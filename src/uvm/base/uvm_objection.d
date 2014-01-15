@@ -1470,9 +1470,10 @@ class uvm_test_done_objection: m_uvm_test_done_objection_base
 	    m_executing_stop_processes = 0;
 	  },
 	  {
-	    if (stop_timeout == 0)
-	      wait(stop_timeout != 0);
-	    wait(stop_timeout);
+	    while (stop_timeout == 0) {
+	      wait(stop_timeout.getEvent());
+	    }
+	    wait(stop_timeout.get());
 	    uvm_error("STOP_TIMEOUT",
 		      format("Stop-task timeout of %0t expired. ",
 			     stop_timeout) ~

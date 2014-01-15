@@ -437,7 +437,7 @@ class uvm_sequencer_base: uvm_component
       // }
       while(m_wait_for_item_sequence_id != sequence_id ||
 	    m_wait_for_item_transaction_id != transaction_id) {
-	wait(m_wait_for_item_sequence_id.getEvent() ||
+	wait(m_wait_for_item_sequence_id.getEvent() |
 	     m_wait_for_item_transaction_id.getEvent());
       }
     }
