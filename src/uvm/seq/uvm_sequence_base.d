@@ -210,7 +210,7 @@ class uvm_sequence_base: uvm_sequence_item
       _m_sequence_state = new WithEvent!uvm_sequence_state;
       _m_sequence_state = CREATED;
       _m_wait_for_grant_semaphore = 0;
-      _response_queue_event.init();
+      _response_queue_event.init("_response_queue_event");
     }
   }
 
@@ -604,8 +604,8 @@ class uvm_sequence_base: uvm_sequence_item
 			 " wait_for_relevant()", UVM_NONE);
       }
     }
-    Event e;
-    wait(e);  // this is intended to never return
+    Event forEver = Event("forEver");
+    wait(forEver);  // this is intended to never return
   }
 
 

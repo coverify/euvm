@@ -118,8 +118,8 @@ class mailbox(T): Channel, FifoInIF!T, FifoOutIF!T
 
  public:
   this(size_t bound=0) {
-    _readEvent.init(this);
-    _writeEvent.init(this);
+    _readEvent.init("_readEvent", this);
+    _writeEvent.init("_writeEvent", this);
     this._bound=bound;
     if(_bound is 0) {
       _buffer.length = 4;

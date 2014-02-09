@@ -60,7 +60,7 @@ final private class m_uvm_waiter
   // private string _field_name;
   @uvm_immutable_sync private Event _trigger;
   this(string inst_name) { // , string field_name
-    _trigger.init();
+    _trigger.init("_trigger");
     this._inst_name = inst_name;
     // this._field_name = field_name;
   }
