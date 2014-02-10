@@ -81,8 +81,8 @@ class uvm_event : /*extends*/ uvm_object
   public this (string name="") {
     synchronized(this) {
       super(name);
-      _m_event.init();
-      _on_event.init();
+      _m_event.init("_m_event");
+      _on_event.init("_on_event");
     }
   }
 

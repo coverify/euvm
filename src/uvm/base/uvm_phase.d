@@ -1528,7 +1528,7 @@ class uvm_phase: uvm_object
 	    task_phase.traverse(top, this, UVM_PHASE_EXECUTING);
 
 	    // wait(0) -- SV version
-	    Event forEver = Event();
+	    Event forEver = Event("forEver");
 	    wait(forEver);
 	  });
 
@@ -1659,7 +1659,7 @@ class uvm_phase: uvm_object
 			     this, UVM_DEBUG);
 	    }
 	    else {
-	      Event forEver = Event();
+	      Event forEver = Event("forEver");
 	      wait(forEver);
 	    }
 	  });

@@ -161,6 +161,7 @@ class uvm_root_entity: RootEntity
     synchronized(this) {
       super(name);
       _seed = seed;
+      _uvmRootInitEvent.init("_uvmRootInitEvent");
     }
   }
 

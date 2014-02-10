@@ -34,6 +34,11 @@ import esdl.base.core;
 class uvm_tlm_event
 {
   Event trigger;
+  this() {
+    synchronized(this) {
+      trigger.init("trigger");
+    }
+  }
 }
 
 //------------------------------------------------------------------------------

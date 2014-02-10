@@ -117,7 +117,7 @@ class QueueWithEvent(T)
 
   this() {
     synchronized(this) {
-      _event.init(Process.self);
+      _event.init("_event", Process.self);
     }
   }
 
@@ -156,7 +156,7 @@ class AssocWithEvent(K, V)
   }
 
   this() {
-    _event.init(Process.self);
+    _event.init("_event", Process.self);
   }
 }
 
@@ -178,7 +178,7 @@ class WithEvent(T) {
       if(parent is null) {
 	parent = getRootEntity();
       }
-      _event.init(parent);
+      _event.init("_event", parent);
       _val = val;
     }
   }
@@ -191,7 +191,7 @@ class WithEvent(T) {
       if(parent is null) {
 	parent = getRootEntity();
       }
-      _event.init(parent);
+      _event.init("_event", parent);
     }
   }
 

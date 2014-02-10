@@ -58,9 +58,9 @@ class uvm_objection_events {
   @uvm_immutable_sync private Event _all_dropped;
   this() {
     synchronized(this) {
-      _raised.init();
-      _dropped.init();
-      _all_dropped.init();
+      _raised.init("_raised");
+      _dropped.init("_dropped");
+      _all_dropped.init("_all_dropped");
     }
   }
 }
@@ -122,7 +122,7 @@ class uvm_once_objection
 
   this() {
     synchronized(this) {
-      _m_scheduled_list_event.init();
+      _m_scheduled_list_event.init("_m_scheduled_list_event");
       _m_objections = new SyncQueue!uvm_objection();
       _m_context_pool = new SyncQueue!uvm_objection_context_object();
       _m_scheduled_list = new SyncQueue!uvm_objection_context_object();
@@ -1331,7 +1331,7 @@ class uvm_test_done_objection: m_uvm_test_done_objection_base
   public this(string name = "uvm_test_done") {
     synchronized(this) {
       super(name);
-      _m_n_stop_threads_event.init();
+      _m_n_stop_threads_event.init("_m_n_stop_threads_event");
       version(UVM_NO_DEPRECATED) {}
       else {
 	_stop_timeout = new WithEvent!SimTime(SimTime(0));
