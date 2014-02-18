@@ -2653,8 +2653,8 @@ abstract class uvm_component: uvm_report_object
   final public void do_resolve_bindings() {
     foreach(c; m_children) {
       c.do_resolve_bindings();
-      resolve_bindings();
     }
+    resolve_bindings();
   }
 
   // do_flush  (flush_hier?)

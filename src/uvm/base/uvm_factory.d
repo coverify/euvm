@@ -655,11 +655,32 @@ final class uvm_factory
       // if no override exists, try to use requested_type_name directly
       if(wrapper is null) {
 	if(requested_type_name !in _m_type_names) {
-	  uvm_report_warning("BDTYP", "Cannot create an object of type '" ~
-			     requested_type_name ~
-			     "' because it is not registered with the factory.",
-			     UVM_NONE);
-	  return null;
+	  // return null;
+	  
+	  // SV works via static initialization -- In Vlang we do not
+	  // have that option since we create uvm_root dynamically
+	  // For VLang we have a special recourse == Try to invoke the
+	  // Object.factory
+	  auto obj = Object.factory(requested_type_name);
+	  if(obj is null) {
+	    uvm_report_warning("BDTYP", "Cannot create an object of type '" ~
+			       requested_type_name ~
+			       "' because it is not registered with the factory.",
+			       UVM_NONE);
+
+	    uvm_report_warning("BDTYP", "Object.factory Cannot create an object of type '" ~
+			       requested_type_name ~
+			       "'.",
+			       UVM_NONE);
+	  }
+	  auto uobj = cast(uvm_object) obj;
+	  if(uobj is null) {
+	    uvm_report_warning("BDTYP", "Object.factory created an object but could cast it to uvm_object type '" ~
+			       requested_type_name ~
+			       "'.",
+			       UVM_NONE);
+	  }
+	  return uobj;
 	}
 	wrapper = _m_type_names[requested_type_name];
       }
@@ -734,11 +755,31 @@ final class uvm_factory
       // if no override exists, try to use requested_type_name directly
       if(wrapper is null) {
 	if(requested_type_name !in _m_type_names) {
-	  uvm_report_warning("BDTYP", "Cannot create a component of type '" ~
-			     requested_type_name ~
-			     "' because it is not registered with the factory.",
-			     UVM_NONE);
-	  return null;
+	  // return null;
+	  
+	  // SV works via static initialization -- In Vlang we do not
+	  // have that option since we create uvm_root dynamically
+	  // For VLang we have a special recourse == Try to invoke the
+	  // Object.factory
+	  auto comp = Object.factory(requested_type_name);
+	  if(comp is null) {
+	    uvm_report_warning("BDTYP", "Cannot create a component of type '" ~
+			       requested_type_name ~
+			       "' because it is not registered with the factory.",
+			       UVM_NONE);
+	    uvm_report_warning("BDTYP", "Object.factory Cannot create an object of type '" ~
+			       requested_type_name ~
+			       "'.",
+			       UVM_NONE);
+	  }
+	  auto ucomp = cast(uvm_component) comp;
+	  if(ucomp is null) {
+	    uvm_report_warning("BDTYP", "Object.factory created an object but could cast it to uvm_component type '" ~
+			       requested_type_name ~
+			       "'.",
+			       UVM_NONE);
+	  }
+	  return ucomp;
 	}
 	wrapper = _m_type_names[requested_type_name];
       }

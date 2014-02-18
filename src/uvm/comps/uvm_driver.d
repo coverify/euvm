@@ -24,6 +24,7 @@
 module uvm.comps.uvm_driver;
 import uvm.seq.uvm_sequence_item;
 import uvm.base.uvm_component;
+import uvm.tlm1.uvm_analysis_port;
 import uvm.tlm1.uvm_sqr_connections;
 
 //------------------------------------------------------------------------------
@@ -78,14 +79,14 @@ class uvm_driver(REQ=uvm_sequence_item, RSP=REQ): uvm_component
     synchronized(this) {
       super(name, parent);
       seq_item_port    = new uvm_seq_item_pull_port!(REQ, RSP)("sqr_pull_port", this);
-      rsp_port         = new uvm_seq_item_pull_port!(REQ, RSP)("rsp_port", this);
+      rsp_port         = new uvm_analysis_port!(RSP)("rsp_port", this);
       seq_item_prod_if = seq_item_port;
     }
   }
 
   enum string type_name = "uvm_driver!(REQ,RSP)";
 
-  public string get_type_name() {
+  override public string get_type_name() {
     return type_name;
   }
 }

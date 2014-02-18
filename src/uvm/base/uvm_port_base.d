@@ -229,7 +229,8 @@ abstract class uvm_port_base(IF = uvm_void): IF
   // local, protected, and non-user properties
 
   @uvm_protected_sync
-    protected uint                              _m_if_mask;
+  protected uint                              _m_if_mask;
+  @uvm_protected_sync
   protected this_type                           _m_if;    // REMOVE
   protected size_t                              _m_def_index;
   @uvm_immutable_sync

@@ -163,7 +163,7 @@ abstract class uvm_sequence (REQ = uvm_sequence_item,
   // A #(R1,S1) can run on sequencer #(R,S) as long as R1 and S1 are by themselves
   // type-compatible with R and S, respectively.
   override public uvm_sequence_item create_request () {
-    REQ req = new RSP();
+    REQ req = new REQ();
     return req;
   }
 
