@@ -25,6 +25,7 @@ module uvm.tlm1.uvm_sqr_connections;
 
 import uvm.base.uvm_port_base;
 import uvm.base.uvm_object_globals;
+import uvm.base.uvm_component;
 
 import uvm.tlm1.uvm_sqr_ifs;
 import uvm.tlm1.uvm_tlm_defines;
@@ -77,7 +78,7 @@ class uvm_seq_item_pull_port(REQ=int, RSP=REQ):
       m_if_mask = UVM_SEQ_ITEM_PULL_MASK;
     }
   }
-  public string get_type_name() {
+  override public string get_type_name() {
     return "uvm_seq_item_pull_port";
   }
 

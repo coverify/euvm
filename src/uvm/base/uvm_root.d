@@ -314,6 +314,8 @@ class uvm_root: uvm_component
 
       uvm_test_top = cast(uvm_component)
 	factory.create_component_by_name(test_name, "", "uvm_test_top", null);
+      // Special case for VLang
+      // uvm_test_top.set_name("uvm_test_top");
 
       if(uvm_test_top is null) {
 	string msg = testname_plusarg ?
