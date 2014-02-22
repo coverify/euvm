@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2011 Cadence Design Systems, Inc. 
+//   Copyright 2007-2011 Cadence Design Systems, Inc.
 //   Copyright 2010 Synopsys, Inc.
 //   Copyright 2014 Coverify Systems Technology
 //   All Rights Reserved Worldwide
@@ -60,7 +60,7 @@ class uvm_push_sequencer(REQ=uvm_sequence_item, RSP=REQ):
   public this(string name, uvm_component parent = null) {
     synchronized(this) {
       super(name, parent);
-      req_port = new uvm_blocking_put_port!REQ ("req_port", this);
+      _req_port = new uvm_blocking_put_port!REQ ("req_port", this);
     }
   }
 
@@ -82,11 +82,11 @@ class uvm_push_sequencer(REQ=uvm_sequence_item, RSP=REQ):
 	super.run_phase(phase);
 	while(true) {
 	  REQ t;
-          m_select_sequence();
-          m_req_fifo.get(t);
-          req_port.put(t);
-          m_wait_for_item_sequence_id = t.get_sequence_id();
-          m_wait_for_item_transaction_id = t.get_transaction_id();
+	  m_select_sequence();
+	  m_req_fifo.get(t);
+	  req_port.put(t);
+	  m_wait_for_item_sequence_id = t.get_sequence_id();
+	  m_wait_for_item_transaction_id = t.get_transaction_id();
 	}
       });
     runF.joinAll();

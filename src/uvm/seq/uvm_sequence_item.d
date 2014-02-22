@@ -56,15 +56,15 @@ class uvm_sequence_item: uvm_transaction
   mixin(uvm_sync!uvm_sequence_item);
 
   private    int                _m_sequence_id = -1;
-  protected  bool               _m_use_sequence_info;
-  protected  int                _m_depth = -1;
+  @uvm_protected_sync private bool _m_use_sequence_info;
+  @uvm_protected_sync private int  _m_depth = -1;
   @uvm_protected_sync protected uvm_sequencer_base _m_sequencer;
   @uvm_protected_sync protected uvm_sequence_base  _m_parent_sequence;
 
   // issued1 and issued2 seem redundant -- declared in SV version though
   // static     bool               issued1,issued2;
 
-  @uvm_public_sync private bool                  _print_sequence_info;
+  @uvm_public_sync private bool _print_sequence_info;
 
 
   // Function: new
@@ -189,11 +189,13 @@ class uvm_sequence_item: uvm_transaction
   // initialize responses for future compatibility.
 
   public void set_id_info(uvm_sequence_item item) {
-    if (item is null) {
-      uvm_report_fatal(get_full_name(), "set_id_info called with null parameter", UVM_NONE);
+    synchronized(this) {
+      if (item is null) {
+	uvm_report_fatal(get_full_name(), "set_id_info called with null parameter", UVM_NONE);
+      }
+      this.set_transaction_id(item.get_transaction_id());
+      this.set_sequence_id(item.get_sequence_id());
     }
-    this.set_transaction_id(item.get_transaction_id());
-    this.set_sequence_id(item.get_sequence_id());
   }
 
 
@@ -394,9 +396,9 @@ class uvm_sequence_item: uvm_transaction
   // information continuously, we save the info here. The m_get_client_info function
   // should only be called for a message that has passed the is_enabled check,
   // e.g. from the `uvm_info macro.
-  protected string _m_client_str;
-  protected uvm_report_object _m_client;
-  protected uvm_report_handler _m_rh;
+  @uvm_protected_sync private string _m_client_str;
+  @uvm_protected_sync private uvm_report_object _m_client;
+  @uvm_protected_sync private uvm_report_handler _m_rh;
 
   public string m_get_client_info(out uvm_report_object client) {
     synchronized(this) {

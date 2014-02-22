@@ -17,7 +17,7 @@ module uvm.tlm1.uvm_tlm_defines;
 // //
 // //| `uvm_nonblocking_put_imp_decl(SFX)
 // //
-// // Define the class uvm_nonblocking_put_impSFX for providing non-blocking 
+// // Define the class uvm_nonblocking_put_impSFX for providing non-blocking
 // // put implementations.  ~SFX~ is the suffix for the new class type.
 
 // `define uvm_nonblocking_put_imp_decl(SFX) \
@@ -61,7 +61,7 @@ module uvm.tlm1.uvm_tlm_defines;
 // //
 // //| `uvm_nonblocking_get_imp_decl(SFX)
 // //
-// // Define the class uvm_nonblocking_get_impSFX for providing non-blocking 
+// // Define the class uvm_nonblocking_get_impSFX for providing non-blocking
 // // get implementations.  ~SFX~ is the suffix for the new class type.
 
 // `define uvm_nonblocking_get_imp_decl(SFX) \
@@ -99,13 +99,13 @@ module uvm.tlm1.uvm_tlm_defines;
 //   extends uvm_port_base #(uvm_tlm_if_base #(T,T)); \
 //   `UVM_IMP_COMMON(`UVM_TLM_BLOCKING_PEEK_MASK,`"uvm_blocking_peek_imp``SFX`",IMP) \
 //   `UVM_BLOCKING_PEEK_IMP_SFX(SFX, m_imp, T, t) \
-// endclass 
+// endclass
 
 // // MACRO: `uvm_nonblocking_peek_imp_decl
 // //
 // //| `uvm_nonblocking_peek_imp_decl(SFX)
 // //
-// // Define the class uvm_nonblocking_peek_impSFX for providing non-blocking 
+// // Define the class uvm_nonblocking_peek_impSFX for providing non-blocking
 // // peek implementations.  ~SFX~ is the suffix for the new class type.
 
 // `define uvm_nonblocking_peek_imp_decl(SFX) \
@@ -151,7 +151,7 @@ module uvm.tlm1.uvm_tlm_defines;
 // //
 // //| `uvm_nonblocking_get_peek_imp_decl(SFX)
 // //
-// // Define the class uvm_nonblocking_get_peek_impSFX for providing non-blocking 
+// // Define the class uvm_nonblocking_get_peek_impSFX for providing non-blocking
 // // get_peek implemenation.
 
 // `define uvm_nonblocking_get_peek_imp_decl(SFX) \
@@ -379,9 +379,9 @@ module uvm.tlm1.uvm_tlm_defines;
 // //| `uvm_analysis_imp_decl(SFX)
 // //
 // // Define the class uvm_analysis_impSFX for providing an analysis
-// // implementation. ~SFX~ is the suffix for the new class type. The analysis 
-// // implemenation is the write function. The `uvm_analysis_imp_decl allows 
-// // for a scoreboard (or other analysis component) to support input from many 
+// // implementation. ~SFX~ is the suffix for the new class type. The analysis
+// // implemenation is the write function. The `uvm_analysis_imp_decl allows
+// // for a scoreboard (or other analysis component) to support input from many
 // // places. For example:
 // //
 // //| `uvm_analysis_imp_decl(_ingress)
@@ -467,7 +467,7 @@ module uvm.tlm1.uvm_tlm_defines;
 //     if(imp) return imp.nb_transport``SFX(req_arg, rsp_arg); \
 //   endfunction
 
-  // primitive interfaces
+// primitive interfaces
 enum int UVM_TLM_BLOCKING_PUT_MASK         =  (1<<0);
 enum int UVM_TLM_BLOCKING_GET_MASK         =  (1<<1);
 enum int UVM_TLM_BLOCKING_PEEK_MASK        =  (1<<2);
@@ -511,21 +511,21 @@ enum int UVM_SEQ_ITEM_GET_MASK                =  (1<<7);
 enum int UVM_SEQ_ITEM_PEEK_MASK               =  (1<<8);
 
 enum int UVM_SEQ_ITEM_PULL_MASK  = (UVM_SEQ_ITEM_GET_NEXT_ITEM_MASK |
-				    UVM_SEQ_ITEM_TRY_NEXT_ITEM_MASK | 
+				    UVM_SEQ_ITEM_TRY_NEXT_ITEM_MASK |
 				    UVM_SEQ_ITEM_ITEM_DONE_MASK |
-				    UVM_SEQ_ITEM_HAS_DO_AVAILABLE_MASK | 
+				    UVM_SEQ_ITEM_HAS_DO_AVAILABLE_MASK |
 				    UVM_SEQ_ITEM_WAIT_FOR_SEQUENCES_MASK |
-				    UVM_SEQ_ITEM_PUT_RESPONSE_MASK | 
+				    UVM_SEQ_ITEM_PUT_RESPONSE_MASK |
 				    UVM_SEQ_ITEM_PUT_MASK |
 				    UVM_SEQ_ITEM_GET_MASK |
 				    UVM_SEQ_ITEM_PEEK_MASK);
 
 enum int UVM_SEQ_ITEM_UNI_PULL_MASK = (UVM_SEQ_ITEM_GET_NEXT_ITEM_MASK |
-				       UVM_SEQ_ITEM_TRY_NEXT_ITEM_MASK | 
+				       UVM_SEQ_ITEM_TRY_NEXT_ITEM_MASK |
 				       UVM_SEQ_ITEM_ITEM_DONE_MASK |
-				       UVM_SEQ_ITEM_HAS_DO_AVAILABLE_MASK | 
+				       UVM_SEQ_ITEM_HAS_DO_AVAILABLE_MASK |
 				       UVM_SEQ_ITEM_WAIT_FOR_SEQUENCES_MASK |
-				       UVM_SEQ_ITEM_GET_MASK | 
+				       UVM_SEQ_ITEM_GET_MASK |
 				       UVM_SEQ_ITEM_PEEK_MASK);
 
 enum int UVM_SEQ_ITEM_PUSH_MASK  = (UVM_SEQ_ITEM_PUT_MASK);

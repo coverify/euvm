@@ -60,11 +60,16 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   private Queue!REQ _m_last_req_buffer;
   private Queue!RSP _m_last_rsp_buffer;
 
-  protected int _m_num_last_reqs = 1;
-  protected int _num_last_items = 1; // _m_num_last_reqs
-  protected int _m_num_last_rsps = 1;
-  protected int _m_num_reqs_sent;
-  protected int _m_num_rsps_received;
+  @uvm_protected_sync
+  private int _m_num_last_reqs = 1;
+  @uvm_protected_sync
+  private int _num_last_items = 1; // _m_num_last_reqs
+  @uvm_protected_sync
+  private int _m_num_last_rsps = 1;
+  @uvm_protected_sync
+  private int _m_num_reqs_sent;
+  @uvm_protected_sync
+  private int _m_num_rsps_received;
 
   @uvm_immutable_sync
     private uvm_sequencer_analysis_fifo!RSP _sqr_rsp_analysis_fifo;
@@ -138,7 +143,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
 	uvm_report_fatal(get_name(), format("send_request failed to cast"
 					    " sequence item"), UVM_NONE);
       }
-      param_t.set_sequence_id(sequence_ptr.m_get_sqr_sequence_id(_m_sequencer_id,
+      param_t.set_sequence_id(sequence_ptr.m_get_sqr_sequence_id(m_sequencer_id,
 								 true));
       t.set_sequencer(this);
       if (_m_req_fifo.try_put(param_t) !is true) {

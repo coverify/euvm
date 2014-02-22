@@ -43,11 +43,12 @@ class uvm_sequencer_analysis_fifo (RSP = uvm_sequence_item)
     private uvm_sequencer_base _sequencer_ptr;
 
   public this(string name, uvm_component parent = null) {
-    super(name, parent, 0);
-    _analysis_export =
-      new uvm_analysis_imp!(RSP,
-			    uvm_sequencer_analysis_fifo!RSP)("analysis_export",
-							     this);
+    synchronized(this) {
+      super(name, parent, 0);
+      _analysis_export =
+	new uvm_analysis_imp!(RSP, uvm_sequencer_analysis_fifo!RSP)
+	                                    ("analysis_export", this);
+    }
   }
 
   public void write(RSP t) {

@@ -96,11 +96,7 @@ class uvm_blocking_put_export(T=int): uvm_port_base!(uvm_tlm_if_base!(T,T))
 
   // task
   public void put (T t) {
-    uvm_port_base!(uvm_tlm_if_base!(T,T)) _m_if;
-    synchronized(this) {
-      _m_if = m_if;
-    }
-    _m_if.put(t);
+    m_if.put(t);
   }
 }
 
@@ -122,15 +118,11 @@ class uvm_nonblocking_put_export(T=int):
   }
 
   public bool try_put (T t) {
-    synchronized(this) {
-      return this.m_if.try_put(t);
-    }
+    return m_if.try_put(t);
   }
 
   public bool can_put() {
-    synchronized(this) {
-      return this.m_if.can_put();
-    }
+    return m_if.can_put();
   }
 }
 
@@ -152,23 +144,15 @@ class uvm_put_export(T=int):
 
   // task
   public void put(T t) {
-    uvm_port_base!(uvm_tlm_if_base!(T,T)) _m_if;
-    synchronized(this) {
-      _m_if = m_if;
-    }
-    _m_if.put(t);
+    m_if.put(t);
   }
 
   public bool try_put (T t) {
-    synchronized(this) {
-      return this.m_if.try_put(t);
-    }
+    return m_if.try_put(t);
   }
 
   public bool can_put() {
-    synchronized(this) {
-      return this.m_if.can_put();
-    }
+    return m_if.can_put();
   }
 }
 
@@ -189,9 +173,7 @@ class uvm_blocking_get_export(T=int):
 
   // task
   public void get (out T t) {
-    synchronized(this) {
-      this.m_if.get(t);
-    }
+    m_if.get(t);
   }
 
 }
@@ -212,15 +194,11 @@ class uvm_nonblocking_get_export(T=int):
   }
 
   public bool try_get (out T t) {
-    synchronized(this) {
-      return this.m_if.try_get(t);
-    }
+    return m_if.try_get(t);
   }
 
   public bool can_get() {
-    synchronized(this) {
-      return this.m_if.can_get();
-    }
+    return m_if.can_get();
   }
 }
 
@@ -243,23 +221,15 @@ class uvm_get_export(T=int):
 
   // task
   public void get (out T t) {
-    uvm_port_base!(uvm_tlm_if_base!(T,T)) _m_if;
-    synchronized(this) {
-      _m_if = m_if;
-    }
-    _m_if.get(t);
+    m_if.get(t);
   }
 
   public bool try_get (out T t) {
-    synchronized(this) {
-      return this.m_if.try_get(t);
-    }
+    return m_if.try_get(t);
   }
 
   public bool can_get() {
-    synchronized(this) {
-      return this.m_if.can_get();
-    }
+    return m_if.can_get();
   }
 }
 
@@ -282,11 +252,7 @@ class uvm_blocking_peek_export(T=int):
 
   // task
   public void peek (out T t) {
-    uvm_port_base!(uvm_tlm_if_base!(T,T)) _m_if;
-    synchronized(this) {
-      _m_if = m_if;
-    }
-    _m_if.peek(t);
+    m_if.peek(t);
   }
 }
 
@@ -308,15 +274,11 @@ class uvm_nonblocking_peek_export(T=int):
   }
 
   public bool try_peek (out T t) {
-    synchronized(this) {
-      return this.m_if.try_peek(t);
-    }
+    return m_if.try_peek(t);
   }
 
   public bool can_peek() {
-    synchronized(this) {
-      return this.m_if.can_peek();
-    }
+    return m_if.can_peek();
   }
 }
 
@@ -339,24 +301,15 @@ class uvm_peek_export(T=int):
 
   // task
   public void peek (out T t) {
-    uvm_port_base!(uvm_tlm_if_base!(T,T)) _m_if;
-    synchronized(this) {
-      _m_if = m_if;
-    }
-
-    _m_if.peek(t);
+    m_if.peek(t);
   }
 
   public bool try_peek (out T t) {
-    synchronized(this) {
-      return this.m_if.try_peek(t);
-    }
+    return m_if.try_peek(t);
   }
 
   public bool can_peek() {
-    synchronized(this) {
-      return this.m_if.can_peek();
-    }
+    return m_if.can_peek();
   }
 
 }
@@ -381,20 +334,12 @@ class uvm_blocking_get_peek_export(T=int):
 
   // task
   public void get (out T t) {
-    uvm_port_base!(uvm_tlm_if_base!(T,T)) _m_if;
-    synchronized(this) {
-      _m_if = m_if;
-    }
-    _m_if.get(t);
+    m_if.get(t);
   }
 
   // task
   public void peek (out T t) {
-    uvm_port_base!(uvm_tlm_if_base!(T,T)) _m_if;
-    synchronized(this) {
-      _m_if = m_if;
-    }
-    _m_if.peek(t);
+    m_if.peek(t);
   }
 }
 
@@ -416,27 +361,19 @@ class uvm_nonblocking_get_peek_export(T=int):
   }
 
   public bool try_get (out T t) {
-    synchronized(this) {
-      return this.m_if.try_get(t);
-    }
+    return m_if.try_get(t);
   }
 
   public bool can_get() {
-    synchronized(this) {
-      return this.m_if.can_get();
-    }
+    return m_if.can_get();
   }
 
   public bool try_peek (out T t) {
-    synchronized(this) {
-      return this.m_if.try_peek(t);
-    }
+    return m_if.try_peek(t);
   }
 
   public bool can_peek() {
-    synchronized(this) {
-      return this.m_if.can_peek();
-    }
+    return m_if.can_peek();
   }
 
 }
@@ -460,44 +397,28 @@ class uvm_get_peek_export(T=int):
 
   // task
   public void get (out T t) {
-    uvm_port_base!(uvm_tlm_if_base!(T,T)) _m_if;
-    synchronized(this) {
-      _m_if = m_if;
-    }
-    _m_if.get(t);
+    m_if.get(t);
   }
 
   // task
   public void peek (out T t) {
-    uvm_port_base!(uvm_tlm_if_base!(T,T)) _m_if;
-    synchronized(this) {
-      _m_if = m_if;
-    }
-    _m_if.peek(t);
+    m_if.peek(t);
   }
 
   public bool try_get (out T t) {
-    synchronized(this) {
-      return this.m_if.try_get(t);
-    }
+    return m_if.try_get(t);
   }
 
   public bool can_get() {
-    synchronized(this) {
-      return this.m_if.can_get();
-    }
+    return m_if.can_get();
   }
 
   public bool try_peek (out T t) {
-    synchronized(this) {
-      return this.m_if.try_peek(t);
-    }
+    return m_if.try_peek(t);
   }
 
   public bool can_peek() {
-    synchronized(this) {
-      return this.m_if.can_peek();
-    }
+    return m_if.can_peek();
   }
 
 }
@@ -570,29 +491,17 @@ class uvm_blocking_master_export (REQ=int, RSP=REQ):
 
   // task
   public void put (REQ t) {
-    uvm_port_base!(uvm_tlm_if_base!(T,T)) _m_if;
-    synchronized(this) {
-      _m_if = m_if;
-    }
-    _m_if.put(t);
+    m_if.put(t);
   }
 
   // task
   public void get (out RSP t) {
-    uvm_port_base!(uvm_tlm_if_base!(T,T)) _m_if;
-    synchronized(this) {
-      _m_if = m_if;
-    }
-    _m_if.get(t);
+    m_if.get(t);
   }
 
   // task
   public void peek (out RSP t) {
-    uvm_port_base!(uvm_tlm_if_base!(T,T)) _m_if;
-    synchronized(this) {
-      _m_if = m_if;
-    }
-    _m_if.peek(t);
+    m_if.peek(t);
   }
 }
 
@@ -615,39 +524,27 @@ class uvm_nonblocking_master_export (REQ=int, RSP=REQ):
   }
 
   public bool try_put (REQ t) {
-    synchronized(this) {
-      return this.m_if.try_put(t);
-    }
+    return m_if.try_put(t);
   }
 
   public bool can_put() {
-    synchronized(this) {
-      return this.m_if.can_put();
-    }
+    return m_if.can_put();
   }
 
   public bool try_get (out RSP t) {
-    synchronized(this) {
-      return this.m_if.try_get(t);
-    }
+    return m_if.try_get(t);
   }
 
   public bool can_get() {
-    synchronized(this) {
-      return this.m_if.can_get();
-    }
+    return m_if.can_get();
   }
 
   public bool try_peek (out RSP t) {
-    synchronized(this) {
-      return this.m_if.try_peek(t);
-    }
+    return m_if.try_peek(t);
   }
 
   public bool can_peek() {
-    synchronized(this) {
-      return this.m_if.can_peek();
-    }
+    return m_if.can_peek();
   }
 }
 
@@ -671,65 +568,41 @@ class uvm_master_export (REQ=int, RSP=REQ):
 
   // task
   public void put (REQ t) {
-    uvm_port_base!(uvm_tlm_if_base!(T,T)) _m_if;
-    synchronized(this) {
-      _m_if = m_if;
-    }
-    this.m_if.put(t);
+    m_if.put(t);
   }
 
   public bool try_put (REQ t) {
-    synchronized(this) {
-      return this.m_if.try_put(t);
-    }
+    return m_if.try_put(t);
   }
 
   public bool can_put() {
-    synchronized(this) {
-      return this.m_if.can_put();
-    }
+    return m_if.can_put();
   }
 
   // task
   public void get (out RSP t) {
-    uvm_port_base!(uvm_tlm_if_base!(T,T)) _m_if;
-    synchronized(this) {
-      _m_if = m_if;
-    }
-    _m_if.get(t);
+    m_if.get(t);
   }
 
   // task
   public void peek (out RSP t) {
-    uvm_port_base!(uvm_tlm_if_base!(T,T)) _m_if;
-    synchronized(this) {
-      _m_if = m_if;
-    }
-    _m_if.peek(t);
+    m_if.peek(t);
   }
 
   public bool try_get (out RSP t) {
-    synchronized(this) {
-      return this.m_if.try_get(t);
-    }
+    return m_if.try_get(t);
   }
 
   public bool can_get() {
-    synchronized(this) {
-      return this.m_if.can_get();
-    }
+    return m_if.can_get();
   }
 
   public bool try_peek (out RSP t) {
-    synchronized(this) {
-      return this.m_if.try_peek(t);
-    }
+    return m_if.try_peek(t);
   }
 
   public bool can_peek() {
-    synchronized(this) {
-      return this.m_if.can_peek();
-    }
+    return m_if.can_peek();
   }
 }
 
@@ -753,27 +626,17 @@ class uvm_blocking_slave_export (REQ=int, RSP=REQ):
 
   // task
   public void put (RSP t) {
-    uvm_port_base!(uvm_tlm_if_base!(T,T)) _m_if;
-    synchronized(this) {
-      _m_if = m_if;
-    }
-    _m_if.put(t);
+    m_if.put(t);
   }
 
   // task
   public void get (out REQ t) {
-    uvm_port_base!(uvm_tlm_if_base!(T,T)) _m_if;
-    synchronized(this) {
-      _m_if = m_if;
-    }
-    _m_if.get(t);
+    m_if.get(t);
   }
 
   // task
   public void peek (out REQ t) {
-    synchronized(this) {
-      this.m_if.peek(t);
-    }
+    m_if.peek(t);
   }
 }
 
@@ -796,40 +659,28 @@ class uvm_nonblocking_slave_export (REQ=int, RSP=REQ):
   }
 
   public bool try_put (RSP t) {
-    synchronized(this) {
-      return this.m_if.try_put(t);
-    }
+    return m_if.try_put(t);
   }
 
   public bool can_put() {
     uvm_port_base!(uvm_tlm_if_base!(T,T)) _m_if;
-    synchronized(this) {
-      return this.m_if.can_put();
-    }
+    return m_if.can_put();
   }
 
   public bool try_get (out REQ t) {
-    synchronized(this) {
-      return this.m_if.try_get(t);
-    }
+    return m_if.try_get(t);
   }
 
   public bool can_get() {
-    synchronized(this) {
-      return this.m_if.can_get();
-    }
+    return m_if.can_get();
   }
 
   public bool try_peek (out REQ t) {
-    synchronized(this) {
-      return this.m_if.try_peek(t);
-    }
+    return m_if.try_peek(t);
   }
 
   public bool can_peek() {
-    synchronized(this) {
-      return this.m_if.can_peek();
-    }
+    return m_if.can_peek();
   }
 }
 
@@ -853,63 +704,41 @@ class uvm_slave_export (REQ=int, RSP=REQ):
 
   // task
   public void put (RSP t) {
-    uvm_port_base!(uvm_tlm_if_base!(T,T)) _m_if;
-    synchronized(this) {
-      _m_if = m_if;
-    }
-    _m_if.put(t);
+    m_if.put(t);
   }
 
   public bool try_put (RSP t) {
-    synchronized(this) {
-      return this.m_if.try_put(t);
-    }
+    return m_if.try_put(t);
   }
 
   public bool can_put() {
-    synchronized(this) {
-      return this.m_if.can_put();
-    }
+    return m_if.can_put();
   }
 
   // task
   public void get (out REQ t) {
-    uvm_port_base!(uvm_tlm_if_base!(T,T)) _m_if;
-    synchronized(this) {
-      _m_if = m_if;
-    }
-    _m_if.get(t);
+    m_if.get(t);
   }
 
   // task
   public void peek (out REQ t) {
-    synchronized(this) {
-      this.m_if.peek(t);
-    }
+    m_if.peek(t);
   }
 
   public bool try_get (out REQ t) {
-    synchronized(this) {
-      return this.m_if.try_get(t);
-    }
+    return m_if.try_get(t);
   }
 
   public bool can_get() {
-    synchronized(this) {
-      this.m_if.can_get();
-    }
+    m_if.can_get();
   }
 
   public bool try_peek (out REQ t) {
-    synchronized(this) {
-      return this.m_if.try_peek(t);
-    }
+    return m_if.try_peek(t);
   }
 
   public bool can_peek() {
-    synchronized(this) {
-      return this.m_if.can_peek();
-    }
+    return m_if.can_peek();
   }
 }
 
@@ -933,7 +762,7 @@ class uvm_blocking_transport_export (REQ=int, RSP=REQ):
 
   // task
   public void transport (REQ req, out RSP rsp) {
-    this.m_if.transport(req, rsp);
+    m_if.transport(req, rsp);
   }
 }
 
@@ -955,9 +784,7 @@ class uvm_nonblocking_transport_export (REQ=int, RSP=REQ):
   }
 
   public bool nb_transport (REQ req, out RSP rsp) {
-    synchronized(this) {
-      return this.m_if.nb_transport(req, rsp);
-    }
+    return m_if.nb_transport(req, rsp);
   }
 }
 
@@ -980,17 +807,11 @@ class uvm_transport_export (REQ=int, RSP=REQ):
 
   // task
   public void transport (REQ req, out RSP rsp) {
-    uvm_port_base!(uvm_tlm_if_base!(T,T)) _m_if;
-    synchronized(this) {
-      _m_if = m_if;
-    }
-    _m_if.transport(req, rsp);
+    m_if.transport(req, rsp);
   }
 
   public bool nb_transport (REQ req, out RSP rsp) {
-    synchronized(this) {
-      return this.m_if.nb_transport(req, rsp);
-    }
+    return m_if.nb_transport(req, rsp);
   }
 
 }

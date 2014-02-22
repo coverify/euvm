@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------
 //   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2011 Cadence Design Systems, Inc. 
+//   Copyright 2007-2011 Cadence Design Systems, Inc.
 //   Copyright 2010 Synopsys, Inc.
 //   Copyright 2014 Coverify Systems Technology
 //   All Rights Reserved Worldwide
@@ -77,7 +77,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   //
   // See <uvm_sqr_if_base #(REQ,RSP)> for information about this interface.
 
-  
+
   @uvm_immutable_sync
     private uvm_seq_item_pull_imp!(REQ, RSP, this_type) _seq_item_export;
 
@@ -126,7 +126,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
     return "uvm_sequencer";
   }
 
-  
+
   //-----------------
   // Internal Methods
   //-----------------
@@ -144,13 +144,13 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
 
     // If a sequence_item has already been requested, then get_next_item()
     // should not be called again until item_done() has been called.
-    
+
     if (get_next_item_called is true) {
       uvm_report_error(get_full_name(),
 		       "Get_next_item called twice without item_done"
 		       " or get in between", UVM_NONE);
     }
-  
+
     if (! sequence_item_requested) m_select_sequence();
 
     // Set flag indicating that the item has been requested to ensure that item_done or get
@@ -176,22 +176,22 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
 		       " twice without item_done or get in between", UVM_NONE);
       return;
     }
-    
+
     // allow state from last transaction to settle such that sequences'
     // relevancy can be determined with up-to-date information
     wait_for_sequences();
 
-    // choose the sequence based on relevancy
-    int selected_sequence = m_choose_next_request();
-
-    // return if none available
-    if (selected_sequence is -1) {
-      t = null;
-      return;
-    }
-
     uvm_sequence_base seq;
     synchronized(this) {
+      // choose the sequence based on relevancy
+      int selected_sequence = m_choose_next_request();
+
+      // return if none available
+      if (selected_sequence is -1) {
+	t = null;
+	return;
+      }
+
       // now, allow chosen sequence to resume
       m_set_arbitration_completed(_arb_sequence_q[selected_sequence].request_id);
       seq = _arb_sequence_q[selected_sequence].sequence_ptr;
@@ -225,7 +225,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
       // Set flag to allow next get_next_item or peek to get a new sequence_item
       _sequence_item_requested = false;
       _get_next_item_called = false;
-  
+
       REQ t;
       if (m_req_fifo.try_get(t) is false) {
 	uvm_report_fatal(get_full_name(), "Item_done() called with no"
@@ -237,7 +237,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
 	m_wait_for_item_sequence_id = t.get_sequence_id();
 	m_wait_for_item_transaction_id = t.get_transaction_id();
       }
-  
+
       if (item !is null) {
 	seq_item_export.put_response(item);
       }
@@ -278,11 +278,9 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   // ----
 
   final public void peek(out REQ t) {
-
     if (sequence_item_requested is false) {
       m_select_sequence();
     }
-  
     // Set flag indicating that the item has been requested to ensure that item_done or get
     // is called between requests
     sequence_item_requested = true;
@@ -315,7 +313,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
 
   override protected size_t m_find_number_driver_connections() {
     uvm_port_component_base[string] provided_to_port_list;
-  
+
     // Check that the seq_item_pull_port is connected
     uvm_port_component_base seq_port_base = seq_item_export.get_comp();
     seq_port_base.get_provided_to(provided_to_port_list);
@@ -325,13 +323,3 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
 }
 
 alias uvm_sequencer!uvm_sequence_item uvm_virtual_sequencer;
-
-
-
-
-
-
-
-
-
-

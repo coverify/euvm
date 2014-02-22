@@ -175,12 +175,18 @@ class uvm_sequence_base: uvm_sequence_item
 
   // Each sequencer will assign a sequence id.  When a sequence is talking to multiple
   // sequencers, each sequence_id is managed seperately
-  protected int[int] _m_sqr_seq_ids;
+
+  // protected
+  private int[int] _m_sqr_seq_ids;
 
   @uvm_protected_sync private Queue!uvm_sequence_item _response_queue;
-  protected Event                   _response_queue_event;
-  protected int                     _response_queue_depth = 8;
-  protected bool                    _response_queue_error_report_disabled;
+
+  // protected
+  private Event                   _response_queue_event;
+  // protected
+  private int                     _response_queue_depth = 8;
+  // protected
+  private bool                    _response_queue_error_report_disabled;
 
   // Variable: do_not_randomize
   //
@@ -247,8 +253,8 @@ class uvm_sequence_base: uvm_sequence_item
 
   // task
   public void wait_for_sequence_state(uvm_sequence_state state) {
-    while(m_sequence_state != state) {
-      m_sequence_state.wait();
+    while(m_sequence_state.get != state) {
+      m_sequence_state.getEvent.wait();
     }
   }
 
@@ -286,10 +292,10 @@ class uvm_sequence_base: uvm_sequence_item
 		    int this_priority = -1,
 		    bool call_pre_post = true) {
 
-    set_item_context(parent_sequence, sequencer);
-
-    // if (!(m_sequence_state inside {CREATED,STOPPED,FINISHED}))
     synchronized(this) {
+      set_item_context(parent_sequence, sequencer);
+
+      // if (!(m_sequence_state inside {CREATED,STOPPED,FINISHED}))
       if(_m_sequence_state != CREATED &&
 	 _m_sequence_state != STOPPED &&
 	 _m_sequence_state != FINISHED) {
@@ -334,7 +340,7 @@ class uvm_sequence_base: uvm_sequence_item
       }
     }
 
-    auto startF = fork({
+    auto seqFork = fork({
 	m_sequence_process = Process.self;
 
 	m_sequence_state = PRE_START;
@@ -377,7 +383,7 @@ class uvm_sequence_base: uvm_sequence_item
 	wait(0);
 
       });
-    startF.joinAll();
+    seqFork.joinAll();
 
     synchronized(this) {
       if (_m_sequencer !is null) {
@@ -808,43 +814,44 @@ class uvm_sequence_base: uvm_sequence_item
   public void start_item (uvm_sequence_item item,
 			  int set_priority = -1,
 			  uvm_sequencer_base sequencer = null) {
+    synchronized(this) {
+      if(item is null) {
+	uvm_report_fatal("NULLITM",
+			 "attempting to start a null item from sequence '" ~
+			 get_full_name() ~ "'", UVM_NONE);
+	return;
+      }
 
-    if(item is null) {
-      uvm_report_fatal("NULLITM",
-		       "attempting to start a null item from sequence '" ~
-		       get_full_name() ~ "'", UVM_NONE);
-      return;
+      auto seq = cast(uvm_sequence_base) item;
+      if(seq !is null) {
+	uvm_report_fatal("SEQNOTITM",
+			 "attempting to start a sequence using start_item()"
+			 " from sequence '" ~ get_full_name() ~
+			 "'. Use seq.start() instead.", UVM_NONE);
+	return;
+      }
+
+      if(sequencer is null) {
+	sequencer = item.get_sequencer();
+      }
+
+      if(sequencer is null)
+	sequencer = get_sequencer();
+
+      if(sequencer is null) {
+	uvm_report_fatal("SEQ", "neither the item's sequencer nor dedicated "
+			 "sequencer has been supplied to start item in " ~
+			 get_full_name(), UVM_NONE);
+	return;
+      }
+
+      item.set_item_context(this, sequencer);
+
+      if (set_priority < 0) {
+	set_priority = get_priority();
+      }
     }
-
-    auto seq = cast(uvm_sequence_base) item;
-    if(seq !is null) {
-      uvm_report_fatal("SEQNOTITM",
-		       "attempting to start a sequence using start_item()"
-		       " from sequence '" ~ get_full_name() ~
-		       "'. Use seq.start() instead.", UVM_NONE);
-      return;
-    }
-
-    if(sequencer is null) {
-      sequencer = item.get_sequencer();
-    }
-
-    if(sequencer is null)
-      sequencer = get_sequencer();
-
-    if(sequencer is null) {
-      uvm_report_fatal("SEQ", "neither the item's sequencer nor dedicated "
-		       "sequencer has been supplied to start item in " ~
-		       get_full_name(), UVM_NONE);
-      return;
-    }
-
-    item.set_item_context(this, sequencer);
-
-    if (set_priority < 0) {
-      set_priority = get_priority();
-    }
-
+    
     sequencer.wait_for_grant(this, set_priority);
 
     version(UVM_DISABLE_AUTO_ITEM_RECORDING) {}
@@ -865,15 +872,17 @@ class uvm_sequence_base: uvm_sequence_item
   // task
   public void finish_item (uvm_sequence_item item,
 			   int set_priority = -1) {
+    uvm_sequencer_base sequencer;
+    synchronized(this) {
+      sequencer = item.get_sequencer();
 
-    uvm_sequencer_base sequencer = item.get_sequencer();
+      if (sequencer is null) {
+	uvm_report_fatal("STRITM", "sequence_item has null sequencer", UVM_NONE);
+      }
 
-    if (sequencer is null) {
-      uvm_report_fatal("STRITM", "sequence_item has null sequencer", UVM_NONE);
+      mid_do(item);
+      sequencer.send_request(this, item);
     }
-
-    mid_do(item);
-    sequencer.send_request(this, item);
     sequencer.wait_for_item_done(this, -1);
     version(UVM_DISABLE_AUTO_ITEM_RECORDING) {}
     else {
@@ -1128,7 +1137,7 @@ class uvm_sequence_base: uvm_sequence_item
     //
     // Used as an identifier in constraints for a specific sequence type.
 
-    @rand uint seq_kind;
+    @uvm_public_sync private @rand uint _seq_kind;
     private uint _num_seq;
 
     override public void pre_randomize() {
@@ -1139,15 +1148,15 @@ class uvm_sequence_base: uvm_sequence_item
 
     // For user random selection. This excludes the exhaustive and
     // random sequences.
-    Constraint! q{
-      ( _num_seq <= 2 ) || ( seq_kind >= 2 ) ;
-      ( seq_kind < _num_seq ) || ( seq_kind == 0 );
-    }  pick_sequence;
-
     // Constraint! q{
-    //   _num_seq <= 2 || seq_kind >= 2;
-    //   seq_kind <  _num_seq || seq_kind == 0;
+    //   ( _num_seq <= 2 ) || ( _seq_kind >= 2 ) ;
+    //   ( _seq_kind < _num_seq ) || ( _seq_kind == 0 );
     // }  pick_sequence;
+
+    Constraint! q{
+      _num_seq <= 2 || _seq_kind >= 2;
+      _seq_kind < _num_seq || _seq_kind == 0;
+    }  pick_sequence;
 
 
     // Function- num_sequences

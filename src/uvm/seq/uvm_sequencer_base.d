@@ -83,19 +83,26 @@ class uvm_sequencer_base: uvm_component
     }
   }
 
-  @uvm_protected_sync
-    protected Queue!uvm_sequence_request _arb_sequence_q;
+  // make sure that all accesses to _arb_sequence_q are made under
+  // synchronized(this) lock
+  protected Queue!uvm_sequence_request _arb_sequence_q;
 
+  // make sure that all accesses to _arb_completed are made under
+  // synchronized(this) lock
   // declared protected in SV version
-  private bool[int]                  _arb_completed;
+  private bool[int]                    _arb_completed;
 
+  // make sure that all accesses to _lock_list are made under
+  // synchronized(this) lock
   // declared protected in SV version
-  private Queue!uvm_sequence_base    _lock_list;
+  private Queue!uvm_sequence_base      _lock_list;
 
+  // make sure that all accesses to _reg_sequences are made under
+  // synchronized(this) lock
   // declared protected in SV version
-  private uvm_sequence_base[int]     _reg_sequences;
+  private uvm_sequence_base[int]       _reg_sequences;
 
-  protected int                        _m_sequencer_id;
+  @uvm_protected_sync private int      _m_sequencer_id;
 
 
   // declared protected in SV version
@@ -349,37 +356,36 @@ class uvm_sequencer_base: uvm_component
 		       "wait_for_grant passed null sequence_ptr", UVM_NONE);
     }
 
-    int my_seq_id = m_register_sequence(sequence_ptr);
+    synchronized(this) {
+      // FIXME -- decide whether this has to be under synchronized lock
+      int my_seq_id = m_register_sequence(sequence_ptr);
 
-    // If lock_request is asserted, then issue a lock.  Don't wait for the response, since
-    // there is a request immediately following the lock request
-    if (lock_request is true) {
+      // If lock_request is asserted, then issue a lock.  Don't wait for the response, since
+      // there is a request immediately following the lock request
+      if (lock_request is true) {
+	req_s = new uvm_sequence_request();
+	synchronized(req_s) {
+	  req_s.grant = false;
+	  req_s.sequence_id = my_seq_id;
+	  req_s.request = SEQ_TYPE_LOCK;
+	  req_s.sequence_ptr = sequence_ptr;
+	  req_s.request_id = inc_g_request_id();
+	  req_s.process_id = Process.self;
+	}
+	_arb_sequence_q.pushBack(req_s);
+      }
+
+      // Push the request onto the queue
       req_s = new uvm_sequence_request();
       synchronized(req_s) {
 	req_s.grant = false;
+	req_s.request = SEQ_TYPE_REQ;
 	req_s.sequence_id = my_seq_id;
-	req_s.request = SEQ_TYPE_LOCK;
+	req_s.item_priority = item_priority;
 	req_s.sequence_ptr = sequence_ptr;
 	req_s.request_id = inc_g_request_id();
 	req_s.process_id = Process.self;
       }
-      synchronized(this) {
-	_arb_sequence_q.pushBack(req_s);
-      }
-    }
-
-    // Push the request onto the queue
-    req_s = new uvm_sequence_request();
-    synchronized(req_s) {
-      req_s.grant = false;
-      req_s.request = SEQ_TYPE_REQ;
-      req_s.sequence_id = my_seq_id;
-      req_s.item_priority = item_priority;
-      req_s.sequence_ptr = sequence_ptr;
-      req_s.request_id = inc_g_request_id();
-      req_s.process_id = Process.self;
-    }
-    synchronized(this) {
       _arb_sequence_q.pushBack(req_s);
       m_update_lists();
     }
@@ -423,8 +429,8 @@ class uvm_sequencer_base: uvm_component
 
     if (transaction_id == -1) {
       // wait (m_wait_for_item_sequence_id == sequence_id);
-      while(m_wait_for_item_sequence_id != sequence_id) {
-	m_wait_for_item_sequence_id.wait();
+      while(m_wait_for_item_sequence_id.get != sequence_id) {
+	m_wait_for_item_sequence_id.getEvent.wait();
       }
     }
     else {
@@ -435,8 +441,8 @@ class uvm_sequencer_base: uvm_component
       //	     (m_wait_for_item_transaction_id != transaction_id)) {
       //	 wait(m_wait_for_item_sequence_event || m_wait_for_item_transaction_event);
       // }
-      while(m_wait_for_item_sequence_id != sequence_id ||
-	    m_wait_for_item_transaction_id != transaction_id) {
+      while(m_wait_for_item_sequence_id.get != sequence_id ||
+	    m_wait_for_item_transaction_id.get != transaction_id) {
 	wait(m_wait_for_item_sequence_id.getEvent() |
 	     m_wait_for_item_transaction_id.getEvent());
       }
@@ -494,8 +500,9 @@ class uvm_sequencer_base: uvm_component
       uvm_report_fatal("uvm_sequence_controller",
 		       "has_lock passed null sequence_ptr", UVM_NONE);
     }
-    int my_seq_id = m_register_sequence(sequence_ptr);
     synchronized(this) {
+      // FIXME -- deadlock possibility flag
+      int my_seq_id = m_register_sequence(sequence_ptr);
       foreach (lock; _lock_list) {
 	if (lock.get_inst_id() == sequence_ptr.get_inst_id()) {
 	  return true;
@@ -583,11 +590,15 @@ class uvm_sequencer_base: uvm_component
   // stop_sequences
   // --------------
 
-  public void stop_sequences() {
-    uvm_sequence_base seq_ptr = m_find_sequence(-1);
-    while (seq_ptr !is null) {
-      kill_sequence(seq_ptr);
-      seq_ptr = m_find_sequence(-1);
+  public void stop_sequences() { // FIXME -- find out if it would be
+				 // appropriate to have a synchronized
+				 // lock for this function
+    synchronized(this) {
+      uvm_sequence_base seq_ptr = m_find_sequence(-1);
+      while (seq_ptr !is null) {
+	kill_sequence(seq_ptr);
+	seq_ptr = m_find_sequence(-1);
+      }
     }
   }
 
@@ -972,15 +983,15 @@ class uvm_sequencer_base: uvm_component
 
     // Search the list of arb_wait_q, see if this item is done
     while(true) {
-      int lock_arb_size = m_lock_arb_size;
+      int lock_arb_size = m_lock_arb_size.get;
       synchronized(this) {
 	if (request_id in _arb_completed) {
 	  _arb_completed.remove(request_id);
 	  return;
 	}
       }
-      while(lock_arb_size == m_lock_arb_size) {
-	m_lock_arb_size.wait();
+      while(lock_arb_size == m_lock_arb_size.get) {
+	m_lock_arb_size.getEvent.wait();
       }
     }
   }
@@ -1006,19 +1017,19 @@ class uvm_sequencer_base: uvm_component
       uvm_report_fatal("uvm_sequence_controller",
 		       "lock_req passed null sequence_ptr", UVM_NONE);
     }
+    uvm_sequence_request new_req;
+    synchronized(this) {	// FIXME -- deadlock possible flag
+      int my_seq_id = m_register_sequence(sequence_ptr);
+      new_req = new uvm_sequence_request();
+      synchronized(new_req) {
+	new_req.grant = false;
+	new_req.sequence_id = sequence_ptr.get_sequence_id();
+	new_req.request = SEQ_TYPE_LOCK;
+	new_req.sequence_ptr = sequence_ptr;
+	new_req.request_id = inc_g_request_id();
+	new_req.process_id = Process.self;
+      }
 
-    int my_seq_id = m_register_sequence(sequence_ptr);
-    auto new_req = new uvm_sequence_request();
-    synchronized(new_req) {
-      new_req.grant = false;
-      new_req.sequence_id = sequence_ptr.get_sequence_id();
-      new_req.request = SEQ_TYPE_LOCK;
-      new_req.sequence_ptr = sequence_ptr;
-      new_req.request_id = inc_g_request_id();
-      new_req.process_id = Process.self;
-    }
-
-    synchronized(this) {
       if (lock is 1) {
 	// Locks are arbitrated just like all other requests
 	_arb_sequence_q.pushBack(new_req);
@@ -1052,8 +1063,8 @@ class uvm_sequencer_base: uvm_component
       uvm_report_fatal("uvm_sequencer",
 		       "m_unlock_req passed null sequence_ptr", UVM_NONE);
     }
-    int my_seq_id = m_register_sequence(sequence_ptr);
-    synchronized(this) {
+    synchronized(this) {	// FIXME -- deadlock possible flag
+      int my_seq_id = m_register_sequence(sequence_ptr);
       foreach (i, lock; _lock_list) {
 	if (lock.get_inst_id() == sequence_ptr.get_inst_id()) {
 	  _lock_list.remove(i);
@@ -1061,11 +1072,11 @@ class uvm_sequencer_base: uvm_component
 	  return;
 	}
       }
+      uvm_report_warning("SQRUNL",
+			 "Sequence '" ~ sequence_ptr.get_full_name() ~
+			 "' called ungrab / unlock, but didn't have lock",
+			 UVM_NONE);
     }
-    uvm_report_warning("SQRUNL",
-		       "Sequence '" ~ sequence_ptr.get_full_name() ~
-		       "' called ungrab / unlock, but didn't have lock",
-		       UVM_NONE);
   }
 
 
@@ -1137,8 +1148,10 @@ class uvm_sequencer_base: uvm_component
   // -------------
 
   public void kill_sequence(uvm_sequence_base sequence_ptr) {
-    remove_sequence_from_queues(sequence_ptr);
-    sequence_ptr.m_kill();
+    synchronized(this) {
+      remove_sequence_from_queues(sequence_ptr);
+      sequence_ptr.m_kill();
+    }
   }
 
 
@@ -1231,8 +1244,11 @@ class uvm_sequencer_base: uvm_component
       }
       sequence_ptr.m_set_sqr_sequence_id(_m_sequencer_id, inc_g_sequence_id());
       _reg_sequences[sequence_ptr.get_sequence_id()] = sequence_ptr;
+      // }
+      // Decide if it is fine to have sequence_ptr under
+      // synchronized(this) lock -- may lead to deadlocks
+      return sequence_ptr.get_sequence_id();
     }
-    return sequence_ptr.get_sequence_id();
   }
 
   // m_unregister_sequence
@@ -1308,8 +1324,8 @@ class uvm_sequencer_base: uvm_component
   // task
   public void m_wait_arb_not_equal() {
     // wait (m_arb_size != m_lock_arb_size);
-    while(m_lock_arb_size == m_arb_size) {
-      m_lock_arb_size.wait();
+    while(m_lock_arb_size.get == m_arb_size) {
+      m_lock_arb_size.getEvent.wait();
     }
   }
 
@@ -1321,9 +1337,8 @@ class uvm_sequencer_base: uvm_component
     Queue!int is_relevant_entries;
     // This routine will wait for a change in the request list, or for
     // wait_for_relevant to return on any non-relevant, non-blocked sequence
-    m_arb_size = m_lock_arb_size;
-
     synchronized(this) {
+      m_arb_size = m_lock_arb_size.get;
       for (int i = 0; i < _arb_sequence_q.length; ++i) {
 	if (_arb_sequence_q[i].request == SEQ_TYPE_REQ) {
 	  if (is_blocked(_arb_sequence_q[i].sequence_ptr) is false) {
@@ -1345,14 +1360,16 @@ class uvm_sequencer_base: uvm_component
     // join({
     auto seqF = fork({
 	// One path in fork is for any wait_for_relevant to return
-	m_is_relevant_completed = false;
+	synchronized(this) {
+	  m_is_relevant_completed = false;
 
-	for(size_t i = 0; i < is_relevant_entries.length; ++i) {
-	  m_complete_relevant(is_relevant_entries[i]);
+	  for(size_t i = 0; i < is_relevant_entries.length; ++i) {
+	    m_complete_relevant(is_relevant_entries[i]);
+	  }
 	}
 	// wait (m_is_relevant_completed is true);
-	while(m_is_relevant_completed is false) {
-	  m_is_relevant_completed.wait();
+	while(m_is_relevant_completed.get is false) {
+	  m_is_relevant_completed.getEvent.wait();
 	}
       },
       // The other path in the fork is for any queue entry to change
@@ -1365,10 +1382,13 @@ class uvm_sequencer_base: uvm_component
   }
 
   public void m_complete_relevant(int is_relevant) {
-    fork({
-	arb_sequence_q[is_relevant].sequence_ptr.wait_for_relevant();
-	m_is_relevant_completed = true;
-      });
+    synchronized(this) {
+      uvm_sequence_request req = _arb_sequence_q[is_relevant];
+      fork({
+	  req.sequence_ptr.wait_for_relevant();
+	  m_is_relevant_completed = true;
+	});
+    }
   }
 
   // m_get_seq_item_priority
