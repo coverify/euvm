@@ -22,8 +22,11 @@
 
 module uvm.base.uvm_object_defines;
 import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_component: uvm_component;
 import uvm.base.uvm_registry: uvm_component_registry;
 import uvm.base.uvm_factory: uvm_object_wrapper;
+import uvm.seq.uvm_sequence_item: uvm_sequence_item;
+import uvm.base.uvm_object_globals;
 
 mixin template uvm_object_utils(T)
 {
@@ -203,3 +206,55 @@ mixin template m_uvm_component_registry_param(T)
     return type_id.get();
   }
 }
+
+void uvm_field_auto_copy(T)(T t, T s) {
+  uvm_field_auto_copy_all_fields(t, s);
+}
+
+void uvm_field_auto_copy_all_fields(size_t I=0, T)(T t, T s) {
+  static if(I < t.tupleof.length) {
+    uvm_field_auto_copy_field!(I)(t, s);
+    uvm_field_auto_copy_all_fields!(I+1)(t, s);
+  }
+  else static if(is(T B == super)) {
+      alias BASE = B[0];
+      static if(! (is(BASE == uvm_component) ||
+		   is(BASE == uvm_object) ||
+		   is(BASE == uvm_sequence_item))) {
+	BASE bt = t;
+	BASE bs = s;
+	uvm_field_auto_copy_all_fields!0(bt, bs);
+      }
+    }
+}
+
+// copy the Ith field
+void uvm_field_auto_copy_field(size_t I=0, T)(T t, T s) {
+  int flags = uvm_field_auto_get_flags!I(t);
+  if(flags & UVM_COPY &&
+     !(flags & UVM_NOCOPY)) {
+    t.tupleof[I] = s.tupleof[I];
+  }
+}
+
+uint uvm_field_auto_get_flags(size_t I, T)(T t) {
+  enum int class_flags =
+    uvm_field_auto_acc_flags!(__traits(getAttributes, T));
+  enum int flags =
+    uvm_field_auto_acc_flags!(__traits(getAttributes, t.tupleof[I]));
+  return flags | class_flags;
+}
+  
+template uvm_field_auto_acc_flags(A...)
+{
+  static if(A.length is 0) enum int uvm_field_auto_acc_flags = 0;
+  else static if(is(typeof(A[0]) == uvm_recursion_policy_enum) ||
+		 is(typeof(A[0]) == uvm_field_auto_enum)) {
+      enum int uvm_field_auto_acc_flags = A[0] |
+	uvm_field_auto_acc_flags!(A[1..$]);
+    }
+    else {
+      enum int uvm_field_auto_acc_flags = uvm_field_auto_acc_flags!(A[1..$]);
+    }
+}
+  

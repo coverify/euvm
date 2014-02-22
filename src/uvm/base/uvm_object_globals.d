@@ -192,30 +192,36 @@ enum int UVM_MACRO_NUMFLAGS    = 17;
 //F=REFERENCE, S=SHALLOW, D=DEEP
 //K=PACK, R=RECORD, P=PRINT, M=COMPARE, C=COPY
 //--------------------------- AYFSD K R P M C
-enum int UVM_DEFAULT     = 0b000010101010101;
-enum int UVM_ALL_ON      = 0b000000101010101;
-enum int UVM_FLAGS_ON    = 0b000000101010101;
-enum int UVM_FLAGS_OFF   = 0;
 
-//Values are or'ed into a 32 bit value
-//and externally
-enum int UVM_COPY         = (1 << 0);
-enum int UVM_NOCOPY       = (1 << 1);
-enum int UVM_COMPARE      = (1 << 2);
-enum int UVM_NOCOMPARE    = (1 << 3);
-enum int UVM_PRINT        = (1 << 4);
-enum int UVM_NOPRINT      = (1 << 5);
-enum int UVM_RECORD       = (1 << 6);
-enum int UVM_NORECORD     = (1 << 7);
-enum int UVM_PACK         = (1 << 8);
-enum int UVM_NOPACK       = (1 << 9);
-//enum int UVM_DEEP         = (1 << 10);
-//enum int UVM_SHALLOW      = (1 << 11);
-//enum int UVM_REFERENCE    = (1 << 12);
-enum int UVM_PHYSICAL     = (1 << 13);
-enum int UVM_ABSTRACT     = (1 << 14);
-enum int UVM_READONLY     = (1 << 15);
-enum int UVM_NODEFPRINT   = (1 << 16);
+enum uvm_field_auto_enum: int
+  {   UVM_DEFAULT     = 0b000010101010101,
+      UVM_ALL_ON      = 0b000000101010101,
+      UVM_FLAGS_ON    = 0b000000101010101,
+      UVM_FLAGS_OFF   = 0,
+
+      //Values are or'ed into a 32 bit value
+      //and externally
+      UVM_COPY         = (1 << 0),
+      UVM_NOCOPY       = (1 << 1),
+      UVM_COMPARE      = (1 << 2),
+      UVM_NOCOMPARE    = (1 << 3),
+      UVM_PRINT        = (1 << 4),
+      UVM_NOPRINT      = (1 << 5),
+      UVM_RECORD       = (1 << 6),
+      UVM_NORECORD     = (1 << 7),
+      UVM_PACK         = (1 << 8),
+      UVM_NOPACK       = (1 << 9),
+      //UVM_DEEP         = (1 << 10),
+      //UVM_SHALLOW      = (1 << 11),
+      //UVM_REFERENCE    = (1 << 12),
+      UVM_PHYSICAL     = (1 << 13),
+      UVM_ABSTRACT     = (1 << 14),
+      UVM_READONLY     = (1 << 15),
+      UVM_NODEFPRINT   = (1 << 16),
+      }
+
+mixin(declareEnums!uvm_field_auto_enum());
+
 
 //Extra values that are used for extra methods
 enum int UVM_MACRO_EXTRAS   = (1 << UVM_MACRO_NUMFLAGS);
