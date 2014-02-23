@@ -22,6 +22,9 @@
 //------------------------------------------------------------------------------
 
 module uvm.tlm1.uvm_tlm_fifo_base;
+
+import uvm.meta.misc;
+
 import uvm.tlm1.uvm_imps;
 import uvm.tlm1.uvm_analysis_port;
 
@@ -68,6 +71,8 @@ abstract class uvm_tlm_fifo_base(T=int): uvm_component
 
   alias uvm_tlm_fifo_base!(T) this_type;
 
+  mixin(uvm_sync!this_type);
+
   // Port: put_export
   //
   // The ~put_export~ provides both the blocking and non-blocking put interface
@@ -81,7 +86,8 @@ abstract class uvm_tlm_fifo_base(T=int): uvm_component
   // export, provided the transaction types match. See <uvm_tlm_if_base #(T1,T2)>
   // for more information on each of the above interface methods.
 
-  uvm_put_imp!(T, this_type) put_export;
+  @uvm_immutable_sync
+  private uvm_put_imp!(T, this_type) _put_export;
 
 
   // Port: get_peek_export
@@ -101,7 +107,8 @@ abstract class uvm_tlm_fifo_base(T=int): uvm_component
   // <uvm_tlm_if_base #(T1,T2)> for more information on each of the above interface
   // methods.
 
-  uvm_get_peek_imp!(T, this_type) get_peek_export;
+  @uvm_immutable_sync
+  private uvm_get_peek_imp!(T, this_type) _get_peek_export;
 
 
   // Port: put_ap
@@ -115,7 +122,8 @@ abstract class uvm_tlm_fifo_base(T=int): uvm_component
   // See <uvm_tlm_if_base #(T1,T2)> for more information on the ~write~ interface
   // method.
 
-  uvm_analysis_port!(T) put_ap;
+  @uvm_immutable_sync
+  private uvm_analysis_port!(T) _put_ap;
 
 
   // Port: get_ap
@@ -129,27 +137,38 @@ abstract class uvm_tlm_fifo_base(T=int): uvm_component
   // All connected analysis exports and imps will receive get transactions.
   // See <uvm_tlm_if_base #(T1,T2)> for more information on the ~write~ method.
 
-  uvm_analysis_port!(T) get_ap;
+  @uvm_immutable_sync
+  private uvm_analysis_port!(T) _get_ap;
 
 
   // The following are aliases to the above put_export.
 
-  uvm_put_imp      !(T, this_type) blocking_put_export;
-  uvm_put_imp      !(T, this_type) nonblocking_put_export;
+  @uvm_immutable_sync
+  private uvm_put_imp!(T, this_type) _blocking_put_export;
+  @uvm_immutable_sync
+  private uvm_put_imp!(T, this_type) _nonblocking_put_export;
 
   // The following are all aliased to the above get_peek_export, which provides
   // the superset of these interfaces.
 
-  uvm_get_peek_imp !(T, this_type) blocking_get_export;
-  uvm_get_peek_imp !(T, this_type) nonblocking_get_export;
-  uvm_get_peek_imp !(T, this_type) get_export;
+  @uvm_immutable_sync
+  private uvm_get_peek_imp!(T, this_type) _blocking_get_export;
+  @uvm_immutable_sync
+  private uvm_get_peek_imp!(T, this_type) _nonblocking_get_export;
+  @uvm_immutable_sync
+  private uvm_get_peek_imp!(T, this_type) _get_export;
 
-  uvm_get_peek_imp !(T, this_type) blocking_peek_export;
-  uvm_get_peek_imp !(T, this_type) nonblocking_peek_export;
-  uvm_get_peek_imp !(T, this_type) peek_export;
+  @uvm_immutable_sync
+  private uvm_get_peek_imp!(T, this_type) _blocking_peek_export;
+  @uvm_immutable_sync
+  private uvm_get_peek_imp!(T, this_type) _nonblocking_peek_export;
+  @uvm_immutable_sync
+  private uvm_get_peek_imp!(T, this_type) _peek_export;
 
-  uvm_get_peek_imp !(T, this_type) blocking_get_peek_export;
-  uvm_get_peek_imp !(T, this_type) nonblocking_get_peek_export;
+  @uvm_immutable_sync
+  private uvm_get_peek_imp!(T, this_type) _blocking_get_peek_export;
+  @uvm_immutable_sync
+  private uvm_get_peek_imp!(T, this_type) _nonblocking_get_peek_export;
 
 
   // Function: new
@@ -163,23 +182,23 @@ abstract class uvm_tlm_fifo_base(T=int): uvm_component
     synchronized(this) {
       super(name, parent);
 
-      put_export = new uvm_put_imp!(T, this_type) ("put_export", this);
-      blocking_put_export     = put_export;
-      nonblocking_put_export  = put_export;
+      _put_export = new uvm_put_imp!(T, this_type) ("put_export", this);
+      _blocking_put_export     = put_export;
+      _nonblocking_put_export  = put_export;
 
-      get_peek_export = new uvm_get_peek_imp!(T, this_type)("get_peek_export",
-							    this);
-      blocking_get_peek_export    = get_peek_export;
-      nonblocking_get_peek_export = get_peek_export;
-      blocking_get_export         = get_peek_export;
-      nonblocking_get_export      = get_peek_export;
-      get_export                  = get_peek_export;
-      blocking_peek_export        = get_peek_export;
-      nonblocking_peek_export     = get_peek_export;
-      peek_export                 = get_peek_export;
+      _get_peek_export = new uvm_get_peek_imp!(T, this_type)("get_peek_export",
+							     this);
+      _blocking_get_peek_export    = get_peek_export;
+      _nonblocking_get_peek_export = get_peek_export;
+      _blocking_get_export         = get_peek_export;
+      _nonblocking_get_export      = get_peek_export;
+      _get_export                  = get_peek_export;
+      _blocking_peek_export        = get_peek_export;
+      _nonblocking_peek_export     = get_peek_export;
+      _peek_export                 = get_peek_export;
 
-      put_ap = new uvm_analysis_port!(T)("put_ap", this);
-      get_ap = new uvm_analysis_port!(T)("get_ap", this);
+      _put_ap = new uvm_analysis_port!(T)("put_ap", this);
+      _get_ap = new uvm_analysis_port!(T)("get_ap", this);
 
     }
   }

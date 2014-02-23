@@ -57,8 +57,17 @@ class uvm_tlm_fifo(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
 {
   enum string type_name = "uvm_tlm_fifo!(T)";
 
-  private mailbox!T m;
-  private size_t m_size;
+  // _m is effectively immutable
+  private mailbox!T _m;
+  private mailbox!T m() {
+    return _m;
+  }
+  
+  // _m_size is effectively immutable
+  private size_t _m_size;
+  private size_t m_size() {
+    return _m_size;
+  }
 
   protected int m_pending_blocked_gets;
 
@@ -73,8 +82,8 @@ class uvm_tlm_fifo(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
   public this(string name=null, uvm_component parent = null, int size = 1) {
     synchronized(this) {
       super(name, parent);
-      m = new mailbox!T(size);
-      m_size = size;
+      _m = new mailbox!T(size);
+      _m_size = size;
     }
   }
 
@@ -113,7 +122,7 @@ class uvm_tlm_fifo(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
 
   override public bool is_empty() {
     synchronized(this) {
-      return (m.num() is 0);
+      return (m.num is 0);
     }
   }
  
@@ -131,39 +140,25 @@ class uvm_tlm_fifo(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
 
   // task
   override public void put(T t) {
-    mailbox!T _m;
-    uvm_analysis_port!(T) _put_ap;
-    synchronized(this) {
-      _m = m;
-      _put_ap = this.put_ap;
-    }
-    _m.put(t);
-    _put_ap.write(t);
+    m.put(t);
+    put_ap.write(t);
   }
 
   // task
   override public void get(out T t) {
-    mailbox!T _m;
-    uvm_analysis_port!(T) _get_ap;
     synchronized(this) {
-      _m = m;
-      _get_ap = this.get_ap;
       m_pending_blocked_gets++;
     }
-    _m.get(t);
+    m.get(t);
     synchronized(this) {
       m_pending_blocked_gets--;
     }
-    _get_ap.write(t);
+    get_ap.write(t);
   }
 
   // task
   override public void peek(out T t) {
-    mailbox!T _m;
-    synchronized(this) {
-      _m = m;
-    }
-    _m.peek(t);
+    m.peek(t);
   }
    
   override public bool try_get(out T t) {
@@ -197,6 +192,10 @@ class uvm_tlm_fifo(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
     }
   }  
 
+  // Should always be called under synchronized(this) lock
+  // else if some action is sought right after can_put on basis
+  // of the result, the result may not hold for long in multicore
+  // environment
   override public bool can_put() {
     synchronized(this) {
       return m_size is 0 || m.num() < m_size;

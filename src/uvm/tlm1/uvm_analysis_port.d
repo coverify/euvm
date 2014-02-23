@@ -143,9 +143,7 @@ class uvm_analysis_imp(T=int, IMP=int): uvm_port_base!(uvm_tlm_if_base !(T,T))
   }
 
   override public void write (T t) {
-    synchronized(this) {
-      m_imp.write (t);
-    }
+    m_imp.write (t);
   }
 
 }

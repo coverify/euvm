@@ -30,6 +30,7 @@ enum int NUM_LOOPS=10;
 //--------------------------------------------------------------------
 // bus_trans
 //--------------------------------------------------------------------
+@UVM_DEFAULT
 class bus_trans: uvm_sequence_item
 {
 
@@ -46,10 +47,11 @@ class bus_trans: uvm_sequence_item
       uvm_error("do_copy", "cast failed, check type compatability");
 
     super.do_copy(rhs);
+    uvm_field_auto_copy(this, rhs_);
 
-    this.addr = rhs_.addr;
-    this.data = rhs_.data;
-    this.op = rhs_.op;
+    // this.addr = rhs_.addr;
+    // this.data = rhs_.data;
+    // this.op = rhs_.op;
   }
 
   override bool do_compare(uvm_object rhs,uvm_comparer comparer) {
@@ -178,7 +180,9 @@ class sequenceA(REQ, RSP): uvm_sequence!(REQ, RSP)
       req.data = cast(bvec!8) (my_id + i + 55).toBitVec;
       req.op   = bus_op_t.BUS_WRITE;
 
-      uvm_send(req);
+      REQ cloned = cast(REQ) req.clone;
+      
+      uvm_send(cloned);
       get_response(rsp);
 
       uvm_create(req);

@@ -127,15 +127,11 @@ class uvm_nonblocking_put_imp(T=int, IMP=int): uvm_port_base!(uvm_tlm_if_base!(T
   }
 
   public bool try_put (T t) {
-    synchronized(this) {
-      return m_imp.try_put(t);
-    }
+    return m_imp.try_put(t);
   }
 
   public bool can_put() {
-    synchronized(this) {
-      return m_imp.can_put();
-    }
+    return m_imp.can_put();
   }
 }
 
@@ -539,6 +535,7 @@ class uvm_blocking_master_imp(REQ=int, RSP=REQ, IMP=int,
   // `UVM_BLOCKING_GET_PEEK_IMP (m_rsp_imp, RSP, t)
   private this_req_type m_req_imp;
   private this_rsp_type m_rsp_imp;
+
   public this(string name, this_imp_type imp, this_req_type req_imp = null, this_rsp_type rsp_imp = null) {
     synchronized(this) {
       super(name, imp, UVM_IMPLEMENTATION, 1, 1);
@@ -858,6 +855,7 @@ class uvm_blocking_transport_imp(REQ=int, RSP=REQ, IMP=int): uvm_port_base!(uvm_
   // `UVM_IMP_COMMON(`UVM_TLM_BLOCKING_TRANSPORT_MASK,"uvm_blocking_transport_imp",IMP)
   // `UVM_BLOCKING_TRANSPORT_IMP (m_imp, REQ, RSP, req, rsp)
   private IMP m_imp;
+
   public this(string name, IMP imp) {
     synchronized(this) {
       super(name, imp, UVM_IMPLEMENTATION, 1, 1);
@@ -882,6 +880,7 @@ class uvm_nonblocking_transport_imp(REQ=int, RSP=REQ, IMP=int): uvm_port_base!(u
   // `UVM_IMP_COMMON(`UVM_TLM_NONBLOCKING_TRANSPORT_MASK,"uvm_nonblocking_transport_imp",IMP)
   // `UVM_NONBLOCKING_TRANSPORT_IMP (m_imp, REQ, RSP, req, rsp)
   private IMP m_imp;
+
   public this(string name, IMP imp) {
     synchronized(this) {
       super(name, imp, UVM_IMPLEMENTATION, 1, 1);
@@ -906,6 +905,7 @@ class uvm_transport_imp(REQ=int, RSP=REQ, IMP=int): uvm_port_base!(uvm_tlm_if_ba
   // `UVM_BLOCKING_TRANSPORT_IMP (m_imp, REQ, RSP, req, rsp)
   // `UVM_NONBLOCKING_TRANSPORT_IMP (m_imp, REQ, RSP, req, rsp)
   private IMP m_imp;
+
   public this(string name, IMP imp) {
     synchronized(this) {
       super(name, imp, UVM_IMPLEMENTATION, 1, 1);

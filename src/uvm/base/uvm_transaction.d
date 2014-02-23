@@ -197,7 +197,7 @@ abstract class uvm_transaction: uvm_object
       }
 
       do_accept_tr();
-      e = _events.get("accept");
+      e = events.get("accept");
 
       if(e !is null) {
 	e.trigger();
@@ -497,7 +497,7 @@ abstract class uvm_transaction: uvm_object
 
   final public uvm_event_pool get_event_pool() {
     synchronized(this) {
-      return _events;
+      return events;
     }
   }
 
@@ -610,6 +610,7 @@ abstract class uvm_transaction: uvm_object
   // The event pool instance for this transaction. This pool is used to track
   // various The <begin_event>
 
+  @uvm_immutable_sync
   private uvm_event_pool _events;
 
 

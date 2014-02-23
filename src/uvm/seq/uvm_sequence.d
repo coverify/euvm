@@ -46,11 +46,11 @@ abstract class uvm_sequence (REQ = uvm_sequence_item,
   alias uvm_sequencer_param_base!(REQ, RSP) sequencer_t;
 
   @uvm_public_sync
-    private sequencer_t        _param_sequencer;
+  private sequencer_t        _param_sequencer;
   @uvm_public_sync
-    private REQ                _req;
+  private REQ                _req;
   @uvm_public_sync
-    private RSP                _rsp;
+  private RSP                _rsp;
 
   // Function: new
   //
@@ -67,7 +67,8 @@ abstract class uvm_sequence (REQ = uvm_sequence_item,
   // randomized before being sent to the driver. The send_request function may
   // only be called after <uvm_sequence_base::wait_for_grant> returns.
 
-  final override public void send_request(uvm_sequence_item request, bool rerandomize = 0) {
+  final override public void send_request(uvm_sequence_item request,
+					  bool rerandomize = 0) {
     synchronized(this) {
       REQ m_request = cast(REQ) request;
 
@@ -156,25 +157,25 @@ abstract class uvm_sequence (REQ = uvm_sequence_item,
   }
 
 
-  // Function- create_request
-  //
-  // Returns an instance of the ~REQ~ type in a <uvm_sequence_item> base handle.
-  // Used for type-compatibility checking. Unrelated (inheritance-wise) sequence
-  // A #(R1,S1) can run on sequencer #(R,S) as long as R1 and S1 are by themselves
-  // type-compatible with R and S, respectively.
-  override public uvm_sequence_item create_request () {
-    REQ req = new REQ();
-    return req;
-  }
+  // // Function- create_request
+  // //
+  // // Returns an instance of the ~REQ~ type in a <uvm_sequence_item> base handle.
+  // // Used for type-compatibility checking. Unrelated (inheritance-wise) sequence
+  // // A #(R1,S1) can run on sequencer #(R,S) as long as R1 and S1 are by themselves
+  // // type-compatible with R and S, respectively.
+  // override public uvm_sequence_item create_request () {
+  //   REQ req = new REQ();
+  //   return req;
+  // }
 
-  // Function- create_response
-  //
-  // Returns an instance of the ~RSP~ type in a <uvm_sequence_item> base handle.
-  // Used for type-compatibility checking. Unrelated (inheritance-wise) sequence
-  // A #(R1,S1) can run on sequencer #(R,S) as long as R1 and S1 are by themselves
-  // type-compatible with R and S, respectively.
-  override public uvm_sequence_item create_response () {
-    RSP rsp = new RSP();
-    return rsp;
-  }
+  // // Function- create_response
+  // //
+  // // Returns an instance of the ~RSP~ type in a <uvm_sequence_item> base handle.
+  // // Used for type-compatibility checking. Unrelated (inheritance-wise) sequence
+  // // A #(R1,S1) can run on sequencer #(R,S) as long as R1 and S1 are by themselves
+  // // type-compatible with R and S, respectively.
+  // override public uvm_sequence_item create_response () {
+  //   RSP rsp = new RSP();
+  //   return rsp;
+  // }
 }

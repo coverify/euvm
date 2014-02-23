@@ -25,7 +25,40 @@ class test: phasing_test
 {
   mixin uvm_component_utils!(test);
   shared static int first_time_around;
+  public this() {
+    import std.stdio;
+    writeln("Test Object is being initialized");
+    super("", null);
+    synchronized {
+      uvm_report_info("Test", "Testing correct phase order...");
+      predicted_phasing ~= "new";
+      predicted_phasing ~= "common/build";
+      predicted_phasing ~= "common/connect";
+      predicted_phasing ~= "common/end_of_elaboration";
+      predicted_phasing ~= "common/start_of_simulation";
+      predicted_phasing ~= "common/run";
+      predicted_phasing ~= "uvm/pre_reset";
+      predicted_phasing ~= "uvm/reset";
+      predicted_phasing ~= "uvm/post_reset";
+      predicted_phasing ~= "uvm/pre_configure";
+      predicted_phasing ~= "uvm/configure";
+      predicted_phasing ~= "uvm/post_configure";
+      predicted_phasing ~= "uvm/pre_main";
+      predicted_phasing ~= "uvm/main";
+      // predicted_phasing ~= "uvm/post_main";
+      // predicted_phasing ~= "uvm/pre_shutdown";
+      predicted_phasing ~= "uvm/shutdown";
+      predicted_phasing ~= "uvm/post_shutdown";
+      predicted_phasing ~= "common/extract";
+      predicted_phasing ~= "common/check";
+      predicted_phasing ~= "common/report";
+      predicted_phasing ~= "common/final";
+      first_time_around = 1;
+    }
+  }
   public this (string name="anon", uvm_component parent=null) {
+    import std.stdio;
+    writeln("Test Object is being initialized, " ~ name);
     super(name,parent);
     synchronized {
       uvm_report_info("Test", "Testing correct phase order...");
@@ -199,13 +232,12 @@ class EsdlRoot: uvm_root_entity
   void initial() {
     lockStage();
 
-    uvm_component_registry!(test, "test.test").get();
+    // uvm_component_registry!(test, "test.test").get();
 
     uvm_top.finish_on_completion = 0;
     run_test("test.test");
     phasing_test.check_phasing();
-    uvm_report_server svr;
-    svr = uvm_top.get_report_server();
+    auto svr = uvm_top.get_report_server();
     svr.summarize();
     if (svr.get_severity_count(UVM_FATAL) +
 	svr.get_severity_count(UVM_ERROR) == 0)
