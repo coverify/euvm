@@ -851,7 +851,7 @@ class uvm_sequence_base: uvm_sequence_item
 	set_priority = get_priority();
       }
     }
-    
+
     sequencer.wait_for_grant(this, set_priority);
 
     version(UVM_DISABLE_AUTO_ITEM_RECORDING) {}
@@ -1351,7 +1351,7 @@ class uvm_sequence_base: uvm_sequence_item
   // Group: Sequence Action Macros
   //
   // These macros are used to start sequences and sequence items on the default
-  // sequencer, ~m_sequencer~. This is determined a number of ways. 
+  // sequencer, ~m_sequencer~. This is determined a number of ways.
   // - the sequencer handle provided in the <uvm_sequence_base::start> method
   // - the sequencer used by the parent sequence
   // - the sequencer that was set using the <uvm_sequence_item::set_sequencer> method
@@ -1365,7 +1365,7 @@ class uvm_sequence_base: uvm_sequence_item
   // does zero processing.  After this action completes, the user can manually set
   // values, manipulate rand_mode and constraint_mode, etc.
 
-  public void uvm_create(T)(ref T SEQ_OR_ITEM) {
+  public void uvm_create(T)(ref T SEQ_OR_ITEM) if(is(T: uvm_sequence_item)){
     uvm_create_on(SEQ_OR_ITEM, m_sequencer());
   }
 
@@ -1379,7 +1379,7 @@ class uvm_sequence_base: uvm_sequence_item
   // then randomized.
   // In the case of an item, it is randomized after the call to
   // <uvm_sequence_base::start_item()> returns.
-  // This is called late-randomization. 
+  // This is called late-randomization.
   // In the case of a sequence, the sub-sequence is started using
   // <uvm_sequence_base::start()> with ~call_pre_post~ set to 0.
   // In the case of an item,
@@ -1411,8 +1411,8 @@ class uvm_sequence_base: uvm_sequence_item
   //|   sub_seq.post_start()        (task)
   //|
 
-  public void uvm_do(alias SEQ_OR_ITEM)() {
-    uvm_do_on_pri_with!(SEQ_OR_ITEM, m_sequencer(), -1, q{});
+  public void uvm_do(T) (ref T SEQ_OR_ITEM) if(is(T: uvm_sequence_item)) {
+    uvm_do_on_pri_with!q{}(SEQ_OR_ITEM, m_sequencer(), -1);
   }
 
 
@@ -1423,9 +1423,10 @@ class uvm_sequence_base: uvm_sequence_item
   // This is the same as `uvm_do except that the sequene item or sequence is
   // executed with the priority specified in the argument
 
-  public void uvm_do_pri(alias SEQ_OR_ITEM, int PRIORITY)() {
-    uvm_do_on_pri_with!(SEQ_OR_ITEM, m_sequencer, PRIORITY, q{});
-  }
+  public void uvm_do_pri(T) (ref T SEQ_OR_ITEM, int PRIORITY)
+    if(is(T: uvm_sequence_item)){
+      uvm_do_on_pri_with!q{}(SEQ_OR_ITEM, m_sequencer, PRIORITY);
+    }
 
 
   // FIXME add bitvectors to this template filter
@@ -1447,10 +1448,9 @@ class uvm_sequence_base: uvm_sequence_item
   // argument is applied to the item or sequence in a randomize with statement
   // before execution.
 
-  public void uvm_do_with(alias SEQ_OR_ITEM,
-			  string CONSTRAINTS, V...)(V values) {
-    uvm_do_on_pri_with!(SEQ_OR_ITEM, m_sequencer(), -1,
-			CONSTRAINTS)(values);
+  public void uvm_do_with(string CONSTRAINTS, T, V...)
+    (ref T SEQ_OR_ITEM, V values) if(is(T: uvm_sequence_item)) {
+    uvm_do_on_pri_with!CONSTRAINTS(SEQ_OR_ITEM, m_sequencer(), -1, values);
   }
 
 
@@ -1462,10 +1462,10 @@ class uvm_sequence_base: uvm_sequence_item
   // applied to the item or sequence in a randomize with statement before
   // execution.
 
-  public void uvm_do_pri_with(alias SEQ_OR_ITEM, int PRIORITY,
-			      string CONSTRAINTS, V...)(V values) {
-    uvm_do_on_pri_with!(SEQ_OR_ITEM, m_sequencer(), PRIORITY,
-			CONSTRAINTS)(values);
+  public void uvm_do_pri_with(string CONSTRAINTS, T, V...)
+    (ref T SEQ_OR_ITEM, int PRIORITY, values) if(is(T: uvm_sequence_item)) {
+    uvm_do_on_pri_with!CONSTRAINTS(SEQ_OR_ITEM, m_sequencer(),
+				   PRIORITY, values);
   }
 
 
@@ -1486,10 +1486,11 @@ class uvm_sequence_base: uvm_sequence_item
   // to the sequence in which the macro is invoked, and it sets the sequencer to
   // the specified ~SEQR~ argument.
 
-  public void uvm_create_on(T, U)(ref T SEQ_OR_ITEM, U SEQR) {
-    uvm_object_wrapper w_ = SEQ_OR_ITEM.get_type();
-    SEQ_OR_ITEM = cast(T) create_item(w_, SEQR, SEQ_OR_ITEM.stringof);
-  }
+  public void uvm_create_on(T, U)(ref T SEQ_OR_ITEM, U SEQR)
+    if(is(T: uvm_sequence_item) && is(U: uvm_sequencer_base)) {
+      uvm_object_wrapper w_ = SEQ_OR_ITEM.get_type();
+      SEQ_OR_ITEM = cast(T) create_item(w_, SEQR, SEQ_OR_ITEM.stringof);
+    }
 
 
   // MACRO: `uvm_do_on
@@ -1500,9 +1501,10 @@ class uvm_sequence_base: uvm_sequence_item
   // the sequence in which the macro is invoked, and it sets the sequencer to the
   // specified ~SEQR~ argument.
 
-  public void uvm_do_on(alias SEQ_OR_ITEM, alias SEQR)() {
-    uvm_do_on_pri_with!(SEQ_OR_ITEM, SEQR, -1, q{});
-  }
+  public void uvm_do_on(T, U)(ref T SEQ_OR_ITEM, U SEQR)
+    if(is(T: uvm_sequence_item) && is(U: uvm_sequencer_base)) {
+      uvm_do_on_pri_with!q{}(SEQ_OR_ITEM, SEQR, -1);
+    }
 
 
   // MACRO: `uvm_do_on_pri
@@ -1513,9 +1515,10 @@ class uvm_sequence_base: uvm_sequence_item
   // to the sequence in which the macro is invoked, and it sets the sequencer to
   // the specified ~SEQR~ argument.
 
-  public void uvm_do_on_pri(alias SEQ_OR_ITEM, alias SEQR, int PRIORITY)() {
-    uvm_do_on_pri_with!(SEQ_OR_ITEM, SEQR, PRIORITY, q{});
-  }
+  public void uvm_do_on_pri(T, U)(ref T SEQ_OR_ITEM, U SEQR, int PRIORITY)
+    if(is(T: uvm_sequence_item) && is(U: uvm_sequencer_base)) {
+      uvm_do_on_pri_with!q{}(SEQ_OR_ITEM, SEQR, PRIORITY);
+    }
 
   // MACRO: `uvm_do_on_with
   //
@@ -1526,10 +1529,11 @@ class uvm_sequence_base: uvm_sequence_item
   // sequencer to the specified ~SEQR~ argument.
   // The user must supply brackets around the constraints.
 
-  public void uvm_do_on_with(alias SEQ_OR_ITEM, alias SEQR,
-			     string CONSTRAINTS, V...)(V values) {
-    uvm_do_on_pri_with!(SEQ_OR_ITEM, SEQR, -1, CONSTRAINTS)(values);
-  }
+  public void uvm_do_on_with(string CONSTRAINTS, T, U, V...)
+    (ref T SEQ_OR_ITEM, U SEQR, V values)
+    if(is(T: uvm_sequence_item) && is(U: uvm_sequencer_base)) {
+      uvm_do_on_pri_with!CONSTRAINTS(SEQ_OR_ITEM, SEQR, -1, values);
+    }
 
 
   // MACRO: `uvm_do_on_pri_with
@@ -1540,19 +1544,20 @@ class uvm_sequence_base: uvm_sequence_item
   // sequence to the sequence in which the macro is invoked, and it sets the
   // sequencer to the specified ~SEQR~ argument.
 
-  public void uvm_do_on_pri_with(alias SEQ_OR_ITEM, alias SEQR, int PRIORITY,
-				 string CONSTRAINTS, V...)(V values) {
-    uvm_create_on!(SEQ_OR_ITEM, SEQR);
-    uvm_sequence_base _seq =
-      cast(uvm_sequence_base) start_item(SEQ_OR_ITEM, PRIORITY);
-    if((_seq is null || ! _seq.do_not_randomize) &&
-       ! SEQ_OR_ITEM.randomizeWith!(CONSTRAINTS)(values)) {
-      uvm_warning("RNDFLD", "Randomization failed in uvm_do_with action");
+  public void uvm_do_on_pri_with(string CONSTRAINTS, T, U, V...)
+    (ref T SEQ_OR_ITEM, U SEQR, int PRIORITY, V values)
+    if(is(T: uvm_sequence_item) && is(U: uvm_sequencer_base)) {
+      uvm_create_on(SEQ_OR_ITEM, SEQR);
+      uvm_sequence_base _seq =
+	cast(uvm_sequence_base) start_item(SEQ_OR_ITEM, PRIORITY);
+      if((_seq is null || ! _seq.do_not_randomize) &&
+	 ! SEQ_OR_ITEM.randomizeWith!(CONSTRAINTS)(values)) {
+	uvm_warning("RNDFLD", "Randomization failed in uvm_do_with action");
+      }
+      _seq = cast(uvm_sequence_base) SEQ_OR_ITEM;
+      if(_seq is null) finish_item(SEQ_OR_ITEM, PRIORITY);
+      else _seq.start(SEQR, this, PRIORITY, 0);
     }
-    _seq = cast(uvm_sequence_base) SEQ_OR_ITEM;
-    if(_seq is null) finish_item(SEQ_OR_ITEM, PRIORITY);
-    else _seq.start(SEQR, this, PRIORITY, 0);
-  }
 
 
   //-----------------------------------------------------------------------------
@@ -1560,7 +1565,7 @@ class uvm_sequence_base: uvm_sequence_item
   // Group: Sequence Action Macros for Pre-Existing Sequences
   //
   // These macros are used to start sequences and sequence items that do not
-  // need to be created. 
+  // need to be created.
   //-----------------------------------------------------------------------------
 
 
@@ -1572,10 +1577,10 @@ class uvm_sequence_base: uvm_sequence_item
   // `uvm_create.  The processing is done without randomization.  Essentially, an
   // `uvm_do without the create or randomization.
 
-  public void uvm_send(T)(ref T SEQ_OR_ITEM) {
+  public void uvm_send(T)(ref T SEQ_OR_ITEM) if(is(T: uvm_sequence_item)) {
     uvm_send_pri(SEQ_OR_ITEM, -1);
   }
-  
+
 
   // MACRO: `uvm_send_pri
   //
@@ -1584,15 +1589,16 @@ class uvm_sequence_base: uvm_sequence_item
   // This is the same as `uvm_send except that the sequene item or sequence is
   // executed with the priority specified in the argument.
 
-  public void uvm_send_pri(T)(T SEQ_OR_ITEM, int PRIORITY) {
-    uvm_sequence_base _seq = cast(uvm_sequence_base) SEQ_OR_ITEM;
-    if (_seq is null) {
-      start_item(SEQ_OR_ITEM, PRIORITY);
-      finish_item(SEQ_OR_ITEM, PRIORITY);
+  public void uvm_send_pri(T)(T SEQ_OR_ITEM, int PRIORITY)
+    if(is(T: uvm_sequence_item)) {
+      uvm_sequence_base _seq = cast(uvm_sequence_base) SEQ_OR_ITEM;
+      if (_seq is null) {
+	start_item(SEQ_OR_ITEM, PRIORITY);
+	finish_item(SEQ_OR_ITEM, PRIORITY);
+      }
+      else _seq.start(_seq.get_sequencer(), this, PRIORITY, 0);
     }
-    else _seq.start(_seq.get_sequencer(), this, PRIORITY, 0);
-  }
-  
+
 
   // MACRO: `uvm_rand_send
   //
@@ -1602,9 +1608,10 @@ class uvm_sequence_base: uvm_sequence_item
   // allocated (possibly with `uvm_create). The processing is done with
   // randomization.  Essentially, an `uvm_do without the create.
 
-  public void uvm_rand_send(alias SEQ_OR_ITEM)() {
-    uvm_rand_send_pri_with!(SEQ_OR_ITEM, -1, q{});
-  }
+  public void uvm_rand_send(T)(ref T SEQ_OR_ITEM)
+    if(is(T: uvm_sequence_item)) {
+      uvm_rand_send_pri_with!q{}(SEQ_OR_ITEM, -1);
+    }
 
 
   // MACRO: `uvm_rand_send_pri
@@ -1614,10 +1621,10 @@ class uvm_sequence_base: uvm_sequence_item
   // This is the same as `uvm_rand_send except that the sequene item or sequence
   // is executed with the priority specified in the argument.
 
-  public void uvm_rand_send_pri(alias SEQ_OR_ITEM, int PRIORITY)() {
-    uvm_rand_send_pri_with!(SEQ_OR_ITEM, PRIORITY, q{});
-  }
-
+  public void uvm_rand_send_pri(T)(ref T SEQ_OR_ITEM, int PRIORITY)
+    if(is(T: uvm_sequence_item)) {
+      uvm_rand_send_pri_with!q{}(SEQ_OR_ITEM, PRIORITY);
+    }
 
   // MACRO: `uvm_rand_send_with
   //
@@ -1627,9 +1634,9 @@ class uvm_sequence_base: uvm_sequence_item
   // applied to the item or sequence in a randomize with statement before
   // execution.
 
-  public void uvm_rand_send_with(alias SEQ_OR_ITEM,
-				 string CONSTRAINTS, V...)(V values) {
-    uvm_rand_send_pri_with!(SEQ_OR_ITEM, -1, CONSTRAINTS)(values);
+  public void uvm_rand_send_with(string CONSTRAINTS, T, V...)
+    (ref T SEQ_OR_ITEM, V values) if(is(T: uvm_sequence_item)) {
+    uvm_rand_send_pri_with!CONSTRAINTS(SEQ_OR_ITEM, -1, values);
   }
 
   // MACRO: `uvm_rand_send_pri_with
@@ -1640,8 +1647,8 @@ class uvm_sequence_base: uvm_sequence_item
   // is applied to the item or sequence in a randomize with statement before
   // execution.
 
-  public void uvm_rand_send_pri_with(alias SEQ_OR_ITEM, int PRIORITY,
-				     string CONSTRAINTS, V...)(V values) {
+  public void uvm_rand_send_pri_with(string CONSTRAINTS, T, V...)
+    (ref T SEQ_OR_ITEM, int PRIORITY, V values) if(is(T: uvm_sequence_item)) {
     uvm_sequence_base _seq = cast(uvm_sequence_base) SEQ_OR_ITEM;
     if (_seq is null) start_item(SEQ_OR_ITEM, PRIORITY);
     else _seq.set_item_context(this,SEQ_OR_ITEM.get_sequencer());
@@ -1656,19 +1663,18 @@ class uvm_sequence_base: uvm_sequence_item
   }
 
 
-  public void uvm_create_seq(alias UVM_SEQ, alias SEQR_CONS_IF)() {
-    uvm_create_on!(UVM_SEQ, SEQR_CONS_IF.consumer_seqr);
+  public void uvm_create_seq(T, U)(ref T UVM_SEQ, U SEQR_CONS_IF) {
+    uvm_create_on(UVM_SEQ, SEQR_CONS_IF.consumer_seqr);
   }
 
-  public void uvm_do_seq(alias UVM_SEQ, alias SEQR_CONS_IF)() {
-    uvm_do_on!(UVM_SEQ, SEQR_CONS_IF.consumer_seqr);
+  public void uvm_do_seq(T, U)(ref T UVM_SEQ, U SEQR_CONS_IF) {
+    uvm_do_on(UVM_SEQ, SEQR_CONS_IF.consumer_seqr);
   }
 
-  public void uvm_do_seq_with(alias UVM_SEQ, alias SEQR_CONS_IF,
-			      string CONSTRAINTS, V...)(V values) {
-    uvm_do_on_with!(UVM_SEQ, SEQR_CONS_IF.consumer_seqr, CONSTRAINTS)(values);
+  public void uvm_do_seq_with(string CONSTRAINTS, T, U, V...)
+    (ref T UVM_SEQ, U SEQR_CONS_IF, V values) {
+    uvm_do_on_with!CONSTRAINTS(UVM_SEQ, SEQR_CONS_IF.consumer_seqr, values);
   }
-
 
 
   //-----------------------------------------------------------------------------
