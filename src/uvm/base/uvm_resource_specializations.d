@@ -47,7 +47,7 @@ module uvm.base.uvm_resource_specializations;
 import uvm.base.uvm_resource;
 import uvm.base.uvm_root;
 import uvm.base.uvm_object;
-import uvm.base.uvm_message_defines;
+import uvm.base.uvm_globals;
 import std.string: format;
 
 mixin template UVM_RESOURCE_GET_FCNS(base_type)

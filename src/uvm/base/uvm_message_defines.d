@@ -219,4 +219,4 @@ mixin template uvm_report_mixin()
   }
 }
 
-mixin uvm_report_mixin;
+// mixin uvm_report_mixin;  // have it in the uvm_globals

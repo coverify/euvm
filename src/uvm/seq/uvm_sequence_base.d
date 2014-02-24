@@ -610,8 +610,7 @@ class uvm_sequence_base: uvm_sequence_item
 			 " wait_for_relevant()", UVM_NONE);
       }
     }
-    Event forEver = Event("forEver");
-    wait(forEver);  // this is intended to never return
+    sleep();  // this is intended to never return
   }
 
 

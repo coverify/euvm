@@ -27,7 +27,7 @@ import uvm.base.uvm_common_phases;
 import uvm.base.uvm_phase;
 import uvm.base.uvm_runtime_phases;
 import uvm.base.uvm_object_globals;
-import uvm.base.uvm_message_defines;
+import uvm.base.uvm_globals;
 import uvm.meta.misc;
 
 import esdl.data.queue;

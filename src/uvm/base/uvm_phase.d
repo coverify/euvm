@@ -119,10 +119,10 @@ import uvm.base.uvm_root;
 import uvm.base.uvm_task_phase;
 import uvm.meta.misc;
 import uvm.meta.mcd;
-import esdl.base.core: FifoObj, waitDelta, wait, Fork, abortForks, getSimTime;
+import esdl.base.core: FifoObj, waitDelta, wait,
+  Fork, abortForks, getSimTime, sleep;
 import esdl.data.sync;
 import uvm.base.uvm_cmdline_processor;
-import uvm.base.uvm_message_defines;
 
 import std.string: format;
 import std.conv: to;
@@ -1528,8 +1528,7 @@ class uvm_phase: uvm_object
 	    task_phase.traverse(top, this, UVM_PHASE_EXECUTING);
 
 	    // wait(0) -- SV version
-	    Event forEver = Event("forEver");
-	    wait(forEver);
+	    sleep();
 	  });
 
 	uvm_wait_for_nba_region(); //Give sequences, etc. a chance to object
@@ -1659,8 +1658,7 @@ class uvm_phase: uvm_object
 			     this, UVM_DEBUG);
 	    }
 	    else {
-	      Event forEver = Event("forEver");
-	      wait(forEver);
+	      sleep();
 	    }
 	  });
 	endPhase.joinAny();

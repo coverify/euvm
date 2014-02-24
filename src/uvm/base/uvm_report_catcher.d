@@ -142,12 +142,6 @@ class uvm_once_report_catcher
   @uvm_private_sync private string _m_orig_message;
 
   @uvm_private_sync private bool _do_report;
-
-  this() {
-    synchronized(this) {
-      _do_report = true;
-    }
-  }
 }
 
 abstract class uvm_report_catcher: uvm_callback
@@ -188,6 +182,7 @@ abstract class uvm_report_catcher: uvm_callback
       // calling it again and again also does not cause any issues.
       uvm_callbacks!(uvm_report_object,
 		     uvm_report_catcher).m_register_pair();
+      do_report = true;
     }
   }
 
@@ -199,9 +194,7 @@ abstract class uvm_report_catcher: uvm_callback
   // is currently being processes.
 
   static public uvm_report_object get_client() {
-    synchronized(_once) {
-      return m_client;
-    }
+    return m_client;
   }
 
   // Function: get_severity
@@ -212,9 +205,7 @@ abstract class uvm_report_catcher: uvm_callback
   // severity is the modified value.
 
   static public uvm_severity_type get_severity() {
-    synchronized(_once) {
-      return m_modified_severity;
-    }
+    return m_modified_severity;
   }
 
   // Function: get_context
@@ -226,9 +217,7 @@ abstract class uvm_report_catcher: uvm_callback
   // user-defined.
 
   static public string get_context() {
-    synchronized(_once) {
-      return m_name;
-    }
+    return m_name;
   }
 
   // Function: get_verbosity
@@ -239,9 +228,7 @@ abstract class uvm_report_catcher: uvm_callback
   // verbosity is the modified value.
 
   static public int get_verbosity() {
-    synchronized(_once) {
-      return m_modified_verbosity;
-    }
+    return m_modified_verbosity;
   }
 
   // Function: get_id
@@ -252,9 +239,7 @@ abstract class uvm_report_catcher: uvm_callback
   // id is the modified value.
 
   static public string get_id() {
-    synchronized(_once) {
       return m_modified_id;
-    }
   }
 
   // Function: get_message
@@ -265,9 +250,7 @@ abstract class uvm_report_catcher: uvm_callback
   // message is the modified value.
 
   static public string get_message() {
-    synchronized(_once) {
-      return m_modified_message;
-    }
+    return m_modified_message;
   }
 
   // Function: get_action
@@ -278,9 +261,7 @@ abstract class uvm_report_catcher: uvm_callback
   // action is the modified value.
 
   static public uvm_action get_action() {
-    synchronized(_once) {
-      return m_modified_action;
-    }
+    return m_modified_action;
   }
 
   // Function: get_fname
@@ -288,9 +269,7 @@ abstract class uvm_report_catcher: uvm_callback
   // Returns the file name of the message.
 
   static public string get_fname() {
-    synchronized(_once) {
-      return m_file_name;
-    }
+    return m_file_name;
   }
 
   // Function: get_line
@@ -298,9 +277,7 @@ abstract class uvm_report_catcher: uvm_callback
   // Returns the line number of the message.
 
   static public size_t get_line() {
-    synchronized(_once) {
-      return m_line_number;
-    }
+    return m_line_number;
   }
 
   // Group: Change Message State
@@ -311,9 +288,7 @@ abstract class uvm_report_catcher: uvm_callback
   // report catchers will see the modified value.
 
   static protected void set_severity(uvm_severity_type severity) {
-    synchronized(_once) {
-      m_modified_severity = severity;
-    }
+    m_modified_severity = severity;
   }
 
   // Function: set_verbosity
@@ -322,9 +297,7 @@ abstract class uvm_report_catcher: uvm_callback
   // report catchers will see the modified value.
 
   static protected void set_verbosity(int verbosity) {
-    synchronized(_once) {
-      m_modified_verbosity = verbosity;
-    }
+    m_modified_verbosity = verbosity;
   }
 
   // Function: set_id
@@ -333,9 +306,7 @@ abstract class uvm_report_catcher: uvm_callback
   // report catchers will see the modified value.
 
   static protected void set_id(string id) {
-    synchronized(_once) {
-      m_modified_id = id;
-    }
+    m_modified_id = id;
   }
 
   // Function: set_message
@@ -344,9 +315,7 @@ abstract class uvm_report_catcher: uvm_callback
   // report catchers will see the modified value.
 
   static protected void set_message(string message) {
-    synchronized(_once) {
-      m_modified_message = message;
-    }
+    m_modified_message = message;
   }
 
   // Function: set_action
@@ -355,10 +324,8 @@ abstract class uvm_report_catcher: uvm_callback
   // report catchers will see the modified value.
 
   static protected void set_action(uvm_action action) {
-    synchronized(_once) {
-      m_modified_action = action;
-      m_set_action_called = 1;
-    }
+    m_modified_action = action;
+    m_set_action_called = true;
   }
 
   // Group: Debug
@@ -368,15 +335,13 @@ abstract class uvm_report_catcher: uvm_callback
   // Returns the first report catcher that has ~name~.
 
   static public uvm_report_catcher get_report_catcher(string name) {
-    synchronized(_once) {
-      // static uvm_report_cb_iter iter = new uvm_report_cb_iter(null);
-      foreach(catcher; uvm_report_cb.get_all_enabled(null)) {
-	if(catcher.get_name() == name) {
-	  return catcher;
-	}
+    // static uvm_report_cb_iter iter = new uvm_report_cb_iter(null);
+    foreach(catcher; uvm_report_cb.get_all_enabled(null)) {
+      if(catcher.get_name() == name) {
+	return catcher;
       }
-      return null;
     }
+    return null;
   }
 
 
@@ -387,7 +352,7 @@ abstract class uvm_report_catcher: uvm_callback
   // method can be used by calling uvm_report_cb::display(<uvm_report_object>).
 
   static public void print_catcher(UVM_FILE file=0) {
-    synchronized(_once) {
+    synchronized(typeid(uvm_report_catcher)) {
       string enabled;
       // static uvm_report_cb_iter iter = new(null);
 
@@ -412,9 +377,7 @@ abstract class uvm_report_catcher: uvm_callback
   // * DO_NOT_MODIFY -- forces the message to remain unchanged
 
   static public void debug_report_catcher(int what= 0) {
-    synchronized(_once) {
-      m_debug_flags = what;
-    }
+    m_debug_flags = what;
   }
 
   // Group: Callback Interface
@@ -430,6 +393,9 @@ abstract class uvm_report_catcher: uvm_callback
 
 
   // Group: Reporting
+
+  import uvm.base.uvm_message_defines: uvm_report_mixin;
+  mixin uvm_report_mixin;
 
   // Function: uvm_report_fatal
   //
@@ -523,7 +489,7 @@ abstract class uvm_report_catcher: uvm_callback
   static protected void uvm_report(uvm_severity_type severity, string id,
 				   string message, int verbosity,
 				   string fname = "", size_t line = 0) {
-    synchronized(_once) {
+    synchronized(typeid(uvm_report_catcher)) {
       uvm_report_handler rh = _m_client.get_report_handler();
       uvm_action a = rh.get_action(severity, id);
       UVM_FILE f = rh.get_file_handle(severity, id);
@@ -543,7 +509,7 @@ abstract class uvm_report_catcher: uvm_callback
   // times if the message is not ~CAUGHT~.
 
   static protected void issue() {
-    synchronized(_once) {
+    synchronized(typeid(uvm_report_catcher)) {
       uvm_report_handler rh = _m_client.get_report_handler();
       uvm_action a  =  _m_modified_action;
       UVM_FILE f  = rh.get_file_handle(this.m_modified_severity,
@@ -688,7 +654,7 @@ abstract class uvm_report_catcher: uvm_callback
   //
 
   static private void f_display(UVM_FILE file, string str) {
-    synchronized(_once) {
+    synchronized(typeid(uvm_report_catcher)) {
       if (file is 0) vdisplay("%s", str);
       else vfdisplay(file, "%s", str);
     }
@@ -700,7 +666,7 @@ abstract class uvm_report_catcher: uvm_callback
   // It prints the statistics for the active catchers.
 
   static public void summarize_report_catcher(UVM_FILE file) {
-    synchronized(_once) {
+    synchronized(typeid(uvm_report_catcher)) {
       string s;
       if(do_report) {
 	f_display(file, "");
@@ -708,17 +674,17 @@ abstract class uvm_report_catcher: uvm_callback
 	f_display(file, "");
 	f_display(file, "");
 	f_display(file, format("Number of demoted UVM_FATAL reports  :%5d",
-			       _m_demoted_fatal));
+			       m_demoted_fatal));
 	f_display(file, format("Number of demoted UVM_ERROR reports  :%5d",
-			       _m_demoted_error));
+			       m_demoted_error));
 	f_display(file, format("Number of demoted UVM_WARNING reports:%5d",
-			       _m_demoted_warning));
+			       m_demoted_warning));
 	f_display(file, format("Number of caught UVM_FATAL reports   :%5d",
-			       _m_caught_fatal));
+			       m_caught_fatal));
 	f_display(file, format("Number of caught UVM_ERROR reports   :%5d",
-			       _m_caught_error));
+			       m_caught_error));
 	f_display(file, format("Number of caught UVM_WARNING reports :%5d",
-			       _m_caught_warning));
+			       m_caught_warning));
       }
     }
   }

@@ -240,7 +240,7 @@ class uvm_queue (T=int): uvm_object
   public void insert (long index, T item) {
     synchronized(this) {
       if (index >= size() || index < 0) {
-	import uvm.base.uvm_message_defines;
+	import uvm.base.uvm_globals;
 	uvm_report_warning("QUEUEINS",
 			   format("insert: given index out of range for queue of"
 				  " size %0d. Ignoring insert request", size()));

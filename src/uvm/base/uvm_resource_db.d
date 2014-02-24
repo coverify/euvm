@@ -43,7 +43,7 @@ module uvm.base.uvm_resource_db;
 import uvm.base.uvm_cmdline_processor;
 import uvm.base.uvm_resource;
 import uvm.base.uvm_object;
-import uvm.base.uvm_message_defines;
+import uvm.base.uvm_globals;
 import uvm.base.uvm_object_globals;
 import uvm.meta.misc;
 

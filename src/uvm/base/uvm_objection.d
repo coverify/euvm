@@ -31,7 +31,6 @@ import uvm.base.uvm_component;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_queue;
 import uvm.base.uvm_registry;
-import uvm.base.uvm_message_defines;
 import uvm.base.uvm_domain;
 
 import uvm.seq.uvm_sequence_base;
@@ -526,7 +525,7 @@ class uvm_objection: uvm_report_object
 			       int count = 1) {
     if(obj is null) obj = m_top;
     synchronized(this) {
-      _m_cleared = true;
+      _m_cleared = true;	// FIXME -- false
       _m_top_all_dropped = false;
     }
     m_raise (obj, obj, description, count);

@@ -382,6 +382,13 @@ class uvm_sequence_item: uvm_transaction
   }
 
 
+  //----------------------------------------------------------------------------
+  // Group: Reporting
+  //----------------------------------------------------------------------------
+
+  import uvm.base.uvm_message_defines: uvm_report_mixin;
+  mixin uvm_report_mixin;
+
   //---------------------------
   // Group: Reporting Interface
   //---------------------------

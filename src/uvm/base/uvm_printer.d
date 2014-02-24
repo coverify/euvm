@@ -24,7 +24,7 @@
 
 module uvm.base.uvm_printer;
 
-import uvm.base.uvm_message_defines;
+import uvm.base.uvm_globals;
 import std.conv: to;
 import esdl.base.time;
 
