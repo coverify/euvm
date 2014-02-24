@@ -40,7 +40,7 @@ import uvm.base.uvm_phase;
 import uvm.base.uvm_domain;
 import uvm.base.uvm_component;
 import uvm.base.uvm_object_globals;
-import uvm.base.uvm_message_defines;
+import uvm.base.uvm_globals;
 import uvm.base.uvm_misc;
 
 import esdl.base.core: Process;
@@ -54,7 +54,7 @@ abstract class uvm_bottomup_phase: uvm_phase
   // Create a new instance of a bottom-up phase.
   //
   public this(string name) {
-    super(name,UVM_PHASE_IMP);
+    super(name, UVM_PHASE_IMP);
   }
 
 

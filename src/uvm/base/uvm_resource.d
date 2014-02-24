@@ -111,7 +111,6 @@ module uvm.base.uvm_resource;
 import std.string;
 import uvm.base.uvm_object;
 import uvm.base.uvm_globals;
-import uvm.base.uvm_message_defines;
 import uvm.base.uvm_root;
 import uvm.base.uvm_printer;
 import esdl.base.core: getSimTime;

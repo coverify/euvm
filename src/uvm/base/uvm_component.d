@@ -34,7 +34,6 @@ import uvm.base.uvm_domain;
 import uvm.base.uvm_pool;
 import uvm.base.uvm_root;
 import uvm.base.uvm_common_phases;
-import uvm.base.uvm_message_defines;
 import uvm.base.uvm_config_db;
 import uvm.base.uvm_spell_chkr;
 import uvm.base.uvm_cmdline_processor;
@@ -2461,7 +2460,7 @@ abstract class uvm_component: uvm_report_object
       else etype = "Error";
       if(error_time == 0) error_time = getSimTime;
       int stream_h = _m_stream_handle[stream_name];
-      if(rcrdr.check_handle_kind("Fiber", stream_h) !is 1) {
+      if(rcrdr.check_handle_kind("Fiber", stream_h) !is true) {
 	stream_h = rcrdr.create_stream(stream_name, "TVM", get_full_name());
 	_m_stream_handle[stream_name] = stream_h;
       }
@@ -2590,9 +2589,33 @@ abstract class uvm_component: uvm_report_object
     }
   }
 
-  //   extern                   function void set_int_local(string field_name,
-  //                                                        uvm_bitstream_t value,
-  //                                                        bit recurse=1);
+  override public void set_int_local (string field_name,
+				      uvm_bitstream_t value,
+				      bool recurse = true) {
+    synchronized(this) {
+      //call the super function to get child recursion and any registered fields
+      super.set_int_local(field_name, value, recurse);
+
+      //set the local properties
+      if(uvm_is_match(field_name, "recording_detail"))
+	_recording_detail = cast(uint) value;
+
+    }
+  }
+
+  override public void set_int_local (string field_name,
+				      ulong value,
+				      bool recurse = true) {
+    synchronized(this) {
+      //call the super function to get child recursion and any registered fields
+      super.set_int_local(field_name, value, recurse);
+
+      //set the local properties
+      if(uvm_is_match(field_name, "recording_detail"))
+	_recording_detail = cast(uint) value;
+
+    }
+  }
 
   protected uvm_component _m_parent;
 
@@ -2603,7 +2626,6 @@ abstract class uvm_component: uvm_report_object
   protected bool m_add_child(uvm_component child) {
     synchronized(this) {
       import std.string: format;
-      import uvm.base.uvm_message_defines: uvm_warning;
       string name = child.get_name();
       if(name in _m_children && _m_children[name] !is child) {
 	uvm_warning("BDCLD",
@@ -2787,7 +2809,7 @@ abstract class uvm_component: uvm_report_object
 	  _m_stream_handle[stream_name] = stream_h;
 	}
 
-	string kind = (has_parent is 0) ?
+	string kind = (has_parent is false) ?
 	  "Begin_No_Parent, Link" : "Begin_End, Link";
 
 	tr_h = rcrdr.begin_tr(kind, stream_h, name, label, desc, begin_time);
@@ -2862,7 +2884,7 @@ abstract class uvm_component: uvm_report_object
 
       version(UVM_NO_DEPRECATED) {}
       else {
-	if (_enable_stop_interrupt !is 0) {
+	if (_enable_stop_interrupt !is false) {
 	  printer.print_int("enable_stop_interrupt", _enable_stop_interrupt,
 			    UVM_BIN, '.', "bit");
 	}

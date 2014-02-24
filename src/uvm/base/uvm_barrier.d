@@ -212,7 +212,7 @@ class uvm_barrier: uvm_object
 
   // FIXME -- at some point this has to go
   public override string get_type_name() {
-    return typeid(typeof(this)).stringof;
+    return typeof(this).stringof;
   }
 
   // task

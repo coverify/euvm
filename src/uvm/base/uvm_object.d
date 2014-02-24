@@ -59,7 +59,6 @@ import uvm.base.uvm_packer;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_report_object;
 import uvm.base.uvm_globals;
-import uvm.base.uvm_message_defines;
 import uvm.base.uvm_root;
 import uvm.meta.mcd;
 import uvm.meta.misc;
@@ -993,7 +992,7 @@ abstract class uvm_object: uvm_void, RandomizableIntf
 
   public void set_int_local (string      field_name,
 			     uvm_bitstream_t value,
-			     bool         recurse=true) {
+			     bool         recurse = true) {
     // presently D has only a funky way to clear up associative arrays
     m_uvm_status_container.remove_all_cycles();
     m_uvm_status_container.reset_cycle_scopes();
@@ -1015,7 +1014,7 @@ abstract class uvm_object: uvm_void, RandomizableIntf
 
   public void set_int_local (string      field_name,
 			     ulong       value,
-			     bool        recurse=true) {
+			     bool        recurse = true) {
     // presently D has only a funky way to clear up associative arrays
     m_uvm_status_container.remove_all_cycles();
     m_uvm_status_container.reset_cycle_scopes();

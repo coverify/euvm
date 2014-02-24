@@ -61,7 +61,7 @@ import uvm.base.uvm_phase;
 import uvm.base.uvm_component;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_domain;
-import uvm.base.uvm_message_defines;
+import uvm.base.uvm_globals;
 import uvm.base.uvm_misc;
 import uvm.seq.uvm_sequencer_base;
 import esdl.base.core: Process, fork, Fork;

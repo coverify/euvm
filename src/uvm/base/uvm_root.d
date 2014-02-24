@@ -78,7 +78,6 @@ import uvm.base.uvm_phase;
 import uvm.base.uvm_report_handler;
 import uvm.base.uvm_report_object;
 import uvm.base.uvm_report_server;
-import uvm.base.uvm_message_defines;
 import uvm.base.uvm_domain;
 
 public import uvm.meta.misc;

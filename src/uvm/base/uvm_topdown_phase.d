@@ -38,7 +38,7 @@ module uvm.base.uvm_topdown_phase;
 import uvm.base.uvm_phase;
 import uvm.base.uvm_component;
 import uvm.base.uvm_object_globals;
-import uvm.base.uvm_message_defines;
+import uvm.base.uvm_globals;
 import uvm.base.uvm_domain;
 import uvm.base.uvm_misc;
 

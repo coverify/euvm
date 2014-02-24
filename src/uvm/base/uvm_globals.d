@@ -113,6 +113,9 @@ version (UVM_NO_DEPRECATED) { }
 //
 //----------------------------------------------------------------------------
 
+import uvm.base.uvm_message_defines: uvm_report_mixin;
+mixin uvm_report_mixin;
+
 // Function: uvm_report_enabled
 //
 // Returns 1 if the configured verbosity in ~uvm_top~ is greater than
