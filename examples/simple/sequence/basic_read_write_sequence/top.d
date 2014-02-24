@@ -158,12 +158,14 @@ class sequenceA(REQ, RSP): uvm_sequence!(REQ, RSP)
 
   mixin uvm_object_utils!(sequenceA!(REQ,RSP));
 
-  private static int g_my_id = 1;
+  private shared static int g_my_id = 1;
   private int my_id;
 
   this(string name="") {
     super(name);
-    my_id = g_my_id++;
+    synchronized(typeid(sequenceA!(REQ, RSP))) {
+      my_id = g_my_id++;
+    }
   }
 
   // task
