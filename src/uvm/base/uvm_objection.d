@@ -525,7 +525,7 @@ class uvm_objection: uvm_report_object
 			       int count = 1) {
     if(obj is null) obj = m_top;
     synchronized(this) {
-      _m_cleared = true;	// FIXME -- false
+      _m_cleared = false;
       _m_top_all_dropped = false;
     }
     m_raise (obj, obj, description, count);
