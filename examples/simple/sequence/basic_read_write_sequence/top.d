@@ -158,12 +158,14 @@ class sequenceA(REQ, RSP): uvm_sequence!(REQ, RSP)
 
   mixin uvm_object_utils!(sequenceA!(REQ,RSP));
 
-  private static int g_my_id = 1;
+  private shared static int g_my_id = 1;
   private int my_id;
 
   this(string name="") {
     super(name);
-    my_id = g_my_id++;
+    synchronized(typeid(sequenceA!(REQ, RSP))) {
+      my_id = g_my_id++;
+    }
   }
 
   // task
@@ -171,7 +173,7 @@ class sequenceA(REQ, RSP): uvm_sequence!(REQ, RSP)
     REQ  req;
     RSP  rsp;
 
-    uvm_info("sequenceA", "Starting sequence", UVM_MEDIUM);
+    this.uvm_info("sequenceA", "Starting sequence", UVM_MEDIUM);
 
     for(uint i = 0; i < NUM_LOOPS; i++) {
       uvm_create(req);
@@ -200,7 +202,7 @@ class sequenceA(REQ, RSP): uvm_sequence!(REQ, RSP)
 			 req.addr, req.data, rsp.data));
       }
     }
-    uvm_info("sequenceA", "Finishing sequence", UVM_MEDIUM);
+    this.uvm_info("sequenceA", "Finishing sequence", UVM_MEDIUM);
   } // frame
 
 }
