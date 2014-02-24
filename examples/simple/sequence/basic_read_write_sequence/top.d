@@ -173,7 +173,7 @@ class sequenceA(REQ, RSP): uvm_sequence!(REQ, RSP)
     REQ  req;
     RSP  rsp;
 
-    this.uvm_info("sequenceA", "Starting sequence", UVM_MEDIUM);
+    uvm_info("sequenceA", "Starting sequence", UVM_MEDIUM);
 
     for(uint i = 0; i < NUM_LOOPS; i++) {
       uvm_create(req);
@@ -202,7 +202,7 @@ class sequenceA(REQ, RSP): uvm_sequence!(REQ, RSP)
 			 req.addr, req.data, rsp.data));
       }
     }
-    this.uvm_info("sequenceA", "Finishing sequence", UVM_MEDIUM);
+    uvm_info("sequenceA", "Finishing sequence", UVM_MEDIUM);
   } // frame
 
 }
