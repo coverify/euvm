@@ -26,13 +26,19 @@ import uvm.base.uvm_component: uvm_component;
 import uvm.base.uvm_registry: uvm_component_registry;
 import uvm.base.uvm_factory: uvm_object_wrapper;
 import uvm.seq.uvm_sequence_item: uvm_sequence_item;
+import uvm.seq.uvm_sequence_base: uvm_sequence_base;
 import uvm.base.uvm_object_globals;
+
+string uvm_object_utils()() {
+  return "mixin uvm_object_utils!(typeof(this));";
+}
 
 mixin template uvm_object_utils(T)
 {
   mixin uvm_object_registry_mixin!(T, __MODULE__ ~ "." ~ T.stringof);
   mixin m_uvm_object_create_func!(T);
   mixin m_uvm_get_type_name_func!(T);
+  mixin m_uvm_field_auto_copy!(T);
   // `uvm_field_utils_begin(T)
 }
 
@@ -42,6 +48,10 @@ mixin template uvm_object_param_utils(T)
   mixin m_uvm_object_registry_param!(T);
   mixin m_uvm_object_create_func!(T);
   // `uvm_field_utils_begin(T)
+}
+
+string uvm_component_utils()() {
+  return "mixin uvm_component_utils!(typeof(this));";
 }
 
 mixin template uvm_component_utils(T)
@@ -207,33 +217,44 @@ mixin template m_uvm_component_registry_param(T)
   }
 }
 
-void uvm_field_auto_copy(T)(T t, T s) {
-  uvm_field_auto_copy_all_fields(t, s);
+mixin template m_uvm_field_auto_copy(T)
+{
+  override void uvm_field_auto_copy(uvm_object rhs) {
+    auto rhs_ = cast(T) rhs;
+
+    if(rhs_ is null) {
+      uvm_error("do_copy", "cast failed, check type compatability");
+    }
+  
+    uvm_field_auto_copy_all_fields(this, rhs_);
+  }
 }
 
-void uvm_field_auto_copy_all_fields(size_t I=0, T)(T t, T s) {
-  static if(I < t.tupleof.length) {
-    uvm_field_auto_copy_field!(I)(t, s);
-    uvm_field_auto_copy_all_fields!(I+1)(t, s);
+void uvm_field_auto_copy_all_fields(size_t I=0, T)(T lhs, T rhs) {
+  static if(I < lhs.tupleof.length) {
+    uvm_field_auto_copy_field!(I)(lhs, rhs);
+    uvm_field_auto_copy_all_fields!(I+1)(lhs, rhs);
   }
-  else static if(is(T B == super)) {
+  else static if(is(T B == super) // && B.length > 0
+		 ) {
       alias BASE = B[0];
       static if(! (is(BASE == uvm_component) ||
 		   is(BASE == uvm_object) ||
-		   is(BASE == uvm_sequence_item))) {
-	BASE bt = t;
-	BASE bs = s;
-	uvm_field_auto_copy_all_fields!0(bt, bs);
+		   is(BASE == uvm_sequence_item) ||
+		   is(BASE == uvm_sequence_base))) {
+	BASE lhs_ = lhs;
+	BASE rhs_ = rhs;
+	uvm_field_auto_copy_all_fields!0(lhs_, rhs_);
       }
     }
 }
 
 // copy the Ith field
-void uvm_field_auto_copy_field(size_t I=0, T)(T t, T s) {
-  int flags = uvm_field_auto_get_flags!I(t);
+void uvm_field_auto_copy_field(size_t I=0, T)(T lhs, T rhs) {
+  int flags = uvm_field_auto_get_flags!I(lhs);
   if(flags & UVM_COPY &&
      !(flags & UVM_NOCOPY)) {
-    t.tupleof[I] = s.tupleof[I];
+    lhs.tupleof[I] = rhs.tupleof[I];
   }
 }
 

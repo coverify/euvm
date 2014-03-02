@@ -65,6 +65,7 @@
 //
 //------------------------------------------------------------------------------
 
+module uvm.comps.uvm_algorithmic_comparator;
 
 class uvm_algorithmic_comparator(BEFORE=int,
 				 AFTER=int,

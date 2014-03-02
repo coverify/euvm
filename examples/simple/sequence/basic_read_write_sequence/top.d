@@ -1,25 +1,9 @@
 import std.stdio;
+
 import esdl.base.core;
 import esdl.data.sync;
-import uvm.base.uvm_root;
-import uvm.comps.uvm_env;
-import uvm.comps.uvm_driver;
-import uvm.comps.uvm_test;
-import uvm.base.uvm_component;
-import uvm.base.uvm_object_defines;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_globals;
-import uvm.base.uvm_comparer;
-import uvm.base.uvm_phase;
-import uvm.base.uvm_domain;
-import uvm.base.uvm_message_defines;
-import uvm.base.uvm_registry;
-import uvm.base.uvm_runtime_phases;
-import uvm.base.uvm_common_phases;
-import uvm.base.uvm_config_db;
-import uvm.seq.uvm_sequence;
-import uvm.seq.uvm_sequence_item;
-import uvm.seq.uvm_sequencer;
+
+import uvm;
 
 enum bus_op_t: ubyte {BUS_READ, BUS_WRITE};
 enum status_t: ubyte {STATUS_OK, STATUS_NOT_OK};
@@ -38,7 +22,8 @@ class bus_trans: uvm_sequence_item
   bvec!8 data;
   bus_op_t op;
 
-  mixin uvm_object_utils!bus_trans;
+  // mixin uvm_object_utils!bus_trans;
+  mixin(uvm_object_utils);
 
   override void do_copy (uvm_object rhs) {
     auto rhs_ = cast(bus_trans) rhs;
@@ -47,7 +32,7 @@ class bus_trans: uvm_sequence_item
       uvm_error("do_copy", "cast failed, check type compatability");
 
     super.do_copy(rhs);
-    uvm_field_auto_copy(this, rhs_);
+    // uvm_field_auto_copy(this, rhs_);
 
     // this.addr = rhs_.addr;
     // this.data = rhs_.data;
@@ -82,7 +67,7 @@ class bus_trans: uvm_sequence_item
 
 class bus_req: bus_trans
 {
-  mixin uvm_object_utils!(bus_req);
+  mixin(uvm_object_utils);
   this (string name="") {
     super(name);
   }
@@ -100,7 +85,7 @@ class bus_rsp: bus_trans
     super(name);
   }
 
-  mixin uvm_object_utils!(bus_rsp);
+  mixin(uvm_object_utils);
 
   override void do_copy (uvm_object rhs) {
     auto rhs_ = cast(bus_rsp) rhs;
@@ -156,7 +141,7 @@ class my_driver(REQ, RSP): uvm_driver!(REQ, RSP)
 class sequenceA(REQ, RSP): uvm_sequence!(REQ, RSP)
 {
 
-  mixin uvm_object_utils!(sequenceA!(REQ,RSP));
+  mixin(uvm_object_utils);
 
   private shared static int g_my_id = 1;
   private int my_id;
