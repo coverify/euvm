@@ -59,6 +59,7 @@ class uvm_comparer
   // Sets the maximum number of messages to send to the messager for miscompares
   // of an object.
 
+  @uvm_public_sync
   private uint _show_max = 1;
 
 
@@ -269,6 +270,44 @@ class uvm_comparer
   // less than or equal to 4096.
   //
   // The radix is used for reporting purposes, the default radix is hex.
+
+  public bool compare_field(T)(string name, T lhs, T rhs,
+			       uvm_radix_enum radix=UVM_NORADIX)
+    if(isBitVector!T || isIntegral!T) {
+      synchronized(this) {
+	if(lhs != rhs) {
+	  string msg;
+	  uvm_object.m_uvm_status_container.scope_stack.set_arg(name);
+	  switch (radix) {
+	  case UVM_BIN:
+	    msg = format ("lhs = 'b%0b : rhs = 'b%0b", lhs, rhs);
+	    break;
+	  case UVM_OCT:
+	    msg = format ("lhs = 'o%0o : rhs = 'o%0o", lhs, rhs);
+	    break;
+	  case UVM_DEC:
+	    msg = format ("lhs = %0d : rhs = %0d", lhs, rhs);
+	    break;
+	  case UVM_TIME:
+	    msg = format ("lhs = %0d : rhs = %0d", lhs, rhs);
+	    break;
+	  case UVM_STRING:
+	    msg = format ("lhs = %0s : rhs = %0s", lhs, rhs);
+	    break;
+	  case UVM_ENUM:
+	    //Printed as decimal, user should cuse compare string for enum val
+	    msg = format ("lhs = %0d : rhs = %0d", lhs, rhs);
+	    break;
+	  default:
+	    msg = format ("lhs = 'h%0x : rhs = 'h%0x", lhs, rhs);
+	    break;
+	  }
+	  print_msg(msg);
+	  return false;
+	}
+	return true;
+      }
+    }
 
   public bool compare_field (string name,
 			     uvm_bitstream_t lhs,

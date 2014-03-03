@@ -35,6 +35,8 @@
 // type parameters, T1 and T2.
 //-----------------------------------------------------------------------------
 
+module uvm.comps.uvm_pair;
+
 class uvm_class_pair(T1=uvm_object, T2=T1): uvm_object
 {
   alias uvm_class_pair!(T1, T2) this_type;
