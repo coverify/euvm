@@ -1,6 +1,6 @@
 import std.stdio;
-import esdl.base.core;
-import esdl.data.sync;
+
+import esdl;
 import uvm;
 
 class myseq: uvm_sequence!uvm_sequence_item

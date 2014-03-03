@@ -1,8 +1,6 @@
 import std.stdio;
 
-import esdl.base.core;
-import esdl.data.sync;
-
+import esdl;
 import uvm;
 
 enum bus_op_t: ubyte {BUS_READ, BUS_WRITE};
@@ -18,35 +16,12 @@ enum int NUM_LOOPS=10;
 class bus_trans: uvm_sequence_item
 {
 
-  bvec!12 addr;
-  bvec!8 data;
-  bus_op_t op;
+  @rand bvec!12 addr;
+  @rand bvec!8 data;
+  @rand bus_op_t op;
 
   // mixin uvm_object_utils!bus_trans;
   mixin(uvm_object_utils);
-
-  override void do_copy (uvm_object rhs) {
-    auto rhs_ = cast(bus_trans) rhs;
-
-    if(rhs_ is null) 
-      uvm_error("do_copy", "cast failed, check type compatability");
-
-    super.do_copy(rhs);
-    // uvm_field_auto_copy(this, rhs_);
-
-    // this.addr = rhs_.addr;
-    // this.data = rhs_.data;
-    // this.op = rhs_.op;
-  }
-
-  override bool do_compare(uvm_object rhs,uvm_comparer comparer) {
-    bus_trans rhs_ = cast(bus_trans) rhs;
-
-    if(rhs_ is null) 
-      uvm_fatal("do_compare", "cast failed, check type compatability");
-
-    return ((op == rhs_.op) && (addr == rhs_.addr) && (data == rhs_.data));
-  }
 
   override string convert2string() {
     import std.string: format;
@@ -76,6 +51,7 @@ class bus_req: bus_trans
 //--------------------------------------------------------------------
 // bus_rsp
 //--------------------------------------------------------------------
+@UVM_DEFAULT
 class bus_rsp: bus_trans
 {
 
@@ -86,15 +62,6 @@ class bus_rsp: bus_trans
   }
 
   mixin(uvm_object_utils);
-
-  override void do_copy (uvm_object rhs) {
-    auto rhs_ = cast(bus_rsp) rhs;
-    if(rhs_ is null) 
-      uvm_fatal("do_copy", "cast failed, check type compatability");
-
-    super.do_copy(rhs_);
-    status = rhs_.status;
-  }
 
   override string convert2string() {
     import std.string: format;
@@ -107,7 +74,7 @@ class bus_rsp: bus_trans
 class my_driver(REQ, RSP): uvm_driver!(REQ, RSP)
 {
 
-  mixin uvm_component_utils!(my_driver!(REQ,RSP));
+  mixin(uvm_component_utils);
 
   private int data_array[512];
 
@@ -163,6 +130,12 @@ class sequenceA(REQ, RSP): uvm_sequence!(REQ, RSP)
     for(uint i = 0; i < NUM_LOOPS; i++) {
       uvm_create(req);
 
+      // req.randomizeWith! q{
+      // 	op   == bus_op_t.BUS_WRITE;
+      // 	addr == @0 + @1;
+      // 	data == @0 + @1 + 55;
+      // }(my_id, i);
+      
       req.addr = cast(bvec!12) ((my_id * NUM_LOOPS) + i).toBitVec;
       req.data = cast(bvec!8) (my_id + i + 55).toBitVec;
       req.op   = bus_op_t.BUS_WRITE;
@@ -195,7 +168,7 @@ class sequenceA(REQ, RSP): uvm_sequence!(REQ, RSP)
 
 class env: uvm_env
 {
-  mixin uvm_component_utils!env;
+  mixin(uvm_component_utils);
   private uvm_sequencer!(bus_req, bus_rsp) sqr;
   private my_driver!(bus_req, bus_rsp) drv ;
 
