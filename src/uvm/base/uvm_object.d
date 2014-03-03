@@ -601,6 +601,11 @@ abstract class uvm_object: uvm_void, RandomizableIntf
 		       "no uvm_object_utils", UVM_NONE);
   }
   
+  void uvm_field_auto_compare(uvm_object rhs) {
+    uvm_report_warning("NOUTILS", "default uvm_field_auto_compare --"
+		       "no uvm_object_utils", UVM_NONE);
+  }
+  
   final public void copy (uvm_object rhs) {
     // Thread static
     static int depth;
@@ -733,7 +738,11 @@ abstract class uvm_object: uvm_void, RandomizableIntf
 
     if(! done) {
       comparer.compare_map.set(rhs, this);
-      m_uvm_field_automation(rhs, UVM_COMPARE, "");
+      // SV version -- not required for Vlang
+      // m_uvm_field_automation(rhs, UVM_COMPARE, "");
+
+      // overridden by mixin(uvm_object_utils);
+      uvm_field_auto_compare(rhs);
       dc = do_compare(rhs, comparer);
     }
 

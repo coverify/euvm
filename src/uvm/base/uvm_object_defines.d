@@ -29,17 +29,24 @@ import uvm.seq.uvm_sequence_item: uvm_sequence_item;
 import uvm.seq.uvm_sequence_base: uvm_sequence_base;
 import uvm.base.uvm_object_globals;
 
-string uvm_object_utils()() {
-  return "mixin uvm_object_utils!(typeof(this));";
+public string uvm_object_utils()() {
+  return "mixin uvm_object_utils_mixin!(typeof(this));";
 }
 
-mixin template uvm_object_utils(T)
+mixin template uvm_object_utils_mixin(T=void)
 {
-  mixin uvm_object_registry_mixin!(T, __MODULE__ ~ "." ~ T.stringof);
-  mixin m_uvm_object_create_func!(T);
-  mixin m_uvm_get_type_name_func!(T);
-  mixin m_uvm_field_auto_copy!(T);
-  // `uvm_field_utils_begin(T)
+  static if(is(T == void)) {
+    alias typeof(this) U;
+  }
+  else {
+    alias T U;
+  }
+  mixin uvm_object_registry_mixin!(U, __MODULE__ ~ "." ~ U.stringof);
+  mixin m_uvm_object_create_func!(U);
+  mixin m_uvm_get_type_name_func!(U);
+  mixin m_uvm_field_auto_utils!(U);
+  mixin Randomization;
+  // `uvm_field_utils_begin(U)
 }
 
 
@@ -51,13 +58,19 @@ mixin template uvm_object_param_utils(T)
 }
 
 string uvm_component_utils()() {
-  return "mixin uvm_component_utils!(typeof(this));";
+  return "mixin uvm_component_utils_mixin!(typeof(this));";
 }
 
-mixin template uvm_component_utils(T)
+mixin template uvm_component_utils_mixin(T=void)
 {
-  mixin uvm_component_registry_mixin!(T, T.stringof);
-  mixin m_uvm_get_type_name_func!(T);
+  static if(is(T == void)) {
+    alias typeof(this) U;
+  }
+  else {
+    alias T U;
+  }
+  mixin uvm_component_registry_mixin!(U, U.stringof);
+  mixin m_uvm_get_type_name_func!(U);
 }
 
 mixin template uvm_component_param_utils(T)
@@ -217,53 +230,98 @@ mixin template m_uvm_component_registry_param(T)
   }
 }
 
-mixin template m_uvm_field_auto_copy(T)
+mixin template m_uvm_field_auto_utils(T)
 {
+  void uvm_field_auto_all_fields(alias F, size_t I=0, T)(T lhs, T rhs) {
+    static if(I < lhs.tupleof.length) {
+      if(F!(I)(lhs, rhs)) {
+	// shortcircuit useful for compare etc
+	return;
+      }
+      uvm_field_auto_all_fields!(F, I+1)(lhs, rhs);
+    }
+    else static if(is(T B == super) // && B.length > 0
+		   ) {
+	alias BASE = B[0];
+	static if(! (is(BASE == uvm_component) ||
+		     is(BASE == uvm_object) ||
+		     is(BASE == uvm_sequence_item) ||
+		     is(BASE == uvm_sequence_base))) {
+	  BASE lhs_ = lhs;
+	  BASE rhs_ = rhs;
+	  uvm_field_auto_all_fields!(F, 0)(lhs_, rhs_);
+	}
+      }
+  }
+
+  // Copy
   override void uvm_field_auto_copy(uvm_object rhs) {
     auto rhs_ = cast(T) rhs;
-
     if(rhs_ is null) {
-      uvm_error("do_copy", "cast failed, check type compatability");
+      uvm_error("uvm_field_auto_copy", "cast failed, check type compatability");
     }
-  
-    uvm_field_auto_copy_all_fields(this, rhs_);
+    uvm_field_auto_all_fields!uvm_field_auto_copy_field(this, rhs_);
   }
-}
 
-void uvm_field_auto_copy_all_fields(size_t I=0, T)(T lhs, T rhs) {
-  static if(I < lhs.tupleof.length) {
-    uvm_field_auto_copy_field!(I)(lhs, rhs);
-    uvm_field_auto_copy_all_fields!(I+1)(lhs, rhs);
+  // copy the Ith field
+  bool uvm_field_auto_copy_field(size_t I=0, T)(T lhs, T rhs) {
+    enum int flags = uvm_field_auto_get_flags!(lhs, I);
+    if(flags & UVM_COPY &&
+       !(flags & UVM_NOCOPY)) {
+      lhs.tupleof[I] = rhs.tupleof[I];
+    }
+    return false;
   }
-  else static if(is(T B == super) // && B.length > 0
-		 ) {
-      alias BASE = B[0];
-      static if(! (is(BASE == uvm_component) ||
-		   is(BASE == uvm_object) ||
-		   is(BASE == uvm_sequence_item) ||
-		   is(BASE == uvm_sequence_base))) {
-	BASE lhs_ = lhs;
-	BASE rhs_ = rhs;
-	uvm_field_auto_copy_all_fields!0(lhs_, rhs_);
+
+  // Comparison
+  override void uvm_field_auto_compare(uvm_object rhs) {
+    auto rhs_ = cast(T) rhs;
+    if(rhs_ is null) {
+      uvm_error("uvm_field_auto_compare", "cast failed, check type compatability");
+    }
+    uvm_field_auto_all_fields!uvm_field_auto_compare_field(this, rhs_);
+  }
+  
+  // compare the Ith field
+  bool uvm_field_auto_compare_field(size_t I=0, T)(T lhs, T rhs) {
+    enum int flags = uvm_field_auto_get_flags!(lhs, I);
+    static if(flags & UVM_COMPARE &&
+	      !(flags & UVM_NOCOMPARE)) {
+      auto comparer = m_uvm_status_container.comparer;
+      alias typeof(lhs.tupleof[I]) U;
+      static if(isBitVector!U) {
+	if(! lhs.tupleof[I].isLogicEqual(rhs.tupleof[I])) {
+	  comparer.compare_field(lhs.tupleof[I].stringof[4..$],
+				 lhs.tupleof[I], rhs.tupleof[I]);
+	}
+      }
+      else static if(isIntegral!U) {
+	  if(lhs.tupleof[I] != rhs.tupleof[I]) {
+	    comparer.compare_field(lhs.tupleof[I].stringof[4..$],
+				   lhs.tupleof[I], rhs.tupleof[I]);
+	  }
+	}
+	else {
+	  static assert(false, "compare not implemented yet for: " ~
+			U.stringof);
+	}
+      if(comparer.result && (comparer.show_max <= comparer.result)) {
+	// shortcircuit
+	return true;
       }
     }
-}
-
-// copy the Ith field
-void uvm_field_auto_copy_field(size_t I=0, T)(T lhs, T rhs) {
-  int flags = uvm_field_auto_get_flags!I(lhs);
-  if(flags & UVM_COPY &&
-     !(flags & UVM_NOCOPY)) {
-    lhs.tupleof[I] = rhs.tupleof[I];
+    return false;
   }
 }
 
-uint uvm_field_auto_get_flags(size_t I, T)(T t) {
+
+template uvm_field_auto_get_flags(alias t, size_t I) {
+  alias typeof(t) T;
   enum int class_flags =
     uvm_field_auto_acc_flags!(__traits(getAttributes, T));
   enum int flags =
     uvm_field_auto_acc_flags!(__traits(getAttributes, t.tupleof[I]));
-  return flags | class_flags;
+  enum int uvm_field_auto_get_flags = flags | class_flags;
 }
   
 template uvm_field_auto_acc_flags(A...)
