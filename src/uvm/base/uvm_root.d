@@ -87,6 +87,7 @@ import esdl.data.queue;
 
 import std.conv;
 import std.format;
+import std.string: format;
 
 // each process belonging to a given root enity would see the same
 // uvm_root. This static (thread local) variable gets assigned during

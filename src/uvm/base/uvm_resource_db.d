@@ -110,13 +110,13 @@ class uvm_resource_db (T=uvm_object) {
 
   // internal helper function to print resource accesses
 
-  protected static public void m_show_msg(string id,
-					  string rtype,
-					  string action,
-					  string rscope,
-					  string name,
-					  uvm_object accessor,
-					  rsrc_t rsrc) {
+  protected static void m_show_msg(string id,
+				   string rtype,
+				   string action,
+				   string rscope,
+				   string name,
+				   uvm_object accessor,
+				   rsrc_t rsrc) {
     string msg = format("%s '%s%s' (type %s) %s by %s = %s", rtype, rscope,
 			name=="" ? "" : "." ~ name, typeid(T), action,
 			(accessor !is null) ? accessor.get_full_name() :

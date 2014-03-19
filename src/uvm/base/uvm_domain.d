@@ -92,7 +92,7 @@ final class uvm_once_domain
 
 class uvm_domain: uvm_phase
 {
-
+  import std.string: format;
   mixin(uvm_once_sync!(uvm_once_domain));
 
   // Function: get_domains

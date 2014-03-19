@@ -44,6 +44,7 @@ import uvm.base.uvm_globals;
 import uvm.base.uvm_misc;
 
 import esdl.base.core: Process;
+import std.conv: to;
 import std.string: format;
 
 abstract class uvm_bottomup_phase: uvm_phase

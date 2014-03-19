@@ -122,6 +122,7 @@ class sequenceA(REQ, RSP): uvm_sequence!(REQ, RSP)
 
   // task
   override void frame() {
+    import std.string: format;
     REQ  req;
     RSP  rsp;
 
@@ -230,6 +231,7 @@ class EsdlRoot: uvm_root_entity
 
 void main()
 {
+  import std.random: uniform;
   auto theRoot = new EsdlRoot("theRoot", uniform!uint());
   theRoot.elaborate();
   theRoot.simulate();

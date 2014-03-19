@@ -34,6 +34,8 @@ import uvm.meta.mcd;
 import uvm.meta.misc;
 
 import esdl.base.time;
+import esdl.base.core: getSimTime;
+import std.string: format;
 
 // typedef class uvm_event;
 // typedef class uvm_event_pool;

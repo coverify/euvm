@@ -120,7 +120,8 @@ import uvm.base.uvm_task_phase;
 import uvm.meta.misc;
 import uvm.meta.mcd;
 import esdl.base.core: FifoObj, waitDelta, wait,
-  Fork, abortForks, getSimTime, sleep;
+  Fork, abortForks, getSimTime, sleep, fork;
+import esdl.base.time;
 import esdl.data.sync;
 import uvm.base.uvm_cmdline_processor;
 
@@ -145,6 +146,8 @@ final class uvm_once_phase
 
 class uvm_phase: uvm_object
 {
+  import esdl.base.core: Process;
+  import esdl.data.queue;
   mixin(uvm_once_sync!uvm_once_phase);
   mixin(uvm_sync!uvm_phase);
   // not required in vlang

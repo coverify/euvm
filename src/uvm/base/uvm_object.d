@@ -63,6 +63,7 @@ import uvm.base.uvm_root;
 import uvm.meta.mcd;
 import uvm.meta.misc;
 import std.traits;
+import std.string: format;
 
 final class uvm_once_object
 {

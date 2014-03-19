@@ -103,6 +103,7 @@ abstract class uvm_task_phase: uvm_phase
     }
 
     synchronized(this) {
+      import std.string: format;
       if (m_phase_trace) {
 	uvm_info("PH_TRACE",format("topdown-phase phase=%s state=%s comp=%s "
 				   "comp.domain=%s phase.domain=%s",

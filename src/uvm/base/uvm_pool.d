@@ -39,6 +39,7 @@ import uvm.base.uvm_object;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_printer;
 import uvm.base.uvm_root;
+import std.conv: to;
 
 class uvm_pool (KEY=int, VAL=uvm_void): /*extends*/ uvm_object
 {
@@ -47,7 +48,7 @@ class uvm_pool (KEY=int, VAL=uvm_void): /*extends*/ uvm_object
 
   alias uvm_pool!(KEY,VAL) this_type;
 
-  private __gshared protected this_type[uvm_object] _m_global_pool;
+  private __gshared this_type[uvm_object] _m_global_pool;
 
   protected VAL[KEY] _pool;
 
@@ -404,7 +405,7 @@ class uvm_object_string_pool (VAL=uvm_object): /*extends*/ uvm_pool!(string,VAL)
   import std.string: format;
 
   alias uvm_object_string_pool!(VAL) this_type;
-  private __gshared protected this_type[uvm_object] _m_global_pool;
+  private __gshared this_type[uvm_object] _m_global_pool;
 
 
   // Function: new

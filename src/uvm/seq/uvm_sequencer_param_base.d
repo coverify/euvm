@@ -38,6 +38,7 @@ import uvm.meta.misc;
 
 import esdl.data.queue;
 import esdl.data.rand;
+import std.string: format;
 
 //------------------------------------------------------------------------------
 //

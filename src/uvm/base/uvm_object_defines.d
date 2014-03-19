@@ -284,6 +284,7 @@ mixin template m_uvm_field_auto_utils(T)
   
   // compare the Ith field
   bool uvm_field_auto_compare_field(size_t I=0, T)(T lhs, T rhs) {
+    import std.traits: isIntegral;
     enum int flags = uvm_field_auto_get_flags!(lhs, I);
     static if(flags & UVM_COMPARE &&
 	      !(flags & UVM_NOCOMPARE)) {

@@ -1,3 +1,4 @@
 /examples/vpi/hello.vvp
 /examples/vpi/hellod.o
 /examples/vpi/hellod.vpi
+*.deps
