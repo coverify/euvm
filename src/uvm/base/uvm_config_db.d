@@ -390,7 +390,7 @@ class uvm_once_config_db_options
 }
 
 
-private class uvm_config_db_options
+package class uvm_config_db_options
 {
   import uvm.base.uvm_cmdline_processor;
   mixin(uvm_once_sync!(uvm_once_config_db_options));

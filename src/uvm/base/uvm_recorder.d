@@ -43,7 +43,7 @@ import uvm.meta.mcd;
 import uvm.meta.misc;
 import esdl.base.core: getSimTime;
 
-import std.traits: isNumeric, isFloatingPoint;
+import std.traits: isNumeric, isFloatingPoint, isIntegral;
 
 class uvm_once_recorder
 {

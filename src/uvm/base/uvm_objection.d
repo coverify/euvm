@@ -41,6 +41,7 @@ import esdl.base.core: Event, SimTime, Process,
   process, waitForks, wait, getRootEntity, Fork, fork;
 import esdl.data.sync;
 
+import std.string: format;
 
 alias uvm_callbacks!(uvm_objection,uvm_objection_callback) uvm_objection_cbs_t;
 
@@ -132,6 +133,7 @@ class uvm_once_objection
 
 class uvm_objection: uvm_report_object
 {
+  import esdl.data.queue;
   mixin(uvm_sync!uvm_objection);
   mixin(uvm_once_sync!uvm_once_objection);
 

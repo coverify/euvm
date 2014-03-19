@@ -36,9 +36,11 @@ import uvm.base.uvm_misc;
 import uvm.meta.misc;
 
 import esdl.data.rand;
+import esdl.data.queue;
 import esdl.base.core;
 import std.random: uniform;
 import std.algorithm: filter;
+import std.string: format;
 
 alias uvm_config_db!uvm_sequence_base uvm_config_seq;
 // typedef class uvm_sequence_request;

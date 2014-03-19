@@ -32,6 +32,7 @@ import uvm.base.uvm_root;
 import uvm.meta.misc;
 import uvm.meta.mcd;
 
+import std.string: format;
 
 alias uvm_callbacks!(uvm_report_object, uvm_report_catcher) uvm_report_cb;
 alias uvm_callback_iter!(uvm_report_object, uvm_report_catcher) uvm_report_cb_iter;

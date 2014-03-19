@@ -35,6 +35,7 @@ import uvm.base.uvm_objection;
 import esdl.base.core;
 import esdl.base.time;
 
+import std.string: format;
 
 import uvm.meta.misc;
 
@@ -73,6 +74,7 @@ alias uvm_callbacks!(uvm_callbacks_objection, uvm_heartbeat_callback)
 // typedef class uvm_objection_callback;
 class uvm_heartbeat: uvm_object
 {
+  import esdl.data.queue;
   mixin(uvm_sync!uvm_heartbeat);
 
   protected uvm_callbacks_objection _m_objection;

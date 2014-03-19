@@ -54,6 +54,7 @@ import uvm.seq.uvm_sequence_base;
 import std.traits: isIntegral;
 
 import std.string: format;
+import std.conv: to;
 
 import std.algorithm;
 import std.exception: enforce;

@@ -27,6 +27,9 @@ import uvm.base.uvm_root;
 import uvm.base.uvm_domain;
 
 import uvm.meta.misc;
+import std.string: format;
+import std.conv: to;
+
 
 enum int UVM_UNBOUNDED_CONNECTIONS = -1;
 enum string s_connection_error_id = "Connection Error";
