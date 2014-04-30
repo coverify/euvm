@@ -18,7 +18,7 @@ class TrafficLight: Entity
   Event yellow[POLES];
   Event green[POLES];
 
-  Signal!(lvec!200) test;
+  Signal!(int) test;
 
   int count = 0;
 
@@ -42,7 +42,7 @@ class TrafficLight: Entity
     while(true)
       {
 	lockStage();
-	test = cast(lvec!200) (test + 7);
+	test = test + 11;
 	// writeln("Test is: ", test);
   	// writeln(getSimTime, ": Red -> Green ", index, " -- ",
 	// Process.self.getFullName());
@@ -110,8 +110,8 @@ extern (C) void hellod() {
   writeln("Hello World from D");
   // theRoot.elaborate();
   // for (size_t i=1; i!=1000; ++i) {
-  //   // theRoot.forkSim(i.nsec);
-  //   // theRoot.joinSim();
+  //   // theRoot.doSim(i.nsec);
+  //   // theRoot.waitSim();
   //   simulateAllRoots(i.nsec);
   //   // theRoot.simulate(i.nsec);
   // }
@@ -124,8 +124,8 @@ extern(C) void initEsdl() {
   hello_register();
 
   TrafficRoot theRoot = new TrafficRoot("theRoot");
-  theRoot.forkElab();
-  theRoot.joinElab();
+  theRoot.doElab();
+  theRoot.waitElab();
 
   s_cb_data new_cb;
   new_cb.reason = vpiCbStartOfSimulation;

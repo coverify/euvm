@@ -1665,7 +1665,7 @@ class uvm_phase: uvm_object
 	    }
 	  });
 	endPhase.joinAny();
-	endPhase.abortRec();
+	endPhase.abortTree();
 	// });
 
       }

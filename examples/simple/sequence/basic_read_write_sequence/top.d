@@ -84,16 +84,20 @@ class my_driver(REQ, RSP): uvm_driver!(REQ, RSP)
 
   // task
   override void run_phase(uvm_phase phase) {
+    REQ req;
+    RSP rsp;
+    
     while(true) {
-      assert(seq_item_port !is null);
+      // assert(seq_item_port !is null);
       seq_item_port.get(req);
-      auto rsp = new RSP();
+      rsp = new RSP();
       rsp.set_id_info(req);
 
       // Actually do the read or write here
       if (req.op == bus_op_t.BUS_READ) {
 	rsp.addr = req.addr[0..9];
-	rsp.data = cast(bvec!8) data_array[rsp.addr].toBitVec;
+	// rsp.data = cast(bvec!8) data_array[rsp.addr].toBitVec;
+	rsp.data = cast(byte) data_array[rsp.addr];
 	uvm_info("sending",rsp.convert2string,UVM_MEDIUM);
       }
       else {
@@ -141,9 +145,9 @@ class sequenceA(REQ, RSP): uvm_sequence!(REQ, RSP)
       req.data = cast(bvec!8) (my_id + i + 55).toBitVec;
       req.op   = bus_op_t.BUS_WRITE;
 
-      REQ cloned = cast(REQ) req.clone;
+      // REQ cloned = cast(REQ) req.clone;
       
-      uvm_send(cloned);
+      uvm_send(req);
       get_response(rsp);
 
       uvm_create(req);

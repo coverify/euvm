@@ -1226,7 +1226,7 @@ abstract class uvm_component: uvm_report_object
     public void kill() {
       synchronized(this) {
 	if (_m_phase_process !is null) {
-	  _m_phase_process.abortRec();
+	  _m_phase_process.abortTree();
 	  _m_phase_process = null;
 	}
       }

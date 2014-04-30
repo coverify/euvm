@@ -12,7 +12,7 @@ import uvm.comps.uvm_test;
 
 class test: uvm_test
 {
-  mixin uvm_component_utils!test;
+  mixin uvm_component_utils;
 
   this(string name, uvm_component parent = null) {
     super(name, parent);
@@ -87,8 +87,8 @@ extern (C) void hellod() {
   writeln("Hello World from D");
   // theRoot.elaborate();
   // for (size_t i=1; i!=1000; ++i) {
-  //   // theRoot.forkSim(i.nsec);
-  //   // theRoot.joinSim();
+  //   // theRoot.doSim(i.nsec);
+  //   // theRoot.waitSim();
   //   simulateAllRoots(i.nsec);
   //   // theRoot.simulate(i.nsec);
   // }
@@ -103,8 +103,8 @@ extern(C) void initEsdl() {
   import std.stdio;
   import std.random;
   // Root0 theRoot = new Root0("theRoot", uniform!uint());
-  // theRoot.forkElab();
-  // theRoot.joinElab();
+  // theRoot.doElab();
+  // theRoot.waitElab();
   auto theRoot = new EsdlRoot("theRoot", uniform!uint());
   theRoot.elaborate();
   theRoot.simulate(100.nsec);
