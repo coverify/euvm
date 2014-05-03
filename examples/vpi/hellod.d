@@ -188,7 +188,7 @@ int callback_cbNextSimTime(p_cb_data cb) {
 
   // writefln("callback_cbNextSimTime time=%d", time);
 
-  simulateAllRoots(time.nsec);
+  simulateAllRootsUpto(time.nsec);
 
   s_cb_data new_cb;
   new_cb.reason = vpiCbReadOnlySynch;
