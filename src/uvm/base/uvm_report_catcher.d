@@ -179,8 +179,11 @@ abstract class uvm_report_catcher: uvm_callback
       // from the SV version of UVM
       do_report = true;
       // FIXME -- this gets called everytime we instantiate a
-      // report_catcher. Having it called once is sufficient. But
-      // calling it again and again also does not cause any issues.
+      // report_catcher. Having it called once is sufficient.
+      // The issue here is that SV uses static initilization to make
+      // sure that the code is called only once. In Vlang, we do not
+      // have any static initialization, and that is because we
+      // support multiple uvm_root instances.
       uvm_callbacks!(uvm_report_object,
 		     uvm_report_catcher).m_register_pair();
       do_report = true;

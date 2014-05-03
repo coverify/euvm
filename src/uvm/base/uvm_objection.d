@@ -261,11 +261,11 @@ class uvm_objection: uvm_report_object
     // running drains have a context and a process
     foreach(o, context; m_forked_contexts) {
       version(UVM_USE_PROCESS_CONTAINER) {
-	m_drain_proc[o].p.abortRec();
+	m_drain_proc[o].p.abortTree();
 	m_drain_proc.remove(o);
       }
       else {
-	m_drain_proc[o].abortRec();
+	m_drain_proc[o].abortTree();
 	m_drain_proc.remove(o);
       }
 
@@ -609,11 +609,11 @@ class uvm_objection: uvm_report_object
 	  m_forked_contexts.remove(obj);
 	  // Kill the drain
 	  version(UVM_USE_PROCESS_CONTAINER) {
-	    m_drain_proc[obj].p.abortRec();
+	    m_drain_proc[obj].p.abortTree();
 	    m_drain_proc.remove(obj);
 	  }
 	  else {
-	    m_drain_proc[obj].abortRec();
+	    m_drain_proc[obj].abortTree();
 	    m_drain_proc.remove(obj);
 	  }
 
@@ -1031,15 +1031,13 @@ class uvm_objection: uvm_report_object
   // Returns the current list of objecting objects (objects that
   // raised an objection but have not dropped it).
 
-  final public void get_objectors(ref Queue!uvm_object list) {
-    list.clear;
+  final public void get_objectors(out Queue!uvm_object list) {
     foreach (obj, count; m_source_count) {
       list.pushBack(obj);
     }
   }
 
-  final public void get_objectors(ref uvm_object[] list) {
-    list.clear;
+  final public void get_objectors(out uvm_object[] list) {
     foreach (obj, count; m_source_count) {
       list ~= obj;
     }
@@ -1481,7 +1479,7 @@ class uvm_test_done_objection: m_uvm_test_done_objection_base
 		      "'run' phase ready to proceed to extract phase");
 	  });
 	guard.joinAny();
-	guard.abortRec();
+	guard.abortTree();
 
 	uvm_info_context("TEST_DONE", "'run' phase is ready "
 			 "to proceed to the 'extract' phase", UVM_LOW,m_top);

@@ -760,7 +760,7 @@ class uvm_sequencer_base: uvm_component
 	bool temp = false;
 	if (i < _arb_sequence_q.length) {
 	  if (_arb_sequence_q[i].request == SEQ_TYPE_LOCK) {
-	    if(_arb_sequence_q[i].process_id.isTerminated()) {
+	    if(_arb_sequence_q[i].process_id.isDefunct()) {
 	      uvm_error("SEQLCKZMB",
 			format("The task responsible for requesting a lock"
 			       " on sequencer '%s' for sequence '%s' has"
@@ -840,7 +840,7 @@ class uvm_sequencer_base: uvm_component
 
       int i = 0;
       while (i < _arb_sequence_q.length) {
-	if(_arb_sequence_q[i].process_id.isTerminated()) {
+	if(_arb_sequence_q[i].process_id.isDefunct()) {
 	  uvm_error("SEQREQZMB",
 		    format("The task responsible for requesting a"
 			   " wait_for_grant on sequencer '%s' for"
@@ -1379,7 +1379,7 @@ class uvm_sequencer_base: uvm_component
 	m_wait_arb_not_equal();
       });
     seqF.joinAny();
-    seqF.abortRec();
+    seqF.abortTree();
     // });
   }
 

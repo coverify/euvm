@@ -394,7 +394,7 @@ class uvm_heartbeat: uvm_object
 	wait(_m_stop_event);
       });
     hb_process.joinAny();
-    hb_process.abortRec();
+    hb_process.abortTree();
   }
 }
 

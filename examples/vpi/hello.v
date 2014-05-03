@@ -1,12 +1,12 @@
 `timescale 1ns/100ps
 module main;
    reg clock;
-   reg[199:0] test;
-   initial $hello;
+   reg[31:0] test;
+   // initial $hello;
 
    always begin
       #10 clock = 1;
-      test = test * 2;
+      test = test * 11;
       #10 clock = 0;
       $display("test is %d", test);
    end
