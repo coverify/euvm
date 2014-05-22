@@ -273,7 +273,7 @@ class uvm_comparer
 
   public bool compare_field(T)(string name, T lhs, T rhs,
 			       uvm_radix_enum radix=UVM_NORADIX)
-    if(isBitVector!T || isIntegral!T) {
+    if(isBitVector!T || isIntegral!T || isBoolean!T) {
       synchronized(this) {
 	if(lhs != rhs) {
 	  string msg;
