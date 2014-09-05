@@ -21,7 +21,7 @@ class bus_trans: uvm_sequence_item
   @rand bus_op_t op;
 
   // mixin uvm_object_utils!bus_trans;
-  mixin(uvm_object_utils);
+  mixin uvm_object_utils;
 
   override string convert2string() {
     import std.string: format;
@@ -42,7 +42,7 @@ class bus_trans: uvm_sequence_item
 
 class bus_req: bus_trans
 {
-  mixin(uvm_object_utils);
+  mixin uvm_object_utils;
   this (string name="") {
     super(name);
   }
@@ -61,7 +61,7 @@ class bus_rsp: bus_trans
     super(name);
   }
 
-  mixin(uvm_object_utils);
+  mixin uvm_object_utils;
 
   override string convert2string() {
     import std.string: format;
@@ -74,7 +74,7 @@ class bus_rsp: bus_trans
 class my_driver(REQ, RSP): uvm_driver!(REQ, RSP)
 {
 
-  mixin(uvm_component_utils);
+  mixin uvm_component_utils;
 
   private int data_array[512];
 
@@ -112,7 +112,7 @@ class my_driver(REQ, RSP): uvm_driver!(REQ, RSP)
 class sequenceA(REQ, RSP): uvm_sequence!(REQ, RSP)
 {
 
-  mixin(uvm_object_utils);
+  mixin uvm_object_utils;
 
   private shared static int g_my_id = 1;
   private int my_id;
@@ -120,7 +120,8 @@ class sequenceA(REQ, RSP): uvm_sequence!(REQ, RSP)
   this(string name="") {
     super(name);
     synchronized(typeid(sequenceA!(REQ, RSP))) {
-      my_id = g_my_id++;
+      g_my_id = g_my_id + 1;
+      my_id = g_my_id;
     }
   }
 
@@ -173,7 +174,7 @@ class sequenceA(REQ, RSP): uvm_sequence!(REQ, RSP)
 
 class env: uvm_env
 {
-  mixin(uvm_component_utils);
+  mixin uvm_component_utils;
   private uvm_sequencer!(bus_req, bus_rsp) sqr;
   private my_driver!(bus_req, bus_rsp) drv ;
 
@@ -206,6 +207,9 @@ class env: uvm_env
 
 };
 
+
+@timeUnit(100.psec)
+@timePrecision(100.psec)
 class EsdlRoot: uvm_root_entity
 {
   // UvmRoot uvmRoot;
@@ -214,10 +218,6 @@ class EsdlRoot: uvm_root_entity
     super(name, seed);
   }
 
-  override void doConfig() {
-    timeUnit = 100.psec;
-    timePrecision = 100.psec;
-  }
 
   void initial() {
     //    lockStage();

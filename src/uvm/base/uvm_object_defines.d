@@ -29,11 +29,11 @@ import uvm.seq.uvm_sequence_item: uvm_sequence_item;
 import uvm.seq.uvm_sequence_base: uvm_sequence_base;
 import uvm.base.uvm_object_globals;
 
-public string uvm_object_utils()() {
-  return "mixin uvm_object_utils_mixin!(typeof(this));";
+public string uvm_object_utils_string()() {
+  return "mixin uvm_object_utils!(typeof(this));";
 }
 
-mixin template uvm_object_utils_mixin(T=void)
+mixin template uvm_object_utils(T=void)
 {
   static if(is(T == void)) {
     alias typeof(this) U;
@@ -57,11 +57,11 @@ mixin template uvm_object_param_utils(T)
   // `uvm_field_utils_begin(T)
 }
 
-string uvm_component_utils()() {
-  return "mixin uvm_component_utils_mixin!(typeof(this));";
+string uvm_component_utils_string()() {
+  return "mixin uvm_component_utils!(typeof(this));";
 }
 
-mixin template uvm_component_utils_mixin(T=void)
+mixin template uvm_component_utils(T=void)
 {
   static if(is(T == void)) {
     alias typeof(this) U;

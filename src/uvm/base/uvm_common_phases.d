@@ -93,6 +93,10 @@ final class uvm_build_phase: uvm_topdown_phase
   }
 }
 
+// The uvm_auto_build_phase would be used to build whatever has not
+// been built by the user in the build phase. uvm_auto_build_phase
+// takes help of D reflections to visit all the uvm_components that
+// have been declared in the code but have not been instantiated.
 final class uvm_auto_build_phase: uvm_topdown_phase
 {
   mixin(uvm_once_sync!uvm_once_auto_build_phase);
