@@ -93,6 +93,40 @@ final class uvm_build_phase: uvm_topdown_phase
   }
 }
 
+final class uvm_auto_build_phase: uvm_topdown_phase
+{
+  mixin(uvm_once_sync!uvm_once_auto_build_phase);
+  final override public void exec_func(uvm_component comp, uvm_phase phase) {
+    comp.auto_build_phase(phase);
+  }
+
+  enum string type_name = "uvm_auto_build_phase";
+
+  static public uvm_auto_build_phase get() {
+    synchronized(_once) {
+      return m_inst;
+    }
+  }
+
+  final protected this(string name="auto_build") {
+    super(name);
+  }
+
+  final override public string get_type_name() {
+    return type_name;
+  }
+}
+
+final class uvm_once_auto_build_phase
+{
+  @uvm_immutable_sync uvm_auto_build_phase _m_inst;
+  this() {
+    synchronized(this) {
+      _m_inst = new uvm_auto_build_phase();
+    }
+  }
+}
+
 // Class: uvm_connect_phase
 //
 // Establish cross-component connections.

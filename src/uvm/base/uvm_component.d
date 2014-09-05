@@ -159,7 +159,7 @@ abstract class uvm_component: uvm_report_object
 	._uvm_top = top;
       }
 
-      // while we are at sontructing the uvm_top, there is no need to
+      // while we are at contructing the uvm_top, there is no need to
       // check whether we are in build_phase, this can be done for
       // other uvm_components.
       if(this !is top) {
@@ -539,6 +539,8 @@ abstract class uvm_component: uvm_report_object
     }
   }
 
+  // base function for auto build phase
+  public void auto_build_phase(uvm_phase phase) {}
 
   // Function: connect_phase
   //
@@ -1357,7 +1359,7 @@ abstract class uvm_component: uvm_report_object
     if(isIntegral!T || is(T == uvm_bitstream_t) || is(T == string)) {
       uvm_config_db!T.set(this, inst_name, field_name, value);
     }
-  
+
 
   // Function: set_config_int
   public void set_config_int(T)(string inst_name, string field_name, T value)

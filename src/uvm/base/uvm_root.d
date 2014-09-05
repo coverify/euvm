@@ -1143,6 +1143,7 @@ class uvm_once
     uvm_once_post_shutdown_phase, uvm_post_shutdown_phase;
   import uvm.base.uvm_common_phases:
   uvm_once_build_phase, uvm_build_phase,
+    uvm_once_auto_build_phase, uvm_auto_build_phase,
     uvm_once_connect_phase, uvm_connect_phase,
     uvm_once_end_of_elaboration_phase, uvm_end_of_elaboration_phase,
     uvm_once_start_of_simulation_phase, uvm_start_of_simulation_phase,
@@ -1189,6 +1190,7 @@ class uvm_once
   uvm_once_post_shutdown_phase _uvm_post_shutdown_phase;
 
   uvm_once_build_phase _uvm_build_phase;
+  uvm_once_auto_build_phase _uvm_auto_build_phase;
   uvm_once_connect_phase _uvm_connect_phase;
   uvm_once_end_of_elaboration_phase _uvm_end_of_elaboration_phase;
   uvm_once_start_of_simulation_phase _uvm_start_of_simulation_phase;
@@ -1308,6 +1310,9 @@ class uvm_once
       _uvm_build_phase = new uvm_once_build_phase();
       uvm_build_phase._once = _uvm_build_phase;
       // writeln("Done -- _uvm_build_phase");
+      _uvm_auto_build_phase = new uvm_once_auto_build_phase();
+      uvm_auto_build_phase._once = _uvm_auto_build_phase;
+      // writeln("Done -- _uvm_auto_build_phase");
       _uvm_connect_phase = new uvm_once_connect_phase();
       uvm_connect_phase._once = _uvm_connect_phase;
       // writeln("Done -- _uvm_connect_phase");
@@ -1384,6 +1389,7 @@ class uvm_once
 
     // uvm_common_phases;
     uvm_build_phase._once = _uvm_build_phase;
+    uvm_auto_build_phase._once = _uvm_auto_build_phase;
     uvm_connect_phase._once = _uvm_connect_phase;
     uvm_end_of_elaboration_phase._once = _uvm_end_of_elaboration_phase;
     uvm_start_of_simulation_phase._once = _uvm_start_of_simulation_phase;
