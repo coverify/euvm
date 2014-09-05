@@ -92,7 +92,7 @@ import std.string: format;
 // each process belonging to a given root enity would see the same
 // uvm_root. This static (thread local) variable gets assigned during
 // the initialization of all the processes and rouines as part of the
-// initProcess and initRoutine functions.
+// initProcess function.
 package static uvm_root _uvm_top;
 
 package static is_root_thread = false;
@@ -154,13 +154,6 @@ class uvm_root_entity: RootEntity
   }
 
   public Task!(initUVM, -1) _initUVM__;
-
-  override public void initRoutine() {
-    super.initRoutine();
-    // uvm_top();
-    ._uvm_top = this._uvm_top;
-    if(once !is null) once.initialize();
-  }
 
   override public void initProcess() {
     super.initProcess();
