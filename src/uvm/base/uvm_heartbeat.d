@@ -33,7 +33,7 @@ import uvm.base.uvm_callback;
 import uvm.base.uvm_event;
 import uvm.base.uvm_objection;
 import esdl.base.core;
-import esdl.base.time;
+import esdl.data.time;
 
 import std.string: format;
 

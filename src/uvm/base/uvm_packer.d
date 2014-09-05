@@ -47,7 +47,8 @@ import uvm.meta.misc;
 import esdl.data.packer;
 import esdl.data.bstr;
 import esdl.data.bvec;
-import esdl.base.time;
+import esdl.base.core: SimTime;
+import esdl.data.time;
 import std.string: format;
 import std.traits;
 

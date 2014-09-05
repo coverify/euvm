@@ -38,7 +38,7 @@ import uvm.seq.uvm_sequence_base;
 import uvm.meta.misc;
 
 import esdl.base.core: Event, SimTime, Process,
-  process, waitForks, wait, getRootEntity, Fork, fork;
+  waitForks, wait, getRootEntity, Fork, fork;
 import esdl.data.sync;
 
 import std.string: format;
@@ -91,7 +91,7 @@ import uvm.base.uvm_report_object;
 import uvm.base.uvm_object;
 import uvm.base.uvm_root;
 
-import esdl.base.time: sec;
+import esdl.data.time: sec;
 
 class uvm_once_objection
 {

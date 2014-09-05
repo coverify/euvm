@@ -24,7 +24,7 @@
 module uvm.base.uvm_object_globals;
 
 import esdl.data.bvec;
-import esdl.base.time;
+import esdl.data.time;
 import uvm.meta.misc;
 
 //This bit marks where filtering should occur to remove uvm stuff from a

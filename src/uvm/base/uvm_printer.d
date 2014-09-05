@@ -26,7 +26,7 @@ module uvm.base.uvm_printer;
 
 import uvm.base.uvm_globals;
 import std.conv: to;
-import esdl.base.time;
+import esdl.base.core: SimTime;
 
 enum int UVM_STDOUT = 1;  // Writes to standard out and logfile
 

@@ -47,7 +47,7 @@ version (UVM_NO_DEPRECATED) { }
 // `ifndef UVM_NO_DEPRECATED
  else {
    import uvm.base.uvm_objection;
-   import esdl.base.time;
+   import esdl.data.time;
    import esdl.base.core: getRootEntity;
    // Variable- uvm_test_done - DEPRECATED
    //

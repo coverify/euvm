@@ -121,7 +121,7 @@ import uvm.meta.misc;
 import uvm.meta.mcd;
 import esdl.base.core: FifoObj, waitDelta, wait,
   Fork, abortForks, getSimTime, sleep, fork;
-import esdl.base.time;
+import esdl.data.time;
 import esdl.data.sync;
 import uvm.base.uvm_cmdline_processor;
 
