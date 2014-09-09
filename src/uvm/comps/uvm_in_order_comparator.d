@@ -81,7 +81,7 @@ class uvm_in_order_comparator (T = int ,
 			       pair_type = uvm_built_in_pair!T ):  uvm_component
 {
   alias uvm_in_order_comparator!(T,comp_type,convert,pair_type) this_type;
-  mixin uvm_component_param_utils!this_type;
+  mixin uvm_component_utils;
 
   enum string type_name =
     "uvm_in_order_comparator!(T,comp_type,convert,pair_type)";
@@ -215,7 +215,7 @@ class uvm_in_order_comparator (T = int ,
 class uvm_in_order_built_in_comparator(T=int): uvm_in_order_comparator!T
 {
   alias uvm_in_order_built_in_comparator!T this_type;
-  mixin uvm_component_param_utils!this_type;
+  mixin uvm_component_utils;
 
   enum  string type_name = "uvm_in_order_built_in_comparator!T";
 
@@ -245,7 +245,7 @@ class uvm_in_order_class_comparator(T = int ):
 			   uvm_class_pair!(T, T))
 {
   alias uvm_in_order_class_comparator!T this_type;
-  mixin uvm_component_param_utils!this_type;
+  mixin uvm_component_utils;
 
   enum string type_name = "uvm_in_order_class_comparator!T";
 

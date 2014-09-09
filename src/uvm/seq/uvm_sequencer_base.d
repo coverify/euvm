@@ -28,6 +28,7 @@ import uvm.base.uvm_config_db;
 import uvm.base.uvm_factory;
 import uvm.base.uvm_message_defines;
 import uvm.base.uvm_object_globals;
+import uvm.base.uvm_object_defines;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_phase;
 import uvm.base.uvm_domain;
@@ -66,6 +67,8 @@ class uvm_sequencer_base: uvm_component
 {
   mixin(uvm_once_sync!uvm_once_sequencer_base);
   mixin(uvm_sync!uvm_sequencer_base);
+
+  mixin uvm_component_utils;
 
   static inc_g_request_id() {
     synchronized(_once) {

@@ -161,16 +161,16 @@ class uvm_root_entity: RootEntity
     if(this._uvm_top is null) {	// check if the process is the initUVM process
       auto proc = Process.self;
       if(proc.getName == "_initUVM__") {
-    	return;
+	return;
       }
       else {
-    	uvm_top();
+	uvm_top();
       }
     }
     if(once !is null) once.initialize();
   }
 
-    
+
 
   // The uvm_root instance corresponding to this RootEntity.
   private uvm_root _uvm_top;
@@ -350,9 +350,9 @@ class uvm_root: uvm_component
     // Process phase_runner_proc; // store thread forked below for final cleanup
     Process phase_runner_proc = fork({uvm_phase.m_run_phases();});
     // fork({
-    // 	// spawn the phase runner task
-    // 	phase_runner_proc = Process.self();
-    // 	uvm_phase.m_run_phases();
+    //	// spawn the phase runner task
+    //	phase_runner_proc = Process.self();
+    //	uvm_phase.m_run_phases();
     //   });
     wait(0); // #0; // let the phase runner start
 
@@ -654,6 +654,12 @@ class uvm_root: uvm_component
     m_do_config_settings();
     m_do_max_quit_settings();
     m_do_dump_args();
+  }
+
+  override public void auto_build_phase(uvm_phase phase) {
+    foreach(child; get_children()) {
+      child._uvm__auto_build();
+    }
   }
 
   //   extern local function void m_do_verbosity_settings();

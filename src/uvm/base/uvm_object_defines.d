@@ -50,12 +50,18 @@ mixin template uvm_object_utils(T=void)
 }
 
 
-mixin template uvm_object_param_utils(T)
-{
-  mixin m_uvm_object_registry_param!(T);
-  mixin m_uvm_object_create_func!(T);
-  // `uvm_field_utils_begin(T)
-}
+// mixin template uvm_object_param_utils(T=void)
+// {
+//   static if(is(T == void)) {
+//     alias typeof(this) U;
+//   }
+//   else {
+//     alias T U;
+//   }
+//   mixin m_uvm_object_registry_param!(U);
+//   mixin m_uvm_object_create_func!(U);
+//   // `uvm_field_utils_begin(U)
+// }
 
 string uvm_component_utils_string()() {
   return "mixin uvm_component_utils!(typeof(this));";
@@ -71,12 +77,30 @@ mixin template uvm_component_utils(T=void)
   }
   mixin uvm_component_registry_mixin!(U, U.stringof);
   mixin m_uvm_get_type_name_func!(U);
+  mixin uvm_component_auto_build_mixin;
 }
 
-mixin template uvm_component_param_utils(T)
+mixin template uvm_component_auto_build_mixin()
 {
-  mixin m_uvm_component_registry_param!(T);
+  // overriding function that calls the generic function for automatic
+  // object construction
+  override void _uvm__auto_build() {
+    import std.stdio;
+    writeln("Building .... : ", get_full_name);
+    _uvm__auto_build_component(this);
+  }
 }
+
+// mixin template uvm_component_param_utils(T=void)
+// {
+//   static if(is(T == void)) {
+//     alias typeof(this) U;
+//   }
+//   else {
+//     alias T U;
+//   }
+//   mixin m_uvm_component_registry_param!(U);
+// }
 
 // MACRO: `uvm_object_registry
 //
@@ -185,16 +209,16 @@ mixin template m_uvm_get_type_name_func(T) {
 // m_uvm_object_registry_param
 // ---------------------------
 
-mixin template m_uvm_object_registry_param(T)
-{
-  alias uvm_object_registry!T type_id;
-  static public type_id get_type() {
-    return type_id.get();
-  }
-  override public uvm_object_wrapper get_object_type() {
-    return type_id.get();
-  }
-}
+// mixin template m_uvm_object_registry_param(T)
+// {
+//   alias uvm_object_registry!T type_id;
+//   static public type_id get_type() {
+//     return type_id.get();
+//   }
+//   override public uvm_object_wrapper get_object_type() {
+//     return type_id.get();
+//   }
+// }
 
 
 // m_uvm_component_registry_internal
@@ -219,16 +243,16 @@ mixin template m_uvm_component_registry_internal(T, string S)
 // m_uvm_component_registry_param
 // ------------------------------
 
-mixin template m_uvm_component_registry_param(T)
-{
-  alias uvm_component_registry!T type_id;
-  static public type_id get_type() {
-    return type_id.get();
-  }
-  override public uvm_object_wrapper get_object_type() {
-    return type_id.get();
-  }
-}
+// mixin template m_uvm_component_registry_param(T)
+// {
+//   alias uvm_component_registry!T type_id;
+//   static public type_id get_type() {
+//     return type_id.get();
+//   }
+//   override public uvm_object_wrapper get_object_type() {
+//     return type_id.get();
+//   }
+// }
 
 mixin template m_uvm_field_auto_utils(T)
 {
@@ -281,7 +305,7 @@ mixin template m_uvm_field_auto_utils(T)
     }
     uvm_field_auto_all_fields!uvm_field_auto_compare_field(this, rhs_);
   }
-  
+
   // compare the Ith field
   bool uvm_field_auto_compare_field(size_t I=0, T)(T lhs, T rhs) {
     import std.traits: isIntegral;
@@ -324,7 +348,7 @@ template uvm_field_auto_get_flags(alias t, size_t I) {
     uvm_field_auto_acc_flags!(__traits(getAttributes, t.tupleof[I]));
   enum int uvm_field_auto_get_flags = flags | class_flags;
 }
-  
+
 template uvm_field_auto_acc_flags(A...)
 {
   static if(A.length is 0) enum int uvm_field_auto_acc_flags = 0;
@@ -337,4 +361,3 @@ template uvm_field_auto_acc_flags(A...)
       enum int uvm_field_auto_acc_flags = uvm_field_auto_acc_flags!(A[1..$]);
     }
 }
-  

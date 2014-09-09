@@ -47,6 +47,7 @@ import uvm.base.uvm_resource;
 import uvm.base.uvm_queue;
 import uvm.base.uvm_event;
 import uvm.base.uvm_misc;
+import uvm.comps.uvm_agent;
 
 import uvm.seq.uvm_sequence_item;
 import uvm.seq.uvm_sequence_base;
@@ -165,7 +166,8 @@ abstract class uvm_component: uvm_report_object
       if(this !is top) {
 	// Check that we're not in or past end_of_elaboration
 	uvm_domain common = uvm_domain.get_common_domain();
-	uvm_phase bld = common.find(uvm_build_phase.get());
+	// uvm_phase bld = common.find(uvm_build_phase.get());
+	uvm_phase bld = common.find(uvm_auto_build_phase.get());
 	if (bld is null) {
 	  uvm_report_fatal("COMP/INTERNAL",
 			   "attempt to find build phase object failed",UVM_NONE);
@@ -540,7 +542,20 @@ abstract class uvm_component: uvm_report_object
   }
 
   // base function for auto build phase
+  bool _uvm__auto_build_done_ = false;
+  public bool _uvm__auto_build_done() {
+    return _uvm__auto_build_done_;
+  }
+  public void _uvm__auto_build_done(bool flag) {
+    _uvm__auto_build_done_ = flag;
+  }
+
   public void auto_build_phase(uvm_phase phase) {}
+
+  public void _uvm__auto_build() {
+    uvm_fatal("COMPUTILS", "Mixin uvm_component_utils missing for: " ~
+	      get_full_name());
+  }
 
   // Function: connect_phase
   //
@@ -2565,21 +2580,21 @@ abstract class uvm_component: uvm_report_object
   //----------------------------------------------------------------------------
 
   @uvm_protected_sync
-    private uvm_domain _m_domain;    // set_domain stores our domain handle
+  private uvm_domain _m_domain;    // set_domain stores our domain handle
 
   @uvm_public_sync
-    private uvm_phase _m_phase_imps[uvm_phase];    // functors to override ovm_root defaults
+  private uvm_phase _m_phase_imps[uvm_phase];    // functors to override ovm_root defaults
 
   //   //TND review protected, provide read-only accessor.
   @uvm_public_sync
-    private uvm_phase _m_current_phase;            // the most recently executed phase
+  private uvm_phase _m_current_phase;            // the most recently executed phase
   protected Process _m_phase_process;
 
   @uvm_public_sync
-    private bool _m_build_done;
+  private bool _m_build_done;
 
   @uvm_public_sync
-    private int _m_phasing_active;
+  private int _m_phasing_active;
 
   public void inc_phasing_active() {
     synchronized(this) {
@@ -2623,7 +2638,7 @@ abstract class uvm_component: uvm_report_object
   protected uvm_component _m_parent;
 
   @uvm_public_sync
-    protected uvm_component[string] _m_children;
+  protected uvm_component[string] _m_children;
   protected uvm_component[uvm_component] _m_children_by_handle;
 
   protected bool m_add_child(uvm_component child) {
@@ -3222,4 +3237,100 @@ private class uvm_config_object_wrapper
   mixin(uvm_sync!uvm_config_object_wrapper);
   @uvm_private_sync private uvm_object _obj;
   @uvm_private_sync private bool _clone;
+}
+
+////////////////////////////////////////////////////////////////
+// Auto Build Functions
+
+template _uvm__is_member_component(L)
+{
+  static if(is(L == class) && is(L: uvm_component)) {
+    enum bool _uvm__is_member_component = true;
+  }
+  else static if(isArray!L) {
+      import std.range: ElementType;
+      enum bool _uvm__is_member_component =
+	_uvm__is_member_component!(ElementType!L);
+    }
+    else {
+      enum bool _uvm__is_member_component = false;
+    }
+}
+
+void _uvm__auto_build_component(size_t I=0, size_t CI=0, T)(T t)
+  if(is(T : uvm_component) && is(T == class)) {
+    static if(I < t.tupleof.length) {
+      import std.string;
+      // ignore the ESDL that have been tagged as _esdl__ignore
+      alias M=typeof(t.tupleof[I]);
+      static if(_uvm__is_member_component!M) {
+	enum bool isActiveAttr = findUvmActiveAttrIndexed!(0, __traits(getAttributes, t.tupleof[I]));
+	bool is_active = true;
+	static if(is(T: uvm_agent)) {
+	  is_active = t.is_active;
+	}
+	if(is_active ||	    // build everything if the agent is active
+	   (! isActiveAttr)) { // build the element if not and active element
+	  static if((isArray!M)) {
+	    _uvm__auto_build_array!I(t, t.tupleof[I]);
+	  }
+	  else {
+	    _uvm__auto_build_child!I(t, t.tupleof[I]);
+	  }
+	}
+      }
+      // iterate through the next element in the object tuple
+      _uvm__auto_build_component!(I+1, CI+1)(t);
+    }
+    // recurse through the objects found in the base classes
+    else static if(is(T B == super)
+		   && is(B[0]: uvm_component)
+		   && is(B[0] == class)
+		   && (! is(B[0] == uvm_component))) {
+	B[0] b = t;
+	_uvm__auto_build_component!(0, CI)(b);
+      }
+  }
+
+void _uvm__auto_build_array(size_t I, T, L)(T t, ref L l, uint[] indices=null)
+{
+  for(size_t j = 0; j < l.length; ++j) {
+    // pragma(msg, "Adding: ", typeof(l[j]));
+    static if(isArray!(typeof(l[j]))) {
+      _uvm__auto_build_array!I(t, l[j],
+			       indices ~ cast(uint) j);
+    }
+    else {
+      l[j]._uvm__auto_build_child!I(t, l[j], indices ~ cast(uint) j);
+    }
+  }
+}
+
+static void _uvm__auto_build_child(size_t I, T, L)(T t, ref L l,
+						   uint[] indices=null) {
+  string name = t.tupleof[I].stringof[2..$]; // chomp "t."
+  foreach(i; indices) {
+    name ~= "[" ~ i.to!string ~ "]";
+  }
+  if(l is null) {
+    l = L.type_id.create(name, t);
+  }
+  if(! l._uvm__auto_build_done) {
+    l._uvm__auto_build_done(true);
+    l._uvm__auto_build();
+  }
+}
+
+private template findUvmActiveAttrIndexed(size_t I, A...) {
+  static if(I < A.length) {
+    static if(is(typeof(A[I]) == uvm_active_passive_enum) && A[I] == UVM_ACTIVE) {
+      enum bool findUvmActiveAttrIndexed = true;
+    }
+    else {
+      enum bool findUvmActiveAttrIndexed = findUvmActiveAttrIndexed!(I+1, A);
+    }
+  }
+  else {
+    enum bool findUvmActiveAttrIndexed = false;
+  }
 }

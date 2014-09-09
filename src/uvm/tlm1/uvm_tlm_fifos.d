@@ -29,6 +29,7 @@ import uvm.tlm1.uvm_analysis_port;
 
 import uvm.base.uvm_component;
 import uvm.base.uvm_object_globals;
+import uvm.base.uvm_object_defines;
 
 import uvm.meta.mailbox;
 
@@ -36,7 +37,7 @@ import uvm.meta.mailbox;
 //
 // Title: TLM FIFO Classes
 //
-// This section defines TLM-based FIFO classes. 
+// This section defines TLM-based FIFO classes.
 //
 //------------------------------------------------------------------------------
 
@@ -45,7 +46,7 @@ import uvm.meta.mailbox;
 // Class: uvm_tlm_fifo
 //
 // This class provides storage of transactions between two independently running
-// processes. Transactions are put into the FIFO via the ~put_export~. 
+// processes. Transactions are put into the FIFO via the ~put_export~.
 // transactions are fetched from the FIFO in the order they arrived via the
 // ~get_peek_export~. The ~put_export~ and ~get_peek_export~ are inherited from
 // the <uvm_tlm_fifo_base #(T)> super class, and the interface methods provided by
@@ -55,6 +56,8 @@ import uvm.meta.mailbox;
 
 class uvm_tlm_fifo(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
 {
+  mixin uvm_component_utils;
+
   enum string type_name = "uvm_tlm_fifo!(T)";
 
   // _m is effectively immutable
@@ -62,7 +65,7 @@ class uvm_tlm_fifo(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
   private mailbox!T m() {
     return _m;
   }
-  
+
   // _m_size is effectively immutable
   private size_t _m_size;
   private size_t m_size() {
@@ -74,7 +77,7 @@ class uvm_tlm_fifo(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
 
   // Function: new
   //
-  // The ~name~ and ~parent~ are the normal uvm_component constructor arguments. 
+  // The ~name~ and ~parent~ are the normal uvm_component constructor arguments.
   // The ~parent~ should be null if the <uvm_tlm_fifo> is going to be used in a
   // statically elaborated construct (e.g., a module). The ~size~ indicates the
   // maximum size of the FIFO; a value of zero indicates no upper bound.
@@ -103,7 +106,7 @@ class uvm_tlm_fifo(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
       return m_size;
     }
   }
- 
+
 
   // Function: used
   //
@@ -125,7 +128,7 @@ class uvm_tlm_fifo(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
       return (m.num is 0);
     }
   }
- 
+
 
   // Function: is_full
   //
@@ -160,7 +163,7 @@ class uvm_tlm_fifo(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
   override public void peek(out T t) {
     m.peek(t);
   }
-   
+
   override public bool try_get(out T t) {
     synchronized(this) {
       if(!m.try_get(t)) {
@@ -170,8 +173,8 @@ class uvm_tlm_fifo(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
       get_ap.write(t);
       return true;
     }
-  } 
-  
+  }
+
   override public bool try_peek(out T t) {
     synchronized(this) {
       if(!m.try_peek(t)) {
@@ -186,11 +189,11 @@ class uvm_tlm_fifo(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
       if(!m.try_put(t)) {
 	return false;
       }
-  
+
       put_ap.write(t);
       return true;
     }
-  }  
+  }
 
   // Should always be called under synchronized(this) lock
   // else if some action is sought right after can_put on basis
@@ -200,14 +203,14 @@ class uvm_tlm_fifo(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
     synchronized(this) {
       return m_size is 0 || m.num() < m_size;
     }
-  }  
+  }
 
   override public bool can_get() {
     synchronized(this) {
       return m.num() > 0 && m_pending_blocked_gets == 0;
     }
   }
-  
+
   override public bool can_peek() {
     synchronized(this) {
       return m.num() > 0;
@@ -225,9 +228,9 @@ class uvm_tlm_fifo(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
       T t;
       bool r;
 
-      r = true; 
+      r = true;
       while(r) r = try_get(t) ;
-    
+
       if(m.num() > 0 && m_pending_blocked_gets != 0) {
 	uvm_report_error("flush failed" ,
 			 "there are blocked gets preventing the flush",
@@ -260,7 +263,7 @@ class uvm_tlm_analysis_fifo(T=int): uvm_tlm_fifo!T
   //|  function void write (T t)
   //
   // Access via ports bound to this export is the normal mechanism for writing
-  // to an analysis FIFO. 
+  // to an analysis FIFO.
   // See write method of <uvm_tlm_if_base #(T1,T2)> for more information.
 
   uvm_analysis_imp!(T, uvm_tlm_analysis_fifo!T) analysis_export;
