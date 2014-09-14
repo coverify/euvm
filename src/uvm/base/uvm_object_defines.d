@@ -85,9 +85,11 @@ mixin template uvm_component_auto_build_mixin()
   // overriding function that calls the generic function for automatic
   // object construction
   override void _uvm__auto_build() {
-    import std.stdio;
-    writeln("Building .... : ", get_full_name);
-    _uvm__auto_build_component(this);
+    debug(UVM_AUTO) {
+      import std.stdio;
+      writeln("Building .... : ", get_full_name);
+    }
+    ._uvm__auto_build!(0, typeof(this))(this);
   }
 }
 

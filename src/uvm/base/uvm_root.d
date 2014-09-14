@@ -79,6 +79,7 @@ import uvm.base.uvm_report_handler;
 import uvm.base.uvm_report_object;
 import uvm.base.uvm_report_server;
 import uvm.base.uvm_domain;
+import uvm.comps.uvm_test;
 
 public import uvm.meta.misc;
 
@@ -198,6 +199,9 @@ class uvm_root: uvm_component
     }
   }
 
+  // SV implementation makes this a part of the run_test function
+  uvm_component uvm_test_top;
+
   // in SV this is part of the constructor. Here we have separated it
   // out since we need to make sure that _once initialization has completed
   void init_report() {
@@ -252,7 +256,10 @@ class uvm_root: uvm_component
   // task
   public void run_test(string test_name="") {
     uvm_factory factory = uvm_factory.get();
-    uvm_component uvm_test_top;
+
+    // Moved to uvm_root class
+    // uvm_component uvm_test_top;
+
     bool testname_plusarg = false;
 
     // Set up the process that decouples the thread that drops objections from
@@ -657,6 +664,13 @@ class uvm_root: uvm_component
   }
 
   override public void auto_build_phase(uvm_phase phase) {
+    // The root gets id 0
+    this.set_id();
+    
+    foreach(child; get_children()) {
+      child.set_id();
+    }
+    
     foreach(child; get_children()) {
       child._uvm__auto_build();
     }

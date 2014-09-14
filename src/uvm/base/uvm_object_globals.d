@@ -161,6 +161,12 @@ enum uvm_active_passive_enum: bool
 
 mixin(declareEnums!uvm_active_passive_enum());
 
+enum uvm_auto_enum: byte
+  {   UVM_NO_AUTO=0,
+      UVM_AUTO=1
+      }
+
+mixin(declareEnums!uvm_auto_enum());
 
 // Parameter: `uvm_field_* macro flags
 //

@@ -52,7 +52,7 @@ import uvm.comps.uvm_agent;
 import uvm.seq.uvm_sequence_item;
 import uvm.seq.uvm_sequence_base;
 
-import std.traits: isIntegral;
+import std.traits: isIntegral, isAbstractClass;
 
 import std.string: format;
 import std.conv: to;
@@ -116,6 +116,7 @@ class uvm_once_component
   @uvm_private_sync bool _print_config_matches;
   @uvm_private_sync m_verbosity_setting[] _m_time_settings;
   @uvm_private_sync bool _print_config_warned;
+  @uvm_private_sync uint _m_comp_count;
 }
 
 abstract class uvm_component: uvm_report_object
@@ -2858,6 +2859,26 @@ abstract class uvm_component: uvm_report_object
 
   private string _m_name;
 
+  private int _m_comp_id = -1; // set in the auto_build_phase
+
+  public int get_id() {
+    return _m_comp_id;
+  }
+
+  package void set_id() {
+    uint id;
+    synchronized(_once) {
+      id = _once._m_comp_count++;
+    }
+    synchronized(this) {
+      debug(UVM_AUTO) {
+	import std.stdio;
+	writeln("Auto Number ", get_full_name, ": ", id);
+      }
+      _m_comp_id = id;
+    }
+  }
+
   enum string type_name = "uvm_component";
 
   override public string get_type_name() {
@@ -3257,80 +3278,114 @@ template _uvm__is_member_component(L)
     }
 }
 
-void _uvm__auto_build_component(size_t I=0, size_t CI=0, T)(T t)
+void _uvm__auto_build(size_t I, T, N...)(T t)
   if(is(T : uvm_component) && is(T == class)) {
+    // pragma(msg, N);
     static if(I < t.tupleof.length) {
-      import std.string;
-      // ignore the ESDL that have been tagged as _esdl__ignore
       alias M=typeof(t.tupleof[I]);
       static if(_uvm__is_member_component!M) {
-	enum bool isActiveAttr = findUvmActiveAttrIndexed!(0, __traits(getAttributes, t.tupleof[I]));
-	bool is_active = true;
-	static if(is(T: uvm_agent)) {
-	  is_active = t.is_active;
-	}
-	if(is_active ||	    // build everything if the agent is active
-	   (! isActiveAttr)) { // build the element if not and active element
-	  static if((isArray!M)) {
-	    _uvm__auto_build_array!I(t, t.tupleof[I]);
-	  }
-	  else {
-	    _uvm__auto_build_child!I(t, t.tupleof[I]);
-	  }
-	}
+	_uvm__auto_build!(I+1, T, N, I)(t);
       }
-      // iterate through the next element in the object tuple
-      _uvm__auto_build_component!(I+1, CI+1)(t);
+      else {
+	_uvm__auto_build!(I+1, T, N)(t);
+      }
     }
-    // recurse through the objects found in the base classes
-    else static if(is(T B == super)
-		   && is(B[0]: uvm_component)
-		   && is(B[0] == class)
-		   && (! is(B[0] == uvm_component))) {
+    else {
+      // first build these
+      static if(N.length > 0) {
+	alias U = typeof(t.tupleof[N[0]]);
+	_uvm__auto_build!(T, U, N)(t, t.tupleof[N[0]], []);
+      }
+      // then go over the base object
+      static if(is(T B == super)
+		&& is(B[0]: uvm_component)
+		&& is(B[0] == class)
+		&& (! is(B[0] == uvm_component))) {
 	B[0] b = t;
-	_uvm__auto_build_component!(0, CI)(b);
+	_uvm__auto_build!(0, B)(b);
       }
-  }
-
-void _uvm__auto_build_array(size_t I, T, L)(T t, ref L l, uint[] indices=null)
-{
-  for(size_t j = 0; j < l.length; ++j) {
-    // pragma(msg, "Adding: ", typeof(l[j]));
-    static if(isArray!(typeof(l[j]))) {
-      _uvm__auto_build_array!I(t, l[j],
-			       indices ~ cast(uint) j);
-    }
-    else {
-      l[j]._uvm__auto_build_child!I(t, l[j], indices ~ cast(uint) j);
+      // and finally iterate over the children
+      static if(N.length > 0) {
+	_uvm__auto_build_recurse!(T, U, N)(t, t.tupleof[N[0]], []);
+      }
     }
   }
-}
 
-static void _uvm__auto_build_child(size_t I, T, L)(T t, ref L l,
-						   uint[] indices=null) {
-  string name = t.tupleof[I].stringof[2..$]; // chomp "t."
-  foreach(i; indices) {
-    name ~= "[" ~ i.to!string ~ "]";
-  }
-  if(l is null) {
-    l = L.type_id.create(name, t);
-  }
-  if(! l._uvm__auto_build_done) {
-    l._uvm__auto_build_done(true);
-    l._uvm__auto_build();
-  }
-}
+void _uvm__auto_build(T, U, size_t I, N...)(T t, ref U u,
+					    uint indices[]) {
+  enum bool isActiveAttr =
+    findUvmAttr!(0, UVM_ACTIVE, __traits(getAttributes, t.tupleof[I]));
+  enum bool noAutoAttr =
+    findUvmAttr!(0, UVM_NO_AUTO, __traits(getAttributes, t.tupleof[I]));
+  enum bool isAbstract = isAbstractClass!U;
 
-private template findUvmActiveAttrIndexed(size_t I, A...) {
-  static if(I < A.length) {
-    static if(is(typeof(A[I]) == uvm_active_passive_enum) && A[I] == UVM_ACTIVE) {
-      enum bool findUvmActiveAttrIndexed = true;
-    }
-    else {
-      enum bool findUvmActiveAttrIndexed = findUvmActiveAttrIndexed!(I+1, A);
+  bool is_active = true;
+  static if(is(T: uvm_agent)) {
+    is_active = t.is_active;
+  }
+  static if(isArray!U) {
+    for(size_t j = 0; j < u.length; ++j) {
+      alias E = typeof(u[j]);
+      _uvm__auto_build!(T, E, I)(t, u[j], indices ~ cast(uint) j);
     }
   }
   else {
-    enum bool findUvmActiveAttrIndexed = false;
+    string name = t.tupleof[I].stringof[2..$]; // chomp "t."
+    foreach(i; indices) {
+      name ~= "[" ~ i.to!string ~ "]";
+    }
+    if(u is null &&
+       (! isAbstract) &&  // class is abstract
+       (! noAutoAttr) &&  // make sure that UVM_NO_AUTO is not present
+       (is_active ||	  // build everything if the agent is active
+	(! isActiveAttr))) { // build the element if not and active element
+      u = U.type_id.create(name, t);
+    }
+    // provide an ID to all the components that are not null
+    if(u !is null) {
+      u.set_id();
+    }
+  }
+  static if(N.length > 0) {
+    enum J = N[0];
+    alias V = typeof(t.tupleof[J]);
+    _uvm__auto_build!(T, V, N)(t, t.tupleof[J], []);
+  }
+}
+
+void _uvm__auto_build_recurse(T, U, size_t I, N...)(T t, ref U u,
+						    uint indices[]) {
+  static if(isArray!U) {
+    for(size_t j = 0; j < u.length; ++j) {
+      alias E = typeof(u[j]);
+      _uvm__auto_build_recurse!(T, E, I)(t, u[j], indices ~ cast(uint) j);
+    }
+  }
+  else {
+    if(u !is null &&
+       (! u._uvm__auto_build_done)) {
+      u._uvm__auto_build_done(true);
+      u._uvm__auto_build();
+    }
+  }
+  static if(N.length > 0) {
+    enum J = N[0];
+    alias V = typeof(t.tupleof[J]);
+    _uvm__auto_build_recurse!(T, V, N)(t, t.tupleof[J], []);
+  }
+}
+
+
+private template findUvmAttr(size_t I, alias S, A...) {
+  static if(I < A.length) {
+    static if(is(typeof(A[I]) == typeof(S)) && A[I] == S) {
+      enum bool findUvmAttr = true;
+    }
+    else {
+      enum bool findUvmAttr = findUvmAttr!(I+1, S, A);
+    }
+  }
+  else {
+    enum bool findUvmAttr = false;
   }
 }
