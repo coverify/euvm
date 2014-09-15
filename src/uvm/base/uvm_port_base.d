@@ -126,6 +126,11 @@ abstract class uvm_port_component_base: uvm_component
 class uvm_port_component (PORT=uvm_object): uvm_port_component_base
 {
   mixin(uvm_sync!(uvm_port_component!PORT));
+
+  // These needs further investigation
+  // The component becomes accessible via the port -- FIXME
+  override void _uvm__auto_build() {}
+
   @uvm_immutable_sync private PORT _m_port;
 
   public this(string name, uvm_component parent, PORT port) {

@@ -61,7 +61,6 @@ import std.algorithm;
 final class uvm_once_domain_globals
 {
   @uvm_public_sync uvm_phase _build_ph;
-  @uvm_public_sync uvm_phase _auto_build_ph;
   @uvm_public_sync uvm_phase _connect_ph;
   @uvm_public_sync uvm_phase _end_of_elaboration_ph;
   @uvm_public_sync uvm_phase _start_of_simulation_ph;
@@ -145,7 +144,6 @@ class uvm_domain: uvm_phase
 
     uvm_domain domain = new uvm_domain("common");
     domain.add(uvm_build_phase.get());
-    domain.add(uvm_auto_build_phase.get());
     domain.add(uvm_connect_phase.get());
     domain.add(uvm_end_of_elaboration_phase.get());
     domain.add(uvm_start_of_simulation_phase.get());
@@ -161,7 +159,6 @@ class uvm_domain: uvm_phase
       // for backward compatibility, make common phases visible;
       // same as uvm_<name>_phase.get().
       build_ph               = domain.find(uvm_build_phase.get());
-      auto_build_ph          = domain.find(uvm_auto_build_phase.get());
       connect_ph             = domain.find(uvm_connect_phase.get());
       end_of_elaboration_ph  = domain.find(uvm_end_of_elaboration_phase.get());
       start_of_simulation_ph = domain.find(uvm_start_of_simulation_phase.get());

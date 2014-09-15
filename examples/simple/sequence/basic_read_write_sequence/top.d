@@ -175,20 +175,25 @@ class sequenceA(REQ, RSP): uvm_sequence!(REQ, RSP)
 class env: uvm_env
 {
   mixin uvm_component_utils;
-  private uvm_sequencer!(bus_req, bus_rsp) sqr;
-  private my_driver!(bus_req, bus_rsp) drv ;
+  private uvm_sequencer!(bus_req, bus_rsp) sequence_controller;
+  // @UVM_NO_AUTO
+  private my_driver!(bus_req, bus_rsp) mydriver ;
 
   this(string name, uvm_component parent) {
     super(name, parent);
   }
 
-  override void build_phase(uvm_phase phase) {
-    super.build_phase(phase);
-    sqr = new uvm_sequencer!(bus_req, bus_rsp)("sequence_controller", this);
+  // override void build_phase(uvm_phase phase) {
+  //   super.build_phase(phase);
+  //   // sequence_controller = new uvm_sequencer!(bus_req, bus_rsp)("sequence_controller", this);
 
-    // create and connect driver
-    drv = new my_driver!(bus_req, bus_rsp)("my_driver", this);
-    drv.seq_item_port.connect(sqr.seq_item_export);
+  //   // create and connect driver
+  //   // mydriver = new my_driver!(bus_req, bus_rsp)("my_driver", this);
+  //   // mydriver.seq_item_port.connect(sequence_controller.seq_item_export);
+  // }
+
+  override void connect_phase(uvm_phase phase) {
+    mydriver.seq_item_port.connect(sequence_controller.seq_item_export);
   }
 
   // task
@@ -197,7 +202,7 @@ class env: uvm_env
     for (int i = 0; i < NUM_SEQS; i++) {
       fork({
     	  auto the_sequence = new sequenceA!(bus_req, bus_rsp)("sequence");
-    	  the_sequence.start(sqr, null);
+    	  the_sequence.start(sequence_controller, null);
     	});
     }
 
@@ -210,33 +215,22 @@ class env: uvm_env
 
 @timeUnit(100.psec)
 @timePrecision(100.psec)
-class EsdlRoot: uvm_root_entity
+class my_root: uvm_root
 {
-  // UvmRoot uvmRoot;
+  mixin uvm_component_utils;
 
-  this(string name, uint seed) {
-    super(name, seed);
-  }
-
-
-  void initial() {
-    //    lockStage();
-    auto top = uvm_top();
-
+  // override void _uvm__auto_build() {}
+  
+  // env my_env;
+  override void initial() {
     uvm_info("top","In top initial block", UVM_MEDIUM);
-    auto e = new env("env", null);
+    auto my_env = new env("env", null);
     run_test();
-
   }
-
-  Task!initial _init;
-
 }
 
 void main()
 {
   import std.random: uniform;
-  auto theRoot = new EsdlRoot("theRoot", uniform!uint());
-  theRoot.elaborate();
-  theRoot.simulate();
+  uvm_execute!(my_root)(uniform!uint());
 }

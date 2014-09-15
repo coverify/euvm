@@ -56,6 +56,7 @@ import uvm.base.uvm_phase;
 import uvm.base.uvm_bottomup_phase;
 import uvm.base.uvm_topdown_phase;
 import uvm.base.uvm_component;
+import uvm.base.uvm_globals;
 import uvm.base.uvm_task_phase;
 import uvm.meta.misc;
 
@@ -74,6 +75,12 @@ final class uvm_build_phase: uvm_topdown_phase
   mixin(uvm_once_sync!uvm_once_build_phase);
   final override public void exec_func(uvm_component comp, uvm_phase phase) {
     comp.build_phase(phase);
+    // Do the auto build stuff here
+    debug(UVM_AUTO) {
+      uvm_info("UVM_AUTO", "Post Build on: " ~ comp.get_full_name() ~ ":" ~
+	       comp.get_type_name());
+    }
+    comp._uvm__auto_build();
   }
 
   enum string type_name = "uvm_build_phase";
@@ -90,44 +97,6 @@ final class uvm_build_phase: uvm_topdown_phase
 
   final override public string get_type_name() {
     return type_name;
-  }
-}
-
-// The uvm_auto_build_phase would be used to build whatever has not
-// been built by the user in the build phase. uvm_auto_build_phase
-// takes help of D reflections to visit all the uvm_components that
-// have been declared in the code but have not been instantiated.
-final class uvm_auto_build_phase: uvm_topdown_phase
-{
-  mixin(uvm_once_sync!uvm_once_auto_build_phase);
-  final override public void exec_func(uvm_component comp, uvm_phase phase) {
-    comp.auto_build_phase(phase);
-  }
-
-  enum string type_name = "uvm_auto_build_phase";
-
-  static public uvm_auto_build_phase get() {
-    synchronized(_once) {
-      return m_inst;
-    }
-  }
-
-  final protected this(string name="auto_build") {
-    super(name);
-  }
-
-  final override public string get_type_name() {
-    return type_name;
-  }
-}
-
-final class uvm_once_auto_build_phase
-{
-  @uvm_immutable_sync uvm_auto_build_phase _m_inst;
-  this() {
-    synchronized(this) {
-      _m_inst = new uvm_auto_build_phase();
-    }
   }
 }
 

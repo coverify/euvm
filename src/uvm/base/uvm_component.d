@@ -168,7 +168,7 @@ abstract class uvm_component: uvm_report_object
 	// Check that we're not in or past end_of_elaboration
 	uvm_domain common = uvm_domain.get_common_domain();
 	// uvm_phase bld = common.find(uvm_build_phase.get());
-	uvm_phase bld = common.find(uvm_auto_build_phase.get());
+	uvm_phase bld = common.find(uvm_build_phase.get());
 	if (bld is null) {
 	  uvm_report_fatal("COMP/INTERNAL",
 			   "attempt to find build phase object failed",UVM_NONE);
@@ -543,19 +543,17 @@ abstract class uvm_component: uvm_report_object
   }
 
   // base function for auto build phase
-  bool _uvm__auto_build_done_ = false;
-  public bool _uvm__auto_build_done() {
-    return _uvm__auto_build_done_;
-  }
-  public void _uvm__auto_build_done(bool flag) {
-    _uvm__auto_build_done_ = flag;
-  }
-
-  public void auto_build_phase(uvm_phase phase) {}
+  // bool _uvm__auto_build_done_ = false;
+  // public bool _uvm__auto_build_done() {
+  //   return _uvm__auto_build_done_;
+  // }
+  // public void _uvm__auto_build_done(bool flag) {
+  //   _uvm__auto_build_done_ = flag;
+  // }
 
   public void _uvm__auto_build() {
     uvm_fatal("COMPUTILS", "Mixin uvm_component_utils missing for: " ~
-	      get_full_name());
+		get_type_name());
   }
 
   // Function: connect_phase
@@ -2859,6 +2857,7 @@ abstract class uvm_component: uvm_report_object
 
   private string _m_name;
 
+  @uvm_private_sync
   private int _m_comp_id = -1; // set in the auto_build_phase
 
   public int get_id() {
@@ -2867,15 +2866,15 @@ abstract class uvm_component: uvm_report_object
 
   package void set_id() {
     uint id;
-    synchronized(_once) {
-      id = _once._m_comp_count++;
-    }
-    synchronized(this) {
+    if(m_comp_id == -1) {
+      synchronized(_once) {
+	id = _once._m_comp_count++;
+      }
       debug(UVM_AUTO) {
 	import std.stdio;
 	writeln("Auto Number ", get_full_name, ": ", id);
       }
-      _m_comp_id = id;
+      m_comp_id = id;
     }
   }
 
@@ -3296,18 +3295,31 @@ void _uvm__auto_build(size_t I, T, N...)(T t)
 	alias U = typeof(t.tupleof[N[0]]);
 	_uvm__auto_build!(T, U, N)(t, t.tupleof[N[0]], []);
       }
+      else static if(is(T: uvm_root)) {
+	  if(t.m_children.length is 0) {
+	    uvm_report_fatal("NOCOMP",
+			     "No components instantiated. You must either "
+			     "instantiate at least one component before "
+			     "calling run_test or use run_test to do so. "
+			     "To run a test using run_test, use +UVM_TESTNAME "
+			     "or supply the test name in the argument to "
+			     "run_test(). Exiting simulation.", UVM_NONE);
+	    return;
+	  }
+	}
       // then go over the base object
       static if(is(T B == super)
 		&& is(B[0]: uvm_component)
 		&& is(B[0] == class)
-		&& (! is(B[0] == uvm_component))) {
+		&& (! is(B[0] == uvm_component))
+		&& (! is(B[0] == uvm_root))) {
 	B[0] b = t;
 	_uvm__auto_build!(0, B)(b);
       }
       // and finally iterate over the children
-      static if(N.length > 0) {
-	_uvm__auto_build_recurse!(T, U, N)(t, t.tupleof[N[0]], []);
-      }
+      // static if(N.length > 0) {
+      // 	_uvm__auto_build_recurse!(T, U, N)(t, t.tupleof[N[0]], []);
+      // }
     }
   }
 
@@ -3353,27 +3365,27 @@ void _uvm__auto_build(T, U, size_t I, N...)(T t, ref U u,
   }
 }
 
-void _uvm__auto_build_recurse(T, U, size_t I, N...)(T t, ref U u,
-						    uint indices[]) {
-  static if(isArray!U) {
-    for(size_t j = 0; j < u.length; ++j) {
-      alias E = typeof(u[j]);
-      _uvm__auto_build_recurse!(T, E, I)(t, u[j], indices ~ cast(uint) j);
-    }
-  }
-  else {
-    if(u !is null &&
-       (! u._uvm__auto_build_done)) {
-      u._uvm__auto_build_done(true);
-      u._uvm__auto_build();
-    }
-  }
-  static if(N.length > 0) {
-    enum J = N[0];
-    alias V = typeof(t.tupleof[J]);
-    _uvm__auto_build_recurse!(T, V, N)(t, t.tupleof[J], []);
-  }
-}
+// void _uvm__auto_build_recurse(T, U, size_t I, N...)(T t, ref U u,
+// 						    uint indices[]) {
+//   static if(isArray!U) {
+//     for(size_t j = 0; j < u.length; ++j) {
+//       alias E = typeof(u[j]);
+//       _uvm__auto_build_recurse!(T, E, I)(t, u[j], indices ~ cast(uint) j);
+//     }
+//   }
+//   else {
+//     if(u !is null &&
+//        (! u._uvm__auto_build_done)) {
+//       u._uvm__auto_build_done(true);
+//       u._uvm__auto_build();
+//     }
+//   }
+//   static if(N.length > 0) {
+//     enum J = N[0];
+//     alias V = typeof(t.tupleof[J]);
+//     _uvm__auto_build_recurse!(T, V, N)(t, t.tupleof[J], []);
+//   }
+// }
 
 
 private template findUvmAttr(size_t I, alias S, A...) {

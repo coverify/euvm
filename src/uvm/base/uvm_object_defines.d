@@ -23,6 +23,7 @@
 module uvm.base.uvm_object_defines;
 import uvm.base.uvm_object: uvm_object;
 import uvm.base.uvm_component: uvm_component;
+import uvm.base.uvm_root: uvm_root;
 import uvm.base.uvm_registry: uvm_component_registry;
 import uvm.base.uvm_factory: uvm_object_wrapper;
 import uvm.seq.uvm_sequence_item: uvm_sequence_item;
@@ -75,7 +76,9 @@ mixin template uvm_component_utils(T=void)
   else {
     alias T U;
   }
-  mixin uvm_component_registry_mixin!(U, U.stringof);
+  static if(! is(U: uvm_root)) { // do not register uvm_roots with factory
+    mixin uvm_component_registry_mixin!(U, U.stringof);
+  }
   mixin m_uvm_get_type_name_func!(U);
   mixin uvm_component_auto_build_mixin;
 }
