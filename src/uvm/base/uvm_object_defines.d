@@ -94,6 +94,10 @@ mixin template uvm_component_auto_build_mixin()
     }
     ._uvm__auto_build!(0, typeof(this))(this);
   }
+
+  override void _uvm__config_parallelism() {
+    ._uvm__config_parallelism(this);
+  }
 }
 
 // mixin template uvm_component_param_utils(T=void)

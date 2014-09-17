@@ -119,11 +119,24 @@ class uvm_once_component
   @uvm_private_sync uint _m_comp_count;
 }
 
-abstract class uvm_component: uvm_report_object
+abstract class uvm_component: uvm_report_object, ParContext
 {
   mixin(uvm_once_sync!uvm_once_component);
   mixin(uvm_sync!uvm_component);
 
+  mixin ParContextMixin;
+
+  parallelize _par__info = parallelize(ParallelPolicy.NONE,
+				       uint.max);;
+
+  public ParContext _esdl__parInheritFrom() {
+    return get_parent();
+  }
+
+  public uint _esdl__parComponentId() {
+    return get_id();
+  }
+  
   // Function: new
   //
   // Creates a new component with the given leaf instance ~name~ and handle to
@@ -555,6 +568,8 @@ abstract class uvm_component: uvm_report_object
     uvm_fatal("COMPUTILS", "Mixin uvm_component_utils missing for: " ~
 		get_type_name());
   }
+
+  public void _uvm__config_parallelism() {}
 
   // Function: connect_phase
   //
@@ -3277,6 +3292,64 @@ template _uvm__is_member_component(L)
     }
 }
 
+void _uvm__config_parallelism(T)(T t) 
+  if(is(T : uvm_component) && is(T == class)) {
+
+    auto linfo = _esdl__get_parallelism(t);
+
+    ParConfig pconf;
+    parallelize pinfo;
+
+    if(t.get_parent !is null) {
+      pconf = t.get_parent._esdl__getParConfig;
+      pinfo = t.get_parent._par__info;
+    }
+
+    if(t.get_parent is null ||
+       pinfo._parallel == ParallelPolicy.NONE) {
+      // the parent had no parallel info
+      // get it from RootEntity
+      pinfo = getRootEntity._esdl__getParInfo();
+      pconf = getRootEntity._esdl__getParConfig();
+    }
+
+    parallelize par__info;
+    ParConfig   par__conf;
+    
+    if(linfo._parallel == ParallelPolicy.NONE) {
+	import std.stdio;
+	writeln(t.get_full_name(), " -- Single Parent: Must setAffinity :-)");
+      // no parallelize attribute. take hier information
+      if(pinfo._parallel == ParallelPolicy.SINGLE) {
+	par__info._parallel = ParallelPolicy.INHERIT;
+      }
+      else {
+	par__info = pinfo;
+      }
+    }
+    else {
+      par__info = linfo;
+    }
+
+    if(par__info._parallel == ParallelPolicy.INHERIT) {
+      par__conf = pconf;
+    }
+    else {
+      // UDP @parallelize without argument
+      auto nthreads = getRootEntity.getNumPoolThreads();
+      if(par__info._poolIndex != uint.max) {
+	assert(par__info._poolIndex < nthreads);
+	par__conf = new ParConfig(par__info._poolIndex);
+      }
+      else {
+	par__conf = new ParConfig(t._esdl__parComponentId() % nthreads);
+      }
+    }
+
+    t._esdl__parConfig = par__conf;
+    t._par__info = par__info;
+  }
+
 void _uvm__auto_build(size_t I, T, N...)(T t)
   if(is(T : uvm_component) && is(T == class)) {
     // pragma(msg, N);
@@ -3331,6 +3404,9 @@ void _uvm__auto_build(T, U, size_t I, N...)(T t, ref U u,
     findUvmAttr!(0, UVM_NO_AUTO, __traits(getAttributes, t.tupleof[I]));
   enum bool isAbstract = isAbstractClass!U;
 
+  // the top level we start with should also get an id
+  t.set_id();
+  
   bool is_active = true;
   static if(is(T: uvm_agent)) {
     is_active = t.is_active;

@@ -166,6 +166,6 @@ abstract class uvm_task_phase: uvm_phase
 	exec_task(comp, phase);
 
 	phase.dec_m_num_procs_not_yet_returned;
-      });
+      }).setAffinity(comp);
   }
 }

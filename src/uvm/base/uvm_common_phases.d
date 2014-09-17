@@ -81,6 +81,7 @@ final class uvm_build_phase: uvm_topdown_phase
 	       comp.get_type_name());
     }
     comp._uvm__auto_build();
+    comp._uvm__config_parallelism();
   }
 
   enum string type_name = "uvm_build_phase";
