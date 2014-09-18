@@ -81,7 +81,6 @@ final class uvm_build_phase: uvm_topdown_phase
 	       comp.get_type_name());
     }
     comp._uvm__auto_build();
-    comp._uvm__config_parallelism();
   }
 
   enum string type_name = "uvm_build_phase";
@@ -149,6 +148,45 @@ final class uvm_connect_phase: uvm_bottomup_phase
   }
 
   protected this(string name="connect") {
+    super(name);
+  }
+
+  final override public string get_type_name() {
+    return type_name;
+  }
+}
+
+final class uvm_once_elaboration_phase
+{
+  @uvm_immutable_sync uvm_elaboration_phase _m_inst;
+  this() {
+    synchronized(this) {
+      _m_inst = new uvm_elaboration_phase();
+    }
+  }
+}
+
+final class uvm_elaboration_phase: uvm_topdown_phase
+{
+  mixin(uvm_once_sync!uvm_once_elaboration_phase);
+  final override public void exec_func(uvm_component comp, uvm_phase phase) {
+    comp.elaboration_phase(phase);
+    // Do the auto elab stuff here
+    debug(UVM_AUTO) {
+      uvm_info("UVM_AUTO", "Elaborating: " ~ comp.get_full_name() ~ ":" ~
+	       comp.get_type_name());
+    }
+  }
+
+  enum string type_name = "uvm_elaboration_phase";
+
+  static public uvm_elaboration_phase get() {
+    synchronized(_once) {
+      return m_inst;
+    }
+  }
+
+  final protected this(string name="elaboration") {
     super(name);
   }
 

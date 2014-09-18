@@ -81,6 +81,7 @@ mixin template uvm_component_utils(T=void)
   }
   mixin m_uvm_get_type_name_func!(U);
   mixin uvm_component_auto_build_mixin;
+  mixin uvm_component_auto_elab_mixin;
 }
 
 mixin template uvm_component_auto_build_mixin()
@@ -94,9 +95,18 @@ mixin template uvm_component_auto_build_mixin()
     }
     ._uvm__auto_build!(0, typeof(this))(this);
   }
+}
 
-  override void _uvm__config_parallelism() {
-    ._uvm__config_parallelism(this);
+mixin template uvm_component_auto_elab_mixin()
+{
+  // overriding function that calls the generic function for automatic
+  // object construction
+  override void _uvm__auto_elab() {
+    debug(UVM_AUTO) {
+      import std.stdio;
+      writeln("Elaborating .... : ", get_full_name);
+    }
+    ._uvm__auto_elab!(0, typeof(this))(this);
   }
 }
 

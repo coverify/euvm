@@ -684,6 +684,16 @@ class uvm_root: uvm_component
     m_do_dump_args();
   }
 
+  override public void elaboration_phase(uvm_phase phase) {
+    foreach(child; get_children()) {
+      child._uvm__auto_elab();
+    }
+  }
+  
+  public override ParContext _esdl__parInheritFrom() {
+    return getRootEntity();
+  }
+
   //   extern local function void m_do_verbosity_settings();
   // m_do_verbosity_settings
   // -----------------------
@@ -1172,6 +1182,7 @@ class uvm_once(T) if(is(T: uvm_root))
     import uvm.base.uvm_common_phases:
     uvm_once_build_phase, uvm_build_phase,
       uvm_once_connect_phase, uvm_connect_phase,
+      uvm_once_elaboration_phase, uvm_elaboration_phase,
       uvm_once_end_of_elaboration_phase, uvm_end_of_elaboration_phase,
       uvm_once_start_of_simulation_phase, uvm_start_of_simulation_phase,
       uvm_once_run_phase, uvm_run_phase,
@@ -1218,6 +1229,7 @@ class uvm_once(T) if(is(T: uvm_root))
 
     uvm_once_build_phase _uvm_build_phase;
     uvm_once_connect_phase _uvm_connect_phase;
+    uvm_once_elaboration_phase _uvm_elaboration_phase;
     uvm_once_end_of_elaboration_phase _uvm_end_of_elaboration_phase;
     uvm_once_start_of_simulation_phase _uvm_start_of_simulation_phase;
     uvm_once_run_phase _uvm_run_phase;
@@ -1339,6 +1351,9 @@ class uvm_once(T) if(is(T: uvm_root))
 	_uvm_connect_phase = new uvm_once_connect_phase();
 	uvm_connect_phase._once = _uvm_connect_phase;
 	// writeln("Done -- _uvm_connect_phase");
+	_uvm_elaboration_phase = new uvm_once_elaboration_phase();
+	uvm_elaboration_phase._once = _uvm_elaboration_phase;
+	// writeln("Done -- _uvm_elaboration_phase");
 	_uvm_end_of_elaboration_phase = new uvm_once_end_of_elaboration_phase();
 	uvm_end_of_elaboration_phase._once = _uvm_end_of_elaboration_phase;
 	// writeln("Done -- _uvm_end_of_elaboration_phase");
@@ -1413,6 +1428,7 @@ class uvm_once(T) if(is(T: uvm_root))
       // uvm_common_phases;
       uvm_build_phase._once = _uvm_build_phase;
       uvm_connect_phase._once = _uvm_connect_phase;
+      uvm_elaboration_phase._once = _uvm_elaboration_phase;
       uvm_end_of_elaboration_phase._once = _uvm_end_of_elaboration_phase;
       uvm_start_of_simulation_phase._once = _uvm_start_of_simulation_phase;
       uvm_run_phase._once = _uvm_run_phase;

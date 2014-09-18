@@ -130,7 +130,11 @@ abstract class uvm_component: uvm_report_object, ParContext
 				       uint.max);;
 
   public ParContext _esdl__parInheritFrom() {
-    return get_parent();
+    auto c = get_parent();
+    if(c is null) {
+      return uvm_top();
+    }
+    else return c;
   }
 
   public uint _esdl__parComponentId() {
@@ -556,20 +560,20 @@ abstract class uvm_component: uvm_report_object, ParContext
   }
 
   // base function for auto build phase
-  // bool _uvm__auto_build_done_ = false;
-  // public bool _uvm__auto_build_done() {
-  //   return _uvm__auto_build_done_;
-  // }
-  // public void _uvm__auto_build_done(bool flag) {
-  //   _uvm__auto_build_done_ = flag;
-  // }
+  bool _uvm__auto_elab_done_ = false;
+  public bool _uvm__auto_elab_done() {
+    return _uvm__auto_elab_done_;
+  }
+  public void _uvm__auto_elab_done(bool flag) {
+    _uvm__auto_elab_done_ = flag;
+  }
 
   public void _uvm__auto_build() {
     uvm_fatal("COMPUTILS", "Mixin uvm_component_utils missing for: " ~
 		get_type_name());
   }
 
-  public void _uvm__config_parallelism() {}
+  public void _uvm__auto_elab() {}
 
   // Function: connect_phase
   //
@@ -590,6 +594,14 @@ abstract class uvm_component: uvm_report_object, ParContext
   public void connect() {
     return;
   }
+
+  // Function: elaboration_phase
+  //
+  // The <uvm_elaboration_phase> phase implementation method.
+  //
+  // This method should never be called directly.
+
+  public void elaboration_phase(uvm_phase phase) {}
 
   // Function: end_of_elaboration_phase
   //
@@ -3292,64 +3304,6 @@ template _uvm__is_member_component(L)
     }
 }
 
-void _uvm__config_parallelism(T)(T t) 
-  if(is(T : uvm_component) && is(T == class)) {
-
-    auto linfo = _esdl__get_parallelism(t);
-
-    ParConfig pconf;
-    parallelize pinfo;
-
-    if(t.get_parent !is null) {
-      pconf = t.get_parent._esdl__getParConfig;
-      pinfo = t.get_parent._par__info;
-    }
-
-    if(t.get_parent is null ||
-       pinfo._parallel == ParallelPolicy.NONE) {
-      // the parent had no parallel info
-      // get it from RootEntity
-      pinfo = getRootEntity._esdl__getParInfo();
-      pconf = getRootEntity._esdl__getParConfig();
-    }
-
-    parallelize par__info;
-    ParConfig   par__conf;
-    
-    if(linfo._parallel == ParallelPolicy.NONE) {
-	import std.stdio;
-	writeln(t.get_full_name(), " -- Single Parent: Must setAffinity :-)");
-      // no parallelize attribute. take hier information
-      if(pinfo._parallel == ParallelPolicy.SINGLE) {
-	par__info._parallel = ParallelPolicy.INHERIT;
-      }
-      else {
-	par__info = pinfo;
-      }
-    }
-    else {
-      par__info = linfo;
-    }
-
-    if(par__info._parallel == ParallelPolicy.INHERIT) {
-      par__conf = pconf;
-    }
-    else {
-      // UDP @parallelize without argument
-      auto nthreads = getRootEntity.getNumPoolThreads();
-      if(par__info._poolIndex != uint.max) {
-	assert(par__info._poolIndex < nthreads);
-	par__conf = new ParConfig(par__info._poolIndex);
-      }
-      else {
-	par__conf = new ParConfig(t._esdl__parComponentId() % nthreads);
-      }
-    }
-
-    t._esdl__parConfig = par__conf;
-    t._par__info = par__info;
-  }
-
 void _uvm__auto_build(size_t I, T, N...)(T t)
   if(is(T : uvm_component) && is(T == class)) {
     // pragma(msg, N);
@@ -3366,7 +3320,7 @@ void _uvm__auto_build(size_t I, T, N...)(T t)
       // first build these
       static if(N.length > 0) {
 	alias U = typeof(t.tupleof[N[0]]);
-	_uvm__auto_build!(T, U, N)(t, t.tupleof[N[0]], []);
+	_uvm__auto_build!(T, U, N)(t, t.tupleof[N[0]]);
       }
       else static if(is(T: uvm_root)) {
 	  if(t.m_children.length is 0) {
@@ -3391,13 +3345,13 @@ void _uvm__auto_build(size_t I, T, N...)(T t)
       }
       // and finally iterate over the children
       // static if(N.length > 0) {
-      // 	_uvm__auto_build_recurse!(T, U, N)(t, t.tupleof[N[0]], []);
+      // 	_uvm__auto_build_iterate!(T, U, N)(t, t.tupleof[N[0]], []);
       // }
     }
   }
 
 void _uvm__auto_build(T, U, size_t I, N...)(T t, ref U u,
-					    uint indices[]) {
+					    uint indices[] = []) {
   enum bool isActiveAttr =
     findUvmAttr!(0, UVM_ACTIVE, __traits(getAttributes, t.tupleof[I]));
   enum bool noAutoAttr =
@@ -3441,12 +3395,12 @@ void _uvm__auto_build(T, U, size_t I, N...)(T t, ref U u,
   }
 }
 
-// void _uvm__auto_build_recurse(T, U, size_t I, N...)(T t, ref U u,
+// void _uvm__auto_build_iterate(T, U, size_t I, N...)(T t, ref U u,
 // 						    uint indices[]) {
 //   static if(isArray!U) {
 //     for(size_t j = 0; j < u.length; ++j) {
 //       alias E = typeof(u[j]);
-//       _uvm__auto_build_recurse!(T, E, I)(t, u[j], indices ~ cast(uint) j);
+//       _uvm__auto_build_iterate!(T, E, I)(t, u[j], indices ~ cast(uint) j);
 //     }
 //   }
 //   else {
@@ -3459,9 +3413,150 @@ void _uvm__auto_build(T, U, size_t I, N...)(T t, ref U u,
 //   static if(N.length > 0) {
 //     enum J = N[0];
 //     alias V = typeof(t.tupleof[J]);
-//     _uvm__auto_build_recurse!(T, V, N)(t, t.tupleof[J], []);
+//     _uvm__auto_build_iterate!(T, V, N)(t, t.tupleof[J]);
 //   }
 // }
+
+void _uvm__auto_elab(size_t I=0, T, N...)(T t)
+  if(is(T : uvm_component) && is(T == class)) {
+    // pragma(msg, N);
+    static if(I < t.tupleof.length) {
+      alias M=typeof(t.tupleof[I]);
+      static if(_uvm__is_member_component!M) {
+	_uvm__auto_elab!(I+1, T, N, I)(t);
+      }
+      else {
+	_uvm__auto_elab!(I+1, T, N)(t);
+      }
+    }
+    else {
+      // first elab these
+      static if(N.length > 0) {
+	alias U = typeof(t.tupleof[N[0]]);
+	_uvm__auto_elab!(T, U, N)(t, t.tupleof[N[0]]);
+      }
+      // then go over the base object
+      static if(is(T B == super)
+		&& is(B[0]: uvm_component)
+		&& is(B[0] == class)
+		&& (! is(B[0] == uvm_component))
+		&& (! is(B[0] == uvm_root))) {
+	B[0] b = t;
+	_uvm__auto_elab!(0, B[0])(b);
+      }
+      // and finally iterate over the children
+      static if(N.length > 0) {
+      	_uvm__auto_elab_iterate!(T, U, N)(t, t.tupleof[N[0]]);
+      }
+    }
+  }
+
+void _uvm__auto_elab_iterate(T, U, size_t I, N...)(T t, ref U u,
+						   uint indices[] = []) {
+  static if(isArray!U) {
+    for(size_t j = 0; j < u.length; ++j) {
+      alias E = typeof(u[j]);
+      _uvm__auto_elab_iterate!(T, E, I)(t, u[j], indices ~ cast(uint) j);
+    }
+  }
+  else {
+    if(u !is null &&
+       (! u._uvm__auto_elab_done)) {
+      u._uvm__auto_elab_done(true);
+      u._uvm__auto_elab();
+    }
+  }
+  static if(N.length > 0) {
+    enum J = N[0];
+    alias V = typeof(t.tupleof[J]);
+    _uvm__auto_elab_iterate!(T, V, N)(t, t.tupleof[J]);
+  }
+}
+
+void _uvm__auto_elab(T, U, size_t I, N...)(T t, ref U u,
+					    uint indices[] = []) {
+
+  // the top level we start with should also get an id
+  t.set_id();
+  static if(isArray!U) {
+    for(size_t j = 0; j < u.length; ++j) {
+      alias E = typeof(u[j]);
+      _uvm__auto_elab!(T, E, I)(t, u[j], indices ~ cast(uint) j);
+    }
+  }
+  else {
+    // string name = t.tupleof[I].stringof[2..$]; // chomp "t."
+    // foreach(i; indices) {
+    //   name ~= "[" ~ i.to!string ~ "]";
+    // }
+    // provide an ID to all the components that are not null
+    auto linfo = _esdl__get_parallelism!(I, T, U)(t, u);
+    _uvm__config_parallelism(u, linfo);
+    if(u !is null) {
+      u.set_id();
+    }
+  }
+  static if(N.length > 0) {
+    enum J = N[0];
+    alias V = typeof(t.tupleof[J]);
+    _uvm__auto_elab!(T, V, N)(t, t.tupleof[J]);
+  }
+}
+
+void _uvm__config_parallelism(T)(T t, ref parallelize linfo)
+  if(is(T : uvm_component) && is(T == class)) {
+
+    ParConfig pconf;
+    parallelize pinfo;
+    assert(t !is null);
+    if(t.get_parent !is null) {
+      pconf = t.get_parent._esdl__getParConfig;
+      pinfo = t.get_parent._par__info;
+    }
+
+    if(t.get_parent is null ||
+       pinfo._parallel == ParallelPolicy.NONE) {
+      // the parent had no parallel info
+      // get it from RootEntity
+      pinfo = getRootEntity._esdl__getParInfo();
+      pconf = getRootEntity._esdl__getParConfig();
+    }
+
+    parallelize par__info;
+    ParConfig   par__conf;
+    
+    if(linfo._parallel == ParallelPolicy.NONE) {
+      // no parallelize attribute. take hier information
+      if(pinfo._parallel == ParallelPolicy.SINGLE) {
+	par__info._parallel = ParallelPolicy.INHERIT;
+      }
+      else {
+	par__info = pinfo;
+      }
+    }
+    else {
+      par__info = linfo;
+    }
+
+    if(par__info._parallel == ParallelPolicy.INHERIT) {
+      par__conf = pconf;
+    }
+    else {
+      // UDP @parallelize without argument
+      auto nthreads = getRootEntity.getNumPoolThreads();
+      if(par__info._poolIndex != uint.max) {
+	assert(par__info._poolIndex < nthreads);
+	par__conf = new ParConfig(par__info._poolIndex);
+      }
+      else {
+	par__conf = new ParConfig(t._esdl__parComponentId() % nthreads);
+      }
+    }
+
+    t._esdl__parConfig = par__conf;
+    t._par__info = par__info;
+  }
+
 
 
 private template findUvmAttr(size_t I, alias S, A...) {
