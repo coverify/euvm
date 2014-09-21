@@ -339,16 +339,17 @@ mixin template m_uvm_field_auto_utils(T)
 				 lhs.tupleof[I], rhs.tupleof[I]);
 	}
       }
-      else static if(isIntegral!U || isBoolean!U ) {
+      else // static if(isIntegral!U || isBoolean!U )
+	{
 	  if(lhs.tupleof[I] != rhs.tupleof[I]) {
 	    comparer.compare_field(lhs.tupleof[I].stringof[4..$],
 				   lhs.tupleof[I], rhs.tupleof[I]);
 	  }
 	}
-	else {
-	  static assert(false, "compare not implemented yet for: " ~
-			U.stringof);
-	}
+      // else {
+      // 	static assert(false, "compare not implemented yet for: " ~
+      // 		      U.stringof);
+      // }
       if(comparer.result && (comparer.show_max <= comparer.result)) {
 	// shortcircuit
 	return true;
