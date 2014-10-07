@@ -195,7 +195,7 @@ class uvm_recorder: uvm_object
 			T value)
     if(isFloatingPoint!T) {
       synchronized(this) {
-	ubvec!(BitLength!T) ival = value;
+	UBit!(BitLength!T) ival = value;
 	if(_tr_handle is 0) return;
 	_scope_stack.set_arg(name);
 	set_attribute(_tr_handle, _scope_stack.get(), ival, UVM_REAL,

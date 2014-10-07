@@ -542,14 +542,14 @@ class uvm_packer
     }
   }
 
-  public bit get_bit (uint index) {
+  public Bit!1 get_bit (uint index) {
     synchronized(this) {
       if (index >= _m_bits.length) {
-	index_error(index, "bit", 1);
+	index_error(index, "Bit!1", 1);
       }
       bool val;
       _m_bits.getFront(val, index);
-      return cast(bit) val;
+      return cast(Bit!1) val;
     }
   }
 
@@ -575,15 +575,15 @@ class uvm_packer
     }
   }
 
-  public void get_bits (ref bit[] bits) {
+  public void get_bits (ref Bit!1[] bits) {
     synchronized(this) {
       _m_bits.toArray(bits);
     }
   }
 
-  public bit[] get_bits () {
+  public Bit!1[] get_bits () {
     synchronized(this) {
-      bit[] bits;
+      Bit!1[] bits;
       _m_bits.toArray(bits);
       return bits;
     }
@@ -638,7 +638,7 @@ class uvm_packer
     }
   }
 
-  public void put_bits (bit bits[]) {
+  public void put_bits (Bit!1 bits[]) {
     synchronized(this) {
       _m_bits.fromArray(bits);
       _m_bits.unpackReset();

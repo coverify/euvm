@@ -148,7 +148,7 @@ class uvm_obj_rsrc: uvm_resource!uvm_object
 //
 // specialization of uvm_resource #(T) for T = vector of bits
 //----------------------------------------------------------------------
-class uvm_bit_rsrc(size_t N=1): uvm_resource!(ubvec!N)
+class uvm_bit_rsrc(size_t N=1): uvm_resource!(UBit!N)
 {
   alias uvm_bit_rsrc!N this_subtype;
 
@@ -166,11 +166,11 @@ class uvm_bit_rsrc(size_t N=1): uvm_resource!(ubvec!N)
     return this.to!string;
   }
 
-  mixin UVM_RESOURCE_GET_FCNS!(ubvec!N);
+  mixin UVM_RESOURCE_GET_FCNS!(UBit!N);
 }
 
 // This class is not used anywhere else in UVM baseclasses.
-// We can code this one once we have multi-dimensional bvecs working
+// We can code this one once we have multi-dimensional Bits working
 
 // //----------------------------------------------------------------------
 // // uvm_byte_rsrc

@@ -687,11 +687,11 @@ public string uvm_vector_to_string(T)(T value,
 				      string radix_str="")
   if(isBitVector!T || isIntegral!T || is(T == bool)) {
     static if(isIntegral!T)       vec!T val = value;
-    else static if(is(T == bool)) bit val = value;
+    else static if(is(T == bool)) Bit!1 val = value;
       else                        alias value val;
 
     // sign extend & don't show radix for negative values
-    if (radix is UVM_DEC && (cast(bit) val[$-1]) is 1)
+    if (radix is UVM_DEC && (cast(Bit!1) val[$-1]) is 1)
       return format("%0d", val);
 
     switch(radix) {

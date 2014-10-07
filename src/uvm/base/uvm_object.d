@@ -795,7 +795,7 @@ abstract class uvm_object: uvm_void, RandomizableIntf
 
   // Function: pack
 
-  final public size_t pack (ref bit[] bitstream, uvm_packer packer=null) {
+  final public size_t pack (ref Bit!1[] bitstream, uvm_packer packer=null) {
     m_pack(packer);
     packer.get_bits(bitstream);
     return packer.get_packed_size();
@@ -900,7 +900,7 @@ abstract class uvm_object: uvm_void, RandomizableIntf
 
   // Function: unpack
 
-  final public size_t unpack (ref bit[] bitstream,
+  final public size_t unpack (ref Bit!1[] bitstream,
 			      uvm_packer packer = null) {
 
     m_unpack_pre(packer);
