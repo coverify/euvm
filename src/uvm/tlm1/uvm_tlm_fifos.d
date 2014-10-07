@@ -54,15 +54,15 @@ import uvm.meta.mailbox;
 //
 //------------------------------------------------------------------------------
 
-class uvm_tlm_fifo(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
+class uvm_tlm_fifo_common(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
 {
   mixin uvm_component_utils;
 
   enum string type_name = "uvm_tlm_fifo!(T)";
 
   // _m is effectively immutable
-  private mailbox!T _m;
-  private mailbox!T m() {
+  private MailboxBase!T _m;
+  private MailboxBase!T m() {
     return _m;
   }
 
@@ -85,7 +85,7 @@ class uvm_tlm_fifo(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
   public this(string name=null, uvm_component parent = null, int size = 1) {
     synchronized(this) {
       super(name, parent);
-      _m = new mailbox!T(size);
+      // _m = new Mailbox!T(size);
       _m_size = size;
     }
   }
@@ -240,6 +240,38 @@ class uvm_tlm_fifo(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
   }
 }
 
+class uvm_tlm_fifo(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
+{
+  mixin uvm_component_utils;
+  public this(string name=null, uvm_component parent = null, int size = 1) {
+    synchronized(this) {
+      super(name, parent, size);
+      _m = new Mailbox!T(size);
+    }
+  }
+}
+
+class uvm_tlm_fifo_ingress(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
+{
+  mixin uvm_component_utils;
+  public this(string name=null, uvm_component parent = null, int size = 1) {
+    synchronized(this) {
+      super(name, parent, size);
+      _m = new MailInbox!T(size);
+    }
+  }
+}
+
+class uvm_tlm_fifo_egress(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
+{
+  mixin uvm_component_utils;
+  public this(string name=null, uvm_component parent = null, int size = 1) {
+    synchronized(this) {
+      super(name, parent, size);
+      _m = new MailOutbox!T(size);
+    }
+  }
+}
 
 //------------------------------------------------------------------------------
 //

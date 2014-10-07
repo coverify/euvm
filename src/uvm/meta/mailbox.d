@@ -21,9 +21,10 @@
 module uvm.meta.mailbox;
 
 private import esdl.base.core: Event;
+private import core.sync.semaphore: Semaphore;
 
 // Mimics the SystemVerilog mailbox behaviour
-class mailbox(T)
+abstract class MailboxBase(T)
 {
   
   private T[] _buffer;
@@ -38,9 +39,11 @@ class mailbox(T)
     return _bound;
   }
 
-  private Event _readEvent;
-  private Event _writeEvent;
-
+  abstract void readWait();
+  abstract void writeWait();
+  abstract void readNotify();
+  abstract void writeNotify();
+  
   private void GrowBuffer() {
     synchronized(this) {
       size_t size = _buffer.length;
@@ -56,8 +59,6 @@ class mailbox(T)
   public this(size_t bound = 0) {
     synchronized(this) {
       _bound = bound;
-      _readEvent.init("readEvent");
-      _writeEvent.init("writeEvent");
       if(bound is 0) {
 	// no bound, start with 4
 	_buffer.length = 4;
@@ -123,12 +124,12 @@ class mailbox(T)
   void get(ref T val) {
     while(true) {
       if(numFilled is 0) {
-	_writeEvent.wait();
+	writeWait();
       }
       synchronized(this) {
 	if(numFilled !is 0) {
 	  readBuffer(val);
-	  _readEvent.notify();
+	  readNotify();
 	  break;
 	}
       }
@@ -138,7 +139,7 @@ class mailbox(T)
   void peek(ref T val) {
     while(true) {
       if(numFilled is 0) {
-	_writeEvent.wait();
+	writeWait();
       }
       synchronized(this) {
 	if(numFilled !is 0) {
@@ -160,13 +161,13 @@ class mailbox(T)
       }
       else {
 	if(numFree is 0) {
-	  _readEvent.wait();
+	  readWait();
 	}
       }
       synchronized(this) {
 	if(numFree !is 0) {
 	  writeBuffer(val);
-	  _writeEvent.notify();
+	  writeNotify();
 	  break;
 	}
       }
@@ -177,7 +178,7 @@ class mailbox(T)
     synchronized(this) {
       if(numFilled is 0) return false;
       readBuffer(val);
-      _readEvent.notify();
+      readNotify();
       return true;
     }
   }
@@ -203,9 +204,66 @@ class mailbox(T)
 	}
       }
       writeBuffer(val);
-      _writeEvent.notify();
+      writeNotify();
       return true;
     }
   }
 
+}
+
+class Mailbox(T): MailboxBase!T
+{
+  private Event _readEvent;
+  private Event _writeEvent;
+
+  public this(size_t bound = 0) {
+    synchronized(this) {
+      super(bound);
+      _readEvent.init("readEvent");
+      _writeEvent.init("writeEvent");
+    }
+  }
+  
+  override void readWait() {_readEvent.wait();}
+  override void writeWait() {_writeEvent.wait();}
+  override void readNotify() {_readEvent.notify();}
+  override void writeNotify() {_writeEvent.notify();}
+}
+
+class MailOutbox(T): MailboxBase!T
+{
+  private Event _readEvent;
+  private Semaphore _writeEvent;
+
+  public this(size_t bound = 0) {
+    synchronized(this) {
+      super(bound);
+      _readEvent.init("readEvent");
+      _writeEvent = new Semaphore;
+    }
+  }
+  
+  override void readWait() {_readEvent.wait();}
+  override void writeWait() {_writeEvent.wait();}
+  override void readNotify() {_readEvent.notify();}
+  override void writeNotify() {_writeEvent.notify();}
+}
+
+class MailInbox(T): MailboxBase!T
+{
+  private Semaphore _readEvent;
+  private Event _writeEvent;
+
+  public this(size_t bound = 0) {
+    synchronized(this) {
+      super(bound);
+      _writeEvent.init("readEvent");
+      _readEvent = new Semaphore;
+    }
+  }
+  
+  override void readWait() {_readEvent.wait();}
+  override void writeWait() {_writeEvent.wait();}
+  override void readNotify() {_readEvent.notify();}
+  override void writeNotify() {_writeEvent.notify();}
 }
