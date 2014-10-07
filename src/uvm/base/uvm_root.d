@@ -89,6 +89,7 @@ import std.conv;
 import std.format;
 import std.string: format;
 
+import core.sync.semaphore: Semaphore;
 // each process belonging to a given root enity would see the same
 // uvm_root. This static (thread local) variable gets assigned during
 // the initialization of all the processes and rouines as part of the
@@ -128,6 +129,7 @@ class uvm_root_entity_base: RootEntity
   }
   abstract public uvm_root get_uvm_root();
   // The randomization seed passed from the top.
+  // alias get_uvm_root this;
 }
 
 class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
@@ -136,19 +138,30 @@ class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
       synchronized(this) {
 	super(name);
 	_seed = seed;
-	_uvmRootInitEvent.init("_uvmRootInitEvent");
+	_uvmRootInitSemaphore = new Semaphore(); // count 0
+	// _uvmRootInitEvent.init("_uvmRootInitEvent");
+	debug(SEED) {
+	  import std.stdio;
+	  writeln("seed for UVM is:", seed);
+	}
       }
     }
 
-    override public uvm_root get_uvm_root() {
+    override public T get_uvm_root() {
       if(_uvmRootInit is false) {
-	_uvmRootInitEvent.wait();
+	// _uvmRootInitEvent.wait();
+	_uvmRootInitSemaphore.wait();
+	_uvmRootInitSemaphore.notify();
 	if(once !is null) once.initialize();
       }
       return this._uvm_top;
     }
 
-    Event _uvmRootInitEvent;
+    alias get_uvm_root this;
+    
+    // Event _uvmRootInitEvent;
+    Semaphore _uvmRootInitSemaphore;
+    
     @uvm_private_sync bool _uvmRootInit;
 
     final public void initUVM() {
@@ -157,8 +170,9 @@ class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
 	_once = new uvm_once!(T)(_uvm_top, _seed);
 	uvm_top.init_report();
 	uvm_top.init_domains();
-	_uvmRootInitEvent.notify();
 	_uvmRootInit = true;
+	// _uvmRootInitEvent.notify();
+	_uvmRootInitSemaphore.notify();
 
       }
     }
@@ -189,7 +203,7 @@ class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
 
 
     // The uvm_root instance corresponding to this RootEntity.
-    private uvm_root _uvm_top;
+    private T _uvm_top;
 
     // The UVM singleton variables are now encapsulated as part of _once
     // mechanism.
@@ -211,6 +225,7 @@ class uvm_root: uvm_component
       super("__top__", null);
       _m_phase_timeout = new WithEvent!SimTime;
       _m_phase_all_done = new WithEvent!bool;
+      _uvmElabDoneSemaphore = new Semaphore(); // count 0
     }
   }
 
@@ -1106,18 +1121,39 @@ class uvm_root: uvm_component
   // -------------
   // At end of elab phase we need to do tlm binding resolution.
   override public void phase_started(uvm_phase phase) {
-    if(phase is end_of_elaboration_ph) {
-      do_resolve_bindings();
-      if(enable_print_topology) print_topology();
-      uvm_report_server srvr = get_report_server();
-      if(srvr.get_severity_count(UVM_ERROR) > 0) {
-	uvm_report_fatal("BUILDERR", "stopping due to build errors", UVM_NONE);
+    synchronized(this) {
+      if(phase is end_of_elaboration_ph) {
+	do_resolve_bindings();
+	if(enable_print_topology) print_topology();
+	uvm_report_server srvr = get_report_server();
+	if(srvr.get_severity_count(UVM_ERROR) > 0) {
+	  uvm_report_fatal("BUILDERR", "stopping due to build errors", UVM_NONE);
+	}
       }
     }
   }
 
+  Semaphore _uvmElabDoneSemaphore;
+  @uvm_private_sync bool _uvmElabDone;
+
+  override public void phase_ended(uvm_phase phase) {
+    if(phase is end_of_elaboration_ph) {
+      synchronized(this) {
+	_uvmElabDone = true;
+	_uvmElabDoneSemaphore.notify();
+      }
+    }
+  }
+
+  final public void wait_for_end_of_elaboration() {
+    while(_uvmElabDone is false) {
+      _uvmElabDoneSemaphore.wait();
+    }
+    _uvmElabDoneSemaphore.notify();
+  }
+
   @uvm_immutable_sync
-    WithEvent!bool _m_phase_all_done;
+  WithEvent!bool _m_phase_all_done;
 
 
   version(UVM_NO_DEPRECATED) {}
@@ -1238,7 +1274,7 @@ class uvm_once(T) if(is(T: uvm_root))
     uvm_once_report_phase _uvm_report_phase;
     uvm_once_final_phase _uvm_final_phase;
 
-    this(ref uvm_root root, uint seed) {
+    this(ref T root, uint seed) {
       synchronized(this) {
 	// import std.stdio;
 	_uvm_sequencer_base = new uvm_once_sequencer_base();
@@ -1473,8 +1509,25 @@ class uvm_root_report_handler: uvm_report_handler
   }
 }
 
-public void uvm_execute(T)(uint seed) {
-  auto root = new uvm_root_entity!T(T.stringof, seed);
+public void uvm_simulate(T, string name="")(uint seed) {
+  static if(name == "") {
+    auto root = new uvm_root_entity!T(T.stringof, seed);
+  }
+  else {
+    auto root = new uvm_root_entity!T(name, seed);
+  }
   root.elaborate();
   root.simulate();
+}
+
+public auto uvm_fork(T, string name="")(uint seed) {
+  static if(name == "") {
+    auto root = new uvm_root_entity!T(T.stringof, seed);
+  }
+  else {
+    auto root = new uvm_root_entity!T(name, seed);
+  }
+  root.elaborate();
+  root.fork();
+  return root;
 }
