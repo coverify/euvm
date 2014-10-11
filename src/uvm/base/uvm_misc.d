@@ -342,10 +342,10 @@ final class uvm_status_container {
     }
   }
 
-  //Used for checking cycles. When a data public is entered, if the depth is
+  //Used for checking cycles. When a data function is entered, if the depth is
   //non-zero, then then the existeance of the object in the map means that a
-  //cycle has occured and the public should immediately exit. When the
-  //public exits, it should reset the cycle map so that there is no memory
+  //cycle has occured and the function should immediately exit. When the
+  //function exits, it should reset the cycle map so that there is no memory
   //leak.
   private bool _cycle_check[uvm_object];
 
@@ -379,14 +379,14 @@ final class uvm_status_container {
   }
 
   //These are the policy objects currently in use. The policy object gets set
-  //when a public starts up. The macros use this.
+  //when a function starts up. The macros use this.
   @uvm_public_sync private uvm_comparer _comparer;
   @uvm_public_sync private uvm_packer   _packer;
   @uvm_public_sync private uvm_recorder _recorder;
   @uvm_public_sync private uvm_printer  _printer;
 
-  // utility public used to perform a cycle check when config setting are pushed
-  // to uvm_objects. the public has to look at the current object stack representing
+  // utility function used to perform a cycle check when config setting are pushed
+  // to uvm_objects. the function has to look at the current object stack representing
   // the call stack of all m_uvm_field_automation() invocations.
   // it is a only a cycle if the previous m_uvm_field_automation call scope
   // is not identical with the current scope AND the scope is already present in the
@@ -546,7 +546,7 @@ final class uvm_seed_map {
 
   // Function- oneway_hash
   //
-  // A one-way hash public that is useful for creating srandom seeds. An
+  // A one-way hash function that is useful for creating srandom seeds. An
   // unsigned int value is generated from the string input. An initial seed can
   // be used to seed the hash, if not supplied the m_global_random_seed
   // value is used. Uses a CRC like functionality to minimize collisions.
