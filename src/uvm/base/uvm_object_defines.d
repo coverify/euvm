@@ -297,6 +297,53 @@ mixin template m_uvm_field_auto_utils(T)
       }
   }
 
+  override void uvm_field_auto_setint(string field_name,
+				      uvm_bitstream_t value) {
+  }
+
+  override void uvm_field_auto_setint(string field_name,
+				      ulong value) {
+  }
+  
+  // return true if a match occured
+  void uvm_set_local(size_t I=0, T, U)(T t, U value, string regx,
+				       string prefix="",
+				       ref bool status = false) {
+    static if(I < t.tupleof.length) {
+      enum int FLAGS = uvm_field_auto_get_flags!(t, I);
+      alias E = typeof(t.tupleof[I]);
+      string name = prefix ~ t.tupleof[I].stringof[2..$];
+      static if(FLAGS & UVM_READONLY) {
+	if(uvm_is_match(regx, name)) {
+	  uvm_report_warning("RDONLY",
+			     format("Readonly argument match %s is ignored",
+				    name),
+			     UVM_NONE);
+	}
+      }
+      else {
+	if(uvm_is_match(regx, name)) {
+	  uvm_report_info("STRMTC", "set_object()" ~ ": Matched string " ~
+			  regx ~ " to field " ~ name,
+			  UVM_LOW);
+	  static if(is(U: E)) {
+	    t.tupleof[I] = value;
+	    status = true;
+	  }
+	  else static if(is(E: U) && is(U: Object)) {
+	      if(t.tupleof[i] == cast(E) value) {
+		status = true;
+	      }
+	    }
+	    else {
+	      t.tupleof[I] = cast(E) value;
+	      status = true;
+	    }
+	}
+      }
+    }
+  }
+
   // Copy
   override void uvm_field_auto_copy(uvm_object rhs) {
     auto rhs_ = cast(T) rhs;
@@ -308,9 +355,9 @@ mixin template m_uvm_field_auto_utils(T)
 
   // copy the Ith field
   bool uvm_field_auto_copy_field(size_t I=0, T)(T lhs, T rhs) {
-    enum int flags = uvm_field_auto_get_flags!(lhs, I);
-    if(flags & UVM_COPY &&
-       !(flags & UVM_NOCOPY)) {
+    enum int FLAGS = uvm_field_auto_get_flags!(lhs, I);
+    if(FLAGS & UVM_COPY &&
+       !(FLAGS & UVM_NOCOPY)) {
       lhs.tupleof[I] = rhs.tupleof[I];
     }
     return false;
@@ -328,9 +375,9 @@ mixin template m_uvm_field_auto_utils(T)
   // compare the Ith field
   bool uvm_field_auto_compare_field(size_t I=0, T)(T lhs, T rhs) {
     import std.traits: isIntegral;
-    enum int flags = uvm_field_auto_get_flags!(lhs, I);
-    static if(flags & UVM_COMPARE &&
-	      !(flags & UVM_NOCOMPARE)) {
+    enum int FLAGS = uvm_field_auto_get_flags!(lhs, I);
+    static if(FLAGS & UVM_COMPARE &&
+	      !(FLAGS & UVM_NOCOMPARE)) {
       auto comparer = m_uvm_status_container.comparer;
       alias typeof(lhs.tupleof[I]) U;
       static if(isBitVector!U) {
@@ -364,9 +411,9 @@ template uvm_field_auto_get_flags(alias t, size_t I) {
   alias typeof(t) T;
   enum int class_flags =
     uvm_field_auto_acc_flags!(__traits(getAttributes, T));
-  enum int flags =
+  enum int FLAGS =
     uvm_field_auto_acc_flags!(__traits(getAttributes, t.tupleof[I]));
-  enum int uvm_field_auto_get_flags = flags | class_flags;
+  enum int uvm_field_auto_get_flags = FLAGS | class_flags;
 }
 
 template uvm_field_auto_acc_flags(A...)

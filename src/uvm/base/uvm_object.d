@@ -597,6 +597,16 @@ abstract class uvm_object: uvm_void, RandomizableIntf
   // classes. To copy the fields of a derived class, that class should override
   // the <do_copy> method.
 
+  void uvm_field_auto_setint(string field_name, uvm_bitstream_t value) {
+    uvm_report_warning("NOUTILS", "default uvm_field_auto_setint --"
+		       "no uvm_object_utils", UVM_NONE);
+  }
+  
+  void uvm_field_auto_setint(string field_name, ulong value) {
+    uvm_report_warning("NOUTILS", "default uvm_field_auto_setint --"
+		       "no uvm_object_utils", UVM_NONE);
+  }
+  
   void uvm_field_auto_copy(uvm_object rhs) {
     uvm_report_warning("NOUTILS", "default uvm_field_auto_copy --"
 		       "no uvm_object_utils", UVM_NONE);
@@ -1019,7 +1029,11 @@ abstract class uvm_object: uvm_void, RandomizableIntf
     m_uvm_status_container.status = false;
     m_uvm_status_container.bitstream = value;
 
-    m_uvm_field_automation(null, UVM_SETINT, field_name);
+    // Use Vlang auto instead
+    // m_uvm_field_automation(null, UVM_SETINT, field_name);
+
+    uvm_field_auto_setint(field_name, value);
+    
 
     if(m_uvm_status_container.warning &&
        ! m_uvm_status_container.status) {
