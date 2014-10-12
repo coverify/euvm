@@ -222,7 +222,7 @@ public bool uvm_string_to_severity (string sev_str, out uvm_severity sev) {
 }
 
 public bool uvm_string_to_action (string action_str, out uvm_action action) {
-  string actions[];
+  string[] actions;
   uvm_split_string(action_str,'|',actions);
   bool retval = true;
   // action = 0; // taken care since action is of type "out"

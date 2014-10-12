@@ -321,7 +321,7 @@ abstract class uvm_component: uvm_report_object, ParContext
     }
   }
 
-  final public void get_children(ref uvm_component children[]) {
+  final public void get_children(ref uvm_component[] children) {
     synchronized(this) {
       children ~= _m_children.values;
     }
@@ -2609,7 +2609,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   private uvm_domain _m_domain;    // set_domain stores our domain handle
 
   @uvm_public_sync
-  private uvm_phase _m_phase_imps[uvm_phase];    // functors to override ovm_root defaults
+  private uvm_phase[uvm_phase] _m_phase_imps;    // functors to override ovm_root defaults
 
   //   //TND review protected, provide read-only accessor.
   @uvm_public_sync
@@ -2795,8 +2795,8 @@ abstract class uvm_component: uvm_report_object, ParContext
     return null;
   }
 
-  private int _m_stream_handle[string];
-  private int _m_tr_h[uvm_transaction];
+  private int[string] _m_stream_handle;
+  private int[uvm_transaction] _m_tr_h;
 
   public int m_begin_tr(uvm_transaction tr,
 			int parent_handle = 0,
@@ -2999,7 +2999,7 @@ abstract class uvm_component: uvm_report_object, ParContext
       // +uvm_set_verbosity=<comp>,<id>,<verbosity>,<phase|time>,<offset>
       // +uvm_set_verbosity=uvm_test_top.env0.agent1.*,_ALL_,UVM_FULL,time,800
 
-      static string values[];
+      static string[] values;
       static bool first = true;
       uvm_cmdline_processor clp = uvm_cmdline_processor.get_inst();
       uvm_root top = uvm_root.get();
@@ -3010,7 +3010,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 
       foreach(i, value; values) {
 	m_verbosity_setting setting;
-	string args[];
+	string[] args;
 	uvm_split_string(value, ',', args);
 
 	// Warning is already issued in uvm_root, so just don't keep it
@@ -3058,9 +3058,9 @@ abstract class uvm_component: uvm_report_object, ParContext
       if(this is top) {
 	fork({
 	    SimTime last_time = 0;
-	    m_verbosity_setting time_settings[] = sort_time_settings();
+	    m_verbosity_setting[] time_settings = sort_time_settings();
 	    foreach(i, setting; time_settings) {
-	      uvm_component comps[];
+	      uvm_component[] comps;
 	      top.find_all(setting.comp, comps);
 	      wait(setting.offset - last_time);
 	      // synchronized(this) {
@@ -3093,8 +3093,8 @@ abstract class uvm_component: uvm_report_object, ParContext
     // +uvm_set_action=<comp>,<id>,<severity>,<action[|action]>
     // +uvm_set_action=uvm_test_top.env0.*,_ALL_,UVM_ERROR,UVM_NO_ACTION
 
-    static string values[];
-    string args[];
+    static string[] values;
+    string[] args;
     uvm_severity sev;
     uvm_action action;
 
@@ -3351,7 +3351,7 @@ void _uvm__auto_build(size_t I, T, N...)(T t)
   }
 
 void _uvm__auto_build(T, U, size_t I, N...)(T t, ref U u,
-					    uint indices[] = []) {
+					    uint[] indices = []) {
   enum bool isActiveAttr =
     findUvmAttr!(0, UVM_ACTIVE, __traits(getAttributes, t.tupleof[I]));
   enum bool noAutoAttr =
@@ -3452,7 +3452,7 @@ void _uvm__auto_elab(size_t I=0, T, N...)(T t)
   }
 
 void _uvm__auto_elab_iterate(T, U, size_t I, N...)(T t, ref U u,
-						   uint indices[] = []) {
+						   uint[] indices = []) {
   static if(isArray!U) {
     for(size_t j = 0; j < u.length; ++j) {
       alias E = typeof(u[j]);
@@ -3474,7 +3474,7 @@ void _uvm__auto_elab_iterate(T, U, size_t I, N...)(T t, ref U u,
 }
 
 void _uvm__auto_elab(T, U, size_t I, N...)(T t, ref U u,
-					    uint indices[] = []) {
+					    uint[] indices = []) {
 
   // the top level we start with should also get an id
   t.set_id();

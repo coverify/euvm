@@ -272,7 +272,7 @@ final class uvm_status_container {
   // (uvm_status_container), it is Ok to not make the next two
   // elements static (as done in SV version)
   // __gshared 
-  private bool _field_array[string];
+  private bool[string] _field_array;
 
   public bool field_exists(string field) {
     synchronized(this) {
@@ -347,7 +347,7 @@ final class uvm_status_container {
   //cycle has occured and the function should immediately exit. When the
   //function exits, it should reset the cycle map so that there is no memory
   //leak.
-  private bool _cycle_check[uvm_object];
+  private bool[uvm_object] _cycle_check;
 
   public bool check_cycle(uvm_object obj) {
     synchronized(this) {
@@ -436,7 +436,7 @@ final class uvm_status_container {
 
 final class uvm_copy_map {
   import uvm.base.uvm_object;
-  private uvm_object _m_map[uvm_object];
+  private uvm_object[uvm_object] _m_map;
   public void set(uvm_object key, uvm_object obj) {
     synchronized(this) {
       _m_map[key] = obj;
@@ -496,8 +496,8 @@ final class uvm_once_seed_map
 final class uvm_seed_map {
   mixin(uvm_once_sync!(uvm_once_seed_map));
 
-  private uint _seed_table[string];
-  private uint _count[string];
+  private uint[string] _seed_table;
+  private uint[string] _count;
 
   static private uint map_random_seed ( string type_id, string inst_id="" ) {
     uvm_seed_map seed_map;
@@ -813,7 +813,7 @@ final class uvm_utils (TYPE=uvm_void, string FIELD="config") {
   // starting with the component given by ~start~. Uses <uvm_root::find_all>.
 
   static public types_t find_all(uvm_component start) {
-    uvm_component list[];
+    uvm_component[] list;
     types_t types;
     uvm_root top = uvm_root.get();
     top.find_all("*", list, start);

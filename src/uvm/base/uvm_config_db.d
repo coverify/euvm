@@ -435,7 +435,7 @@ package class uvm_config_db_options
 
   static private void _init() {
     synchronized(_once) {
-      string trace_args[];
+      string[] trace_args;
 
       uvm_cmdline_processor clp = uvm_cmdline_processor.get_inst();
 

@@ -251,7 +251,7 @@ class uvm_packer
 	ubyte c;
 	bool is_null_term = false;
 	if(num_chars == -1) is_null_term = true;
-	char retval[];
+	char[] retval;
 	for (size_t i=0; i != num_chars; ++i) {
 	  if(enough_bits(8,"string")) {
 	    _m_bits.unpack(c, _big_endian);
@@ -631,28 +631,28 @@ class uvm_packer
     }
   }
 
-  public void put_bits (bool bits[]) {
+  public void put_bits (bool[] bits) {
     synchronized(this) {
       _m_bits.fromArray(bits);
       _m_bits.unpackReset();
     }
   }
 
-  public void put_bits (Bit!1 bits[]) {
+  public void put_bits (Bit!1[] bits) {
     synchronized(this) {
       _m_bits.fromArray(bits);
       _m_bits.unpackReset();
     }
   }
 
-  public void put_bytes(ubyte bytes[]) {
+  public void put_bytes(ubyte[] bytes) {
     synchronized(this) {
       _m_bits.fromArray(bytes);
       _m_bits.unpackReset();
     }
   }
 
-  public void put_ints (uint ints[]) {
+  public void put_ints (uint[] ints) {
     synchronized(this) {
       _m_bits.fromArray(ints);
       _m_bits.unpackReset();
