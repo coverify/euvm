@@ -475,7 +475,7 @@ class uvm_root: uvm_component
     }
   }
 
-  public void find_all(string comp_match, ref uvm_component comps[],
+  public void find_all(string comp_match, ref uvm_component[] comps,
 		       uvm_component comp=null) {
     synchronized(this) {
       if(comp is null) {
@@ -487,7 +487,7 @@ class uvm_root: uvm_component
 
   public uvm_component[] find_all(string comp_match, uvm_component comp=null) {
     synchronized(this) {
-      uvm_component comps[];
+      uvm_component[] comps;
       if(comp is null) {
 	comp = this;
       }
@@ -639,7 +639,7 @@ class uvm_root: uvm_component
     }
   }
 
-  public void m_find_all_recurse(string comp_match, ref uvm_component comps[],
+  public void m_find_all_recurse(string comp_match, ref uvm_component[] comps,
 				 uvm_component comp=null) {
     synchronized(this) {
       string name;
@@ -1509,7 +1509,7 @@ class uvm_root_report_handler: uvm_report_handler
   }
 }
 
-public void uvm_simulate(T, string name="")(uint seed) {
+public auto uvm_simulate(T, string name="")(uint seed) {
   static if(name == "") {
     auto root = new uvm_root_entity!T(T.stringof, seed);
   }
@@ -1518,6 +1518,19 @@ public void uvm_simulate(T, string name="")(uint seed) {
   }
   root.elaborate();
   root.simulate();
+  return root;
+}
+
+public auto uvm_elaborate(T, string name="")(uint seed) {
+  static if(name == "") {
+    auto root = new uvm_root_entity!T(T.stringof, seed);
+  }
+  else {
+    auto root = new uvm_root_entity!T(name, seed);
+  }
+  root.elaborate();
+  // root.simulate();
+  return root;
 }
 
 public auto uvm_fork(T, string name="")(uint seed) {
