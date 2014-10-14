@@ -16,8 +16,8 @@ enum int NUM_LOOPS=10;
 class bus_trans: uvm_sequence_item
 {
 
-  @rand bvec!12 addr;
-  @rand bvec!8 data;
+  @rand Bit!12 addr;
+  @rand Bit!8 data;
   @rand bus_op_t op;
 
   // mixin uvm_object_utils!bus_trans;
@@ -76,10 +76,13 @@ class my_driver(REQ, RSP): uvm_driver!(REQ, RSP)
 
   mixin uvm_component_utils;
 
+  uvm_put_port!(REQ) data_out;
+
   private int data_array[512];
 
   this(string name, uvm_component parent) {
     super(name, parent);
+    data_out = new uvm_put_port!(REQ) ("data_out", this);
   }
 
   // task
@@ -93,10 +96,11 @@ class my_driver(REQ, RSP): uvm_driver!(REQ, RSP)
       rsp = new RSP();
       rsp.set_id_info(req);
 
+      data_out.put(req);
       // Actually do the read or write here
       if (req.op == bus_op_t.BUS_READ) {
 	rsp.addr = req.addr[0..9];
-	// rsp.data = cast(bvec!8) data_array[rsp.addr].toBitVec;
+	// rsp.data = cast(Bit!8) data_array[rsp.addr].toBitVec;
 	rsp.data = cast(byte) data_array[rsp.addr];
 	uvm_info("sending",rsp.convert2string,UVM_MEDIUM);
       }
@@ -142,8 +146,8 @@ class sequenceA(REQ, RSP): uvm_sequence!(REQ, RSP)
       // 	data == @0 + @1 + 55;
       // }(my_id, i);
       
-      req.addr = cast(bvec!12) ((my_id * NUM_LOOPS) + i).toBitVec;
-      req.data = cast(bvec!8) (my_id + i + 55).toBitVec;
+      req.addr = cast(Bit!12) ((my_id * NUM_LOOPS) + i).toBitVec;
+      req.data = cast(Bit!8) (my_id + i + 55).toBitVec;
       req.op   = bus_op_t.BUS_WRITE;
 
       // REQ cloned = cast(REQ) req.clone;
@@ -152,7 +156,7 @@ class sequenceA(REQ, RSP): uvm_sequence!(REQ, RSP)
       get_response(rsp);
 
       uvm_create(req);
-      req.addr = cast(bvec!12) ((my_id * NUM_LOOPS) + i).toBitVec;
+      req.addr = cast(Bit!12) ((my_id * NUM_LOOPS) + i).toBitVec;
 
       req.data = 0;
       req.op   = bus_op_t.BUS_READ;
@@ -218,19 +222,34 @@ class env: uvm_env
 class my_root: uvm_root
 {
   mixin uvm_component_utils;
-
-  // override void _uvm__auto_build() {}
-  
-  // env my_env;
+  env my_env;
+  uvm_tlm_fifo_egress!bus_req fifo;
+  uvm_get_port!bus_req data_in;
   override void initial() {
-    uvm_info("top","In top initial block", UVM_MEDIUM);
-    auto my_env = new env("env", null);
+    data_in = new uvm_get_port!bus_req("data_in", this);
+    fifo = new uvm_tlm_fifo_egress!bus_req ("fifo", null, 1);
+    my_env = new env("env", null);
     run_test();
+  }
+  override void connect_phase(uvm_phase phase) {
+    my_env.mydriver.data_out.connect(fifo.put_export);
+    data_in.connect(fifo.get_export);
   }
 }
 
-void main()
-{
+void main() {
   import std.random: uniform;
-  uvm_execute!(my_root)(uniform!uint());
+  import std.stdio;
+  auto root = uvm_fork!(my_root, "test")(uniform!uint(), 4, 0);
+  
+  root.wait_for_end_of_elaboration();
+  auto env = root.get_uvm_root.lookup("env");
+  for (size_t i=0; i!=200; ++i) {
+    bus_req req;
+    assert(root.data_in !is null);
+    root.data_in.get(req);
+    writeln("got data: ", req.convert2string);
+  }
+  writeln("got all data");
+  root.join();
 }
