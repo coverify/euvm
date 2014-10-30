@@ -65,6 +65,8 @@ import uvm.meta.misc;
 import std.traits;
 import std.string: format;
 
+import std.random: uniform;
+
 final class uvm_once_object
 {
   @uvm_private_sync
@@ -86,7 +88,7 @@ abstract class uvm_object: uvm_void, RandomizableIntf
 {
   import esdl.data.bvec;
 
-  mixin(_esdl__randomizable());
+  mixin _esdl__randomizable;
   mixin(uvm_once_sync!uvm_once_object);
   mixin(uvm_sync!uvm_object);
 
@@ -103,6 +105,15 @@ abstract class uvm_object: uvm_void, RandomizableIntf
     synchronized(this) {
       _m_inst_id = inst_id;
       _m_leaf_name = name;
+      auto proc = Procedure.self;
+      if(proc !is null) {
+	auto seed = uniform!int(proc.getRandGen());
+	debug(SEED) {
+	  import std.stdio;
+	  writeln("Setting seed: ", seed, " for instance: ", get_full_name);
+	}
+	this.reseed(seed);
+      }
     }
   }
 
@@ -132,6 +143,10 @@ abstract class uvm_object: uvm_void, RandomizableIntf
   //
   // If the <use_uvm_seeding> static variable is set to 0, then reseed() does
   // not perform any function.
+
+  final public void reseed (int seed) {
+    this.srandom(seed);
+  }
 
   final public void reseed () {
     synchronized(this) {

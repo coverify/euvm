@@ -47,6 +47,8 @@ import uvm.base.uvm_resource;
 import uvm.base.uvm_queue;
 import uvm.base.uvm_event;
 import uvm.base.uvm_misc;
+import uvm.base.uvm_port_base;
+
 import uvm.comps.uvm_agent;
 
 import uvm.seq.uvm_sequence_item;
@@ -3304,12 +3306,27 @@ template _uvm__is_member_component(L)
     }
 }
 
+template _uvm__is_member_base_port(L)
+{
+  static if(is(L == class) && is(L: uvm_port_base!IF, IF)) {
+    enum bool _uvm__is_member_base_port = true;
+  }
+  else static if(isArray!L) {
+      import std.range: ElementType;
+      enum bool _uvm__is_member_base_port =
+	_uvm__is_member_base_port!(ElementType!L);
+    }
+    else {
+      enum bool _uvm__is_member_base_port = false;
+    }
+}
+
 void _uvm__auto_build(size_t I, T, N...)(T t)
   if(is(T : uvm_component) && is(T == class)) {
     // pragma(msg, N);
     static if(I < t.tupleof.length) {
       alias M=typeof(t.tupleof[I]);
-      static if(_uvm__is_member_component!M) {
+      static if(_uvm__is_member_component!M || _uvm__is_member_base_port!M) {
 	_uvm__auto_build!(I+1, T, N, I)(t);
       }
       else {
@@ -3381,11 +3398,21 @@ void _uvm__auto_build(T, U, size_t I, N...)(T t, ref U u,
        (! noAutoAttr) &&  // make sure that UVM_NO_AUTO is not present
        (is_active ||	  // build everything if the agent is active
 	(! isActiveAttr))) { // build the element if not and active element
-      u = U.type_id.create(name, t);
+      static if(is(U: uvm_component)) {
+	u = U.type_id.create(name, t);
+      }
+      else if(is(U: uvm_port_base!IF, IF)) {
+	u = new U(name, t);
+      }
+      else {
+	static assert("Support only for uvm_component and uvm_port_base");
+      }
     }
     // provide an ID to all the components that are not null
     if(u !is null) {
-      u.set_id();
+      static if(is(U: uvm_component)) {
+	u.set_id();
+      }
     }
   }
   static if(N.length > 0) {
