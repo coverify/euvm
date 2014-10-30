@@ -80,6 +80,12 @@
 
 module uvm.tlm1.uvm_ports;
 
+import uvm.base.uvm_port_base;
+import uvm.base.uvm_component;
+import uvm.base.uvm_object_globals;
+import uvm.tlm1.uvm_tlm_ifs;
+import uvm.tlm1.uvm_tlm_defines;
+
 class uvm_blocking_put_port(T=int): uvm_port_base!(uvm_tlm_if_base!(T,T))
 {
   // `UVM_PORT_COMMON(`UVM_TLM_BLOCKING_PUT_MASK,"uvm_blocking_put_port")
@@ -139,20 +145,20 @@ class uvm_put_port(T=int):
       m_if_mask = UVM_TLM_PUT_MASK;
     }
   }
-  public string get_type_name() {
+  override public string get_type_name() {
     return "uvm_put_port";
   }
 
   // task
-  public void put(T t) {
+  override public void put(T t) {
     m_if.put(t);
   }
 
-  public bool try_put (T t) {
+  override public bool try_put (T t) {
     return m_if.try_put(t);
   }
 
-  public bool can_put() {
+  override public bool can_put() {
     return m_if.can_put();
   }
 }
@@ -215,20 +221,20 @@ class uvm_get_port(T=int):
     }
   }
 
-  public string get_type_name() {
+  override public string get_type_name() {
     return "uvm_get_port";
   }
 
   // task
-  public void get (out T t) {
+  override public void get (out T t) {
     m_if.get(t);
   }
 
-  public bool try_get (out T t) {
+  override public bool try_get (out T t) {
     return m_if.try_get(t);
   }
 
-  public bool can_get() {
+  override public bool can_get() {
     return m_if.can_get();
   }
 }

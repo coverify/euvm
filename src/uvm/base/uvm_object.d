@@ -65,6 +65,8 @@ import uvm.meta.misc;
 import std.traits;
 import std.string: format;
 
+import std.random: uniform;
+
 final class uvm_once_object
 {
   @uvm_private_sync
@@ -86,7 +88,7 @@ abstract class uvm_object: uvm_void, RandomizableIntf
 {
   import esdl.data.bvec;
 
-  mixin(_esdl__randomizable());
+  mixin _esdl__randomizable;
   mixin(uvm_once_sync!uvm_once_object);
   mixin(uvm_sync!uvm_object);
 
@@ -103,6 +105,15 @@ abstract class uvm_object: uvm_void, RandomizableIntf
     synchronized(this) {
       _m_inst_id = inst_id;
       _m_leaf_name = name;
+      auto proc = Procedure.self;
+      if(proc !is null) {
+	auto seed = uniform!int(proc.getRandGen());
+	debug(SEED) {
+	  import std.stdio;
+	  writeln("Setting seed: ", seed, " for instance: ", get_full_name);
+	}
+	this.reseed(seed);
+      }
     }
   }
 
@@ -132,6 +143,10 @@ abstract class uvm_object: uvm_void, RandomizableIntf
   //
   // If the <use_uvm_seeding> static variable is set to 0, then reseed() does
   // not perform any function.
+
+  final public void reseed (int seed) {
+    this.srandom(seed);
+  }
 
   final public void reseed () {
     synchronized(this) {
@@ -597,6 +612,16 @@ abstract class uvm_object: uvm_void, RandomizableIntf
   // classes. To copy the fields of a derived class, that class should override
   // the <do_copy> method.
 
+  void uvm_field_auto_setint(string field_name, uvm_bitstream_t value) {
+    uvm_report_warning("NOUTILS", "default uvm_field_auto_setint --"
+		       "no uvm_object_utils", UVM_NONE);
+  }
+  
+  void uvm_field_auto_setint(string field_name, ulong value) {
+    uvm_report_warning("NOUTILS", "default uvm_field_auto_setint --"
+		       "no uvm_object_utils", UVM_NONE);
+  }
+  
   void uvm_field_auto_copy(uvm_object rhs) {
     uvm_report_warning("NOUTILS", "default uvm_field_auto_copy --"
 		       "no uvm_object_utils", UVM_NONE);
@@ -795,7 +820,7 @@ abstract class uvm_object: uvm_void, RandomizableIntf
 
   // Function: pack
 
-  final public size_t pack (ref bit[] bitstream, uvm_packer packer=null) {
+  final public size_t pack (ref Bit!1[] bitstream, uvm_packer packer=null) {
     m_pack(packer);
     packer.get_bits(bitstream);
     return packer.get_packed_size();
@@ -900,7 +925,7 @@ abstract class uvm_object: uvm_void, RandomizableIntf
 
   // Function: unpack
 
-  final public size_t unpack (ref bit[] bitstream,
+  final public size_t unpack (ref Bit!1[] bitstream,
 			      uvm_packer packer = null) {
 
     m_unpack_pre(packer);
@@ -1019,7 +1044,11 @@ abstract class uvm_object: uvm_void, RandomizableIntf
     m_uvm_status_container.status = false;
     m_uvm_status_container.bitstream = value;
 
-    m_uvm_field_automation(null, UVM_SETINT, field_name);
+    // Use Vlang auto instead
+    // m_uvm_field_automation(null, UVM_SETINT, field_name);
+
+    uvm_field_auto_setint(field_name, value);
+    
 
     if(m_uvm_status_container.warning &&
        ! m_uvm_status_container.status) {

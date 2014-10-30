@@ -402,7 +402,7 @@ class uvm_resource_db_options
 
   static private void init() {
     uvm_cmdline_processor clp = uvm_cmdline_processor.get_inst();
-    string trace_args[];
+    string[] trace_args;
     synchronized(_once) {
       if (clp.get_arg_matches(`\+UVM_RESOURCE_DB_TRACE`, trace_args)) {
 	_tracing = true;

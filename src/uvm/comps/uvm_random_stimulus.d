@@ -53,7 +53,7 @@ class uvm_random_stimulus(T=uvm_transaction): uvm_component
 
   alias uvm_random_stimulus!T this_type;
 
-  mixin uvm_component_param_utils!this_type;
+  mixin uvm_component_utils;
 
   // Port: blocking_put_port
   //

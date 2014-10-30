@@ -47,7 +47,7 @@ version (UVM_NO_DEPRECATED) { }
 // `ifndef UVM_NO_DEPRECATED
  else {
    import uvm.base.uvm_objection;
-   import esdl.base.time;
+   import esdl.data.time;
    import esdl.base.core: getRootEntity;
    // Variable- uvm_test_done - DEPRECATED
    //
@@ -222,7 +222,7 @@ public bool uvm_string_to_severity (string sev_str, out uvm_severity sev) {
 }
 
 public bool uvm_string_to_action (string action_str, out uvm_action action) {
-  string actions[];
+  string[] actions;
   uvm_split_string(action_str,'|',actions);
   bool retval = true;
   // action = 0; // taken care since action is of type "out"

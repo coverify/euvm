@@ -272,7 +272,7 @@ final class uvm_status_container {
   // (uvm_status_container), it is Ok to not make the next two
   // elements static (as done in SV version)
   // __gshared 
-  private bool _field_array[string];
+  private bool[string] _field_array;
 
   public bool field_exists(string field) {
     synchronized(this) {
@@ -342,12 +342,12 @@ final class uvm_status_container {
     }
   }
 
-  //Used for checking cycles. When a data public is entered, if the depth is
+  //Used for checking cycles. When a data function is entered, if the depth is
   //non-zero, then then the existeance of the object in the map means that a
-  //cycle has occured and the public should immediately exit. When the
-  //public exits, it should reset the cycle map so that there is no memory
+  //cycle has occured and the function should immediately exit. When the
+  //function exits, it should reset the cycle map so that there is no memory
   //leak.
-  private bool _cycle_check[uvm_object];
+  private bool[uvm_object] _cycle_check;
 
   public bool check_cycle(uvm_object obj) {
     synchronized(this) {
@@ -379,14 +379,14 @@ final class uvm_status_container {
   }
 
   //These are the policy objects currently in use. The policy object gets set
-  //when a public starts up. The macros use this.
+  //when a function starts up. The macros use this.
   @uvm_public_sync private uvm_comparer _comparer;
   @uvm_public_sync private uvm_packer   _packer;
   @uvm_public_sync private uvm_recorder _recorder;
   @uvm_public_sync private uvm_printer  _printer;
 
-  // utility public used to perform a cycle check when config setting are pushed
-  // to uvm_objects. the public has to look at the current object stack representing
+  // utility function used to perform a cycle check when config setting are pushed
+  // to uvm_objects. the function has to look at the current object stack representing
   // the call stack of all m_uvm_field_automation() invocations.
   // it is a only a cycle if the previous m_uvm_field_automation call scope
   // is not identical with the current scope AND the scope is already present in the
@@ -436,7 +436,7 @@ final class uvm_status_container {
 
 final class uvm_copy_map {
   import uvm.base.uvm_object;
-  private uvm_object _m_map[uvm_object];
+  private uvm_object[uvm_object] _m_map;
   public void set(uvm_object key, uvm_object obj) {
     synchronized(this) {
       _m_map[key] = obj;
@@ -496,8 +496,8 @@ final class uvm_once_seed_map
 final class uvm_seed_map {
   mixin(uvm_once_sync!(uvm_once_seed_map));
 
-  private uint _seed_table[string];
-  private uint _count[string];
+  private uint[string] _seed_table;
+  private uint[string] _count;
 
   static private uint map_random_seed ( string type_id, string inst_id="" ) {
     uvm_seed_map seed_map;
@@ -546,7 +546,7 @@ final class uvm_seed_map {
 
   // Function- oneway_hash
   //
-  // A one-way hash public that is useful for creating srandom seeds. An
+  // A one-way hash function that is useful for creating srandom seeds. An
   // unsigned int value is generated from the string input. An initial seed can
   // be used to seed the hash, if not supplied the m_global_random_seed
   // value is used. Uses a CRC like functionality to minimize collisions.
@@ -687,11 +687,11 @@ public string uvm_vector_to_string(T)(T value,
 				      string radix_str="")
   if(isBitVector!T || isIntegral!T || is(T == bool)) {
     static if(isIntegral!T)       vec!T val = value;
-    else static if(is(T == bool)) bit val = value;
+    else static if(is(T == bool)) Bit!1 val = value;
       else                        alias value val;
 
     // sign extend & don't show radix for negative values
-    if (radix is UVM_DEC && (cast(bit) val[$-1]) is 1)
+    if (radix is UVM_DEC && (cast(Bit!1) val[$-1]) is 1)
       return format("%0d", val);
 
     switch(radix) {
@@ -813,7 +813,7 @@ final class uvm_utils (TYPE=uvm_void, string FIELD="config") {
   // starting with the component given by ~start~. Uses <uvm_root::find_all>.
 
   static public types_t find_all(uvm_component start) {
-    uvm_component list[];
+    uvm_component[] list;
     types_t types;
     uvm_root top = uvm_root.get();
     top.find_all("*", list, start);

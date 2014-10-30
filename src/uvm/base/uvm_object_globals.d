@@ -24,7 +24,7 @@
 module uvm.base.uvm_object_globals;
 
 import esdl.data.bvec;
-import esdl.base.time;
+import esdl.data.time;
 import uvm.meta.misc;
 
 //This bit marks where filtering should occur to remove uvm stuff from a
@@ -161,6 +161,12 @@ enum uvm_active_passive_enum: bool
 
 mixin(declareEnums!uvm_active_passive_enum());
 
+enum uvm_auto_enum: byte
+  {   UVM_NO_AUTO=0,
+      UVM_AUTO=1
+      }
+
+mixin(declareEnums!uvm_auto_enum());
 
 // Parameter: `uvm_field_* macro flags
 //

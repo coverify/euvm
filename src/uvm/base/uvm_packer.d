@@ -47,7 +47,8 @@ import uvm.meta.misc;
 import esdl.data.packer;
 import esdl.data.bstr;
 import esdl.data.bvec;
-import esdl.base.time;
+import esdl.base.core: SimTime;
+import esdl.data.time;
 import std.string: format;
 import std.traits;
 
@@ -250,7 +251,7 @@ class uvm_packer
 	ubyte c;
 	bool is_null_term = false;
 	if(num_chars == -1) is_null_term = true;
-	char retval[];
+	char[] retval;
 	for (size_t i=0; i != num_chars; ++i) {
 	  if(enough_bits(8,"string")) {
 	    _m_bits.unpack(c, _big_endian);
@@ -541,14 +542,14 @@ class uvm_packer
     }
   }
 
-  public bit get_bit (uint index) {
+  public Bit!1 get_bit (uint index) {
     synchronized(this) {
       if (index >= _m_bits.length) {
-	index_error(index, "bit", 1);
+	index_error(index, "Bit!1", 1);
       }
       bool val;
       _m_bits.getFront(val, index);
-      return cast(bit) val;
+      return cast(Bit!1) val;
     }
   }
 
@@ -574,15 +575,15 @@ class uvm_packer
     }
   }
 
-  public void get_bits (ref bit[] bits) {
+  public void get_bits (ref Bit!1[] bits) {
     synchronized(this) {
       _m_bits.toArray(bits);
     }
   }
 
-  public bit[] get_bits () {
+  public Bit!1[] get_bits () {
     synchronized(this) {
-      bit[] bits;
+      Bit!1[] bits;
       _m_bits.toArray(bits);
       return bits;
     }
@@ -630,28 +631,28 @@ class uvm_packer
     }
   }
 
-  public void put_bits (bool bits[]) {
+  public void put_bits (bool[] bits) {
     synchronized(this) {
       _m_bits.fromArray(bits);
       _m_bits.unpackReset();
     }
   }
 
-  public void put_bits (bit bits[]) {
+  public void put_bits (Bit!1[] bits) {
     synchronized(this) {
       _m_bits.fromArray(bits);
       _m_bits.unpackReset();
     }
   }
 
-  public void put_bytes(ubyte bytes[]) {
+  public void put_bytes(ubyte[] bytes) {
     synchronized(this) {
       _m_bits.fromArray(bytes);
       _m_bits.unpackReset();
     }
   }
 
-  public void put_ints (uint ints[]) {
+  public void put_ints (uint[] ints) {
     synchronized(this) {
       _m_bits.fromArray(ints);
       _m_bits.unpackReset();

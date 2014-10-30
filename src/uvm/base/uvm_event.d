@@ -41,7 +41,7 @@ import uvm.base.uvm_misc;
 import uvm.base.uvm_object_globals;
 import uvm.meta.misc;
 
-import esdl.base.time;
+import esdl.data.time;
 import esdl.base.core;
 import esdl.data.queue;
 

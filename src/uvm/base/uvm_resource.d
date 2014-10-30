@@ -113,7 +113,7 @@ import uvm.base.uvm_object;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_root;
 import uvm.base.uvm_printer;
-import esdl.base.core: getSimTime;
+import esdl.base.core: getSimTime, SimTime;
 
 import std.conv: to;
 
@@ -132,7 +132,7 @@ class uvm_resource_types
 {
   import uvm.meta.misc;
   import uvm.base.uvm_queue: uvm_queue;
-  import esdl.base.time;
+  import esdl.data.time;
   // types uses for setting overrides
   // typedef bit[1:0] override_t;
   enum override_e: byte
@@ -682,7 +682,7 @@ abstract class uvm_resource_base: uvm_object
 // of the audit trail facility for resources.
 //----------------------------------------------------------------------
 struct get_t {
-  import esdl.base.time;
+  import esdl.data.time;
   string name;
   string rscope;
   uvm_resource_base rsrc;

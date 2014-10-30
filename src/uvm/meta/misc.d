@@ -131,7 +131,7 @@ class AssocWithEvent(K, V)
 
   // We require to overload opIndexAssign and remove and assign operators
 
-  V _assoc[K];
+  V[K] _assoc;
   Event _event;
 
   alias _assoc this;

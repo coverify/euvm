@@ -41,7 +41,7 @@ import uvm.base.uvm_misc;
 import uvm.base.uvm_object_globals;
 import uvm.meta.mcd;
 import uvm.meta.misc;
-import esdl.base.core: getSimTime;
+import esdl.base.core: getSimTime, SimTime;
 
 import std.traits: isNumeric, isFloatingPoint, isIntegral;
 
@@ -54,7 +54,7 @@ class uvm_once_recorder
 class uvm_recorder: uvm_object
 {
 
-  import esdl.base.time;
+  import esdl.data.time;
   import esdl.data.bvec;
 
   mixin(uvm_once_sync!uvm_once_recorder);
@@ -195,7 +195,7 @@ class uvm_recorder: uvm_object
 			T value)
     if(isFloatingPoint!T) {
       synchronized(this) {
-	ubvec!(BitLength!T) ival = value;
+	UBit!(BitLength!T) ival = value;
 	if(_tr_handle is 0) return;
 	_scope_stack.set_arg(name);
 	set_attribute(_tr_handle, _scope_stack.get(), ival, UVM_REAL,

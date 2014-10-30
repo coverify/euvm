@@ -23,17 +23,18 @@
 module uvm.base.uvm_object_defines;
 import uvm.base.uvm_object: uvm_object;
 import uvm.base.uvm_component: uvm_component;
+import uvm.base.uvm_root: uvm_root;
 import uvm.base.uvm_registry: uvm_component_registry;
 import uvm.base.uvm_factory: uvm_object_wrapper;
 import uvm.seq.uvm_sequence_item: uvm_sequence_item;
 import uvm.seq.uvm_sequence_base: uvm_sequence_base;
 import uvm.base.uvm_object_globals;
 
-public string uvm_object_utils()() {
-  return "mixin uvm_object_utils_mixin!(typeof(this));";
+public string uvm_object_utils_string()() {
+  return "mixin uvm_object_utils!(typeof(this));";
 }
 
-mixin template uvm_object_utils_mixin(T=void)
+mixin template uvm_object_utils(T=void)
 {
   static if(is(T == void)) {
     alias typeof(this) U;
@@ -50,18 +51,24 @@ mixin template uvm_object_utils_mixin(T=void)
 }
 
 
-mixin template uvm_object_param_utils(T)
-{
-  mixin m_uvm_object_registry_param!(T);
-  mixin m_uvm_object_create_func!(T);
-  // `uvm_field_utils_begin(T)
+// mixin template uvm_object_param_utils(T=void)
+// {
+//   static if(is(T == void)) {
+//     alias typeof(this) U;
+//   }
+//   else {
+//     alias T U;
+//   }
+//   mixin m_uvm_object_registry_param!(U);
+//   mixin m_uvm_object_create_func!(U);
+//   // `uvm_field_utils_begin(U)
+// }
+
+string uvm_component_utils_string()() {
+  return "mixin uvm_component_utils!(typeof(this));";
 }
 
-string uvm_component_utils()() {
-  return "mixin uvm_component_utils_mixin!(typeof(this));";
-}
-
-mixin template uvm_component_utils_mixin(T=void)
+mixin template uvm_component_utils(T=void)
 {
   static if(is(T == void)) {
     alias typeof(this) U;
@@ -69,14 +76,50 @@ mixin template uvm_component_utils_mixin(T=void)
   else {
     alias T U;
   }
-  mixin uvm_component_registry_mixin!(U, U.stringof);
+  static if(! is(U: uvm_root)) { // do not register uvm_roots with factory
+    mixin uvm_component_registry_mixin!(U, U.stringof);
+  }
   mixin m_uvm_get_type_name_func!(U);
+  mixin uvm_component_auto_build_mixin;
+  mixin uvm_component_auto_elab_mixin;
 }
 
-mixin template uvm_component_param_utils(T)
+mixin template uvm_component_auto_build_mixin()
 {
-  mixin m_uvm_component_registry_param!(T);
+  // overriding function that calls the generic function for automatic
+  // object construction
+  override void _uvm__auto_build() {
+    debug(UVM_AUTO) {
+      import std.stdio;
+      writeln("Building .... : ", get_full_name);
+    }
+    ._uvm__auto_build!(0, typeof(this))(this);
+  }
 }
+
+mixin template uvm_component_auto_elab_mixin()
+{
+  // overriding function that calls the generic function for automatic
+  // object construction
+  override void _uvm__auto_elab() {
+    debug(UVM_AUTO) {
+      import std.stdio;
+      writeln("Elaborating .... : ", get_full_name);
+    }
+    ._uvm__auto_elab!(0, typeof(this))(this);
+  }
+}
+
+// mixin template uvm_component_param_utils(T=void)
+// {
+//   static if(is(T == void)) {
+//     alias typeof(this) U;
+//   }
+//   else {
+//     alias T U;
+//   }
+//   mixin m_uvm_component_registry_param!(U);
+// }
 
 // MACRO: `uvm_object_registry
 //
@@ -185,16 +228,16 @@ mixin template m_uvm_get_type_name_func(T) {
 // m_uvm_object_registry_param
 // ---------------------------
 
-mixin template m_uvm_object_registry_param(T)
-{
-  alias uvm_object_registry!T type_id;
-  static public type_id get_type() {
-    return type_id.get();
-  }
-  override public uvm_object_wrapper get_object_type() {
-    return type_id.get();
-  }
-}
+// mixin template m_uvm_object_registry_param(T)
+// {
+//   alias uvm_object_registry!T type_id;
+//   static public type_id get_type() {
+//     return type_id.get();
+//   }
+//   override public uvm_object_wrapper get_object_type() {
+//     return type_id.get();
+//   }
+// }
 
 
 // m_uvm_component_registry_internal
@@ -219,16 +262,16 @@ mixin template m_uvm_component_registry_internal(T, string S)
 // m_uvm_component_registry_param
 // ------------------------------
 
-mixin template m_uvm_component_registry_param(T)
-{
-  alias uvm_component_registry!T type_id;
-  static public type_id get_type() {
-    return type_id.get();
-  }
-  override public uvm_object_wrapper get_object_type() {
-    return type_id.get();
-  }
-}
+// mixin template m_uvm_component_registry_param(T)
+// {
+//   alias uvm_component_registry!T type_id;
+//   static public type_id get_type() {
+//     return type_id.get();
+//   }
+//   override public uvm_object_wrapper get_object_type() {
+//     return type_id.get();
+//   }
+// }
 
 mixin template m_uvm_field_auto_utils(T)
 {
@@ -254,6 +297,53 @@ mixin template m_uvm_field_auto_utils(T)
       }
   }
 
+  override void uvm_field_auto_setint(string field_name,
+				      uvm_bitstream_t value) {
+  }
+
+  override void uvm_field_auto_setint(string field_name,
+				      ulong value) {
+  }
+  
+  // return true if a match occured
+  void uvm_set_local(size_t I=0, T, U)(T t, U value, string regx,
+				       string prefix="",
+				       ref bool status = false) {
+    static if(I < t.tupleof.length) {
+      enum int FLAGS = uvm_field_auto_get_flags!(t, I);
+      alias E = typeof(t.tupleof[I]);
+      string name = prefix ~ t.tupleof[I].stringof[2..$];
+      static if(FLAGS & UVM_READONLY) {
+	if(uvm_is_match(regx, name)) {
+	  uvm_report_warning("RDONLY",
+			     format("Readonly argument match %s is ignored",
+				    name),
+			     UVM_NONE);
+	}
+      }
+      else {
+	if(uvm_is_match(regx, name)) {
+	  uvm_report_info("STRMTC", "set_object()" ~ ": Matched string " ~
+			  regx ~ " to field " ~ name,
+			  UVM_LOW);
+	  static if(is(U: E)) {
+	    t.tupleof[I] = value;
+	    status = true;
+	  }
+	  else static if(is(E: U) && is(U: Object)) {
+	      if(t.tupleof[i] == cast(E) value) {
+		status = true;
+	      }
+	    }
+	    else {
+	      t.tupleof[I] = cast(E) value;
+	      status = true;
+	    }
+	}
+      }
+    }
+  }
+
   // Copy
   override void uvm_field_auto_copy(uvm_object rhs) {
     auto rhs_ = cast(T) rhs;
@@ -265,9 +355,9 @@ mixin template m_uvm_field_auto_utils(T)
 
   // copy the Ith field
   bool uvm_field_auto_copy_field(size_t I=0, T)(T lhs, T rhs) {
-    enum int flags = uvm_field_auto_get_flags!(lhs, I);
-    if(flags & UVM_COPY &&
-       !(flags & UVM_NOCOPY)) {
+    enum int FLAGS = uvm_field_auto_get_flags!(lhs, I);
+    if(FLAGS & UVM_COPY &&
+       !(FLAGS & UVM_NOCOPY)) {
       lhs.tupleof[I] = rhs.tupleof[I];
     }
     return false;
@@ -281,13 +371,13 @@ mixin template m_uvm_field_auto_utils(T)
     }
     uvm_field_auto_all_fields!uvm_field_auto_compare_field(this, rhs_);
   }
-  
+
   // compare the Ith field
   bool uvm_field_auto_compare_field(size_t I=0, T)(T lhs, T rhs) {
     import std.traits: isIntegral;
-    enum int flags = uvm_field_auto_get_flags!(lhs, I);
-    static if(flags & UVM_COMPARE &&
-	      !(flags & UVM_NOCOMPARE)) {
+    enum int FLAGS = uvm_field_auto_get_flags!(lhs, I);
+    static if(FLAGS & UVM_COMPARE &&
+	      !(FLAGS & UVM_NOCOMPARE)) {
       auto comparer = m_uvm_status_container.comparer;
       alias typeof(lhs.tupleof[I]) U;
       static if(isBitVector!U) {
@@ -296,16 +386,17 @@ mixin template m_uvm_field_auto_utils(T)
 				 lhs.tupleof[I], rhs.tupleof[I]);
 	}
       }
-      else static if(isIntegral!U || isBoolean!U ) {
+      else // static if(isIntegral!U || isBoolean!U )
+	{
 	  if(lhs.tupleof[I] != rhs.tupleof[I]) {
 	    comparer.compare_field(lhs.tupleof[I].stringof[4..$],
 				   lhs.tupleof[I], rhs.tupleof[I]);
 	  }
 	}
-	else {
-	  static assert(false, "compare not implemented yet for: " ~
-			U.stringof);
-	}
+      // else {
+      // 	static assert(false, "compare not implemented yet for: " ~
+      // 		      U.stringof);
+      // }
       if(comparer.result && (comparer.show_max <= comparer.result)) {
 	// shortcircuit
 	return true;
@@ -320,11 +411,11 @@ template uvm_field_auto_get_flags(alias t, size_t I) {
   alias typeof(t) T;
   enum int class_flags =
     uvm_field_auto_acc_flags!(__traits(getAttributes, T));
-  enum int flags =
+  enum int FLAGS =
     uvm_field_auto_acc_flags!(__traits(getAttributes, t.tupleof[I]));
-  enum int uvm_field_auto_get_flags = flags | class_flags;
+  enum int uvm_field_auto_get_flags = FLAGS | class_flags;
 }
-  
+
 template uvm_field_auto_acc_flags(A...)
 {
   static if(A.length is 0) enum int uvm_field_auto_acc_flags = 0;
@@ -337,4 +428,3 @@ template uvm_field_auto_acc_flags(A...)
       enum int uvm_field_auto_acc_flags = uvm_field_auto_acc_flags!(A[1..$]);
     }
 }
-  

@@ -103,7 +103,7 @@ final class uvm_cmdline_processor: /*extends*/ uvm_report_object
   // element 0 of the array will always be the name of the
   // executable which started the simulation.
 
-  final public void get_args (out string args[]) {
+  final public void get_args (out string[] args) {
     synchronized(this) {
       args = _m_argv;
     }
@@ -125,7 +125,7 @@ final class uvm_cmdline_processor: /*extends*/ uvm_report_object
   // command line, the third argument is unrelated); this is not
   // necessarily the case with vendor specific dash arguments.
 
-  final public void get_plusargs (out string args[]) {
+  final public void get_plusargs (out string[] args) {
     synchronized(this) {
       args = _m_plus_argv;
     }
@@ -145,7 +145,7 @@ final class uvm_cmdline_processor: /*extends*/ uvm_report_object
   // the keyword UVM (case insensitive) as the first three
   // letters of the argument.
 
-  final public void get_uvm_args (out string args[]) {
+  final public void get_uvm_args (out string[] args) {
     synchronized(this) {
       args = _m_uvm_argv;
     }
@@ -176,7 +176,7 @@ final class uvm_cmdline_processor: /*extends*/ uvm_report_object
   //|                                                                   //and foo123.sv,
   //|                                                                   //not barfoo.sv.
 
-  final public size_t get_arg_matches (string _match, out string args[]) {
+  final public size_t get_arg_matches (string _match, out string[] args) {
     synchronized(this) {
       auto len = _match.length;
       if((_match.length > 2) && (_match[0] is '/') && (_match[$-1] is '/')) {
@@ -260,7 +260,7 @@ final class uvm_cmdline_processor: /*extends*/ uvm_report_object
   // Splitting the resultant string is left to user but using the
   // uvm_split_string() function is recommended.
 
-  final public size_t get_arg_values (string match, out string values[]) {
+  final public size_t get_arg_values (string match, out string[] values) {
     synchronized(this) {
       auto chars = match.length;
       foreach (arg; _m_argv) {
