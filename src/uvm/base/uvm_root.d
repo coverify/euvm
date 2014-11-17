@@ -1509,42 +1509,27 @@ class uvm_root_report_handler: uvm_report_handler
   }
 }
 
-public auto uvm_simulate(T, string name="")(uint seed, uint multi=1,
-					     uint first=0) {
-  static if(name == "") {
-    auto root = new uvm_root_entity!T(T.stringof, seed);
-  }
-  else {
-    auto root = new uvm_root_entity!T(name, seed);
-  }
+public auto uvm_simulate(T)(string name, uint seed,
+			    uint multi=1, uint first=0) {
+  auto root = new uvm_root_entity!T(name, seed);
   root.multiCore(multi, first);
   root.elaborate();
   root.simulate();
   return root;
 }
 
-public auto uvm_elaborate(T, string name="")(uint seed, uint multi=1,
-					     uint first=0) {
-  static if(name == "") {
-    auto root = new uvm_root_entity!T(T.stringof, seed);
-  }
-  else {
-    auto root = new uvm_root_entity!T(name, seed);
-  }
+public auto uvm_elaborate(T)(string name, uint seed,
+			     uint multi=1, uint first=0) {
+  auto root = new uvm_root_entity!T(name, seed);
   root.multiCore(multi, first);
   root.elaborate();
   // root.simulate();
   return root;
 }
 
-public auto uvm_fork(T, string name="")(uint seed, uint multi=1,
-					uint first=0) {
-  static if(name == "") {
-    auto root = new uvm_root_entity!T(T.stringof, seed);
-  }
-  else {
-    auto root = new uvm_root_entity!T(name, seed);
-  }
+public auto uvm_fork(T)(string name, uint seed,
+			uint multi=1, uint first=0) {
+  auto root = new uvm_root_entity!T(name, seed);
   root.multiCore(multi, first);
   root.elaborate();
   root.fork();

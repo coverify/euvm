@@ -240,8 +240,7 @@ class my_root: uvm_root
 void main() {
   import std.random: uniform;
   import std.stdio;
-  auto root = uvm_fork!(my_root, "test")(uniform!uint(), 4, 0);
-  
+  auto root = uvm_fork!(my_root)("test", uniform!uint(), 4, 0);
   root.wait_for_end_of_elaboration();
   auto env = root.get_uvm_root.lookup("env");
   for (size_t i=0; i!=200; ++i) {
