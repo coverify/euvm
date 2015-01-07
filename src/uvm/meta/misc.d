@@ -20,7 +20,7 @@
 //------------------------------------------------------------------------------
 module uvm.meta.misc;
 
-import esdl.base.core: Event, Process, getRootEntity, NamedObj;
+import esdl.base.core: Event, Process, getRootEntity, NamedComp;
 import esdl.data.queue: Queue;
 // This file lists D routines required for coding UVM
 
@@ -170,7 +170,7 @@ class WithEvent(T) {
   T _val;
   Event _event;
 
-  this(T val, NamedObj parent=null) {
+  this(T val, NamedComp parent=null) {
     synchronized(this) {
       if(parent is null) {
 	parent = Process.self;
@@ -183,7 +183,7 @@ class WithEvent(T) {
     }
   }
 
-  this(NamedObj parent=null) {
+  this(NamedComp parent=null) {
     synchronized(this) {
       if(parent is null) {
 	parent = Process.self;

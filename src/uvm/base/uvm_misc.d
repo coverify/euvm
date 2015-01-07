@@ -686,7 +686,7 @@ public string uvm_vector_to_string(T)(T value,
 				      uvm_radix_enum radix=UVM_NORADIX,
 				      string radix_str="")
   if(isBitVector!T || isIntegral!T || is(T == bool)) {
-    static if(isIntegral!T)       vec!T val = value;
+    static if(isIntegral!T)       _bvec!T val = value;
     else static if(is(T == bool)) Bit!1 val = value;
       else                        alias value val;
 

@@ -1139,7 +1139,7 @@ class uvm_sequence_base: uvm_sequence_item
     @uvm_public_sync private @rand uint _seq_kind;
     private uint _num_seq;
 
-    override public void pre_randomize() {
+    override public void preRandomize() {
       synchronized(this) {
 	_num_seq = num_sequences();
       }

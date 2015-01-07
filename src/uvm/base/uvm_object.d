@@ -88,7 +88,8 @@ abstract class uvm_object: uvm_void, RandomizableIntf
 {
   import esdl.data.bvec;
 
-  mixin _esdl__randomizable;
+  mixin Randomization;
+  
   mixin(uvm_once_sync!uvm_once_object);
   mixin(uvm_sync!uvm_object);
 

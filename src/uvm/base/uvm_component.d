@@ -128,7 +128,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 
   mixin ParContextMixin;
 
-  parallelize _par__info = parallelize(ParallelPolicy.NONE,
+  parallelize _par__info = parallelize(ParallelPolicy._UNDEFINED_,
 				       uint.max);;
 
   public ParContext _esdl__parInheritFrom() {
@@ -3517,7 +3517,7 @@ void _uvm__auto_elab(T, U, size_t I, N...)(T t, ref U u,
     //   name ~= "[" ~ i.to!string ~ "]";
     // }
     // provide an ID to all the components that are not null
-    auto linfo = _esdl__get_parallelism!(I, T, U)(t, u);
+    auto linfo = _esdl__get_parallelism!(I, T)(t);
     _uvm__config_parallelism(u, linfo);
     if(u !is null) {
       u.set_id();
@@ -3533,6 +3533,10 @@ void _uvm__auto_elab(T, U, size_t I, N...)(T t, ref U u,
 void _uvm__config_parallelism(T)(T t, ref parallelize linfo)
   if(is(T : uvm_component) && is(T == class)) {
 
+    if(linfo.isUndefined) {
+      linfo = _esdl__get_parallelism(t);
+    }
+    
     ParConfig pconf;
     parallelize pinfo;
     assert(t !is null);
@@ -3542,7 +3546,7 @@ void _uvm__config_parallelism(T)(T t, ref parallelize linfo)
     }
 
     if(t.get_parent is null ||
-       pinfo._parallel == ParallelPolicy.NONE) {
+       pinfo._parallel == ParallelPolicy._UNDEFINED_) {
       // the parent had no parallel info
       // get it from RootEntity
       pinfo = getRootEntity._esdl__getParInfo();
@@ -3552,7 +3556,7 @@ void _uvm__config_parallelism(T)(T t, ref parallelize linfo)
     parallelize par__info;
     ParConfig   par__conf;
     
-    if(linfo._parallel == ParallelPolicy.NONE) {
+    if(linfo._parallel == ParallelPolicy._UNDEFINED_) {
       // no parallelize attribute. take hier information
       if(pinfo._parallel == ParallelPolicy.SINGLE) {
 	par__info._parallel = ParallelPolicy.INHERIT;
