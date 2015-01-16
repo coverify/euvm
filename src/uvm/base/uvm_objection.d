@@ -122,7 +122,7 @@ class uvm_once_objection
 
   this() {
     synchronized(this) {
-      _m_scheduled_list_event.init("_m_scheduled_list_event");
+      _m_scheduled_list_event.init("_m_scheduled_list_event", getRootEntity());
       _m_objections = new SyncQueue!uvm_objection();
       _m_context_pool = new SyncQueue!uvm_objection_context_object();
       _m_scheduled_list = new SyncQueue!uvm_objection_context_object();

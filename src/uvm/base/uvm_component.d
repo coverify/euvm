@@ -163,10 +163,11 @@ abstract class uvm_component: uvm_report_object, ParContext
       super(name);
 
       // If uvm_top, reset name to "" so it doesn't show in full paths then return
-      if (parent is null && name == "__top__") {
-	set_name(""); // *** VIRTUAL
-	return;
-      }
+      // separated to uvm_root specific constructor
+      // if (parent is null && name == "__top__") {
+      // 	set_name(""); // *** VIRTUAL
+      // 	return;
+      // }
 
       uvm_root top = uvm_root.get();
 
@@ -264,6 +265,18 @@ abstract class uvm_component: uvm_report_object, ParContext
 
       m_set_cl_msg_args();
 
+    }
+  }
+
+  // Csontructor called by uvm_root constructor
+  package this() {
+    synchronized(this) {
+      super("");
+
+      // make sure that we are actually construting a uvm_root
+      auto top = cast(uvm_root) this;
+      assert(top !is null);
+      ._uvm_top = top;
     }
   }
 

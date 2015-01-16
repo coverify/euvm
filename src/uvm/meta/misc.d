@@ -178,6 +178,7 @@ class WithEvent(T) {
       if(parent is null) {
 	parent = getRootEntity();
       }
+      assert(parent !is null);
       _event.init("_event", parent);
       _val = val;
     }

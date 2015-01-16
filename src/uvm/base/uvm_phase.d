@@ -138,7 +138,7 @@ final class uvm_once_phase
   @uvm_private_sync private bool _m_use_ovm_run_semantic;
   this() {
     synchronized(this) {
-      _m_phase_hopper = new FifoObj!uvm_phase;
+      _m_phase_hopper = new FifoObj!uvm_phase("_m_phase_hopper", getRootEntity());
       _m_executing_phases = new SyncAssoc!(uvm_phase, bool);
     }
   }

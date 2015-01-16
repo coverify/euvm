@@ -144,6 +144,11 @@ class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
 	  import std.stdio;
 	  writeln("seed for UVM is:", seed);
 	}
+	_once = new uvm_once!(T)(_uvm_top, _seed);
+	uvm_top.init_report();
+	uvm_top.init_domains();
+	_uvmRootInit = true;
+	_uvmRootInitSemaphore.notify();
       }
     }
 
@@ -164,20 +169,21 @@ class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
     
     @uvm_private_sync bool _uvmRootInit;
 
-    final public void initUVM() {
-      is_root_thread = true;
-      synchronized(this) {
-	_once = new uvm_once!(T)(_uvm_top, _seed);
-	uvm_top.init_report();
-	uvm_top.init_domains();
-	_uvmRootInit = true;
-	// _uvmRootInitEvent.notify();
-	_uvmRootInitSemaphore.notify();
+    // Moved to constructor
+    // final public void initUVM() {
+    //   is_root_thread = true;
+    //   synchronized(this) {
+    // 	_once = new uvm_once!(T)(_uvm_top, _seed);
+    // 	uvm_top.init_report();
+    // 	uvm_top.init_domains();
+    // 	_uvmRootInit = true;
+    // 	// _uvmRootInitEvent.notify();
+    // 	_uvmRootInitSemaphore.notify();
 
-      }
-    }
+    //   }
+    // }
 
-    public Task!(initUVM, -1) _initUVM__;
+    // public Task!(initUVM, -1) _initUVM__;
 
     public void initial() {
       _uvm_top.initial();
@@ -222,7 +228,7 @@ class uvm_root: uvm_component
 
   this() {
     synchronized(this) {
-      super("__top__", null);
+      super();
       _m_phase_timeout = new WithEvent!SimTime;
       _m_phase_all_done = new WithEvent!bool;
       _uvmElabDoneSemaphore = new Semaphore(); // count 0
