@@ -332,6 +332,9 @@ public template uvm_sync_access(size_t I=0, A...) {
     }
 } 
 
+mixin template uvm_sync() {
+  mixin(uvm_sync!(typeof(this)));
+}
 
 public template uvm_sync(T, string U="this", size_t ITER=0) {
   static if(ITER == (__traits(derivedMembers, T).length)) {
@@ -390,6 +393,14 @@ template uvm_once_sync(T, size_t ITER=0) {
   static if(ITER == (__traits(derivedMembers, T).length)) {
     //    enum string uvm_once_sync = "static if(!__traits(compiles, _once)) {public static " ~ T.stringof ~ " _once;}
     enum string uvm_once_sync = "public static " ~ T.stringof ~ " _once;
+public static " ~ T.stringof ~ " uvm_once() {
+import uvm.base.uvm_root: uvm_root_entity_base;
+if(_once is null) {
+auto root = cast(uvm_root_entity_base) getRootEntity();
+// _once = root.once.
+}
+return _once;
+}
 " ~ "mixin(uvm_sync!(" ~ T.stringof ~ ", \"_once\"));
 ";
   }
