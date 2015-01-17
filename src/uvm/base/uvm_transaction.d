@@ -137,7 +137,7 @@ import std.string: format;
 
 abstract class uvm_transaction: uvm_object
 {
-  mixin(uvm_sync!uvm_transaction);
+  mixin uvm_sync;
 
   // Function: new
   //

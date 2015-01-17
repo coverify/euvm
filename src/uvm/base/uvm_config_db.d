@@ -54,7 +54,7 @@ import esdl.base.core;
 
 final private class m_uvm_waiter
 {
-  mixin(uvm_sync!m_uvm_waiter);
+  mixin uvm_sync;
   @uvm_immutable_sync private string _inst_name;
   // _field_name is present in the SV version but is not used
   // private string _field_name;
@@ -404,7 +404,7 @@ package class uvm_config_db_options
   // This method is implicitly called by the ~+UVM_CONFIG_DB_TRACE~.
 
   static public void turn_on_tracing() {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       if (!_ready) _init();
       _tracing = true;
     }
@@ -415,7 +415,7 @@ package class uvm_config_db_options
   // Turn tracing off for the configuration database.
 
   static public void turn_off_tracing() {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       if (!_ready) _init();
       _tracing = false;
     }
@@ -426,7 +426,7 @@ package class uvm_config_db_options
   // Returns 1 if the tracing facility is on and 0 if it is off.
 
   static public bool is_tracing() {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       if (!_ready) _init();
       return _tracing;
     }
@@ -434,7 +434,7 @@ package class uvm_config_db_options
 
 
   static private void _init() {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       string[] trace_args;
 
       uvm_cmdline_processor clp = uvm_cmdline_processor.get_inst();

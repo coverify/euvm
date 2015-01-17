@@ -90,7 +90,7 @@ class uvm_pre_reset_phase: uvm_task_phase
   enum string type_name = "uvm_pre_reset_phase";
 
   static public uvm_pre_reset_phase get() {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       return m_inst;
     }
   }
@@ -152,7 +152,7 @@ class uvm_reset_phase: uvm_task_phase
   enum string type_name = "uvm_reset_phase";
 
   static public uvm_reset_phase get() {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       return m_inst;
     }
   }
@@ -204,7 +204,7 @@ class uvm_post_reset_phase: uvm_task_phase
   enum string type_name = "uvm_post_reset_phase";
 
   static public uvm_post_reset_phase get() {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       return m_inst;
     }
   }
@@ -258,7 +258,7 @@ class uvm_pre_configure_phase: uvm_task_phase
   enum string type_name = "uvm_pre_configure_phase";
 
   static public uvm_pre_configure_phase get() {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       return m_inst;
     }
   }
@@ -313,7 +313,7 @@ class uvm_configure_phase: uvm_task_phase
   enum string type_name = "uvm_configure_phase";
 
   static public uvm_configure_phase get() {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       return m_inst;
     }
   }
@@ -365,7 +365,7 @@ class uvm_post_configure_phase: uvm_task_phase
   enum string type_name = "uvm_post_configure_phase";
 
   static public uvm_post_configure_phase get() {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       return m_inst;
     }
   }
@@ -414,7 +414,7 @@ class uvm_pre_main_phase: uvm_task_phase
   enum string type_name = "uvm_pre_main_phase";
 
   static public uvm_pre_main_phase get() {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       return m_inst;
     }
   }
@@ -467,7 +467,7 @@ class uvm_main_phase: uvm_task_phase
   enum string type_name = "uvm_main_phase";
 
   static public uvm_main_phase get() {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       return m_inst;
     }
   }
@@ -516,7 +516,7 @@ class uvm_post_main_phase: uvm_task_phase
   enum string type_name = "uvm_post_main_phase";
 
   static public uvm_post_main_phase get() {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       return m_inst;
     }
   }
@@ -565,7 +565,7 @@ class uvm_pre_shutdown_phase: uvm_task_phase
   enum string type_name = "uvm_pre_shutdown_phase";
 
   static public uvm_pre_shutdown_phase get() {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       return m_inst;
     }
   }
@@ -617,7 +617,7 @@ class uvm_shutdown_phase: uvm_task_phase
   enum string type_name = "uvm_shutdown_phase";
 
   static public uvm_shutdown_phase get() {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       return m_inst;
     }
   }
@@ -670,7 +670,7 @@ class uvm_post_shutdown_phase: uvm_task_phase
   enum string type_name = "uvm_post_shutdown_phase";
 
   static public uvm_post_shutdown_phase get() {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       return m_inst;
     }
   }

@@ -49,7 +49,7 @@ import std.string: format;
 
 class uvm_event : /*extends*/ uvm_object
 {
-  mixin(uvm_sync!(uvm_event));
+  mixin uvm_sync;
 
   enum string type_name = "uvm_event";
 

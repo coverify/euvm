@@ -86,7 +86,7 @@ final class uvm_build_phase: uvm_topdown_phase
   enum string type_name = "uvm_build_phase";
 
   static public uvm_build_phase get() {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       return m_inst;
     }
   }
@@ -142,7 +142,7 @@ final class uvm_connect_phase: uvm_bottomup_phase
 
   enum string type_name = "uvm_connect_phase";
   static public uvm_connect_phase get() {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       return m_inst;
     }
   }
@@ -181,7 +181,7 @@ final class uvm_elaboration_phase: uvm_topdown_phase
   enum string type_name = "uvm_elaboration_phase";
 
   static public uvm_elaboration_phase get() {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       return m_inst;
     }
   }
@@ -234,7 +234,7 @@ final class uvm_end_of_elaboration_phase: uvm_bottomup_phase
 
   enum string type_name = "uvm_end_of_elaboration_phase";
   static public uvm_end_of_elaboration_phase get() {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       return m_inst;
     }
   }
@@ -291,7 +291,7 @@ final class uvm_start_of_simulation_phase: uvm_bottomup_phase
 
   enum string type_name = "uvm_start_of_simulation_phase";
   static public uvm_start_of_simulation_phase get() {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       return m_inst;
     }
   }
@@ -370,7 +370,7 @@ final class uvm_run_phase: uvm_task_phase
 
   static const string type_name = "uvm_run_phase";
   static public uvm_run_phase get() {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       return m_inst;
     }
   }
@@ -428,7 +428,7 @@ final class uvm_extract_phase: uvm_bottomup_phase
   enum string type_name = "uvm_extract_phase";
 
   static public uvm_extract_phase get() {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       return m_inst;
     }
   }
@@ -478,7 +478,7 @@ final class uvm_check_phase: uvm_bottomup_phase
   enum string type_name = "uvm_check_phase";
 
   static public uvm_check_phase get() {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       return m_inst;
     }
   }
@@ -529,7 +529,7 @@ final class uvm_report_phase: uvm_bottomup_phase
   enum string type_name = "uvm_report_phase";
 
   static public uvm_report_phase get() {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       return m_inst;
     }
   }
@@ -581,7 +581,7 @@ final class uvm_final_phase: uvm_topdown_phase
   enum string type_name = "uvm_final_phase";
 
   static public uvm_final_phase get() {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       return m_inst;
     }
   }

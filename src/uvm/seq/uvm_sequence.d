@@ -41,7 +41,7 @@ abstract class uvm_sequence (REQ = uvm_sequence_item,
 			     RSP = REQ):
   uvm_sequence_base
 {
-  mixin(uvm_sync!(uvm_sequence!(REQ, RSP)));
+  mixin uvm_sync;
 
   alias uvm_sequencer_param_base!(REQ, RSP) sequencer_t;
 

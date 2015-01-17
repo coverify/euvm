@@ -149,7 +149,7 @@ class uvm_phase: uvm_object
   import esdl.base.core: Process;
   import esdl.data.queue;
   mixin(uvm_once_sync!uvm_once_phase);
-  mixin(uvm_sync!uvm_phase);
+  mixin uvm_sync;
   // not required in vlang
   //`uvm_object_utils(uvm_phase)
 

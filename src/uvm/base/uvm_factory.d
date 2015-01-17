@@ -43,7 +43,7 @@ import std.string: format;
 //Instance overrides by requested type lookup
 final class uvm_factory_queue_class
 {
-  mixin(uvm_sync!uvm_factory_queue_class);
+  mixin uvm_sync;
 
   @uvm_private_sync private Queue!uvm_factory_override _queue;
 
@@ -178,7 +178,7 @@ final class uvm_factory
   // Get the factory singleton
   //
   static public uvm_factory get() {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       return m_inst;
     }
   }
@@ -1755,7 +1755,7 @@ abstract class uvm_object_wrapper
 
 final class uvm_factory_override
 {
-  mixin(uvm_sync!uvm_factory_override);
+  mixin uvm_sync;
 
   @uvm_private_sync private string _full_inst_path;
   @uvm_private_sync private string _orig_type_name;

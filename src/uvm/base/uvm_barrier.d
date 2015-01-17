@@ -43,7 +43,7 @@ import esdl.base.core: wait;
 
 class uvm_barrier: uvm_object
 {
-  mixin(uvm_sync!uvm_barrier);
+  mixin uvm_sync;
 
   // Guard and encapsulate the state variables
   @uvm_private_sync private int  _threshold;

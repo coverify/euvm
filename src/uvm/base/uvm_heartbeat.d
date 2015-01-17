@@ -75,7 +75,7 @@ alias uvm_callbacks!(uvm_callbacks_objection, uvm_heartbeat_callback)
 class uvm_heartbeat: uvm_object
 {
   import esdl.data.queue;
-  mixin(uvm_sync!uvm_heartbeat);
+  mixin uvm_sync;
 
   protected uvm_callbacks_objection _m_objection;
 

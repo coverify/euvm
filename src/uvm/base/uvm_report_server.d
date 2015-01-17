@@ -59,7 +59,7 @@ class uvm_once_report_server
 class uvm_report_server: /*extends*/ uvm_object
 {
   mixin(uvm_once_sync!(uvm_once_report_server));
-  mixin(uvm_sync!uvm_report_server);
+  mixin uvm_sync;
 
   private int _max_quit_count;
   private int _quit_count;
@@ -104,7 +104,7 @@ class uvm_report_server: /*extends*/ uvm_object
   // server is responsible for formatting messages.
 
   static public void set_server(uvm_report_server server) {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       import std.exception: enforce;
       enforce(server !is null);
 
@@ -125,7 +125,7 @@ class uvm_report_server: /*extends*/ uvm_object
   // a valid handle to a report server.
 
   static public uvm_report_server get_server() {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       if (_m_global_report_server is null)
 	_m_global_report_server = new uvm_report_server();
       return _m_global_report_server;

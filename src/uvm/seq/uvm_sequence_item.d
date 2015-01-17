@@ -53,7 +53,7 @@ import uvm.meta.misc;
 
 class uvm_sequence_item: uvm_transaction
 {
-  mixin(uvm_sync!uvm_sequence_item);
+  mixin uvm_sync;
 
   private    int                _m_sequence_id = -1;
   @uvm_protected_sync private bool _m_use_sequence_info;

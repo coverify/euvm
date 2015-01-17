@@ -127,6 +127,14 @@ class uvm_root_entity_base: RootEntity
   this(string name) {
     super(name);
   }
+
+  // The UVM singleton variables are now encapsulated as part of _once
+  // mechanism.
+  private uvm_root_once _once;
+  public uvm_root_once once() {
+    return _once;
+  }
+
   abstract public uvm_root get_uvm_root();
   // The randomization seed passed from the top.
   // alias get_uvm_root this;
@@ -144,7 +152,9 @@ class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
 	  import std.stdio;
 	  writeln("seed for UVM is:", seed);
 	}
-	_once = new uvm_once!(T)(_uvm_top, _seed);
+	T _top;
+	_once = new uvm_root_once(_top, _seed);
+	_uvm_top = _top;
 	uvm_top.init_report();
 	uvm_top.init_domains();
 	_uvmRootInit = true;
@@ -173,7 +183,7 @@ class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
     // final public void initUVM() {
     //   is_root_thread = true;
     //   synchronized(this) {
-    // 	_once = new uvm_once!(T)(_uvm_top, _seed);
+    // 	_once = new uvm_root_once!(T)(_uvm_top, _seed);
     // 	uvm_top.init_report();
     // 	uvm_top.init_domains();
     // 	_uvmRootInit = true;
@@ -211,20 +221,13 @@ class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
     // The uvm_root instance corresponding to this RootEntity.
     private T _uvm_top;
 
-    // The UVM singleton variables are now encapsulated as part of _once
-    // mechanism.
-    private uvm_once!T _once;
-    public uvm_once!T once() {
-      return _once;
-    }
-
     // The randomization seed passed from the top.
     private uint _seed;
 }
 
 class uvm_root: uvm_component
 {
-  mixin(uvm_sync!uvm_root);
+  mixin uvm_sync;
 
   this() {
     synchronized(this) {
@@ -1179,7 +1182,7 @@ class uvm_root: uvm_component
 
 
 
-class uvm_once(T) if(is(T: uvm_root))
+class uvm_root_once
   {
     import uvm.seq.uvm_sequencer_base: uvm_once_sequencer_base,
       uvm_sequencer_base;
@@ -1280,7 +1283,7 @@ class uvm_once(T) if(is(T: uvm_root))
     uvm_once_report_phase _uvm_report_phase;
     uvm_once_final_phase _uvm_final_phase;
 
-    this(ref T root, uint seed) {
+    this(T)(ref T root, uint seed) {
       synchronized(this) {
 	// import std.stdio;
 	_uvm_sequencer_base = new uvm_once_sequencer_base();

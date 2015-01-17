@@ -546,7 +546,7 @@ abstract class uvm_report_catcher: uvm_callback
 						 ref uvm_action action,
 						 string filename,
 						 size_t line) {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       bool thrown = true;
       uvm_severity_type orig_severity;
 
@@ -637,7 +637,7 @@ abstract class uvm_report_catcher: uvm_callback
 			    UVM_NONE, __FILE__, __LINE__);
     }
 
-    synchronized(_once) {
+    synchronized(uvm_once) {
       if(m_debug_flags & DO_NOT_MODIFY) {
 	m_modified_severity    = m_orig_severity;
 	m_modified_id          = m_orig_id;

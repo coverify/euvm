@@ -90,7 +90,7 @@ import esdl.base.core: finish;
 
 class uvm_report_object: /*extends*/ uvm_object
 {
-  mixin(uvm_sync!uvm_report_object);
+  mixin uvm_sync;
 
   @uvm_public_sync private uvm_report_handler _m_rh;
 

@@ -238,11 +238,11 @@ import uvm.base.uvm_packer;
 import uvm.base.uvm_comparer;
 import uvm.base.uvm_recorder;
 import uvm.base.uvm_printer;
+import uvm.base.uvm_object;
 
 final class uvm_status_container {
-  import uvm.base.uvm_object;
 
-  mixin(uvm_sync!uvm_status_container);
+  mixin uvm_sync;
 
   //The clone setting is used by the set/get config to know if cloning is on.
   @uvm_public_sync private bool _clone = true;
@@ -506,7 +506,7 @@ final class uvm_seed_map {
 
     type_id = "uvm_pkg." ~ type_id; // uvm_instance_scope()
 
-    synchronized(_once) {
+    synchronized(uvm_once) {
       if (inst_id !in _uvm_random_seed_table_lookup) {
 	_uvm_random_seed_table_lookup[inst_id] = new uvm_seed_map();
       }
@@ -913,7 +913,7 @@ version(UVM_USE_PROCESS_CONTAINER) {
   import esdl.base.core;
   final class process_container_c
   {
-    mixin(uvm_sync!process_container_c);
+    mixin uvm_sync;
 
     @uvm_immutable_sync private Process _p;
 

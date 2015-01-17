@@ -89,7 +89,7 @@ abstract class uvm_printer
 {
   import std.traits: isIntegral;
 
-  mixin(uvm_sync!uvm_printer);
+  mixin uvm_sync;
 
   // Variable: knobs
   //
@@ -853,7 +853,7 @@ class uvm_printer_knobs {
   // Indicates whether the <print_header> function should be called when
   // printing an object.
 
-  mixin(uvm_sync!uvm_printer_knobs);
+  mixin uvm_sync;
 
   @uvm_public_sync private bool _header = true;
 

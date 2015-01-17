@@ -91,7 +91,7 @@ abstract class uvm_object: uvm_void, RandomizableIntf
   mixin Randomization;
   
   mixin(uvm_once_sync!uvm_once_object);
-  mixin(uvm_sync!uvm_object);
+  mixin uvm_sync;
 
   // Function: new
 
@@ -100,7 +100,7 @@ abstract class uvm_object: uvm_void, RandomizableIntf
 
   public this(string name="") {
     int inst_id;
-    synchronized(_once) {
+    synchronized(uvm_once) {
       inst_id = _m_inst_count++;
     }
     synchronized(this) {
@@ -132,7 +132,7 @@ abstract class uvm_object: uvm_void, RandomizableIntf
   // The <uvm_component> class is an example of a type that has a unique
   // instance name.
 
-  // Moved to _once
+  // Moved to uvm_once
   // shared static bool use_uvm_seeding = true;
 
 
@@ -224,7 +224,7 @@ abstract class uvm_object: uvm_void, RandomizableIntf
   // identifier.
 
   static public int get_inst_count() {
-    synchronized(_once) {
+    synchronized(uvm_once) {
       return _m_inst_count;
     }
   }

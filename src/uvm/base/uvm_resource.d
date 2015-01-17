@@ -241,7 +241,7 @@ class uvm_once_resource_base
 abstract class uvm_resource_base: uvm_object
 {
   mixin(uvm_once_sync!(uvm_once_resource_base));
-  mixin(uvm_sync!uvm_resource_base);
+  mixin uvm_sync;
 
   protected string _rscope;
   @uvm_immutable_sync
@@ -1426,7 +1426,7 @@ class uvm_resource_pool {
 				    bool audit = false) {
     synchronized(this) {
 
-      // moved to _once
+      // moved to uvm_once
 
       // printer.knobs.separator  = "";
       // printer.knobs.full_name  = 0;

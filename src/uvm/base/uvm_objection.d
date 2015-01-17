@@ -49,7 +49,7 @@ alias uvm_callbacks!(uvm_objection,uvm_objection_callback) uvm_objection_cbs_t;
 // typedef class uvm_callbacks_objection;
 
 class uvm_objection_events {
-  mixin(uvm_sync!uvm_objection_events);
+  mixin uvm_sync;
   @uvm_private_sync   private int   _waiters;
   private void inc_waiters() {synchronized(this) ++_waiters;}
   private void dec_waiters() {synchronized(this) --_waiters;}
@@ -134,7 +134,7 @@ class uvm_once_objection
 class uvm_objection: uvm_report_object
 {
   import esdl.data.queue;
-  mixin(uvm_sync!uvm_objection);
+  mixin uvm_sync;
   mixin(uvm_once_sync!uvm_once_objection);
 
   @uvm_protected_sync
@@ -1311,7 +1311,7 @@ class uvm_once_test_done_objection
 class uvm_test_done_objection: m_uvm_test_done_objection_base
 {
   mixin(uvm_once_sync!uvm_once_test_done_objection);
-  mixin(uvm_sync!uvm_test_done_objection);
+  mixin uvm_sync;
 
   // Seems redundant -- not used anywhere -- declared in SV version
   // protected bool m_forced;
@@ -1583,7 +1583,7 @@ class uvm_test_done_objection: m_uvm_test_done_objection_base
 // Have a pool of context objects to use
 class uvm_objection_context_object
 {
-  mixin(uvm_sync!uvm_objection_context_object);
+  mixin uvm_sync;
   @uvm_private_sync
   private uvm_object _obj;
   @uvm_private_sync

@@ -70,7 +70,7 @@ class uvm_report_handler
   import std.string: format;
 
   mixin(uvm_once_sync!(uvm_once_report_handler));
-  mixin(uvm_sync!uvm_report_handler);
+  mixin uvm_sync;
 
   @uvm_public_sync private int _m_max_verbosity_level;
 

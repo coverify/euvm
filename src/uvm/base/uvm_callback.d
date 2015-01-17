@@ -110,7 +110,7 @@ class uvm_callbacks_base: uvm_object
 {
 
   mixin(uvm_once_sync!uvm_once_callbacks_base);
-  mixin(uvm_sync!uvm_callbacks_base);
+  mixin uvm_sync;
 
   alias uvm_callbacks_base this_type;
 
@@ -199,7 +199,7 @@ class uvm_callbacks_base: uvm_object
 
 class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
 {
-  mixin(uvm_sync!(uvm_typed_callbacks!T));
+  mixin uvm_sync;
 
   @uvm_immutable_sync
     uvm_queue!uvm_callback _m_tw_cb_q;
@@ -520,7 +520,7 @@ class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
 
 class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
 {
-  mixin(uvm_sync!this_type);
+  mixin uvm_sync;
   // Parameter: T
   //
   // This type parameter specifies the base object type with which the

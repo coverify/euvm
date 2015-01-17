@@ -124,7 +124,7 @@ class uvm_once_component
 abstract class uvm_component: uvm_report_object, ParContext
 {
   mixin(uvm_once_sync!uvm_once_component);
-  mixin(uvm_sync!uvm_component);
+  mixin uvm_sync;
 
   mixin ParContextMixin;
 
@@ -2909,8 +2909,8 @@ abstract class uvm_component: uvm_report_object, ParContext
   package void set_id() {
     uint id;
     if(m_comp_id == -1) {
-      synchronized(_once) {
-	id = _once._m_comp_count++;
+      synchronized(uvm_once) {
+	id = uvm_once._m_comp_count++;
       }
       debug(UVM_AUTO) {
 	import std.stdio;
@@ -2990,19 +2990,19 @@ abstract class uvm_component: uvm_report_object, ParContext
 
 
   private void add_time_setting(m_verbosity_setting setting) {
-    synchronized(_once) {
-      _once._m_time_settings ~= setting;
+    synchronized(uvm_once) {
+      uvm_once._m_time_settings ~= setting;
     }
   }
 
   private m_verbosity_setting[] sort_time_settings() {
-    synchronized(_once) {
-      if (_once._m_time_settings.length > 0) {
+    synchronized(uvm_once) {
+      if (uvm_once._m_time_settings.length > 0) {
 	// m_time_settings.sort() with ( item.offset );
 	sort!((m_verbosity_setting a, m_verbosity_setting b)
-	      {return a.offset < b.offset;})(_once._m_time_settings);
+	      {return a.offset < b.offset;})(uvm_once._m_time_settings);
       }
-      return _once._m_time_settings.dup;
+      return uvm_once._m_time_settings.dup;
     }
   }
 
@@ -3296,7 +3296,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 private class uvm_config_object_wrapper
 {
   // pragma(msg, uvm_sync!uvm_config_object_wrapper);
-  mixin(uvm_sync!uvm_config_object_wrapper);
+  mixin uvm_sync;
   @uvm_private_sync private uvm_object _obj;
   @uvm_private_sync private bool _clone;
 }

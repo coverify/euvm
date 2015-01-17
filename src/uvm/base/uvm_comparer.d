@@ -46,7 +46,7 @@ class uvm_comparer
   import esdl.data.bvec;
   import std.string: format;
 
-  mixin(uvm_sync!uvm_comparer);
+  mixin uvm_sync;
   // Variable: policy
   //
   // Determines whether comparison is UVM_DEEP, UVM_REFERENCE, or UVM_SHALLOW.
