@@ -57,20 +57,20 @@ import std.regex; // : Regex, regex, match
 import uvm.vpi.uvm_svcmd_vpi;
 import std.string: toUpper;
 
-final class uvm_once_cmdline_processor
-{
-  @uvm_immutable_sync private uvm_cmdline_processor _m_inst;
-
-  this() {
-    synchronized(this) {
-      _m_inst = new uvm_cmdline_processor("uvm_cmdline_proc");
-    }
-  }
-}
-
 final class uvm_cmdline_processor: /*extends*/ uvm_report_object
 {
-  mixin(uvm_once_sync!(uvm_once_cmdline_processor));
+  static class uvm_once
+  {
+    @uvm_immutable_sync private uvm_cmdline_processor _m_inst;
+
+    this() {
+      synchronized(this) {
+	_m_inst = new uvm_cmdline_processor("uvm_cmdline_proc");
+      }
+    }
+  }
+
+  mixin uvm_once_sync;
 
   // Group: Singleton
 

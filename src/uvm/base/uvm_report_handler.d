@@ -58,18 +58,18 @@ import uvm.base.uvm_report_object;
 import uvm.base.uvm_cmdline_processor;
 import uvm.base.uvm_version;
 import uvm.meta.misc;
-import uvm.base.uvm_root: uvm_top;
-
-class uvm_once_report_handler
-{
-  @uvm_private_sync private bool _m_relnotes_done;
-}
+import uvm.base.uvm_root: uvm_top, uvm_root_entity_base;
 
 class uvm_report_handler
 {
   import std.string: format;
 
-  mixin(uvm_once_sync!(uvm_once_report_handler));
+  static class uvm_once
+  {
+    @uvm_private_sync private bool _m_relnotes_done;
+  }
+
+  mixin uvm_once_sync;
   mixin uvm_sync;
 
   @uvm_public_sync private int _m_max_verbosity_level;

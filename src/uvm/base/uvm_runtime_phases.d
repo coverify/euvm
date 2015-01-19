@@ -70,19 +70,19 @@ import uvm.base.uvm_phase;
 import uvm.base.uvm_component;
 import uvm.meta.misc;
 
-class uvm_once_pre_reset_phase
-{
-  @uvm_immutable_sync uvm_pre_reset_phase _m_inst;
-  this() {
-    synchronized(this) {
-      _m_inst = new uvm_pre_reset_phase();
-    }
-  }
-}
-
 class uvm_pre_reset_phase: uvm_task_phase
 {
-  mixin(uvm_once_sync!uvm_once_pre_reset_phase);
+  static class uvm_once
+  {
+    @uvm_immutable_sync uvm_pre_reset_phase _m_inst;
+    this() {
+      synchronized(this) {
+	_m_inst = new uvm_pre_reset_phase();
+      }
+    }
+  }
+
+  mixin uvm_once_sync;
   // task
   final override public void exec_task(uvm_component comp, uvm_phase phase) {
     comp.pre_reset_phase(phase);
@@ -90,7 +90,7 @@ class uvm_pre_reset_phase: uvm_task_phase
   enum string type_name = "uvm_pre_reset_phase";
 
   static public uvm_pre_reset_phase get() {
-    synchronized(uvm_once) {
+    synchronized(once) {
       return m_inst;
     }
   }
@@ -131,19 +131,19 @@ class uvm_pre_reset_phase: uvm_task_phase
 // - Output signals and state variables have been initialized.
 //
 
-class uvm_once_reset_phase
-{
-  @uvm_immutable_sync uvm_reset_phase _m_inst;
-  this() {
-    synchronized(this) {
-      _m_inst = new uvm_reset_phase();
-    }
-  }
-}
-
 class uvm_reset_phase: uvm_task_phase
 {
-  mixin(uvm_once_sync!uvm_once_reset_phase);
+  static class uvm_once
+  {
+    @uvm_immutable_sync uvm_reset_phase _m_inst;
+    this() {
+      synchronized(this) {
+	_m_inst = new uvm_reset_phase();
+      }
+    }
+  }
+
+  mixin uvm_once_sync;
 
   // task
   final override public void exec_task(uvm_component comp, uvm_phase phase) {
@@ -152,7 +152,7 @@ class uvm_reset_phase: uvm_task_phase
   enum string type_name = "uvm_reset_phase";
 
   static public uvm_reset_phase get() {
-    synchronized(uvm_once) {
+    synchronized(once) {
       return m_inst;
     }
   }
@@ -184,19 +184,19 @@ class uvm_reset_phase: uvm_task_phase
 // Exit Criteria:
 // - The testbench and the DUT are in a known, active state.
 //
-class uvm_once_post_reset_phase
-{
-  @uvm_immutable_sync uvm_post_reset_phase _m_inst;
-  this() {
-    synchronized(this) {
-      _m_inst = new uvm_post_reset_phase();
-    }
-  }
-}
-
 class uvm_post_reset_phase: uvm_task_phase
 {
-  mixin(uvm_once_sync!uvm_once_post_reset_phase);
+  static class uvm_once
+  {
+    @uvm_immutable_sync uvm_post_reset_phase _m_inst;
+    this() {
+      synchronized(this) {
+	_m_inst = new uvm_post_reset_phase();
+      }
+    }
+  }
+
+  mixin uvm_once_sync;
   // task
   final override public void exec_task(uvm_component comp, uvm_phase phase) {
     comp.post_reset_phase(phase);
@@ -204,7 +204,7 @@ class uvm_post_reset_phase: uvm_task_phase
   enum string type_name = "uvm_post_reset_phase";
 
   static public uvm_post_reset_phase get() {
-    synchronized(uvm_once) {
+    synchronized(once) {
       return m_inst;
     }
   }
@@ -238,19 +238,19 @@ class uvm_post_reset_phase: uvm_task_phase
 // Exit Criteria:
 // - DUT configuration information is defined.
 //
-class uvm_once_pre_configure_phase
-{
-  @uvm_immutable_sync uvm_pre_configure_phase _m_inst;
-  this() {
-    synchronized(this) {
-      _m_inst = new uvm_pre_configure_phase();
-    }
-  }
-}
-
 class uvm_pre_configure_phase: uvm_task_phase
 {
-  mixin(uvm_once_sync!uvm_once_pre_configure_phase);
+  static class uvm_once
+  {
+    @uvm_immutable_sync uvm_pre_configure_phase _m_inst;
+    this() {
+      synchronized(this) {
+	_m_inst = new uvm_pre_configure_phase();
+      }
+    }
+  }
+
+  mixin uvm_once_sync;
   // task
   final override public void exec_task(uvm_component comp, uvm_phase phase) {
     comp.pre_configure_phase(phase);
@@ -258,7 +258,7 @@ class uvm_pre_configure_phase: uvm_task_phase
   enum string type_name = "uvm_pre_configure_phase";
 
   static public uvm_pre_configure_phase get() {
-    synchronized(uvm_once) {
+    synchronized(once) {
       return m_inst;
     }
   }
@@ -292,19 +292,19 @@ class uvm_pre_configure_phase: uvm_task_phase
 // Exit Criteria:
 // - The DUT has been configured and is ready to operate normally.
 //
-class uvm_once_configure_phase
-{
-  @uvm_immutable_sync uvm_configure_phase _m_inst;
-  this() {
-    synchronized(this) {
-      _m_inst = new uvm_configure_phase();
-    }
-  }
-}
-
 class uvm_configure_phase: uvm_task_phase
 {
-  mixin(uvm_once_sync!uvm_once_configure_phase);
+  static class uvm_once
+  {
+    @uvm_immutable_sync uvm_configure_phase _m_inst;
+    this() {
+      synchronized(this) {
+	_m_inst = new uvm_configure_phase();
+      }
+    }
+  }
+
+  mixin uvm_once_sync;
   // task
   final override public void exec_task(uvm_component comp, uvm_phase phase) {
     comp.configure_phase(phase);
@@ -313,7 +313,7 @@ class uvm_configure_phase: uvm_task_phase
   enum string type_name = "uvm_configure_phase";
 
   static public uvm_configure_phase get() {
-    synchronized(uvm_once) {
+    synchronized(once) {
       return m_inst;
     }
   }
@@ -345,19 +345,19 @@ class uvm_configure_phase: uvm_task_phase
 // - The DUT has been fully configured and enabled
 //   and is ready to start operating normally.
 //
-class uvm_once_post_configure_phase
-{
-  @uvm_immutable_sync uvm_post_configure_phase _m_inst;
-  this() {
-    synchronized(this) {
-      _m_inst = new uvm_post_configure_phase();
-    }
-  }
-}
-
 class uvm_post_configure_phase: uvm_task_phase
 {
-  mixin(uvm_once_sync!uvm_once_post_configure_phase);
+  static class uvm_once
+  {
+    @uvm_immutable_sync uvm_post_configure_phase _m_inst;
+    this() {
+      synchronized(this) {
+	_m_inst = new uvm_post_configure_phase();
+      }
+    }
+  }
+
+  mixin uvm_once_sync;
   // task
   final override public void exec_task(uvm_component comp, uvm_phase phase) {
     comp.post_configure_phase(phase);
@@ -365,7 +365,7 @@ class uvm_post_configure_phase: uvm_task_phase
   enum string type_name = "uvm_post_configure_phase";
 
   static public uvm_post_configure_phase get() {
-    synchronized(uvm_once) {
+    synchronized(once) {
       return m_inst;
     }
   }
@@ -394,19 +394,19 @@ class uvm_post_configure_phase: uvm_task_phase
 // - All components have completed training and rate negotiation.
 // - All components are ready to generate and/or observe normal stimulus.
 //
-class uvm_once_pre_main_phase
-{
-  @uvm_immutable_sync uvm_pre_main_phase _m_inst;
-  this() {
-    synchronized(this) {
-      _m_inst = new uvm_pre_main_phase();
-    }
-  }
-}
-
 class uvm_pre_main_phase: uvm_task_phase
 {
-  mixin(uvm_once_sync!uvm_once_pre_main_phase);
+  static class uvm_once
+  {
+    @uvm_immutable_sync uvm_pre_main_phase _m_inst;
+    this() {
+      synchronized(this) {
+	_m_inst = new uvm_pre_main_phase();
+      }
+    }
+  }
+
+  mixin uvm_once_sync;
   // task
   final override public void exec_task(uvm_component comp, uvm_phase phase) {
     comp.pre_main_phase(phase);
@@ -414,7 +414,7 @@ class uvm_pre_main_phase: uvm_task_phase
   enum string type_name = "uvm_pre_main_phase";
 
   static public uvm_pre_main_phase get() {
-    synchronized(uvm_once) {
+    synchronized(once) {
       return m_inst;
     }
   }
@@ -447,19 +447,19 @@ class uvm_pre_main_phase: uvm_task_phase
 // - Enough stimulus has been applied to meet the primary
 //   stimulus objective of the test.
 //
-class uvm_once_main_phase
-{
-  @uvm_immutable_sync uvm_main_phase _m_inst;
-  this() {
-    synchronized(this) {
-      _m_inst = new uvm_main_phase();
-    }
-  }
-}
-
 class uvm_main_phase: uvm_task_phase
 {
-  mixin(uvm_once_sync!uvm_once_main_phase);
+  static class uvm_once
+  {
+    @uvm_immutable_sync uvm_main_phase _m_inst;
+    this() {
+      synchronized(this) {
+	_m_inst = new uvm_main_phase();
+      }
+    }
+  }
+
+  mixin uvm_once_sync;
   // task
   final override public void exec_task(uvm_component comp, uvm_phase phase) {
     comp.main_phase(phase);
@@ -467,7 +467,7 @@ class uvm_main_phase: uvm_task_phase
   enum string type_name = "uvm_main_phase";
 
   static public uvm_main_phase get() {
-    synchronized(uvm_once) {
+    synchronized(once) {
       return m_inst;
     }
   }
@@ -496,19 +496,19 @@ class uvm_main_phase: uvm_task_phase
 // Exit Criteria:
 // - None.
 //
-class uvm_once_post_main_phase
-{
-  @uvm_immutable_sync uvm_post_main_phase _m_inst;
-  this() {
-    synchronized(this) {
-      _m_inst = new uvm_post_main_phase();
-    }
-  }
-}
-
 class uvm_post_main_phase: uvm_task_phase
 {
-  mixin(uvm_once_sync!uvm_once_post_main_phase);
+  static class uvm_once
+  {
+    @uvm_immutable_sync uvm_post_main_phase _m_inst;
+    this() {
+      synchronized(this) {
+	_m_inst = new uvm_post_main_phase();
+      }
+    }
+  }
+
+  mixin uvm_once_sync;
   // task
   final override public void exec_task(uvm_component comp, uvm_phase phase) {
     comp.post_main_phase(phase);
@@ -516,7 +516,7 @@ class uvm_post_main_phase: uvm_task_phase
   enum string type_name = "uvm_post_main_phase";
 
   static public uvm_post_main_phase get() {
-    synchronized(uvm_once) {
+    synchronized(once) {
       return m_inst;
     }
   }
@@ -545,19 +545,19 @@ class uvm_post_main_phase: uvm_task_phase
 // Exit Criteria:
 // - None.
 //
-class uvm_once_pre_shutdown_phase
-{
-  @uvm_immutable_sync uvm_pre_shutdown_phase _m_inst;
-  this() {
-    synchronized(this) {
-      _m_inst = new uvm_pre_shutdown_phase();
-    }
-  }
-}
-
 class uvm_pre_shutdown_phase: uvm_task_phase
 {
-  mixin(uvm_once_sync!uvm_once_pre_shutdown_phase);
+  static class uvm_once
+  {
+    @uvm_immutable_sync uvm_pre_shutdown_phase _m_inst;
+    this() {
+      synchronized(this) {
+	_m_inst = new uvm_pre_shutdown_phase();
+      }
+    }
+  }
+
+  mixin uvm_once_sync;
   // task
   final override public void exec_task(uvm_component comp, uvm_phase phase) {
     comp.pre_shutdown_phase(phase);
@@ -565,7 +565,7 @@ class uvm_pre_shutdown_phase: uvm_task_phase
   enum string type_name = "uvm_pre_shutdown_phase";
 
   static public uvm_pre_shutdown_phase get() {
-    synchronized(uvm_once) {
+    synchronized(once) {
       return m_inst;
     }
   }
@@ -597,19 +597,19 @@ class uvm_pre_shutdown_phase: uvm_task_phase
 // - All data has been drained or extracted from the DUT.
 // - All interfaces are idle.
 //
-class uvm_once_shutdown_phase
-{
-  @uvm_immutable_sync uvm_shutdown_phase _m_inst;
-  this() {
-    synchronized(this) {
-      _m_inst = new uvm_shutdown_phase();
-    }
-  }
-}
-
 class uvm_shutdown_phase: uvm_task_phase
 {
-  mixin(uvm_once_sync!uvm_once_shutdown_phase);
+  static class uvm_once
+  {
+    @uvm_immutable_sync uvm_shutdown_phase _m_inst;
+    this() {
+      synchronized(this) {
+	_m_inst = new uvm_shutdown_phase();
+      }
+    }
+  }
+
+  mixin uvm_once_sync;
   // task
   final override public void exec_task(uvm_component comp, uvm_phase phase) {
     comp.shutdown_phase(phase);
@@ -617,7 +617,7 @@ class uvm_shutdown_phase: uvm_task_phase
   enum string type_name = "uvm_shutdown_phase";
 
   static public uvm_shutdown_phase get() {
-    synchronized(uvm_once) {
+    synchronized(once) {
       return m_inst;
     }
   }
@@ -650,19 +650,19 @@ class uvm_shutdown_phase: uvm_task_phase
 // - All run-time checks have been satisfied.
 // - The <uvm_run_phase> phase is ready to end.
 //
-class uvm_once_post_shutdown_phase
-{
-  @uvm_immutable_sync uvm_post_shutdown_phase _m_inst;
-  this() {
-    synchronized(this) {
-      _m_inst = new uvm_post_shutdown_phase();
-    }
-  }
-}
-
 class uvm_post_shutdown_phase: uvm_task_phase
 {
-  mixin(uvm_once_sync!uvm_once_post_shutdown_phase);
+  static class uvm_once
+  {
+    @uvm_immutable_sync uvm_post_shutdown_phase _m_inst;
+    this() {
+      synchronized(this) {
+	_m_inst = new uvm_post_shutdown_phase();
+      }
+    }
+  }
+
+  mixin uvm_once_sync;
   // task
   final override public void exec_task(uvm_component comp, uvm_phase phase) {
     comp.post_shutdown_phase(phase);
@@ -670,7 +670,7 @@ class uvm_post_shutdown_phase: uvm_task_phase
   enum string type_name = "uvm_post_shutdown_phase";
 
   static public uvm_post_shutdown_phase get() {
-    synchronized(uvm_once) {
+    synchronized(once) {
       return m_inst;
     }
   }

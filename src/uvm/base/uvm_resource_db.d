@@ -352,15 +352,15 @@ class uvm_resource_db (T=uvm_object) {
 //    The default for tracing is off.
 //
 //----------------------------------------------------------------------
-class uvm_once_resource_db_options
-{
-  @uvm_public_sync private bool _ready;
-  @uvm_public_sync private bool _tracing;
-}
-
 class uvm_resource_db_options
 {
-  mixin(uvm_once_sync!uvm_once_resource_db_options);
+  static class uvm_once
+  {
+    @uvm_public_sync private bool _ready;
+    @uvm_public_sync private bool _tracing;
+  }
+
+  mixin uvm_once_sync;
 
   // Function: turn_on_tracing
   //
@@ -371,7 +371,7 @@ class uvm_resource_db_options
   // This method is implicitly called by the ~+UVM_RESOURCE_DB_TRACE~.
 
   static public void turn_on_tracing() {
-    synchronized(uvm_once) {
+    synchronized(once) {
       if (! _ready) init();
       _tracing = true;
     }
@@ -382,7 +382,7 @@ class uvm_resource_db_options
   // Turn tracing off for the resource database.
 
   static public void turn_off_tracing() {
-    synchronized(uvm_once) {
+    synchronized(once) {
       if (! _ready) init();
       _tracing = false;
     }
@@ -393,7 +393,7 @@ class uvm_resource_db_options
   // Returns 1 if the tracing facility is on and 0 if it is off.
 
   static public bool is_tracing() {
-    synchronized(uvm_once) {
+    synchronized(once) {
       if (! _ready) init();
       return _tracing;
     }
@@ -403,7 +403,7 @@ class uvm_resource_db_options
   static private void init() {
     uvm_cmdline_processor clp = uvm_cmdline_processor.get_inst();
     string[] trace_args;
-    synchronized(uvm_once) {
+    synchronized(once) {
       if (clp.get_arg_matches(`\+UVM_RESOURCE_DB_TRACE`, trace_args)) {
 	_tracing = true;
       }

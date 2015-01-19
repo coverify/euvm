@@ -89,27 +89,27 @@ import esdl.data.sync;
 // instance queue.
 //------------------------------------------------------------------------------
 
-class uvm_once_callbacks_base
-{
-  @uvm_public_sync private bool _m_tracing = true;
-  @uvm_immutable_sync private uvm_callbacks_base _m_b_inst;
-  @uvm_immutable_sync private uvm_pool!(uvm_object, uvm_queue!(uvm_callback))
-    _m_pool;
-  @uvm_immutable_sync private uvm_pool!(ClassInfo, uvm_callbacks_base)
-    _typeid_map;
-  this() {
-    synchronized(this) {
-      _m_b_inst = new uvm_callbacks_base;
-      _m_pool = new uvm_pool!(uvm_object, uvm_queue!(uvm_callback));
-      _typeid_map = new uvm_pool!(ClassInfo, uvm_callbacks_base);
-    }
-  }
-}
-
 class uvm_callbacks_base: uvm_object
 {
 
-  mixin(uvm_once_sync!uvm_once_callbacks_base);
+  static class uvm_once
+  {
+    @uvm_public_sync private bool _m_tracing = true;
+    @uvm_immutable_sync private uvm_callbacks_base _m_b_inst;
+    @uvm_immutable_sync private uvm_pool!(uvm_object, uvm_queue!(uvm_callback))
+      _m_pool;
+    @uvm_immutable_sync private uvm_pool!(ClassInfo, uvm_callbacks_base)
+      _typeid_map;
+    this() {
+      synchronized(this) {
+	_m_b_inst = new uvm_callbacks_base;
+	_m_pool = new uvm_pool!(uvm_object, uvm_queue!(uvm_callback));
+	_typeid_map = new uvm_pool!(ClassInfo, uvm_callbacks_base);
+      }
+    }
+  }
+
+  mixin uvm_once_sync;
   mixin uvm_sync;
 
   alias uvm_callbacks_base this_type;

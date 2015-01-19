@@ -45,11 +45,6 @@ import esdl.base.core: getSimTime, SimTime;
 
 import std.traits: isNumeric, isFloatingPoint, isIntegral;
 
-class uvm_once_recorder
-{
-  @uvm_private_sync private bool[int] _m_handles;
-  @uvm_private_sync private int _handle;
-}
 
 class uvm_recorder: uvm_object
 {
@@ -57,7 +52,13 @@ class uvm_recorder: uvm_object
   import esdl.data.time;
   import esdl.data.bvec;
 
-  mixin(uvm_once_sync!uvm_once_recorder);
+  static class uvm_once
+  {
+    @uvm_private_sync private bool[int] _m_handles;
+    @uvm_private_sync private int _handle;
+  }
+
+  mixin uvm_once_sync;
 
   mixin uvm_sync;
   // TBD
@@ -325,7 +326,7 @@ class uvm_recorder: uvm_object
 			    string t,
 			    string _scope) {
     if (open_file()) {
-      synchronized(uvm_once) {	// since we are not locking "this"
+      synchronized(once) {	// since we are not locking "this"
 				// monitor, do not use '_file'
 	import uvm.meta.mcd;
 	_m_handles[++_handle] = true;
@@ -379,7 +380,7 @@ class uvm_recorder: uvm_object
   //
   //
   public bool check_handle_kind (string htype, int han) {
-    synchronized(uvm_once) {
+    synchronized(once) {
       if (han in _m_handles) return true;
       else return false;
     }
@@ -396,7 +397,7 @@ class uvm_recorder: uvm_object
 		      string desc="",
 		      SimTime begin_time=SimTime(0)) {
     if (open_file()) {
-      synchronized(uvm_once) {	// since we are not locking "this"
+      synchronized(once) {	// since we are not locking "this"
 				// monitor, do not use '_file'
 	_m_handles[++_handle] = true;
 	import uvm.meta.mcd;
@@ -452,7 +453,7 @@ class uvm_recorder: uvm_object
       import uvm.meta.mcd;
       vfdisplay(this.file, "FREE @%0t {TXH:%0d}",
 		getSimTime(), han);
-      synchronized(uvm_once) {
+      synchronized(once) {
 	if(han in _m_handles) _m_handles.remove(han);
       }
     }

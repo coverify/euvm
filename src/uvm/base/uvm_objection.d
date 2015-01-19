@@ -93,49 +93,50 @@ import uvm.base.uvm_root;
 
 import esdl.data.time: sec;
 
-class uvm_once_objection
-{
-  @uvm_immutable_sync private SyncQueue!uvm_objection _m_objections;
-
-  //// Drain Logic
-
-  // The context pool holds used context objects, so that
-  // they're not constantly being recreated.  The maximum
-  // number of contexts in the pool is equal to the maximum
-  // number of simultaneous drains you could have occuring,
-  // both pre and post forks.
-  //
-  // There's the potential for a programmability within the
-  // library to dictate the largest this pool should be allowed
-  // to grow, but that seems like overkill for the time being.
-  @uvm_immutable_sync
-  private SyncQueue!uvm_objection_context_object _m_context_pool;
-
-  // These are the contexts which have been scheduled for
-  // retrieval by the background process, but which the
-  // background process hasn't seen yet.
-  @uvm_immutable_sync
-  private SyncQueue!uvm_objection_context_object _m_scheduled_list;
-
-  @uvm_immutable_sync
-  private Event _m_scheduled_list_event;
-
-  this() {
-    synchronized(this) {
-      _m_scheduled_list_event.init("_m_scheduled_list_event", getRootEntity());
-      _m_objections = new SyncQueue!uvm_objection();
-      _m_context_pool = new SyncQueue!uvm_objection_context_object();
-      _m_scheduled_list = new SyncQueue!uvm_objection_context_object();
-    }
-  }
-}
-
-
 class uvm_objection: uvm_report_object
 {
   import esdl.data.queue;
   mixin uvm_sync;
-  mixin(uvm_once_sync!uvm_once_objection);
+
+  static class uvm_once
+  {
+    @uvm_immutable_sync private SyncQueue!uvm_objection _m_objections;
+
+    //// Drain Logic
+
+    // The context pool holds used context objects, so that
+    // they're not constantly being recreated.  The maximum
+    // number of contexts in the pool is equal to the maximum
+    // number of simultaneous drains you could have occuring,
+    // both pre and post forks.
+    //
+    // There's the potential for a programmability within the
+    // library to dictate the largest this pool should be allowed
+    // to grow, but that seems like overkill for the time being.
+    @uvm_immutable_sync
+    private SyncQueue!uvm_objection_context_object _m_context_pool;
+
+    // These are the contexts which have been scheduled for
+    // retrieval by the background process, but which the
+    // background process hasn't seen yet.
+    @uvm_immutable_sync
+    private SyncQueue!uvm_objection_context_object _m_scheduled_list;
+
+    @uvm_immutable_sync
+    private Event _m_scheduled_list_event;
+
+    this() {
+      synchronized(this) {
+	_m_scheduled_list_event.init("_m_scheduled_list_event", getRootEntity());
+	_m_objections = new SyncQueue!uvm_objection();
+	_m_context_pool = new SyncQueue!uvm_objection_context_object();
+	_m_scheduled_list = new SyncQueue!uvm_objection_context_object();
+      }
+    }
+  }
+
+
+  mixin(uvm_once_sync!(uvm_once, typeof(this)));
 
   @uvm_protected_sync
     private bool _m_trace_mode;
@@ -1293,14 +1294,6 @@ public SimTime uvm_default_timeout() {
 
 
 
-class uvm_once_test_done_objection
-{
-  @uvm_protected_sync private uvm_test_done_objection _m_inst;
-  this() {
-    _m_inst = new uvm_test_done_objection("run");
-  }
-}
-
 //------------------------------------------------------------------------------
 //
 // Class- uvm_test_done_objection DEPRECATED
@@ -1310,7 +1303,15 @@ class uvm_once_test_done_objection
 
 class uvm_test_done_objection: m_uvm_test_done_objection_base
 {
-  mixin(uvm_once_sync!uvm_once_test_done_objection);
+  static class uvm_once
+  {
+    @uvm_protected_sync private uvm_test_done_objection _m_inst;
+    this() {
+      _m_inst = new uvm_test_done_objection("run");
+    }
+  }
+
+  mixin(uvm_once_sync!(uvm_once, typeof(this)));
   mixin uvm_sync;
 
   // Seems redundant -- not used anywhere -- declared in SV version

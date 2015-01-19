@@ -654,10 +654,7 @@ import uvm.base.uvm_recorder;
 import uvm.base.uvm_root;
 
 
-mixin(uvm_once_sync!(uvm_once_object_globals, "_uvm_object_globals"));
-// Though the mixin declared above does define the following once
-// declaration, DMD is not currently able to resolve it.
-public uvm_once_object_globals _uvm_object_globals_once;
+mixin(uvm_once_sync!(uvm_once_object_globals, "uvm_object_globals"));
 
 final class uvm_once_object_globals
 {

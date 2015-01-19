@@ -56,35 +56,35 @@ alias uvm_config_db!uvm_sequence_base uvm_config_seq;
 //
 //------------------------------------------------------------------------------
 
-class uvm_once_sequencer_base
-{
-  @uvm_private_sync private int _g_request_id;
-  @uvm_private_sync private int _g_sequence_id = 1;
-  @uvm_private_sync private int _g_sequencer_id = 1;
-}
-
 class uvm_sequencer_base: uvm_component
 {
-  mixin(uvm_once_sync!uvm_once_sequencer_base);
+  static class uvm_once
+  {
+    @uvm_private_sync private int _g_request_id;
+    @uvm_private_sync private int _g_sequence_id = 1;
+    @uvm_private_sync private int _g_sequencer_id = 1;
+  }
+
+  mixin uvm_once_sync;
   mixin uvm_sync;
 
   mixin uvm_component_utils;
 
   static inc_g_request_id() {
-    synchronized(uvm_once) {
-      return uvm_once._g_request_id++;
+    synchronized(once) {
+      return once._g_request_id++;
     }
   }
 
   static inc_g_sequence_id() {
-    synchronized(uvm_once) {
-      return uvm_once._g_sequence_id++;
+    synchronized(once) {
+      return once._g_sequence_id++;
     }
   }
 
   static inc_g_sequencer_id() {
-    synchronized(uvm_once) {
-      return uvm_once._g_sequencer_id++;
+    synchronized(once) {
+      return once._g_sequencer_id++;
     }
   }
 

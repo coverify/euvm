@@ -67,31 +67,33 @@ import std.string: format;
 
 import std.random: uniform;
 
-final class uvm_once_object
-{
-  @uvm_private_sync
-  private bool _use_uvm_seeding = true;
-  // ** from uvm_object -- static variable in SV
-  @uvm_immutable_sync
-  private uvm_status_container _m_uvm_status_container;
-  @uvm_protected_sync
-  private int _m_inst_count;
-
-  this() {
-    synchronized(this) {
-      _m_uvm_status_container = new uvm_status_container();
-    }
-  }
-}
-
 abstract class uvm_object: uvm_void, RandomizableIntf
 {
   import esdl.data.bvec;
-
   mixin Randomization;
   
-  mixin(uvm_once_sync!uvm_once_object);
+  static class uvm_once
+  {
+    @uvm_private_sync
+    private bool _use_uvm_seeding = true;
+    // ** from uvm_object -- static variable in SV
+    @uvm_immutable_sync
+    private uvm_status_container _m_uvm_status_container;
+    @uvm_protected_sync
+    private int _m_inst_count;
+
+    this() {
+      synchronized(this) {
+	_m_uvm_status_container = new uvm_status_container();
+      }
+    }
+  }
+
+  // Can not use "mixin uvm_once_sync" template due to a bud in DMD
+  // Using string Mixin function
+  mixin(uvm_once_sync!(uvm_once, typeof(this)));
   mixin uvm_sync;
+
 
   // Function: new
 
@@ -100,7 +102,7 @@ abstract class uvm_object: uvm_void, RandomizableIntf
 
   public this(string name="") {
     int inst_id;
-    synchronized(uvm_once) {
+    synchronized(once) {
       inst_id = _m_inst_count++;
     }
     synchronized(this) {
@@ -132,7 +134,7 @@ abstract class uvm_object: uvm_void, RandomizableIntf
   // The <uvm_component> class is an example of a type that has a unique
   // instance name.
 
-  // Moved to uvm_once
+  // Moved to once
   // shared static bool use_uvm_seeding = true;
 
 
@@ -224,7 +226,7 @@ abstract class uvm_object: uvm_void, RandomizableIntf
   // identifier.
 
   static public int get_inst_count() {
-    synchronized(uvm_once) {
+    synchronized(once) {
       return _m_inst_count;
     }
   }

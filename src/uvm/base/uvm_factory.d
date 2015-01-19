@@ -155,20 +155,20 @@ final class uvm_factory_queue_class
 // See <Usage> section for details on configuring and using the factory.
 //
 
-final class uvm_once_factory
-{
-  @uvm_private_sync private bool _m_debug_pass;
-  @uvm_immutable_sync private uvm_factory _m_inst;
-  this() {
-    synchronized(this) {
-      _m_inst = new uvm_factory();
-    }
-  }
-}
-
 final class uvm_factory
 {
-  mixin(uvm_once_sync!(uvm_once_factory));
+  static class uvm_once
+  {
+    @uvm_private_sync private bool _m_debug_pass;
+    @uvm_immutable_sync private uvm_factory _m_inst;
+    this() {
+      synchronized(this) {
+	_m_inst = new uvm_factory();
+      }
+    }
+  }
+
+  mixin uvm_once_sync;
 
   // systemverilog version defines this function as empty -- god knows
   // why they need to do that
@@ -178,7 +178,7 @@ final class uvm_factory
   // Get the factory singleton
   //
   static public uvm_factory get() {
-    synchronized(uvm_once) {
+    synchronized(once) {
       return m_inst;
     }
   }

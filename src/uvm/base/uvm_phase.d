@@ -129,26 +129,27 @@ import std.string: format;
 import std.conv: to;
 
 
-final class uvm_once_phase
-{
-  @uvm_immutable_sync private SyncAssoc!(uvm_phase, bool) _m_executing_phases;
-  // private static mailbox #(uvm_phase) m_phase_hopper = new();
-  @uvm_immutable_sync private FifoObj!uvm_phase _m_phase_hopper;
-  @uvm_protected_sync private bool _m_phase_trace;
-  @uvm_private_sync private bool _m_use_ovm_run_semantic;
-  this() {
-    synchronized(this) {
-      _m_phase_hopper = new FifoObj!uvm_phase("_m_phase_hopper", getRootEntity());
-      _m_executing_phases = new SyncAssoc!(uvm_phase, bool);
-    }
-  }
-}
 
 class uvm_phase: uvm_object
 {
   import esdl.base.core: Process;
   import esdl.data.queue;
-  mixin(uvm_once_sync!uvm_once_phase);
+
+  static class uvm_once
+  {
+    @uvm_immutable_sync private SyncAssoc!(uvm_phase, bool) _m_executing_phases;
+    // private static mailbox #(uvm_phase) m_phase_hopper = new();
+    @uvm_immutable_sync private FifoObj!uvm_phase _m_phase_hopper;
+    @uvm_protected_sync private bool _m_phase_trace;
+    @uvm_private_sync private bool _m_use_ovm_run_semantic;
+    this() {
+      synchronized(this) {
+	_m_phase_hopper = new FifoObj!uvm_phase("_m_phase_hopper", getRootEntity());
+	_m_executing_phases = new SyncAssoc!(uvm_phase, bool);
+      }
+    }
+  }
+  mixin uvm_once_sync;
   mixin uvm_sync;
   // not required in vlang
   //`uvm_object_utils(uvm_phase)

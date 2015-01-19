@@ -46,19 +46,19 @@ import uvm.base.uvm_root;
 
 import esdl.base.core: getSimTime, finish;
 
-class uvm_once_report_server
-{
-  @uvm_private_sync private uvm_report_server _m_global_report_server;
-  this() {
-    synchronized(this) {
-      _m_global_report_server = new uvm_report_server();
-    }
-  }
-}
-
 class uvm_report_server: /*extends*/ uvm_object
 {
-  mixin(uvm_once_sync!(uvm_once_report_server));
+  static class uvm_once
+  {
+    @uvm_private_sync private uvm_report_server _m_global_report_server;
+    this() {
+      synchronized(this) {
+	_m_global_report_server = new uvm_report_server();
+      }
+    }
+  }
+
+  mixin uvm_once_sync;
   mixin uvm_sync;
 
   private int _max_quit_count;
@@ -104,7 +104,7 @@ class uvm_report_server: /*extends*/ uvm_object
   // server is responsible for formatting messages.
 
   static public void set_server(uvm_report_server server) {
-    synchronized(uvm_once) {
+    synchronized(once) {
       import std.exception: enforce;
       enforce(server !is null);
 
@@ -125,7 +125,7 @@ class uvm_report_server: /*extends*/ uvm_object
   // a valid handle to a report server.
 
   static public uvm_report_server get_server() {
-    synchronized(uvm_once) {
+    synchronized(once) {
       if (_m_global_report_server is null)
 	_m_global_report_server = new uvm_report_server();
       return _m_global_report_server;

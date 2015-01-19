@@ -110,20 +110,20 @@ struct m_verbosity_setting {
   string id;
 }
 
-class uvm_once_component
-{
-  // m_config_set is declared in SV version but is not used anywhere
-  // @uvm_private_sync bool _m_config_set = true;
-
-  @uvm_private_sync bool _print_config_matches;
-  @uvm_private_sync m_verbosity_setting[] _m_time_settings;
-  @uvm_private_sync bool _print_config_warned;
-  @uvm_private_sync uint _m_comp_count;
-}
-
 abstract class uvm_component: uvm_report_object, ParContext
 {
-  mixin(uvm_once_sync!uvm_once_component);
+  static class uvm_once
+  {
+    // m_config_set is declared in SV version but is not used anywhere
+    // @uvm_private_sync bool _m_config_set = true;
+
+    @uvm_private_sync bool _print_config_matches;
+    @uvm_private_sync m_verbosity_setting[] _m_time_settings;
+    @uvm_private_sync bool _print_config_warned;
+    @uvm_private_sync uint _m_comp_count;
+  }
+
+  mixin uvm_once_sync;
   mixin uvm_sync;
 
   mixin ParContextMixin;
@@ -1387,7 +1387,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 
 
   // Used for caching config settings
-  // moved to uvm_once_component
+  // moved to uvm_once
   // static bit m_config_set = 1;
 
   final public string massage_scope(string scope_stack) {
@@ -1853,7 +1853,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   // Setting this static variable causes get_config_* to print info about
   // matching configuration settings as they are being applied.
 
-  // moved to uvm_once_component
+  // moved to uvm_once
   //   __gshared bit print_config_matches;
 
 
@@ -2909,8 +2909,8 @@ abstract class uvm_component: uvm_report_object, ParContext
   package void set_id() {
     uint id;
     if(m_comp_id == -1) {
-      synchronized(uvm_once) {
-	id = uvm_once._m_comp_count++;
+      synchronized(once) {
+	id = once._m_comp_count++;
       }
       debug(UVM_AUTO) {
 	import std.stdio;
@@ -2990,19 +2990,19 @@ abstract class uvm_component: uvm_report_object, ParContext
 
 
   private void add_time_setting(m_verbosity_setting setting) {
-    synchronized(uvm_once) {
-      uvm_once._m_time_settings ~= setting;
+    synchronized(once) {
+      once._m_time_settings ~= setting;
     }
   }
 
   private m_verbosity_setting[] sort_time_settings() {
-    synchronized(uvm_once) {
-      if (uvm_once._m_time_settings.length > 0) {
+    synchronized(once) {
+      if (once._m_time_settings.length > 0) {
 	// m_time_settings.sort() with ( item.offset );
 	sort!((m_verbosity_setting a, m_verbosity_setting b)
-	      {return a.offset < b.offset;})(uvm_once._m_time_settings);
+	      {return a.offset < b.offset;})(once._m_time_settings);
       }
-      return uvm_once._m_time_settings.dup;
+      return once._m_time_settings.dup;
     }
   }
 
