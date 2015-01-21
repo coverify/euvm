@@ -84,6 +84,8 @@ module uvm.base.uvm_report_object;
 import uvm.base.uvm_object;
 import uvm.base.uvm_report_handler;
 import uvm.base.uvm_report_server;
+import uvm.base.uvm_report_catcher;
+import uvm.base.uvm_callback;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_root;
 import esdl.base.core: finish;
@@ -92,6 +94,8 @@ class uvm_report_object: /*extends*/ uvm_object
 {
   mixin uvm_sync;
 
+  mixin uvm_register_cb!(uvm_report_catcher);
+  
   @uvm_public_sync private uvm_report_handler _m_rh;
 
   // Function: new

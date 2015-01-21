@@ -150,15 +150,16 @@ abstract class uvm_report_catcher: uvm_callback
 
   mixin uvm_once_sync;
 
+  // Mover to the uvm_report_object module
+
   // `uvm_register_cb(uvm_report_object,uvm_report_catcher)
   // FIXME -- this has moved to the constructor
-
-  static this() {
-    if(uvm_is_uvm_thread) {
-      uvm_callbacks!(uvm_report_object,
-		     uvm_report_catcher).m_register_pair();
-    }
-  }
+  // static this() {
+  //   if(uvm_is_uvm_thread) {
+  //     uvm_callbacks!(uvm_report_object,
+  // 		     uvm_report_catcher).m_register_pair();
+  //   }
+  // }
   
   enum action_e: int
   {   UNKNOWN_ACTION,
@@ -190,6 +191,8 @@ abstract class uvm_report_catcher: uvm_callback
       // sure that the code is called only once. In Vlang, we do not
       // have any static initialization, and that is because we
       // support multiple uvm_root instances.
+
+      // moved to "static this"
       // uvm_callbacks!(uvm_report_object,
       // 		     uvm_report_catcher).m_register_pair();
       do_report = true;

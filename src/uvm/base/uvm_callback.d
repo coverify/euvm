@@ -736,9 +736,10 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
       }
     }
     else {
-      uvm_cb_trace_noobj(cb, format("Add (%s) callback %0s to object %0s ",
-				    ordering.stringof, cb.get_name(),
-				    obj.get_full_name()));
+      uvm_cb_trace_noobj(cb,
+			 format("Add (%s) callback %0s to object %0s ",
+				ordering.stringof, cb.get_name(),
+				obj.get_full_name()));
       uvm_queue!(uvm_callback) q = m_pool.get(obj);
       if (q is null) {
 	q = new uvm_queue!(uvm_callback);
@@ -1081,7 +1082,7 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
 // allow for setting up of the derived_type/super_type mapping.
 //------------------------------------------------------------------------------
 
-class uvm_derived_callbacks (T=uvm_object, ST=uvm_object, CB=uvm_callback) :
+class uvm_derived_callbacks (T=uvm_object, ST=uvm_object, CB=uvm_callback):
   uvm_callbacks!(T, CB)
 {
   alias uvm_derived_callbacks!(T, ST, CB) this_type;
@@ -1290,28 +1291,6 @@ class uvm_callback: uvm_object
   }
 }
 
-// `define uvm_cb_trace(OBJ, CB, OPER)			\
-// begin \
-// string msg; \
-// msg = (OBJ is null) ? "null" : $sformatf("%s (%s@%0d)", \
-// 					 OBJ.get_full_name(), OBJ.get_type_name(), OBJ.get_inst_id()); \
-// `uvm_info("UVMCB_TRC", $sformatf("%s: callback %s (%s@%0d) : to object %s",  \
-//        OPER, CB.get_name(), CB.get_type_name(), CB.get_inst_id(), msg), UVM_NONE) \
-//   end
-// `else
-// `define uvm_cb_trace(OBJ, CB, OPER) /* null */
-
-
-public void uvm_cb_trace_noobj(uvm_callback CB, string oper) {
-  debug(UVM_CB_TRACE_ON) {
-    if(uvm_callbacks_base.m_tracing) {
-      uvm_info("UVMCB_TRC",
-	       format("%s : callback %s (%s@%0d)" , oper, CB.get_name(),
-		      CB.get_type_name(), CB.get_inst_id()), UVM_NONE);
-    }
-  }
-}
-
 // macros
 // from sv file macros/uvm_callback_defines
 
@@ -1350,6 +1329,61 @@ public void uvm_cb_trace_noobj(uvm_callback CB, string oper) {
 
 // `define uvm_register_cb(T,CB) \
 //   static local bit m_register_cb_``CB = uvm_callbacks#(T,CB)::m_register_pair(`"T`",`"CB`");
+
+mixin template uvm_register_cb(T, CB) if(is(CB: uvm_callback))
+{
+  static this() {
+    if(uvm_is_uvm_thread) {
+      uvm_callbacks!(T, CB).m_register_pair();
+    }
+  }
+  void uvm_do_callbacks(void delegate(CB cb) dg) {
+    import uvm.base.uvm_callback;
+    uvm_do_obj_callbacks!(CB)(this, dg);
+  }
+  bool uvm_do_callbacks_exit_on(bool delegate(Cb cb) dg, bool val) {
+    import uvm.base.uvm_callback;
+    return uvm_do_obj_callbacks_exit_on!(CB)(this, dg, val);
+  }
+}
+
+mixin template uvm_register_cb(CB) if(is(CB: uvm_callback))
+{
+  static this() {
+    import uvm.base.uvm_root;
+    if(uvm_is_uvm_thread) {
+      uvm_callbacks!(typeof(this), CB).m_register_pair();
+    }
+  }
+  void uvm_do_callbacks(void delegate(CB cb) dg) {
+    import uvm.base.uvm_callback;
+    uvm_do_obj_callbacks!(CB)(this, dg);
+  }
+  bool uvm_do_callbacks_exit_on(bool delegate(CB cb) dg, bool val) {
+    import uvm.base.uvm_callback;
+    return uvm_do_obj_callbacks_exit_on!(CB)(this, dg, val);
+  }
+}
+
+// register callback and also the supertype
+mixin template uvm_register_cb(CB, ST) if(is(CB: uvm_callback))
+  {
+    static this() {
+      import uvm.base.uvm_root;
+      if(uvm_is_uvm_thread) {
+	uvm_callbacks!(typeof(this), CB).m_register_pair();
+	uvm_derived_callbacks!(typeof(this), ST).register_super_type();
+      }
+    }
+    void uvm_do_callbacks(void delegate(CB cb) dg) {
+      import uvm.base.uvm_callback;
+      uvm_do_obj_callbacks!(CB)(this, dg);
+    }
+    bool uvm_do_callbacks_exit_on(bool delegate(Cb cb) dg, bool val) {
+      import uvm.base.uvm_callback;
+      return uvm_do_obj_callbacks_exit_on!(CB)(this, dg, val);
+    }
+}
 
 
 //-----------------------------------------------------------------------------
@@ -1390,66 +1424,88 @@ public void uvm_cb_trace_noobj(uvm_callback CB, string oper) {
 // `define uvm_set_super_type(T,ST) \
 //   static local bit m_register_``T``ST = uvm_derived_callbacks#(T,ST)::register_super_type(`"T`",`"ST`"); 
 
+mixin template uvm_set_super_type(T,ST)
+{
+  static this() {
+    import uvm.base.uvm_root;
+    if(uvm_is_uvm_thread) {
+      uvm_derived_callbacks!(T, ST).register_super_type();
+    }
+  }
+}
 
-// //-----------------------------------------------------------------------------
-// // MACRO: `uvm_do_callbacks
-// //
-// //| `uvm_do_callbacks(T,CB,METHOD)
-// //
-// // Calls the given ~METHOD~ of all callbacks of type ~CB~ registered with
-// // the calling object (i.e. ~this~ object), which is or is based on type ~T~.
-// //
-// // This macro executes all of the callbacks associated with the calling
-// // object (i.e. ~this~ object). The macro takes three arguments:
-// //
-// // - CB is the class type of the callback objects to execute. The class
-// //   type must have a function signature that matches the METHOD argument.
-// //
-// // - T is the type associated with the callback. Typically, an instance
-// //   of type T is passed as one the arguments in the ~METHOD~ call.
-// //
-// // - METHOD is the method call to invoke, with all required arguments as
-// //   if they were invoked directly.
-// //
-// // For example, given the following callback class definition:
-// //
-// //| virtual class mycb extends uvm_cb;
-// //|   pure function void my_function (mycomp comp, int addr, int data);
-// //| endclass
-// //
-// // A component would invoke the macro as
-// //
-// //| task mycomp::run_phase(uvm_phase phase); 
-// //|    int curr_addr, curr_data;
-// //|    ...
-// //|    `uvm_do_callbacks(mycb, mycomp, my_function(this, curr_addr, curr_data))
-// //|    ...
-// //| endtask
-// //-----------------------------------------------------------------------------
+mixin template uvm_set_super_type(ST)
+{
+  static this() {
+    import uvm.base.uvm_root;
+    if(uvm_is_uvm_thread) {
+      uvm_derived_callbacks!(typeof(this), ST).register_super_type();
+    }
+  }
+}
 
+//-----------------------------------------------------------------------------
+// MACRO: `uvm_do_callbacks
+//
+//| `uvm_do_callbacks(T,CB,METHOD)
+//
+// Calls the given ~METHOD~ of all callbacks of type ~CB~ registered with
+// the calling object (i.e. ~this~ object), which is or is based on type ~T~.
+//
+// This macro executes all of the callbacks associated with the calling
+// object (i.e. ~this~ object). The macro takes three arguments:
+//
+// - CB is the class type of the callback objects to execute. The class
+//   type must have a function signature that matches the METHOD argument.
+//
+// - T is the type associated with the callback. Typically, an instance
+//   of type T is passed as one the arguments in the ~METHOD~ call.
+//
+// - METHOD is the method call to invoke, with all required arguments as
+//   if they were invoked directly.
+//
+// For example, given the following callback class definition:
+//
+//| virtual class mycb extends uvm_cb;
+//|   pure function void my_function (mycomp comp, int addr, int data);
+//| endclass
+//
+// A component would invoke the macro as
+//
+//| task mycomp::run_phase(uvm_phase phase); 
+//|    int curr_addr, curr_data;
+//|    ...
+//|    `uvm_do_callbacks(mycb, mycomp, my_function(this, curr_addr, curr_data))
+//|    ...
+//| endtask
+//-----------------------------------------------------------------------------
 
-// `define uvm_do_callbacks(T,CB,METHOD) \
+// For the Vlang UVM implementation
+// This is defined as part of the mixin uvm_register_cb
+
+// `define uvm_do_callbacks(T,CB,METHOD)	\
 //   `uvm_do_obj_callbacks(T,CB,this,METHOD)
 
 
-// //-----------------------------------------------------------------------------
-// // MACRO: `uvm_do_obj_callbacks
-// //
-// //| `uvm_do_obj_callbacks(T,CB,OBJ,METHOD)
-// //
-// // Calls the given ~METHOD~ of all callbacks based on type ~CB~ registered with
-// // the given object, ~OBJ~, which is or is based on type ~T~.
-// //
-// // This macro is identical to <`uvm_do_callbacks> macro,
-// // but it has an additional ~OBJ~ argument to allow the specification of an
-// // external object to associate the callback with. For example, if the
-// // callbacks are being applied in a sequence, ~OBJ~ could be specified
-// // as the associated sequencer or parent sequence.
-// //
-// //|    ...
-// //|    `uvm_do_callbacks(mycb, mycomp, seqr, my_function(seqr, curr_addr, curr_data))
-// //|    ...
-// //-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// MACRO: `uvm_do_obj_callbacks
+//
+//| `uvm_do_obj_callbacks(T,CB,OBJ,METHOD)
+//
+// Calls the given ~METHOD~ of all callbacks based on type ~CB~ registered with
+// the given object, ~OBJ~, which is or is based on type ~T~.
+//
+// This macro is identical to <`uvm_do_callbacks> macro,
+// but it has an additional ~OBJ~ argument to allow the specification of an
+// external object to associate the callback with. For example, if the
+// callbacks are being applied in a sequence, ~OBJ~ could be specified
+// as the associated sequencer or parent sequence.
+//
+//|    ...
+//|    `uvm_do_callbacks(mycb, mycomp, seqr, my_function(seqr, curr_addr, curr_data))
+//|    ...
+//-----------------------------------------------------------------------------
 
 // `define uvm_do_obj_callbacks(T,CB,OBJ,METHOD) \
 //    begin \
@@ -1462,87 +1518,94 @@ public void uvm_cb_trace_noobj(uvm_callback CB, string oper) {
 //      end \
 //    end
 
+void uvm_do_obj_callbacks(CB,T)(T obj, void delegate(CB cb) dg) {
+  foreach(callb; uvm_callbacks!(T, CB).get_all_enabled(obj)) {
+    dg(callb);
+  }
+}
 
 
+//-----------------------------------------------------------------------------
+// MACRO: `uvm_do_callbacks_exit_on
+//
+//| `uvm_do_callbacks_exit_on(T,CB,METHOD,VAL)
+//
+// Calls the given ~METHOD~ of all callbacks of type ~CB~ registered with
+// the calling object (i.e. ~this~ object), which is or is based on type ~T~,
+// returning upon the first callback returning the bit value given by ~VAL~.
+//
+// This macro executes all of the callbacks associated with the calling
+// object (i.e. ~this~ object). The macro takes three arguments:
+//
+// - CB is the class type of the callback objects to execute. The class
+//   type must have a function signature that matches the METHOD argument.
+//
+// - T is the type associated with the callback. Typically, an instance
+//   of type T is passed as one the arguments in the ~METHOD~ call.
+//
+// - METHOD is the method call to invoke, with all required arguments as
+//   if they were invoked directly.
+//
+// - VAL, if 1, says return upon the first callback invocation that
+//   returns 1. If 0, says return upon the first callback invocation that
+//   returns 0.
+//
+// For example, given the following callback class definition:
+//
+//| virtual class mycb extends uvm_cb;
+//|   pure function bit drop_trans (mycomp comp, my_trans trans);
+//| endclass
+//
+// A component would invoke the macro as
+//
+//| task mycomp::run_phase(uvm_phase phase); 
+//|    my_trans trans;
+//|    forever begin
+//|      get_port.get(trans);
+//|      if(do_callbacks(trans) == 0)
+//|        uvm_report_info("DROPPED",{"trans dropped: %s",trans.convert2string()});
+//|      else
+//|        // execute transaction
+//|    end
+//| endtask
+//| function bit do_callbacks(my_trans);
+//|   // Returns 0 if drop happens and 1 otherwise
+//|   `uvm_do_callbacks_exit_on(mycomp, mycb, extobj, drop_trans(this,trans), 1)
+//| endfunction
+//
+// Because this macro calls ~return~, its use is restricted to implementations
+// of functions that return a ~bit~ value, as in the above example.
+//
+//-----------------------------------------------------------------------------
 
-// //-----------------------------------------------------------------------------
-// // MACRO: `uvm_do_callbacks_exit_on
-// //
-// //| `uvm_do_callbacks_exit_on(T,CB,METHOD,VAL)
-// //
-// // Calls the given ~METHOD~ of all callbacks of type ~CB~ registered with
-// // the calling object (i.e. ~this~ object), which is or is based on type ~T~,
-// // returning upon the first callback returning the bit value given by ~VAL~.
-// //
-// // This macro executes all of the callbacks associated with the calling
-// // object (i.e. ~this~ object). The macro takes three arguments:
-// //
-// // - CB is the class type of the callback objects to execute. The class
-// //   type must have a function signature that matches the METHOD argument.
-// //
-// // - T is the type associated with the callback. Typically, an instance
-// //   of type T is passed as one the arguments in the ~METHOD~ call.
-// //
-// // - METHOD is the method call to invoke, with all required arguments as
-// //   if they were invoked directly.
-// //
-// // - VAL, if 1, says return upon the first callback invocation that
-// //   returns 1. If 0, says return upon the first callback invocation that
-// //   returns 0.
-// //
-// // For example, given the following callback class definition:
-// //
-// //| virtual class mycb extends uvm_cb;
-// //|   pure function bit drop_trans (mycomp comp, my_trans trans);
-// //| endclass
-// //
-// // A component would invoke the macro as
-// //
-// //| task mycomp::run_phase(uvm_phase phase); 
-// //|    my_trans trans;
-// //|    forever begin
-// //|      get_port.get(trans);
-// //|      if(do_callbacks(trans) == 0)
-// //|        uvm_report_info("DROPPED",{"trans dropped: %s",trans.convert2string()});
-// //|      else
-// //|        // execute transaction
-// //|    end
-// //| endtask
-// //| function bit do_callbacks(my_trans);
-// //|   // Returns 0 if drop happens and 1 otherwise
-// //|   `uvm_do_callbacks_exit_on(mycomp, mycb, extobj, drop_trans(this,trans), 1)
-// //| endfunction
-// //
-// // Because this macro calls ~return~, its use is restricted to implementations
-// // of functions that return a ~bit~ value, as in the above example.
-// //
-// //-----------------------------------------------------------------------------
 
+// For the Vlang UVM implementation
+// This is defined as part of the mixin uvm_register_cb
 
 // `define uvm_do_callbacks_exit_on(T,CB,METHOD,VAL) \
 //   `uvm_do_obj_callbacks_exit_on(T,CB,this,METHOD,VAL) \
 
 
-// //-----------------------------------------------------------------------------
-// // MACRO: `uvm_do_obj_callbacks_exit_on
-// //
-// //| `uvm_do_obj_callbacks_exit_on(T,CB,OBJ,METHOD,VAL)
-// //
-// // Calls the given ~METHOD~ of all callbacks of type ~CB~ registered with
-// // the given object ~OBJ~, which must be or be based on type ~T~, and returns
-// // upon the first callback that returns the bit value given by ~VAL~. It is
-// // exactly the same as the <`uvm_do_callbacks_exit_on> but has a specific
-// // object instance (instead of the implicit this instance) as the third
-// // argument.
-// //
-// //| ...
-// //|  // Exit if a callback returns a 1
-// //|  `uvm_do_callbacks_exit_on(mycomp, mycb, seqr, drop_trans(seqr,trans), 1)
-// //| ...
-// //
-// // Because this macro calls ~return~, its use is restricted to implementations
-// // of functions that return a ~bit~ value, as in the above example.
-// //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+// MACRO: `uvm_do_obj_callbacks_exit_on
+//
+//| `uvm_do_obj_callbacks_exit_on(T,CB,OBJ,METHOD,VAL)
+//
+// Calls the given ~METHOD~ of all callbacks of type ~CB~ registered with
+// the given object ~OBJ~, which must be or be based on type ~T~, and returns
+// upon the first callback that returns the bit value given by ~VAL~. It is
+// exactly the same as the <`uvm_do_callbacks_exit_on> but has a specific
+// object instance (instead of the implicit this instance) as the third
+// argument.
+//
+//| ...
+//|  // Exit if a callback returns a 1
+//|  `uvm_do_callbacks_exit_on(mycomp, mycb, seqr, drop_trans(seqr,trans), 1)
+//| ...
+//
+// Because this macro calls ~return~, its use is restricted to implementations
+// of functions that return a ~bit~ value, as in the above example.
+//-----------------------------------------------------------------------------
 
 // `define uvm_do_obj_callbacks_exit_on(T,CB,OBJ,METHOD,VAL) \
 //    begin \
@@ -1559,31 +1622,68 @@ public void uvm_cb_trace_noobj(uvm_callback CB, string oper) {
 //      return 1-VAL; \
 //    end
 
+bool uvm_do_obj_callbacks_exit_on(CB,T)(T obj, bool delegate(CB cb) dg,
+					bool val) {
+  foreach(callb; uvm_callbacks!(T, CB).get_all_enabled(obj)) {
+    if(dg(callb) == val) {
+      uvm_cb_trace_noobj(callb,
+			 format("Executed callback method 'METHOD' for" ~
+				" callback %s (CB) from %s (T) : returned" ~
+				" value VAL (other callbacks will be ignored)",
+				callb.get_name(), obj.get_full_name()));
+      return val;
+    }
+    uvm_cb_trace_noobj(callb, format("Executed callback method 'METHOD' for" ~
+				     " callback %s (CB) from %s (T) : did not" ~
+				     " return value VAL`",
+				     callb.get_name(), obj.get_full_name()));
+  }
+  return !val;
+}
 
-// // The +define+UVM_CB_TRACE_ON setting will instrument the uvm library to emit 
-// // messages with message id UVMCB_TRC and UVM_NONE verbosity 
-// // notifing add,delete and execution of uvm callbacks. The instrumentation is off by default.
+
+// The +define+UVM_CB_TRACE_ON setting will instrument the uvm library to emit 
+// messages with message id UVMCB_TRC and UVM_NONE verbosity 
+// notifing add,delete and execution of uvm callbacks. The instrumentation is off by default.
 
 // `ifdef UVM_CB_TRACE_ON
-
-// `define uvm_cb_trace(OBJ,CB,OPER) \
-//   begin \
-//     string msg; \
-//     msg = (OBJ == null) ? "null" : $sformatf("%s (%s@%0d)", \
-//       OBJ.get_full_name(), OBJ.get_type_name(), OBJ.get_inst_id()); \
-//     `uvm_info("UVMCB_TRC", $sformatf("%s: callback %s (%s@%0d) : to object %s",  \
-//        OPER, CB.get_name(), CB.get_type_name(), CB.get_inst_id(), msg), UVM_NONE) \
-//   end
-
-// `define uvm_cb_trace_noobj(CB,OPER) \
-//   begin \
-//     if(uvm_callbacks_base::m_tracing) \
-//       `uvm_info("UVMCB_TRC", $sformatf("%s : callback %s (%s@%0d)" ,  \
-//        OPER, CB.get_name(), CB.get_type_name(), CB.get_inst_id()), UVM_NONE) \
-//   end
+version(UVM_CB_TRACE_ON) {
+  // `defineu vm_cb_trace(OBJ,CB,OPER) \
+  //   begin \
+  //     string msg; \
+  //     msg = (OBJ == null) ? "null" : $sformatf("%s (%s@%0d)", \
+  //       OBJ.get_full_name(), OBJ.get_type_name(), OBJ.get_inst_id()); \
+  //     `uvm_info("UVMCB_TRC", $sformatf("%s: callback %s (%s@%0d) : to object %s",  \
+  //        OPER, CB.get_name(), CB.get_type_name(), CB.get_inst_id(), msg), UVM_NONE) \
+  //   end
+  void uvm_cb_trace(T, CB)(T obj, CB cb, string oper) {
+    string msg = (obj is null) ? "null" :
+      format("%s (%s@%0d)",
+	     obj.get_full_name(), obj.get_type_name(), obj.get_inst_id());
+    uvm_info("UVMCB_TRC", format("%s: callback %s (%s@%0d) : to object %s",
+				 oper, cb.get_name(), cb.get_type_name(),
+				 cb.get_inst_id(), msg), UVM_NONE);
+  }
+    
+  // `define uvm_cb_trace_noobj(CB,OPER) \
+  //   begin \
+  //     if(uvm_callbacks_base::m_tracing) \
+  //       `uvm_info("UVMCB_TRC", $sformatf("%s : callback %s (%s@%0d)" ,  \
+  //        OPER, CB.get_name(), CB.get_type_name(), CB.get_inst_id()), UVM_NONE) \
+  //   end
+  void uvm_cb_trace_noobj(CB)(CB cb, string oper) {
+    if(uvm_callbacks_base.m_tracing) {
+      uvm_info("UVMCB_TRC",
+	       format("%s : callback %s (%s@%0d)",
+		      oper, cb.get_name(), cb.get_type_name(),
+		      cb.get_inst_id()), UVM_NONE);
+    }
+  }
+}
 // `else
+ else {
+   void uvm_cb_trace(T,CB)(T obj, CB cb, string oper) {}
+   void uvm_cb_trace_noobj(CB)(CB cb, string oper) {}
 
-// `define uvm_cb_trace_noobj(CB,OPER) /* null */
-// `define uvm_cb_trace(OBJ,CB,OPER) /* null */
-
-// `endif
+ // `endif
+ }

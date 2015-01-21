@@ -1632,10 +1632,14 @@ class uvm_callbacks_objection: uvm_objection
   // in the constructor
   //   `uvm_register_cb(uvm_callbacks_objection, uvm_objection_callback)
 
+  mixin uvm_register_cb!(uvm_objection_callback);
+  
   public this(string name="") {
     super(name);
-    uvm_callbacks!(uvm_callbacks_objection,
-		   uvm_objection_callback).m_register_pair();
+
+    // moved to static this
+    // uvm_callbacks!(uvm_callbacks_objection,
+    // 		   uvm_objection_callback).m_register_pair();
   }
 
   // Return callbacks in form of a range
@@ -1653,12 +1657,9 @@ class uvm_callbacks_objection: uvm_objection
 
   override public void raised (uvm_object obj, uvm_object source_obj,
 			       string description, int count) {
-    foreach(cb; get_callbacks!uvm_objection_callback()) {
-      auto callb = cast(uvm_objection_callback) cb;
-      if(callb !is null && callb.callback_mode) {
-	callb.raised(this,obj,source_obj,description,count);
-      }
-    }
+    uvm_do_callbacks( (uvm_objection_callback cb) {
+	cb.raised(this,obj,source_obj,description,count);});
+
   }
 
   // Function: dropped
@@ -1668,12 +1669,9 @@ class uvm_callbacks_objection: uvm_objection
 
   override public void dropped (uvm_object obj, uvm_object source_obj,
 				string description, int count) {
-    foreach(cb; get_callbacks!uvm_objection_callback()) {
-      auto callb = cast(uvm_objection_callback) cb;
-      if(callb !is null && callb.callback_mode) {
-	callb.dropped(this,obj,source_obj,description,count);
-      }
-    }
+    // `uvm_do_callbacks(uvm_callbacks_objection,uvm_objection_callback,dropped(this,obj,source_obj,description,count))
+    uvm_do_callbacks( (uvm_objection_callback cb) {
+	cb.dropped(this,obj,source_obj,description,count);});
   }
 
   // Function: all_dropped
@@ -1685,12 +1683,8 @@ class uvm_callbacks_objection: uvm_objection
   // task
   override public void all_dropped (uvm_object obj, uvm_object source_obj,
 				    string description, int count) {
-    foreach(cb; get_callbacks!uvm_objection_callback()) {
-      auto callb = cast(uvm_objection_callback) cb;
-      if(callb !is null && callb.callback_mode) {
-	callb.all_dropped(this,obj,source_obj,description,count);
-      }
-    }
+    uvm_do_callbacks( (uvm_objection_callback cb) {
+	cb.all_dropped(this,obj,source_obj,description,count);});
   }
 
 }
