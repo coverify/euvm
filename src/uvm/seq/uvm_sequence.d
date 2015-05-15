@@ -45,11 +45,11 @@ abstract class uvm_sequence (REQ = uvm_sequence_item,
 
   alias uvm_sequencer_param_base!(REQ, RSP) sequencer_t;
 
-  @uvm_public_sync
+  @uvm_public_sync @rand!false
   private sequencer_t        _param_sequencer;
-  @uvm_public_sync
+  @uvm_public_sync @rand!false
   private REQ                _req;
-  @uvm_public_sync
+  @uvm_public_sync @rand!false
   private RSP                _rsp;
 
   // Function: new

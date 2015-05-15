@@ -130,9 +130,12 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
       REQ param_t = cast(REQ) t;
       if (param_t !is null) {
 	if (rerandomize is true) {
-	  if (! param_t.randomize()) {
+	  try {
+	    param_t.randomize();
+	  }
+	  catch {
 	    uvm_report_warning("SQRSNDREQ", "Failed to rerandomize sequence"
-			       " item in send_request");
+	    		       " item in send_request");
 	  }
 	}
 	if (param_t.get_transaction_id() is -1) {

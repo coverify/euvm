@@ -1132,6 +1132,8 @@ class uvm_sequence_base: uvm_sequence_item
   version(UVM_NO_DEPRECATED) {}
   else {
 
+    mixin Randomization;
+    
     // Variable- seq_kind
     //
     // Used as an identifier in constraints for a specific sequence type.
@@ -1139,7 +1141,7 @@ class uvm_sequence_base: uvm_sequence_item
     @uvm_public_sync private @rand uint _seq_kind;
     private uint _num_seq;
 
-    override public void preRandomize() {
+    public void preRandomize() {
       synchronized(this) {
 	_num_seq = num_sequences();
       }
@@ -1248,7 +1250,10 @@ class uvm_sequence_base: uvm_sequence_item
 
       m_seq.set_item_context(this, m_sequencer);
 
-      if(! m_seq.randomize()) {
+      try {
+	m_seq.randomize();
+      }
+      catch {
 	uvm_report_warning("RNDFLD", "Randomization failed in"
 			   " do_sequence_kind()");
       }

@@ -38,10 +38,11 @@ module uvm.base.uvm_misc;
 import std.array;
 import std.string: format;
 import esdl.data.bvec;
+import esdl.data.rand;
 // import uvm.base.uvm_object_globals;
 
 interface uvm_void_if { }
-abstract class uvm_void: uvm_void_if { }
+abstract class uvm_void: Randomizable, uvm_void_if { }
 
 
 

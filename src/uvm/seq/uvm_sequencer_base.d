@@ -315,12 +315,17 @@ class uvm_sequencer_base: uvm_component
       seq.reseed();
       seq.starting_phase = phase;
 
-      if (!seq.do_not_randomize && !seq.randomize()) {
-	uvm_warning("STRDEFSEQ",
-		    "Randomization failed for default sequence '" ~
-		    seq.get_type_name() ~ "' for phase '" ~
-		    phase.get_name() ~ "'");
-	return;
+      if (!seq.do_not_randomize) {
+	try {
+	  seq.randomize();
+	}
+	catch {
+	  uvm_warning("STRDEFSEQ",
+		      "Randomization failed for default sequence '" ~
+		      seq.get_type_name() ~ "' for phase '" ~
+		      phase.get_name() ~ "'");
+	  return;
+	}
       }
 
       fork({
@@ -1429,6 +1434,7 @@ class uvm_sequencer_base: uvm_component
 
   version(UVM_NO_DEPRECATED) {}
   else {
+    mixin Randomization;
     // Variable- count
     //
     // Sets the number of items to execute.
@@ -1572,7 +1578,10 @@ class uvm_sequencer_base: uvm_component
 	  m_seq.set_sequencer(this);
 	  m_seq.reseed();
 	}
-	if (!m_seq.randomize()) {
+	try{
+	  m_seq.randomize();
+	}
+	catch {
 	  uvm_report_warning("STRDEFSEQ", "Failed to randomize sequence");
 	}
 	m_seq.start(this);

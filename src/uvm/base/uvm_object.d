@@ -67,11 +67,9 @@ import std.string: format;
 
 import std.random: uniform;
 
-abstract class uvm_object: uvm_void, RandomizableIntf
+abstract class uvm_object: uvm_void
 {
   import esdl.data.bvec;
-  mixin Randomization;
-  
   static class uvm_once
   {
     @uvm_private_sync
