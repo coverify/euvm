@@ -87,12 +87,13 @@ abstract class uvm_object: uvm_void
     }
   }
 
-  // Can not use "mixin uvm_once_sync" template due to a bud in DMD
+  // Can not use "mixin uvm_once_sync" template due to forward reference error
   // Using string Mixin function
+  // mixin uvm_once_sync;
   mixin(uvm_once_sync!(uvm_once, typeof(this)));
   mixin uvm_sync;
 
-
+  mixin Randomization;
   // Function: new
 
   // Creates a new uvm_object with the given instance ~name~. If ~name~ is not

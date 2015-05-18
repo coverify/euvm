@@ -42,7 +42,10 @@ import esdl.data.rand;
 // import uvm.base.uvm_object_globals;
 
 interface uvm_void_if { }
-abstract class uvm_void: Randomizable, uvm_void_if { }
+abstract class uvm_void: uvm_void_if {
+  // Randomization mixin is in uvm_object class
+  // mixin Randomization;
+}
 
 
 
