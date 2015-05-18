@@ -38,6 +38,7 @@ import uvm.base.uvm_event;
 import uvm.base.uvm_printer;
 import uvm.base.uvm_object_globals;
 import uvm.meta.misc;
+import uvm.meta.meta;
 
 import esdl.base.core: wait;
 
@@ -212,7 +213,7 @@ class uvm_barrier: uvm_object
 
   // FIXME -- at some point this has to go
   public override string get_type_name() {
-    return typeof(this).stringof;
+    return qualifiedTypeName!(typeof(this));
   }
 
   // task

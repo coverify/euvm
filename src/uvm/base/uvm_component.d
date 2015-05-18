@@ -3402,7 +3402,7 @@ void _uvm__auto_build(T, U, size_t I, N...)(T t, ref U u,
     }
   }
   else {
-    string name = t.tupleof[I].stringof[2..$]; // chomp "t."
+    string name = __traits(identifier, T.tupleof[I]);
     foreach(i; indices) {
       name ~= "[" ~ i.to!string ~ "]";
     }
@@ -3525,7 +3525,7 @@ void _uvm__auto_elab(T, U, size_t I, N...)(T t, ref U u,
     }
   }
   else {
-    // string name = t.tupleof[I].stringof[2..$]; // chomp "t."
+    // string name = __traits(identifier, T.tupleof[I]);
     // foreach(i; indices) {
     //   name ~= "[" ~ i.to!string ~ "]";
     // }

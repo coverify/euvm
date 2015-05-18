@@ -56,7 +56,6 @@ class uvm_sequence_item: uvm_transaction
 {
   mixin uvm_sync;
   mixin Randomization;
-  import esdl.data.randcore;
 
   private    int                _m_sequence_id = -1;
   @uvm_protected_sync private bool _m_use_sequence_info;

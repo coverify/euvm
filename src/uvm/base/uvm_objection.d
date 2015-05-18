@@ -87,6 +87,7 @@ class uvm_objection_events {
 //------------------------------------------------------------------------------
 
 import uvm.meta.misc;
+import uvm.meta.meta;
 import uvm.base.uvm_report_object;
 import uvm.base.uvm_object;
 import uvm.base.uvm_root;
@@ -1263,7 +1264,7 @@ class uvm_objection: uvm_report_object
   }
 
   override public string get_type_name () {
-    return typeid(this).stringof;
+    return qualifiedTypeName!(typeof(this));
   }
 
   override public void do_copy (uvm_object rhs) {

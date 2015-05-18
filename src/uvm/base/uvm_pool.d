@@ -40,6 +40,7 @@ import uvm.base.uvm_globals;
 import uvm.base.uvm_printer;
 import uvm.base.uvm_root;
 import std.conv: to;
+import uvm.meta.meta;
 
 class uvm_pool (KEY=int, VAL=uvm_void): /*extends*/ uvm_object
 {
@@ -357,7 +358,7 @@ class uvm_pool (KEY=int, VAL=uvm_void): /*extends*/ uvm_object
   }
 
   public override string get_type_name () {
-    return typeid(typeof(this)).stringof;
+    return qualifiedTypeName!(typeof(this));
   }
 
   public override void do_copy (uvm_object rhs) {
@@ -424,7 +425,7 @@ class uvm_object_string_pool (VAL=uvm_object): /*extends*/ uvm_pool!(string,VAL)
   // Returns the type name of this object.
 
   public override string get_type_name() {
-    return typeid(typeof(this)).stringof;
+    return qualifiedTypeName!(typeof(this));
   }
 
   // Function: get_global_pool

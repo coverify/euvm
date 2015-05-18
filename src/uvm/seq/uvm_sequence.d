@@ -27,6 +27,7 @@ import uvm.base.uvm_object_globals;
 import uvm.seq.uvm_sequence_item;
 import uvm.seq.uvm_sequence_base;
 import uvm.seq.uvm_sequencer_param_base;
+import esdl.data.rand;
 
 //------------------------------------------------------------------------------
 //

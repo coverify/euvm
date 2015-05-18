@@ -84,6 +84,7 @@ import uvm.base.uvm_object;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_component;
 import uvm.meta.misc;
+import uvm.meta.meta;
 
 abstract class uvm_printer
 {
@@ -338,7 +339,7 @@ abstract class uvm_printer
 
 	row_info.level = _m_scope.depth();
 	row_info.name = adjust_name(_m_scope.get(), scope_separator);
-	row_info.type_name = T.stringof;
+	row_info.type_name = qualifiedTypeName!T;
 	row_info.size = (T.sizeof*8).to!string();
 	row_info.val = format("%f",value);
 

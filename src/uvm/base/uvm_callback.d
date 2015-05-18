@@ -68,6 +68,7 @@ import uvm.base.uvm_queue;
 import uvm.base.uvm_root;
 import uvm.base.uvm_component;
 import uvm.meta.mcd;
+import uvm.meta.meta;
 
 import esdl.data.queue;
 import esdl.data.sync;
@@ -203,7 +204,7 @@ class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
 
   @uvm_immutable_sync
     uvm_queue!uvm_callback _m_tw_cb_q;
-  enum string m_typename = T.stringof;
+  enum string m_typename = qualifiedTypeName!T;
 
   alias uvm_typed_callbacks!(T) this_type;
   alias uvm_callbacks_base      super_type;
@@ -565,10 +566,10 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
   }
 
 
-  enum string m_typename = T.stringof;
+  enum string m_typename = qualifiedTypeName!T;
 
   // not used anywhere -- defined in SV version
-  // enum string m_cb_typename = CB.stringof;
+  // enum string m_cb_typename = qualifiedTypeName!CB;
 
   alias uvm_callbacks!(T, uvm_callback) BT; // base type
 
@@ -730,7 +731,7 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
       else {
 	uvm_cb_trace_noobj(cb,
 			   format("Add (%s) typewide callback %0s for type %s",
-				  ordering.stringof, cb.get_name(),
+				  ordering.to!string, cb.get_name(),
 				  BT.m_typename));
 	m_t_inst.m_add_tw_cbs(cb, ordering);
       }
@@ -738,7 +739,7 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
     else {
       uvm_cb_trace_noobj(cb,
 			 format("Add (%s) callback %0s to object %0s ",
-				ordering.stringof, cb.get_name(),
+				ordering.to!string, cb.get_name(),
 				obj.get_full_name()));
       uvm_queue!(uvm_callback) q = m_pool.get(obj);
       if (q is null) {
@@ -1111,7 +1112,7 @@ class uvm_derived_callbacks (T=uvm_object, ST=uvm_object, CB=uvm_callback):
 	if(u_inst.m_super_type is typeid(ST)) return true;
 	uvm_report_warning("CBTPREG", "Type " ~ tname ~
 			   " is already registered to super type " ~ 
-			   ST.stringof ~ 
+			   qualifiedTypeName!ST ~ 
 			   ". Ignoring attempt to register to super type " ~
 			   sname, UVM_NONE);
 	return true;
@@ -1287,7 +1288,7 @@ class uvm_callback: uvm_object
   // Returns the type name of this callback object.
 
   override public string get_type_name() {
-    return (typeid(this)).stringof;
+    return qualifiedTypeName!(typeof(this));
   }
 }
 

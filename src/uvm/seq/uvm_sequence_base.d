@@ -1490,10 +1490,11 @@ class uvm_sequence_base: uvm_sequence_item
   // to the sequence in which the macro is invoked, and it sets the sequencer to
   // the specified ~SEQR~ argument.
 
+  // FIXME -- consider changing SEQ_OR_ITEM and SEQR to aliases passed as temaplte arguments
   public void uvm_create_on(T, U)(ref T SEQ_OR_ITEM, U SEQR)
     if(is(T: uvm_sequence_item) && is(U: uvm_sequencer_base)) {
       uvm_object_wrapper w_ = SEQ_OR_ITEM.get_type();
-      SEQ_OR_ITEM = cast(T) create_item(w_, SEQR, SEQ_OR_ITEM.stringof);
+      SEQ_OR_ITEM = cast(T) create_item(w_, SEQR, "SEQ_OR_ITEM");
     }
 
 

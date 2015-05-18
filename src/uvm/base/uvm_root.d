@@ -81,6 +81,7 @@ import uvm.base.uvm_report_server;
 import uvm.base.uvm_domain;
 
 public import uvm.meta.misc;
+import uvm.meta.meta;
 
 import esdl.base.core;
 import esdl.data.queue;
@@ -502,7 +503,7 @@ class uvm_root: uvm_component
   }
 
   override public string get_type_name() {
-    return(typeid(this)).stringof;
+    return qualifiedTypeName!(typeof(this));
   }
 
   // Function: print_topology

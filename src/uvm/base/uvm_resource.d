@@ -117,6 +117,7 @@ import esdl.base.core: getSimTime, SimTime;
 
 import std.conv: to;
 import std.algorithm: sort;
+import uvm.meta.meta;
 
 //----------------------------------------------------------------------
 // Class: uvm_resource_types
@@ -1540,7 +1541,7 @@ class uvm_resource (T=int): uvm_resource_base
       }
       else {
 	import std.string: format;
-	return format("(%s) %0s", typeid(_val).stringof, _val);
+	return format("(%s) %0s", qualifiedTypeName!T, _val);
       }
     }
   }

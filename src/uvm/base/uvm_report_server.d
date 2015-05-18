@@ -37,6 +37,7 @@ module uvm.base.uvm_report_server;
 
 import uvm.base.uvm_object;
 import uvm.meta.mcd;
+import uvm.meta.meta;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_report_handler;
@@ -78,7 +79,7 @@ class uvm_report_server: /*extends*/ uvm_object
 
   // Needed for callbacks
   public override string get_type_name() {
-    return "uvm_report_server"; // (typeof(this)).stringof;
+    return qualifiedTypeName!(typeof(this));
   }
 
 
