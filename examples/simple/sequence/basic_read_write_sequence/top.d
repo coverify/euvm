@@ -241,12 +241,12 @@ void main() {
   import std.random: uniform;
   import std.stdio;
   auto root = uvm_fork!(my_root)("test", uniform!uint(), 4, 0);
-  root.wait_for_end_of_elaboration();
+  root.get_uvm_root().wait_for_end_of_elaboration();
   auto env = root.get_uvm_root.lookup("env");
   for (size_t i=0; i!=200; ++i) {
     bus_req req;
-    assert(root.data_in !is null);
-    root.data_in.get(req);
+    assert(root.get_uvm_root().data_in !is null);
+    root.get_uvm_root().data_in.get(req);
     writeln("got data: ", req.convert2string);
   }
   writeln("got all data");
