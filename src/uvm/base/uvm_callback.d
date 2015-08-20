@@ -141,9 +141,9 @@ class uvm_callbacks_base: uvm_object
     return false;
   }
 
-  public bool m_is_registered(uvm_object obj, uvm_callback cb) {
-    return false;
-  }
+  // public bool m_is_registered(uvm_object obj, uvm_callback cb) {
+  //   return false;
+  // }
 
   public uvm_queue!uvm_callback m_get_tw_cb_q(uvm_object obj) {
     return null;
@@ -158,28 +158,28 @@ class uvm_callbacks_base: uvm_object
   //Check registration. To test registration, start at this class and
   //work down the class hierarchy. If any class returns true then
   //the pair is legal.
-  public bool check_registration(uvm_object obj, uvm_callback cb) {
-    synchronized(this) {
-      if (m_is_registered(obj, cb)) {
-	return true;
-      }
-      // Need to look at all possible T/CB pairs of this type
-      foreach(t; _m_this_types) {
-	if(m_b_inst !is t && t.m_is_registered(obj, cb)) {
-	  return true;
-	}
-      }
-      if(obj is null) {
-	foreach(t; _m_derived_types) {
-	  this_type dt = typeid_map[t];
-	  if(dt !is null && dt.check_registration(null, cb)) {
-	    return true;
-	  }
-	}
-      }
-      return false;
-    }
-  }
+  // public bool check_registration(uvm_object obj, uvm_callback cb) {
+  //   synchronized(this) {
+  //     if (m_is_registered(obj, cb)) {
+  // 	return true;
+  //     }
+  //     // Need to look at all possible T/CB pairs of this type
+  //     foreach(t; _m_this_types) {
+  // 	if(m_b_inst !is t && t.m_is_registered(obj, cb)) {
+  // 	  return true;
+  // 	}
+  //     }
+  //     if(obj is null) {
+  // 	foreach(t; _m_derived_types) {
+  // 	  this_type dt = typeid_map[t];
+  // 	  if(dt !is null && dt.check_registration(null, cb)) {
+  // 	    return true;
+  // 	  }
+  // 	}
+  //     }
+  //     return false;
+  //   }
+  // }
 }
 
 
@@ -605,11 +605,11 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
   // -------------
   // Register valid callback type
 
-  static public bool m_register_pair() {
-    this_type inst = get();
-    inst.m_registered = true; 
-    return true;
-  }
+  // static public bool m_register_pair() {
+  //   this_type inst = get();
+  //   inst.m_registered = true; 
+  //   return true;
+  // }
 
   // calls m_register_pair only if uvm_root is not null
   // static public bool m_register_pair_if_uvm() {
@@ -618,16 +618,16 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
   //   return true;
   // }
 
-  override public bool m_is_registered(uvm_object obj, uvm_callback cb) {
-    synchronized(this) {
-      if(m_is_for_me(cb) && m_am_i_a(obj)) {
-	return m_registered;
-      }
-      // SV version does not have the following line
-      // as a result m_is_registered default value false is returned
-      return false;
-    }
-  }
+  // override public bool m_is_registered(uvm_object obj, uvm_callback cb) {
+  //   synchronized(this) {
+  //     if(m_is_for_me(cb) && m_am_i_a(obj)) {
+  // 	return m_registered;
+  //     }
+  //     // SV version does not have the following line
+  //     // as a result m_is_registered default value false is returned
+  //     return false;
+  //   }
+  // }
 
   //Does type check to see if the callback is valid for this type
   override public bool m_is_for_me(uvm_callback cb) {
@@ -686,32 +686,32 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
       return;
     }
 
-    if (! BT.get().check_registration(obj, cb)) {
-      if (obj is null) {
-	nm = "(*)";
-      }
-      else {
-	nm = obj.get_full_name();
-      }
+    // if (! BT.get().check_registration(obj, cb)) {
+    //   if (obj is null) {
+    // 	nm = "(*)";
+    //   }
+    //   else {
+    // 	nm = obj.get_full_name();
+    //   }
 
-      if (BT.m_typename != "") {
-	tnm = BT.m_typename;
-      }
-      else if(obj !is null) {
-	tnm = obj.get_type_name();
-      }
-      else {
-	tnm = "uvm_object";
-      }
+    //   if (BT.m_typename != "") {
+    // 	tnm = BT.m_typename;
+    //   }
+    //   else if(obj !is null) {
+    // 	tnm = obj.get_type_name();
+    //   }
+    //   else {
+    // 	tnm = "uvm_object";
+    //   }
 
-      uvm_report_warning("CBUNREG",
-			 "Callback " ~ cb.get_name() ~
-			 " cannot be registered with object " ~
-			 nm ~ " because callback type " ~ cb.get_type_name() ~
-			 " is not registered with object type " ~ tnm, UVM_NONE);
-      // return statement missing in SV version
-      return;
-    }
+    //   uvm_report_warning("CBUNREG",
+    // 			 "Callback " ~ cb.get_name() ~
+    // 			 " cannot be registered with object " ~
+    // 			 nm ~ " because callback type " ~ cb.get_type_name() ~
+    // 			 " is not registered with object type " ~ tnm, UVM_NONE);
+    //   // return statement missing in SV version
+    //   return;
+    // }
 
     if(obj is null) {
 
@@ -1333,58 +1333,61 @@ class uvm_callback: uvm_object
 
 mixin template uvm_register_cb(T, CB) if(is(CB: uvm_callback))
 {
-  static this() {
-    if(uvm_is_uvm_thread) {
-      uvm_callbacks!(T, CB).m_register_pair();
+  import uvm.base.uvm_callback;
+  // static this() {
+  //   if(uvm_is_uvm_thread) {
+  // 	uvm_callbacks!(T, CB).m_register_pair();
+  //   }
+  // }
+  void uvm_do_callbacks(void delegate(CB cb) dg) {
+    foreach(callb; uvm_callbacks!(T, CB).get_all_enabled(this)) {
+      dg(callb);
     }
   }
-  void uvm_do_callbacks(void delegate(CB cb) dg) {
-    import uvm.base.uvm_callback;
-    uvm_do_obj_callbacks!(CB)(this, dg);
-  }
-  bool uvm_do_callbacks_exit_on(bool delegate(Cb cb) dg, bool val) {
-    import uvm.base.uvm_callback;
-    return uvm_do_obj_callbacks_exit_on!(CB)(this, dg, val);
+
+  bool uvm_do_callbacks_exit_on(bool delegate(CB cb) dg, bool val) {
+    foreach(callb; uvm_callbacks!(T, CB).get_all_enabled(this)) {
+      if(dg(callb) == val) {
+	uvm_cb_trace_noobj(callb,
+			   format("Executed callback method 'METHOD' for" ~
+				  " callback %s (CB) from %s (T) : returned" ~
+				  " value VAL (other callbacks will be ignored)",
+				  callb.get_name(), this.get_full_name()));
+	return val;
+      }
+      uvm_cb_trace_noobj(callb, format("Executed callback method 'METHOD' for" ~
+				       " callback %s (CB) from %s (T) : did not" ~
+				       " return value VAL`",
+				       callb.get_name(), this.get_full_name()));
+    }
+    return !val;
   }
 }
 
 mixin template uvm_register_cb(CB) if(is(CB: uvm_callback))
 {
-  static this() {
-    import uvm.base.uvm_root;
-    if(uvm_is_uvm_thread) {
-      uvm_callbacks!(typeof(this), CB).m_register_pair();
-    }
-  }
-  void uvm_do_callbacks(void delegate(CB cb) dg) {
-    import uvm.base.uvm_callback;
-    uvm_do_obj_callbacks!(CB)(this, dg);
-  }
-  bool uvm_do_callbacks_exit_on(bool delegate(CB cb) dg, bool val) {
-    import uvm.base.uvm_callback;
-    return uvm_do_obj_callbacks_exit_on!(CB)(this, dg, val);
-  }
+  mixin uvm_register_cb!(typeof(this), CB);
 }
 
-// register callback and also the supertype
-mixin template uvm_register_cb(CB, ST) if(is(CB: uvm_callback))
-  {
-    static this() {
-      import uvm.base.uvm_root;
-      if(uvm_is_uvm_thread) {
-	uvm_callbacks!(typeof(this), CB).m_register_pair();
-	uvm_derived_callbacks!(typeof(this), ST).register_super_type();
-      }
-    }
-    void uvm_do_callbacks(void delegate(CB cb) dg) {
-      import uvm.base.uvm_callback;
-      uvm_do_obj_callbacks!(CB)(this, dg);
-    }
-    bool uvm_do_callbacks_exit_on(bool delegate(Cb cb) dg, bool val) {
-      import uvm.base.uvm_callback;
-      return uvm_do_obj_callbacks_exit_on!(CB)(this, dg, val);
-    }
-}
+// // register callback and also the supertype
+// mixin template uvm_register_cb(CB, ST) if(is(CB: uvm_callback))
+//   {
+//     static this() {
+//       import uvm.base.uvm_root;
+//       if(uvm_is_uvm_thread) {
+// 	uvm_callbacks!(typeof(this), CB).m_register_pair();
+// 	uvm_derived_callbacks!(typeof(this), ST).register_super_type();
+//       }
+//     }
+//     void uvm_do_callbacks(void delegate(CB cb) dg) {
+//       import uvm.base.uvm_callback;
+//       uvm_do_obj_callbacks!(CB)(this, dg);
+//     }
+//     bool uvm_do_callbacks_exit_on(bool delegate(Cb cb) dg, bool val) {
+//       import uvm.base.uvm_callback;
+//       return uvm_do_obj_callbacks_exit_on!(CB)(this, dg, val);
+//     }
+// }
 
 
 //-----------------------------------------------------------------------------
@@ -1425,25 +1428,25 @@ mixin template uvm_register_cb(CB, ST) if(is(CB: uvm_callback))
 // `define uvm_set_super_type(T,ST) \
 //   static local bit m_register_``T``ST = uvm_derived_callbacks#(T,ST)::register_super_type(`"T`",`"ST`"); 
 
-mixin template uvm_set_super_type(T,ST)
-{
-  static this() {
-    import uvm.base.uvm_root;
-    if(uvm_is_uvm_thread) {
-      uvm_derived_callbacks!(T, ST).register_super_type();
-    }
-  }
-}
+// mixin template uvm_set_super_type(T,ST)
+// {
+//   static this() {
+//     import uvm.base.uvm_root;
+//     if(uvm_is_uvm_thread) {
+//       uvm_derived_callbacks!(T, ST).register_super_type();
+//     }
+//   }
+// }
 
-mixin template uvm_set_super_type(ST)
-{
-  static this() {
-    import uvm.base.uvm_root;
-    if(uvm_is_uvm_thread) {
-      uvm_derived_callbacks!(typeof(this), ST).register_super_type();
-    }
-  }
-}
+// mixin template uvm_set_super_type(ST)
+// {
+//   static this() {
+//     import uvm.base.uvm_root;
+//     if(uvm_is_uvm_thread) {
+//       uvm_derived_callbacks!(typeof(this), ST).register_super_type();
+//     }
+//   }
+// }
 
 //-----------------------------------------------------------------------------
 // MACRO: `uvm_do_callbacks
@@ -1518,12 +1521,6 @@ mixin template uvm_set_super_type(ST)
 //        cb = iter.next(); \
 //      end \
 //    end
-
-void uvm_do_obj_callbacks(CB,T)(T obj, void delegate(CB cb) dg) {
-  foreach(callb; uvm_callbacks!(T, CB).get_all_enabled(obj)) {
-    dg(callb);
-  }
-}
 
 
 //-----------------------------------------------------------------------------
@@ -1622,25 +1619,6 @@ void uvm_do_obj_callbacks(CB,T)(T obj, void delegate(CB cb) dg) {
 //      end \
 //      return 1-VAL; \
 //    end
-
-bool uvm_do_obj_callbacks_exit_on(CB,T)(T obj, bool delegate(CB cb) dg,
-					bool val) {
-  foreach(callb; uvm_callbacks!(T, CB).get_all_enabled(obj)) {
-    if(dg(callb) == val) {
-      uvm_cb_trace_noobj(callb,
-			 format("Executed callback method 'METHOD' for" ~
-				" callback %s (CB) from %s (T) : returned" ~
-				" value VAL (other callbacks will be ignored)",
-				callb.get_name(), obj.get_full_name()));
-      return val;
-    }
-    uvm_cb_trace_noobj(callb, format("Executed callback method 'METHOD' for" ~
-				     " callback %s (CB) from %s (T) : did not" ~
-				     " return value VAL`",
-				     callb.get_name(), obj.get_full_name()));
-  }
-  return !val;
-}
 
 
 // The +define+UVM_CB_TRACE_ON setting will instrument the uvm library to emit 
