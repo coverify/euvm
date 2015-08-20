@@ -97,8 +97,6 @@ import core.sync.semaphore: Semaphore;
 // initProcess function.
 package static uvm_root _uvm_top;
 
-package static is_root_thread = false;
-
 //------------------------------------------------------------------------------
 // Variable: uvm_top
 //
@@ -108,7 +106,7 @@ package static is_root_thread = false;
 
 // provide read only access to the _uvm_top static variable
 public uvm_root uvm_top() {
-  if(_uvm_top !is null || is_root_thread) return _uvm_top;
+  if(_uvm_top !is null) return _uvm_top;
   auto _entity = cast(uvm_root_entity_base) getRootEntity;
   if(_entity is null) {
     return null;
@@ -117,11 +115,6 @@ public uvm_root uvm_top() {
   return _uvm_top;
 }
 
-// return true if pool thread associated with UVM
-public bool uvm_is_uvm_thread() {
-  if(getPoolThread() is null || uvm_top() is null) return false;
-  return true;
-}
 
 // This is where the uvm gets instantiated as part of the ESDL
 // simulator. Unlike the SystemVerilog version where uvm_root is a
@@ -158,13 +151,6 @@ class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
 	  import std.stdio;
 	  writeln("seed for UVM is:", seed);
 	}
-	T _top;
-	_root_once = new uvm_root_once(_top, _seed);
-	_uvm_top = _top;
-	uvm_top.init_report();
-	uvm_top.init_domains();
-	_uvmRootInit = true;
-	_uvmRootInitSemaphore.notify();
       }
     }
 
@@ -178,7 +164,7 @@ class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
       return this._uvm_top;
     }
 
-    alias get_uvm_root this;
+    // alias get_uvm_root this;
 
     // Event _uvmRootInitEvent;
     Semaphore _uvmRootInitSemaphore;
@@ -202,6 +188,18 @@ class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
     // public Task!(initUVM, -1) _initUVM__;
 
     public void initial() {
+      T _top;
+      _root_once = new uvm_root_once();
+      _root_once.initialize(_seed);
+
+      _top = new T();
+      ._uvm_top = _top;
+
+      _uvm_top = _top;
+      uvm_top.init_report();
+      uvm_top.init_domains();
+      _uvmRootInit = true;
+      _uvmRootInitSemaphore.notify();
       _uvm_top.initial();
     }
 
@@ -1248,209 +1246,155 @@ class uvm_root_once
   uvm_check_phase.uvm_once _uvm_check_phase_once;
   uvm_report_phase.uvm_once _uvm_report_phase_once;
   uvm_final_phase.uvm_once _uvm_final_phase_once;
-
-  this(T)(ref T root, uint seed) {
+  
+  void initialize(uint seed) {
     synchronized(this) {
       // import std.stdio;
       _uvm_sequencer_base_once = new uvm_sequencer_base.uvm_once();
-      uvm_sequencer_base._once = _uvm_sequencer_base_once;
+      // uvm_sequencer_base._once = _uvm_sequencer_base_once;
       _uvm_seed_map_once = new uvm_seed_map.uvm_once(seed);
-      uvm_seed_map._once = _uvm_seed_map_once;
+      // uvm_seed_map._once = _uvm_seed_map_once;
       // writeln("Done -- _uvm_seed_map_once");
       _uvm_recorder_once = new uvm_recorder.uvm_once();
-      uvm_recorder._once = _uvm_recorder_once;
+      // uvm_recorder._once = _uvm_recorder_once;
       // writeln("Done -- _uvm_recorder_once");
       _uvm_object_once = new uvm_object.uvm_once();
-      uvm_object._once = _uvm_object_once;
+      // uvm_object._once = _uvm_object_once;
       // writeln("Done -- _uvm_object_once");
       _uvm_component_once = new uvm_component.uvm_once();
-      uvm_component._once = _uvm_component_once;
+      // uvm_component._once = _uvm_component_once;
       // writeln("Done -- _uvm_component_once");
       _uvm_config_db_once = new uvm_once_config_db();
-      _uvm_config_db_uvm_once = _uvm_config_db_once;
+      // _uvm_config_db_uvm_once = _uvm_config_db_once;
       // writeln("Done -- _uvm_config_db_once");
       _uvm_config_db_options_once = new uvm_config_db_options.uvm_once();
-      uvm_config_db_options._once = _uvm_config_db_options_once;
+      // uvm_config_db_options._once = _uvm_config_db_options_once;
       // writeln("Done -- _uvm_config_db_options_once");
       _uvm_report_catcher_once = new uvm_report_catcher.uvm_once();
-      uvm_report_catcher._once = _uvm_report_catcher_once;
+      // uvm_report_catcher._once = _uvm_report_catcher_once;
       // writeln("Done -- _uvm_report_catcher_once");
       _uvm_report_handler_once = new uvm_report_handler.uvm_once();
-      uvm_report_handler._once = _uvm_report_handler_once;
+      // uvm_report_handler._once = _uvm_report_handler_once;
       // writeln("Done -- _uvm_report_handler_once");
       _uvm_resource_options_once = new uvm_resource_options.uvm_once();
-      uvm_resource_options._once = _uvm_resource_options_once;
+      // uvm_resource_options._once = _uvm_resource_options_once;
       // writeln("Done -- _uvm_resource_options_once");
       _uvm_resource_base_once = new uvm_resource_base.uvm_once();
-      uvm_resource_base._once = _uvm_resource_base_once;
+      // uvm_resource_base._once = _uvm_resource_base_once;
       // writeln("Done -- _uvm_resource_base_once");
       _uvm_resource_pool_once = new uvm_resource_pool.uvm_once();
-      uvm_resource_pool._once = _uvm_resource_pool_once;
+      // uvm_resource_pool._once = _uvm_resource_pool_once;
       // writeln("Done -- _uvm_resource_pool_once");
       _uvm_factory_once = new uvm_factory.uvm_once();
-      uvm_factory._once = _uvm_factory_once;
+      // uvm_factory._once = _uvm_factory_once;
       // writeln("Done -- _uvm_factory_once");
       _uvm_resource_db_options_once = new uvm_resource_db_options.uvm_once();
-      uvm_resource_db_options._once = _uvm_resource_db_options_once;
+      // uvm_resource_db_options._once = _uvm_resource_db_options_once;
       // writeln("Done -- _uvm_resource_db_options_once");
       _uvm_domain_globals_once = new uvm_once_domain_globals();
-      _uvm_domain_globals_uvm_once = _uvm_domain_globals_once;
+      // _uvm_domain_globals_uvm_once = _uvm_domain_globals_once;
       // writeln("Done -- _uvm_domain_once_globals_once");
       _uvm_domain_once = new uvm_domain.uvm_once();
-      uvm_domain._once = _uvm_domain_once;
+      // uvm_domain._once = _uvm_domain_once;
       // writeln("Done -- _uvm_domain_once");
       _uvm_cmdline_processor_once = new uvm_cmdline_processor.uvm_once();
-      uvm_cmdline_processor._once = _uvm_cmdline_processor_once;
+      // uvm_cmdline_processor._once = _uvm_cmdline_processor_once;
       // writeln("Done -- _uvm_cmdline_processor_once");
 
-      // Build UVM Root
-      root = new T();
-      ._uvm_top = root;
 
       _uvm_objection_once = new uvm_objection.uvm_once();
-      uvm_objection._once = _uvm_objection_once;
+      // uvm_objection._once = _uvm_objection_once;
       // writeln("Done -- _uvm_objection_once");
       _uvm_test_done_objection_once = new uvm_test_done_objection.uvm_once();
-      uvm_test_done_objection._once = _uvm_test_done_objection_once;
+      // uvm_test_done_objection._once = _uvm_test_done_objection_once;
       // writeln("Done -- _uvm_test_done_objection_once");
+
       _uvm_phase_once = new uvm_phase.uvm_once();
-      uvm_phase._once = _uvm_phase_once;
+      // uvm_phase._once = _uvm_phase_once;
       // writeln("Done -- _uvm_phase_once");
 
       // uvm_runtime_phases;
       _uvm_pre_reset_phase_once = new uvm_pre_reset_phase.uvm_once();
-      uvm_pre_reset_phase._once = _uvm_pre_reset_phase_once;
+      // uvm_pre_reset_phase._once = _uvm_pre_reset_phase_once;
       // writeln("Done -- _uvm_pre_reset_phase_once");
       _uvm_reset_phase_once = new uvm_reset_phase.uvm_once();
-      uvm_reset_phase._once = _uvm_reset_phase_once;
+      // uvm_reset_phase._once = _uvm_reset_phase_once;
       // writeln("Done -- _uvm_reset_phase_once");
       _uvm_post_reset_phase_once = new uvm_post_reset_phase.uvm_once();
-      uvm_post_reset_phase._once = _uvm_post_reset_phase_once;
+      // uvm_post_reset_phase._once = _uvm_post_reset_phase_once;
       // writeln("Done -- _uvm_post_reset_phase_once");
       _uvm_pre_configure_phase_once = new uvm_pre_configure_phase.uvm_once();
-      uvm_pre_configure_phase._once = _uvm_pre_configure_phase_once;
+      // uvm_pre_configure_phase._once = _uvm_pre_configure_phase_once;
       // writeln("Done -- _uvm_pre_configure_phase_once");
       _uvm_configure_phase_once = new uvm_configure_phase.uvm_once();
-      uvm_configure_phase._once = _uvm_configure_phase_once;
+      // uvm_configure_phase._once = _uvm_configure_phase_once;
       // writeln("Done -- _uvm_configure_phase_once");
       _uvm_post_configure_phase_once = new uvm_post_configure_phase.uvm_once();
-      uvm_post_configure_phase._once = _uvm_post_configure_phase_once;
+      // uvm_post_configure_phase._once = _uvm_post_configure_phase_once;
       // writeln("Done -- _uvm_post_configure_phase_once");
       _uvm_pre_main_phase_once = new uvm_pre_main_phase.uvm_once();
-      uvm_pre_main_phase._once = _uvm_pre_main_phase_once;
+      // uvm_pre_main_phase._once = _uvm_pre_main_phase_once;
       // writeln("Done -- _uvm_pre_main_phase_once");
       _uvm_main_phase_once = new uvm_main_phase.uvm_once();
-      uvm_main_phase._once = _uvm_main_phase_once;
+      // uvm_main_phase._once = _uvm_main_phase_once;
       // writeln("Done -- _uvm_main_phase_once");
       _uvm_post_main_phase_once = new uvm_post_main_phase.uvm_once();
-      uvm_post_main_phase._once = _uvm_post_main_phase_once;
+      // uvm_post_main_phase._once = _uvm_post_main_phase_once;
       // writeln("Done -- _uvm_post_main_phase_once");
       _uvm_pre_shutdown_phase_once = new uvm_pre_shutdown_phase.uvm_once();
-      uvm_pre_shutdown_phase._once = _uvm_pre_shutdown_phase_once;
+      // uvm_pre_shutdown_phase._once = _uvm_pre_shutdown_phase_once;
       // writeln("Done -- _uvm_pre_shutdown_phase_once");
       _uvm_shutdown_phase_once = new uvm_shutdown_phase.uvm_once();
-      uvm_shutdown_phase._once = _uvm_shutdown_phase_once;
+      // uvm_shutdown_phase._once = _uvm_shutdown_phase_once;
       // writeln("Done -- _uvm_shutdown_phase_once");
       _uvm_post_shutdown_phase_once = new uvm_post_shutdown_phase.uvm_once();
-      uvm_post_shutdown_phase._once = _uvm_post_shutdown_phase_once;
+      // uvm_post_shutdown_phase._once = _uvm_post_shutdown_phase_once;
       // writeln("Done -- _uvm_post_shutdown_phase_once");
 
       // uvm_common_phases;
       _uvm_build_phase_once = new uvm_build_phase.uvm_once();
-      uvm_build_phase._once = _uvm_build_phase_once;
+      // uvm_build_phase._once = _uvm_build_phase_once;
       // writeln("Done -- _uvm_build_phase_once");
       _uvm_connect_phase_once = new uvm_connect_phase.uvm_once();
-      uvm_connect_phase._once = _uvm_connect_phase_once;
+      // uvm_connect_phase._once = _uvm_connect_phase_once;
       // writeln("Done -- _uvm_connect_phase_once");
       _uvm_elaboration_phase_once = new uvm_elaboration_phase.uvm_once();
-      uvm_elaboration_phase._once = _uvm_elaboration_phase_once;
+      // uvm_elaboration_phase._once = _uvm_elaboration_phase_once;
       // writeln("Done -- _uvm_elaboration_phase_once");
       _uvm_end_of_elaboration_phase_once = new uvm_end_of_elaboration_phase.uvm_once();
-      uvm_end_of_elaboration_phase._once = _uvm_end_of_elaboration_phase_once;
+      // uvm_end_of_elaboration_phase._once = _uvm_end_of_elaboration_phase_once;
       // writeln("Done -- _uvm_end_of_elaboration_phase_once");
       _uvm_start_of_simulation_phase_once = new uvm_start_of_simulation_phase.uvm_once();
-      uvm_start_of_simulation_phase._once = _uvm_start_of_simulation_phase_once;
+      // uvm_start_of_simulation_phase._once = _uvm_start_of_simulation_phase_once;
       // writeln("Done -- _uvm_start_of_simulation_phase_once");
       _uvm_run_phase_once = new uvm_run_phase.uvm_once();
-      uvm_run_phase._once = _uvm_run_phase_once;
+      // uvm_run_phase._once = _uvm_run_phase_once;
       // writeln("Done -- _uvm_run_phase_once");
       _uvm_extract_phase_once = new uvm_extract_phase.uvm_once();
-      uvm_extract_phase._once = _uvm_extract_phase_once;
+      // uvm_extract_phase._once = _uvm_extract_phase_once;
       // writeln("Done -- _uvm_extract_phase_once");
       _uvm_check_phase_once = new uvm_check_phase.uvm_once();
-      uvm_check_phase._once = _uvm_check_phase_once;
+      // uvm_check_phase._once = _uvm_check_phase_once;
       // writeln("Done -- _uvm_check_phase_once");
       _uvm_report_phase_once = new uvm_report_phase.uvm_once();
-      uvm_report_phase._once = _uvm_report_phase_once;
+      // uvm_report_phase._once = _uvm_report_phase_once;
       // writeln("Done -- _uvm_report_phase_once");
       _uvm_final_phase_once = new uvm_final_phase.uvm_once();
-      uvm_final_phase._once = _uvm_final_phase_once;
+      // uvm_final_phase._once = _uvm_final_phase_once;
       // writeln("Done -- _uvm_final_phase_once");
-
       _uvm_report_server_once = new uvm_report_server.uvm_once();
-      uvm_report_server._once = _uvm_report_server_once;
+      // uvm_report_server._once = _uvm_report_server_once;
       // writeln("Done -- _uvm_report_server_once");
       _uvm_callbacks_base_once = new uvm_callbacks_base.uvm_once();
-      uvm_callbacks_base._once = _uvm_callbacks_base_once;
+      // uvm_callbacks_base._once = _uvm_callbacks_base_once;
       // writeln("Done -- _uvm_callbacks_base_once");
       _uvm_object_globals_once = new uvm_once_object_globals();
-      _uvm_object_globals_uvm_once = _uvm_object_globals_once;
+      // _uvm_object_globals_uvm_once = _uvm_object_globals_once;
       // writeln("Done -- _uvm_object_globals_once");
 
     }
   }
 
-  package void initialize() {
-    // uvm_sequencer_base._once = _uvm_sequencer_base_once;
-    // uvm_seed_map._once = _uvm_seed_map_once;
-    // uvm_recorder._once = _uvm_recorder_once;
-    // uvm_object._once = _uvm_object_once;
-    // uvm_component._once = _uvm_component_once;
-    // _uvm_config_db_uvm_once = _uvm_config_db_once;
-    // uvm_config_db_options._once = _uvm_config_db_options_once;
-    // uvm_report_catcher._once = _uvm_report_catcher_once;
-    // uvm_report_handler._once = _uvm_report_handler_once;
-    // uvm_resource_options._once = _uvm_resource_options_once;
-    // uvm_resource_base._once = _uvm_resource_base_once;
-    // uvm_resource_pool._once = _uvm_resource_pool_once;
-    // uvm_factory._once = _uvm_factory_once;
-    // uvm_resource_db_options._once = _uvm_resource_db_options_once;
-    // _uvm_domain_once_globals_uvm_once = _uvm_domain_once_globals_once;
-    // uvm_domain._once = _uvm_domain_once;
-    // uvm_cmdline_processor._once = _uvm_cmdline_processor_once;
-    // uvm_objection._once = _uvm_objection_once;
-    // uvm_test_done_objection._once = _uvm_test_done_objection_once;
-    // uvm_phase._once = _uvm_phase_once;
-
-    // uvm_runtime_phases;
-    // uvm_pre_reset_phase._once = _uvm_pre_reset_phase_once;
-    // uvm_reset_phase._once = _uvm_reset_phase_once;
-    // uvm_post_reset_phase._once = _uvm_post_reset_phase_once;
-    // uvm_pre_configure_phase._once = _uvm_pre_configure_phase_once;
-    // uvm_configure_phase._once = _uvm_configure_phase_once;
-    // uvm_post_configure_phase._once = _uvm_post_configure_phase_once;
-    // uvm_pre_main_phase._once = _uvm_pre_main_phase_once;
-    // uvm_main_phase._once = _uvm_main_phase_once;
-    // uvm_post_main_phase._once = _uvm_post_main_phase_once;
-    // uvm_pre_shutdown_phase._once = _uvm_pre_shutdown_phase_once;
-    // uvm_shutdown_phase._once = _uvm_shutdown_phase_once;
-    // uvm_post_shutdown_phase._once = _uvm_post_shutdown_phase_once;
-
-    // uvm_common_phases;
-    // uvm_build_phase._once = _uvm_build_phase_once;
-    // uvm_connect_phase._once = _uvm_connect_phase_once;
-    // uvm_elaboration_phase._once = _uvm_elaboration_phase_once;
-    // uvm_end_of_elaboration_phase._once = _uvm_end_of_elaboration_phase_once;
-    // uvm_start_of_simulation_phase._once = _uvm_start_of_simulation_phase_once;
-    // uvm_run_phase._once = _uvm_run_phase_once;
-    // uvm_extract_phase._once = _uvm_extract_phase_once;
-    // uvm_check_phase._once = _uvm_check_phase_once;
-    // uvm_report_phase._once = _uvm_report_phase_once;
-    // uvm_final_phase._once = _uvm_final_phase_once;
-    // uvm_report_server._once = _uvm_report_server_once;
-    // uvm_callbacks_base._once = _uvm_callbacks_base_once;
-    // _uvm_object_globals_uvm_once = _uvm_object_globals_once;
-  }
 }
 
 
