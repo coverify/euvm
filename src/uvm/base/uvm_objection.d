@@ -1307,9 +1307,9 @@ class uvm_test_done_objection: m_uvm_test_done_objection_base
   static class uvm_once
   {
     @uvm_protected_sync private uvm_test_done_objection _m_inst;
-    this() {
-      _m_inst = new uvm_test_done_objection("run");
-    }
+    // this() {
+    //   _m_inst = new uvm_test_done_objection("run");
+    // }
   }
 
   mixin(uvm_once_sync!(uvm_once, typeof(this)));
@@ -1574,8 +1574,10 @@ class uvm_test_done_objection: m_uvm_test_done_objection_base
   }
 
   static public uvm_test_done_objection get() {
-    if(m_inst is null) m_inst = uvm_test_done_objection.type_id.create("run");
-    return m_inst;
+    synchronized(once) {
+      if(m_inst is null) m_inst = uvm_test_done_objection.type_id.create("run");
+      return m_inst;
+    }
   }
 
 }

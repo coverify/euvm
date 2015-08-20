@@ -150,7 +150,7 @@ abstract class uvm_report_catcher: uvm_callback
 
   mixin uvm_once_sync;
 
-  // Mover to the uvm_report_object module
+  // Moved to the uvm_report_object module
 
   // `uvm_register_cb(uvm_report_object,uvm_report_catcher)
   // FIXME -- this has moved to the constructor

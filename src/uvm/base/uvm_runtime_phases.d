@@ -74,10 +74,13 @@ class uvm_pre_reset_phase: uvm_task_phase
 {
   static class uvm_once
   {
-    @uvm_immutable_sync uvm_pre_reset_phase _m_inst;
-    this() {
+    uvm_pre_reset_phase _m_inst;
+    uvm_pre_reset_phase m_inst() {
       synchronized(this) {
-	_m_inst = new uvm_pre_reset_phase();
+	if(_m_inst is null) {
+	  _m_inst = new uvm_pre_reset_phase();
+	}
+	return _m_inst;
       }
     }
   }
@@ -90,9 +93,7 @@ class uvm_pre_reset_phase: uvm_task_phase
   enum string type_name = "uvm_pre_reset_phase";
 
   static public uvm_pre_reset_phase get() {
-    synchronized(once) {
-      return m_inst;
-    }
+    return m_inst;
   }
 
   protected this(string name="pre_reset") {
@@ -135,10 +136,13 @@ class uvm_reset_phase: uvm_task_phase
 {
   static class uvm_once
   {
-    @uvm_immutable_sync uvm_reset_phase _m_inst;
-    this() {
+    uvm_reset_phase _m_inst;
+    uvm_reset_phase m_inst() {
       synchronized(this) {
-	_m_inst = new uvm_reset_phase();
+	if(_m_inst is null) {
+	  _m_inst = new uvm_reset_phase();
+	}
+	return _m_inst;
       }
     }
   }
@@ -152,10 +156,9 @@ class uvm_reset_phase: uvm_task_phase
   enum string type_name = "uvm_reset_phase";
 
   static public uvm_reset_phase get() {
-    synchronized(once) {
       return m_inst;
-    }
   }
+  
   protected this(string name="reset") {
     super(name);
   }
@@ -188,10 +191,13 @@ class uvm_post_reset_phase: uvm_task_phase
 {
   static class uvm_once
   {
-    @uvm_immutable_sync uvm_post_reset_phase _m_inst;
-    this() {
+    uvm_post_reset_phase _m_inst;
+    uvm_post_reset_phase m_inst() {
       synchronized(this) {
-	_m_inst = new uvm_post_reset_phase();
+	if(_m_inst is null) {
+	  _m_inst = new uvm_post_reset_phase();
+	}
+	return _m_inst;
       }
     }
   }
@@ -204,10 +210,9 @@ class uvm_post_reset_phase: uvm_task_phase
   enum string type_name = "uvm_post_reset_phase";
 
   static public uvm_post_reset_phase get() {
-    synchronized(once) {
-      return m_inst;
-    }
+    return m_inst;
   }
+  
   protected this(string name="post_reset") {
     super(name);
   }
@@ -242,10 +247,13 @@ class uvm_pre_configure_phase: uvm_task_phase
 {
   static class uvm_once
   {
-    @uvm_immutable_sync uvm_pre_configure_phase _m_inst;
-    this() {
+    uvm_pre_configure_phase _m_inst;
+    uvm_pre_configure_phase m_inst() {
       synchronized(this) {
-	_m_inst = new uvm_pre_configure_phase();
+	if(_m_inst is null) {
+	  _m_inst = new uvm_pre_configure_phase();
+	}
+	return _m_inst;
       }
     }
   }
@@ -258,9 +266,7 @@ class uvm_pre_configure_phase: uvm_task_phase
   enum string type_name = "uvm_pre_configure_phase";
 
   static public uvm_pre_configure_phase get() {
-    synchronized(once) {
-      return m_inst;
-    }
+    return m_inst;
   }
 
   protected this(string name="pre_configure") {
@@ -296,10 +302,13 @@ class uvm_configure_phase: uvm_task_phase
 {
   static class uvm_once
   {
-    @uvm_immutable_sync uvm_configure_phase _m_inst;
-    this() {
+    uvm_configure_phase _m_inst;
+    uvm_configure_phase m_inst() {
       synchronized(this) {
-	_m_inst = new uvm_configure_phase();
+	if(_m_inst is null) {
+	  _m_inst = new uvm_configure_phase();
+	}
+	return _m_inst;
       }
     }
   }
@@ -313,13 +322,13 @@ class uvm_configure_phase: uvm_task_phase
   enum string type_name = "uvm_configure_phase";
 
   static public uvm_configure_phase get() {
-    synchronized(once) {
-      return m_inst;
-    }
+    return m_inst;
   }
+
   protected this(string name="configure") {
     super(name);
   }
+  
   final override public string get_type_name() {
     return type_name;
   }
@@ -349,10 +358,13 @@ class uvm_post_configure_phase: uvm_task_phase
 {
   static class uvm_once
   {
-    @uvm_immutable_sync uvm_post_configure_phase _m_inst;
-    this() {
+    uvm_post_configure_phase _m_inst;
+    uvm_post_configure_phase m_inst() {
       synchronized(this) {
-	_m_inst = new uvm_post_configure_phase();
+	if(_m_inst is null) {
+	  _m_inst = new uvm_post_configure_phase();
+	}
+	return _m_inst;
       }
     }
   }
@@ -365,13 +377,13 @@ class uvm_post_configure_phase: uvm_task_phase
   enum string type_name = "uvm_post_configure_phase";
 
   static public uvm_post_configure_phase get() {
-    synchronized(once) {
-      return m_inst;
-    }
+    return m_inst;
   }
+
   protected this(string name="post_configure") {
     super(name);
   }
+  
   final override public string get_type_name() {
     return type_name;
   }
@@ -398,10 +410,13 @@ class uvm_pre_main_phase: uvm_task_phase
 {
   static class uvm_once
   {
-    @uvm_immutable_sync uvm_pre_main_phase _m_inst;
-    this() {
+    uvm_pre_main_phase _m_inst;
+    uvm_pre_main_phase m_inst() {
       synchronized(this) {
-	_m_inst = new uvm_pre_main_phase();
+	if(_m_inst is null) {
+	  _m_inst = new uvm_pre_main_phase();
+	}
+	return _m_inst;
       }
     }
   }
@@ -414,13 +429,13 @@ class uvm_pre_main_phase: uvm_task_phase
   enum string type_name = "uvm_pre_main_phase";
 
   static public uvm_pre_main_phase get() {
-    synchronized(once) {
-      return m_inst;
-    }
+    return m_inst;
   }
+
   protected this(string name="pre_main") {
     super(name);
   }
+  
   final override public string get_type_name() {
     return type_name;
   }
@@ -451,10 +466,13 @@ class uvm_main_phase: uvm_task_phase
 {
   static class uvm_once
   {
-    @uvm_immutable_sync uvm_main_phase _m_inst;
-    this() {
+    uvm_main_phase _m_inst;
+    uvm_main_phase m_inst() {
       synchronized(this) {
-	_m_inst = new uvm_main_phase();
+	if(_m_inst is null) {
+	  _m_inst = new uvm_main_phase();
+	}
+	return _m_inst;
       }
     }
   }
@@ -467,13 +485,13 @@ class uvm_main_phase: uvm_task_phase
   enum string type_name = "uvm_main_phase";
 
   static public uvm_main_phase get() {
-    synchronized(once) {
-      return m_inst;
-    }
+    return m_inst;
   }
+
   protected this(string name="main") {
     super(name);
   }
+
   final override public string get_type_name() {
     return type_name;
   }
@@ -500,10 +518,13 @@ class uvm_post_main_phase: uvm_task_phase
 {
   static class uvm_once
   {
-    @uvm_immutable_sync uvm_post_main_phase _m_inst;
-    this() {
+    uvm_post_main_phase _m_inst;
+    uvm_post_main_phase m_inst() {
       synchronized(this) {
-	_m_inst = new uvm_post_main_phase();
+	if(_m_inst is null) {
+	  _m_inst = new uvm_post_main_phase();
+	}
+	return _m_inst;
       }
     }
   }
@@ -516,13 +537,13 @@ class uvm_post_main_phase: uvm_task_phase
   enum string type_name = "uvm_post_main_phase";
 
   static public uvm_post_main_phase get() {
-    synchronized(once) {
-      return m_inst;
-    }
+    return m_inst;
   }
+
   protected this(string name="post_main") {
     super(name);
   }
+
   final override public string get_type_name() {
     return type_name;
   }
@@ -549,10 +570,13 @@ class uvm_pre_shutdown_phase: uvm_task_phase
 {
   static class uvm_once
   {
-    @uvm_immutable_sync uvm_pre_shutdown_phase _m_inst;
-    this() {
+    uvm_pre_shutdown_phase _m_inst;
+    uvm_pre_shutdown_phase m_inst() {
       synchronized(this) {
-	_m_inst = new uvm_pre_shutdown_phase();
+	if(_m_inst is null) {
+	  _m_inst = new uvm_pre_shutdown_phase();
+	}
+	return _m_inst;
       }
     }
   }
@@ -565,13 +589,13 @@ class uvm_pre_shutdown_phase: uvm_task_phase
   enum string type_name = "uvm_pre_shutdown_phase";
 
   static public uvm_pre_shutdown_phase get() {
-    synchronized(once) {
-      return m_inst;
-    }
+    return m_inst;
   }
+
   protected this(string name="pre_shutdown") {
     super(name);
   }
+
   final override public string get_type_name() {
     return type_name;
   }
@@ -601,10 +625,13 @@ class uvm_shutdown_phase: uvm_task_phase
 {
   static class uvm_once
   {
-    @uvm_immutable_sync uvm_shutdown_phase _m_inst;
-    this() {
+    uvm_shutdown_phase _m_inst;
+    uvm_shutdown_phase m_inst() {
       synchronized(this) {
-	_m_inst = new uvm_shutdown_phase();
+	if(_m_inst is null) {
+	  _m_inst = new uvm_shutdown_phase();
+	}
+	return _m_inst;
       }
     }
   }
@@ -617,13 +644,13 @@ class uvm_shutdown_phase: uvm_task_phase
   enum string type_name = "uvm_shutdown_phase";
 
   static public uvm_shutdown_phase get() {
-    synchronized(once) {
-      return m_inst;
-    }
+    return m_inst;
   }
+  
   protected this(string name="shutdown") {
     super(name);
   }
+
   final override public string get_type_name() {
     return type_name;
   }
@@ -654,10 +681,13 @@ class uvm_post_shutdown_phase: uvm_task_phase
 {
   static class uvm_once
   {
-    @uvm_immutable_sync uvm_post_shutdown_phase _m_inst;
-    this() {
+    uvm_post_shutdown_phase _m_inst;
+    uvm_post_shutdown_phase m_inst() {
       synchronized(this) {
-	_m_inst = new uvm_post_shutdown_phase();
+	if(_m_inst is null) {
+	  _m_inst = new uvm_post_shutdown_phase();
+	}
+	return _m_inst;
       }
     }
   }
@@ -670,13 +700,13 @@ class uvm_post_shutdown_phase: uvm_task_phase
   enum string type_name = "uvm_post_shutdown_phase";
 
   static public uvm_post_shutdown_phase get() {
-    synchronized(once) {
-      return m_inst;
-    }
+    return m_inst;
   }
+
   protected this(string name="post_shutdown") {
     super(name);
   }
+
   final override public string get_type_name() {
     return type_name;
   }

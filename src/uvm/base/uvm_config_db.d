@@ -262,7 +262,7 @@ class uvm_config_db (T = int): uvm_resource_db!T
       r.set_override();
     }
 
-    synchronized(_uvm_config_db_uvm_once) {
+    synchronized(uvm_config_db_uvm_once) {
       //trigger any waiters
       if(field_name in _m_waiters) {
 	m_uvm_waiter w;
@@ -333,7 +333,7 @@ class uvm_config_db (T = int): uvm_resource_db!T
 
     m_uvm_waiter waiter = new m_uvm_waiter(inst_name);
 
-    synchronized(_uvm_config_db_uvm_once) {
+    synchronized(uvm_config_db_uvm_once) {
       if(field_name !in _m_waiters) {
 	_m_waiters[field_name] = new uvm_array!(m_uvm_waiter);
       }
@@ -345,7 +345,7 @@ class uvm_config_db (T = int): uvm_resource_db!T
     // wait on the waiter to trigger
     waiter.wait_for_trigger();
 
-    synchronized(_uvm_config_db_uvm_once) {
+    synchronized(uvm_config_db_uvm_once) {
       // Remove the waiter from the waiter list
       for(int i = 0; i < _m_waiters[field_name].size(); ++i) {
 	if(_m_waiters[field_name].get(i) is waiter) {

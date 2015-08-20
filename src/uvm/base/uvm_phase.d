@@ -118,8 +118,9 @@ import uvm.base.uvm_domain;
 import uvm.base.uvm_root;
 import uvm.base.uvm_task_phase;
 import uvm.meta.misc;
+import uvm.meta.mailbox;
 import uvm.meta.mcd;
-import esdl.base.core: FifoObj, waitDelta, wait,
+import esdl.base.core: waitDelta, wait,
   Fork, abortForks, getSimTime, sleep, fork;
 import esdl.data.time;
 import esdl.data.sync;
@@ -139,12 +140,13 @@ class uvm_phase: uvm_object
   {
     @uvm_immutable_sync private SyncAssoc!(uvm_phase, bool) _m_executing_phases;
     // private static mailbox #(uvm_phase) m_phase_hopper = new();
-    @uvm_immutable_sync private FifoObj!uvm_phase _m_phase_hopper;
+    @uvm_immutable_sync private Mailbox!uvm_phase _m_phase_hopper;
     @uvm_protected_sync private bool _m_phase_trace;
     @uvm_private_sync private bool _m_use_ovm_run_semantic;
     this() {
       synchronized(this) {
-	_m_phase_hopper = new FifoObj!uvm_phase("_m_phase_hopper", getRootEntity());
+	_m_phase_hopper = new Mailbox!uvm_phase();// "_m_phase_hopper", getRootEntity()
+						
 	_m_executing_phases = new SyncAssoc!(uvm_phase, bool);
       }
     }
@@ -1428,11 +1430,11 @@ class uvm_phase: uvm_object
 
     // initiate by starting first phase in common domain
     uvm_phase ph = uvm_domain.get_common_domain();
-    m_phase_hopper.nbWrite(ph);
+    m_phase_hopper.try_put(ph);
 
     for(;;) {
       uvm_phase phase;
-      m_phase_hopper.read(phase);
+      m_phase_hopper.get(phase);
       fork({phase.execute_phase();});
       wait(0);	// #0;		// let the process start running
     }
@@ -1736,7 +1738,7 @@ class uvm_phase: uvm_object
 	synchronized(this) {
 	  _m_jump_fwd = false;
 	  _m_jump_bkwd = false;
-	  _m_phase_hopper.nbWrite(_m_jump_phase);
+	  _m_phase_hopper.try_put(_m_jump_phase);
 	  _m_jump_phase = null;
 	  return;
 	}
@@ -1813,7 +1815,7 @@ class uvm_phase: uvm_object
 	  succ.m_state = UVM_PHASE_SCHEDULED;
 	  wait(0); // LET ANY WAITERS WAKE UP
 	  synchronized(this) {
-	    m_phase_hopper.nbWrite(succ);
+	    m_phase_hopper.try_put(succ);
 	    if(_m_phase_trace)
 	      UVM_PH_TRACE("PH/TRC/SCHEDULED", "Scheduled from phase " ~
 			   get_full_name(), succ, UVM_LOW);

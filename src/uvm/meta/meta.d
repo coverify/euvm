@@ -19,8 +19,10 @@
 //   permissions and limitations under the License.
 //------------------------------------------------------------------------------
 module uvm.meta.meta;
+// import std.traits: fullyQualifiedName;
 
 public template qualifiedTypeName(T) {
   // typeid(T).stringof returns string of the form "&typeid(qualifiedTypeName)"
   enum string qualifiedTypeName = typeid(T).stringof[8..$-1];
+  // enum string qualifiedTypeName = fullyQualifiedName!T;
 }

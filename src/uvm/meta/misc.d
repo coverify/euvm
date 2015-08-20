@@ -402,14 +402,15 @@ mixin template uvm_once_sync() {
 template uvm_once_sync(T, U, size_t ITER=0) {
   static if(ITER == (__traits(derivedMembers, T).length)) {
     //    enum string uvm_once_sync = "static if(!__traits(compiles, _once)) {public static " ~ T.stringof ~ " _once;}
-    enum string uvm_once_sync = "public static uvm_once _once;
+    enum string uvm_once_sync = "// public static uvm_once _once;
 public static uvm_once once() {
 import uvm.base.uvm_root;
-if(_once is null) {
+// if(_once is null) {
 auto root = cast(uvm_root_entity_base) getRootEntity();
-_once = root.root_once._" ~ U.stringof ~ "_once;
-}
-return _once;
+// _once =
+return root.root_once._" ~ U.stringof ~ "_once;
+// }
+// return _once;
 }
 " ~ "mixin(uvm_sync!(" ~ T.stringof ~ ", \"once\"));
 ";
@@ -431,15 +432,16 @@ return _once;
 
 template uvm_once_sync(T, string _inst, size_t ITER=0) {
   static if(ITER == (__traits(derivedMembers, T).length)) {
-    enum string uvm_once_sync = "public " ~ T.stringof ~
+    enum string uvm_once_sync = "// public " ~ T.stringof ~
       " _" ~ _inst ~ "_uvm_once;
 public " ~ T.stringof ~ " " ~ _inst ~ "_uvm_once() {
 import uvm.base.uvm_root; // : uvm_root_entity_base;
-if(_" ~ _inst ~ "_uvm_once is null) {
+// if(_" ~ _inst ~ "_uvm_once is null) {
 auto root = cast(uvm_root_entity_base) getRootEntity();
-_" ~ _inst ~ "_uvm_once = root.root_once._" ~ _inst ~ "_once;
-}
-return _" ~ _inst ~ "_uvm_once;
+// _" ~ _inst ~ "_uvm_once = 
+return root.root_once._" ~ _inst ~ "_once;
+// }
+// return _" ~ _inst ~ "_uvm_once;
 }
 " ~ "mixin(uvm_sync!(" ~ T.stringof ~ ", \"" ~ _inst ~ "_uvm_once\"));
 ";

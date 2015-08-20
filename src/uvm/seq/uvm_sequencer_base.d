@@ -70,19 +70,19 @@ class uvm_sequencer_base: uvm_component
 
   mixin uvm_component_utils;
 
-  static inc_g_request_id() {
+  static int inc_g_request_id() {
     synchronized(once) {
       return once._g_request_id++;
     }
   }
 
-  static inc_g_sequence_id() {
+  static int inc_g_sequence_id() {
     synchronized(once) {
       return once._g_sequence_id++;
     }
   }
 
-  static inc_g_sequencer_id() {
+  static int inc_g_sequencer_id() {
     synchronized(once) {
       return once._g_sequencer_id++;
     }
