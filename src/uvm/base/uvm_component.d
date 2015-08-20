@@ -169,17 +169,8 @@ abstract class uvm_component: uvm_report_object, ParContext
       // 	return;
       // }
 
-      uvm_root top = uvm_root.get();
-
-      if(top is null) {
-	// Top could be null only if we are presently constructing
-	// uvm_root itself
-	top = cast(uvm_root) this;
-	if(top is null) {
-	  assert(false, "Unable to get uvm_root!");
-	}
-	._uvm_top = top;
-      }
+      uvm_root top;
+      top = get_root();
 
       // while we are at contructing the uvm_top, there is no need to
       // check whether we are in build_phase, this can be done for
@@ -271,12 +262,11 @@ abstract class uvm_component: uvm_report_object, ParContext
   // Csontructor called by uvm_root constructor
   package this() {
     synchronized(this) {
-      super("");
-
-      // make sure that we are actually construting a uvm_root
-      auto top = cast(uvm_root) this;
-      assert(top !is null);
-      ._uvm_top = top;
+      super("__top__");
+      set_name(""); // *** VIRTUAL
+      // // make sure that we are actually construting a uvm_root
+      // auto top = cast(uvm_root) this;
+      // assert(top !is null);
     }
   }
 
@@ -2709,13 +2699,25 @@ abstract class uvm_component: uvm_report_object, ParContext
   }
 
 
+  public bool is_root() {
+    return false;
+  }
+  
+  private uvm_root get_root() {
+    if(this.is_root()) {
+      return cast(uvm_root) this;
+    }
+    else {
+      return uvm_top();
+    }
+  }
 
   // m_set_full_name
   // ---------------
 
   private void m_set_full_name() {
     synchronized(this) {
-      uvm_root top = uvm_top;
+      uvm_root top = get_root();
       if (_m_parent is top || _m_parent is null) {
 	_m_name = get_name();
       }
@@ -3017,7 +3019,7 @@ abstract class uvm_component: uvm_report_object, ParContext
       static string[] values;
       static bool first = true;
       uvm_cmdline_processor clp = uvm_cmdline_processor.get_inst();
-      uvm_root top = uvm_root.get();
+      uvm_root top = get_root();
 
       if(values.length == 0) {
 	uvm_cmdline_proc.get_arg_values("+uvm_set_verbosity=", values);

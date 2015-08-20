@@ -103,7 +103,7 @@ class uvm_report_object: /*extends*/ uvm_object
   // Creates a new report object with the given name. This method also creates
   // a new <uvm_report_handler> object to which most tasks are delegated.
 
-  public this (string name = "") {
+  public this(string name = "") {
     synchronized(this) {
       super(name);
       _m_rh = new uvm_report_handler();

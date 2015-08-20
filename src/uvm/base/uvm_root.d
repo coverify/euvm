@@ -91,11 +91,6 @@ import std.format;
 import std.string: format;
 
 import core.sync.semaphore: Semaphore;
-// each process belonging to a given root enity would see the same
-// uvm_root. This static (thread local) variable gets assigned during
-// the initialization of all the processes and rouines as part of the
-// initProcess function.
-package static uvm_root _uvm_top;
 
 //------------------------------------------------------------------------------
 // Variable: uvm_top
@@ -106,13 +101,9 @@ package static uvm_root _uvm_top;
 
 // provide read only access to the _uvm_top static variable
 public uvm_root uvm_top() {
-  if(_uvm_top !is null) return _uvm_top;
-  auto _entity = cast(uvm_root_entity_base) getRootEntity;
-  if(_entity is null) {
-    return null;
-  }
-  _uvm_top = _entity.get_uvm_root();
-  return _uvm_top;
+  auto _entity = cast(uvm_root_entity_base) Process.self().getParentEntity();
+  assert(_entity !is null);
+  return _entity.get_root();
 }
 
 
@@ -135,6 +126,7 @@ class uvm_root_entity_base: RootEntity
   }
 
   abstract public uvm_root get_uvm_root();
+  abstract protected uvm_root get_root();
   // The randomization seed passed from the top.
   // alias get_uvm_root this;
 }
@@ -152,6 +144,10 @@ class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
 	  writeln("seed for UVM is:", seed);
 	}
       }
+    }
+
+    override protected T get_root() {
+      return this._uvm_top;
     }
 
     override public T get_uvm_root() {
@@ -193,14 +189,12 @@ class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
       _root_once.initialize(_seed);
 
       _top = new T();
-      ._uvm_top = _top;
-
       _uvm_top = _top;
       uvm_top.init_report();
       uvm_top.init_domains();
       _uvmRootInit = true;
       _uvmRootInitSemaphore.notify();
-      _uvm_top.initial();
+      uvm_top().initial();
     }
 
     public Task!(initial) _init;
@@ -226,6 +220,7 @@ class uvm_root: uvm_component
 
   this() {
     synchronized(this) {
+      // super("__top__", null);
       super();
       _m_phase_timeout = new WithEvent!SimTime;
       _m_phase_all_done = new WithEvent!bool;
@@ -235,6 +230,10 @@ class uvm_root: uvm_component
 
   // SV implementation makes this a part of the run_test function
   uvm_component uvm_test_top;
+
+  override bool is_root() {
+    return true;
+  }
 
   // in SV this is part of the constructor. Here we have separated it
   // out since we need to make sure that _once initialization has completed
@@ -256,7 +255,7 @@ class uvm_root: uvm_component
   void init_domains() {
     synchronized(this) {
       uvm_domain.get_common_domain();
-      _uvm_top.m_domain = uvm_domain.get_uvm_domain();
+      uvm_top().m_domain = uvm_domain.get_uvm_domain();
     }
   }
 
