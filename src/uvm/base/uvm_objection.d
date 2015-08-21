@@ -38,7 +38,7 @@ import uvm.seq.uvm_sequence_base;
 import uvm.meta.misc;
 
 import esdl.base.core: Event, SimTime, Process,
-  waitForks, wait, getRootEntity, Fork, fork;
+  waitForks, wait, Fork, fork;
 import esdl.data.sync;
 
 import std.string: format;
@@ -128,7 +128,8 @@ class uvm_objection: uvm_report_object
 
     this() {
       synchronized(this) {
-	_m_scheduled_list_event.init("_m_scheduled_list_event", getRootEntity());
+	_m_scheduled_list_event.init("_m_scheduled_list_event",
+				     Process.self().getParentEntity());
 	_m_objections = new SyncQueue!uvm_objection();
 	_m_context_pool = new SyncQueue!uvm_objection_context_object();
 	_m_scheduled_list = new SyncQueue!uvm_objection_context_object();
@@ -1288,7 +1289,7 @@ version(UVM_USE_CALLBACKS_OBJECTION_FOR_TEST_DONE) {
 
 // TODO: change to plusarg
 public SimTime uvm_default_timeout() {
-  return SimTime(getRootEntity(), UVM_DEFAULT_TIMEOUT);
+  return SimTime(Process.self().getParentEntity(), UVM_DEFAULT_TIMEOUT);
 }
 
 // typedef class uvm_cmdline_processor;

@@ -457,7 +457,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 
   final public uvm_component lookup(string name) {
     synchronized(this) {
-      uvm_root top = uvm_root.get();
+      uvm_root top = get_root(); // uvm_root.get();
       uvm_component comp = this;
 
       string leaf , remainder;
@@ -3564,8 +3564,8 @@ void _uvm__config_parallelism(T)(T t, ref parallelize linfo)
        pinfo._parallel == ParallelPolicy._UNDEFINED_) {
       // the parent had no parallel info
       // get it from RootEntity
-      pinfo = getRootEntity._esdl__getParInfo();
-      pconf = getRootEntity._esdl__getParConfig();
+      pinfo = Process.self().getParentEntity()._esdl__getParInfo();
+      pconf = Process.self().getParentEntity()._esdl__getParConfig();
     }
 
     parallelize par__info;

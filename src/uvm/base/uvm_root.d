@@ -101,9 +101,20 @@ import core.sync.semaphore: Semaphore;
 
 // provide read only access to the _uvm_top static variable
 public uvm_root uvm_top() {
-  auto _entity = cast(uvm_root_entity_base) Process.self().getParentEntity();
+  return uvm_root_entity().get_root();
+}
+
+public uvm_root_entity_base uvm_root_entity() {
+  auto proc = Process.self();
+  if(proc !is null) {
+    auto _entity = cast(uvm_root_entity_base) proc.getParentEntity();
+    if(_entity !is null) {
+      return _entity;
+    }
+  }
+  auto _entity = uvm_root_entity_base._uvm_root_entity;
   assert(_entity !is null);
-  return _entity.get_root();
+  return _entity;
 }
 
 
@@ -118,6 +129,7 @@ class uvm_root_entity_base: RootEntity
     super(name);
   }
 
+  public static uvm_root_entity_base _uvm_root_entity;
   // The UVM singleton variables are now encapsulated as part of _once
   // mechanism.
   private uvm_root_once _root_once;
@@ -129,6 +141,16 @@ class uvm_root_entity_base: RootEntity
   abstract protected uvm_root get_root();
   // The randomization seed passed from the top.
   // alias get_uvm_root this;
+
+  public uvm_root_entity_base uvm_set_context() {
+    auto proc = Process.self();
+    if(proc !is null) {
+      auto _entity = cast(uvm_root_entity_base) proc.getParentEntity();
+      assert(_entity is null, "Default context already set to: " ~ _entity.getFullName());
+    }
+    _uvm_root_entity = this;
+    return this;
+  }
 }
 
 class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
@@ -189,6 +211,7 @@ class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
       _root_once.initialize(_seed);
 
       _top = new T();
+      _top.set_uvm_root_entity(this);
       _uvm_top = _top;
       uvm_top.init_report();
       uvm_top.init_domains();
@@ -230,9 +253,21 @@ class uvm_root: uvm_component
 
   // SV implementation makes this a part of the run_test function
   uvm_component uvm_test_top;
-
+  uvm_root_entity_base _uvm_root_entity;
+  
   override bool is_root() {
     return true;
+  }
+
+  void set_uvm_root_entity(uvm_root_entity_base entity) {
+    synchronized(this) {
+      _uvm_root_entity = entity;
+    }
+  }
+  
+  public uvm_root_entity_base uvm_set_context() {
+    assert(_uvm_root_entity !is null);
+    return _uvm_root_entity.uvm_set_context();
   }
 
   // in SV this is part of the constructor. Here we have separated it
@@ -588,7 +623,7 @@ class uvm_root: uvm_component
     }
     m_uvm_timeout_overridable = overridable;
     synchronized(this) {
-      m_phase_timeout = SimTime(getRootEntity(), timeout);
+      m_phase_timeout = SimTime(Process.self().getParentEntity(), timeout);
     }
   }
 
@@ -709,7 +744,7 @@ class uvm_root: uvm_component
   }
 
   public override ParContext _esdl__parInheritFrom() {
-    return getRootEntity();
+    return Process.self().getParentEntity();
   }
 
   //   extern local function void m_do_verbosity_settings();

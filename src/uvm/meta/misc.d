@@ -20,7 +20,7 @@
 //------------------------------------------------------------------------------
 module uvm.meta.misc;
 
-import esdl.base.core: Event, Process, getRootEntity, NamedComp;
+import esdl.base.core: Event, Process, NamedComp;
 import esdl.data.queue: Queue;
 // This file lists D routines required for coding UVM
 
@@ -175,9 +175,6 @@ class WithEvent(T) {
       if(parent is null) {
 	parent = Process.self;
       }
-      if(parent is null) {
-	parent = getRootEntity();
-      }
       assert(parent !is null);
       _event.init("_event", parent);
       _val = val;
@@ -189,9 +186,7 @@ class WithEvent(T) {
       if(parent is null) {
 	parent = Process.self;
       }
-      if(parent is null) {
-	parent = getRootEntity();
-      }
+      assert(parent !is null);
       _event.init("_event", parent);
     }
   }
@@ -406,7 +401,7 @@ template uvm_once_sync(T, U, size_t ITER=0) {
 public static uvm_once once() {
 import uvm.base.uvm_root;
 // if(_once is null) {
-auto root = cast(uvm_root_entity_base) getRootEntity();
+auto root = uvm_root_entity(); // cast(uvm_root_entity_base) proc.getParentEntity();
 // _once =
 return root.root_once._" ~ U.stringof ~ "_once;
 // }
@@ -437,7 +432,7 @@ template uvm_once_sync(T, string _inst, size_t ITER=0) {
 public " ~ T.stringof ~ " " ~ _inst ~ "_uvm_once() {
 import uvm.base.uvm_root; // : uvm_root_entity_base;
 // if(_" ~ _inst ~ "_uvm_once is null) {
-auto root = cast(uvm_root_entity_base) getRootEntity();
+auto root = uvm_root_entity(); // cast(uvm_root_entity_base) proc.getParentEntity();
 // _" ~ _inst ~ "_uvm_once = 
 return root.root_once._" ~ _inst ~ "_once;
 // }
