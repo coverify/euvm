@@ -377,7 +377,7 @@ class uvm_heartbeat: uvm_object
 	  }
 	}
 	m_cb.reset_counts();
-	last_trigger = getSimTime();
+	last_trigger = getRootEntity().getSimTime();
 	triggered = true;
       }
     }
@@ -428,7 +428,7 @@ class uvm_heartbeat_callback: uvm_objection_callback
 	  _cnt[source_obj] = 0;
 	}
 	_cnt[source_obj] += 1;
-	_last_trigger[source_obj] = getSimTime();
+	_last_trigger[source_obj] = getRootEntity().getSimTime();
       }
     }
   }

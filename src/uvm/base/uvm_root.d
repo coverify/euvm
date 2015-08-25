@@ -123,12 +123,10 @@ public uvm_root_entity_base uvm_root_entity() {
 // singleton, we can have multiple instances of uvm_root, but each
 // ESDL RootEntity could have only one instance of uvm_root.
 
-class uvm_root_entity_base: RootEntity
+class uvm_root_entity_base: Entity
 {
-  this(string name) {
-    super(name);
-  }
-
+  this() {}
+  
   public static uvm_root_entity_base _uvm_root_entity;
   // The UVM singleton variables are now encapsulated as part of _once
   // mechanism.
@@ -155,16 +153,10 @@ class uvm_root_entity_base: RootEntity
 
 class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
   {
-    this(string name, uint seed) {
+    this() {
       synchronized(this) {
-	super(name);
-	_seed = seed;
+	super();
 	_uvmRootInitSemaphore = new Semaphore(); // count 0
-	// _uvmRootInitEvent.init("_uvmRootInitEvent");
-	debug(SEED) {
-	  import std.stdio;
-	  writeln("seed for UVM is:", seed);
-	}
       }
     }
 
@@ -206,18 +198,21 @@ class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
     // public Task!(initUVM, -1) _initUVM__;
 
     public void initial() {
-      T _top;
-      _root_once = new uvm_root_once();
-      _root_once.initialize(_seed);
+      lockStage();
+      fileCaveat();
+      synchronized(this) {
+	T _top;
+	_root_once = new uvm_root_once();
+	_root_once.initialize(_seed);
 
-      _top = new T();
-      _top.set_uvm_root_entity(this);
-      _uvm_top = _top;
-      uvm_top.init_report();
-      uvm_top.init_domains();
-      _uvmRootInit = true;
-      _uvmRootInitSemaphore.notify();
-      uvm_top().initial();
+	_uvm_top = new T();
+	_uvm_top.set_uvm_root_entity(this);
+	_uvm_top.init_report();
+	_uvm_top.init_domains();
+	_uvmRootInit = true;
+	_uvmRootInitSemaphore.notify();
+      }
+      _uvm_top.initial();
     }
 
     public Task!(initial) _init;
@@ -235,6 +230,17 @@ class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
 
     // The randomization seed passed from the top.
     private uint _seed;
+
+    public void set_seed(uint seed) {
+      synchronized(this) {
+	if(_uvm_top !is null) {
+	uvm_report_fatal("SEED",
+			 "Method set_seed can not be called after the simulation has started",
+			 UVM_NONE);
+	}
+	_seed = seed;
+      }
+    }
 }
 
 class uvm_root: uvm_component
@@ -446,12 +452,14 @@ class uvm_root: uvm_component
 
     report_summarize();
 
+    unlockStage();
     if(finish_on_completion) {
       debug(FINISH) {
 	import std.stdio;
 	writeln("finish_on_completion");
       }
-      finish();
+      withdrawCaveat();
+      // finish();
     }
   }
 
@@ -1144,10 +1152,10 @@ class uvm_root: uvm_component
 
   // task
   override public void run_phase(uvm_phase phase) {
-    if(getSimTime() > 0) {
+    if(getRootEntity().getSimTime() > 0) {
       uvm_fatal("RUNPHSTIME",
 		"The run phase must start at time 0, current time is " ~
-		format("%0t", getSimTime()) ~
+		format("%0t", getRootEntity().getSimTime()) ~
 		". No non-zero delays are allowed before run_test(), and"
 		" pre-run user defined phases may not consume simulation"
 		" time before the start of the run phase.");
@@ -1463,29 +1471,30 @@ class uvm_root_report_handler: uvm_report_handler
   }
 }
 
-public auto uvm_simulate(T)(string name, uint seed,
-			    uint multi=1, uint first=0) {
-  auto root = new uvm_root_entity!T(name, seed);
-  root.multiCore(multi, first);
-  root.elaborate();
-  root.simulate();
-  return root;
-}
 
-public auto uvm_elaborate(T)(string name, uint seed,
-			     uint multi=1, uint first=0) {
-  auto root = new uvm_root_entity!T(name, seed);
-  root.multiCore(multi, first);
-  root.elaborate();
-  // root.simulate();
-  return root;
-}
+// public auto uvm_simulate(T)(string name, uint seed,
+// 			    uint multi=1, uint first=0) {
+//   auto root = new uvm_root_entity!T(name, seed);
+//   root.multiCore(multi, first);
+//   root.elaborate();
+//   root.simulate();
+//   return root;
+// }
 
-public auto uvm_fork(T)(string name, uint seed,
-			uint multi=1, uint first=0) {
-  auto root = new uvm_root_entity!T(name, seed);
-  root.multiCore(multi, first);
-  root.elaborate();
-  root.fork();
-  return root;
-}
+// public auto uvm_elaborate(T)(string name, uint seed,
+// 			     uint multi=1, uint first=0) {
+//   auto root = new uvm_root_entity!T(name, seed);
+//   root.multiCore(multi, first);
+//   root.elaborate();
+//   // root.simulate();
+//   return root;
+// }
+
+// public auto uvm_fork(T)(string name, uint seed,
+// 			uint multi=1, uint first=0) {
+//   auto root = new uvm_root_entity!T(name, seed);
+//   root.multiCore(multi, first);
+//   root.elaborate();
+//   root.fork();
+//   return root;
+// }

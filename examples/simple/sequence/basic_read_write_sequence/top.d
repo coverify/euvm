@@ -217,8 +217,6 @@ class env: uvm_env
 };
 
 
-@timeUnit(100.psec)
-@timePrecision(100.psec)
 class my_root: uvm_root
 {
   mixin uvm_component_utils;
@@ -237,18 +235,38 @@ class my_root: uvm_root
   }
 }
 
+@timeUnit(1.nsec)
+@timePrecision(100.psec)
+class TestBench: RootEntity
+{
+  uvm_root_entity!(my_root) tb;
+  this(string name) {
+    super(name);
+  }
+}
+
 void main() {
   import std.random: uniform;
   import std.stdio;
-  auto root = uvm_fork!(my_root)("test", uniform!uint(), 4, 0);
-  root.get_uvm_root().wait_for_end_of_elaboration();
-  auto env = root.get_uvm_root.lookup("env");
+
+  TestBench test = new TestBench("test");
+  test.multiCore(1, 0);
+  test.elaborate();
+  test.tb.set_seed(100);
+
+  test.forkSim();
+
+  auto root = test.tb.get_uvm_root();
+  
+  root.wait_for_end_of_elaboration();
+  auto env = root.lookup("env");
   for (size_t i=0; i!=200; ++i) {
     bus_req req;
-    assert(root.get_uvm_root().data_in !is null);
-    root.get_uvm_root().data_in.get(req);
+    assert(root.data_in !is null);
+    root.data_in.get(req);
     writeln("got data: ", req.convert2string);
   }
+
   writeln("got all data");
-  root.join();
+  test.join();
 }

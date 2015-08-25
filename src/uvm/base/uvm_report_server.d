@@ -45,7 +45,7 @@ import uvm.base.uvm_report_object;
 import uvm.base.uvm_report_catcher;
 import uvm.base.uvm_root;
 
-import esdl.base.core: getSimTime, finish;
+import esdl.base.core: finish, getRootEntity;
 
 class uvm_report_server: /*extends*/ uvm_object
 {
@@ -443,7 +443,7 @@ class uvm_report_server: /*extends*/ uvm_object
       string retval;
 
       uvm_severity_type sv = cast(uvm_severity_type) severity;
-      string time_str = format("%s", getSimTime());
+      string time_str = format("%s", getRootEntity().getSimTime());
 
       if (name == "" && filename == "")
 	retval = to!string(sv) ~ " @ " ~ time_str ~ " [" ~ id ~ "] " ~ message;

@@ -120,8 +120,8 @@ import uvm.base.uvm_task_phase;
 import uvm.meta.misc;
 import uvm.meta.mailbox;
 import uvm.meta.mcd;
-import esdl.base.core: waitDelta, wait,
-  Fork, abortForks, getSimTime, sleep, fork;
+import esdl.base.core: waitDelta, wait, Fork, abortForks, getRootEntity,
+  sleep, fork;
 import esdl.data.time;
 import esdl.data.sync;
 import uvm.base.uvm_cmdline_processor;
@@ -1615,7 +1615,7 @@ class uvm_phase: uvm_object
 
 	      wait(top.m_phase_timeout.get);
 
-	      if(getSimTime() == uvm_default_timeout()) {
+	      if(getRootEntity().getSimTime() == uvm_default_timeout()) {
 		if(m_phase_trace) {
 		  UVM_PH_TRACE("PH/TRC/TIMEOUT", "PHASE TIMEOUT WATCHDOG "
 			       "EXPIRED", this, UVM_LOW);

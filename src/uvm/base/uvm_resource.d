@@ -113,7 +113,7 @@ import uvm.base.uvm_object;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_root;
 import uvm.base.uvm_printer;
-import esdl.base.core: getSimTime, SimTime;
+import esdl.base.core: SimTime, getRootEntity;
 
 import std.conv: to;
 import std.algorithm: sort;
@@ -587,7 +587,7 @@ abstract class uvm_resource_base: uvm_object
 
       // Update the accessor record
       access_record.read_count++;
-      access_record.read_time = getSimTime();
+      access_record.read_time = getRootEntity().getSimTime();
       _access[str] = access_record;
     }
   }
@@ -615,7 +615,7 @@ abstract class uvm_resource_base: uvm_object
 	    access_record = uvm_resource_types.access_t.init;
 	  }
 	  access_record.write_count++;
-	  access_record.write_time = getSimTime();
+	  access_record.write_time = getRootEntity().getSimTime();
 	  _access[str] = access_record;
 	}
       }
@@ -945,7 +945,6 @@ class uvm_resource_pool {
   final public void push_get_record(string name, string rscope,
 				    uvm_resource_base rsrc) {
     synchronized(this) {
-      import esdl.base.core: getSimTime;
       get_t impt;
 
       // if auditing is turned off then there is no reason
@@ -960,7 +959,7 @@ class uvm_resource_pool {
       impt.name  = name;
       impt.rscope = rscope;
       impt.rsrc  = rsrc;
-      impt.t     = getSimTime();
+      impt.t     = getRootEntity().getSimTime();
 
       _get_record.pushBack(impt);
     }

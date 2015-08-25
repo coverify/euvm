@@ -41,7 +41,7 @@ import uvm.base.uvm_misc;
 import uvm.base.uvm_object_globals;
 import uvm.meta.mcd;
 import uvm.meta.misc;
-import esdl.base.core: getSimTime, SimTime;
+import esdl.base.core: SimTime, getRootEntity;
 
 import std.traits: isNumeric, isFloatingPoint, isIntegral;
 
@@ -332,7 +332,7 @@ class uvm_recorder: uvm_object
 	_m_handles[++_handle] = true;
 	vfdisplay(this.file,
 		  "  CREATE_STREAM @%0t {NAME:%s T:%s SCOPE:%s STREAM:%0d}",
-		  getSimTime(), name, t, _scope, _handle);
+		  getRootEntity().getSimTime(), name, t, _scope, _handle);
 	return _handle;
       }
     }
@@ -350,7 +350,7 @@ class uvm_recorder: uvm_object
       if (open_file()) {
 	import uvm.meta.mcd;
 	vfdisplay(_file,"  SET_ATTR @%0t {TXH:%0d NAME:%s VALUE:%s}",
-		  getSimTime(), txh, nm, value);
+		  getRootEntity().getSimTime(), txh, nm, value);
       }
     }
   }
@@ -370,7 +370,8 @@ class uvm_recorder: uvm_object
 	  import uvm.meta.mcd;
 	  vfdisplay(_file,"  SET_ATTR @%0t {TXH:%0d NAME:%s VALUE:%0d"
 		    "   RADIX:%s BITS=%0d}",
-		    getSimTime(), txh, nm, value, radix, numbits);
+		    getRootEntity().getSimTime(), txh, nm, value,
+		    radix, numbits);
 	}
       }
     }
@@ -403,8 +404,8 @@ class uvm_recorder: uvm_object
 	import uvm.meta.mcd;
 	vfdisplay(this.file, "BEGIN @%0t {TXH:%0d STREAM:%0d NAME:%s "
 		  "TIME=%0t  TYPE=\"%0s\" LABEL:\"%0s\" DESC=\"%0s\"}",
-		  getSimTime(), _handle, stream, nm, begin_time, txtype,
-		  label, desc);
+		  getRootEntity().getSimTime(), _handle, stream, nm,
+		  begin_time, txtype, label, desc);
 	return _handle;
       }
     }
@@ -422,7 +423,7 @@ class uvm_recorder: uvm_object
       synchronized(this) {
 	import uvm.meta.mcd;
 	vfdisplay(_file, "END @%0t {TXH:%0d TIME=%0t}",
-		  getSimTime(), han, end_time);
+		  getRootEntity().getSimTime(), han, end_time);
       }
     }
   }
@@ -438,7 +439,7 @@ class uvm_recorder: uvm_object
       if (open_file()) {
 	import uvm.meta.mcd;
 	vfdisplay(_file, "  LINK @%0t {TXH1:%0d TXH2:%0d RELATION=%0s}",
-		  getSimTime(), h1, h2, relation);
+		  getRootEntity().getSimTime(), h1, h2, relation);
       }
     }
   }
@@ -452,7 +453,7 @@ class uvm_recorder: uvm_object
     if(open_file()) {
       import uvm.meta.mcd;
       vfdisplay(this.file, "FREE @%0t {TXH:%0d}",
-		getSimTime(), han);
+		getRootEntity().getSimTime(), han);
       synchronized(once) {
 	if(han in _m_handles) _m_handles.remove(han);
       }

@@ -2507,7 +2507,7 @@ abstract class uvm_component: uvm_report_object, ParContext
       string etype;
       if(keep_active) etype = "Error, Link";
       else etype = "Error";
-      if(error_time == 0) error_time = getSimTime;
+      if(error_time == 0) error_time = getRootEntity().getSimTime;
       int stream_h = _m_stream_handle[stream_name];
       if(rcrdr.check_handle_kind("Fiber", stream_h) !is true) {
 	stream_h = rcrdr.create_stream(stream_name, "TVM", get_full_name());
@@ -2556,7 +2556,7 @@ abstract class uvm_component: uvm_report_object, ParContext
       if(keep_active) etype = "Event, Link";
       else etype = "Event";
 
-      if(event_time == 0) event_time = getSimTime();
+      if(event_time == 0) event_time = getRootEntity().getSimTime();
 
       int stream_h = _m_stream_handle[stream_name];
       if (rcrdr.check_handle_kind("Fiber", stream_h) !is true) {
