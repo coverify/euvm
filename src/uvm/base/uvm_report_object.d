@@ -84,14 +84,18 @@ module uvm.base.uvm_report_object;
 import uvm.base.uvm_object;
 import uvm.base.uvm_report_handler;
 import uvm.base.uvm_report_server;
+import uvm.base.uvm_report_catcher;
+import uvm.base.uvm_callback;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_root;
 import esdl.base.core: finish;
 
 class uvm_report_object: /*extends*/ uvm_object
 {
-  mixin(uvm_sync!uvm_report_object);
+  mixin uvm_sync;
 
+  mixin uvm_register_cb!(uvm_report_catcher);
+  
   @uvm_public_sync private uvm_report_handler _m_rh;
 
   // Function: new
@@ -99,7 +103,7 @@ class uvm_report_object: /*extends*/ uvm_object
   // Creates a new report object with the given name. This method also creates
   // a new <uvm_report_handler> object to which most tasks are delegated.
 
-  public this (string name = "") {
+  public this(string name = "") {
     synchronized(this) {
       super(name);
       _m_rh = new uvm_report_handler();

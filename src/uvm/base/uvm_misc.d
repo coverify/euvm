@@ -38,10 +38,14 @@ module uvm.base.uvm_misc;
 import std.array;
 import std.string: format;
 import esdl.data.bvec;
+import esdl.data.rand;
 // import uvm.base.uvm_object_globals;
 
 interface uvm_void_if { }
-abstract class uvm_void: uvm_void_if { }
+abstract class uvm_void: uvm_void_if {
+  // Randomization mixin is in uvm_object class
+  // mixin Randomization;
+}
 
 
 
@@ -238,11 +242,11 @@ import uvm.base.uvm_packer;
 import uvm.base.uvm_comparer;
 import uvm.base.uvm_recorder;
 import uvm.base.uvm_printer;
+import uvm.base.uvm_object;
 
 final class uvm_status_container {
-  import uvm.base.uvm_object;
 
-  mixin(uvm_sync!uvm_status_container);
+  mixin uvm_sync;
 
   //The clone setting is used by the set/get config to know if cloning is on.
   @uvm_public_sync private bool _clone = true;
@@ -463,29 +467,6 @@ final class uvm_copy_map {
 }
 
 
-final class uvm_once_seed_map
-{
-  // ** from uvm_misc
-  // Variable- m_global_random_seed
-  //
-  // Create a seed which is based off of the global seed which can be used to seed
-  // srandom processes but will change if the command line seed setting is
-  // changed.
-  //
-  @uvm_immutable_sync
-  private uint _m_global_random_seed;
-
-  // ** from uvm_misc -- global variable in SV
-  private uvm_seed_map[string] _uvm_random_seed_table_lookup;
-
-
-  this(uint seed) {
-    synchronized(this) {
-      _m_global_random_seed = seed;
-    }
-  }
-}
-
 // Class- uvm_seed_map
 //
 // This map is a seed map that can be used to update seeds. The update
@@ -494,7 +475,30 @@ final class uvm_once_seed_map
 // uses a type name for the lookup.
 //
 final class uvm_seed_map {
-  mixin(uvm_once_sync!(uvm_once_seed_map));
+  static class uvm_once
+  {
+    // ** from uvm_misc
+    // Variable- m_global_random_seed
+    //
+    // Create a seed which is based off of the global seed which can be used to seed
+    // srandom processes but will change if the command line seed setting is
+    // changed.
+    //
+    @uvm_immutable_sync
+    private uint _m_global_random_seed;
+
+    // ** from uvm_misc -- global variable in SV
+    private uvm_seed_map[string] _uvm_random_seed_table_lookup;
+
+
+    this(uint seed) {
+      synchronized(this) {
+	_m_global_random_seed = seed;
+      }
+    }
+  }
+
+  mixin(uvm_once_sync!(uvm_once, typeof(this)));
 
   private uint[string] _seed_table;
   private uint[string] _count;
@@ -506,7 +510,7 @@ final class uvm_seed_map {
 
     type_id = "uvm_pkg." ~ type_id; // uvm_instance_scope()
 
-    synchronized(_once) {
+    synchronized(once) {
       if (inst_id !in _uvm_random_seed_table_lookup) {
 	_uvm_random_seed_table_lookup[inst_id] = new uvm_seed_map();
       }
@@ -686,7 +690,7 @@ public string uvm_vector_to_string(T)(T value,
 				      uvm_radix_enum radix=UVM_NORADIX,
 				      string radix_str="")
   if(isBitVector!T || isIntegral!T || is(T == bool)) {
-    static if(isIntegral!T)       vec!T val = value;
+    static if(isIntegral!T)       _bvec!T val = value;
     else static if(is(T == bool)) Bit!1 val = value;
       else                        alias value val;
 
@@ -913,7 +917,7 @@ version(UVM_USE_PROCESS_CONTAINER) {
   import esdl.base.core;
   final class process_container_c
   {
-    mixin(uvm_sync!process_container_c);
+    mixin uvm_sync;
 
     @uvm_immutable_sync private Process _p;
 

@@ -33,7 +33,7 @@ import uvm.base.uvm_object_globals;
 import uvm.meta.mcd;
 import uvm.meta.misc;
 
-import esdl.base.core: getSimTime, SimTime;
+import esdl.base.core: SimTime, getRootEntity;
 import std.string: format;
 
 // typedef class uvm_event;
@@ -137,7 +137,7 @@ import std.string: format;
 
 abstract class uvm_transaction: uvm_object
 {
-  mixin(uvm_sync!uvm_transaction);
+  mixin uvm_sync;
 
   // Function: new
   //
@@ -194,7 +194,7 @@ abstract class uvm_transaction: uvm_object
 	_accept_time = accept_time;
       }
       else {
-	_accept_time = getSimTime();
+	_accept_time = getRootEntity().getSimTime();
       }
 
       do_accept_tr();
@@ -356,7 +356,7 @@ abstract class uvm_transaction: uvm_object
 	_end_time = end_time;
       }
       else {
-	_end_time = getSimTime();
+	_end_time = getRootEntity().getSimTime();
       }
 
       do_end_tr(); // Callback prior to actual ending of transaction
@@ -734,7 +734,7 @@ abstract class uvm_transaction: uvm_object
 	_begin_time = begin_time;
       }
       else {
-	_begin_time = getSimTime();
+	_begin_time = getRootEntity().getSimTime();
       }
 
       // May want to establish predecessor/successor relation

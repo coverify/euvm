@@ -38,7 +38,7 @@ import uvm.seq.uvm_sequence_base;
 import uvm.meta.misc;
 
 import esdl.base.core: Event, SimTime, Process,
-  waitForks, wait, getRootEntity, Fork, fork;
+  waitForks, wait, Fork, fork;
 import esdl.data.sync;
 
 import std.string: format;
@@ -49,7 +49,7 @@ alias uvm_callbacks!(uvm_objection,uvm_objection_callback) uvm_objection_cbs_t;
 // typedef class uvm_callbacks_objection;
 
 class uvm_objection_events {
-  mixin(uvm_sync!uvm_objection_events);
+  mixin uvm_sync;
   @uvm_private_sync   private int   _waiters;
   private void inc_waiters() {synchronized(this) ++_waiters;}
   private void dec_waiters() {synchronized(this) --_waiters;}
@@ -87,55 +87,58 @@ class uvm_objection_events {
 //------------------------------------------------------------------------------
 
 import uvm.meta.misc;
+import uvm.meta.meta;
 import uvm.base.uvm_report_object;
 import uvm.base.uvm_object;
 import uvm.base.uvm_root;
 
 import esdl.data.time: sec;
 
-class uvm_once_objection
-{
-  @uvm_immutable_sync private SyncQueue!uvm_objection _m_objections;
-
-  //// Drain Logic
-
-  // The context pool holds used context objects, so that
-  // they're not constantly being recreated.  The maximum
-  // number of contexts in the pool is equal to the maximum
-  // number of simultaneous drains you could have occuring,
-  // both pre and post forks.
-  //
-  // There's the potential for a programmability within the
-  // library to dictate the largest this pool should be allowed
-  // to grow, but that seems like overkill for the time being.
-  @uvm_immutable_sync
-  private SyncQueue!uvm_objection_context_object _m_context_pool;
-
-  // These are the contexts which have been scheduled for
-  // retrieval by the background process, but which the
-  // background process hasn't seen yet.
-  @uvm_immutable_sync
-  private SyncQueue!uvm_objection_context_object _m_scheduled_list;
-
-  @uvm_immutable_sync
-  private Event _m_scheduled_list_event;
-
-  this() {
-    synchronized(this) {
-      _m_scheduled_list_event.init("_m_scheduled_list_event");
-      _m_objections = new SyncQueue!uvm_objection();
-      _m_context_pool = new SyncQueue!uvm_objection_context_object();
-      _m_scheduled_list = new SyncQueue!uvm_objection_context_object();
-    }
-  }
-}
-
-
 class uvm_objection: uvm_report_object
 {
   import esdl.data.queue;
-  mixin(uvm_sync!uvm_objection);
-  mixin(uvm_once_sync!uvm_once_objection);
+  mixin uvm_sync;
+
+  static class uvm_once
+  {
+    @uvm_immutable_sync private SyncQueue!uvm_objection _m_objections;
+
+    //// Drain Logic
+
+    // The context pool holds used context objects, so that
+    // they're not constantly being recreated.  The maximum
+    // number of contexts in the pool is equal to the maximum
+    // number of simultaneous drains you could have occuring,
+    // both pre and post forks.
+    //
+    // There's the potential for a programmability within the
+    // library to dictate the largest this pool should be allowed
+    // to grow, but that seems like overkill for the time being.
+    @uvm_immutable_sync
+    private SyncQueue!uvm_objection_context_object _m_context_pool;
+
+    // These are the contexts which have been scheduled for
+    // retrieval by the background process, but which the
+    // background process hasn't seen yet.
+    @uvm_immutable_sync
+    private SyncQueue!uvm_objection_context_object _m_scheduled_list;
+
+    @uvm_immutable_sync
+    private Event _m_scheduled_list_event;
+
+    this() {
+      synchronized(this) {
+	_m_scheduled_list_event.init("_m_scheduled_list_event",
+				     Process.self().getParentEntity());
+	_m_objections = new SyncQueue!uvm_objection();
+	_m_context_pool = new SyncQueue!uvm_objection_context_object();
+	_m_scheduled_list = new SyncQueue!uvm_objection_context_object();
+      }
+    }
+  }
+
+
+  mixin(uvm_once_sync!(uvm_once, typeof(this)));
 
   @uvm_protected_sync
     private bool _m_trace_mode;
@@ -1262,7 +1265,7 @@ class uvm_objection: uvm_report_object
   }
 
   override public string get_type_name () {
-    return typeid(this).stringof;
+    return qualifiedTypeName!(typeof(this));
   }
 
   override public void do_copy (uvm_object rhs) {
@@ -1286,20 +1289,12 @@ version(UVM_USE_CALLBACKS_OBJECTION_FOR_TEST_DONE) {
 
 // TODO: change to plusarg
 public SimTime uvm_default_timeout() {
-  return SimTime(getRootEntity(), UVM_DEFAULT_TIMEOUT);
+  return SimTime(Process.self().getParentEntity(), UVM_DEFAULT_TIMEOUT);
 }
 
 // typedef class uvm_cmdline_processor;
 
 
-
-class uvm_once_test_done_objection
-{
-  @uvm_protected_sync private uvm_test_done_objection _m_inst;
-  this() {
-    _m_inst = new uvm_test_done_objection("run");
-  }
-}
 
 //------------------------------------------------------------------------------
 //
@@ -1310,8 +1305,16 @@ class uvm_once_test_done_objection
 
 class uvm_test_done_objection: m_uvm_test_done_objection_base
 {
-  mixin(uvm_once_sync!uvm_once_test_done_objection);
-  mixin(uvm_sync!uvm_test_done_objection);
+  static class uvm_once
+  {
+    @uvm_protected_sync private uvm_test_done_objection _m_inst;
+    // this() {
+    //   _m_inst = new uvm_test_done_objection("run");
+    // }
+  }
+
+  mixin(uvm_once_sync!(uvm_once, typeof(this)));
+  mixin uvm_sync;
 
   // Seems redundant -- not used anywhere -- declared in SV version
   // protected bool m_forced;
@@ -1572,8 +1575,10 @@ class uvm_test_done_objection: m_uvm_test_done_objection_base
   }
 
   static public uvm_test_done_objection get() {
-    if(m_inst is null) m_inst = uvm_test_done_objection.type_id.create("run");
-    return m_inst;
+    synchronized(once) {
+      if(m_inst is null) m_inst = uvm_test_done_objection.type_id.create("run");
+      return m_inst;
+    }
   }
 
 }
@@ -1583,7 +1588,7 @@ class uvm_test_done_objection: m_uvm_test_done_objection_base
 // Have a pool of context objects to use
 class uvm_objection_context_object
 {
-  mixin(uvm_sync!uvm_objection_context_object);
+  mixin uvm_sync;
   @uvm_private_sync
   private uvm_object _obj;
   @uvm_private_sync
@@ -1631,10 +1636,14 @@ class uvm_callbacks_objection: uvm_objection
   // in the constructor
   //   `uvm_register_cb(uvm_callbacks_objection, uvm_objection_callback)
 
+  mixin uvm_register_cb!(uvm_objection_callback);
+  
   public this(string name="") {
     super(name);
-    uvm_callbacks!(uvm_callbacks_objection,
-		   uvm_objection_callback).m_register_pair();
+
+    // moved to static this
+    // uvm_callbacks!(uvm_callbacks_objection,
+    // 		   uvm_objection_callback).m_register_pair();
   }
 
   // Return callbacks in form of a range
@@ -1652,12 +1661,9 @@ class uvm_callbacks_objection: uvm_objection
 
   override public void raised (uvm_object obj, uvm_object source_obj,
 			       string description, int count) {
-    foreach(cb; get_callbacks!uvm_objection_callback()) {
-      auto callb = cast(uvm_objection_callback) cb;
-      if(callb !is null && callb.callback_mode) {
-	callb.raised(this,obj,source_obj,description,count);
-      }
-    }
+    uvm_do_callbacks( (uvm_objection_callback cb) {
+	cb.raised(this,obj,source_obj,description,count);});
+
   }
 
   // Function: dropped
@@ -1667,12 +1673,9 @@ class uvm_callbacks_objection: uvm_objection
 
   override public void dropped (uvm_object obj, uvm_object source_obj,
 				string description, int count) {
-    foreach(cb; get_callbacks!uvm_objection_callback()) {
-      auto callb = cast(uvm_objection_callback) cb;
-      if(callb !is null && callb.callback_mode) {
-	callb.dropped(this,obj,source_obj,description,count);
-      }
-    }
+    // `uvm_do_callbacks(uvm_callbacks_objection,uvm_objection_callback,dropped(this,obj,source_obj,description,count))
+    uvm_do_callbacks( (uvm_objection_callback cb) {
+	cb.dropped(this,obj,source_obj,description,count);});
   }
 
   // Function: all_dropped
@@ -1684,12 +1687,8 @@ class uvm_callbacks_objection: uvm_objection
   // task
   override public void all_dropped (uvm_object obj, uvm_object source_obj,
 				    string description, int count) {
-    foreach(cb; get_callbacks!uvm_objection_callback()) {
-      auto callb = cast(uvm_objection_callback) cb;
-      if(callb !is null && callb.callback_mode) {
-	callb.all_dropped(this,obj,source_obj,description,count);
-      }
-    }
+    uvm_do_callbacks( (uvm_objection_callback cb) {
+	cb.all_dropped(this,obj,source_obj,description,count);});
   }
 
 }

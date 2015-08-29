@@ -68,6 +68,7 @@ import uvm.base.uvm_queue;
 import uvm.base.uvm_root;
 import uvm.base.uvm_component;
 import uvm.meta.mcd;
+import uvm.meta.meta;
 
 import esdl.data.queue;
 import esdl.data.sync;
@@ -89,28 +90,28 @@ import esdl.data.sync;
 // instance queue.
 //------------------------------------------------------------------------------
 
-class uvm_once_callbacks_base
-{
-  @uvm_public_sync private bool _m_tracing = true;
-  @uvm_immutable_sync private uvm_callbacks_base _m_b_inst;
-  @uvm_immutable_sync private uvm_pool!(uvm_object, uvm_queue!(uvm_callback))
-    _m_pool;
-  @uvm_immutable_sync private uvm_pool!(ClassInfo, uvm_callbacks_base)
-    _typeid_map;
-  this() {
-    synchronized(this) {
-      _m_b_inst = new uvm_callbacks_base;
-      _m_pool = new uvm_pool!(uvm_object, uvm_queue!(uvm_callback));
-      _typeid_map = new uvm_pool!(ClassInfo, uvm_callbacks_base);
-    }
-  }
-}
-
 class uvm_callbacks_base: uvm_object
 {
 
-  mixin(uvm_once_sync!uvm_once_callbacks_base);
-  mixin(uvm_sync!uvm_callbacks_base);
+  static class uvm_once
+  {
+    @uvm_public_sync private bool _m_tracing = true;
+    @uvm_immutable_sync private uvm_callbacks_base _m_b_inst;
+    @uvm_immutable_sync private uvm_pool!(uvm_object, uvm_queue!(uvm_callback))
+      _m_pool;
+    @uvm_immutable_sync private uvm_pool!(ClassInfo, uvm_callbacks_base)
+      _typeid_map;
+    this() {
+      synchronized(this) {
+	_m_b_inst = new uvm_callbacks_base;
+	_m_pool = new uvm_pool!(uvm_object, uvm_queue!(uvm_callback));
+	_typeid_map = new uvm_pool!(ClassInfo, uvm_callbacks_base);
+      }
+    }
+  }
+
+  mixin uvm_once_sync;
+  mixin uvm_sync;
 
   alias uvm_callbacks_base this_type;
 
@@ -140,9 +141,9 @@ class uvm_callbacks_base: uvm_object
     return false;
   }
 
-  public bool m_is_registered(uvm_object obj, uvm_callback cb) {
-    return false;
-  }
+  // public bool m_is_registered(uvm_object obj, uvm_callback cb) {
+  //   return false;
+  // }
 
   public uvm_queue!uvm_callback m_get_tw_cb_q(uvm_object obj) {
     return null;
@@ -157,28 +158,28 @@ class uvm_callbacks_base: uvm_object
   //Check registration. To test registration, start at this class and
   //work down the class hierarchy. If any class returns true then
   //the pair is legal.
-  public bool check_registration(uvm_object obj, uvm_callback cb) {
-    synchronized(this) {
-      if (m_is_registered(obj, cb)) {
-	return true;
-      }
-      // Need to look at all possible T/CB pairs of this type
-      foreach(t; _m_this_types) {
-	if(m_b_inst !is t && t.m_is_registered(obj, cb)) {
-	  return true;
-	}
-      }
-      if(obj is null) {
-	foreach(t; _m_derived_types) {
-	  this_type dt = typeid_map[t];
-	  if(dt !is null && dt.check_registration(null, cb)) {
-	    return true;
-	  }
-	}
-      }
-      return false;
-    }
-  }
+  // public bool check_registration(uvm_object obj, uvm_callback cb) {
+  //   synchronized(this) {
+  //     if (m_is_registered(obj, cb)) {
+  // 	return true;
+  //     }
+  //     // Need to look at all possible T/CB pairs of this type
+  //     foreach(t; _m_this_types) {
+  // 	if(m_b_inst !is t && t.m_is_registered(obj, cb)) {
+  // 	  return true;
+  // 	}
+  //     }
+  //     if(obj is null) {
+  // 	foreach(t; _m_derived_types) {
+  // 	  this_type dt = typeid_map[t];
+  // 	  if(dt !is null && dt.check_registration(null, cb)) {
+  // 	    return true;
+  // 	  }
+  // 	}
+  //     }
+  //     return false;
+  //   }
+  // }
 }
 
 
@@ -199,11 +200,11 @@ class uvm_callbacks_base: uvm_object
 
 class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
 {
-  mixin(uvm_sync!(uvm_typed_callbacks!T));
+  mixin uvm_sync;
 
   @uvm_immutable_sync
     uvm_queue!uvm_callback _m_tw_cb_q;
-  enum string m_typename = T.stringof;
+  enum string m_typename = qualifiedTypeName!T;
 
   alias uvm_typed_callbacks!(T) this_type;
   alias uvm_callbacks_base      super_type;
@@ -520,7 +521,7 @@ class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
 
 class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
 {
-  mixin(uvm_sync!this_type);
+  mixin uvm_sync;
   // Parameter: T
   //
   // This type parameter specifies the base object type with which the
@@ -565,10 +566,10 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
   }
 
 
-  enum string m_typename = T.stringof;
+  enum string m_typename = qualifiedTypeName!T;
 
   // not used anywhere -- defined in SV version
-  // enum string m_cb_typename = CB.stringof;
+  // enum string m_cb_typename = qualifiedTypeName!CB;
 
   alias uvm_callbacks!(T, uvm_callback) BT; // base type
 
@@ -604,21 +605,29 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
   // -------------
   // Register valid callback type
 
-  static public bool m_register_pair() {
-    this_type inst = get();
-    inst.m_registered = true; 
-    return true;
-  }
+  // static public bool m_register_pair() {
+  //   this_type inst = get();
+  //   inst.m_registered = true; 
+  //   return true;
+  // }
 
-  override public bool m_is_registered(uvm_object obj, uvm_callback cb) {
-    synchronized(this) {
-      if(m_is_for_me(cb) && m_am_i_a(obj)) {
-	return m_registered;
-      }
-      // SV version does not have the following line
-      return false;
-    }
-  }
+  // calls m_register_pair only if uvm_root is not null
+  // static public bool m_register_pair_if_uvm() {
+  //   this_type inst = get();
+  //   inst.m_registered = true; 
+  //   return true;
+  // }
+
+  // override public bool m_is_registered(uvm_object obj, uvm_callback cb) {
+  //   synchronized(this) {
+  //     if(m_is_for_me(cb) && m_am_i_a(obj)) {
+  // 	return m_registered;
+  //     }
+  //     // SV version does not have the following line
+  //     // as a result m_is_registered default value false is returned
+  //     return false;
+  //   }
+  // }
 
   //Does type check to see if the callback is valid for this type
   override public bool m_is_for_me(uvm_callback cb) {
@@ -677,32 +686,32 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
       return;
     }
 
-    if (! BT.get().check_registration(obj, cb)) {
-      if (obj is null) {
-	nm = "(*)";
-      }
-      else {
-	nm = obj.get_full_name();
-      }
+    // if (! BT.get().check_registration(obj, cb)) {
+    //   if (obj is null) {
+    // 	nm = "(*)";
+    //   }
+    //   else {
+    // 	nm = obj.get_full_name();
+    //   }
 
-      if (BT.m_typename != "") {
-	tnm = BT.m_typename;
-      }
-      else if(obj !is null) {
-	tnm = obj.get_type_name();
-      }
-      else {
-	tnm = "uvm_object";
-      }
+    //   if (BT.m_typename != "") {
+    // 	tnm = BT.m_typename;
+    //   }
+    //   else if(obj !is null) {
+    // 	tnm = obj.get_type_name();
+    //   }
+    //   else {
+    // 	tnm = "uvm_object";
+    //   }
 
-      uvm_report_warning("CBUNREG",
-			 "Callback " ~ cb.get_name() ~
-			 " cannot be registered with object " ~
-			 nm ~ " because callback type " ~ cb.get_type_name() ~
-			 " is not registered with object type " ~ tnm, UVM_NONE);
-      // return statement missing in SV version
-      return;
-    }
+    //   uvm_report_warning("CBUNREG",
+    // 			 "Callback " ~ cb.get_name() ~
+    // 			 " cannot be registered with object " ~
+    // 			 nm ~ " because callback type " ~ cb.get_type_name() ~
+    // 			 " is not registered with object type " ~ tnm, UVM_NONE);
+    //   // return statement missing in SV version
+    //   return;
+    // }
 
     if(obj is null) {
 
@@ -722,15 +731,16 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
       else {
 	uvm_cb_trace_noobj(cb,
 			   format("Add (%s) typewide callback %0s for type %s",
-				  ordering.stringof, cb.get_name(),
+				  ordering.to!string, cb.get_name(),
 				  BT.m_typename));
 	m_t_inst.m_add_tw_cbs(cb, ordering);
       }
     }
     else {
-      uvm_cb_trace_noobj(cb, format("Add (%s) callback %0s to object %0s ",
-				    ordering.stringof, cb.get_name(),
-				    obj.get_full_name()));
+      uvm_cb_trace_noobj(cb,
+			 format("Add (%s) callback %0s to object %0s ",
+				ordering.to!string, cb.get_name(),
+				obj.get_full_name()));
       uvm_queue!(uvm_callback) q = m_pool.get(obj);
       if (q is null) {
 	q = new uvm_queue!(uvm_callback);
@@ -1073,7 +1083,7 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
 // allow for setting up of the derived_type/super_type mapping.
 //------------------------------------------------------------------------------
 
-class uvm_derived_callbacks (T=uvm_object, ST=uvm_object, CB=uvm_callback) :
+class uvm_derived_callbacks (T=uvm_object, ST=uvm_object, CB=uvm_callback):
   uvm_callbacks!(T, CB)
 {
   alias uvm_derived_callbacks!(T, ST, CB) this_type;
@@ -1102,7 +1112,7 @@ class uvm_derived_callbacks (T=uvm_object, ST=uvm_object, CB=uvm_callback) :
 	if(u_inst.m_super_type is typeid(ST)) return true;
 	uvm_report_warning("CBTPREG", "Type " ~ tname ~
 			   " is already registered to super type " ~ 
-			   ST.stringof ~ 
+			   qualifiedTypeName!ST ~ 
 			   ". Ignoring attempt to register to super type " ~
 			   sname, UVM_NONE);
 	return true;
@@ -1278,28 +1288,381 @@ class uvm_callback: uvm_object
   // Returns the type name of this callback object.
 
   override public string get_type_name() {
-    return (typeid(this)).stringof;
+    return qualifiedTypeName!(typeof(this));
   }
 }
 
-// `define uvm_cb_trace(OBJ, CB, OPER)			\
-// begin \
-// string msg; \
-// msg = (OBJ is null) ? "null" : $sformatf("%s (%s@%0d)", \
-// 					 OBJ.get_full_name(), OBJ.get_type_name(), OBJ.get_inst_id()); \
-// `uvm_info("UVMCB_TRC", $sformatf("%s: callback %s (%s@%0d) : to object %s",  \
-//        OPER, CB.get_name(), CB.get_type_name(), CB.get_inst_id(), msg), UVM_NONE) \
-//   end
-// `else
-// `define uvm_cb_trace(OBJ, CB, OPER) /* null */
+// macros
+// from sv file macros/uvm_callback_defines
+
+//-----------------------------------------------------------------------------
+// Title: Callback Macros
+//
+// These macros are used to register and execute callbacks extending
+// from ~uvm_callbacks~.
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// MACRO: `uvm_register_cb
+//
+//| `uvm_register_cb(T,CB)
+//
+// Registers the given ~CB~ callback type with the given ~T~ object type. If
+// a type-callback pair is not registered then a warning is issued if an
+// attempt is made to use the pair (add, delete, etc.).
+//
+// The registration will typically occur in the component that executes the
+// given type of callback. For instance:
+//
+//| virtual class mycb extends uvm_callback;
+//|   virtual function void doit();
+//| endclass
+//|
+//| class my_comp extends uvm_component;
+//|   `uvm_register_cb(my_comp,mycb)
+//|   ...
+//|   task run_phase(uvm_phase phase);
+//|     ...
+//|     `uvm_do_callbacks(my_comp, mycb, doit())
+//|   endtask
+//| endclass
+//-----------------------------------------------------------------------------
+
+// `define uvm_register_cb(T,CB) \
+//   static local bit m_register_cb_``CB = uvm_callbacks#(T,CB)::m_register_pair(`"T`",`"CB`");
+
+mixin template uvm_register_cb(T, CB) if(is(CB: uvm_callback))
+{
+  import uvm.base.uvm_callback;
+  // static this() {
+  //   if(uvm_is_uvm_thread) {
+  // 	uvm_callbacks!(T, CB).m_register_pair();
+  //   }
+  // }
+  void uvm_do_callbacks(void delegate(CB cb) dg) {
+    foreach(callb; uvm_callbacks!(T, CB).get_all_enabled(this)) {
+      dg(callb);
+    }
+  }
+
+  bool uvm_do_callbacks_exit_on(bool delegate(CB cb) dg, bool val) {
+    foreach(callb; uvm_callbacks!(T, CB).get_all_enabled(this)) {
+      if(dg(callb) == val) {
+	uvm_cb_trace_noobj(callb,
+			   format("Executed callback method 'METHOD' for" ~
+				  " callback %s (CB) from %s (T) : returned" ~
+				  " value VAL (other callbacks will be ignored)",
+				  callb.get_name(), this.get_full_name()));
+	return val;
+      }
+      uvm_cb_trace_noobj(callb, format("Executed callback method 'METHOD' for" ~
+				       " callback %s (CB) from %s (T) : did not" ~
+				       " return value VAL`",
+				       callb.get_name(), this.get_full_name()));
+    }
+    return !val;
+  }
+}
+
+mixin template uvm_register_cb(CB) if(is(CB: uvm_callback))
+{
+  mixin uvm_register_cb!(typeof(this), CB);
+}
+
+// // register callback and also the supertype
+// mixin template uvm_register_cb(CB, ST) if(is(CB: uvm_callback))
+//   {
+//     static this() {
+//       import uvm.base.uvm_root;
+//       if(uvm_is_uvm_thread) {
+// 	uvm_callbacks!(typeof(this), CB).m_register_pair();
+// 	uvm_derived_callbacks!(typeof(this), ST).register_super_type();
+//       }
+//     }
+//     void uvm_do_callbacks(void delegate(CB cb) dg) {
+//       import uvm.base.uvm_callback;
+//       uvm_do_obj_callbacks!(CB)(this, dg);
+//     }
+//     bool uvm_do_callbacks_exit_on(bool delegate(Cb cb) dg, bool val) {
+//       import uvm.base.uvm_callback;
+//       return uvm_do_obj_callbacks_exit_on!(CB)(this, dg, val);
+//     }
+// }
 
 
-public void uvm_cb_trace_noobj(uvm_callback CB, string oper) {
-  debug(UVM_CB_TRACE_ON) {
+//-----------------------------------------------------------------------------
+// MACRO: `uvm_set_super_type
+//
+//| `uvm_set_super_type(T,ST)
+//
+// Defines the super type of ~T~ to be ~ST~. This allows for derived class
+// objects to inherit typewide callbacks that are registered with the base
+// class.
+//
+// The registration will typically occur in the component that executes the
+// given type of callback. For instance:
+//
+//| virtual class mycb extend uvm_callback;
+//|   virtual function void doit();
+//| endclass
+//|
+//| class my_comp extends uvm_component;
+//|   `uvm_register_cb(my_comp,mycb)
+//|   ...
+//|   task run_phase(uvm_phase phase);
+//|     ...
+//|     `uvm_do_callbacks(my_comp, mycb, doit())
+//|   endtask
+//| endclass
+//|
+//| class my_derived_comp extends my_comp;
+//|   `uvm_set_super_type(my_derived_comp,my_comp)
+//|   ...
+//|   task run_phase(uvm_phase phase);
+//|     ...
+//|     `uvm_do_callbacks(my_comp, mycb, doit())
+//|   endtask
+//| endclass
+//-----------------------------------------------------------------------------
+
+// `define uvm_set_super_type(T,ST) \
+//   static local bit m_register_``T``ST = uvm_derived_callbacks#(T,ST)::register_super_type(`"T`",`"ST`"); 
+
+// mixin template uvm_set_super_type(T,ST)
+// {
+//   static this() {
+//     import uvm.base.uvm_root;
+//     if(uvm_is_uvm_thread) {
+//       uvm_derived_callbacks!(T, ST).register_super_type();
+//     }
+//   }
+// }
+
+// mixin template uvm_set_super_type(ST)
+// {
+//   static this() {
+//     import uvm.base.uvm_root;
+//     if(uvm_is_uvm_thread) {
+//       uvm_derived_callbacks!(typeof(this), ST).register_super_type();
+//     }
+//   }
+// }
+
+//-----------------------------------------------------------------------------
+// MACRO: `uvm_do_callbacks
+//
+//| `uvm_do_callbacks(T,CB,METHOD)
+//
+// Calls the given ~METHOD~ of all callbacks of type ~CB~ registered with
+// the calling object (i.e. ~this~ object), which is or is based on type ~T~.
+//
+// This macro executes all of the callbacks associated with the calling
+// object (i.e. ~this~ object). The macro takes three arguments:
+//
+// - CB is the class type of the callback objects to execute. The class
+//   type must have a function signature that matches the METHOD argument.
+//
+// - T is the type associated with the callback. Typically, an instance
+//   of type T is passed as one the arguments in the ~METHOD~ call.
+//
+// - METHOD is the method call to invoke, with all required arguments as
+//   if they were invoked directly.
+//
+// For example, given the following callback class definition:
+//
+//| virtual class mycb extends uvm_cb;
+//|   pure function void my_function (mycomp comp, int addr, int data);
+//| endclass
+//
+// A component would invoke the macro as
+//
+//| task mycomp::run_phase(uvm_phase phase); 
+//|    int curr_addr, curr_data;
+//|    ...
+//|    `uvm_do_callbacks(mycb, mycomp, my_function(this, curr_addr, curr_data))
+//|    ...
+//| endtask
+//-----------------------------------------------------------------------------
+
+// For the Vlang UVM implementation
+// This is defined as part of the mixin uvm_register_cb
+
+// `define uvm_do_callbacks(T,CB,METHOD)	\
+//   `uvm_do_obj_callbacks(T,CB,this,METHOD)
+
+
+
+//-----------------------------------------------------------------------------
+// MACRO: `uvm_do_obj_callbacks
+//
+//| `uvm_do_obj_callbacks(T,CB,OBJ,METHOD)
+//
+// Calls the given ~METHOD~ of all callbacks based on type ~CB~ registered with
+// the given object, ~OBJ~, which is or is based on type ~T~.
+//
+// This macro is identical to <`uvm_do_callbacks> macro,
+// but it has an additional ~OBJ~ argument to allow the specification of an
+// external object to associate the callback with. For example, if the
+// callbacks are being applied in a sequence, ~OBJ~ could be specified
+// as the associated sequencer or parent sequence.
+//
+//|    ...
+//|    `uvm_do_callbacks(mycb, mycomp, seqr, my_function(seqr, curr_addr, curr_data))
+//|    ...
+//-----------------------------------------------------------------------------
+
+// `define uvm_do_obj_callbacks(T,CB,OBJ,METHOD) \
+//    begin \
+//      uvm_callback_iter#(T,CB) iter = new(OBJ); \
+//      CB cb = iter.first(); \
+//      while(cb != null) begin \
+//        `uvm_cb_trace_noobj(cb,$sformatf(`"Executing callback method 'METHOD' for callback %s (CB) from %s (T)`",cb.get_name(), OBJ.get_full_name())) \
+//        cb.METHOD; \
+//        cb = iter.next(); \
+//      end \
+//    end
+
+
+//-----------------------------------------------------------------------------
+// MACRO: `uvm_do_callbacks_exit_on
+//
+//| `uvm_do_callbacks_exit_on(T,CB,METHOD,VAL)
+//
+// Calls the given ~METHOD~ of all callbacks of type ~CB~ registered with
+// the calling object (i.e. ~this~ object), which is or is based on type ~T~,
+// returning upon the first callback returning the bit value given by ~VAL~.
+//
+// This macro executes all of the callbacks associated with the calling
+// object (i.e. ~this~ object). The macro takes three arguments:
+//
+// - CB is the class type of the callback objects to execute. The class
+//   type must have a function signature that matches the METHOD argument.
+//
+// - T is the type associated with the callback. Typically, an instance
+//   of type T is passed as one the arguments in the ~METHOD~ call.
+//
+// - METHOD is the method call to invoke, with all required arguments as
+//   if they were invoked directly.
+//
+// - VAL, if 1, says return upon the first callback invocation that
+//   returns 1. If 0, says return upon the first callback invocation that
+//   returns 0.
+//
+// For example, given the following callback class definition:
+//
+//| virtual class mycb extends uvm_cb;
+//|   pure function bit drop_trans (mycomp comp, my_trans trans);
+//| endclass
+//
+// A component would invoke the macro as
+//
+//| task mycomp::run_phase(uvm_phase phase); 
+//|    my_trans trans;
+//|    forever begin
+//|      get_port.get(trans);
+//|      if(do_callbacks(trans) == 0)
+//|        uvm_report_info("DROPPED",{"trans dropped: %s",trans.convert2string()});
+//|      else
+//|        // execute transaction
+//|    end
+//| endtask
+//| function bit do_callbacks(my_trans);
+//|   // Returns 0 if drop happens and 1 otherwise
+//|   `uvm_do_callbacks_exit_on(mycomp, mycb, extobj, drop_trans(this,trans), 1)
+//| endfunction
+//
+// Because this macro calls ~return~, its use is restricted to implementations
+// of functions that return a ~bit~ value, as in the above example.
+//
+//-----------------------------------------------------------------------------
+
+
+// For the Vlang UVM implementation
+// This is defined as part of the mixin uvm_register_cb
+
+// `define uvm_do_callbacks_exit_on(T,CB,METHOD,VAL) \
+//   `uvm_do_obj_callbacks_exit_on(T,CB,this,METHOD,VAL) \
+
+
+//-----------------------------------------------------------------------------
+// MACRO: `uvm_do_obj_callbacks_exit_on
+//
+//| `uvm_do_obj_callbacks_exit_on(T,CB,OBJ,METHOD,VAL)
+//
+// Calls the given ~METHOD~ of all callbacks of type ~CB~ registered with
+// the given object ~OBJ~, which must be or be based on type ~T~, and returns
+// upon the first callback that returns the bit value given by ~VAL~. It is
+// exactly the same as the <`uvm_do_callbacks_exit_on> but has a specific
+// object instance (instead of the implicit this instance) as the third
+// argument.
+//
+//| ...
+//|  // Exit if a callback returns a 1
+//|  `uvm_do_callbacks_exit_on(mycomp, mycb, seqr, drop_trans(seqr,trans), 1)
+//| ...
+//
+// Because this macro calls ~return~, its use is restricted to implementations
+// of functions that return a ~bit~ value, as in the above example.
+//-----------------------------------------------------------------------------
+
+// `define uvm_do_obj_callbacks_exit_on(T,CB,OBJ,METHOD,VAL) \
+//    begin \
+//      uvm_callback_iter#(T,CB) iter = new(OBJ); \
+//      CB cb = iter.first(); \
+//      while(cb != null) begin \
+//        if (cb.METHOD == VAL) begin \
+//          `uvm_cb_trace_noobj(cb,$sformatf(`"Executed callback method 'METHOD' for callback %s (CB) from %s (T) : returned value VAL (other callbacks will be ignored)`",cb.get_name(), OBJ.get_full_name())) \
+//          return VAL; \
+//        end \
+//        `uvm_cb_trace_noobj(cb,$sformatf(`"Executed callback method 'METHOD' for callback %s (CB) from %s (T) : did not return value VAL`",cb.get_name(), OBJ.get_full_name())) \
+//        cb = iter.next(); \
+//      end \
+//      return 1-VAL; \
+//    end
+
+
+// The +define+UVM_CB_TRACE_ON setting will instrument the uvm library to emit 
+// messages with message id UVMCB_TRC and UVM_NONE verbosity 
+// notifing add,delete and execution of uvm callbacks. The instrumentation is off by default.
+
+// `ifdef UVM_CB_TRACE_ON
+version(UVM_CB_TRACE_ON) {
+  // `defineu vm_cb_trace(OBJ,CB,OPER) \
+  //   begin \
+  //     string msg; \
+  //     msg = (OBJ == null) ? "null" : $sformatf("%s (%s@%0d)", \
+  //       OBJ.get_full_name(), OBJ.get_type_name(), OBJ.get_inst_id()); \
+  //     `uvm_info("UVMCB_TRC", $sformatf("%s: callback %s (%s@%0d) : to object %s",  \
+  //        OPER, CB.get_name(), CB.get_type_name(), CB.get_inst_id(), msg), UVM_NONE) \
+  //   end
+  void uvm_cb_trace(T, CB)(T obj, CB cb, string oper) {
+    string msg = (obj is null) ? "null" :
+      format("%s (%s@%0d)",
+	     obj.get_full_name(), obj.get_type_name(), obj.get_inst_id());
+    uvm_info("UVMCB_TRC", format("%s: callback %s (%s@%0d) : to object %s",
+				 oper, cb.get_name(), cb.get_type_name(),
+				 cb.get_inst_id(), msg), UVM_NONE);
+  }
+    
+  // `define uvm_cb_trace_noobj(CB,OPER) \
+  //   begin \
+  //     if(uvm_callbacks_base::m_tracing) \
+  //       `uvm_info("UVMCB_TRC", $sformatf("%s : callback %s (%s@%0d)" ,  \
+  //        OPER, CB.get_name(), CB.get_type_name(), CB.get_inst_id()), UVM_NONE) \
+  //   end
+  void uvm_cb_trace_noobj(CB)(CB cb, string oper) {
     if(uvm_callbacks_base.m_tracing) {
       uvm_info("UVMCB_TRC",
-	       format("%s : callback %s (%s@%0d)" , oper, CB.get_name(),
-		      CB.get_type_name(), CB.get_inst_id()), UVM_NONE);
+	       format("%s : callback %s (%s@%0d)",
+		      oper, cb.get_name(), cb.get_type_name(),
+		      cb.get_inst_id()), UVM_NONE);
     }
   }
 }
+// `else
+ else {
+   void uvm_cb_trace(T,CB)(T obj, CB cb, string oper) {}
+   void uvm_cb_trace_noobj(CB)(CB cb, string oper) {}
+
+ // `endif
+ }

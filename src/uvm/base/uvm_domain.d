@@ -72,8 +72,7 @@ final class uvm_once_domain_globals
   @uvm_public_sync uvm_phase _report_ph;
 }
 
-public uvm_once_domain_globals _uvm_domain_globals_once;
-mixin(uvm_once_sync!(uvm_once_domain_globals, "_uvm_domain_globals"));
+mixin(uvm_once_sync!(uvm_once_domain_globals, "uvm_domain_globals"));
 
 //------------------------------------------------------------------------------
 //
@@ -85,31 +84,32 @@ mixin(uvm_once_sync!(uvm_once_domain_globals, "_uvm_domain_globals"));
 // Handle used to assign domains to components or hierarchies in the testbench
 //
 
-final class uvm_once_domain
-{
-  @uvm_private_sync private uvm_domain         _m_common_domain;
-  @uvm_private_sync private uvm_domain         _m_uvm_domain; // run-time phases
-  @uvm_private_sync private uvm_domain[string] _m_domains;
-  @uvm_private_sync private uvm_phase          _m_uvm_schedule;
-}
-
 class uvm_domain: uvm_phase
 {
   import std.string: format;
-  mixin(uvm_once_sync!(uvm_once_domain));
+
+  static class uvm_once
+  {
+    @uvm_private_sync private uvm_domain         _m_common_domain;
+    @uvm_private_sync private uvm_domain         _m_uvm_domain; // run-time phases
+    @uvm_private_sync private uvm_domain[string] _m_domains;
+    @uvm_private_sync private uvm_phase          _m_uvm_schedule;
+  }
+
+  mixin uvm_once_sync;
 
   // Function: get_domains
   //
   // Provides a list of all domains in the provided ~domains~ argument.
   //
   static public void get_domains(out uvm_domain[string] domains) {
-    synchronized(_once) {
+    synchronized(once) {
       domains = m_domains;
     }
   }
 
   static public uvm_domain[string] get_domains() {
-    synchronized(_once) {
+    synchronized(once) {
       return m_domains;
     }
   }
@@ -121,7 +121,7 @@ class uvm_domain: uvm_phase
   //
   static public uvm_phase get_uvm_schedule() {
     get_uvm_domain();
-    synchronized(_once) {
+    synchronized(once) {
       return m_uvm_schedule;
     }
   }
@@ -138,7 +138,7 @@ class uvm_domain: uvm_phase
 
     // defined in SV version but not used anywhere
     // uvm_phase schedule;
-    synchronized(_once) {
+    synchronized(once) {
       if (m_common_domain !is null) {
 	return m_common_domain;
       }
@@ -156,8 +156,8 @@ class uvm_domain: uvm_phase
     domain.add(uvm_report_phase.get());
     domain.add(uvm_final_phase.get());
 
-    synchronized(_once) {
-      _once._m_domains["common"] = domain;
+    synchronized(once) {
+      once._m_domains["common"] = domain;
 
       // for backward compatibility, make common phases visible;
       // same as uvm_<name>_phase.get().
@@ -203,7 +203,7 @@ class uvm_domain: uvm_phase
   // Get a handle to the singleton ~uvm~ domain
   //
   static public uvm_domain get_uvm_domain() {
-    synchronized(_once) {
+    synchronized(once) {
       if (m_uvm_domain is null) {
 	m_uvm_domain = new uvm_domain("uvm");
 	m_uvm_schedule = new uvm_phase("uvm_sched", UVM_PHASE_SCHEDULE);
@@ -219,12 +219,12 @@ class uvm_domain: uvm_phase
   // Create a new instance of a phase domain.
   public this(string name="") {
     super(name,UVM_PHASE_DOMAIN);
-    synchronized(_once) {
+    synchronized(once) {
       if (name in m_domains) {
 	uvm_error("UNIQDOMNAM",
 		  format("Domain created with non-unique name '%s'", name));
       }
-      _once._m_domains[name] = this;
+      once._m_domains[name] = this;
     }
   }
 

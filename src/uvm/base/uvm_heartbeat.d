@@ -75,7 +75,7 @@ alias uvm_callbacks!(uvm_callbacks_objection, uvm_heartbeat_callback)
 class uvm_heartbeat: uvm_object
 {
   import esdl.data.queue;
-  mixin(uvm_sync!uvm_heartbeat);
+  mixin uvm_sync;
 
   protected uvm_callbacks_objection _m_objection;
 
@@ -377,7 +377,7 @@ class uvm_heartbeat: uvm_object
 	  }
 	}
 	m_cb.reset_counts();
-	last_trigger = getSimTime();
+	last_trigger = getRootEntity().getSimTime();
 	triggered = true;
       }
     }
@@ -428,7 +428,7 @@ class uvm_heartbeat_callback: uvm_objection_callback
 	  _cnt[source_obj] = 0;
 	}
 	_cnt[source_obj] += 1;
-	_last_trigger[source_obj] = getSimTime();
+	_last_trigger[source_obj] = getRootEntity().getSimTime();
       }
     }
   }

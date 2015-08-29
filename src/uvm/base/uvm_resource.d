@@ -113,9 +113,11 @@ import uvm.base.uvm_object;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_root;
 import uvm.base.uvm_printer;
-import esdl.base.core: getSimTime, SimTime;
+import esdl.base.core: SimTime, getRootEntity;
 
 import std.conv: to;
+import std.algorithm: sort;
+import uvm.meta.meta;
 
 //----------------------------------------------------------------------
 // Class: uvm_resource_types
@@ -164,11 +166,6 @@ class uvm_resource_types
   }
 }
 
-class uvm_once_resource_options
-{
-  @uvm_private_sync private bool _auditing = true;
-}
-
 //----------------------------------------------------------------------
 // Class: uvm_resource_options
 //
@@ -194,7 +191,12 @@ class uvm_once_resource_options
 class uvm_resource_options
 {
   // static private bool auditing = true;
-  mixin(uvm_once_sync!(uvm_once_resource_options));
+  static class uvm_once
+  {
+    @uvm_private_sync private bool _auditing = true;
+  }
+
+  mixin uvm_once_sync;
 
   // Function: turn_on_auditing
   //
@@ -226,22 +228,22 @@ class uvm_resource_options
 }
 
 
-class uvm_once_resource_base
-{
-  // variable: default_precedence
-  //
-  // The default precedence for an resource that has been created.
-  // When two resources have the same precedence, the first resource
-  // found has precedence.
-  //
-
-  @uvm_public_sync private uint _default_precedence = 1000;
-}
-
 abstract class uvm_resource_base: uvm_object
 {
-  mixin(uvm_once_sync!(uvm_once_resource_base));
-  mixin(uvm_sync!uvm_resource_base);
+  static class uvm_once
+  {
+    // variable: default_precedence
+    //
+    // The default precedence for an resource that has been created.
+    // When two resources have the same precedence, the first resource
+    // found has precedence.
+    //
+
+    @uvm_public_sync private uint _default_precedence = 1000;
+  }
+
+  mixin uvm_once_sync;
+  mixin uvm_sync;
 
   protected string _rscope;
   @uvm_immutable_sync
@@ -585,7 +587,7 @@ abstract class uvm_resource_base: uvm_object
 
       // Update the accessor record
       access_record.read_count++;
-      access_record.read_time = getSimTime();
+      access_record.read_time = getRootEntity().getSimTime();
       _access[str] = access_record;
     }
   }
@@ -613,7 +615,7 @@ abstract class uvm_resource_base: uvm_object
 	    access_record = uvm_resource_types.access_t.init;
 	  }
 	  access_record.write_count++;
-	  access_record.write_time = getSimTime();
+	  access_record.write_time = getRootEntity().getSimTime();
 	  _access[str] = access_record;
 	}
       }
@@ -750,30 +752,30 @@ struct get_t {
 //
 //----------------------------------------------------------------------
 
-class uvm_once_resource_pool
-{
-  @uvm_public_sync private bool _m_has_wildcard_names;
-  @uvm_immutable_sync private uvm_resource_pool _rp; //  = get();
-  @uvm_immutable_sync private uvm_line_printer _printer;
-  this() {
-    synchronized(this) {
-      _rp = new uvm_resource_pool();
-      _printer = new uvm_line_printer();
-      _printer.knobs.separator  = "";
-      _printer.knobs.full_name  = 0;
-      _printer.knobs.identifier = 0;
-      _printer.knobs.type_name  = 0;
-      _printer.knobs.reference  = 0;
-    }
-  }
-}
-
 class uvm_resource_pool {
   import esdl.data.queue;
   import std.string: format;
   import uvm.base.uvm_globals;
 
-  mixin(uvm_once_sync!(uvm_once_resource_pool));
+  static class uvm_once
+  {
+    @uvm_public_sync private bool _m_has_wildcard_names;
+    @uvm_immutable_sync private uvm_resource_pool _rp; //  = get();
+    @uvm_immutable_sync private uvm_line_printer _printer;
+    this() {
+      synchronized(this) {
+	_rp = new uvm_resource_pool();
+	_printer = new uvm_line_printer();
+	_printer.knobs.separator  = "";
+	_printer.knobs.full_name  = 0;
+	_printer.knobs.identifier = 0;
+	_printer.knobs.type_name  = 0;
+	_printer.knobs.reference  = 0;
+      }
+    }
+  }
+
+  mixin uvm_once_sync;
 
   private uvm_resource_types.rsrc_q_t[string]     _rtab;
   private uvm_resource_types.rsrc_q_t[TypeInfo]   _ttab;
@@ -943,7 +945,6 @@ class uvm_resource_pool {
   final public void push_get_record(string name, string rscope,
 				    uvm_resource_base rsrc) {
     synchronized(this) {
-      import esdl.base.core: getSimTime;
       get_t impt;
 
       // if auditing is turned off then there is no reason
@@ -958,7 +959,7 @@ class uvm_resource_pool {
       impt.name  = name;
       impt.rscope = rscope;
       impt.rsrc  = rsrc;
-      impt.t     = getSimTime();
+      impt.t     = getRootEntity().getSimTime();
 
       _get_record.pushBack(impt);
     }
@@ -1250,8 +1251,8 @@ class uvm_resource_pool {
       //iterate in reverse order for the special case of autoconfig
       //of arrays. The array name with no [] needs to be higher priority.
       //This has no effect an manual accesses.
-      foreach_reverse(name, rq; _rtab) {
-	foreach(r; rq) {
+      foreach_reverse(name; sort(_rtab.keys)) {
+	foreach(r; _rtab[name]) {
 	  if(r.match_scope(rscope)) {
 	    q.push_back(r);
 	  }
@@ -1426,7 +1427,7 @@ class uvm_resource_pool {
 				    bool audit = false) {
     synchronized(this) {
 
-      // moved to _once
+      // moved to once
 
       // printer.knobs.separator  = "";
       // printer.knobs.full_name  = 0;
@@ -1539,7 +1540,7 @@ class uvm_resource (T=int): uvm_resource_base
       }
       else {
 	import std.string: format;
-	return format("(%s) %0s", typeid(_val).stringof, _val);
+	return format("(%s) %0s", qualifiedTypeName!T, _val);
       }
     }
   }

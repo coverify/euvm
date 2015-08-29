@@ -38,12 +38,13 @@ import uvm.base.uvm_event;
 import uvm.base.uvm_printer;
 import uvm.base.uvm_object_globals;
 import uvm.meta.misc;
+import uvm.meta.meta;
 
 import esdl.base.core: wait;
 
 class uvm_barrier: uvm_object
 {
-  mixin(uvm_sync!uvm_barrier);
+  mixin uvm_sync;
 
   // Guard and encapsulate the state variables
   @uvm_private_sync private int  _threshold;
@@ -212,7 +213,7 @@ class uvm_barrier: uvm_object
 
   // FIXME -- at some point this has to go
   public override string get_type_name() {
-    return typeof(this).stringof;
+    return qualifiedTypeName!(typeof(this));
   }
 
   // task

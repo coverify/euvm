@@ -56,35 +56,35 @@ alias uvm_config_db!uvm_sequence_base uvm_config_seq;
 //
 //------------------------------------------------------------------------------
 
-class uvm_once_sequencer_base
-{
-  @uvm_private_sync private int _g_request_id;
-  @uvm_private_sync private int _g_sequence_id = 1;
-  @uvm_private_sync private int _g_sequencer_id = 1;
-}
-
 class uvm_sequencer_base: uvm_component
 {
-  mixin(uvm_once_sync!uvm_once_sequencer_base);
-  mixin(uvm_sync!uvm_sequencer_base);
+  static class uvm_once
+  {
+    @uvm_private_sync private int _g_request_id;
+    @uvm_private_sync private int _g_sequence_id = 1;
+    @uvm_private_sync private int _g_sequencer_id = 1;
+  }
+
+  mixin uvm_once_sync;
+  mixin uvm_sync;
 
   mixin uvm_component_utils;
 
-  static inc_g_request_id() {
-    synchronized(_once) {
-      return _once._g_request_id++;
+  static int inc_g_request_id() {
+    synchronized(once) {
+      return once._g_request_id++;
     }
   }
 
-  static inc_g_sequence_id() {
-    synchronized(_once) {
-      return _once._g_sequence_id++;
+  static int inc_g_sequence_id() {
+    synchronized(once) {
+      return once._g_sequence_id++;
     }
   }
 
-  static inc_g_sequencer_id() {
-    synchronized(_once) {
-      return _once._g_sequencer_id++;
+  static int inc_g_sequencer_id() {
+    synchronized(once) {
+      return once._g_sequencer_id++;
     }
   }
 
@@ -315,12 +315,17 @@ class uvm_sequencer_base: uvm_component
       seq.reseed();
       seq.starting_phase = phase;
 
-      if (!seq.do_not_randomize && !seq.randomize()) {
-	uvm_warning("STRDEFSEQ",
-		    "Randomization failed for default sequence '" ~
-		    seq.get_type_name() ~ "' for phase '" ~
-		    phase.get_name() ~ "'");
-	return;
+      if (!seq.do_not_randomize) {
+	try {
+	  seq.randomize();
+	}
+	catch {
+	  uvm_warning("STRDEFSEQ",
+		      "Randomization failed for default sequence '" ~
+		      seq.get_type_name() ~ "' for phase '" ~
+		      phase.get_name() ~ "'");
+	  return;
+	}
       }
 
       fork({
@@ -1429,6 +1434,7 @@ class uvm_sequencer_base: uvm_component
 
   version(UVM_NO_DEPRECATED) {}
   else {
+    mixin Randomization;
     // Variable- count
     //
     // Sets the number of items to execute.
@@ -1572,7 +1578,10 @@ class uvm_sequencer_base: uvm_component
 	  m_seq.set_sequencer(this);
 	  m_seq.reseed();
 	}
-	if (!m_seq.randomize()) {
+	try{
+	  m_seq.randomize();
+	}
+	catch {
 	  uvm_report_warning("STRDEFSEQ", "Failed to randomize sequence");
 	}
 	m_seq.start(this);
@@ -1687,7 +1696,7 @@ mixin(declareEnums!seq_req_t());
 
 class uvm_sequence_request
 {
-  mixin(uvm_sync!uvm_sequence_request);
+  mixin uvm_sync;
   @uvm_public_sync private bool               _grant;
   @uvm_public_sync private int                _sequence_id;
   @uvm_public_sync private int                _request_id;

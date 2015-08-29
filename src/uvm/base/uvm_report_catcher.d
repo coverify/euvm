@@ -113,47 +113,54 @@ alias uvm_callback_iter!(uvm_report_object, uvm_report_catcher) uvm_report_cb_it
 //
 //------------------------------------------------------------------------------
 
-class uvm_once_report_catcher
-{
-  @uvm_private_sync private uvm_severity_type _m_modified_severity;
-  @uvm_private_sync private int _m_modified_verbosity;
-  @uvm_private_sync private string _m_modified_id;
-  @uvm_private_sync private string _m_modified_message;
-  @uvm_private_sync private string _m_file_name;
-  @uvm_private_sync private size_t _m_line_number;
-  @uvm_private_sync private uvm_report_object _m_client;
-  @uvm_private_sync private uvm_action _m_modified_action;
-  @uvm_private_sync private bool _m_set_action_called;
-  @uvm_private_sync private uvm_report_server _m_server;
-  @uvm_private_sync private string _m_name;
-
-  @uvm_private_sync private int _m_demoted_fatal;
-  @uvm_private_sync private int _m_demoted_error;
-  @uvm_private_sync private int _m_demoted_warning;
-  @uvm_private_sync private int _m_caught_fatal;
-  @uvm_private_sync private int _m_caught_error;
-  @uvm_private_sync private int _m_caught_warning;
-
-  @uvm_private_sync private int _m_debug_flags;
-
-  @uvm_private_sync private uvm_severity_type _m_orig_severity;
-  @uvm_private_sync private uvm_action _m_orig_action;
-  @uvm_private_sync private string _m_orig_id;
-  @uvm_private_sync private int _m_orig_verbosity;
-  @uvm_private_sync private string _m_orig_message;
-
-  @uvm_private_sync private bool _do_report;
-}
-
 abstract class uvm_report_catcher: uvm_callback
 {
 
-  // static uvm_once_report_catcher _once;
-  mixin(uvm_once_sync!(uvm_once_report_catcher));
+  static class uvm_once
+  {
+    @uvm_private_sync private uvm_severity_type _m_modified_severity;
+    @uvm_private_sync private int _m_modified_verbosity;
+    @uvm_private_sync private string _m_modified_id;
+    @uvm_private_sync private string _m_modified_message;
+    @uvm_private_sync private string _m_file_name;
+    @uvm_private_sync private size_t _m_line_number;
+    @uvm_private_sync private uvm_report_object _m_client;
+    @uvm_private_sync private uvm_action _m_modified_action;
+    @uvm_private_sync private bool _m_set_action_called;
+    @uvm_private_sync private uvm_report_server _m_server;
+    @uvm_private_sync private string _m_name;
+
+    @uvm_private_sync private int _m_demoted_fatal;
+    @uvm_private_sync private int _m_demoted_error;
+    @uvm_private_sync private int _m_demoted_warning;
+    @uvm_private_sync private int _m_caught_fatal;
+    @uvm_private_sync private int _m_caught_error;
+    @uvm_private_sync private int _m_caught_warning;
+
+    @uvm_private_sync private int _m_debug_flags;
+
+    @uvm_private_sync private uvm_severity_type _m_orig_severity;
+    @uvm_private_sync private uvm_action _m_orig_action;
+    @uvm_private_sync private string _m_orig_id;
+    @uvm_private_sync private int _m_orig_verbosity;
+    @uvm_private_sync private string _m_orig_message;
+
+    @uvm_private_sync private bool _do_report;
+  }
+
+  mixin uvm_once_sync;
+
+  // Moved to the uvm_report_object module
 
   // `uvm_register_cb(uvm_report_object,uvm_report_catcher)
   // FIXME -- this has moved to the constructor
-
+  // static this() {
+  //   if(uvm_is_uvm_thread) {
+  //     uvm_callbacks!(uvm_report_object,
+  // 		     uvm_report_catcher).m_register_pair();
+  //   }
+  // }
+  
   enum action_e: int
   {   UNKNOWN_ACTION,
       THROW,
@@ -184,8 +191,10 @@ abstract class uvm_report_catcher: uvm_callback
       // sure that the code is called only once. In Vlang, we do not
       // have any static initialization, and that is because we
       // support multiple uvm_root instances.
-      uvm_callbacks!(uvm_report_object,
-		     uvm_report_catcher).m_register_pair();
+
+      // moved to "static this"
+      // uvm_callbacks!(uvm_report_object,
+      // 		     uvm_report_catcher).m_register_pair();
       do_report = true;
     }
   }
@@ -546,7 +555,7 @@ abstract class uvm_report_catcher: uvm_callback
 						 ref uvm_action action,
 						 string filename,
 						 size_t line) {
-    synchronized(_once) {
+    synchronized(once) {
       bool thrown = true;
       uvm_severity_type orig_severity;
 
@@ -637,7 +646,7 @@ abstract class uvm_report_catcher: uvm_callback
 			    UVM_NONE, __FILE__, __LINE__);
     }
 
-    synchronized(_once) {
+    synchronized(once) {
       if(m_debug_flags & DO_NOT_MODIFY) {
 	m_modified_severity    = m_orig_severity;
 	m_modified_id          = m_orig_id;

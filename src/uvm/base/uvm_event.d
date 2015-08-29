@@ -49,7 +49,7 @@ import std.string: format;
 
 class uvm_event : /*extends*/ uvm_object
 {
-  mixin(uvm_sync!(uvm_event));
+  mixin uvm_sync;
 
   enum string type_name = "uvm_event";
 
@@ -236,7 +236,7 @@ class uvm_event : /*extends*/ uvm_object
 	  _on = true;
 	  _on_event.notify();
 	}
-	_trigger_time = getSimTime();
+	_trigger_time = getRootEntity().getSimTime();
 	_trigger_data = data;
       }
     }

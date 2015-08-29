@@ -84,12 +84,13 @@ import uvm.base.uvm_object;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_component;
 import uvm.meta.misc;
+import uvm.meta.meta;
 
 abstract class uvm_printer
 {
   import std.traits: isIntegral;
 
-  mixin(uvm_sync!uvm_printer);
+  mixin uvm_sync;
 
   // Variable: knobs
   //
@@ -338,7 +339,7 @@ abstract class uvm_printer
 
 	row_info.level = _m_scope.depth();
 	row_info.name = adjust_name(_m_scope.get(), scope_separator);
-	row_info.type_name = T.stringof;
+	row_info.type_name = qualifiedTypeName!T;
 	row_info.size = (T.sizeof*8).to!string();
 	row_info.val = format("%f",value);
 
@@ -853,7 +854,7 @@ class uvm_printer_knobs {
   // Indicates whether the <print_header> function should be called when
   // printing an object.
 
-  mixin(uvm_sync!uvm_printer_knobs);
+  mixin uvm_sync;
 
   @uvm_public_sync private bool _header = true;
 

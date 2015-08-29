@@ -148,7 +148,7 @@ import uvm.meta.misc;
 
 class uvm_sequence_base: uvm_sequence_item
 {
-  mixin(uvm_sync!uvm_sequence_base);
+  mixin uvm_sync;
 
   @uvm_immutable_sync private WithEvent!uvm_sequence_state _m_sequence_state;
 
@@ -1132,6 +1132,8 @@ class uvm_sequence_base: uvm_sequence_item
   version(UVM_NO_DEPRECATED) {}
   else {
 
+    mixin Randomization;
+    
     // Variable- seq_kind
     //
     // Used as an identifier in constraints for a specific sequence type.
@@ -1139,7 +1141,7 @@ class uvm_sequence_base: uvm_sequence_item
     @uvm_public_sync private @rand uint _seq_kind;
     private uint _num_seq;
 
-    override public void pre_randomize() {
+    public void preRandomize() {
       synchronized(this) {
 	_num_seq = num_sequences();
       }
@@ -1248,7 +1250,10 @@ class uvm_sequence_base: uvm_sequence_item
 
       m_seq.set_item_context(this, m_sequencer);
 
-      if(! m_seq.randomize()) {
+      try {
+	m_seq.randomize();
+      }
+      catch {
 	uvm_report_warning("RNDFLD", "Randomization failed in"
 			   " do_sequence_kind()");
       }
@@ -1485,10 +1490,11 @@ class uvm_sequence_base: uvm_sequence_item
   // to the sequence in which the macro is invoked, and it sets the sequencer to
   // the specified ~SEQR~ argument.
 
+  // FIXME -- consider changing SEQ_OR_ITEM and SEQR to aliases passed as temaplte arguments
   public void uvm_create_on(T, U)(ref T SEQ_OR_ITEM, U SEQR)
     if(is(T: uvm_sequence_item) && is(U: uvm_sequencer_base)) {
       uvm_object_wrapper w_ = SEQ_OR_ITEM.get_type();
-      SEQ_OR_ITEM = cast(T) create_item(w_, SEQR, SEQ_OR_ITEM.stringof);
+      SEQ_OR_ITEM = cast(T) create_item(w_, SEQR, "SEQ_OR_ITEM");
     }
 
 

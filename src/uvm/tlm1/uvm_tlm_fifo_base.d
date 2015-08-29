@@ -71,7 +71,7 @@ abstract class uvm_tlm_fifo_base(T=int): uvm_component
 
   alias uvm_tlm_fifo_base!(T) this_type;
 
-  mixin(uvm_sync!this_type);
+  mixin uvm_sync;
 
   // Port: put_export
   //

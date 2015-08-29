@@ -37,6 +37,7 @@ module uvm.base.uvm_report_server;
 
 import uvm.base.uvm_object;
 import uvm.meta.mcd;
+import uvm.meta.meta;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_report_handler;
@@ -44,22 +45,22 @@ import uvm.base.uvm_report_object;
 import uvm.base.uvm_report_catcher;
 import uvm.base.uvm_root;
 
-import esdl.base.core: getSimTime, finish;
-
-class uvm_once_report_server
-{
-  @uvm_private_sync private uvm_report_server _m_global_report_server;
-  this() {
-    synchronized(this) {
-      _m_global_report_server = new uvm_report_server();
-    }
-  }
-}
+import esdl.base.core: finish, getRootEntity;
 
 class uvm_report_server: /*extends*/ uvm_object
 {
-  mixin(uvm_once_sync!(uvm_once_report_server));
-  mixin(uvm_sync!uvm_report_server);
+  static class uvm_once
+  {
+    @uvm_private_sync private uvm_report_server _m_global_report_server;
+    this() {
+      synchronized(this) {
+	_m_global_report_server = new uvm_report_server();
+      }
+    }
+  }
+
+  mixin uvm_once_sync;
+  mixin uvm_sync;
 
   private int _max_quit_count;
   private int _quit_count;
@@ -78,7 +79,7 @@ class uvm_report_server: /*extends*/ uvm_object
 
   // Needed for callbacks
   public override string get_type_name() {
-    return "uvm_report_server"; // (typeof(this)).stringof;
+    return qualifiedTypeName!(typeof(this));
   }
 
 
@@ -104,7 +105,7 @@ class uvm_report_server: /*extends*/ uvm_object
   // server is responsible for formatting messages.
 
   static public void set_server(uvm_report_server server) {
-    synchronized(_once) {
+    synchronized(once) {
       import std.exception: enforce;
       enforce(server !is null);
 
@@ -125,7 +126,7 @@ class uvm_report_server: /*extends*/ uvm_object
   // a valid handle to a report server.
 
   static public uvm_report_server get_server() {
-    synchronized(_once) {
+    synchronized(once) {
       if (_m_global_report_server is null)
 	_m_global_report_server = new uvm_report_server();
       return _m_global_report_server;
@@ -442,7 +443,7 @@ class uvm_report_server: /*extends*/ uvm_object
       string retval;
 
       uvm_severity_type sv = cast(uvm_severity_type) severity;
-      string time_str = format("%s", getSimTime());
+      string time_str = format("%s", getRootEntity().getSimTime());
 
       if (name == "" && filename == "")
 	retval = to!string(sv) ~ " @ " ~ time_str ~ " [" ~ id ~ "] " ~ message;

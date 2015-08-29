@@ -27,6 +27,7 @@ import uvm.base.uvm_object_globals;
 import uvm.seq.uvm_sequence_item;
 import uvm.seq.uvm_sequence_base;
 import uvm.seq.uvm_sequencer_param_base;
+import esdl.data.rand;
 
 //------------------------------------------------------------------------------
 //
@@ -41,15 +42,15 @@ abstract class uvm_sequence (REQ = uvm_sequence_item,
 			     RSP = REQ):
   uvm_sequence_base
 {
-  mixin(uvm_sync!(uvm_sequence!(REQ, RSP)));
+  mixin uvm_sync;
 
   alias uvm_sequencer_param_base!(REQ, RSP) sequencer_t;
 
-  @uvm_public_sync
+  @uvm_public_sync @rand!false
   private sequencer_t        _param_sequencer;
-  @uvm_public_sync
+  @uvm_public_sync @rand!false
   private REQ                _req;
-  @uvm_public_sync
+  @uvm_public_sync @rand!false
   private RSP                _rsp;
 
   // Function: new

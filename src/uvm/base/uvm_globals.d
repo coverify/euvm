@@ -48,7 +48,6 @@ version (UVM_NO_DEPRECATED) { }
  else {
    import uvm.base.uvm_objection;
    import esdl.data.time;
-   import esdl.base.core: getRootEntity;
    // Variable- uvm_test_done - DEPRECATED
    //
    // An instance of the <uvm_test_done_objection> class, this object is
@@ -98,7 +97,7 @@ version (UVM_NO_DEPRECATED) { }
 
    public void set_global_stop_timeout(Time timeout) {
      uvm_test_done_objection tdo = uvm_test_done_objection.get();
-     tdo.stop_timeout = SimTime(getRootEntity, timeout);
+     tdo.stop_timeout = SimTime(Process.self().getParentEntity(), timeout);
    }
 
    public void set_global_stop_timeout(SimTime timeout) {

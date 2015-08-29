@@ -54,7 +54,7 @@ import esdl.base.core;
 
 final private class m_uvm_waiter
 {
-  mixin(uvm_sync!m_uvm_waiter);
+  mixin uvm_sync;
   @uvm_immutable_sync private string _inst_name;
   // _field_name is present in the SV version but is not used
   // private string _field_name;
@@ -100,9 +100,7 @@ class uvm_once_config_db
 // semantics as the set/get_config_* functions in <uvm_component>.
 //----------------------------------------------------------------------
 
-public uvm_once_config_db _uvm_config_db_once;
-
-mixin(uvm_once_sync!(uvm_once_config_db, "_uvm_config_db"));
+mixin(uvm_once_sync!(uvm_once_config_db, "uvm_config_db"));
 
 class uvm_config_db (T = int): uvm_resource_db!T
 {
@@ -264,7 +262,7 @@ class uvm_config_db (T = int): uvm_resource_db!T
       r.set_override();
     }
 
-    synchronized(_uvm_config_db_once) {
+    synchronized(uvm_config_db_uvm_once) {
       //trigger any waiters
       if(field_name in _m_waiters) {
 	m_uvm_waiter w;
@@ -335,7 +333,7 @@ class uvm_config_db (T = int): uvm_resource_db!T
 
     m_uvm_waiter waiter = new m_uvm_waiter(inst_name);
 
-    synchronized(_uvm_config_db_once) {
+    synchronized(uvm_config_db_uvm_once) {
       if(field_name !in _m_waiters) {
 	_m_waiters[field_name] = new uvm_array!(m_uvm_waiter);
       }
@@ -347,7 +345,7 @@ class uvm_config_db (T = int): uvm_resource_db!T
     // wait on the waiter to trigger
     waiter.wait_for_trigger();
 
-    synchronized(_uvm_config_db_once) {
+    synchronized(uvm_config_db_uvm_once) {
       // Remove the waiter from the waiter list
       for(int i = 0; i < _m_waiters[field_name].size(); ++i) {
 	if(_m_waiters[field_name].get(i) is waiter) {
@@ -383,17 +381,18 @@ alias uvm_config_db!uvm_object_wrapper uvm_config_wrapper;
 //
 //----------------------------------------------------------------------
 // singleton resources
-class uvm_once_config_db_options
-{
-  private bool _ready;
-  private bool _tracing;
-}
-
-
 package class uvm_config_db_options
 {
   import uvm.base.uvm_cmdline_processor;
-  mixin(uvm_once_sync!(uvm_once_config_db_options));
+
+  static class uvm_once
+  {
+    private bool _ready;
+    private bool _tracing;
+  }
+
+
+  mixin uvm_once_sync;
 
   // Function: turn_on_tracing
   //
@@ -404,7 +403,7 @@ package class uvm_config_db_options
   // This method is implicitly called by the ~+UVM_CONFIG_DB_TRACE~.
 
   static public void turn_on_tracing() {
-    synchronized(_once) {
+    synchronized(once) {
       if (!_ready) _init();
       _tracing = true;
     }
@@ -415,7 +414,7 @@ package class uvm_config_db_options
   // Turn tracing off for the configuration database.
 
   static public void turn_off_tracing() {
-    synchronized(_once) {
+    synchronized(once) {
       if (!_ready) _init();
       _tracing = false;
     }
@@ -426,7 +425,7 @@ package class uvm_config_db_options
   // Returns 1 if the tracing facility is on and 0 if it is off.
 
   static public bool is_tracing() {
-    synchronized(_once) {
+    synchronized(once) {
       if (!_ready) _init();
       return _tracing;
     }
@@ -434,7 +433,7 @@ package class uvm_config_db_options
 
 
   static private void _init() {
-    synchronized(_once) {
+    synchronized(once) {
       string[] trace_args;
 
       uvm_cmdline_processor clp = uvm_cmdline_processor.get_inst();

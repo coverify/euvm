@@ -33,7 +33,7 @@ enum string uvm_mgc_copyright  = "(C) 2007-2013 Mentor Graphics Corporation";
 enum string uvm_cdn_copyright  = "(C) 2007-2013 Cadence Design Systems, Inc.";
 enum string uvm_snps_copyright = "(C) 2006-2013 Synopsys, Inc.";
 enum string uvm_cy_copyright   = "(C) 2011-2013 Cypress Semiconductor Corp.";
-enum string uvm_co_copyright   = "(C) 2012-2013 Coverify Systems Technology";
+enum string uvm_co_copyright   = "(C) 2012-2015 Coverify Systems Technology";
 enum string uvm_revision = UVM_NAME ~ "-" ~ UVM_MAJOR_REV.to!string() ~
   "." ~ UVM_MINOR_REV.to!string() ~ UVM_FIX_REV;
 

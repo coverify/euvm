@@ -110,25 +110,25 @@ struct m_verbosity_setting {
   string id;
 }
 
-class uvm_once_component
-{
-  // m_config_set is declared in SV version but is not used anywhere
-  // @uvm_private_sync bool _m_config_set = true;
-
-  @uvm_private_sync bool _print_config_matches;
-  @uvm_private_sync m_verbosity_setting[] _m_time_settings;
-  @uvm_private_sync bool _print_config_warned;
-  @uvm_private_sync uint _m_comp_count;
-}
-
 abstract class uvm_component: uvm_report_object, ParContext
 {
-  mixin(uvm_once_sync!uvm_once_component);
-  mixin(uvm_sync!uvm_component);
+  static class uvm_once
+  {
+    // m_config_set is declared in SV version but is not used anywhere
+    // @uvm_private_sync bool _m_config_set = true;
+
+    @uvm_private_sync bool _print_config_matches;
+    @uvm_private_sync m_verbosity_setting[] _m_time_settings;
+    @uvm_private_sync bool _print_config_warned;
+    @uvm_private_sync uint _m_comp_count;
+  }
+
+  mixin uvm_once_sync;
+  mixin uvm_sync;
 
   mixin ParContextMixin;
 
-  parallelize _par__info = parallelize(ParallelPolicy.NONE,
+  parallelize _par__info = parallelize(ParallelPolicy._UNDEFINED_,
 				       uint.max);;
 
   public ParContext _esdl__parInheritFrom() {
@@ -163,22 +163,14 @@ abstract class uvm_component: uvm_report_object, ParContext
       super(name);
 
       // If uvm_top, reset name to "" so it doesn't show in full paths then return
-      if (parent is null && name == "__top__") {
-	set_name(""); // *** VIRTUAL
-	return;
-      }
+      // separated to uvm_root specific constructor
+      // if (parent is null && name == "__top__") {
+      // 	set_name(""); // *** VIRTUAL
+      // 	return;
+      // }
 
-      uvm_root top = uvm_root.get();
-
-      if(top is null) {
-	// Top could be null only if we are presently constructing
-	// uvm_root itself
-	top = cast(uvm_root) this;
-	if(top is null) {
-	  assert(false, "Unable to get uvm_root!");
-	}
-	._uvm_top = top;
-      }
+      uvm_root top;
+      top = get_root();
 
       // while we are at contructing the uvm_top, there is no need to
       // check whether we are in build_phase, this can be done for
@@ -264,6 +256,17 @@ abstract class uvm_component: uvm_report_object, ParContext
 
       m_set_cl_msg_args();
 
+    }
+  }
+
+  // Csontructor called by uvm_root constructor
+  package this() {
+    synchronized(this) {
+      super("__top__");
+      set_name(""); // *** VIRTUAL
+      // // make sure that we are actually construting a uvm_root
+      // auto top = cast(uvm_root) this;
+      // assert(top !is null);
     }
   }
 
@@ -454,7 +457,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 
   final public uvm_component lookup(string name) {
     synchronized(this) {
-      uvm_root top = uvm_root.get();
+      uvm_root top = get_root(); // uvm_root.get();
       uvm_component comp = this;
 
       string leaf , remainder;
@@ -1374,7 +1377,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 
 
   // Used for caching config settings
-  // moved to uvm_once_component
+  // moved to uvm_once
   // static bit m_config_set = 1;
 
   final public string massage_scope(string scope_stack) {
@@ -1840,7 +1843,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   // Setting this static variable causes get_config_* to print info about
   // matching configuration settings as they are being applied.
 
-  // moved to uvm_once_component
+  // moved to uvm_once
   //   __gshared bit print_config_matches;
 
 
@@ -2504,7 +2507,7 @@ abstract class uvm_component: uvm_report_object, ParContext
       string etype;
       if(keep_active) etype = "Error, Link";
       else etype = "Error";
-      if(error_time == 0) error_time = getSimTime;
+      if(error_time == 0) error_time = getRootEntity().getSimTime;
       int stream_h = _m_stream_handle[stream_name];
       if(rcrdr.check_handle_kind("Fiber", stream_h) !is true) {
 	stream_h = rcrdr.create_stream(stream_name, "TVM", get_full_name());
@@ -2553,7 +2556,7 @@ abstract class uvm_component: uvm_report_object, ParContext
       if(keep_active) etype = "Event, Link";
       else etype = "Event";
 
-      if(event_time == 0) event_time = getSimTime();
+      if(event_time == 0) event_time = getRootEntity().getSimTime();
 
       int stream_h = _m_stream_handle[stream_name];
       if (rcrdr.check_handle_kind("Fiber", stream_h) !is true) {
@@ -2696,13 +2699,25 @@ abstract class uvm_component: uvm_report_object, ParContext
   }
 
 
+  public bool is_root() {
+    return false;
+  }
+  
+  private uvm_root get_root() {
+    if(this.is_root()) {
+      return cast(uvm_root) this;
+    }
+    else {
+      return uvm_top();
+    }
+  }
 
   // m_set_full_name
   // ---------------
 
   private void m_set_full_name() {
     synchronized(this) {
-      uvm_root top = uvm_top;
+      uvm_root top = get_root();
       if (_m_parent is top || _m_parent is null) {
 	_m_name = get_name();
       }
@@ -2896,8 +2911,8 @@ abstract class uvm_component: uvm_report_object, ParContext
   package void set_id() {
     uint id;
     if(m_comp_id == -1) {
-      synchronized(_once) {
-	id = _once._m_comp_count++;
+      synchronized(once) {
+	id = once._m_comp_count++;
       }
       debug(UVM_AUTO) {
 	import std.stdio;
@@ -2977,19 +2992,19 @@ abstract class uvm_component: uvm_report_object, ParContext
 
 
   private void add_time_setting(m_verbosity_setting setting) {
-    synchronized(_once) {
-      _once._m_time_settings ~= setting;
+    synchronized(once) {
+      once._m_time_settings ~= setting;
     }
   }
 
   private m_verbosity_setting[] sort_time_settings() {
-    synchronized(_once) {
-      if (_once._m_time_settings.length > 0) {
+    synchronized(once) {
+      if (once._m_time_settings.length > 0) {
 	// m_time_settings.sort() with ( item.offset );
 	sort!((m_verbosity_setting a, m_verbosity_setting b)
-	      {return a.offset < b.offset;})(_once._m_time_settings);
+	      {return a.offset < b.offset;})(once._m_time_settings);
       }
-      return _once._m_time_settings.dup;
+      return once._m_time_settings.dup;
     }
   }
 
@@ -3004,7 +3019,7 @@ abstract class uvm_component: uvm_report_object, ParContext
       static string[] values;
       static bool first = true;
       uvm_cmdline_processor clp = uvm_cmdline_processor.get_inst();
-      uvm_root top = uvm_root.get();
+      uvm_root top = get_root();
 
       if(values.length == 0) {
 	uvm_cmdline_proc.get_arg_values("+uvm_set_verbosity=", values);
@@ -3283,7 +3298,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 private class uvm_config_object_wrapper
 {
   // pragma(msg, uvm_sync!uvm_config_object_wrapper);
-  mixin(uvm_sync!uvm_config_object_wrapper);
+  mixin uvm_sync;
   @uvm_private_sync private uvm_object _obj;
   @uvm_private_sync private bool _clone;
 }
@@ -3389,7 +3404,7 @@ void _uvm__auto_build(T, U, size_t I, N...)(T t, ref U u,
     }
   }
   else {
-    string name = t.tupleof[I].stringof[2..$]; // chomp "t."
+    string name = __traits(identifier, T.tupleof[I]);
     foreach(i; indices) {
       name ~= "[" ~ i.to!string ~ "]";
     }
@@ -3512,12 +3527,12 @@ void _uvm__auto_elab(T, U, size_t I, N...)(T t, ref U u,
     }
   }
   else {
-    // string name = t.tupleof[I].stringof[2..$]; // chomp "t."
+    // string name = __traits(identifier, T.tupleof[I]);
     // foreach(i; indices) {
     //   name ~= "[" ~ i.to!string ~ "]";
     // }
     // provide an ID to all the components that are not null
-    auto linfo = _esdl__get_parallelism!(I, T, U)(t, u);
+    auto linfo = _esdl__get_parallelism!(I, T)(t);
     _uvm__config_parallelism(u, linfo);
     if(u !is null) {
       u.set_id();
@@ -3533,6 +3548,10 @@ void _uvm__auto_elab(T, U, size_t I, N...)(T t, ref U u,
 void _uvm__config_parallelism(T)(T t, ref parallelize linfo)
   if(is(T : uvm_component) && is(T == class)) {
 
+    if(linfo.isUndefined) {
+      linfo = _esdl__get_parallelism(t);
+    }
+    
     ParConfig pconf;
     parallelize pinfo;
     assert(t !is null);
@@ -3542,17 +3561,17 @@ void _uvm__config_parallelism(T)(T t, ref parallelize linfo)
     }
 
     if(t.get_parent is null ||
-       pinfo._parallel == ParallelPolicy.NONE) {
+       pinfo._parallel == ParallelPolicy._UNDEFINED_) {
       // the parent had no parallel info
       // get it from RootEntity
-      pinfo = getRootEntity._esdl__getParInfo();
-      pconf = getRootEntity._esdl__getParConfig();
+      pinfo = Process.self().getParentEntity()._esdl__getParInfo();
+      pconf = Process.self().getParentEntity()._esdl__getParConfig();
     }
 
     parallelize par__info;
     ParConfig   par__conf;
     
-    if(linfo._parallel == ParallelPolicy.NONE) {
+    if(linfo._parallel == ParallelPolicy._UNDEFINED_) {
       // no parallelize attribute. take hier information
       if(pinfo._parallel == ParallelPolicy.SINGLE) {
 	par__info._parallel = ParallelPolicy.INHERIT;

@@ -36,13 +36,14 @@ public string uvm_object_utils_string()() {
 
 mixin template uvm_object_utils(T=void)
 {
+  import uvm.meta.meta;
   static if(is(T == void)) {
     alias typeof(this) U;
   }
   else {
     alias T U;
   }
-  mixin uvm_object_registry_mixin!(U, __MODULE__ ~ "." ~ U.stringof);
+  mixin uvm_object_registry_mixin!(U, qualifiedTypeName!U);
   mixin m_uvm_object_create_func!(U);
   mixin m_uvm_get_type_name_func!(U);
   mixin m_uvm_field_auto_utils!(U);
@@ -77,7 +78,8 @@ mixin template uvm_component_utils(T=void)
     alias T U;
   }
   static if(! is(U: uvm_root)) { // do not register uvm_roots with factory
-    mixin uvm_component_registry_mixin!(U, U.stringof);
+    import uvm.meta.meta;
+    mixin uvm_component_registry_mixin!(U, qualifiedTypeName!U);
   }
   mixin m_uvm_get_type_name_func!(U);
   mixin uvm_component_auto_build_mixin;
@@ -201,7 +203,8 @@ mixin template m_uvm_object_create_func(T) {
 // m_uvm_get_type_name_func
 // ----------------------
 mixin template m_uvm_get_type_name_func(T) {
-  enum string type_name = T.stringof;
+  import uvm.meta.meta;
+  enum string type_name =  qualifiedTypeName!T;
   override public string get_type_name () {
     return type_name;
   }
@@ -312,7 +315,7 @@ mixin template m_uvm_field_auto_utils(T)
     static if(I < t.tupleof.length) {
       enum int FLAGS = uvm_field_auto_get_flags!(t, I);
       alias E = typeof(t.tupleof[I]);
-      string name = prefix ~ t.tupleof[I].stringof[2..$];
+      string name = prefix ~ __traits(identifier, T.tupleof[I]);
       static if(FLAGS & UVM_READONLY) {
 	if(uvm_is_match(regx, name)) {
 	  uvm_report_warning("RDONLY",
@@ -382,20 +385,20 @@ mixin template m_uvm_field_auto_utils(T)
       alias typeof(lhs.tupleof[I]) U;
       static if(isBitVector!U) {
 	if(! lhs.tupleof[I].isLogicEqual(rhs.tupleof[I])) {
-	  comparer.compare_field(lhs.tupleof[I].stringof[4..$],
+	  comparer.compare_field(__traits(identifier, T.tupleof[I]),
 				 lhs.tupleof[I], rhs.tupleof[I]);
 	}
       }
       else // static if(isIntegral!U || isBoolean!U )
 	{
 	  if(lhs.tupleof[I] != rhs.tupleof[I]) {
-	    comparer.compare_field(lhs.tupleof[I].stringof[4..$],
+	    comparer.compare_field(__traits(identifier, T.tupleof[I]),
 				   lhs.tupleof[I], rhs.tupleof[I]);
 	  }
 	}
       // else {
       // 	static assert(false, "compare not implemented yet for: " ~
-      // 		      U.stringof);
+      // 		      qualifiedTypeName!U);
       // }
       if(comparer.result && (comparer.show_max <= comparer.result)) {
 	// shortcircuit
