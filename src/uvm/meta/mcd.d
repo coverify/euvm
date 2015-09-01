@@ -19,7 +19,7 @@
 //   permissions and limitations under the License.
 //------------------------------------------------------------------------------
 module uvm.meta.mcd;
-alias ulong MCD;
+alias size_t MCD;
 public import std.stdio;
 
 enum MCD STDOUT = 1;

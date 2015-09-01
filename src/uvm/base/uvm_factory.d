@@ -1086,7 +1086,7 @@ final class uvm_factory
 	vdisplay("  No instance or type overrides are registered with this factory");
       }
       else {
-	ulong max1,max2,max3;
+	size_t max1,max2,max3;
 	string dash = "---------------------------------------------------------------------------------------------------";
 	string space= "                                                                                                   ";
 
@@ -1262,7 +1262,7 @@ final class uvm_factory
 				  string full_inst_path) {
     synchronized(this) {
 
-      ulong    max1,max2,max3;
+      size_t    max1,max2,max3;
       string dash  = "---------------------------------------------------------"
 	"------------------------------------------";
       string space = "                                                         "

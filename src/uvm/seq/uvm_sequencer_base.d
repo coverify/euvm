@@ -812,7 +812,7 @@ class uvm_sequencer_base: uvm_component
 
   // task
   public void m_select_sequence() {
-    long selected_sequence;
+    ptrdiff_t selected_sequence;
     // Select a sequence
     do {
       wait_for_sequences();
