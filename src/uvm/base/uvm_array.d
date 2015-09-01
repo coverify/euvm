@@ -100,7 +100,7 @@ class uvm_array (T=int): uvm_object
   // If no item exists by that key, a new item is created with that key
   // and returned.
 
-  public T get (long index) {
+  public T get (ptrdiff_t index) {
     synchronized(this) {
       T default_value;
       if (index >= size() || index < 0) {
@@ -129,7 +129,7 @@ class uvm_array (T=int): uvm_object
   //
   // Inserts the item at the given ~index~ in the array.
 
-  public void insert (long index, T item) {
+  public void insert (ptrdiff_t index, T item) {
     synchronized(this) {
       if (index >= size() || index < 0) {
 	import uvm.base.uvm_globals;
@@ -152,7 +152,7 @@ class uvm_array (T=int): uvm_object
 
   // it is named delete in systemverilog version -- but D reserves
   // delete as a keyword
-  public void remove (long index=-1) {
+  public void remove (ptrdiff_t index=-1) {
     synchronized(this) {
       if (index >= size() || index < -1) {
 	uvm_report_warning("ARRAYDEL",
