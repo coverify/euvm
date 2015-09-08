@@ -385,8 +385,8 @@ public void uvm_wait_for_nba_region() {
     import esdl.base.core: Signal, wait;
 
     // These are not declared static in the SV version
-    static Signal!int nba;
-    static int next_nba;
+    Signal!int nba;
+    int next_nba;
 
     //If `included directly in a program block, can't use a non-blocking assign,
     //but it isn't needed since program blocks are in a seperate region.

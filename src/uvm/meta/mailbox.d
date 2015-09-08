@@ -257,7 +257,7 @@ class MailInbox(T): MailboxBase!T
   public this(size_t bound = 0) {
     synchronized(this) {
       super(bound);
-      _writeEvent.init("readEvent");
+      _writeEvent.init("writeEvent");
       _readEvent = new Semaphore;
     }
   }

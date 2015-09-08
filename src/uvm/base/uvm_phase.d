@@ -1182,7 +1182,7 @@ class uvm_phase: uvm_object
   // ------------------
 
   final public void m_print_successors() {
-    static string spaces = "                                                 ";
+    enum string spaces = "                                                 ";
     static int level;
     if(m_phase_type is UVM_PHASE_DOMAIN) {
       level = 0;

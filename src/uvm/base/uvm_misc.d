@@ -464,6 +464,10 @@ final class uvm_copy_map {
       _m_map.remove(v);
     }
   }
+  // ~this() {
+  //   import std.stdio;
+  //   writeln("******************* Destructor for uvm_copy_map");
+  // }
 }
 
 
@@ -692,7 +696,7 @@ public string uvm_vector_to_string(T)(T value,
   if(isBitVector!T || isIntegral!T || is(T == bool)) {
     static if(isIntegral!T)       _bvec!T val = value;
     else static if(is(T == bool)) Bit!1 val = value;
-      else                        alias value val;
+      else                        alias val = value;
 
     // sign extend & don't show radix for negative values
     if (radix is UVM_DEC && (cast(Bit!1) val[$-1]) is 1)
@@ -703,6 +707,7 @@ public string uvm_vector_to_string(T)(T value,
     case UVM_OCT:      return format("%0s%0o", radix_str, val);
     case UVM_UNSIGNED: return format("%0s%0d", radix_str, val);
     case UVM_STRING:   return format("%0s%0s", radix_str, val);
+    case UVM_ENUM:     return format("%0s%s (%s)",  radix_str, value, val);
       // SV UVM uses %0t for time
     case UVM_TIME:     return format("%0s%0d", radix_str, val);
     case UVM_DEC:      return format("%0s%0d", radix_str, val);

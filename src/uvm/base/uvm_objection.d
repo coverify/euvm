@@ -153,12 +153,8 @@ class uvm_objection: uvm_report_object
   @uvm_public_sync
     private bool _m_top_all_dropped;
 
-  static uvm_root _m_top = null;
   static protected uvm_root m_top() {
-    if(_m_top is null) {
-      _m_top = uvm_root.get();
-    }
-    return _m_top;
+    return uvm_root.get();
   }
 
 

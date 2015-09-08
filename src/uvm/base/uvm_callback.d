@@ -212,26 +212,21 @@ class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
   //The actual global object from the derivative class. Note that this is
   //just a reference to the object that is generated in the derived class.
   __gshared this_type[uvm_object] m_t_inst_pool;
-  static this_type _m_t_inst;
   // getter
   static this_type m_t_inst() {
-    if(_m_t_inst is null) {
-      uvm_root top = uvm_root.get();
-      synchronized(typeid(this_type)) {
-	if(top in m_t_inst_pool) {
-	  _m_t_inst = m_t_inst_pool[top];
-	}
-	else return null;
+    uvm_root top = uvm_root.get();
+    synchronized(typeid(this_type)) {
+      if(top in m_t_inst_pool) {
+	return m_t_inst_pool[top];
       }
+      else return null;
     }
-    return _m_t_inst;
   }
   // setter
   static void m_t_inst(this_type inst) {
-    _m_t_inst = inst;
     uvm_root top = uvm_root.get();
     synchronized(typeid(this_type)) {
-      m_t_inst_pool[top] = _m_t_inst;
+      m_t_inst_pool[top] = inst;
     }
   }
 
@@ -542,26 +537,21 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
 
   // Singleton instance is used for type checking
   __gshared this_type[uvm_object] _m_inst_pool;
-  static this_type _m_inst;
   // getter
   static this_type m_inst() {
-    if(_m_inst is null) {
-      uvm_root top = uvm_root.get();
-      synchronized(typeid(this_type)) {
-	if(top in _m_inst_pool) {
-	  _m_inst = _m_inst_pool[top];
-	}
-	else return null;
+    uvm_root top = uvm_root.get();
+    synchronized(typeid(this_type)) {
+      if(top in _m_inst_pool) {
+	return _m_inst_pool[top];
       }
+      else return null;
     }
-    return _m_inst;
   }
   // setter
   static void m_inst(this_type inst) {
-    _m_inst = inst;
     uvm_root top = uvm_root.get();
     synchronized(typeid(this_type)) {
-      _m_inst_pool[top] = _m_inst;
+      _m_inst_pool[top] = inst;
     }
   }
 

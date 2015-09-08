@@ -195,8 +195,8 @@ abstract class uvm_printer
       print_object_header(name, value, scope_separator);
 
       if(value !is null) {
-	if((_knobs.depth is -1 || (_knobs.depth > _m_scope.depth())) &&
-	   value.m_uvm_status_container.check_cycle(value)) {
+	if((_knobs.depth == -1 || (_knobs.depth > _m_scope.depth())) &&
+	   ! value.m_uvm_status_container.check_cycle(value)) {
 	  value.m_uvm_status_container.add_cycle(value);
 	  if(name == "" && value !is null) _m_scope.down(value.get_name());
 	  else                             _m_scope.down(name);
@@ -352,11 +352,11 @@ abstract class uvm_printer
   //
   // Prints a field having the given ~name~, ~type_name~, ~size~, and ~value~.
 
-  public void print_generic (string  name,
-			     string  type_name,
-			     size_t  size,
-			     string  value,
-			     char    scope_separator='.') {
+  public void print_generic (string     name,
+			     string     type_name,
+			     int        size,
+			     string     value,
+			     char       scope_separator='.') {
     synchronized(this) {
       // format
       import std.string: format;

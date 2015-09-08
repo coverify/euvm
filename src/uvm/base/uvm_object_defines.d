@@ -300,6 +300,24 @@ mixin template m_uvm_field_auto_utils(T)
       }
   }
 
+  void uvm_field_auto_all_fields(alias F, size_t I=0, T)(T t) {
+    static if(I < t.tupleof.length) {
+      F!(I)(t);
+      uvm_field_auto_all_fields!(F, I+1)(t);
+    }
+    else static if(is(T B == super) // && B.length > 0
+		   ) {
+	alias BASE = B[0];
+	static if(! (is(BASE == uvm_component) ||
+		     is(BASE == uvm_object) ||
+		     is(BASE == uvm_sequence_item) ||
+		     is(BASE == uvm_sequence_base))) {
+	  BASE t_ = t;
+	  uvm_field_auto_all_fields!(F, 0)(t_);
+	}
+      }
+  }
+
   override void uvm_field_auto_setint(string field_name,
 				      uvm_bitstream_t value) {
   }
@@ -361,6 +379,9 @@ mixin template m_uvm_field_auto_utils(T)
     enum int FLAGS = uvm_field_auto_get_flags!(lhs, I);
     if(FLAGS & UVM_COPY &&
        !(FLAGS & UVM_NOCOPY)) {
+      debug(UVM_UTILS) {
+	pragma(msg, "Copying : " ~ lhs.tupleof[I].stringof);
+      }
       lhs.tupleof[I] = rhs.tupleof[I];
     }
     return false;
@@ -406,6 +427,62 @@ mixin template m_uvm_field_auto_utils(T)
       }
     }
     return false;
+  }
+
+  // print
+  override void uvm_field_auto_sprint() {
+    uvm_field_auto_all_fields!uvm_field_auto_sprint_field(this);
+  }
+
+  // print the Ith field
+  void uvm_field_auto_sprint_field(size_t I=0, T)(T t) {
+    import std.traits: isIntegral;
+    enum int FLAGS = uvm_field_auto_get_flags!(t, I);
+    static if(FLAGS & UVM_PRINT &&
+	      !(FLAGS & UVM_NOPRINT)) {
+      debug(UVM_UTILS) {
+	pragma(msg, "Printing : " ~ t.tupleof[I].stringof);
+      }
+      enum string name = __traits(identifier, T.tupleof[I]);
+      auto value = t.tupleof[I];
+      auto printer = m_uvm_status_container.printer;
+      alias U=typeof(t.tupleof[I]);
+      static if(isBitVector!U ||
+		// is(U == cent) || is(U == ucent) ||
+		is(U == long) || is(U == ulong) ||
+		is(U == int) || is(U == uint)  ||
+		is(U == short) || is(U == ushort)  ||
+		is(U == byte) || is(U == ubyte)) {
+	printer.print_int(name, value,
+			  cast(uvm_radix_enum) (FLAGS & UVM_RADIX));
+      }
+      else static if(isIntegral!U) { // to cover enums
+	  printer.print_int(name, value, UVM_ENUM);
+	}
+      else static if(is(U: uvm_object)) {
+	  if((FLAGS & UVM_REFERENCE) != 0) {
+	    printer.print_object_header(name, value);
+	  }
+	  else {
+	    printer.print_object(name, value);
+	  }
+	}
+      else static if(is(U == string) || is(U == char[])) {
+	  printer.print_string(name, value);
+	}
+      // enum should be already handled as part of integral
+      else static if(isFloatingPoint!U) {
+	  printer.print_real(name, value);
+	}
+      else static if(is(U: EventObj)) {
+	  printer.print_generic(name, "event", -2, "");
+	}
+	else // static if(isIntegral!U || isBoolean!U )
+	  {
+	    import std.conv;
+	    printer.print_generic(name, U.stringof, -2, value.to!string);
+	  }
+    }
   }
 }
 

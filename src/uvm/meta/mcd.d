@@ -62,7 +62,7 @@ public void vdisplay(T...)(T args) {
 class MCDFile
 {
   import std.stdio;
-  static mcdPair[] files;
+  __gshared mcdPair[] files;
   static this()
   {
     files ~= mcdPair(stdout, STDOUT);

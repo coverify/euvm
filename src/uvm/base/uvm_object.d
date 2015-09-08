@@ -420,7 +420,8 @@ abstract class uvm_object: uvm_void
     // not at top-level, must be recursing into sub-object
     if(! printer.istop()) {
       m_uvm_status_container.printer = printer;
-      m_uvm_field_automation(null, UVM_PRINT, "");
+      // m_uvm_field_automation(null, UVM_PRINT, "");
+      uvm_field_auto_sprint();
       do_print(printer);
       return "";
     }
@@ -567,6 +568,7 @@ abstract class uvm_object: uvm_void
 
     recorder.inc_recording_depth();
     m_uvm_field_automation(null, UVM_RECORD, "");
+    // uvm_field_auto_record();
     do_record(recorder);
 
     recorder.dec_recording_depth();
@@ -629,16 +631,36 @@ abstract class uvm_object: uvm_void
 		       "no uvm_object_utils", UVM_NONE);
   }
   
+  void uvm_field_auto_sprint() {
+    uvm_report_warning("NOUTILS", "default uvm_field_auto_sprint --"
+		       "no uvm_object_utils", UVM_NONE);
+  }
+  
+  void uvm_field_auto_pack() {
+    uvm_report_warning("NOUTILS", "default uvm_field_auto_pack --"
+		       "no uvm_object_utils", UVM_NONE);
+  }
+  
+  void uvm_field_auto_unpack() {
+    uvm_report_warning("NOUTILS", "default uvm_field_auto_unpack --"
+		       "no uvm_object_utils", UVM_NONE);
+  }
+  
   void uvm_field_auto_compare(uvm_object rhs) {
     uvm_report_warning("NOUTILS", "default uvm_field_auto_compare --"
 		       "no uvm_object_utils", UVM_NONE);
   }
   
-  final public void copy (uvm_object rhs) {
+  final public void copy(uvm_object rhs) {
+    static uvm_copy_map copy_map = null;
+    if(copy_map is null) {
+      copy_map = new uvm_copy_map();
+    }
+    
     // Thread static
     static int depth;
     if(rhs !is null &&
-       uvm_global_copy_map.get(rhs) !is null) {
+       copy_map.get(rhs) !is null) {
       return;
     }
 
@@ -648,7 +670,7 @@ abstract class uvm_object: uvm_void
       return;
     }
 
-    uvm_global_copy_map.set(rhs, this);
+    copy_map.set(rhs, this);
     ++depth;
 
     // SV version -- not required for Vlang
@@ -660,7 +682,8 @@ abstract class uvm_object: uvm_void
 
     --depth;
     if(depth is 0) {
-      uvm_global_copy_map.clear();
+      copy_map = null;
+      // copy_map.clear(); // not sure what is the problem here FIXME TODO
     }
   }
 

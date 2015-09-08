@@ -382,7 +382,7 @@ final class uvm_run_phase: uvm_task_phase
     comp.run_phase(phase);
   }
 
-  static const string type_name = "uvm_run_phase";
+  enum string type_name = "uvm_run_phase";
   static public uvm_run_phase get() {
     return m_inst;
   }
