@@ -301,8 +301,12 @@ mixin template m_uvm_field_auto_utils(T)
   }
 
   void uvm_field_auto_all_fields(alias F, size_t I=0, T)(T t) {
+    import esdl.data.rand;
     static if(I < t.tupleof.length) {
-      F!(I)(t);
+      alias U=typeof(t.tupleof[I]);
+      static if(! is(U: _esdl__ConstraintBase)) {
+	F!(I)(t);
+      }
       uvm_field_auto_all_fields!(F, I+1)(t);
     }
     else static if(is(T B == super) // && B.length > 0
