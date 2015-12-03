@@ -127,6 +127,11 @@ class uvm_root_entity_base: Entity
 {
   this() {}
   
+  // This is a thread specific variable
+  // A simulation task would know which UVM ROOT it is associated
+  // with, but a non-simulation thread could need to associate itself
+  // with a uvm_root instance -- this static variable would decide
+  // which uvm_root the thread is currently associated with
   public static uvm_root_entity_base _uvm_root_entity;
   // The UVM singleton variables are now encapsulated as part of _once
   // mechanism.
@@ -140,6 +145,9 @@ class uvm_root_entity_base: Entity
   // The randomization seed passed from the top.
   // alias get_uvm_root this;
 
+  // This method would associate a free running thread to this UVM
+  // ROOT instance -- this function can be called multiple times
+  // within the same thread in order to switch context
   public uvm_root_entity_base set_thread_context() {
     auto proc = Process.self();
     if(proc !is null) {
