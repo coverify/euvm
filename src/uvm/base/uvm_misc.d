@@ -456,7 +456,10 @@ final class uvm_copy_map {
   }
   public void clear() {
     synchronized(this) {
-      _m_map = null;		// _m_map.delete() in SV
+      foreach(key, val; _m_map) {
+	_m_map.remove(key);
+      }
+      // _m_map = null;		// _m_map.delete() in SV
     }
   }
   public void remove(uvm_object v) { // delete in D is a keyword

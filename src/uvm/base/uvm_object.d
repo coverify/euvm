@@ -682,8 +682,8 @@ abstract class uvm_object: uvm_void
 
     --depth;
     if(depth is 0) {
-      copy_map = null;
-      // copy_map.clear(); // not sure what is the problem here FIXME TODO
+      // copy_map = null;
+      copy_map.clear();
     }
   }
 
