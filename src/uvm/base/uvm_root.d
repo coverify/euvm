@@ -140,7 +140,7 @@ class uvm_root_entity_base: Entity
   // The randomization seed passed from the top.
   // alias get_uvm_root this;
 
-  public uvm_root_entity_base uvm_set_context() {
+  public uvm_root_entity_base uvm_set_thread_context() {
     auto proc = Process.self();
     if(proc !is null) {
       auto _entity = cast(uvm_root_entity_base) proc.getParentEntity();
@@ -271,9 +271,9 @@ class uvm_root: uvm_component
     }
   }
   
-  public uvm_root_entity_base uvm_set_context() {
+  override public uvm_root_entity_base uvm_set_thread_context() {
     assert(_uvm_root_entity !is null);
-    return _uvm_root_entity.uvm_set_context();
+    return _uvm_root_entity.uvm_set_thread_context();
   }
 
   // in SV this is part of the constructor. Here we have separated it

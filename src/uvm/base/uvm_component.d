@@ -2708,8 +2708,22 @@ abstract class uvm_component: uvm_report_object, ParContext
       return cast(uvm_root) this;
     }
     else {
-      return uvm_top();
+      uvm_root root;
+      uvm_component parent = get_parent();
+      if(parent !is null) {
+	root = get_parent().get_root();
+	return root;
+      }
+      else {
+	// the call is made during the build and therefor we should
+	// use thread specific information to get root
+	return uvm_top();
+      }
     }
+  }
+
+  public uvm_root_entity_base uvm_set_thread_context() {
+    return get_root().uvm_set_thread_context();
   }
 
   // m_set_full_name
