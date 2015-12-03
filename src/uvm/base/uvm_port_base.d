@@ -517,12 +517,12 @@ abstract class uvm_port_base(IF = uvm_void): IF
 	return;
       }
 
-      if (provider is this) {
-	m_comp.uvm_report_error(s_connection_error_id,
-				"Cannot connect a port instance to itself",
-				UVM_NONE);
-	return;
-      }
+      // if (provider is this) {
+      // 	m_comp.uvm_report_error(s_connection_error_id,
+      // 				"Cannot connect a port instance to itself",
+      // 				UVM_NONE);
+      // 	return;
+      // }
 
       if (provider is this) {
 	m_comp.uvm_report_error(s_connection_error_id,
