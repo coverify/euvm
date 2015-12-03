@@ -2722,8 +2722,8 @@ abstract class uvm_component: uvm_report_object, ParContext
     }
   }
 
-  public uvm_root_entity_base uvm_set_thread_context() {
-    return get_root().uvm_set_thread_context();
+  public uvm_root_entity_base set_thread_context() {
+    return get_root().set_thread_context();
   }
 
   // m_set_full_name
