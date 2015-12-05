@@ -112,7 +112,7 @@ public uvm_root_entity_base uvm_root_entity() {
       return _entity;
     }
   }
-  auto _entity = uvm_root_entity_base._uvm_root_entity;
+  auto _entity = cast(uvm_root_entity_base) EntityIntf.getThreadContext();
   assert(_entity !is null);
   return _entity;
 }
@@ -127,12 +127,6 @@ class uvm_root_entity_base: Entity
 {
   this() {}
   
-  // This is a thread specific variable
-  // A simulation task would know which UVM ROOT it is associated
-  // with, but a non-simulation thread could need to associate itself
-  // with a uvm_root instance -- this static variable would decide
-  // which uvm_root the thread is currently associated with
-  public static uvm_root_entity_base _uvm_root_entity;
   // The UVM singleton variables are now encapsulated as part of _once
   // mechanism.
   private uvm_root_once _root_once;
@@ -148,14 +142,13 @@ class uvm_root_entity_base: Entity
   // This method would associate a free running thread to this UVM
   // ROOT instance -- this function can be called multiple times
   // within the same thread in order to switch context
-  public uvm_root_entity_base set_thread_context() {
+  public void set_thread_context() {
     auto proc = Process.self();
     if(proc !is null) {
       auto _entity = cast(uvm_root_entity_base) proc.getParentEntity();
       assert(_entity is null, "Default context already set to: " ~ _entity.getFullName());
     }
-    _uvm_root_entity = this;
-    return this;
+    this.setThreadContext();
   }
 }
 
@@ -279,9 +272,9 @@ class uvm_root: uvm_component
     }
   }
   
-  override public uvm_root_entity_base set_thread_context() {
+  override public void set_thread_context() {
     assert(_uvm_root_entity !is null);
-    return _uvm_root_entity.set_thread_context();
+    _uvm_root_entity.set_thread_context();
   }
 
   // in SV this is part of the constructor. Here we have separated it
