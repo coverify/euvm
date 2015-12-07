@@ -1076,7 +1076,7 @@ class uvm_root: uvm_component
     int verbosity = UVM_MEDIUM;
 
     // Retrieve the verbosities provided on the command line.
-    size_t verb_count = clp.get_arg_values(`\+UVM_VERBOSITY=`, verb_settings);
+    size_t verb_count = clp.get_arg_values(`+UVM_VERBOSITY=`, verb_settings);
 
     // If none provided, provide message about the default being used.
     //if(verb_count is 0)
