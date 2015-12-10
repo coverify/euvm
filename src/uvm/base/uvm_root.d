@@ -165,6 +165,7 @@ class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
 	_root_once = new uvm_root_once(this);
 	_uvm_top = new T();
 	_uvm_top.init_root(this);
+	_uvm_top.init_report();
 	resetThreadContext();
       }
     }
@@ -190,27 +191,13 @@ class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
 
     @uvm_private_sync bool _uvmRootInitialized;
 
-    // Moved to constructor
-    // final public void initUVM() {
-    //   is_root_thread = true;
-    //   synchronized(this) {
-    //	_root_once = new uvm_root_once!(T)(_uvm_top, _seed);
-    //	uvm_top.init_report();
-    //	uvm_top.init_domains();
-    //	_uvmRootInitialized = true;
-    //	// _uvmRootInitEvent.notify();
-    //	_uvmRootInitSemaphore.notify();
-
-    //   }
-    // }
-
-    // public Task!(initUVM, -1) _initUVM__;
-
     public void initial() {
       lockStage();
       fileCaveat();
       synchronized(this) {
-	_uvm_top.init_report();
+	// init_domains can not be moved to the constructor since it
+	// results in notification of some events, which can only
+	// happen once the simulation starts
 	_uvm_top.init_domains();
 	_uvmRootInitialized = true;
 	_uvmRootInitSemaphore.notify();
