@@ -101,20 +101,19 @@ import core.sync.semaphore: Semaphore;
 
 // provide read only access to the _uvm_top static variable
 public uvm_root uvm_top() {
-  return uvm_root_entity().get_root();
+  auto root_entity = uvm_root_entity();
+  if(root_entity is null) return null;
+  return root_entity.get_root();
 }
 
 public uvm_root_entity_base uvm_root_entity() {
-  auto proc = Process.self();
-  if(proc !is null) {
-    auto _entity = cast(uvm_root_entity_base) proc.getParentEntity();
-    if(_entity !is null) {
-      return _entity;
-    }
+  auto context = EntityIntf.getContextEntity();
+  if(context !is null) {
+    auto _entity = cast(uvm_root_entity_base) context;
+    assert(_entity !is null);
+    return _entity;
   }
-  auto _entity = cast(uvm_root_entity_base) EntityIntf.getThreadContext();
-  assert(_entity !is null);
-  return _entity;
+  return null;
 }
 
 
@@ -132,6 +131,9 @@ class uvm_root_entity_base: Entity
   private uvm_root_once _root_once;
   public uvm_root_once root_once() {
     return _root_once;
+  }
+  private void set_root_once(uvm_root_once once) {
+    _root_once = once;
   }
 
   abstract public uvm_root get_uvm_root();
@@ -158,6 +160,10 @@ class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
       synchronized(this) {
 	super();
 	_uvmRootInitSemaphore = new Semaphore(); // count 0
+	// uvm_once has some events etc that need to know the context for init
+	set_thread_context();
+	_root_once = new uvm_root_once(this);
+	resetThreadContext();
       }
     }
 
@@ -203,9 +209,6 @@ class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
       fileCaveat();
       synchronized(this) {
 	T _top;
-	_root_once = new uvm_root_once();
-	_root_once.initialize(_seed);
-
 	_uvm_top = new T();
 	_uvm_top.set_uvm_root_entity(this);
 	_uvm_top.init_report();
@@ -229,9 +232,6 @@ class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
     // The uvm_root instance corresponding to this RootEntity.
     private T _uvm_top;
 
-    // The randomization seed passed from the top.
-    private uint _seed;
-
     public void set_seed(uint seed) {
       synchronized(this) {
 	if(_uvm_top !is null) {
@@ -239,7 +239,7 @@ class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
 			 "Method set_seed can not be called after the simulation has started",
 			 UVM_NONE);
 	}
-	_seed = seed;
+	root_once().set_seed(seed);
       }
     }
 }
@@ -632,7 +632,7 @@ class uvm_root: uvm_component
     }
     m_uvm_timeout_overridable = overridable;
     synchronized(this) {
-      m_phase_timeout = SimTime(Process.self().getParentEntity(), timeout);
+      m_phase_timeout = SimTime(EntityIntf.getContextEntity(), timeout);
     }
   }
 
@@ -1290,8 +1290,12 @@ class uvm_root_once
   uvm_report_phase.uvm_once _uvm_report_phase_once;
   uvm_final_phase.uvm_once _uvm_final_phase_once;
   
-  void initialize(uint seed) {
+  this(uvm_root_entity_base root_entity) {
     synchronized(this) {
+      root_entity.set_root_once(this);
+      import std.random;
+      auto seed = uniform!int;
+      // writeln("UVM default seed initialized to: ", seed);
       // import std.stdio;
       _uvm_sequencer_base_once = new uvm_sequencer_base.uvm_once();
       // uvm_sequencer_base._once = _uvm_sequencer_base_once;
@@ -1438,6 +1442,9 @@ class uvm_root_once
     }
   }
 
+  void set_seed(int seed) {
+    _uvm_seed_map_once.set_seed(seed);
+  }
 }
 
 

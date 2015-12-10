@@ -294,6 +294,7 @@ class uvm_wrap_obj(T) {
   }
 }
 
+enum uvm_none_sync;		// no wrapper
 enum uvm_private_sync;
 enum uvm_public_sync;
 enum uvm_protected_sync;
@@ -307,6 +308,9 @@ public template uvm_sync_access(size_t I=0, A...) {
   static if(I == A.length) {
     enum string uvm_sync_access = "";
   }
+  else static if(is(A[I] == uvm_none_sync)) {
+      enum string uvm_sync_access = "none";
+    }
   else static if(is(A[I] == uvm_private_sync)) {
       enum string uvm_sync_access = "private";
     }
@@ -343,7 +347,9 @@ public template uvm_sync(T, string U="this", size_t ITER=0) {
     }
     else {
       enum string uvm_sync =
-	"static if(! __traits(isVirtualMethod, " ~ U ~ "." ~ mem ~ ")) {
+	"static if(! __traits(isVirtualMethod, " ~ U ~ "." ~ mem ~ ") &&
+                  uvm_sync_access!(0, __traits(getAttributes, "
+	~ U ~ "." ~ mem ~ ")) != \"none\") {
 	  mixin(uvm_sync!(uvm_sync_access!(0, __traits(getAttributes, "
 	~ U ~ "." ~ mem ~ ")),  \"" ~ mem ~ "\", \"" ~ U ~ "\"));
         } " ~
@@ -417,9 +423,13 @@ return root.root_once._" ~ U.stringof ~ "_once;
     }
     else {
       enum string uvm_once_sync = uvm_once_sync!(T, U, ITER+1) ~
-	"static private ref " ~ " auto " ~ " " ~ mem ~ "() {
+	"static if(uvm_sync_access!(0, __traits(getAttributes, once."
+	~ mem ~ "))
+		   != \"none\") {
+static private ref " ~ " auto " ~ " " ~ mem ~ "() {
 	 return once." ~ mem ~ ";
        }
+}
  ";
     }
   }

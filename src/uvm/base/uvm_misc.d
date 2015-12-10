@@ -503,6 +503,16 @@ final class uvm_seed_map {
 	_m_global_random_seed = seed;
       }
     }
+
+    // Call this function only from uvm_root_entity.set_seed
+    @uvm_none_sync
+    void set_seed(uint seed) {
+      import uvm.base.uvm_root: uvm_top;
+      import uvm.base.uvm_globals: uvm_report_fatal;
+      synchronized(this) {
+	_m_global_random_seed = seed;
+      }
+    }
   }
 
   mixin(uvm_once_sync!(uvm_once, typeof(this)));
