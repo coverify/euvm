@@ -163,6 +163,8 @@ class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
 	// uvm_once has some events etc that need to know the context for init
 	set_thread_context();
 	_root_once = new uvm_root_once(this);
+	_uvm_top = new T();
+	_uvm_top.init_root(this);
 	resetThreadContext();
       }
     }
@@ -172,7 +174,7 @@ class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
     }
 
     override public T get_uvm_root() {
-      if(_uvmRootInit is false) {
+      if(_uvmRootInitialized is false) {
 	// _uvmRootInitEvent.wait();
 	_uvmRootInitSemaphore.wait();
 	_uvmRootInitSemaphore.notify();
@@ -186,7 +188,7 @@ class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
     // Event _uvmRootInitEvent;
     Semaphore _uvmRootInitSemaphore;
 
-    @uvm_private_sync bool _uvmRootInit;
+    @uvm_private_sync bool _uvmRootInitialized;
 
     // Moved to constructor
     // final public void initUVM() {
@@ -195,7 +197,7 @@ class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
     //	_root_once = new uvm_root_once!(T)(_uvm_top, _seed);
     //	uvm_top.init_report();
     //	uvm_top.init_domains();
-    //	_uvmRootInit = true;
+    //	_uvmRootInitialized = true;
     //	// _uvmRootInitEvent.notify();
     //	_uvmRootInitSemaphore.notify();
 
@@ -208,12 +210,9 @@ class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
       lockStage();
       fileCaveat();
       synchronized(this) {
-	T _top;
-	_uvm_top = new T();
-	_uvm_top.set_uvm_root_entity(this);
 	_uvm_top.init_report();
 	_uvm_top.init_domains();
-	_uvmRootInit = true;
+	_uvmRootInitialized = true;
 	_uvmRootInitSemaphore.notify();
       }
       _uvm_top.initial();
@@ -234,7 +233,7 @@ class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
 
     public void set_seed(uint seed) {
       synchronized(this) {
-	if(_uvm_top !is null) {
+	if(_uvmRootInitialized) {
 	uvm_report_fatal("SEED",
 			 "Method set_seed can not be called after the simulation has started",
 			 UVM_NONE);
@@ -252,8 +251,6 @@ class uvm_root: uvm_component
     synchronized(this) {
       // super("__top__", null);
       super();
-      _m_phase_timeout = new WithEvent!SimTime;
-      _m_phase_all_done = new WithEvent!bool;
       _uvmElabDoneSemaphore = new Semaphore(); // count 0
     }
   }
@@ -266,9 +263,11 @@ class uvm_root: uvm_component
     return true;
   }
 
-  void set_uvm_root_entity(uvm_root_entity_base entity) {
+  void init_root(uvm_root_entity_base entity) {
     synchronized(this) {
       _uvm_root_entity = entity;
+      _m_phase_timeout = new WithEvent!SimTime(entity);
+      _m_phase_all_done = new WithEvent!bool(entity);
     }
   }
   
