@@ -97,7 +97,7 @@ version (UVM_NO_DEPRECATED) { }
 
    public void set_global_stop_timeout(Time timeout) {
      uvm_test_done_objection tdo = uvm_test_done_objection.get();
-     tdo.stop_timeout = SimTime(Process.self().getParentEntity(), timeout);
+     tdo.stop_timeout = SimTime(EntityIntf.getContextEntity(), timeout);
    }
 
    public void set_global_stop_timeout(SimTime timeout) {
