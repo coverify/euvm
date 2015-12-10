@@ -451,12 +451,7 @@ mixin template m_uvm_field_auto_utils(T)
       auto value = t.tupleof[I];
       auto printer = m_uvm_status_container.printer;
       alias U=typeof(t.tupleof[I]);
-      static if(isBitVector!U ||
-		// is(U == cent) || is(U == ucent) ||
-		is(U == long) || is(U == ulong) ||
-		is(U == int) || is(U == uint)  ||
-		is(U == short) || is(U == ushort)  ||
-		is(U == byte) || is(U == ubyte)) {
+      static if(isBitVector!U || isIntegral!U) {
 	printer.print_int(name, value,
 			  cast(uvm_radix_enum) (FLAGS & UVM_RADIX));
       }
