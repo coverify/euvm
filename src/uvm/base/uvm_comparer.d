@@ -621,14 +621,14 @@ class uvm_comparer
 
   // effectively immutable -- make sure that the external world
   // does not get an lvalue
-  @uvm_immutable_sync private uvm_copy_map _compare_map;	   // mapping of rhs to lhs objects
+  @uvm_immutable_sync private uvm_compare_map _compare_map;	   // mapping of rhs to lhs objects
 
   // This variable is set by an external actor (in uvm_object)
   @uvm_public_sync private uvm_scope_stack _scope_stack;
 
   public this() {
     synchronized(this) {
-      _compare_map = new uvm_copy_map();
+      _compare_map = new uvm_compare_map();
       _scope_stack = new uvm_scope_stack();
     }
   }

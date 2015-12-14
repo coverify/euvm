@@ -40,6 +40,7 @@ import std.string: format;
 import esdl.data.bvec;
 import esdl.data.rand;
 // import uvm.base.uvm_object_globals;
+import std.algorithm: find, canFind;
 
 interface uvm_void_if { }
 abstract class uvm_void: uvm_void_if {
@@ -414,7 +415,6 @@ final class uvm_status_container {
       }
       else {
 	// now check if we have already been in this scope before
-	import std.algorithm;
 	auto m = find(_m_uvm_cycle_scopes, scope_stack);
 	// uvm_object m[] = m_uvm_cycle_scopes.find_first(item) with (item is scope_stack);
 	if(m.length !is 0) {
@@ -438,7 +438,34 @@ final class uvm_status_container {
 // the correct lhs object can be bound to it.
 //------------------------------------------------------------------------------
 
-final class uvm_copy_map {
+struct uvm_copy_map {
+  import uvm.base.uvm_object;
+  private uvm_object[] _m_map;
+  public void set(uvm_object key) {
+    if(! canFind!("a is b")(_m_map, key)) _m_map ~= key;
+  }
+  public bool get(uvm_object key) {
+    if(canFind!("a is b")(_m_map, key)) return true;
+    return false;
+  }
+  public void clear() {
+    // foreach(key, val; _m_map) {
+    // 	_m_map.remove(key);
+    // }
+    _m_map.length = 0;		// _m_map.delete() in SV
+  }
+  // public void remove(uvm_object v) { // delete in D is a keyword
+  //   synchronized(this) {
+  //     _m_map.remove(v);
+  //   }
+  // }
+  // ~this() {
+  //   import std.stdio;
+  //   writeln("******************* Destructor for uvm_copy_map");
+  // }
+}
+
+final class uvm_compare_map {
   import uvm.base.uvm_object;
   private uvm_object[uvm_object] _m_map;
   public void set(uvm_object key, uvm_object obj) {
@@ -456,10 +483,10 @@ final class uvm_copy_map {
   }
   public void clear() {
     synchronized(this) {
-      foreach(key, val; _m_map) {
-	_m_map.remove(key);
-      }
-      // _m_map = null;		// _m_map.delete() in SV
+      // foreach(key, val; _m_map) {
+      // 	_m_map.remove(key);
+      // }
+      _m_map = null;		// _m_map.delete() in SV
     }
   }
   public void remove(uvm_object v) { // delete in D is a keyword

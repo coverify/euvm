@@ -652,15 +652,16 @@ abstract class uvm_object: uvm_void
   }
   
   final public void copy(uvm_object rhs) {
-    static uvm_copy_map copy_map = null;
-    if(copy_map is null) {
-      copy_map = new uvm_copy_map();
-    }
+    static uvm_copy_map copy_map; //  = null;
+    // if(copy_map is null) {
+    //   copy_map = new uvm_copy_map();
+    // }
     
     // Thread static
     static int depth;
     if(rhs !is null &&
-       copy_map.get(rhs) !is null) {
+       // copy_map.get(rhs) !is null) {
+       copy_map.get(rhs) is true) {
       return;
     }
 
@@ -670,7 +671,8 @@ abstract class uvm_object: uvm_void
       return;
     }
 
-    copy_map.set(rhs, this);
+    // copy_map.set(rhs, this);
+    copy_map.set(rhs);
     ++depth;
 
     // SV version -- not required for Vlang
@@ -1301,14 +1303,14 @@ abstract class uvm_object: uvm_void
 
 
 
-private uvm_copy_map uvm_global_copy_map() {
-  // This static variable is required to be thread specific
-  // No need to share this variable
-  static uvm_copy_map copy_map = null;
+// private uvm_copy_map uvm_global_copy_map() {
+//   // This static variable is required to be thread specific
+//   // No need to share this variable
+//   static uvm_copy_map copy_map = null;
 
-  if (copy_map is null) {
-    copy_map = new uvm_copy_map();
-  }
+//   if (copy_map is null) {
+//     copy_map = new uvm_copy_map();
+//   }
 
-  return copy_map;
-}
+//   return copy_map;
+// }
