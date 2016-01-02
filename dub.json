@@ -1,0 +1,36 @@
+﻿{
+    "name": "vlanguvm",
+    "description": "UVM Port for Vlang",
+    "license": "Apache 2.0",
+    "copyright": "Copyright © 2012-2015 Coverify Systems Technology",
+    "authors": [
+	"Puneet Goel"
+    ],
+    "dependencies": {
+	"vlang": "*"
+    },
+    "targetPath": "lib",
+    "configurations": [
+	{
+	    "name": "vlanguvmdynamiclib",
+	    "targetType": "dynamicLibrary",
+	    "dflags": ["-fPIC"],
+	    "excludedSourceFiles": ["source/app.d"]
+	},
+	{
+	    "name": "vlanguvmstaticlib",
+	    "targetType": "staticLibrary",
+	    "excludedSourceFiles": ["source/app.d"]
+	},
+	{
+	    "name": "vlanguvmsourcelib",
+	    "targetType": "sourceLibrary",
+	    "excludedSourceFiles": ["source/app.d"]
+	}
+    ],
+    "excludedSourceFiles": [
+	"src/uvm/reg/*",
+	"src/uvm/tlm2/*",
+	"src/uvm/vpi/uvm_hdl.d"
+    ]
+}
