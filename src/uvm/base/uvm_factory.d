@@ -673,14 +673,17 @@ final class uvm_factory
 			       "'.",
 			       UVM_NONE);
 	  }
-	  auto uobj = cast(uvm_object) obj;
-	  if(uobj is null) {
-	    uvm_report_warning("BDTYP", "Object.factory created an object but could cast it to uvm_object type '" ~
-			       requested_type_name ~
-			       "'.",
-			       UVM_NONE);
+	  else {
+	    auto uobj = cast(uvm_object) obj;
+	    if(uobj is null) {
+	      uvm_report_warning("BDTYP", "Object.factory created an object but could not cast it to uvm_object type '" ~
+				 requested_type_name ~
+				 "'.",
+				 UVM_NONE);
+	    }
+	    uobj.set_name(name);
+	    return uobj;
 	  }
-	  return uobj;
 	}
 	wrapper = _m_type_names[requested_type_name];
       }
@@ -774,7 +777,7 @@ final class uvm_factory
 	  }
 	  auto ucomp = cast(uvm_component) comp;
 	  if(ucomp is null) {
-	    uvm_report_warning("BDTYP", "Object.factory created an object but could cast it to uvm_component type '" ~
+	    uvm_report_warning("BDTYP", "Object.factory created an object but could not cast it to uvm_component type '" ~
 			       requested_type_name ~
 			       "'.",
 			       UVM_NONE);

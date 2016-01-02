@@ -79,6 +79,7 @@ import uvm.base.uvm_report_handler;
 import uvm.base.uvm_report_object;
 import uvm.base.uvm_report_server;
 import uvm.base.uvm_domain;
+import uvm.base.uvm_object_defines;
 
 public import uvm.meta.misc;
 import uvm.meta.meta;
@@ -232,6 +233,10 @@ class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
 
 class uvm_root: uvm_component
 {
+  // adding the mixin here results in gotchas if the user does not add
+  // the mixin in the derived classes
+  // mixin uvm_component_utils;
+  
   mixin uvm_sync;
 
   this() {
@@ -243,7 +248,7 @@ class uvm_root: uvm_component
   }
 
   // SV implementation makes this a part of the run_test function
-  uvm_component uvm_test_top;
+  @UVM_NO_AUTO uvm_component uvm_test_top;
   uvm_root_entity_base _uvm_root_entity;
   
   override bool is_root() {

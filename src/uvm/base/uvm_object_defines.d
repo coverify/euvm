@@ -30,6 +30,24 @@ import uvm.seq.uvm_sequence_item: uvm_sequence_item;
 import uvm.seq.uvm_sequence_base: uvm_sequence_base;
 import uvm.base.uvm_object_globals;
 
+template HasDefaultConstructor(T) {
+  enum HasDefaultConstructor =
+    HasDefaultConstructor!(__traits(getOverloads, T, "__ctor"));
+}
+
+template HasDefaultConstructor(F...) {
+  import std.traits: Parameters;
+  static if(F.length == 0) {
+    enum HasDefaultConstructor = false;
+  }
+  else static if((Parameters!(F[0])).length == 0) {
+    enum HasDefaultConstructor = true;
+  }
+  else {
+    enum HasDefaultConstructor = HasDefaultConstructor!(F[1..$]);
+  }
+}
+    
 public string uvm_object_utils_string()() {
   return "mixin uvm_object_utils!(typeof(this));";
 }
@@ -49,6 +67,11 @@ mixin template uvm_object_utils(T=void)
   mixin m_uvm_field_auto_utils!(U);
   mixin Randomization;
   // `uvm_field_utils_begin(U)
+
+  // Add a defaultConstructor for Object.factory to work
+  static if(! HasDefaultConstructor!U) {
+    this() {this("");}
+  }
 }
 
 
@@ -84,6 +107,13 @@ mixin template uvm_component_utils(T=void)
   mixin m_uvm_get_type_name_func!(U);
   mixin uvm_component_auto_build_mixin;
   mixin uvm_component_auto_elab_mixin;
+
+  // `uvm_field_utils_begin(U)
+
+  // Add a defaultConstructor for Object.factory to work
+  static if(! HasDefaultConstructor!U) {
+    this() {this("", null);}
+  }
 }
 
 mixin template uvm_component_auto_build_mixin()

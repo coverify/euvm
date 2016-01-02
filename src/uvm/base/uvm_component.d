@@ -575,7 +575,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 
   public void _uvm__auto_build() {
     uvm_fatal("COMPUTILS", "Mixin uvm_component_utils missing for: " ~
-		get_type_name());
+	      get_type_name());
   }
 
   public void _uvm__auto_elab() {}
@@ -3422,19 +3422,20 @@ void _uvm__auto_build(T, U, size_t I, N...)(T t, ref U u,
     foreach(i; indices) {
       name ~= "[" ~ i.to!string ~ "]";
     }
-    if(u is null &&
-       (! isAbstract) &&  // class is abstract
-       (! noAutoAttr) &&  // make sure that UVM_NO_AUTO is not present
-       (is_active ||	  // build everything if the agent is active
-	(! isActiveAttr))) { // build the element if not and active element
-      static if(is(U: uvm_component)) {
-	u = U.type_id.create(name, t);
-      }
-      else if(is(U: uvm_port_base!IF, IF)) {
-	u = new U(name, t);
-      }
-      else {
-	static assert("Support only for uvm_component and uvm_port_base");
+    static if((! isAbstract) &&  // class is abstract
+	      (! noAutoAttr)) {
+      if(u is null &&  // make sure that UVM_NO_AUTO is not present
+	 (is_active ||	  // build everything if the agent is active
+	  (! isActiveAttr))) { // build the element if not and active element
+	static if(is(U: uvm_component)) {
+	  u = U.type_id.create(name, t);
+	}
+	else if(is(U: uvm_port_base!IF, IF)) {
+	  u = new U(name, t);
+	}
+	else {
+	  static assert("Support only for uvm_component and uvm_port_base");
+	}
       }
     }
     // provide an ID to all the components that are not null
@@ -3570,7 +3571,7 @@ void _uvm__config_parallelism(T)(T t, ref parallelize linfo)
     parallelize pinfo;
     assert(t !is null);
     if(t.get_parent !is null) {
-      pconf = t.get_parent._esdl__getParConfig;
+      pconf = t.get_parent.getParConfig;
       pinfo = t.get_parent._par__info;
     }
 
@@ -3579,7 +3580,7 @@ void _uvm__config_parallelism(T)(T t, ref parallelize linfo)
       // the parent had no parallel info
       // get it from RootEntity
       pinfo = Process.self().getParentEntity()._esdl__getParInfo();
-      pconf = Process.self().getParentEntity()._esdl__getParConfig();
+      pconf = Process.self().getParentEntity().getParConfig();
     }
 
     parallelize par__info;

@@ -24,63 +24,70 @@
 module uvm.vpi.uvm_svcmd_vpi;
 
 
-version(COSIM_VERILOG) {
-  import esdl.intf.vpi;
-  import std.conv;
+import esdl.intf.vpi;
+import esdl.base.core: getRootEntity;
+import std.conv;
 
-  public string[][] vpi_get_args() {
-    s_vpi_vlog_info info;
-    string[] argv;
-    string[][] argvs;
+public string[][] vpi_get_args() {
+  s_vpi_vlog_info info;
+  string[] argv;
+  string[][] argvs;
 
-    vpi_get_vlog_info(&info);
+  bool vpiUsable = cast(bool) vpi_get_vlog_info(&info);
 
-    auto vlogargv = info.argv;
-    auto vlogargc = info.argc;
+  auto vlogargv = info.argv;
+  auto vlogargc = info.argc;
 
+  // use the vlang commandline arguments if we are not using Verilog
+  // Note that command line arguments have to be passed at the time of
+  // RootEntity elaboration
+  string[] vlangargv = getRootEntity().getArgv();
+
+  uint argc;
+
+  if(vpiUsable) {
+    argc = vlogargc;
     if(vlogargv is null) return argvs;
+  }
+  else {
+    argc = cast(uint) vlangargv.length;
+  }
 
-    for (size_t i=0; i != vlogargc; ++i) {
+  
+  
+  for (size_t i=0; i != argc; ++i) {
+
+    string arg;
+    if(vpiUsable) {
       char* vlogarg = *(vlogargv+i);
-      string arg;
       arg = (vlogarg++).to!string;
-      if(arg == "-f" || arg == "-F") {
-	argvs ~= argv;
-	argv.length = 0;
-      }
-      else {
-	argv ~= arg;
-      }
     }
-    argvs ~= argv;
-    return argvs;
+    else {
+      arg = vlangargv[i];
+    }
+    
+    if(arg == "-f" || arg == "-F") {
+      argvs ~= argv;
+      argv.length = 0;
+    }
+    else {
+      argv ~= arg;
+    }
   }
-
-  public string vpi_get_tool_name() {
-    s_vpi_vlog_info info;
-    vpi_get_vlog_info(&info);
-    return info.product.to!string;
-  }
-
-  public string vpi_get_tool_version() {
-    s_vpi_vlog_info info;
-    vpi_get_vlog_info(&info);
-    return info.product_version.to!string;
-  }
+  argvs ~= argv;
+  return argvs;
 }
 
- else {
-   public string[][] vpi_get_args() {
-     return null;
-   }
+public string vpi_get_tool_name() {
+  s_vpi_vlog_info info;
+  vpi_get_vlog_info(&info);
+  return info.product.to!string;
+}
 
-   public string vpi_get_tool_name() {
-     return "?";
-   }
-
-   public string vpi_get_tool_version() {
-     return "?";
-   }
- }
+public string vpi_get_tool_version() {
+  s_vpi_vlog_info info;
+  vpi_get_vlog_info(&info);
+  return info.product_version.to!string;
+}
 
 // No regexp stuff is required since we already have that in phobos
