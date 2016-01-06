@@ -446,6 +446,13 @@ abstract class uvm_component: uvm_report_object, ParContext
     }
   }
 
+  package void _set_name_force(string name) {
+    synchronized(this) {
+      super.set_name(name);
+      m_set_full_name();
+    }
+  }
+
 
   // Function: lookup
   //
