@@ -1435,7 +1435,9 @@ class uvm_phase: uvm_object
     for(;;) {
       uvm_phase phase;
       m_phase_hopper.get(phase);
-      fork({phase.execute_phase();});
+      fork!("uvm_phases/run_phases")({
+	  phase.execute_phase();
+	});
       wait(0);	// #0;		// let the process start running
     }
   }
@@ -1525,7 +1527,7 @@ class uvm_phase: uvm_object
       else {
 	m_executing_phases[this] = true;
 
-	m_phase_proc = fork({
+	m_phase_proc = fork!("uvm_phases/m_phase_proc")({
 	    //-----------
 	    // EXECUTING: (task phases)
 	    //-----------
@@ -1541,7 +1543,7 @@ class uvm_phase: uvm_object
 
 	// Now wait for one of three criterion for end-of-phase.
 	// Fork guard = join({
-	Fork endPhase = fork({ // JUMP
+	Fork end_phase = fork!("uvm_phases/end_phase")({ // JUMP
 	    while((m_jump_fwd.get || m_jump_bkwd.get) is false) {
 	      wait(m_jump_fwd.getEvent | m_jump_bkwd.getEvent);
 	    }
@@ -1667,8 +1669,8 @@ class uvm_phase: uvm_object
 	      sleep();
 	    }
 	  });
-	endPhase.joinAny();
-	endPhase.abortTree();
+	end_phase.joinAny();
+	end_phase.abortTree();
 	// });
 
       }

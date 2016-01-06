@@ -3087,7 +3087,7 @@ abstract class uvm_component: uvm_report_object, ParContext
       }
       // do time based settings
       if(this is top) {
-	fork({
+	fork!("uvm_component/do_time_based_settings")({
 	    SimTime last_time = 0;
 	    m_verbosity_setting[] time_settings = sort_time_settings();
 	    foreach(i, setting; time_settings) {
@@ -3260,7 +3260,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 	  Process p = Process.self;
 	  auto p_rand = p.getRandState();
 
-	  fork({
+	  fork!("uvm_component/apply_verbosity_settings")({
 	      wait(setting.offset);
 	      // synchronized(this) {
 	      if(setting.id == "_ALL_")
@@ -3548,8 +3548,8 @@ void _uvm__auto_elab(T, U, size_t I, N...)(T t, ref U u,
     // }
     // provide an ID to all the components that are not null
     auto linfo = _esdl__get_parallelism!(I, T)(t);
-    _uvm__config_parallelism(u, linfo);
     if(u !is null) {
+      _uvm__config_parallelism(u, linfo);
       u.set_id();
     }
   }

@@ -427,7 +427,9 @@ class uvm_root: uvm_component
 
     // phase runner, isolated from calling process
     // Process phase_runner_proc; // store thread forked below for final cleanup
-    Process phase_runner_proc = fork({uvm_phase.m_run_phases();});
+    Process phase_runner_proc = fork!("uvm_root/phase_runner_proc")({
+	uvm_phase.m_run_phases();
+      });
     // fork({
     //	// spawn the phase runner task
     //	phase_runner_proc = Process.self();

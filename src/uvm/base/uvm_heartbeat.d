@@ -267,7 +267,7 @@ class uvm_heartbeat: uvm_object
     synchronized(this) {
       if(_m_started) return;
       _m_started = 1;
-      fork({m_hb_process();});
+      fork!("uvm_heartbeat/start_hb_process")({m_hb_process();});
     }
   }
 
@@ -386,7 +386,7 @@ class uvm_heartbeat: uvm_object
   // task
   final public void m_hb_process() {
     // uvm_object obj;
-    Fork hb_process = fork({
+    Fork hb_process = fork!("uvm_heartbeat/hb_process")({
 	m_hb_process_1();
       },
       {

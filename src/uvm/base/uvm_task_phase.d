@@ -149,7 +149,7 @@ abstract class uvm_task_phase: uvm_phase
   //
   override public void execute(uvm_component comp,
 			       uvm_phase phase) {
-    fork({
+    fork!("uvm_task_phase/execute")({
 
 	// reseed this process for random stability
 	auto proc = Process.self;

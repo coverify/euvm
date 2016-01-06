@@ -841,7 +841,7 @@ class uvm_objection: uvm_report_object
 	  // before the fork executes.
 
 	  (uvm_objection objection) {
-	    auto guard = fork({
+	    auto guard = fork!("uvm_objection/execute_scheduled_forks/guard")({
 		// Check to maike sure re-raise didn't empty the fifo
 		uvm_objection_context_object ctxt;
 		synchronized(objection.m_forked_list) {
@@ -942,7 +942,8 @@ class uvm_objection: uvm_report_object
 
   // Forks off the single background process
   static public void m_init_objections() {
-    fork({uvm_objection.m_execute_scheduled_forks();});
+    fork!("uvm_objection/init_objections")
+      ({uvm_objection.m_execute_scheduled_forks();});
   }
 
   // Function: set_drain_time
@@ -1381,7 +1382,7 @@ class uvm_test_done_objection: m_uvm_test_done_objection_base
 	  _m_n_stop_threads++;
 	  _m_n_stop_threads_event.notify();
 	}
-	fork({
+	fork!("uvm_objection/do_stop_all")({
 	    comp.stop_phase(run_ph);
 	    synchronized(this) {
 	      _m_n_stop_threads--;
@@ -1408,7 +1409,7 @@ class uvm_test_done_objection: m_uvm_test_done_objection_base
 	uvm_info_context("STOP_REQ",
 			 "Stop-request called. Waiting for all-dropped on uvm_test_done",
 			 UVM_FULL, m_top);
-	fork({m_stop_request();});
+	fork!("uvm_objection/stop_request")({m_stop_request();});
       }
     }
 
@@ -1460,7 +1461,7 @@ class uvm_test_done_objection: m_uvm_test_done_objection_base
 			 "All end-of-test objections have been dropped. Calling stop tasks",
 			 UVM_FULL, m_top);
 	// join({ // guard
-	Fork guard = fork({
+	Fork guard = fork!("uvm_objection/all_dropped/guard")({
 	    m_executing_stop_processes = 1;
 	    m_do_stop_all(m_top);
 	    while(m_n_stop_threads != 0) {
