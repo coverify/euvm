@@ -30,7 +30,7 @@ private struct mcdPair
   import std.stdio;
   File _fd;
   MCD  _mcd;
-  public this(File fd, MCD mcd)
+  this(File fd, MCD mcd)
   {
     _fd = fd;
     _mcd = mcd;
@@ -50,7 +50,7 @@ alias MCDFile.writefln vfdisplay;
 // alias writefln         vdisplay;
 alias writef           vwrite;
 
-public void vdisplay(T...)(T args) {
+void vdisplay(T...)(T args) {
   static if(args.length == 0) {
     writeln();
   }
@@ -71,7 +71,7 @@ class MCDFile
     }
   }
 
-  static MCD open(string name)
+  static MCD open(string name, string mode="w")
   {
     synchronized(typeid(MCDFile)) {
       import std.exception;
@@ -82,7 +82,7 @@ class MCDFile
       enforce (files.length < 8*MCD.sizeof, "Can not open any more MCD files");
       try
 	{
-	  fd = File(name, "w");
+	  fd = File(name, mode);
 	}
       catch (Exception e)
 	{

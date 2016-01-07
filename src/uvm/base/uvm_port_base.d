@@ -2,8 +2,9 @@
 //------------------------------------------------------------------------------
 //   Copyright 2007-2011 Mentor Graphics Corporation
 //   Copyright 2007-2011 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2014 Coverify Systems Technology
+//   Copyright 2010      Synopsys, Inc.
+//   Copyright 2013      Cisco Systems, Inc.
+//   Copyright 2014-2016 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -25,6 +26,8 @@ import uvm.base.uvm_phase;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_root;
 import uvm.base.uvm_domain;
+import uvm.base.uvm_config_db;
+import uvm.base.uvm_coreservice;
 
 import uvm.meta.misc;
 import std.string: format;
@@ -37,8 +40,7 @@ enum string s_connection_warning_id = "Connection Warning";
 enum string s_spaces = "                       ";
 
 // typedef class uvm_port_component_base;
-// alias uvm_port_component_base uvm_port_list[string];
-alias uvm_port_component_base[string] uvm_port_list;
+alias uvm_port_list = uvm_port_component_base[string];
 
 
 // TITLE: Port Base Classes
@@ -57,15 +59,15 @@ alias uvm_port_component_base[string] uvm_port_list;
 // The connectivity lists are returned in the form of handles to objects of this
 // type. This allowing traversal of any port's fan-out and fan-in network
 // through recursive calls to <get_connected_to> and <get_provided_to>. Each
-// port's full name and type name can be retrieved using get_full_name and
-// get_type_name methods inherited from <uvm_component>.
+// port's full name and type name can be retrieved using ~get_full_name~ and
+// ~get_type_name~ methods inherited from <uvm_component>.
 //------------------------------------------------------------------------------
 
 abstract class uvm_port_component_base: uvm_component
 {
 
-  public this(string name="", uvm_component parent=null) {
-    super(name,parent);
+  this(string name="", uvm_component parent=null) {
+    super(name, parent);
   }
 
   // Function: get_connected_to
@@ -74,8 +76,8 @@ abstract class uvm_port_component_base: uvm_component
   // of the ports, exports and implementations that this port is
   // connected to.
 
-  abstract public void get_connected_to(out uvm_port_list list);
-  abstract public uvm_port_list get_connected_to();
+  abstract void get_connected_to(out uvm_port_list list);
+  abstract uvm_port_list get_connected_to();
 
   // Function: get_provided_to
   //
@@ -83,16 +85,16 @@ abstract class uvm_port_component_base: uvm_component
   // of the ports, exports and implementations that this port is
   // provides its implementation to.
 
-  abstract public void get_provided_to(out uvm_port_list list);
-  abstract public uvm_port_list get_provided_to();
+  abstract void get_provided_to(out uvm_port_list list);
+  abstract uvm_port_list get_provided_to();
 
   // Function: is_port
   //
-  abstract public bool is_port();
+  abstract bool is_port();
 
   // Function: is_export
   //
-  abstract public bool is_export();
+  abstract bool is_export();
 
   // Function: is_imp
   //
@@ -100,17 +102,16 @@ abstract class uvm_port_component_base: uvm_component
   // mutually exclusive; one will return 1 and the other two will
   // return 0.
 
-  abstract public bool is_imp();
+  abstract bool is_imp();
 
   // Turn off auto config by not calling build_phase()
-  override public void build_phase(uvm_phase phase) {
+  override void build_phase(uvm_phase phase) {
     build(); //for backward compat
     return;
   }
 
   // task
-  public void do_task_phase (uvm_phase phase) {
-  }
+  void do_task_phase (uvm_phase phase) {}
 }
 
 
@@ -123,17 +124,18 @@ abstract class uvm_port_component_base: uvm_component
 //------------------------------------------------------------------------------
 
 
-class uvm_port_component (PORT=uvm_object): uvm_port_component_base
+class uvm_port_component(PORT=uvm_object): uvm_port_component_base
 {
   mixin uvm_sync;
 
   // These needs further investigation
   // The component becomes accessible via the port -- FIXME
-  override void _uvm__auto_build() {}
+  override void uvm__auto_build() { }
 
-  @uvm_immutable_sync private PORT _m_port;
+  @uvm_immutable_sync
+  private PORT _m_port;
 
-  public this(string name, uvm_component parent, PORT port) {
+  this(string name, uvm_component parent, PORT port) {
     synchronized(this) {
       super(name, parent);
       if(port is null) {
@@ -143,12 +145,12 @@ class uvm_port_component (PORT=uvm_object): uvm_port_component_base
     }
   }
 
-  override public string get_type_name() {
+  override string get_type_name() {
     if(m_port is null) return "uvm_port_component";
     return m_port.get_type_name();
   }
 
-  override public void resolve_bindings() {
+  override void resolve_bindings() {
     m_port.resolve_bindings();
   }
 
@@ -156,35 +158,35 @@ class uvm_port_component (PORT=uvm_object): uvm_port_component_base
   //
   // Retrieve the actual port object that this proxy refers to.
 
-  final public PORT get_port() {
+  final PORT get_port() {
     return m_port;
   }
 
-  override public void get_connected_to(out uvm_port_list list) {
+  override void get_connected_to(out uvm_port_list list) {
     m_port.get_connected_to(list);
   }
 
-  override public uvm_port_list get_connected_to() {
+  override uvm_port_list get_connected_to() {
     return m_port.get_connected_to();
   }
 
-  override public void get_provided_to(out uvm_port_list list) {
+  override void get_provided_to(out uvm_port_list list) {
     m_port.get_provided_to(list);
   }
 
-  override public uvm_port_list get_provided_to() {
+  override uvm_port_list get_provided_to() {
     return m_port.get_provided_to();
   }
 
-  final override public bool is_port () {
+  final override bool is_port () {
     return m_port.is_port();
   }
 
-  final override public bool is_export () {
+  final override bool is_export () {
     return m_port.is_export();
   }
 
-  final override public bool is_imp () {
+  final override bool is_imp () {
     return m_port.is_imp();
   }
 
@@ -210,7 +212,7 @@ class uvm_port_component (PORT=uvm_object): uvm_port_component_base
 // standard TLM interfaces. They can be found in the ../src/tlm/ directory.
 // For the TLM interfaces, the IF parameter is always <uvm_tlm_if_base #(T1,T2)>.
 //
-// Just before <uvm_component.end_of_elaboration>, an internal
+// Just before <uvm_component.end_of_elaboration_phase>, an internal
 // <uvm_component.resolve_bindings> process occurs, after which each port and
 // export holds a list of all imps connected to it via hierarchical connections
 // to other ports and exports. In effect, we are collapsing the port's fanout,
@@ -220,7 +222,7 @@ class uvm_port_component (PORT=uvm_object): uvm_port_component_base
 //
 // uvm_port_base possesses the properties of components in that they have a
 // hierarchical instance path and parent. Because SystemVerilog does not support
-// multiple inheritance, uvm_port_base can not extend both the interface it
+// multiple inheritance, uvm_port_base cannot extend both the interface it
 // implements and <uvm_component>. Thus, uvm_port_base contains a local instance
 // of uvm_component, to which it delegates such commands as get_name,
 // get_full_name, and get_parent.
@@ -232,17 +234,17 @@ abstract class uvm_port_base(IF = uvm_void): IF
 
   mixin uvm_sync;
 
-  alias uvm_port_base!IF this_type;
+  alias this_type = uvm_port_base!IF;
 
   // local, protected, and non-user properties
 
   @uvm_protected_sync
-  private uint                                _m_if_mask;
+  private uint                                  _m_if_mask;
   @uvm_protected_sync
-  private this_type                           _m_if;    // REMOVE
-  private size_t                              _m_def_index;
+  private this_type                             _m_if;    // REMOVE
+  private size_t                                _m_def_index;
   @uvm_immutable_sync
-  private uvm_port_component!this_type        _m_comp;
+  private uvm_port_component!this_type          _m_comp;
   private this_type[string]                     _m_provided_by;
   private this_type[string]                     _m_provided_to;
   private uvm_port_type_e                       _m_port_type;
@@ -266,10 +268,10 @@ abstract class uvm_port_base(IF = uvm_void): IF
   //
   // By default, the parent/child relationship of any port being connected to
   // this port is not checked. This can be overridden by configuring the
-  // port's ~check_connection_relationships~ bit via <set_config_int>. See
+  // port's ~check_connection_relationships~ bit via ~uvm_config_int::set()~. See
   // <connect> for more information.
 
-  public this(string name,
+  this(string name,
 	      uvm_component parent,
 	      uvm_port_type_e port_type,
 	      int min_size = 0,
@@ -283,7 +285,8 @@ abstract class uvm_port_base(IF = uvm_void): IF
       _m_comp = new uvm_port_component!this_type(name, parent, this);
 
       int tmp;
-      if (!_m_comp.get_config_int("check_connection_relationships", tmp)) {
+      if (!uvm_config_db!int.get(_m_comp, "", "check_connection_relationships",
+				 tmp)) {
 	_m_comp.set_report_id_action(s_connection_warning_id, UVM_NO_ACTION);
       }
     }
@@ -294,7 +297,7 @@ abstract class uvm_port_base(IF = uvm_void): IF
   //
   // Returns the leaf name of this port.
 
-  public string get_name() {
+  string get_name() {
     return m_comp.get_name();
   }
 
@@ -303,16 +306,16 @@ abstract class uvm_port_base(IF = uvm_void): IF
   //
   // Returns the full hierarchical name of this port.
 
-  public string get_full_name() {
+  string get_full_name() {
     return m_comp.get_full_name();
   }
 
 
   // Function: get_parent
   //
-  // Returns the handle to this port's parent, or null if it has no parent.
+  // Returns the handle to this port's parent, or ~null~ if it has no parent.
 
-  public uvm_component get_parent() {
+  uvm_component get_parent() {
     return m_comp.get_parent();
   }
 
@@ -325,7 +328,7 @@ abstract class uvm_port_base(IF = uvm_void): IF
   // <uvm_component>. Instead, they contain an instance of
   // <uvm_port_component #(PORT)> that serves as a proxy to this port.
 
-  public uvm_port_component_base get_comp() {
+  uvm_port_component_base get_comp() {
     return m_comp;
   }
 
@@ -336,7 +339,7 @@ abstract class uvm_port_base(IF = uvm_void): IF
   // this method to return the concrete type. Otherwise, only a generic
   // "uvm_port", "uvm_export" or "uvm_implementation" is returned.
 
-  public string get_type_name() {
+  string get_type_name() {
     synchronized(this) {
       switch(_m_port_type) {
       case UVM_PORT : return "port";
@@ -351,10 +354,10 @@ abstract class uvm_port_base(IF = uvm_void): IF
 
   // Function: min_size
   //
-  // Returns the mininum number of implementation ports that must
+  // Returns the minimum number of implementation ports that must
   // be connected to this port by the end_of_elaboration phase.
 
-  final public int max_size() {
+  final int max_size() {
     synchronized(this) {
       return _m_max_size;
     }
@@ -366,7 +369,7 @@ abstract class uvm_port_base(IF = uvm_void): IF
   // Returns the maximum number of implementation ports that must
   // be connected to this port by the end_of_elaboration phase.
 
-  final public int min_size() {
+  final int min_size() {
     synchronized(this) {
       return _m_min_size;
     }
@@ -379,26 +382,26 @@ abstract class uvm_port_base(IF = uvm_void): IF
   // ports this port can connect to. A port is unbounded when the ~max_size~
   // argument in the constructor is specified as ~UVM_UNBOUNDED_CONNECTIONS~.
 
-  final public bool is_unbounded() {
+  final bool is_unbounded() {
     synchronized(this) {
-      return (_m_max_size is UVM_UNBOUNDED_CONNECTIONS);
+      return (_m_max_size == UVM_UNBOUNDED_CONNECTIONS);
     }
   }
 
 
   // Function: is_port
 
-  final public bool is_port() {
+  final bool is_port() {
     synchronized(this) {
-      return _m_port_type is UVM_PORT;
+      return _m_port_type == UVM_PORT;
     }
   }
 
   // Function: is_export
 
-  final public bool is_export() {
+  final bool is_export() {
     synchronized(this) {
-      return _m_port_type is UVM_EXPORT;
+      return _m_port_type == UVM_EXPORT;
     }
   }
 
@@ -407,9 +410,9 @@ abstract class uvm_port_base(IF = uvm_void): IF
   // Returns 1 if this port is of the type given by the method name,
   // 0 otherwise.
 
-  final public bool is_imp() {
+  final bool is_imp() {
     synchronized(this) {
-      return _m_port_type is UVM_IMPLEMENTATION;
+      return _m_port_type == UVM_IMPLEMENTATION;
     }
   }
 
@@ -420,14 +423,14 @@ abstract class uvm_port_base(IF = uvm_void): IF
   // is not valid before the end_of_elaboration phase, as port connections have
   // not yet been resolved.
 
-  final public size_t size () {
+  final size_t size () {
     synchronized(this) {
       return _m_imp_list.length;
     }
   }
 
 
-  final public void set_if(size_t index=0) {
+  final void set_if(size_t index=0) {
     synchronized(this) {
       _m_if = get_if(index);
       if (_m_if !is null) {
@@ -436,7 +439,7 @@ abstract class uvm_port_base(IF = uvm_void): IF
     }
   }
 
-  final public int m_get_if_mask() {
+  final int m_get_if_mask() {
     synchronized(this) {
       return _m_if_mask;
     }
@@ -450,7 +453,7 @@ abstract class uvm_port_base(IF = uvm_void): IF
   // must not be set before the end_of_elaboration phase, when port connections
   // have not yet been resolved.
 
-  final public void set_default_index(size_t index) {
+  final void set_default_index(size_t index) {
     synchronized(this) {
       _m_def_index = index;
     }
@@ -468,13 +471,13 @@ abstract class uvm_port_base(IF = uvm_void): IF
   //   must be compatible. Each port has an interface mask that encodes the
   //   interface(s) it supports. If the bitwise AND of these masks is equal to
   //   the this port's mask, the requirement is met and the ports are
-  //   compatible. For example, an uvm_blocking_put_port #(T) is compatible with
-  //   an uvm_put_export #(T) and uvm_blocking_put_imp #(T) because the export
+  //   compatible. For example, a uvm_blocking_put_port #(T) is compatible with
+  //   a uvm_put_export #(T) and uvm_blocking_put_imp #(T) because the export
   //   and imp provide the interface required by the uvm_blocking_put_port.
   //
   // - Ports of type <UVM_EXPORT> can only connect to other exports or imps.
   //
-  // - Ports of type <UVM_IMPLEMENTATION> can not be connected, as they are
+  // - Ports of type <UVM_IMPLEMENTATION> cannot be connected, as they are
   //   bound to the component that implements the interface at time of
   //   construction.
   //
@@ -485,29 +488,28 @@ abstract class uvm_port_base(IF = uvm_void): IF
   //
   // Relationships, when enabled, are checked are as follows:
   //
-  // - If this port is an UVM_PORT type, the ~provider~ can be a parent port,
+  // - If this port is a UVM_PORT type, the ~provider~ can be a parent port,
   //   or a sibling export or implementation port.
   //
-  // - If this port is an <UVM_EXPORT> type, the provider can be a child
+  // - If this port is a <UVM_EXPORT> type, the provider can be a child
   //   export or implementation port.
   //
   // If any relationship check is violated, a warning is issued.
   //
-  // Note- the <uvm_component.connect> method is related to but not the same
-  // as this method. The component's connect method is a phase callback where
-  // port's connect method calls are made.
+  // Note- the <uvm_component.connect_phase> method is related to but not the same
+  // as this method. The component's ~connect~ method is a phase callback where
+  // port's ~connect~ method calls are made.
 
-  public void connect (this_type provider) {
+  void connect (this_type provider) {
     synchronized(this) {
-      uvm_root top = uvm_root.get();
-      if (end_of_elaboration_ph.get_state() is UVM_PHASE_EXECUTING || // TBD tidy
-	  end_of_elaboration_ph.get_state() is UVM_PHASE_DONE ) {
-	m_comp.uvm_report_warning("Late Connection",
-				  "Attempt to connect " ~
-				  this.get_full_name() ~
-				  " (of type " ~ this.get_type_name() ~
-				  ") at or after end_of_elaboration phase."
-				  "  Ignoring.");
+      uvm_coreservice_t cs = uvm_coreservice_t.get();
+      uvm_root top = cs.get_root();
+      if (end_of_elaboration_ph.get_state() == UVM_PHASE_EXECUTING || // TBD tidy
+	  end_of_elaboration_ph.get_state() == UVM_PHASE_DONE ) {
+	m_comp.uvm_report_warning("Late Connection", "Attempt to connect " ~
+				  this.get_full_name() ~ " (of type " ~
+				  this.get_type_name() ~ ") at or after " ~
+				  "end_of_elaboration phase.  Ignoring.");
 	return;
       }
 
@@ -516,13 +518,6 @@ abstract class uvm_port_base(IF = uvm_void): IF
 				"Cannot connect to null port handle", UVM_NONE);
 	return;
       }
-
-      // if (provider is this) {
-      // 	m_comp.uvm_report_error(s_connection_error_id,
-      // 				"Cannot connect a port instance to itself",
-      // 				UVM_NONE);
-      // 	return;
-      // }
 
       if (provider is this) {
 	m_comp.uvm_report_error(s_connection_error_id,
@@ -533,8 +528,8 @@ abstract class uvm_port_base(IF = uvm_void): IF
 
       if ((provider.m_if_mask & _m_if_mask) !is _m_if_mask) {
 	m_comp.uvm_report_error(s_connection_error_id,
-				provider.get_full_name() ~
-				" (of type " ~ provider.get_type_name() ~
+				provider.get_full_name() ~ " (of type " ~
+				provider.get_type_name() ~
 				") does not provide the complete interface"
 				" required of this port (type " ~
 				get_type_name() ~ ")", UVM_NONE);
@@ -566,8 +561,8 @@ abstract class uvm_port_base(IF = uvm_void): IF
 
       m_check_relationship(provider);
 
-      _m_provided_by[provider.get_full_name()] = provider;
       synchronized(provider) {
+	_m_provided_by[provider.get_full_name()] = provider;
 	provider._m_provided_to[get_full_name()] = this;
       }
     }
@@ -576,32 +571,35 @@ abstract class uvm_port_base(IF = uvm_void): IF
 
   // Function: debug_connected_to
   //
-  // The debug_connected_to method outputs a visual text display of the
+  // The ~debug_connected_to~ method outputs a visual text display of the
   // port/export/imp network to which this port connects (i.e., the port's
   // fanout).
   //
   // This method must not be called before the end_of_elaboration phase, as port
   // connections are not resolved until then.
 
-  final public void debug_connected_to (int level=0, int max_level=-1) {
+  final void debug_connected_to (int level=0, int max_level=-1) {
     synchronized(this) {
       string save;
       string indent;
 
+      // save and indent are static in the SV version -- we indulge in
+      // some refactoring here to make these variales mapped to stack
       debug_connected_to(indent, save, level, max_level);
 
-      if (level is 0) {
+      if (level == 0) {
 	if (save != "")
 	  save = "This port's fanout network:\n\n  " ~
 	    get_full_name() ~ " (" ~ get_type_name() ~ ")\n" ~ save ~ "\n";
-	if (_m_imp_list.length is 0) {
-	  uvm_root top = uvm_root.get();
-	  if (end_of_elaboration_ph.get_state() is UVM_PHASE_EXECUTING ||
-	      end_of_elaboration_ph.get_state() is UVM_PHASE_DONE ) { // TBD tidy
+	if (_m_imp_list.length == 0) {
+	  uvm_coreservice_t cs = uvm_coreservice_t.get();
+	  uvm_root top = cs.get_root();
+	  if (end_of_elaboration_ph.get_state() == UVM_PHASE_EXECUTING ||
+	      end_of_elaboration_ph.get_state() == UVM_PHASE_DONE ) { // TBD tidy
 	    save ~= "  Connected implementations: none\n";
 	  }
 	  else {
-	    save = save ~
+	    save ~=
 	      "  Connected implementations: not resolved until end-of-elab\n";
 	  }
 	}
@@ -628,25 +626,30 @@ abstract class uvm_port_base(IF = uvm_void): IF
 					int level, int max_level) {
     synchronized(this) {
 
-      if (level <  0) level = 0;
-      if (level is 0) { save = ""; indent="  "; }
+      if (level <  0) {
+	level = 0;
+      }
+      if (level == 0) {
+	save = "";
+	indent = "  ";
+      }
 
-      if (max_level !is -1 && level >= max_level) {
+      if (max_level != -1 && level >= max_level) {
 	return;
       }
 
       auto num = _m_provided_by.length;
 
-      if (_m_provided_by.length !is 0) {
+      if (_m_provided_by.length != 0) {
 	int curr_num = 0;
 	foreach (nm, port; _m_provided_by) {
 	  ++curr_num;
 	  save = save ~ indent ~ "  | \n";
 	  save = save ~ indent ~ "  |_" ~ nm ~ " (" ~ port.get_type_name() ~
 	    ")\n";
-	  indent = (num > 1 && curr_num !is num) ?  indent ~ "  | " :
-	    indent ~ "    ";
-	  port.debug_connected_to(level+1, max_level);
+	  indent = (num > 1 && curr_num !is num) ?
+	    indent ~ "  | " : indent ~ "    ";
+	  port.debug_connected_to(save, indent, level+1, max_level);
 	  indent = indent[0..$-4];
 	}
       }
@@ -656,20 +659,22 @@ abstract class uvm_port_base(IF = uvm_void): IF
 
   // Function: debug_provided_to
   //
-  // The debug_provided_to method outputs a visual display of the port/export
+  // The ~debug_provided_to~ method outputs a visual display of the port/export
   // network that ultimately connect to this port (i.e., the port's fanin).
   //
   // This method must not be called before the end_of_elaboration phase, as port
   // connections are not resolved until then.
 
-  final public void debug_provided_to (int level=0, int max_level=-1) {
+  final void debug_provided_to (int level=0, int max_level=-1) {
     synchronized(this) {
       string save;
       string indent;
 
+      // save and indent are static in the SV version -- we indulge in
+      // some refactoring here to make these variales mapped to stack
       debug_provided_to(save, indent, level, max_level);
 
-      if (level is 0) {
+      if (level == 0) {
 	if (save != "") {
 	  save = "This port's fanin network:\n\n  " ~
 	    get_full_name() ~ " (" ~ get_type_name() ~ ")\n" ~ save ~ "\n";
@@ -691,24 +696,24 @@ abstract class uvm_port_base(IF = uvm_void): IF
 					 int level = 0, int max_level = -1) {
     synchronized(this) {
       if (level <  0) level = 0;
-      if (level is 0) { save = ""; indent = "  "; }
+      if (level == 0) { save = ""; indent = "  "; }
 
-      if (max_level !is -1 && level > max_level) {
+      if (max_level != -1 && level > max_level) {
 	return;
       }
 
       auto num = _m_provided_to.length;
 
-      if (num !is 0) {
+      if (num != 0) {
 	int curr_num = 0;
 	foreach (nm, port; _m_provided_to) {
 	  ++curr_num;
 	  save = save ~ indent ~ "  | \n";
 	  save = save ~ indent ~ "  |_" ~ nm ~ " (" ~
 	    port.get_type_name() ~ ")\n";
-	  indent = (num > 1 && curr_num !is num) ?
+	  indent = (num > 1 && curr_num != num) ?
 	    indent ~ "  | " :  indent ~ "    ";
-	  port.debug_provided_to(level+1, max_level);
+	  port.debug_provided_to(save, indent, level+1, max_level);
 	  indent = indent[0..$-4];
 	}
       }
@@ -719,7 +724,7 @@ abstract class uvm_port_base(IF = uvm_void): IF
   // get_connected_to
   // ----------------
 
-  final public void get_connected_to (out uvm_port_list list) {
+  final void get_connected_to (out uvm_port_list list) {
     synchronized(this) {
       // list = null; // taken care by 'out'
       foreach (name, port; _m_provided_by) {
@@ -728,7 +733,7 @@ abstract class uvm_port_base(IF = uvm_void): IF
     }
   }
 
-  final public uvm_port_list get_connected_to () {
+  final uvm_port_list get_connected_to () {
     synchronized(this) {
       uvm_port_list list;
       foreach (name, port; _m_provided_by) {
@@ -741,7 +746,7 @@ abstract class uvm_port_base(IF = uvm_void): IF
   // get_provided_to
   // ---------------
 
-  final public void get_provided_to (out uvm_port_list list) {
+  final void get_provided_to (out uvm_port_list list) {
     synchronized(this) {
       // list = null; // taken care by 'out'
       foreach (name, port; _m_provided_to) {
@@ -750,7 +755,7 @@ abstract class uvm_port_base(IF = uvm_void): IF
     }
   }
 
-  final public uvm_port_list get_provided_to () {
+  final uvm_port_list get_provided_to () {
     synchronized(this) {
       uvm_port_list list;
       foreach (name, port; _m_provided_to) {
@@ -852,15 +857,15 @@ abstract class uvm_port_base(IF = uvm_void): IF
   // Function: resolve_bindings
   //
   // This callback is called just before entering the end_of_elaboration phase.
-  // It recurses through each port's fanout to determine all the imp destina-
-  // tions. It then checks against the required min and max connections.
+  // It recurses through each port's fanout to determine all the imp 
+  // destinations. It then checks against the required min and max connections.
   // After resolution, <size> returns a valid value and <get_if>
   // can be used to access a particular imp.
   //
   // This method is automatically called just before the start of the
   // end_of_elaboration phase. Users should not need to call it directly.
 
-  public void resolve_bindings() {
+  void resolve_bindings() {
     synchronized(this) {
       if (_m_resolved) { // don't repeat ourselves
 	return;
@@ -906,9 +911,9 @@ abstract class uvm_port_base(IF = uvm_void): IF
   // This method can only be called at the end_of_elaboration phase or after, as
   // port connections are not resolved before then.
 
-  final public uvm_port_base!IF get_if(size_t index=0) {
+  final uvm_port_base!IF get_if(size_t index=0) {
     synchronized(this) {
-      if (size() is 0) {
+      if (size() == 0) {
 	m_comp.uvm_report_warning("get_if",
 				  "Port size is zero; cannot get interface"
 				  " at any index", UVM_NONE);

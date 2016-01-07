@@ -1,7 +1,9 @@
 //----------------------------------------------------------------------
 //   Copyright 2007-2011 Mentor Graphics Corporation
 //   Copyright 2007-2010 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
+//   Copyright 2010      Synopsys, Inc.
+//   Copyright 2013      Cisco Systems, Inc.
+//   Copyright 2012-2016 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -38,18 +40,31 @@ import esdl.data.rand;
 //
 //------------------------------------------------------------------------------
 
-abstract class uvm_sequence (REQ = uvm_sequence_item,
-			     RSP = REQ):
+abstract class uvm_sequence (REQ = uvm_sequence_item, RSP = REQ):
   uvm_sequence_base
 {
   mixin uvm_sync;
 
-  alias uvm_sequencer_param_base!(REQ, RSP) sequencer_t;
+  alias sequencer_t = uvm_sequencer_param_base!(REQ, RSP);
 
   @uvm_public_sync @rand!false
   private sequencer_t        _param_sequencer;
+
+
+  // Variable: req
+  //
+  // The sequence contains a field of the request type called req.  The user
+  // can use this field, if desired, or create another field to use.  The
+  // default ~do_print~ will print this field.
   @uvm_public_sync @rand!false
   private REQ                _req;
+
+
+  // Variable: rsp
+  //
+  // The sequence contains a field of the response type called rsp.  The user
+  // can use this field, if desired, or create another field to use.   The
+  // default ~do_print~ will print this field.
   @uvm_public_sync @rand!false
   private RSP                _rsp;
 
@@ -57,7 +72,7 @@ abstract class uvm_sequence (REQ = uvm_sequence_item,
   //
   // Creates and initializes a new sequence object.
 
-  public this(string name = "uvm_sequence") {
+  this(string name = "uvm_sequence") {
     super(name);
   }
 
@@ -68,14 +83,14 @@ abstract class uvm_sequence (REQ = uvm_sequence_item,
   // randomized before being sent to the driver. The send_request function may
   // only be called after <uvm_sequence_base::wait_for_grant> returns.
 
-  final override public void send_request(uvm_sequence_item request,
-					  bool rerandomize = 0) {
+  final override void send_request(uvm_sequence_item request,
+				   bool rerandomize=false) {
     synchronized(this) {
-      REQ m_request = cast(REQ) request;
-
       if (m_sequencer is null) {
 	uvm_report_fatal("SSENDREQ", "Null m_sequencer reference", UVM_NONE);
       }
+
+      REQ m_request = cast(REQ) request;
       if (request is null) {
 	uvm_report_fatal("SSENDREQ", "Failure to cast uvm_sequence_item to request", UVM_NONE);
       }
@@ -87,7 +102,7 @@ abstract class uvm_sequence (REQ = uvm_sequence_item,
   // Function: get_current_item
   //
   // Returns the request item currently being executed by the sequencer. If the
-  // sequencer is not currently executing an item, this method will return null.
+  // sequencer is not currently executing an item, this method will return ~null~.
   //
   // The sequencer is executing an item from the time that get_next_item or peek
   // is called until the time that get or item_done is called.
@@ -95,7 +110,7 @@ abstract class uvm_sequence (REQ = uvm_sequence_item,
   // Note that a driver that only calls get will never show a current item,
   // since the item is completed at the same time as it is requested.
 
-  final public REQ get_current_item() {
+  final REQ get_current_item() {
     synchronized(this) {
       _param_sequencer = cast(sequencer_t) m_sequencer;
       if (_param_sequencer is null) {
@@ -111,7 +126,7 @@ abstract class uvm_sequence (REQ = uvm_sequence_item,
   // By default, sequences must retrieve responses by calling get_response.
   // If no transaction_id is specified, this task will return the next response
   // sent to this sequence.  If no response is available in the response queue,
-  // the method will block until a response is recieved.
+  // the method will block until a response is received.
   //
   // If a transaction_id is parameter is specified, the task will block until
   // a response with that transaction_id is received in the response queue.
@@ -125,10 +140,9 @@ abstract class uvm_sequence (REQ = uvm_sequence_item,
   // set_response_queue_error_report_disabled.
 
   // task
-  public void get_response(out RSP response, int transaction_id = -1) {
+  void get_response(out RSP response, int transaction_id=-1) {
     uvm_sequence_item rsp;
     get_base_response(rsp, transaction_id);
-
     response = cast(RSP) rsp;
   }
 
@@ -138,45 +152,22 @@ abstract class uvm_sequence (REQ = uvm_sequence_item,
   //
   // Internal method.
 
-  override public void put_response(uvm_sequence_item response_item) {
-    synchronized(this) {
-      RSP response = cast(RSP) response_item;
-      if (response is null) {
-	uvm_report_fatal("PUTRSP", "Failure to cast response in put_response", UVM_NONE);
-      }
-      put_base_response(response_item);
+  override void put_response(uvm_sequence_item response_item) {
+    RSP response = cast(RSP) response_item;
+    if (response is null) {
+      uvm_report_fatal("PUTRSP", "Failure to cast response in put_response",
+		       UVM_NONE);
     }
+    put_base_response(response_item);
   }
 
 
   // Function- do_print
   //
-  final override public void do_print (uvm_printer printer) {
+  final override void do_print (uvm_printer printer) {
     super.do_print(printer);
     printer.print_object("req", req);
     printer.print_object("rsp", rsp);
   }
 
-
-  // // Function- create_request
-  // //
-  // // Returns an instance of the ~REQ~ type in a <uvm_sequence_item> base handle.
-  // // Used for type-compatibility checking. Unrelated (inheritance-wise) sequence
-  // // A #(R1,S1) can run on sequencer #(R,S) as long as R1 and S1 are by themselves
-  // // type-compatible with R and S, respectively.
-  // override public uvm_sequence_item create_request () {
-  //   REQ req = new REQ();
-  //   return req;
-  // }
-
-  // // Function- create_response
-  // //
-  // // Returns an instance of the ~RSP~ type in a <uvm_sequence_item> base handle.
-  // // Used for type-compatibility checking. Unrelated (inheritance-wise) sequence
-  // // A #(R1,S1) can run on sequencer #(R,S) as long as R1 and S1 are by themselves
-  // // type-compatible with R and S, respectively.
-  // override public uvm_sequence_item create_response () {
-  //   RSP rsp = new RSP();
-  //   return rsp;
-  // }
 }

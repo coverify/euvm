@@ -3,7 +3,8 @@
 //   Copyright 2007-2011 Mentor Graphics Corporation
 //   Copyright 2007-2011 Cadence Design Systems, Inc.
 //   Copyright 2010-2011 Synopsys, Inc.
-//   Copyright 2012-2014 Coverify Systems Technology
+//   Copyright 2013      NVIDIA Corporation
+//   Copyright 2012-2016 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -36,7 +37,7 @@
 // The ~uvm_top~ instance of ~uvm_root~ plays several key roles in the UVM.
 //
 // Implicit top-level - The ~uvm_top~ serves as an implicit top-level component.
-// Any component whose parent is specified as NULL becomes a child of ~uvm_top~.
+// Any component whose parent is specified as ~null~ becomes a child of ~uvm_top~.
 // Thus, all UVM components in simulation are descendants of ~uvm_top~.
 //
 // Phase control - ~uvm_top~ manages the phasing for all components.
@@ -57,7 +58,7 @@
 //
 //
 // The ~uvm_top~ instance checks during the end_of_elaboration phase if any errors have
-// been generated so far. If errors are found an UVM_FATAL error is being generated as result
+// been generated so far. If errors are found a UVM_FATAL error is being generated as result
 // so that the simulation will not continue to the start_of_simulation_phase.
 //
 
@@ -70,6 +71,7 @@ module uvm.base.uvm_root;
 import uvm.base.uvm_component; // uvm_component
 import uvm.base.uvm_cmdline_processor; // uvm_component
 import uvm.base.uvm_object_globals;
+import uvm.base.uvm_global_defines;
 import uvm.base.uvm_printer;
 import uvm.base.uvm_factory;
 import uvm.base.uvm_globals;
@@ -80,6 +82,10 @@ import uvm.base.uvm_report_object;
 import uvm.base.uvm_report_server;
 import uvm.base.uvm_domain;
 import uvm.base.uvm_object_defines;
+import uvm.base.uvm_traversal;
+import uvm.base.uvm_coreservice;
+import uvm.base.uvm_config_db;
+import uvm.base.uvm_version;
 
 public import uvm.meta.misc;
 import uvm.meta.meta;
@@ -100,23 +106,13 @@ import core.sync.semaphore: Semaphore;
 // search interface. See <uvm_root> for more information.
 //------------------------------------------------------------------------------
 
-// provide read only access to the _uvm_top static variable
-public uvm_root uvm_top() {
-  auto root_entity = uvm_root_entity();
-  if(root_entity is null) return null;
-  return root_entity.get_root();
-}
-
-public uvm_root_entity_base uvm_root_entity() {
-  auto context = EntityIntf.getContextEntity();
-  if(context !is null) {
-    auto _entity = cast(uvm_root_entity_base) context;
-    assert(_entity !is null);
-    return _entity;
+uvm_root uvm_top() {
+  auto root_entity_instance = uvm_root_entity_base.get(); // static function call
+  if(root_entity_instance is null) {
+    return null;
   }
-  return null;
+  return root_entity_instance._get_uvm_root();
 }
-
 
 // This is where the uvm gets instantiated as part of the ESDL
 // simulator. Unlike the SystemVerilog version where uvm_root is a
@@ -125,31 +121,70 @@ public uvm_root_entity_base uvm_root_entity() {
 
 class uvm_root_entity_base: Entity
 {
-  this() {}
-  
-  // The UVM singleton variables are now encapsulated as part of _once
-  // mechanism.
-  private uvm_root_once _root_once;
-  public uvm_root_once root_once() {
-    return _root_once;
-  }
-  private void set_root_once(uvm_root_once once) {
-    _root_once = once;
+  mixin uvm_sync;
+  this() {
+    synchronized(this) {
+      _uvm_root_init_semaphore = new Semaphore(); // count 0
+      // uvm_once has some events etc that need to know the context for init
+      set_thread_context();
+      _root_once = new uvm_root_once(this);
+    }
   }
 
-  abstract public uvm_root get_uvm_root();
-  abstract protected uvm_root get_root();
+  // Only for use by the uvm_root constructor -- use nowhere else
+  static private uvm_root_entity_base _root_entity_instance;
+
+  // effectively immutable
+  @uvm_immutable_sync
+  private Semaphore _uvm_root_init_semaphore;
+
+  // effectively immutable
+  private uvm_root_once _root_once;
+  
+  uvm_root_once root_once() {
+    return _root_once;
+  }
+
+  // do not give public access -- this function is to be called from
+  // inside the uvm_root_once constructor -- just to make sure that it
+  // is set since some of the uvm_once class instances require this
+  // variable to be already set
+  private void _set_root_once(uvm_root_once once) {
+    synchronized(this) {
+      // The assert below makes sure that this function is being
+      // called only from the constructor (since the constructor also
+      // sets _root_once variable) To make this variable effectively
+      // immutable, it is important to ensure that this variable is
+      // set from uvm_root_once constructor only
+      assert(_root_once is null);
+      _root_once = once;
+    }
+  }
+
+  static uvm_root_entity_base get() {
+    auto context = EntityIntf.getContextEntity();
+    if(context !is null) {
+      auto entity = cast(uvm_root_entity_base) context;
+      assert(entity !is null);
+      return entity;
+    }
+    return null;
+  }
+
+  abstract protected uvm_root _get_uvm_root();
+  abstract uvm_root get_root();
   // The randomization seed passed from the top.
-  // alias get_uvm_root this;
+  // alias _get_uvm_root this;
 
   // This method would associate a free running thread to this UVM
   // ROOT instance -- this function can be called multiple times
   // within the same thread in order to switch context
-  public void set_thread_context() {
+  void set_thread_context() {
     auto proc = Process.self();
     if(proc !is null) {
       auto _entity = cast(uvm_root_entity_base) proc.getParentEntity();
-      assert(_entity is null, "Default context already set to: " ~ _entity.getFullName());
+      assert(_entity is null, "Default context already set to: " ~
+	     _entity.getFullName());
     }
     this.setThreadContext();
   }
@@ -157,74 +192,80 @@ class uvm_root_entity_base: Entity
 
 class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
   {
+    mixin uvm_sync;
+    
+    // alias _get_uvm_root this;
+
+    @uvm_private_sync
+    bool _uvm_root_initialized;
+
+    // The uvm_root instance corresponding to this RootEntity.
+    // effectively immutable
+    @uvm_immutable_sync
+    private T _uvm_root_instance;
+
     this() {
       synchronized(this) {
 	super();
-	_uvmRootInitSemaphore = new Semaphore(); // count 0
-	// uvm_once has some events etc that need to know the context for init
-	set_thread_context();
-	_root_once = new uvm_root_once(this);
-	_uvm_top = new T();
-	_uvm_top.init_root(this);
-	_uvm_top.init_report();
+	// set static variable that would later be used by uvm_root
+	// constructor. Can not pass this instance as an argument to
+	// the uvm_root constructor since the constructor has no
+	// argument. If an argument is introduced, that will spoil
+	// uvm_root user API.
+	uvm_root_entity_base._root_entity_instance = this;
+	_uvm_root_instance = new T();
 	resetThreadContext();
       }
     }
 
-    override protected T get_root() {
-      return this._uvm_top;
+    override void _esdl__postElab() {
+      uvm_root_instance.set_root_name(getFullName() ~ ".(" ~
+				      qualifiedTypeName!T ~ ")");
     }
 
-    override public T get_uvm_root() {
-      if(_uvmRootInitialized is false) {
-	// _uvmRootInitEvent.wait();
-	_uvmRootInitSemaphore.wait();
-	_uvmRootInitSemaphore.notify();
-	// if(root_once !is null) root_once.initialize();
+    override protected T _get_uvm_root() {
+      return uvm_root_instance;
+    }
+
+    // this is part of the public API
+    // Make the uvm_root available only after the simulaion has
+    // started and the uvm_root is ready to use
+    override T get_root() {
+      while(uvm_root_initialized is false) {
+	uvm_root_init_semaphore.wait();
+	uvm_root_init_semaphore.notify();
       }
-      return this._uvm_top;
+      // expose the root_instance to the external world only after
+      // elaboration is done
+      uvm_root_instance.wait_for_end_of_elaboration();
+      return uvm_root_instance;
     }
 
-    // alias get_uvm_root this;
-
-    // Event _uvmRootInitEvent;
-    Semaphore _uvmRootInitSemaphore;
-
-    @uvm_private_sync bool _uvmRootInitialized;
-
-    public void initial() {
+    void initial() {
       lockStage();
+      // instatiating phases (part of once initialization) needs the
+      // simulation to be running
+      root_once.build_phases_once();
       fileCaveat();
-      synchronized(this) {
-	// init_domains can not be moved to the constructor since it
-	// results in notification of some events, which can only
-	// happen once the simulation starts
-	_uvm_top.init_domains();
-	_uvmRootInitialized = true;
-	_uvmRootInitSemaphore.notify();
-      }
-      _uvm_top.initial();
+      // init_domains can not be moved to the constructor since it
+      // results in notification of some events, which can only
+      // happen once the simulation starts
+      uvm_root_instance.init_domains();
+      wait(0);
+      uvm_root_initialized = true;
+      uvm_root_init_semaphore.notify();
+      uvm_root_instance.initial();
     }
 
-    public Task!(initial) _init;
+    Task!(initial) _init;
 
-    // no need now we handle once initialization lazily
-    // override public void initProcess() {
-    //   super.initProcess();
-    //   // if(root_once !is null) root_once.initialize();
-    // }
-
-
-
-    // The uvm_root instance corresponding to this RootEntity.
-    private T _uvm_top;
-
-    public void set_seed(uint seed) {
+    void set_seed(uint seed) {
       synchronized(this) {
-	if(_uvmRootInitialized) {
-	uvm_report_fatal("SEED",
-			 "Method set_seed can not be called after the simulation has started",
-			 UVM_NONE);
+	if(_uvm_root_initialized) {
+	  uvm_report_fatal("SEED",
+			   "Method set_seed can not be called after" ~
+			   " the simulation has started",
+			   UVM_NONE);
 	}
 	root_once().set_seed(seed);
       }
@@ -239,77 +280,88 @@ class uvm_root: uvm_component
   
   mixin uvm_sync;
 
+  // SV implementation makes this a part of the run_test function
+  @UVM_NO_AUTO
+  uvm_component uvm_test_top;
+  @uvm_immutable_sync
+  private uvm_root_entity_base _uvm_root_entity_instance;
+  
   this() {
     synchronized(this) {
-      // super("__top__", null);
       super();
-      _uvmElabDoneSemaphore = new Semaphore(); // count 0
-    }
-  }
+      _elab_done_semaphore = new Semaphore(); // count 0
 
-  // SV implementation makes this a part of the run_test function
-  @UVM_NO_AUTO uvm_component uvm_test_top;
-  uvm_root_entity_base _uvm_root_entity;
-  
-  override bool is_root() {
-    return true;
-  }
-
-  void init_root(uvm_root_entity_base entity) {
-    synchronized(this) {
-      _uvm_root_entity = entity;
-      _m_phase_timeout = new WithEvent!SimTime(entity);
-      _m_phase_all_done = new WithEvent!bool(entity);
-    }
-  }
-  
-  override public void set_thread_context() {
-    assert(_uvm_root_entity !is null);
-    _uvm_root_entity.set_thread_context();
-  }
-
-  // in SV this is part of the constructor. Here we have separated it
-  // out since we need to make sure that _once initialization has completed
-  void init_report() {
-    synchronized(this) {
-      uvm_root_report_handler rh = new uvm_root_report_handler();
-      set_report_handler(rh);
+      // from static variable
+      _uvm_root_entity_instance =
+	uvm_root_entity_base._root_entity_instance;
+      _phase_timeout = new WithEvent!Time(UVM_DEFAULT_TIMEOUT,
+					  _uvm_root_entity_instance);
+      _m_phase_all_done = new WithEvent!bool(_uvm_root_entity_instance);
       _clp = uvm_cmdline_processor.get_inst();
+      m_rh.set_name("reporter");
       report_header();
-
       // This sets up the global verbosity. Other command line args may
       // change individual component verbosity.
       m_check_verbosity();
     }
   }
 
+  override void set_thread_context() {
+    uvm_root_entity_instance.set_thread_context();
+  }
+
+
   // in the SV version these two lines are handled in
   // the uvm_root.get function
   void init_domains() {
     synchronized(this) {
-      uvm_domain.get_common_domain();
-      uvm_top().m_domain = uvm_domain.get_uvm_domain();
+      uvm_domain.get_common_domain(); // FIXME -- comment this line??
+      uvm_root.m_uvm_get_root.m_domain = uvm_domain.get_uvm_domain();
     }
   }
 
   // uvm_root
 
   // Function: get()
-  // Get the factory singleton
+  // Static accessor for <uvm_root>.
   //
-  public static uvm_root get() {
-    auto top = uvm_top();
-    if(top is null) assert("Null uvm_top");
-    return top;
+  // The static accessor is provided as a convenience wrapper
+  // around retrieving the root via the <uvm_coreservice_t::get_root>
+  // method.
+  //
+  // | // Using the uvm_coreservice_t:
+  // | uvm_coreservice_t cs;
+  // | uvm_root r;
+  // | cs = uvm_coreservice_t::get();
+  // | r = cs.get_root();
+  // |
+  // | // Not using the uvm_coreservice_t:
+  // | uvm_root r;
+  // | r = uvm_root::get();
+  static uvm_root get() {
+    uvm_coreservice_t cs = uvm_coreservice_t.get();
+    uvm_root root = cs.get_root();
+    return root;
   }
 
-  @uvm_immutable_sync uvm_cmdline_processor _clp;
+  @uvm_immutable_sync
+  uvm_cmdline_processor _clp;
 
 
   // this function can be overridden by the user
-  public void initial() {
+  void initial() {
     run_test();
   }
+
+  override string get_type_name() {
+    return qualifiedTypeName!(typeof(this));
+  }
+
+
+  //----------------------------------------------------------------------------
+  // Group: Simulation Control
+  //----------------------------------------------------------------------------
+
 
   // Task: run_test
   //
@@ -326,8 +378,9 @@ class uvm_root: uvm_component
   // --------
 
   // task
-  public void run_test(string test_name="") {
-    uvm_factory factory = uvm_factory.get();
+  void run_test(string test_name="") {
+    uvm_coreservice_t cs = uvm_coreservice_t.get();
+    uvm_factory factory = cs.get_factory();
 
     // Moved to uvm_root class
     // uvm_component uvm_test_top;
@@ -409,8 +462,6 @@ class uvm_root: uvm_component
     //   return;
     // }
 
-    // SV version has a begin-end block here
-    // {
     if(test_name == "") {
       uvm_report_info("RNTST", "Running test ...", UVM_LOW);
     }
@@ -423,7 +474,6 @@ class uvm_root: uvm_component
 		      " (via factory override for test \"" ~ test_name ~
 		      "\")...", UVM_LOW);
     }
-    // }
 
     // phase runner, isolated from calling process
     // Process phase_runner_proc; // store thread forked below for final cleanup
@@ -444,7 +494,8 @@ class uvm_root: uvm_component
     // clean up after ourselves
     phase_runner_proc.abort();
 
-    report_summarize();
+    uvm_report_server l_rs = uvm_report_server.get_server();
+    l_rs.report_summarize();
 
     unlockStage();
     if(finish_on_completion) {
@@ -457,6 +508,80 @@ class uvm_root: uvm_component
     }
   }
 
+  // Function: die
+  //
+  // This method is called by the report server if a report reaches the maximum
+  // quit count or has a UVM_EXIT action associated with it, e.g., as with
+  // fatal errors.
+  //
+  // Calls the <uvm_component::pre_abort()> method
+  // on the entire <uvm_component> hierarchy in a bottom-up fashion.
+  // It then calls <uvm_report_server::report_summarize> and terminates the simulation
+  // with ~$finish~.
+
+  version(UVM_INCLUDE_DEPRECATED) {
+    override void die() {_die();}
+  }
+  else {
+    void die() {_die();}
+  }
+
+  private void _die() {
+    uvm_report_server l_rs = uvm_report_server.get_server();
+    // do the pre_abort callbacks
+    m_do_pre_abort();
+
+    l_rs.report_summarize();
+    finish();
+  }
+  
+  // Function: set_timeout
+  //
+  // Specifies the timeout for the simulation. Default is <`UVM_DEFAULT_TIMEOUT>
+  //
+  // The timeout is simply the maximum absolute simulation time allowed before a
+  // ~FATAL~ occurs.  If the timeout is set to 20ns, then the simulation must end
+  // before 20ns, or a ~FATAL~ timeout will occur.
+  //
+  // This is provided so that the user can prevent the simulation from potentially
+  // consuming too many resources (Disk, Memory, CPU, etc) when the testbench is
+  // essentially hung.
+  //
+  //
+
+  @uvm_private_sync
+  private bool _m_uvm_timeout_overridable = true;
+
+  void set_timeout(Time timeout, bool overridable=true) {
+    synchronized(this) {
+      import std.string;
+      if(_m_uvm_timeout_overridable is false) {
+	uvm_report_info("NOTIMOUTOVR",
+			format("The global timeout setting of %0d is not "
+			       "overridable to %0d due to a previous setting.",
+			       phase_timeout, timeout), UVM_NONE);
+	return;
+      }
+      _m_uvm_timeout_overridable = overridable;
+      _phase_timeout = timeout;
+    }
+  }
+
+
+  // Variable: finish_on_completion
+  //
+  // If set, then run_test will call $finish after all phases are executed.
+
+
+  @uvm_public_sync
+  private bool _finish_on_completion = true;
+
+
+  //----------------------------------------------------------------------------
+  // Group: Topology
+  //----------------------------------------------------------------------------
+
+
   // Variable: top_levels
   //
   // This variable is a list of all of the top level components in UVM. It
@@ -464,18 +589,21 @@ class uvm_root: uvm_component
   // well as any other top level components that have been instantiated
   // anywhere in the hierarchy.
 
-  @uvm_private_sync
-    private Queue!uvm_component _top_levels;
+  // note that _top_levels needs to add an element in the front only
+  // when the element name is "uvm_test_top". Since the access from
+  // front is rare and we do not expect the number of elements to be
+  // really large, an array can be used in place of a Queue
+  private uvm_component[] _top_levels;
 
 
   // Function: find
 
-  public uvm_component find(string comp_match) {
+  uvm_component find(string comp_match) {
     synchronized(this) {
       import std.string: format;
-      Queue!uvm_component comp_list;
+      uvm_component[] comp_list;
 
-      find_all(comp_match,comp_list);
+      find_all(comp_match, comp_list);
 
       if(comp_list.length > 1) {
 	uvm_report_warning("MMATCH",
@@ -501,12 +629,12 @@ class uvm_root: uvm_component
   //
   // Returns the component handle (find) or list of components handles
   // (find_all) matching a given string. The string may contain the wildcards,
-  // * and ?. Strings beginning with '.' are absolute path names. If optional
-  // comp arg is provided, then search begins from that component down
+  // * and ?. Strings beginning with '.' are absolute path names. If the optional
+  // argument comp is provided, then search begins from that component down
   // (default=all components).
 
-  public void find_all(string comp_match, ref Queue!uvm_component comps,
-		       uvm_component comp=null) {
+  void find_all(string comp_match, ref Queue!uvm_component comps,
+		uvm_component comp=null) {
     synchronized(this) {
       if(comp is null) {
 	comp = this;
@@ -515,8 +643,8 @@ class uvm_root: uvm_component
     }
   }
 
-  public void find_all(string comp_match, ref uvm_component[] comps,
-		       uvm_component comp=null) {
+  void find_all(string comp_match, ref uvm_component[] comps,
+		uvm_component comp=null) {
     synchronized(this) {
       if(comp is null) {
 	comp = this;
@@ -525,7 +653,7 @@ class uvm_root: uvm_component
     }
   }
 
-  public uvm_component[] find_all(string comp_match, uvm_component comp=null) {
+  uvm_component[] find_all(string comp_match, uvm_component comp=null) {
     synchronized(this) {
       uvm_component[] comps;
       if(comp is null) {
@@ -536,10 +664,6 @@ class uvm_root: uvm_component
     }
   }
 
-  override public string get_type_name() {
-    return qualifiedTypeName!(typeof(this));
-  }
-
   // Function: print_topology
   //
   // Print the verification environment's component topology. The
@@ -547,10 +671,9 @@ class uvm_root: uvm_component
   // of the topology printout; a ~null~ printer prints with the
   // default output.
 
-  public void print_topology(uvm_printer printer=null) {
+  void print_topology(uvm_printer printer=null) {
     synchronized(this) {
       // string s; // defined in SV version but never used
-      uvm_report_info("UVMTOP", "UVM testbench topology:", UVM_LOW);
 
       if(m_children.length is 0) {
 	uvm_report_warning("EMTCOMP", "print_topology - No UVM "
@@ -562,12 +685,12 @@ class uvm_root: uvm_component
 	printer = uvm_default_printer;
 
       foreach(i, c; m_children) {
-	if(c.print_enabled) {
-	  printer.print_object("", c);
+	if((cast(uvm_component) c).print_enabled) {
+	  printer.print_object("", (cast(uvm_component) c));
 	}
       }
-      import uvm.meta.mcd: vdisplay;
-      vdisplay(printer.emit());
+      uvm_info("UVMTOP", "UVM testbench topology:\n" ~ printer.emit(),
+	       UVM_NONE);
     }
   }
 
@@ -577,16 +700,8 @@ class uvm_root: uvm_component
   // If set, then the entire testbench topology is printed just after completion
   // of the end_of_elaboration phase.
 
-  @uvm_public_sync private bool _enable_print_topology = false;
-
-
-  // Variable: finish_on_completion
-  //
-  // If set, then run_test will call $finish after all phases are executed.
-
-
-  @uvm_public_sync private bool _finish_on_completion = true;
-
+  @uvm_public_sync
+  private bool _enable_print_topology = false;
 
   // Variable- phase_timeout
   //
@@ -594,78 +709,20 @@ class uvm_root: uvm_component
 
   // private
   @uvm_immutable_sync
-    public WithEvent!SimTime _m_phase_timeout;
+  private WithEvent!Time _phase_timeout;
 
 
-
-  // Function: set_timeout
-  //
-  // Specifies the timeout for the simulation. Default is <`UVM_DEFAULT_TIMEOUT>
-  //
-  // The timeout is simply the maximum absolute simulation time allowed before a
-  // ~FATAL~ occurs.  If the timeout is set to 20ns, then the simulation must end
-  // before 20ns, or a ~FATAL~ timeout will occur.
-  //
-  // This is provided so that the user can prevent the simulation from potentially
-  // consuming too many resources (Disk, Memory, CPU, etc) when the testbench is
-  // essentially hung.
-  //
-  //
-
-
-  public void set_timeout(Time timeout, bool overridable=true) {
-    import std.string;
-    __gshared bool m_uvm_timeout_overridable = true;
-    if(m_uvm_timeout_overridable is false) {
-      uvm_report_info("NOTIMOUTOVR",
-		      format("The global timeout setting of %0d is not "
-			     "overridable to %0d due to a previous setting.",
-			     m_phase_timeout, timeout), UVM_NONE);
-      return;
-    }
-    m_uvm_timeout_overridable = overridable;
+  SimTime phase_sim_timeout() {
     synchronized(this) {
-      m_phase_timeout = SimTime(EntityIntf.getContextEntity(), timeout);
+      return SimTime(_uvm_root_entity_instance, _phase_timeout);
     }
   }
-
-  public void set_timeout(uint timeout, bool overridable=true) {
-    import std.string;
-    __gshared bool m_uvm_timeout_overridable = true;
-    if(m_uvm_timeout_overridable is false) {
-      uvm_report_info("NOTIMOUTOVR",
-		      format("The global timeout setting of %0d is not "
-			     "overridable to %0d due to a previous setting.",
-			     m_phase_timeout, timeout), UVM_NONE);
-      return;
-    }
-    m_uvm_timeout_overridable = overridable;
-    synchronized(this) {
-      m_phase_timeout = SimTime(timeout);
-    }
-  }
-
-  public void set_timeout(SimTime timeout, bool overridable=true) {
-    import std.string;
-    __gshared bool m_uvm_timeout_overridable = true;
-    if(m_uvm_timeout_overridable is false) {
-      uvm_report_info("NOTIMOUTOVR",
-		      format("The global timeout setting of %0d is not "
-			     "overridable to %0d due to a previous setting.",
-			     m_phase_timeout, timeout), UVM_NONE);
-      return;
-    }
-    m_uvm_timeout_overridable = overridable;
-    synchronized(this) {
-      m_phase_timeout = timeout;
-    }
-  }
-
 
   // PRIVATE members
 
-  public void m_find_all_recurse(string comp_match, ref Queue!uvm_component comps,
-				 uvm_component comp=null) {
+  void m_find_all_recurse(string comp_match,
+			  ref Queue!uvm_component comps,
+			  uvm_component comp=null) {
     synchronized(this) {
       string name;
 
@@ -679,8 +736,9 @@ class uvm_root: uvm_component
     }
   }
 
-  public void m_find_all_recurse(string comp_match, ref uvm_component[] comps,
-				 uvm_component comp=null) {
+  void m_find_all_recurse(string comp_match,
+			  ref uvm_component[] comps,
+			  uvm_component comp=null) {
     synchronized(this) {
       string name;
 
@@ -695,7 +753,6 @@ class uvm_root: uvm_component
     }
   }
 
-  //   extern protected function new();
 
   //   extern protected virtual function bit m_add_child(uvm_component child);
 
@@ -703,14 +760,16 @@ class uvm_root: uvm_component
   // -----------
 
   // Add to the top levels array
-  override public bool m_add_child(uvm_component child) {
+  override bool m_add_child(uvm_component child) {
     synchronized(this) {
       if(super.m_add_child(child)) {
 	if(child.get_name() == "uvm_test_top") {
-	  _top_levels.pushFront(child);
+	  _top_levels = [child] ~ _top_levels;
+	  // _top_levels.pushFront(child);
 	}
 	else {
-	  _top_levels.pushBack(child);
+	  _top_levels ~= child;
+	  // _top_levels.pushBack(child);
 	}
 	return true;
       }
@@ -725,7 +784,7 @@ class uvm_root: uvm_component
   // build_phase
   // -----
 
-  override public void build_phase(uvm_phase phase) {
+  override void build_phase(uvm_phase phase) {
 
     super.build_phase(phase);
 
@@ -739,13 +798,13 @@ class uvm_root: uvm_component
     m_do_dump_args();
   }
 
-  override public void elaboration_phase(uvm_phase phase) {
+  override void elaboration_phase(uvm_phase phase) {
     foreach(child; get_children()) {
-      child._uvm__auto_elab();
+      child.uvm__auto_elab();
     }
   }
 
-  public override ParContext _esdl__parInheritFrom() {
+  override ParContext _esdl__parInheritFrom() {
     return Process.self().getParentEntity();
   }
 
@@ -753,7 +812,7 @@ class uvm_root: uvm_component
   // m_do_verbosity_settings
   // -----------------------
 
-  public void m_do_verbosity_settings() {
+  void m_do_verbosity_settings() {
 
     string[] set_verbosity_settings;
     string[] split_vals;
@@ -787,7 +846,7 @@ class uvm_root: uvm_component
   // m_do_timeout_settings
   // ---------------------
 
-  public void m_do_timeout_settings() {
+  void m_do_timeout_settings() {
     // synchronized(this) {
     // declared in SV version -- redundant
     // string[] split_timeout;
@@ -795,7 +854,9 @@ class uvm_root: uvm_component
     string[] timeout_settings;
     size_t timeout_count = clp.get_arg_values("+UVM_TIMEOUT=", timeout_settings);
 
-    if(timeout_count is 0) return;
+    if(timeout_count == 0) {
+      return;
+    }
     else {
       string timeout = timeout_settings[0];
       if(timeout_count > 1) {
@@ -821,9 +882,9 @@ class uvm_root: uvm_component
       formattedRead(timeout, "%d,%s", &timeout_int, &override_spec);
 
       switch(override_spec) {
-      case "YES": set_timeout(timeout_int, 1); break;
-      case "NO": set_timeout(timeout_int, 0); break;
-      default : set_timeout(timeout_int, 1); break;
+      case "YES": set_timeout(timeout_int.nsec, true); break;
+      case "NO": set_timeout(timeout_int.nsec, false); break;
+      default : set_timeout(timeout_int.nsec, true); break;
       }
     }
     // }
@@ -834,7 +895,7 @@ class uvm_root: uvm_component
   // m_do_factory_settings
   // ---------------------
 
-  public void m_do_factory_settings() {
+  void m_do_factory_settings() {
     string[] args;
 
     clp.get_arg_matches("/^\\+(UVM_SET_INST_OVERRIDE|uvm_set_inst_override)=/",
@@ -853,9 +914,11 @@ class uvm_root: uvm_component
   // m_process_inst_override
   // -----------------------
 
-  public void m_process_inst_override(string ovr) {
+  void m_process_inst_override(string ovr) {
     string[] split_val;
-    uvm_factory fact = uvm_factory.get();
+
+    uvm_coreservice_t cs = uvm_coreservice_t.get();
+    uvm_factory factory = cs.get_factory();
 
     uvm_split_string(ovr, ',', split_val);
 
@@ -868,16 +931,17 @@ class uvm_root: uvm_component
     uvm_report_info("INSTOVR",
 		    "Applying instance override from the command line: "
 		    "+uvm_set_inst_override=" ~ ovr, UVM_NONE);
-    fact.set_inst_override_by_name(split_val[0], split_val[1], split_val[2]);
+    factory.set_inst_override_by_name(split_val[0], split_val[1], split_val[2]);
   }
 
   //   extern local function void m_process_type_override(string ovr);
   // m_process_type_override
   // -----------------------
 
-  public void m_process_type_override(string ovr) {
+  void m_process_type_override(string ovr) {
     string[] split_val;
-    uvm_factory fact = uvm_factory.get();
+    uvm_coreservice_t cs = uvm_coreservice_t.get();
+    uvm_factory factory = cs.get_factory();
 
     uvm_split_string(ovr, ',', split_val);
 
@@ -891,7 +955,7 @@ class uvm_root: uvm_component
 
     // Replace arg is optional. If set, must be 0 or 1
     bool replace = true;
-    if(split_val.length is 3) {
+    if(split_val.length == 3) {
       if(split_val[2] == "0") replace =  false;
       else if(split_val[2] == "1") replace = true;
       else {
@@ -905,7 +969,7 @@ class uvm_root: uvm_component
     uvm_report_info("UVM_CMDLINE_PROC", "Applying type override from "
 		    "the command line: +uvm_set_type_override=" ~ ovr,
 		    UVM_NONE);
-    fact.set_type_override_by_name(split_val[0], split_val[1], replace);
+    factory.set_type_override_by_name(split_val[0], split_val[1], replace);
   }
 
 
@@ -913,7 +977,7 @@ class uvm_root: uvm_component
   // m_do_config_settings
   // --------------------
 
-  public void m_do_config_settings() {
+  void m_do_config_settings() {
     string[] args;
     clp.get_arg_matches("/^\\+(UVM_SET_CONFIG_INT|uvm_set_config_int)=/",
 			args);
@@ -925,84 +989,19 @@ class uvm_root: uvm_component
     foreach(i, arg; args) {
       m_process_config(arg[23..$], false);
     }
-  }
 
-  // extern local function void m_process_config(string cfg, bit is_int);
-  // m_process_config
-  // ----------------
-
-  public void m_process_config(string cfg, bool is_int) {
-    int v;
-    string[] split_val;
-
-    uvm_split_string(cfg, ',', split_val);
-    if(split_val.length is 1) {
-      uvm_report_error("UVM_CMDLINE_PROC",
-		       "Invalid +uvm_set_config command\"" ~ cfg ~
-		       "\" missing field and value: component is \"" ~
-		       split_val[0] ~ "\"", UVM_NONE);
-      return;
-    }
-
-    if(split_val.length is 2) {
-      uvm_report_error("UVM_CMDLINE_PROC",
-		       "Invalid +uvm_set_config command\"" ~ cfg ~
-		       "\" missing value: component is \"" ~ split_val[0] ~
-		       "\"  field is \"" ~ split_val[1] ~ "\"", UVM_NONE);
-      return;
-    }
-
-    if(split_val.length > 3) {
-      uvm_report_error("UVM_CMDLINE_PROC",
-		       format("Invalid +uvm_set_config command\"%s\" : "
-			      "expected only 3 fields (component, field "
-			      "and value).", cfg), UVM_NONE);
-      return;
-    }
-
-    uvm_root m_uvm_top = uvm_root.get();
-    if(is_int) {
-      if(split_val[2].length > 2) {
-	string base = split_val[2][0..2];
-	string extval = split_val[2][2..$];
-	switch(base) {
-	case "'b":
-	  // case "0b": v = parse!(int, 2)(extval); break; // extval.atobin();
-	case "0b": formattedRead(extval, "%b", &v); break;
-	  // case "'o": v = parse!(int, 8)(extval); break; // extval.atooct();
-	case "'o": formattedRead(extval, "%o", &v); break;
-	case "'d": v = parse!(int)(extval); break; // extval.atoi();
-	case "'h":
-	case "'x":
-	  // case "0x": v = parse!(int, 16)(extval); break; // extval.atohex();
-	case "0x": v = formattedRead(extval, "%x", &v); break;
-	default : v = parse!(int)(split_val[2]); break; // split_val[2].atoi();
-	}
-      }
-      else {
-	v = parse!(int)(split_val[2]); // split_val[2].atoi();
-      }
-
-      uvm_report_info("UVM_CMDLINE_PROC",
-		      "Applying config setting from the command line: "
-		      "+uvm_set_config_int=" ~ cfg, UVM_NONE);
-      m_uvm_top.set_config_int(split_val[0], split_val[1], v);
-    }
-    else {
-      uvm_report_info("UVM_CMDLINE_PROC",
-		      "Applying config setting from the command line: "
-		      "+uvm_set_config_string=" ~ cfg, UVM_NONE);
-      m_uvm_top.set_config_string(split_val[0], split_val[1], split_val[2]);
+    clp.get_arg_matches("/^\\+(UVM_SET_DEFAULT_SEQUENCE|uvm_set_default_sequence)=/", args);
+    foreach(i, arg; args) {
+      m_process_default_sequence(arg[26..$]);
     }
   }
-
 
   //   extern local function void m_do_max_quit_settings();
   // m_do_max_quit_settings
   // ----------------------
 
-  public void m_do_max_quit_settings() {
-    uvm_report_server srvr = get_report_server();
+  void m_do_max_quit_settings() {
+    uvm_report_server srvr = uvm_report_server.get_server();
     string[] max_quit_settings;
     size_t max_quit_count = clp.get_arg_values("+UVM_MAX_QUIT_COUNT=",
 					       max_quit_settings);
@@ -1042,7 +1041,7 @@ class uvm_root: uvm_component
   // m_do_dump_args
   // --------------
 
-  public void m_do_dump_args() {
+  void m_do_dump_args() {
     string[] dump_args;
     string[] all_args;
     string out_string;
@@ -1057,11 +1056,138 @@ class uvm_root: uvm_component
   }
 
 
+  // extern local function void m_process_config(string cfg, bit is_int);
+  // m_process_config
+  // ----------------
+
+  void m_process_config(string cfg, bool is_int) {
+    int v;
+    string[] split_val;
+
+    uvm_split_string(cfg, ',', split_val);
+    if(split_val.length is 1) {
+      uvm_report_error("UVM_CMDLINE_PROC",
+		       "Invalid +uvm_set_config command\"" ~ cfg ~
+		       "\" missing field and value: component is \"" ~
+		       split_val[0] ~ "\"", UVM_NONE);
+      return;
+    }
+
+    if(split_val.length is 2) {
+      uvm_report_error("UVM_CMDLINE_PROC",
+		       "Invalid +uvm_set_config command\"" ~ cfg ~
+		       "\" missing value: component is \"" ~ split_val[0] ~
+		       "\"  field is \"" ~ split_val[1] ~ "\"", UVM_NONE);
+      return;
+    }
+
+    if(split_val.length > 3) {
+      uvm_report_error("UVM_CMDLINE_PROC",
+		       format("Invalid +uvm_set_config command\"%s\" : "
+			      "expected only 3 fields (component, field "
+			      "and value).", cfg), UVM_NONE);
+      return;
+    }
+
+    uvm_coreservice_t cs = uvm_coreservice_t.get();
+    uvm_root m_uvm_top = cs.get_root();
+
+    if(is_int) {
+      if(split_val[2].length > 2) {
+	string base = split_val[2][0..2];
+	string extval = split_val[2][2..$];
+	switch(base) {
+	case "'b":
+	  // case "0b": v = parse!(int, 2)(extval); break; // extval.atobin();
+	case "0b": formattedRead(extval, "%b", &v); break;
+	// case "'o": v = parse!(int, 8)(extval); break; // extval.atooct();
+	case "'o": formattedRead(extval, "%o", &v); break;
+	case "'d": v = parse!(int)(extval); break; // extval.atoi();
+	case "'h":
+	case "'x":
+	  // case "0x": v = parse!(int, 16)(extval); break; // extval.atohex();
+	case "0x": v = formattedRead(extval, "%x", &v); break;
+	default : v = parse!(int)(split_val[2]); break; // split_val[2].atoi();
+	}
+      }
+      else {
+	v = parse!(int)(split_val[2]); // split_val[2].atoi();
+      }
+
+      uvm_report_info("UVM_CMDLINE_PROC",
+		      "Applying config setting from the command line: "
+		      "+uvm_set_config_int=" ~ cfg, UVM_NONE);
+      uvm_config_db!int.set(m_uvm_top, split_val[0], split_val[1], v);
+    }
+    else {
+      uvm_report_info("UVM_CMDLINE_PROC",
+		      "Applying config setting from the command line: "
+		      "+uvm_set_config_string=" ~ cfg, UVM_NONE);
+      uvm_config_db!string.set(m_uvm_top, split_val[0], split_val[1], split_val[2]);
+    }
+  }
+
+
+  // m_process_default_sequence
+  // ----------------
+
+  void m_process_default_sequence(string cfg) {
+    synchronized(this) {
+      string[] split_val;
+      uvm_coreservice_t cs = uvm_coreservice_t.get();
+      uvm_root m_uvm_top = cs.get_root();   
+      uvm_factory f = cs.get_factory();
+      uvm_object_wrapper w;
+
+      uvm_split_string(cfg, ',', split_val);
+      if(split_val.length == 1) {
+	uvm_report_error("UVM_CMDLINE_PROC",
+			 "Invalid +uvm_set_default_sequence command\"" ~
+			 cfg ~ "\" missing phase and type: sequencer is \"" ~
+			 split_val[0] ~ "\"", UVM_NONE);
+	return;
+      }
+
+      if(split_val.length == 2) {
+	uvm_report_error("UVM_CMDLINE_PROC",
+			 "Invalid +uvm_set_default_sequence command\"" ~ cfg ~
+			 "\" missing type: sequencer is \"" ~ split_val[0] ~
+			 "\"  phase is \"" ~ split_val[1] ~ "\"",
+			 UVM_NONE);
+	return;
+      }
+
+      if(split_val.length > 3) {
+	uvm_report_error("UVM_CMDLINE_PROC", 
+			 format("Invalid +uvm_set_default_sequence command" ~
+				"\"%s\" : expected only 3 fields (sequencer" ~
+				", phase and type).", cfg), UVM_NONE);
+      }
+
+      w = f.find_wrapper_by_name(split_val[2]);
+      if (w is null) {
+	uvm_report_error("UVM_CMDLINE_PROC",
+			 format("Invalid type '%s' provided to +" ~
+				"uvm_set_default_sequence", split_val[2]),
+			 UVM_NONE);
+	return;
+      }
+      else {
+	uvm_report_info("UVM_CMDLINE_PROC",
+			"Setting default sequence from the command " ~
+			"line: +uvm_set_default_sequence=" ~ cfg, UVM_NONE);
+	uvm_config_db!(uvm_object_wrapper).set(this, split_val[0] ~
+					       "." ~ split_val[1],
+					       "default_sequence", w);
+      }
+    }
+  }
+
   //   extern function void m_check_verbosity();
   // m_check_verbosity
   // ----------------
 
-  public void m_check_verbosity() {
+  void m_check_verbosity() {
 
     string verb_string;
     string[] verb_settings;
@@ -1135,6 +1261,67 @@ class uvm_root: uvm_component
 
   }
 
+  version(UVM_INCLUDE_DEPRECATED) {
+    override void report_header(UVM_FILE file = 0) {_report_header(file);}
+  }
+  else {
+    void report_header(UVM_FILE file = 0) {_report_header(file);}
+  }
+  
+  private void _report_header(UVM_FILE file = 0) {
+    synchronized(this) {
+      string q;
+      uvm_report_server srvr;
+      uvm_cmdline_processor clp;
+      string[] args;
+
+      srvr = uvm_report_server.get_server();
+      clp = uvm_cmdline_processor.get_inst();
+
+      if (clp.get_arg_matches("\\+UVM_NO_RELNOTES", args)) return;
+
+
+      q ~= "\n----------------------------------------------------------------\n";
+      q ~= uvm_revision_string() ~ "\n";
+      q ~= uvm_co_copyright ~ "\n";
+      q ~= uvm_mgc_copyright ~ "\n";
+      q ~= uvm_cdn_copyright ~ "\n";
+      q ~= uvm_snps_copyright ~ "\n";
+      q ~= uvm_cy_copyright ~ "\n";
+      q ~= uvm_nv_copyright ~ "\n";
+      q ~= "----------------------------------------------------------------\n";
+
+
+      version(UVM_INCLUDE_DEPRECATED) {
+      	if(!_m_relnotes_done) {
+      	  q ~= "\n  ***********       IMPORTANT RELEASE NOTES         ************\n";
+      	}
+      	q ~= "\n  You are using a version of the UVM library that has been compiled\n";
+      	q ~= "  with `UVM_INCLUDE_DEPRECATED defined.\n";
+      	q ~= "  See http://www.eda.org/svdb/view.php?id=3313 for more details.\n";
+      	_m_relnotes_done = true;
+      }
+
+      version(UVM_OBJECT_DO_NOT_NEED_CONSTRUCTOR) {}
+      else {
+	if(!_m_relnotes_done) {
+	  q ~= "\n  ***********       IMPORTANT RELEASE NOTES         ************\n";
+	}
+	q ~= "\n  You are using a version of the UVM library that has been compiled\n";
+	q ~= "  with `UVM_OBJECT_DO_NOT_NEED_CONSTRUCTOR undefined.\n";
+	q ~= "  See http://www.eda.org/svdb/view.php?id=3770 for more details.\n";
+	_m_relnotes_done=1;
+      }
+
+      if(_m_relnotes_done) {
+	q ~= "\n      (Specify +UVM_NO_RELNOTES to turn off this notice)\n";
+      }
+
+      uvm_info("UVM/RELNOTES", q, UVM_LOW);
+    }
+  }
+
+
   //   // singleton handle
   //   __gshared private uvm_root m_inst;
 
@@ -1145,11 +1332,30 @@ class uvm_root: uvm_component
   // TBD move to phase_started callback?
 
   // task
-  override public void run_phase(uvm_phase phase) {
+  override void run_phase(uvm_phase phase) {
+    // check that the commandline are took effect
+    foreach(idx, cl_action; m_uvm_applied_cl_action) {
+      if(cl_action.used == 0) {
+	uvm_warning("INVLCMDARGS",
+		    format("\"+uvm_set_action=%s\" never took effect" ~
+			   " due to a mismatching component pattern",
+			   cl_action.arg));
+      }
+    }
+
+    foreach(idx, cl_sev; m_uvm_applied_cl_sev) {
+      if(cl_sev.used == 0) {
+	uvm_warning("INVLCMDARGS",
+		    format("\"+uvm_set_severity=%s\" never took effect" ~
+			   " due to a mismatching component pattern",
+			   cl_sev.arg));
+      }
+    }
+    
     if(getRootEntity().getSimTime() > 0) {
       uvm_fatal("RUNPHSTIME",
 		"The run phase must start at time 0, current time is " ~
-		format("%0t", getRootEntity().getSimTime()) ~
+		format("%s", getRootEntity().getSimTime()) ~
 		". No non-zero delays are allowed before run_test(), and"
 		" pre-run user defined phases may not consume simulation"
 		" time before the start of the run phase.");
@@ -1160,12 +1366,12 @@ class uvm_root: uvm_component
   // phase_started
   // -------------
   // At end of elab phase we need to do tlm binding resolution.
-  override public void phase_started(uvm_phase phase) {
+  override void phase_started(uvm_phase phase) {
     synchronized(this) {
       if(phase is end_of_elaboration_ph) {
 	do_resolve_bindings();
 	if(enable_print_topology) print_topology();
-	uvm_report_server srvr = get_report_server();
+	uvm_report_server srvr = uvm_report_server.get_server();
 	if(srvr.get_severity_count(UVM_ERROR) > 0) {
 	  uvm_report_fatal("BUILDERR", "stopping due to build errors", UVM_NONE);
 	}
@@ -1173,48 +1379,76 @@ class uvm_root: uvm_component
     }
   }
 
-  Semaphore _uvmElabDoneSemaphore;
-  @uvm_private_sync bool _uvmElabDone;
+  @uvm_immutable_sync
+  Semaphore _elab_done_semaphore;
 
-  override public void phase_ended(uvm_phase phase) {
+  @uvm_private_sync
+  bool _elab_done;
+
+  override void phase_ended(uvm_phase phase) {
     if(phase is end_of_elaboration_ph) {
       synchronized(this) {
-	_uvmElabDone = true;
-	_uvmElabDoneSemaphore.notify();
+	elab_done = true;
+	elab_done_semaphore.notify();
       }
     }
   }
 
-  final public void wait_for_end_of_elaboration() {
-    while(_uvmElabDone is false) {
-      _uvmElabDoneSemaphore.wait();
+  final void wait_for_end_of_elaboration() {
+    while(elab_done is false) {
+      elab_done_semaphore.wait();
     }
-    _uvmElabDoneSemaphore.notify();
   }
 
   @uvm_immutable_sync
   WithEvent!bool _m_phase_all_done;
 
+  // internal function not to be used
+  // get the initialized singleton instance of uvm_root
 
-  version(UVM_NO_DEPRECATED) {}
-  else {
+  // Unlike SV version, uvm_root is not a singleton in Vlang -- we
+  // instead detect what root the present caller needs using the
+  // context of the request being made
+  static uvm_root m_uvm_get_root() {
+    auto root_entity_instance = uvm_root_entity_base.get();
+    if(root_entity_instance is null) {
+      assert("Null uvm_top");
+    }
+    return root_entity_instance._get_uvm_root();
+  }
+
+  version(UVM_INCLUDE_DEPRECATED) {
     // stop_request
     // ------------
 
     // backward compat only
     // call global_stop_request() or uvm_test_done.stop_request() instead
-    public void stop_request() {
+    void stop_request() {
       uvm_test_done_objection tdo = uvm_test_done_objection.get();
       tdo.stop_request();
     }
   }
 
+  private bool _m_relnotes_done = false;
+
+  override void end_of_elaboration_phase(uvm_phase phase) {
+    synchronized(this) {
+      auto p = new uvm_component_proxy("proxy");
+      auto adapter = new uvm_top_down_visitor_adapter!uvm_component("adapter");
+      uvm_coreservice_t cs = uvm_coreservice_t.get();
+      uvm_visitor!uvm_component v = cs.get_component_visitor();
+      adapter.accept(this, v, p);
+    }
+  }
+  
 }
 
 
 
 class uvm_root_once
 {
+  import uvm.base.uvm_coreservice: uvm_coreservice_t;
+  import uvm.base.uvm_tr_stream;
   import uvm.seq.uvm_sequencer_base;
   import uvm.base.uvm_misc;
   import uvm.base.uvm_recorder;
@@ -1236,6 +1470,8 @@ class uvm_root_once
   import uvm.base.uvm_runtime_phases;
   import uvm.base.uvm_common_phases;
 
+  uvm_coreservice_t.uvm_once _uvm_coreservice_t_once;
+  uvm_tr_stream.uvm_once _uvm_tr_stream_once;
   uvm_sequencer_base.uvm_once _uvm_sequencer_base_once;
   uvm_seed_map.uvm_once _uvm_seed_map_once;
   uvm_recorder.uvm_once _uvm_recorder_once;
@@ -1282,157 +1518,72 @@ class uvm_root_once
   uvm_check_phase.uvm_once _uvm_check_phase_once;
   uvm_report_phase.uvm_once _uvm_report_phase_once;
   uvm_final_phase.uvm_once _uvm_final_phase_once;
-  
-  this(uvm_root_entity_base root_entity) {
+
+  this(uvm_root_entity_base root_entity_instance) {
     synchronized(this) {
-      root_entity.set_root_once(this);
+      root_entity_instance._set_root_once(this);
       import std.random;
       auto seed = uniform!int;
-      // writeln("UVM default seed initialized to: ", seed);
-      // import std.stdio;
+      _uvm_coreservice_t_once = new uvm_coreservice_t.uvm_once();
+      _uvm_tr_stream_once = new uvm_tr_stream.uvm_once();
       _uvm_sequencer_base_once = new uvm_sequencer_base.uvm_once();
-      // uvm_sequencer_base._once = _uvm_sequencer_base_once;
       _uvm_seed_map_once = new uvm_seed_map.uvm_once(seed);
-      // uvm_seed_map._once = _uvm_seed_map_once;
-      // writeln("Done -- _uvm_seed_map_once");
       _uvm_recorder_once = new uvm_recorder.uvm_once();
-      // uvm_recorder._once = _uvm_recorder_once;
-      // writeln("Done -- _uvm_recorder_once");
       _uvm_object_once = new uvm_object.uvm_once();
-      // uvm_object._once = _uvm_object_once;
-      // writeln("Done -- _uvm_object_once");
       _uvm_component_once = new uvm_component.uvm_once();
-      // uvm_component._once = _uvm_component_once;
-      // writeln("Done -- _uvm_component_once");
       _uvm_config_db_once = new uvm_once_config_db();
-      // _uvm_config_db_uvm_once = _uvm_config_db_once;
-      // writeln("Done -- _uvm_config_db_once");
       _uvm_config_db_options_once = new uvm_config_db_options.uvm_once();
-      // uvm_config_db_options._once = _uvm_config_db_options_once;
-      // writeln("Done -- _uvm_config_db_options_once");
       _uvm_report_catcher_once = new uvm_report_catcher.uvm_once();
-      // uvm_report_catcher._once = _uvm_report_catcher_once;
-      // writeln("Done -- _uvm_report_catcher_once");
       _uvm_report_handler_once = new uvm_report_handler.uvm_once();
-      // uvm_report_handler._once = _uvm_report_handler_once;
-      // writeln("Done -- _uvm_report_handler_once");
       _uvm_resource_options_once = new uvm_resource_options.uvm_once();
-      // uvm_resource_options._once = _uvm_resource_options_once;
-      // writeln("Done -- _uvm_resource_options_once");
       _uvm_resource_base_once = new uvm_resource_base.uvm_once();
-      // uvm_resource_base._once = _uvm_resource_base_once;
-      // writeln("Done -- _uvm_resource_base_once");
       _uvm_resource_pool_once = new uvm_resource_pool.uvm_once();
-      // uvm_resource_pool._once = _uvm_resource_pool_once;
-      // writeln("Done -- _uvm_resource_pool_once");
       _uvm_factory_once = new uvm_factory.uvm_once();
-      // uvm_factory._once = _uvm_factory_once;
-      // writeln("Done -- _uvm_factory_once");
       _uvm_resource_db_options_once = new uvm_resource_db_options.uvm_once();
-      // uvm_resource_db_options._once = _uvm_resource_db_options_once;
-      // writeln("Done -- _uvm_resource_db_options_once");
       _uvm_domain_globals_once = new uvm_once_domain_globals();
-      // _uvm_domain_globals_uvm_once = _uvm_domain_globals_once;
-      // writeln("Done -- _uvm_domain_once_globals_once");
       _uvm_domain_once = new uvm_domain.uvm_once();
-      // uvm_domain._once = _uvm_domain_once;
-      // writeln("Done -- _uvm_domain_once");
       _uvm_cmdline_processor_once = new uvm_cmdline_processor.uvm_once();
-      // uvm_cmdline_processor._once = _uvm_cmdline_processor_once;
-      // writeln("Done -- _uvm_cmdline_processor_once");
 
 
       _uvm_objection_once = new uvm_objection.uvm_once();
-      // uvm_objection._once = _uvm_objection_once;
-      // writeln("Done -- _uvm_objection_once");
       _uvm_test_done_objection_once = new uvm_test_done_objection.uvm_once();
-      // uvm_test_done_objection._once = _uvm_test_done_objection_once;
-      // writeln("Done -- _uvm_test_done_objection_once");
 
-      _uvm_phase_once = new uvm_phase.uvm_once();
-      // uvm_phase._once = _uvm_phase_once;
-      // writeln("Done -- _uvm_phase_once");
-
-      // uvm_runtime_phases;
-      _uvm_pre_reset_phase_once = new uvm_pre_reset_phase.uvm_once();
-      // uvm_pre_reset_phase._once = _uvm_pre_reset_phase_once;
-      // writeln("Done -- _uvm_pre_reset_phase_once");
-      _uvm_reset_phase_once = new uvm_reset_phase.uvm_once();
-      // uvm_reset_phase._once = _uvm_reset_phase_once;
-      // writeln("Done -- _uvm_reset_phase_once");
-      _uvm_post_reset_phase_once = new uvm_post_reset_phase.uvm_once();
-      // uvm_post_reset_phase._once = _uvm_post_reset_phase_once;
-      // writeln("Done -- _uvm_post_reset_phase_once");
-      _uvm_pre_configure_phase_once = new uvm_pre_configure_phase.uvm_once();
-      // uvm_pre_configure_phase._once = _uvm_pre_configure_phase_once;
-      // writeln("Done -- _uvm_pre_configure_phase_once");
-      _uvm_configure_phase_once = new uvm_configure_phase.uvm_once();
-      // uvm_configure_phase._once = _uvm_configure_phase_once;
-      // writeln("Done -- _uvm_configure_phase_once");
-      _uvm_post_configure_phase_once = new uvm_post_configure_phase.uvm_once();
-      // uvm_post_configure_phase._once = _uvm_post_configure_phase_once;
-      // writeln("Done -- _uvm_post_configure_phase_once");
-      _uvm_pre_main_phase_once = new uvm_pre_main_phase.uvm_once();
-      // uvm_pre_main_phase._once = _uvm_pre_main_phase_once;
-      // writeln("Done -- _uvm_pre_main_phase_once");
-      _uvm_main_phase_once = new uvm_main_phase.uvm_once();
-      // uvm_main_phase._once = _uvm_main_phase_once;
-      // writeln("Done -- _uvm_main_phase_once");
-      _uvm_post_main_phase_once = new uvm_post_main_phase.uvm_once();
-      // uvm_post_main_phase._once = _uvm_post_main_phase_once;
-      // writeln("Done -- _uvm_post_main_phase_once");
-      _uvm_pre_shutdown_phase_once = new uvm_pre_shutdown_phase.uvm_once();
-      // uvm_pre_shutdown_phase._once = _uvm_pre_shutdown_phase_once;
-      // writeln("Done -- _uvm_pre_shutdown_phase_once");
-      _uvm_shutdown_phase_once = new uvm_shutdown_phase.uvm_once();
-      // uvm_shutdown_phase._once = _uvm_shutdown_phase_once;
-      // writeln("Done -- _uvm_shutdown_phase_once");
-      _uvm_post_shutdown_phase_once = new uvm_post_shutdown_phase.uvm_once();
-      // uvm_post_shutdown_phase._once = _uvm_post_shutdown_phase_once;
-      // writeln("Done -- _uvm_post_shutdown_phase_once");
-
-      // uvm_common_phases;
-      _uvm_build_phase_once = new uvm_build_phase.uvm_once();
-      // uvm_build_phase._once = _uvm_build_phase_once;
-      // writeln("Done -- _uvm_build_phase_once");
-      _uvm_connect_phase_once = new uvm_connect_phase.uvm_once();
-      // uvm_connect_phase._once = _uvm_connect_phase_once;
-      // writeln("Done -- _uvm_connect_phase_once");
-      _uvm_elaboration_phase_once = new uvm_elaboration_phase.uvm_once();
-      // uvm_elaboration_phase._once = _uvm_elaboration_phase_once;
-      // writeln("Done -- _uvm_elaboration_phase_once");
-      _uvm_end_of_elaboration_phase_once = new uvm_end_of_elaboration_phase.uvm_once();
-      // uvm_end_of_elaboration_phase._once = _uvm_end_of_elaboration_phase_once;
-      // writeln("Done -- _uvm_end_of_elaboration_phase_once");
-      _uvm_start_of_simulation_phase_once = new uvm_start_of_simulation_phase.uvm_once();
-      // uvm_start_of_simulation_phase._once = _uvm_start_of_simulation_phase_once;
-      // writeln("Done -- _uvm_start_of_simulation_phase_once");
-      _uvm_run_phase_once = new uvm_run_phase.uvm_once();
-      // uvm_run_phase._once = _uvm_run_phase_once;
-      // writeln("Done -- _uvm_run_phase_once");
-      _uvm_extract_phase_once = new uvm_extract_phase.uvm_once();
-      // uvm_extract_phase._once = _uvm_extract_phase_once;
-      // writeln("Done -- _uvm_extract_phase_once");
-      _uvm_check_phase_once = new uvm_check_phase.uvm_once();
-      // uvm_check_phase._once = _uvm_check_phase_once;
-      // writeln("Done -- _uvm_check_phase_once");
-      _uvm_report_phase_once = new uvm_report_phase.uvm_once();
-      // uvm_report_phase._once = _uvm_report_phase_once;
-      // writeln("Done -- _uvm_report_phase_once");
-      _uvm_final_phase_once = new uvm_final_phase.uvm_once();
-      // uvm_final_phase._once = _uvm_final_phase_once;
-      // writeln("Done -- _uvm_final_phase_once");
       _uvm_report_server_once = new uvm_report_server.uvm_once();
-      // uvm_report_server._once = _uvm_report_server_once;
-      // writeln("Done -- _uvm_report_server_once");
       _uvm_callbacks_base_once = new uvm_callbacks_base.uvm_once();
-      // uvm_callbacks_base._once = _uvm_callbacks_base_once;
-      // writeln("Done -- _uvm_callbacks_base_once");
       _uvm_object_globals_once = new uvm_once_object_globals();
-      // _uvm_object_globals_uvm_once = _uvm_object_globals_once;
-      // writeln("Done -- _uvm_object_globals_once");
 
     }
+  }
+
+  // we build the phases only once the simulation has started since
+  // the phases require some events to be instantiated and these
+  // events need a parent process to be in place.
+  void build_phases_once() {
+    _uvm_phase_once = new uvm_phase.uvm_once();
+
+    _uvm_pre_reset_phase_once = new uvm_pre_reset_phase.uvm_once();
+    _uvm_reset_phase_once = new uvm_reset_phase.uvm_once();
+    _uvm_post_reset_phase_once = new uvm_post_reset_phase.uvm_once();
+    _uvm_pre_configure_phase_once = new uvm_pre_configure_phase.uvm_once();
+    _uvm_configure_phase_once = new uvm_configure_phase.uvm_once();
+    _uvm_post_configure_phase_once = new uvm_post_configure_phase.uvm_once();
+    _uvm_pre_main_phase_once = new uvm_pre_main_phase.uvm_once();
+    _uvm_main_phase_once = new uvm_main_phase.uvm_once();
+    _uvm_post_main_phase_once = new uvm_post_main_phase.uvm_once();
+    _uvm_pre_shutdown_phase_once = new uvm_pre_shutdown_phase.uvm_once();
+    _uvm_shutdown_phase_once = new uvm_shutdown_phase.uvm_once();
+    _uvm_post_shutdown_phase_once = new uvm_post_shutdown_phase.uvm_once();
+
+    _uvm_build_phase_once = new uvm_build_phase.uvm_once();
+    _uvm_connect_phase_once = new uvm_connect_phase.uvm_once();
+    _uvm_elaboration_phase_once = new uvm_elaboration_phase.uvm_once();
+    _uvm_end_of_elaboration_phase_once = new uvm_end_of_elaboration_phase.uvm_once();
+    _uvm_start_of_simulation_phase_once = new uvm_start_of_simulation_phase.uvm_once();
+    _uvm_run_phase_once = new uvm_run_phase.uvm_once();
+    _uvm_extract_phase_once = new uvm_extract_phase.uvm_once();
+    _uvm_check_phase_once = new uvm_check_phase.uvm_once();
+    _uvm_report_phase_once = new uvm_report_phase.uvm_once();
+    _uvm_final_phase_once = new uvm_final_phase.uvm_once();
   }
 
   void set_seed(int seed) {
@@ -1444,36 +1595,40 @@ class uvm_root_once
 
 // const uvm_root uvm_top = uvm_root::get();
 
+
+
+// FIXME -- remove the junk beyond this line
+
 // // for backward compatibility
 // const uvm_root _global_reporter = uvm_root::get();
 
 
 
-//-----------------------------------------------------------------------------
-//
-// Class- uvm_root_report_handler
-//
-//-----------------------------------------------------------------------------
-// Root report has name "reporter"
+// //-----------------------------------------------------------------------------
+// //
+// // Class- uvm_root_report_handler
+// //
+// //-----------------------------------------------------------------------------
+// // Root report has name "reporter"
 
-class uvm_root_report_handler: uvm_report_handler
-{
-  override public void report(uvm_severity_type severity,
-			      string name,
-			      string id,
-			      string message,
-			      int verbosity_level=UVM_MEDIUM,
-			      string filename="",
-			      size_t line=0,
-			      uvm_report_object client=null) {
-    if(name == "") name = "reporter";
-    super.report(severity, name, id, message, verbosity_level,
-		 filename, line, client);
-  }
-}
+// class uvm_root_report_handler: uvm_report_handler
+// {
+//   override void report(uvm_severity severity,
+// 			      string name,
+// 			      string id,
+// 			      string message,
+// 			      int verbosity_level=UVM_MEDIUM,
+// 			      string filename="",
+// 			      size_t line=0,
+// 			      uvm_report_object client=null) {
+//     if(name == "") name = "reporter";
+//     super.report(severity, name, id, message, verbosity_level,
+// 		 filename, line, client);
+//   }
+// }
 
 
-// public auto uvm_simulate(T)(string name, uint seed,
+// auto uvm_simulate(T)(string name, uint seed,
 // 			    uint multi=1, uint first=0) {
 //   auto root = new uvm_root_entity!T(name, seed);
 //   root.multiCore(multi, first);
@@ -1482,7 +1637,7 @@ class uvm_root_report_handler: uvm_report_handler
 //   return root;
 // }
 
-// public auto uvm_elaborate(T)(string name, uint seed,
+// auto uvm_elaborate(T)(string name, uint seed,
 // 			     uint multi=1, uint first=0) {
 //   auto root = new uvm_root_entity!T(name, seed);
 //   root.multiCore(multi, first);
@@ -1491,7 +1646,7 @@ class uvm_root_report_handler: uvm_report_handler
 //   return root;
 // }
 
-// public auto uvm_fork(T)(string name, uint seed,
+// auto uvm_fork(T)(string name, uint seed,
 // 			uint multi=1, uint first=0) {
 //   auto root = new uvm_root_entity!T(name, seed);
 //   root.multiCore(multi, first);

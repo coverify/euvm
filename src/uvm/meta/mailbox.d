@@ -56,7 +56,7 @@ abstract class MailboxBase(T)
     }
   }
 
-  public this(size_t bound = 0) {
+  this(size_t bound = 0) {
     synchronized(this) {
       _bound = bound;
       if(bound is 0) {
@@ -216,7 +216,7 @@ class Mailbox(T): MailboxBase!T
   private Event _readEvent;
   private Event _writeEvent;
 
-  public this(size_t bound = 0) {
+  this(size_t bound = 0) {
     synchronized(this) {
       super(bound);
       _readEvent.init("readEvent", EntityIntf.getContextEntity());
@@ -235,7 +235,7 @@ class MailOutbox(T): MailboxBase!T
   private Event _readEvent;
   private Semaphore _writeEvent;
 
-  public this(size_t bound = 0) {
+  this(size_t bound = 0) {
     synchronized(this) {
       super(bound);
       _readEvent.init("readEvent", EntityIntf.getContextEntity());
@@ -254,7 +254,7 @@ class MailInbox(T): MailboxBase!T
   private Semaphore _readEvent;
   private Event _writeEvent;
 
-  public this(size_t bound = 0) {
+  this(size_t bound = 0) {
     synchronized(this) {
       super(bound);
       _writeEvent.init("writeEvent", EntityIntf.getContextEntity());

@@ -2,8 +2,8 @@
 //------------------------------------------------------------------------------
 //   Copyright 2007-2011 Mentor Graphics Corporation
 //   Copyright 2007-2011 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2012-2014 Coverify Systems Technology
+//   Copyright 2010      Synopsys, Inc.
+//   Copyright 2012-2016 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -27,6 +27,14 @@ module uvm.base.uvm_printer;
 import uvm.base.uvm_globals;
 import std.conv: to;
 import esdl.base.core: SimTime;
+import std.traits: isFloatingPoint;
+import std.string: format;
+
+
+// GC hack to make sure that heap allocation with static scope
+// are covered -- this is because of an error in druntime
+// https://issues.dlang.org/show_bug.cgi?id=15513
+import core.memory: GC;
 
 enum int UVM_STDOUT = 1;  // Writes to standard out and logfile
 
@@ -85,10 +93,10 @@ import uvm.base.uvm_object_globals;
 import uvm.base.uvm_component;
 import uvm.meta.misc;
 import uvm.meta.meta;
+import std.traits: isIntegral;
 
 abstract class uvm_printer
 {
-  import std.traits: isIntegral;
 
   mixin uvm_sync;
 
@@ -97,16 +105,19 @@ abstract class uvm_printer
   // The knob object provides access to the variety of knobs associated with a
   // specific printer instance.
   //
-  @uvm_immutable_sync private uvm_printer_knobs _knobs; // = new;
+  @uvm_immutable_sync
+  private uvm_printer_knobs _knobs; // = new;
 
   // SV implementation uses a Queue, but a dynamic array will be OK as well
-  protected bool[] _m_array_stack;
-  @uvm_immutable_sync private uvm_scope_stack _m_scope; // = new;
-  @uvm_public_sync private string _m_string;
+  private bool[] _m_array_stack;
+  @uvm_immutable_sync
+  private uvm_scope_stack _m_scope; // = new;
+  @uvm_public_sync
+  private string _m_string;
 
   // holds each cell entry
   // SV implementation uses a Queue, but a dynamic array will be OK as well
-  protected uvm_printer_row_info[] _m_rows;
+  private uvm_printer_row_info[] _m_rows;
 
   this() {
     synchronized(this) {
@@ -120,9 +131,9 @@ abstract class uvm_printer
   // These functions are called from <uvm_object::print>, or they are called
   // directly on any data to get formatted printing.
 
-  // Function: print_int
+  // Function: print_field
   //
-  // Prints an integral field.
+  // Prints an integral field (up to 4096 bits).
   //
   // name  - The name of the field.
   // value - The value of the field.
@@ -133,38 +144,58 @@ abstract class uvm_printer
   //           print the leaf name of a field.  Typical values for the separator
   //           are . (dot) or [ (open bracket).
 
-  public void print_int(T)(string          name,
-			   T               value,
-			   uvm_radix_enum  radix=UVM_NORADIX,
-			   char            scope_separator='.',
-			   string          type_name="")
-    if(isBitVector!T || isIntegral!T || is(T == bool)) {
+  void print(T)(string          name,
+		T               value,
+		uvm_radix_enum  radix=UVM_NORADIX,
+		char            scope_separator='.',
+		string          type_name="")
+    if(isBitVector!T || isIntegral!T || is(T: bool)) {
+      print_int!T(name, value, -1, radix, scope_separator, type_name);
+    }
+
+  void print_integral(T)(string          name,
+			 T               value,
+			 ptrdiff_t       size = -1,
+			 uvm_radix_enum  radix=UVM_NORADIX,
+			 char            scope_separator='.',
+			 string          type_name="")
+    if(isBitVector!T || isIntegral!T || is(T: bool)) {
       synchronized(this) {
+	if(size < 0) {
+	  static if(is(T: bool)) {
+	    size = 1;
+	  }
+	  else static if(isBitVector!T) {
+	    size = T.SIZE;
+	  }
+	  else static if(isIntegral!T) {
+	    size = T.sizeof * 8;
+	  }
+	}
+
 	uvm_printer_row_info row_info;
 	import std.conv: to;
 
 	if(name != "") {
-	  _m_scope.set_arg(name);
-	  name = _m_scope.get();
+	  m_scope.set_arg(name);
+	  name = m_scope.get();
 	}
 
 	if(type_name == "") {
 	  if(radix is UVM_TIME)        type_name = "time";
 	  else if(radix is UVM_STRING) type_name = "string";
+	  else if(radix is UVM_ENUM)   type_name = "enum";
 	  else                         type_name = "integral";
 	}
 
-	static if(isIntegral!T || is(T == bool)) enum size_t size = T.sizeof*8;
-	else                                     enum size_t size = T.SIZE;
-
 	auto sz_str = size.to!string;
 
-	if(radix is UVM_NORADIX) radix = _knobs.default_radix;
+	if(radix is UVM_NORADIX) radix = knobs.default_radix;
 
-	auto val_str = uvm_vector_to_string (value, radix,
-					     _knobs.get_radix_str(radix));
+	auto val_str = uvm_bitvec_to_string(value, size, radix,
+					    knobs.get_radix_str(radix));
 
-	row_info.level = _m_scope.depth();
+	row_info.level = m_scope.depth();
 	row_info.name = adjust_name(name,scope_separator);
 	row_info.type_name = type_name;
 	row_info.size = sz_str;
@@ -176,7 +207,9 @@ abstract class uvm_printer
     }
 
   // backward compatibility
-  alias print_int print_field;
+  alias print_field_int = print_integral;
+  alias print_field = print_integral;
+  alias print_int = print_field;
 
   // Function: print_object
   //
@@ -188,51 +221,63 @@ abstract class uvm_printer
   // behavior off, you must set the <uvm_component::print_enabled> bit to 0 for
   // the specific children you do not want automatically printed.
 
-  public void print_object (string     name,
-			    uvm_object value,
-			    char       scope_separator='.') {
-    synchronized(this) {
-      print_object_header(name, value, scope_separator);
+  void print(T)(string     name,
+		T          value,
+		char       scope_separator='.')
+    if(is(T: uvm_object)) {
+      synchronized(this) {
+	print_object_header(name, value, scope_separator);
 
-      if(value !is null) {
-	if((_knobs.depth == -1 || (_knobs.depth > _m_scope.depth())) &&
-	   ! value.m_uvm_status_container.check_cycle(value)) {
-	  value.m_uvm_status_container.add_cycle(value);
-	  if(name == "" && value !is null) _m_scope.down(value.get_name());
-	  else                             _m_scope.down(name);
-	  auto comp = cast(uvm_component) value;
-	  //Handle children of the comp
-	  if(comp !is null) {
-	    foreach(child; comp.get_children()) {
-	      auto child_comp = cast(uvm_component) child;
-	      if (child_comp !is null && child_comp.print_enabled) {
-		this.print_object("", child_comp);
+	if(value !is null) {
+	  if((knobs.depth == -1 || (knobs.depth > m_scope.depth())) &&
+	     ! value.m_uvm_status_container.check_cycle(value)) {
+
+	    value.m_uvm_status_container.add_cycle(value);
+	    if(name == "" && value !is null) {
+	      m_scope.down(value.get_name());
+	    }
+	    else {
+	      m_scope.down(name);
+	    }
+	    auto comp = cast(uvm_component) value;
+	    //Handle children of the comp
+	    if(comp !is null) {
+	      foreach(child; comp.get_children()) {
+		auto child_comp = cast(uvm_component) child;
+		if (child_comp !is null && child_comp.print_enabled) {
+		  this.print("", child_comp);
+		}
 	      }
 	    }
+
+	    // print members of object
+	    value.sprint(this);
+
+	    if(name != "" && name[0] == '[') {
+	      m_scope.up('[');
+	    }
+	    else {
+	      m_scope.up('.');
+	    }
+	    value.m_uvm_status_container.remove_cycle(value);
 	  }
-
-	  // print members of object
-	  value.sprint(this);
-
-	  if(name != "" && name[0] is '[') _m_scope.up('[');
-	  else                             _m_scope.up('.');
-	  value.m_uvm_status_container.remove_cycle(value);
 	}
       }
     }
-  }
+
+  alias print_object = print;
 
 
-  public void print_object_header (string name,
-				   uvm_object value,
-				   char scope_separator='.') {
+  void print_object_header (string name,
+			    uvm_object value,
+			    char scope_separator='.') {
     synchronized(this) {
       uvm_printer_row_info row_info;
 
       if(name == "") {
 	if(value !is null) {
 	  auto comp = cast(uvm_component) value;
-	  if((_m_scope.depth() is 0) && comp !is null) {
+	  if((m_scope.depth() is 0) && comp !is null) {
 	    name = comp.get_full_name();
 	  }
 	  else {
@@ -241,22 +286,24 @@ abstract class uvm_printer
 	}
       }
 
-      if(name == "") name = "<unnamed>";
+      if(name == "") {
+	name = "<unnamed>";
+      }
 
-      _m_scope.set_arg(name);
+      m_scope.set_arg(name);
 
-      row_info.level = _m_scope.depth();
+      row_info.level = m_scope.depth();
 
-      if(row_info.level is 0 && _knobs.show_root is 1) {
+      if(row_info.level == 0 && knobs.show_root == true) {
 	row_info.name = value.get_full_name();
       }
       else {
-	row_info.name = adjust_name(_m_scope.get(),scope_separator);
+	row_info.name = adjust_name(m_scope.get(), scope_separator);
       }
 
-      row_info.type_name = (value !is null) ?value.get_type_name() : "object";
+      row_info.type_name = (value !is null) ? value.get_type_name() : "object";
       row_info.size = "-";
-      row_info.val = _knobs.reference ? uvm_object_value_str(value) : "-";
+      row_info.val = knobs.reference ? uvm_object_value_str(value) : "-";
 
       _m_rows ~= row_info;
     }
@@ -267,27 +314,27 @@ abstract class uvm_printer
   //
   // Prints a string field.
 
-  public void print_string (string name,
-			    string value,
-			    char   scope_separator = '.') {
-    synchronized(this) {
-      // for format
-      import std.string: format;
+  void print(T)(string name,
+		T      value,
+		char   scope_separator = '.')
+    if(is(T == string)) {
+      synchronized(this) {
+	uvm_printer_row_info row_info;
 
-      uvm_printer_row_info row_info;
+	if(name != "") {
+	  m_scope.set_arg(name);
+	}
 
-      if(name != "") _m_scope.set_arg(name);
+	row_info.level = m_scope.depth();
+	row_info.name = adjust_name(m_scope.get(),scope_separator);
+	row_info.type_name = "string";
+	row_info.size = format("%0d", value.length);
+	row_info.val = (value == "" ? "\"\"" : value);
 
-      row_info.level = _m_scope.depth();
-      row_info.name = adjust_name(_m_scope.get(),scope_separator);
-      row_info.type_name = "string";
-      row_info.size = format("%0d", value.length);
-      row_info.val = (value == "" ? "\"\"" : value);
-
-      _m_rows ~= row_info;
+	_m_rows ~= row_info;
+      }
     }
-  }
-
+  alias print_string = print;
 
   // Function: print_time
   //
@@ -297,48 +344,36 @@ abstract class uvm_printer
   // The print is subject to the ~$timeformat~ system task for formatting time
   // values.
 
-  public void print_time(T)(string name,
-			    T      value,
-			    char   scope_separator='.')
+  void print(T)(string name,
+		T      value,
+		char   scope_separator='.')
     if(is(T == SimTime)) {
       synchronized(this) {
-	print_int(name, cast(BitVec!(T.sizeof*8)) value, UVM_TIME, scope_separator);
+	print(name, value.to!ulong, UVM_TIME, scope_separator);
       }
     }
 
-
-  public void print_time(T)(string name,
-			    T      value,
-			    char   scope_separator='.')
-    if(isIntegral!T) {
-      synchronized(this) {
-	print_int(name, value, UVM_TIME, scope_separator);
-      }
-    }
-
-
+  alias print_time = print;
 
   // Function: print_string
   //
   // Prints a string field.
 
-  public void print_real(T)(string  name,
-			    T       value,
-			    char    scope_separator = '.')
+  void print(T)(string  name,
+		T       value,
+		char    scope_separator = '.')
     if(isFloatingPoint!T) {
       synchronized(this) {
-	// for format
-	import std.string: format;
 
 	uvm_printer_row_info row_info;
 
 	if (name != "" && name != "...") {
-	  _m_scope.set_arg(name);
-	  name = _m_scope.get();
+	  m_scope.set_arg(name);
+	  name = m_scope.get();
 	}
 
-	row_info.level = _m_scope.depth();
-	row_info.name = adjust_name(_m_scope.get(), scope_separator);
+	row_info.level = m_scope.depth();
+	row_info.name = adjust_name(m_scope.get(), scope_separator);
 	row_info.type_name = qualifiedTypeName!T;
 	row_info.size = (T.sizeof*8).to!string();
 	row_info.val = format("%f",value);
@@ -347,28 +382,27 @@ abstract class uvm_printer
 
       }
     }
+  alias print_real = print;
 
   // Function: print_generic
   //
   // Prints a field having the given ~name~, ~type_name~, ~size~, and ~value~.
 
-  public void print_generic (string     name,
-			     string     type_name,
-			     int        size,
-			     string     value,
-			     char       scope_separator='.') {
+  void print_generic(string     name,
+		     string     type_name,
+		     size_t     size,
+		     string     value,
+		     char       scope_separator='.') {
     synchronized(this) {
-      // format
-      import std.string: format;
 
       uvm_printer_row_info row_info;
 
       if (name != "" && name != "...") {
-	_m_scope.set_arg(name);
-	name = _m_scope.get();
+	m_scope.set_arg(name);
+	name = m_scope.get();
       }
 
-      row_info.level = _m_scope.depth();
+      row_info.level = m_scope.depth();
       row_info.name = adjust_name(name,scope_separator);
       row_info.type_name = type_name;
       row_info.size = (size is -2 ? "..." : format("%0d",size));
@@ -386,7 +420,7 @@ abstract class uvm_printer
   // Emits a string representing the contents of an object
   // in a format defined by an extension of this object.
   //
-  public string emit();		// abstract
+  abstract string emit();		// abstract
   //  {
   //   uvm_error("NO_OVERRIDE","emit() method not overridden in printer subtype");
   //   return "";
@@ -397,7 +431,7 @@ abstract class uvm_printer
   //
   // Hook for producing custom output of a single field (row).
   //
-  public string format_row (uvm_printer_row_info row) {
+  string format_row (uvm_printer_row_info row) {
     return "";
   }
 
@@ -405,7 +439,7 @@ abstract class uvm_printer
   // Function: format_row
   //
   // Hook to override base header with a custom header.
-  public string format_header() {
+  string format_header() {
     return "";
   }
 
@@ -413,7 +447,7 @@ abstract class uvm_printer
   // Function: format_header
   //
   // Hook to override base footer with a custom footer.
-  public string format_footer() {
+  string format_footer() {
     return "";
   }
 
@@ -425,11 +459,10 @@ abstract class uvm_printer
   // The intent of the separator is to mark where the leaf name starts if the
   // printer if configured to print only the leaf name of the identifier.
 
-  protected string adjust_name (string id,
-				char scope_separator='.') {
+  protected string adjust_name (string id, char scope_separator='.') {
     synchronized(this) {
-      if(_knobs.show_root && _m_scope.depth() is 0 ||
-	 _knobs.full_name || id == "...") {
+      if(knobs.show_root && m_scope.depth() == 0 ||
+	 knobs.full_name || id == "...") {
 	return id;
       }
       return uvm_leaf_scope(id, scope_separator);
@@ -442,26 +475,27 @@ abstract class uvm_printer
   // individual element is printed. <print_array_footer> is called to mark the
   // completion of array printing.
 
-  public void print_array_header(string name,
-				 size_t size,
-				 string arraytype="array",
-				 char   scope_separator='.') {
+  void print_array_header(string name,
+			  size_t size,
+			  string arraytype="array",
+			  char   scope_separator='.') {
     synchronized(this) {
-      import std.string: format;
 
       uvm_printer_row_info row_info;
 
-      if(name != "") _m_scope.set_arg(name);
+      if(name != "") {
+	m_scope.set_arg(name);
+      }
 
-      row_info.level = _m_scope.depth();
-      row_info.name = adjust_name(_m_scope.get(), scope_separator);
+      row_info.level = m_scope.depth();
+      row_info.name = adjust_name(m_scope.get(), scope_separator);
       row_info.type_name = arraytype;
       row_info.size = format("%0d", size);
       row_info.val = "-";
 
       _m_rows ~= row_info;
 
-      _m_scope.down(name);
+      m_scope.down(name);
       _m_array_stack ~= true;
     }
   }
@@ -475,12 +509,20 @@ abstract class uvm_printer
   // This function should be called after begin_elements have been printed
   // and before end_elements have been printed.
 
-  public void print_array_range (int min, int max) {
+  void print_array_range (int min, int max) {
     // string tmpstr; // redundant -- declared in the SV version
-    if(min is -1 && max is -1) return;
-    if(min is -1) min = max;
-    if(max is -1) max = min;
-    if(max < min) return;
+    if(min == -1 && max == -1) {
+      return;
+    }
+    if(min == -1) {
+      min = max;
+    }
+    if(max == -1) {
+      max = min;
+    }
+    if(max < min) {
+      return;
+    }
     print_generic("...", "...", -2, "...");
   }
 
@@ -491,10 +533,10 @@ abstract class uvm_printer
   // print. Generally, there is no output associated with the array footer, but
   // this method lets the printer know that the array printing is complete.
 
-  public void print_array_footer (size_t size=0) {
+  void print_array_footer (size_t size=0) {
     synchronized(this) {
       if(_m_array_stack.length) {
-	_m_scope.up();
+	m_scope.up();
 	_m_array_stack = _m_array_stack[1..$];
       }
     }
@@ -502,13 +544,13 @@ abstract class uvm_printer
 
 
   // Utility methods
-  final public bool istop () {
+  final bool istop () {
     synchronized(this) {
-      return (_m_scope.depth() is 0);
+      return (m_scope.depth() == 0);
     }
   }
 
-  static public string index_string (int index, string name="") {
+  static string index_string (int index, string name="") {
     return name ~ "[" ~ index.to!string() ~ "]";
   }
 } // endclass
@@ -534,13 +576,13 @@ abstract class uvm_printer
 //
 //------------------------------------------------------------------------------
 
-class uvm_table_printer: /* extends */ uvm_printer {
+class uvm_table_printer: uvm_printer {
 
   // Variable: new
   //
   // Creates a new instance of ~uvm_table_printer~.
   //
-  public this () {
+  this () {
     super();
   }
 
@@ -549,56 +591,61 @@ class uvm_table_printer: /* extends */ uvm_printer {
   // Formats the collected information from prior calls to ~print_*~
   // into table format.
   //
-  override final public string emit() {
+  override final string emit() {
     synchronized(this) {
       import uvm.base.uvm_root;
 
       char[] s;
       string user_format;
-      shared static char[][uvm_object] dash; // = "---------------------------------------------------------------------------------------------------";
-      shared static char[][uvm_object] space; // = "                                                                                                   ";
+      static char[] dash; // = "---------------------------------------------------------------------------------------------------";
+      static char[] space; // = "                                                                                                   ";
       char[] dashes;
 
-      string linefeed = "\n" ~ _knobs.prefix;
+      string linefeed = "\n" ~ knobs.prefix;
 
       calculate_max_widths();
 
       import std.algorithm: max;
       size_t m = max(_m_max_name, _m_max_type, _m_max_size, _m_max_value, 100);
 
-      uvm_root top = uvm_top;
-
-      if(top !in dash) dash[top] = [];
-      if(top !in space) space[top] = [];
-
-      if(dash[top].length < m) {
-	dash[top].length = m;
-	dash[top][] = '-';
-	space[top].length = m;
-	space[top][] = ' ';
+      if(dash.length < m) {
+	// GC hack to make sure that heap allocation with static scope
+	// are covered -- this is because of an error in druntime
+	// https://issues.dlang.org/show_bug.cgi?id=15513
+	GC.disable();
+	if(dash.length != 0) {
+	  GC.removeRoot(dash.ptr);
+	  GC.removeRoot(space.ptr);
+	}
+	dash.length = m;
+	dash[] = '-';
+	space.length = m;
+	space[] = ' ';
+	GC.addRoot(dash.ptr);
+	GC.addRoot(space.ptr);
+	GC.enable();
       }
 
-      if (_knobs.header) {
+      if(knobs.header) {
 	char[] header;
 	user_format = format_header();
-	if (user_format == "") {
+	if(user_format == "") {
 	  string dash_id, dash_typ, dash_sz;
 	  string head_id, head_typ, head_sz;
-	  if (_knobs.identifier) {
-	    // cast away shared
-	    dashes = cast(char[])dash[top][0.._m_max_name+2];
-	    header = "Name" ~ space[top][0.._m_max_name-2];
+	  if(knobs.identifier) {
+	    dashes = dash[0.._m_max_name+2];
+	    header = "Name" ~ space[0.._m_max_name-2];
 	  }
-	  if (_knobs.type_name) {
-	    dashes = dashes ~ dash[top][0.._m_max_name+2];
-	    header = header ~ "Type" ~ space[top][0.._m_max_name-2];
+	  if(knobs.type_name) {
+	    dashes = dashes ~ dash[0.._m_max_type+2];
+	    header = header ~ "Type" ~ space[0.._m_max_type-2];
 	  }
-	  if (_knobs.size) {
-	    dashes = dashes ~ dash[top][0.._m_max_name+2];
-	    header = header ~ "Size" ~ space[top][0.._m_max_name-2];
+	  if(knobs.size) {
+	    dashes = dashes ~ dash[0.._m_max_size+2];
+	    header = header ~ "Size" ~ space[0.._m_max_size-2];
 	  }
-	  dashes = dashes ~ dash[top][0.._m_max_name] ~ linefeed;
-	  header = header ~ "Value" ~ space[top][0.._m_max_value-5] ~ linefeed;
+	  dashes = dashes ~ dash[0.._m_max_value] ~ linefeed;
+	  header = header ~ "Value" ~ space[0.._m_max_value-5] ~ linefeed;
 
 	  s ~= dashes ~ header ~ dashes;
 	}
@@ -608,23 +655,22 @@ class uvm_table_printer: /* extends */ uvm_printer {
       }
 
       foreach (row; _m_rows) {
-	// uvm_printer_row_info row = _m_rows[i];
 	user_format = format_row(row);
 	if (user_format == "") {
 	  char[] row_str;
-	  if (_knobs.identifier) {
-	    row_str = space[top][0..row.level*_knobs.indent] ~ row.name ~
-	      space[top][0.._m_max_name-row.name.length-(row.level*_knobs.indent)+2];
+	  if (knobs.identifier) {
+	    row_str = space[0..row.level*knobs.indent] ~ row.name ~
+	      space[0.._m_max_name-row.name.length-(row.level*knobs.indent)+2];
 	  }
-	  if (_knobs.type_name) {
+	  if (knobs.type_name) {
 	    row_str = row_str ~ row.type_name ~
-	      space[top][0.._m_max_type-row.type_name.length+2];
+	      space[0.._m_max_type-row.type_name.length+2];
 	  }
-	  if (_knobs.size) {
+	  if (knobs.size) {
 	    row_str = row_str ~ row.size ~
-	      space[top][0.._m_max_size-row.size.length+2];
+	      space[0.._m_max_size-row.size.length+2];
 	  }
-	  s ~= row_str ~ row.val ~ space[top][0.._m_max_value-row.val.length]
+	  s ~= row_str ~ row.val ~ space[0.._m_max_value-row.val.length]
 	    ~ linefeed;
 	}
 	else {
@@ -632,15 +678,19 @@ class uvm_table_printer: /* extends */ uvm_printer {
 	}
       }
 
-      if (_knobs.footer) {
+      if (knobs.footer) {
 	user_format = format_footer();
-	if (user_format == "") s ~= dashes;
-	else s ~= user_format ~ linefeed;
+	if (user_format == "") {
+	  s ~= dashes;
+	}
+	else {
+	  s ~= user_format ~ linefeed;
+	}
       }
 
       // _m_rows.delete();
       _m_rows.length = 0;
-      return cast(string)s;
+      return cast(string) (knobs.prefix ~ s);
     }
   }
 
@@ -653,19 +703,27 @@ class uvm_table_printer: /* extends */ uvm_printer {
   private size_t _m_max_size;
   private size_t _m_max_value;
 
-  final public void calculate_max_widths() {
+  final void calculate_max_widths() {
     synchronized(this) {
-      _m_max_name=4;
-      _m_max_type=4;
+      _m_max_name = 4;
+      _m_max_type = 4;
       _m_max_size = 4;
-      _m_max_value= 5;
+      _m_max_value = 5;
       foreach(row; _m_rows) {
 	// uvm_printer_row_info row = _m_rows[j];
-	auto name_len = _knobs.indent*row.level + row.name.length;
-	if (name_len > _m_max_name) _m_max_name =  name_len;
-	if (row.type_name.length > _m_max_type) _m_max_type = row.type_name.length;
-	if (row.size.length > _m_max_size) _m_max_size = row.size.length;
-	if (row.val.length > _m_max_value) _m_max_value = row.val.length;
+	auto name_len = knobs.indent*row.level + row.name.length;
+	if (name_len > _m_max_name) {
+	  _m_max_name =  name_len;
+	}
+	if (row.type_name.length > _m_max_type) {
+	  _m_max_type = row.type_name.length;
+	}
+	if (row.size.length > _m_max_size) {
+	  _m_max_size = row.size.length;
+	}
+	if (row.val.length > _m_max_value) {
+	  _m_max_value = row.val.length;
+	}
       }
     }
   }
@@ -700,13 +758,13 @@ class uvm_tree_printer: uvm_printer {
   //
   // Creates a new instance of ~uvm_tree_printer~.
 
-  public this() {
+  this() {
     synchronized(this) {
       super();
-      _knobs.size = 0;
-      _knobs.type_name = 0;
-      _knobs.header = 0;
-      _knobs.footer = 0;
+      knobs.size = 0;
+      knobs.type_name = 0;
+      knobs.header = 0;
+      knobs.footer = 0;
     }
   }
 
@@ -715,40 +773,43 @@ class uvm_tree_printer: uvm_printer {
   // Formats the collected information from prior calls to ~print_*~
   // into hierarchical tree format.
   //
-  override final public string emit() {
+  override final string emit() {
     synchronized(this) {
-      import std.string: format;
 
-      string s = _knobs.prefix;
+      string s = knobs.prefix;
       string space= "                                                                                                   ";
       string user_format;
 
       string linefeed = _newline == "" || _newline == " " ?
-	_newline : _newline ~ _knobs.prefix;
+	_newline : _newline ~ knobs.prefix;
 
       // Header
-      if (_knobs.header) {
+      if (knobs.header) {
 	user_format = format_header();
-	if (user_format != "") s ~= user_format ~ linefeed;
+	if (user_format != "") {
+	  s ~= user_format ~ linefeed;
+	}
       }
 
       foreach (i, row; _m_rows) {
 	user_format = format_row(row);
 	if (user_format == "") {
-	  auto indent_str = space[0..row.level * _knobs.indent];
+	  auto indent_str = space[0..row.level * knobs.indent];
 
 	  // Name (id)
-	  if (_knobs.identifier) {
+	  if (knobs.identifier) {
 	    s ~= indent_str ~ row.name;
-	    if (row.name != "" && row.name != "...") s ~= ": ";
+	    if (row.name != "" && row.name != "...") {
+	      s ~= ": ";
+	    }
 	  }
 
 	  // Type Name
-	  if (row.val[0] is '@') { // is an object w/ knobs.reference on
+	  if (row.val[0] == '@') { // is an object w/ knobs.reference on
 	    s ~= "(" ~ row.type_name ~ row.val ~ ") ";
 	  }
 	  else {
-	    if (_knobs.type_name &&
+	    if (knobs.type_name &&
 		(row.type_name != "" ||
 		 row.type_name != "-" ||
 		 row.type_name != "...")) {
@@ -757,7 +818,7 @@ class uvm_tree_printer: uvm_printer {
 	  }
 
 	  // Size
-	  if (_knobs.size) {
+	  if (knobs.size) {
 	    if (row.size != "" || row.size != "-") {
 	      s ~= "(" ~ row.size ~ ") ";
 	    }
@@ -765,7 +826,7 @@ class uvm_tree_printer: uvm_printer {
 
 	  if (i < _m_rows.length-1) {
 	    if (_m_rows[i+1].level > row.level) {
-	      s ~= _knobs.separator[0] ~ linefeed;
+	      s ~= knobs.separator[0] ~ linefeed;
 	      continue;
 	    }
 	  }
@@ -776,12 +837,16 @@ class uvm_tree_printer: uvm_printer {
 	  // Scope handling...
 	  if (i <= _m_rows.length-1) {
 	    size_t end_level;
-	    if (i is _m_rows.length-1) end_level = 0;
-	    else                      end_level = _m_rows[i+1].level;
+	    if (i == _m_rows.length-1) {
+	      end_level = 0;
+	    }
+	    else {
+	      end_level = _m_rows[i+1].level;
+	    }
 	    if (end_level < row.level) {
 	      for (size_t l=row.level-1; l >= end_level; --l) {
-		auto str = space[0..l * _knobs.indent];
-		s ~= str ~ _knobs.separator[1] ~ linefeed;
+		auto str = space[0..l * knobs.indent];
+		s ~= str ~ knobs.separator[1] ~ linefeed;
 	      }
 	    }
 	  }
@@ -791,12 +856,16 @@ class uvm_tree_printer: uvm_printer {
       }
 
       // Footer
-      if (_knobs.footer) {
+      if (knobs.footer) {
 	user_format = format_footer();
-	if (user_format != "") s ~= user_format ~ linefeed;
+	if (user_format != "") {
+	  s ~= user_format ~ linefeed;
+	}
       }
 
-      if (_newline == "" || _newline == " ") s ~= "\n";
+      if (_newline == "" || _newline == " ") {
+	s ~= "\n";
+      }
 
       _m_rows.length = 0;
 
@@ -826,7 +895,7 @@ class uvm_line_printer: /*extends*/ uvm_tree_printer {
   // <uvm_tree_printer> only in that the output contains no line-feeds
   // and indentation.
 
-  public this() {
+  this() {
     synchronized(this) {
       _newline = " ";
       _knobs.indent = 0;
@@ -856,7 +925,8 @@ class uvm_printer_knobs {
 
   mixin uvm_sync;
 
-  @uvm_public_sync private bool _header = true;
+  @uvm_public_sync
+  private bool _header = true;
 
 
   // Variable: footer
@@ -864,7 +934,8 @@ class uvm_printer_knobs {
   // Indicates whether the <print_footer> function should be called when
   // printing an object.
 
-  @uvm_public_sync private bool _footer = true;
+  @uvm_public_sync
+  private bool _footer = true;
 
 
   // Variable: full_name
@@ -872,7 +943,8 @@ class uvm_printer_knobs {
   // Indicates whether <adjust_name> should print the full name of an identifier
   // or just the leaf name.
 
-  @uvm_public_sync private bool _full_name = false;
+  @uvm_public_sync
+  private bool _full_name = false;
 
 
   // Variable: identifier
@@ -880,21 +952,24 @@ class uvm_printer_knobs {
   // Indicates whether <adjust_name> should print the identifier. This is useful
   // in cases where you just want the values of an object, but no identifiers.
 
-  @uvm_public_sync private bool _identifier = true;
+  @uvm_public_sync
+  private bool _identifier = true;
 
 
   // Variable: type_name
   //
   // Controls whether to print a field's type name.
 
-  @uvm_public_sync private bool _type_name = true;
+  @uvm_public_sync
+  private bool _type_name = true;
 
 
   // Variable: size
   //
   // Controls whether to print a field's size.
 
-  @uvm_public_sync private bool _size = true;
+  @uvm_public_sync
+  private bool _size = true;
 
 
   // Variable: depth
@@ -902,7 +977,8 @@ class uvm_printer_knobs {
   // Indicates how deep to recurse when printing objects.
   // A depth of -1 means to print everything.
 
-  @uvm_public_sync private int _depth = -1;
+  @uvm_public_sync
+  private int _depth = -1;
 
 
   // Variable: reference
@@ -910,7 +986,8 @@ class uvm_printer_knobs {
   // Controls whether to print a unique reference ID for object handles.
   // The behavior of this knob is simulator-dependent.
 
-  @uvm_public_sync private bool _reference = true;
+  @uvm_public_sync
+  private bool _reference = true;
 
 
   // Variable: begin_elements
@@ -933,7 +1010,8 @@ class uvm_printer_knobs {
   //
   // Specifies the string prepended to each output line
 
-  @uvm_public_sync private string _prefix = "";
+  @uvm_public_sync
+  private string _prefix = "";
 
 
   // Variable: indent
@@ -941,7 +1019,8 @@ class uvm_printer_knobs {
   // This knob specifies the number of spaces to use for level indentation.
   // The default level indentation is two spaces.
 
-  @uvm_public_sync private int _indent = 2;
+  @uvm_public_sync
+  private int _indent = 2;
 
 
   // Variable: show_root
@@ -950,7 +1029,8 @@ class uvm_printer_knobs {
   // (when current depth is 0) prints the full path name. By default, the first
   // object is treated like all other objects and only the leaf name is printed.
 
-  @uvm_public_sync private bool _show_root = false;
+  @uvm_public_sync
+  private bool _show_root = false;
 
 
   // Variable: mcd
@@ -960,7 +1040,8 @@ class uvm_printer_knobs {
   //
   // By default, the output goes to the standard output of the simulator.
 
-  @uvm_public_sync private MCD _mcd = UVM_STDOUT;
+  @uvm_public_sync
+  private MCD _mcd = UVM_STDOUT;
 
 
   // Variable: separator
@@ -968,7 +1049,8 @@ class uvm_printer_knobs {
   // For tree printers only, determines the opening and closing
   // separators used for nested objects.
 
-  @uvm_public_sync private string _separator = "{}";
+  @uvm_public_sync
+  private string _separator = "{}";
 
 
   // Variable: show_radix
@@ -976,7 +1058,8 @@ class uvm_printer_knobs {
   // Indicates whether the radix string ('h, and so on) should be prepended to
   // an integral value when one is printed.
 
-  private bool _show_radix = true;
+  private bool
+  _show_radix = true;
 
 
   // Variable: default_radix
@@ -984,7 +1067,8 @@ class uvm_printer_knobs {
   // This knob sets the default radix to use for integral values when no radix
   // enum is explicitly supplied to the print_int() method.
 
-  @uvm_public_sync private uvm_radix_enum _default_radix = UVM_HEX;
+  @uvm_public_sync
+  private uvm_radix_enum _default_radix = UVM_HEX;
 
 
   // Variable: dec_radix
@@ -995,7 +1079,7 @@ class uvm_printer_knobs {
   // When a negative number is printed, the radix is not printed since only
   // signed decimal values can print as negative.
 
-  private string _dec_radix = "'d";
+  private string _dec_radix = "";
 
 
   // Variable: bin_radix
@@ -1003,7 +1087,7 @@ class uvm_printer_knobs {
   // This string should be prepended to the value of an integral type when a
   // radix of <UVM_BIN> is used for the radix of the integral object.
 
-  private string _bin_radix = "'b";
+  private string _bin_radix = "";
 
 
   // Variable: oct_radix
@@ -1011,7 +1095,7 @@ class uvm_printer_knobs {
   // This string should be prepended to the value of an integral type when a
   // radix of <UVM_OCT> is used for the radix of the integral object.
 
-  private string _oct_radix = "'o";
+  private string _oct_radix = "";
 
 
   // Variable: unsigned_radix
@@ -1020,7 +1104,7 @@ class uvm_printer_knobs {
   // type when a radix of <UVM_UNSIGNED> is used for the radix of the integral
   // object.
 
-  private string _unsigned_radix = "'d";
+  private string _unsigned_radix = "";
 
 
   // Variable: hex_radix
@@ -1028,7 +1112,7 @@ class uvm_printer_knobs {
   // This string should be prepended to the value of an integral type when a
   // radix of <UVM_HEX> is used for the radix of the integral object.
 
-  private string _hex_radix = "'h";
+  private string _hex_radix = "";
 
 
   // Function: get_radix_str
@@ -1036,10 +1120,14 @@ class uvm_printer_knobs {
   // Converts the radix from an enumerated to a printable radix according to
   // the radix printing knobs (bin_radix, and so on).
 
-  public string get_radix_str(uvm_radix_enum radix) {
+  string get_radix_str(uvm_radix_enum radix) {
     synchronized(this) {
-      if(_show_radix is false) return "";
-      if(radix is UVM_NORADIX) radix = _default_radix;
+      if(_show_radix is false) {
+	return "";
+      }
+      if(radix == UVM_NORADIX) {
+	radix = _default_radix;
+      }
       switch(radix) {
       case UVM_BIN:      return _bin_radix;
       case UVM_OCT:      return _oct_radix;

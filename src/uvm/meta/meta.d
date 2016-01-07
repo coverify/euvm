@@ -21,7 +21,7 @@
 module uvm.meta.meta;
 // import std.traits: fullyQualifiedName;
 
-public template qualifiedTypeName(T) {
+template qualifiedTypeName(T) {
   // typeid(T).stringof returns string of the form "&typeid(qualifiedTypeName)"
   enum string qualifiedTypeName = typeid(T).stringof[7..$-1];
   // enum string qualifiedTypeName = fullyQualifiedName!T;

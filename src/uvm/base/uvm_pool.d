@@ -2,7 +2,7 @@
 //------------------------------------------------------------------------------
 //   Copyright 2007-2011 Mentor Graphics Corporation
 //   Copyright 2007-2010 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
+//   Copyright 2010      Synopsys, Inc.
 //   Copyright 2012-2014 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
@@ -39,13 +39,14 @@ import uvm.base.uvm_object;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_printer;
 import uvm.base.uvm_root;
+import uvm.base.uvm_coreservice;
 import std.conv: to;
 import uvm.meta.meta;
+import std.string: format;
 
-class uvm_pool (KEY=int, VAL=uvm_void): /*extends*/ uvm_object
+
+class uvm_pool(KEY=int, VAL=uvm_void): /*extends*/ uvm_object
 {
-
-  import std.string: format;
 
   alias uvm_pool!(KEY,VAL) this_type;
 
@@ -57,7 +58,7 @@ class uvm_pool (KEY=int, VAL=uvm_void): /*extends*/ uvm_object
   // Allow no aliasing, since aliasing leaks out the original assoc
   // array thus putting concurrency in peril
   // For this aliasing
-  // @property public ref auto get_pool() {
+  // @property ref auto get_pool() {
   //   synchronized(this) {
   //     return _pool;
   //   }
@@ -69,7 +70,7 @@ class uvm_pool (KEY=int, VAL=uvm_void): /*extends*/ uvm_object
   //
   // Creates a new pool with the given ~name~.
 
-  this (string name="") {
+  this(string name="") {
     synchronized(this) {
       super(name);
     }
@@ -81,10 +82,12 @@ class uvm_pool (KEY=int, VAL=uvm_void): /*extends*/ uvm_object
       int result = 0;
       auto keys = _pool.keys;
 
-      for (size_t i = 0; i < keys.length; ++i) {
-	  result = dg(keys[i], _pool[keys[i]]);
-	  if (result) break;
+      for(size_t i = 0; i != keys.length; ++i) {
+	result = dg(keys[i], _pool[keys[i]]);
+	if(result) {
+	  break;
 	}
+      }
       return result;
     }
   }
@@ -94,10 +97,12 @@ class uvm_pool (KEY=int, VAL=uvm_void): /*extends*/ uvm_object
       int result = 0;
       auto keys = _pool.keys;
 
-      for (size_t i = 0; i < keys.length; ++i) {
-	  result = dg(_pool[keys[i]]);
-	  if (result) break;
+      for(size_t i = 0; i != keys.length; ++i) {
+	result = dg(_pool[keys[i]]);
+	if(result) {
+	  break;
 	}
+      }
       return result;
     }
   }
@@ -106,8 +111,12 @@ class uvm_pool (KEY=int, VAL=uvm_void): /*extends*/ uvm_object
   // that pointer can in that case escape the concurrency guards
   bool opBinaryRight(string OP)(KEY key) if(OP == "in") {
     synchronized(this) {
-      if(key in _pool) return true;
-      else return false;
+      if(key in _pool) {
+	return true;
+      }
+      else {
+	return false;
+      }
     }
   }
 
@@ -130,11 +139,12 @@ class uvm_pool (KEY=int, VAL=uvm_void): /*extends*/ uvm_object
   // This allows items to be shared amongst components throughout the
   // verification environment.
 
-  static public this_type get_global_pool () {
+  static this_type get_global_pool() {
     synchronized(typeid(this_type)) {
-      uvm_root top = uvm_top;
-      if (top !in _m_global_pool || _m_global_pool[top] is null) {
-	_m_global_pool[top] = new this_type ("pool");
+      uvm_coreservice_t cs = uvm_coreservice_t.get();
+      uvm_root top = cs.get_root();
+      if(top !in _m_global_pool || _m_global_pool[top] is null) {
+	_m_global_pool[top] = new this_type("pool");
       }
       return _m_global_pool[top];
     }
@@ -145,7 +155,7 @@ class uvm_pool (KEY=int, VAL=uvm_void): /*extends*/ uvm_object
   //
   // Returns the specified item instance from the global item pool.
 
-  static public VAL get_global (KEY key) {
+  static VAL get_global(KEY key) {
     synchronized(typeid(this_type)) {
       this_type gpool = get_global_pool();
       return gpool.get(key);
@@ -160,13 +170,17 @@ class uvm_pool (KEY=int, VAL=uvm_void): /*extends*/ uvm_object
   // If no item exists by that key, a new item is created with that key
   // and returned.
 
-  public VAL get (KEY key) {
+  VAL get(KEY key) {
     synchronized(this) {
-      if (key !in _pool) {
+      VAL* vptr = key in _pool;
+      if(vptr is null) {
 	VAL default_value;
 	_pool[key] = default_value;
+	return default_value;
       }
-      return _pool[key];
+      else {
+	return *vptr;
+      }
     }
   }
 
@@ -176,7 +190,7 @@ class uvm_pool (KEY=int, VAL=uvm_void): /*extends*/ uvm_object
   // Adds the given (~key~, ~item~) pair to the pool. If an item already
   // exists at the given ~key~ it is overwritten with the new ~item~.
 
-  public void add (KEY key, VAL item) {
+  void add(KEY key, VAL item) {
     synchronized(this) {
       _pool[key] = item;
     }
@@ -187,41 +201,43 @@ class uvm_pool (KEY=int, VAL=uvm_void): /*extends*/ uvm_object
   //
   // Returns the number of uniquely keyed items stored in the pool.
 
-  public size_t num () {
+  size_t num() {
     synchronized(this) {
       return _pool.length;
     }
   }
 
+  alias length = num;
 
   // Function: delete
   //
   // Removes the item with the given ~key~ from the pool.
 
-  public void remove (KEY key) {
+  void remove(KEY key) {
     synchronized(this) {
-      if (!exists(key)) {
+      if(!exists(key)) {
 	uvm_report_warning("POOLDEL",
-			   "delete: pool key doesn't exist. Ignoring delete request");
+			   "delete: pool key doesn't exist. " ~
+			   "Ignoring delete request");
 	return;
       }
       _pool.remove(key);
     }
   }
 
-  public void remove () {
+  void remove() {
     synchronized(this) {
       _pool = null;
     }
   }
 
-  public void clear () {
+  void clear() {
     synchronized(this) {
       _pool = null;
     }
   }
 
-  public void destroy () {
+  void destroy() {
     synchronized(this) {
       _pool = null;
     }
@@ -233,9 +249,9 @@ class uvm_pool (KEY=int, VAL=uvm_void): /*extends*/ uvm_object
   // Returns 1 if a item with the given ~key~ exists in the pool,
   // 0 otherwise.
 
-  public bool exists (KEY key) {
+  bool exists(KEY key) {
     synchronized(this) {
-      if (key in _pool) return true;
+      if(key in _pool) return true;
       else return false;
     }
   }
@@ -255,14 +271,14 @@ class uvm_pool (KEY=int, VAL=uvm_void): /*extends*/ uvm_object
   // If the pool is not empty, then ~key~ is key of the first item
   // and 1 is returned.
 
-  public int first (ref KEY key) {
+  int first(ref KEY key) {
     synchronized(this) {
       this._keys = _pool.keys;
       static if(__traits(compiles, KEY.init < KEY.init)) {
 	import std.algorithm;
 	sort(_keys);
       }
-      if (_keys.length is 0) {
+      if(_keys.length == 0) {
 	return 0;
       }
       else {
@@ -283,14 +299,14 @@ class uvm_pool (KEY=int, VAL=uvm_void): /*extends*/ uvm_object
   // If the pool is not empty, then ~key~ is set to the last key in
   // the pool and 1 is returned.
 
-  public int last (ref KEY key) {
+  int last(ref KEY key) {
     synchronized(this) {
       this._keys = _pool.keys;
       static if(__traits(compiles, KEY.init < KEY.init)) {
 	import std.algorithm;
 	sort(_keys);
       }
-      if (_keys.length is 0) {
+      if(_keys.length == 0) {
 	return 0;
       }
       else {
@@ -311,10 +327,10 @@ class uvm_pool (KEY=int, VAL=uvm_void): /*extends*/ uvm_object
   // If a next key is found, then ~key~ is updated with that key
   // and 1 is returned.
 
-  public int next (ref KEY key) {
+  int next(ref KEY key) {
     synchronized(this) {
-      if (_keys.length is 0 ||
-	  _keys.length - 1 <= _index) {
+      if(_keys.length == 0 ||
+	 _keys.length - 1 <= _index) {
 	return 0;
       }
       else {
@@ -336,10 +352,10 @@ class uvm_pool (KEY=int, VAL=uvm_void): /*extends*/ uvm_object
   // If a previous key is found, then ~key~ is updated with that key
   // and 1 is returned.
 
-  public int prev (ref KEY key) {
+  int prev(ref KEY key) {
     synchronized(this) {
-      if (_keys.length is 0 ||
-	  _index is 0) {
+      if(_keys.length == 0 ||
+	 _index == 0) {
 	return 0;
       }
       else {
@@ -350,30 +366,30 @@ class uvm_pool (KEY=int, VAL=uvm_void): /*extends*/ uvm_object
     }
   }
 
-  public override uvm_object create (string name=null) {
+  override uvm_object create(string name="") {
     synchronized(this) {
       this_type v = new this_type(name);
       return v;
     }
   }
 
-  public override string get_type_name () {
+  override string get_type_name() {
     return qualifiedTypeName!(typeof(this));
   }
 
-  public override void do_copy (uvm_object rhs) {
+  override void do_copy(uvm_object rhs) {
     synchronized(this, rhs) {
       super.do_copy(rhs);
       auto p = cast(this_type) rhs;
       // KEY key;
-      if (rhs is null || p is null) {
+      if(rhs is null || p is null) {
 	return;
       }
       _pool = p._pool;
     }
   }
 
-  public override void do_print (uvm_printer printer) {
+  override void do_print(uvm_printer printer) {
     synchronized(this) {
       size_t cnt;
       printer.print_array_header("pool", _pool.length, "aa_object_string");
@@ -386,9 +402,7 @@ class uvm_pool (KEY=int, VAL=uvm_void): /*extends*/ uvm_object
       printer.print_array_footer();
     }
   }
-};				// semicolon here takes care of emacs d-mode
-				// indentation bug
-
+};
 
 //------------------------------------------------------------------------------
 //
@@ -402,7 +416,7 @@ class uvm_pool (KEY=int, VAL=uvm_void): /*extends*/ uvm_object
 // ~uvm_barrier_pool~ (a uvm_obejct_string_pool storing <uvm_barrier>s).
 //------------------------------------------------------------------------------
 
-class uvm_object_string_pool (VAL=uvm_object): /*extends*/ uvm_pool!(string,VAL) {
+class uvm_object_string_pool(VAL=uvm_object): /*extends*/ uvm_pool!(string,VAL) {
   import std.string: format;
 
   alias uvm_object_string_pool!(VAL) this_type;
@@ -424,7 +438,7 @@ class uvm_object_string_pool (VAL=uvm_object): /*extends*/ uvm_pool!(string,VAL)
   //
   // Returns the type name of this object.
 
-  public override string get_type_name() {
+  override string get_type_name() {
     return qualifiedTypeName!(typeof(this));
   }
 
@@ -435,11 +449,12 @@ class uvm_object_string_pool (VAL=uvm_object): /*extends*/ uvm_pool!(string,VAL)
   // This allows items to be shared amongst components throughout the
   // verification environment.
 
-  static public this_type get_global_pool () {
+  static this_type get_global_pool() {
     synchronized(typeid(this_type)) {
-      uvm_root top = uvm_top;
-      if (top !in _m_global_pool || _m_global_pool[top] is null) {
-	_m_global_pool[top] = new this_type ("global_pool");
+      uvm_coreservice_t cs = uvm_coreservice_t.get();
+      uvm_root top = cs.get_root();
+      if(top !in _m_global_pool || _m_global_pool[top] is null) {
+	_m_global_pool[top] = new this_type("global_pool");
       }
       return _m_global_pool[top];
     }
@@ -450,7 +465,7 @@ class uvm_object_string_pool (VAL=uvm_object): /*extends*/ uvm_pool!(string,VAL)
   //
   // Returns the specified item instance from the global item pool.
 
-  static public VAL get_global (string key) {
+  static VAL get_global(string key) {
     synchronized(typeid(this_type)) {
       this_type gpool;
       gpool = get_global_pool();
@@ -466,12 +481,18 @@ class uvm_object_string_pool (VAL=uvm_object): /*extends*/ uvm_pool!(string,VAL)
   // If no item exists by the given ~key~, a new item is created for that key
   // and returned.
 
-  public override VAL get (string key) {
+  override VAL get(string key) {
     synchronized(this) {
-      if (key !in _pool) {
-	_pool[key] = new VAL (key);
+      VAL* vptr = key in _pool;
+      if(vptr is null) {
+	auto val = new VAL(key);
+	_pool[key] = val;
+	return val;
+
       }
-      return _pool[key];
+      else {
+	return *vptr;
+      }
     }
   }
 
@@ -480,9 +501,9 @@ class uvm_object_string_pool (VAL=uvm_object): /*extends*/ uvm_pool!(string,VAL)
   //
   // Removes the item with the given string ~key~ from the pool.
 
-  public override void remove (string key) {
+  override void remove(string key) {
     synchronized(this) {
-      if (!exists(key)) {
+      if(!exists(key)) {
 	uvm_report_warning("POOLDEL",
 			   format("delete: key '%s' doesn't exist", key));
 	return;
@@ -494,7 +515,7 @@ class uvm_object_string_pool (VAL=uvm_object): /*extends*/ uvm_pool!(string,VAL)
 
   // Function- do_print
 
-  public override void do_print (uvm_printer printer) {
+  override void do_print(uvm_printer printer) {
     synchronized(this) {
       printer.print_array_header("pool", _pool.length, "aa_object_string");
       foreach(key,val; _pool) {
@@ -509,4 +530,4 @@ import uvm.base.uvm_barrier;
 import uvm.base.uvm_event;
 
 alias uvm_object_string_pool!(uvm_barrier) uvm_barrier_pool;
-alias uvm_object_string_pool!(uvm_event) uvm_event_pool;
+alias uvm_object_string_pool!(uvm_event!(uvm_object)) uvm_event_pool;

@@ -44,13 +44,13 @@ abstract class uvm_scoreboard: uvm_component
   // constructor arguments for <uvm_component>: ~name~ is the name of the
   // instance, and ~parent~ is the handle to the hierarchical parent, if any.
 
-  public this(string name, uvm_component parent) {
+  this(string name, uvm_component parent) {
     super(name, parent);
   }
 
   enum string type_name = "uvm_scoreboard";
 
-  override public string get_type_name () {
+  override string get_type_name () {
     return type_name;
   }
 

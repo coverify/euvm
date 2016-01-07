@@ -1,8 +1,8 @@
 //------------------------------------------------------------------------------
 //   Copyright 2007-2011 Mentor Graphics Corporation
 //   Copyright 2007-2011 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2014 Coverify Systems Technology
+//   Copyright 2010      Synopsys, Inc.
+//   Copyright 2014-2016 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -40,7 +40,7 @@ class uvm_push_sequencer(REQ=uvm_sequence_item, RSP=REQ):
 {
   mixin uvm_sync;
 
-  alias uvm_push_sequencer!(REQ , RSP) this_type;
+  alias this_type = uvm_push_sequencer!(REQ , RSP);
 
   // Port: req_port
   //
@@ -57,7 +57,7 @@ class uvm_push_sequencer(REQ=uvm_sequence_item, RSP=REQ):
   // Standard component constructor that creates an instance of this class
   // using the given ~name~ and ~parent~, if any.
   //
-  public this(string name, uvm_component parent = null) {
+  this(string name, uvm_component parent = null) {
     synchronized(this) {
       super(name, parent);
       _req_port = new uvm_blocking_put_port!REQ ("req_port", this);
@@ -69,16 +69,16 @@ class uvm_push_sequencer(REQ=uvm_sequence_item, RSP=REQ):
   // The push sequencer continuously selects from its list of available
   // sequences and sends the next item from the selected sequence out its
   // <req_port> using req_port.put(item). Typically, the req_port would be
-  // connected to the req_export on an instance of an
+  // connected to the req_export on an instance of a
   // <uvm_push_driver #(REQ,RSP)>, which would be responsible for
   // executing the item.
   //
-  override public void run_phase(uvm_phase phase) {
+  override void run_phase(uvm_phase phase) {
 
     // viriable selected_sequence declared in SV version -- but seems unused
     // int selected_sequence;
 
-    auto runF = fork({
+    auto runF = fork!("uvm_push_sequencer/run_phase")({
 	super.run_phase(phase);
 	while(true) {
 	  REQ t;

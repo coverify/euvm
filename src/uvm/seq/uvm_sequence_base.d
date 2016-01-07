@@ -2,7 +2,7 @@
 //   Copyright 2007-2011 Mentor Graphics Corporation
 //   Copyright 2007-2011 Cadence Design Systems, Inc.
 //   Copyright 2010-2011 Synopsys, Inc.
-//   Copyright 2014 Coverify Systems Technology
+//   Copyright 2014-2016 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -70,7 +70,7 @@ module uvm.seq.uvm_sequence_base;
 // A sequence can also be indirectly started as a child in the <frame> of a
 // parent sequence. The child sequence's <start> method is called indirectly
 // by invoking any of the `uvm_do macros.
-// In thise cases, <start> is called with
+// In these cases, <start> is called with
 // ~call_pre_post~ set to 0, preventing the started sequence's <pre_frame> and
 // <post_frame> methods from being called. During execution of the
 // child sequence, the parent's <pre_do>, <mid_do>, and <post_do> methods
@@ -134,52 +134,93 @@ module uvm.seq.uvm_sequence_base;
 // will produce a run-time error.
 //------------------------------------------------------------------------------
 
+import uvm.base.uvm_coreservice;
 import uvm.seq.uvm_sequence_item;
 import uvm.seq.uvm_sequencer_base;
 import uvm.base.uvm_factory;
+import uvm.base.uvm_recorder;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_phase;
 import uvm.base.uvm_message_defines;
+import uvm.base.uvm_tr_stream;
+import uvm.dap.uvm_get_to_lock_dap;
 import std.string;
 import esdl.base.core;
 import esdl.data.queue;
 import esdl.data.rand;
 import uvm.meta.misc;
 
+version(UVM_INCLUDE_DEPRECATED) {
+   version = UVM_DEPRECATED_STARTING_PHASE;
+ }
+
 class uvm_sequence_base: uvm_sequence_item
 {
   mixin uvm_sync;
 
-  @uvm_immutable_sync private WithEvent!uvm_sequence_state _m_sequence_state;
+  @uvm_immutable_sync
+  private WithEvent!uvm_sequence_state _m_sequence_state;
 
-  @uvm_public_sync private int _m_next_transaction_id = 1;
-  public int inc_next_transaction_id() {
+  @uvm_public_sync
+  private int _m_next_transaction_id = 1;
+
+  int inc_next_transaction_id() {
     synchronized(this) {
       return _m_next_transaction_id++;
     }
   }
 
   private int                  _m_priority = -1;
-  @uvm_public_sync private int _m_tr_handle;
-  @uvm_public_sync private int _m_wait_for_grant_semaphore;
-  public int inc_wait_for_grant_semaphore() {
+  @uvm_public_sync
+  private uvm_recorder _m_tr_recorder;
+  @uvm_public_sync
+  private int _m_wait_for_grant_semaphore;
+
+  int inc_wait_for_grant_semaphore() {
     synchronized(this) {
       return _m_wait_for_grant_semaphore++;
     }
   }
-  public int dec_wait_for_grant_semaphore() {
+  int dec_wait_for_grant_semaphore() {
     synchronized(this) {
       return _m_wait_for_grant_semaphore--;
     }
   }
 
   // Each sequencer will assign a sequence id.  When a sequence is talking to multiple
-  // sequencers, each sequence_id is managed seperately
+  // sequencers, each sequence_id is managed separately
 
   // protected
   private int[int] _m_sqr_seq_ids;
 
-  @uvm_protected_sync private Queue!uvm_sequence_item _response_queue;
+  private bool[uvm_sequence_base] _children_array;
+  void add_children_array(uvm_sequence_base seq) {
+    synchronized(this) {
+      _children_array[seq] = true;
+    }
+  }
+  void rem_children_array(uvm_sequence_base seq) {
+    synchronized(this) {
+      _children_array.remove(seq);
+    }
+  }
+  bool in_children_array(uvm_sequence_base seq) {
+    synchronized(this) {
+      if(seq in _children_array) {
+	return true;
+      }
+      else {
+	return false;
+      }
+    }
+  }
+
+  private Queue!uvm_sequence_item _response_queue;
+  size_t response_queue_length() {
+    synchronized(this) {
+      return _response_queue.length;
+    }
+  }
 
   // protected
   private Event                   _response_queue_event;
@@ -194,9 +235,11 @@ class uvm_sequence_base: uvm_sequence_item
   // by the `uvm_do*() and `uvm_rand_send*() macros,
   // or as a default sequence.
   //
-  @uvm_public_sync private bool _do_not_randomize;
+  @uvm_public_sync
+  private bool _do_not_randomize;
 
-  @uvm_protected_sync private Process _m_sequence_process;
+  @uvm_protected_sync
+  private Process _m_sequence_process;
   private bool _m_use_response_handler;
 
   enum string type_name = "uvm_sequence_base";
@@ -214,9 +257,10 @@ class uvm_sequence_base: uvm_sequence_item
     synchronized(this) {
       super(name);
       _m_sequence_state = new WithEvent!uvm_sequence_state;
-      _m_sequence_state = CREATED;
+      _m_sequence_state = UVM_CREATED;
       _m_wait_for_grant_semaphore = 0;
       _response_queue_event.init("_response_queue_event");
+      m_init_phase_daps(true);
     }
   }
 
@@ -226,7 +270,7 @@ class uvm_sequence_base: uvm_sequence_item
   // Returns 1 on items and 0 on sequences. As this object is a sequence,
   // ~is_item~ will always return 0.
   //
-  override public bool is_item() {
+  override bool is_item() {
     return false;
   }
 
@@ -236,9 +280,9 @@ class uvm_sequence_base: uvm_sequence_item
   // Returns the sequence state as an enumerated value. Can use to wait on
   // the sequence reaching or changing from one or more states.
   //
-  //| wait(get_sequence_state() & (STOPPED|FINISHED));
+  //| wait(get_sequence_state() & (UVM_STOPPED|UVM_FINISHED));
 
-  public uvm_sequence_state_enum get_sequence_state() {
+  uvm_sequence_state get_sequence_state() {
     synchronized(this) {
       return _m_sequence_state;
     }
@@ -250,15 +294,33 @@ class uvm_sequence_base: uvm_sequence_item
   // Waits until the sequence reaches the given ~state~. If the sequence
   // is already in this state, this method returns immediately. Convenience
   // for wait ( get_sequence_state == ~state~ );
+  //| wait_for_sequence_state(UVM_STOPPED|UVM_FINISHED);
 
   // task
-  public void wait_for_sequence_state(uvm_sequence_state state) {
-    while(m_sequence_state.get != state) {
+  void wait_for_sequence_state(uvm_sequence_state state_mask) {
+    while((m_sequence_state.get & state_mask) == 0) {
       m_sequence_state.getEvent.wait();
     }
   }
 
+  // Function: get_tr_handle
+  //
+  // Returns the integral recording transaction handle for this sequence.
+  // Can be used to associate sub-sequences and sequence items as
+  // child transactions when calling <uvm_component::begin_child_tr>.
 
+  override int get_tr_handle() {
+    synchronized(this) {
+      if (_m_tr_recorder !is null) {
+	return _m_tr_recorder.get_handle();
+      }
+      else {
+	return 0;
+      }
+    }
+  }
+
+  
   //--------------------------
   // Group: Sequence Execution
   //--------------------------
@@ -271,7 +333,7 @@ class uvm_sequence_base: uvm_sequence_item
   // The ~sequencer~ argument specifies the sequencer on which to run this
   // sequence. The sequencer must be compatible with the sequence.
   //
-  // If ~parent_sequence~ is null, then this sequence is a root parent,
+  // If ~parent_sequence~ is ~null~, then this sequence is a root parent,
   // otherwise it is a child of ~parent_sequence~. The ~parent_sequence~'s
   // pre_do, mid_do, and post_do methods will be called during the execution
   // of this sequence.
@@ -287,7 +349,7 @@ class uvm_sequence_base: uvm_sequence_item
   // <frame> is called.
 
   // task
-  public void start(uvm_sequencer_base sequencer,
+  void start(uvm_sequencer_base sequencer,
 		    uvm_sequence_base parent_sequence = null,
 		    int this_priority = -1,
 		    bool call_pre_post = true) {
@@ -296,12 +358,18 @@ class uvm_sequence_base: uvm_sequence_item
       set_item_context(parent_sequence, sequencer);
 
       // if (!(m_sequence_state inside {CREATED,STOPPED,FINISHED}))
-      if(_m_sequence_state != CREATED &&
-	 _m_sequence_state != STOPPED &&
-	 _m_sequence_state != FINISHED) {
+      if(_m_sequence_state != UVM_CREATED &&
+	 _m_sequence_state != UVM_STOPPED &&
+	 _m_sequence_state != UVM_FINISHED) {
 	uvm_report_fatal("SEQ_NOT_DONE",
 			 "Sequence " ~ get_full_name() ~ " already started",
 			 UVM_NONE);
+      }
+
+      if(_m_parent_sequence !is null) {
+	synchronized(_m_parent_sequence) {
+	  _m_parent_sequence.add_children_array(this);
+	}
       }
 
       if (this_priority < -1) {
@@ -311,8 +379,12 @@ class uvm_sequence_base: uvm_sequence_item
 				this_priority), UVM_NONE);
       }
       if (this_priority < 0) {
-	if (parent_sequence is null) this_priority = 100;
-	else this_priority = parent_sequence.get_priority();
+	if (parent_sequence is null) {
+	  this_priority = 100;
+	}
+	else {
+	  this_priority = parent_sequence.get_priority();
+	}
       }
 
       // Check that the response queue is empty from earlier runs
@@ -321,11 +393,19 @@ class uvm_sequence_base: uvm_sequence_item
       _m_priority = this_priority;
 
       if (_m_sequencer !is null) {
+	int handle;
+	uvm_tr_stream stream;
 	if (_m_parent_sequence is null) {
-	  _m_tr_handle = _m_sequencer.begin_tr(this, get_name());
-	} else {
-	  _m_tr_handle = _m_sequencer.begin_child_tr(this, _m_parent_sequence.m_tr_handle,
-						     get_root_sequence_name());
+	  stream = _m_sequencer.get_tr_stream(get_name(), "Transactions");
+	  handle = _m_sequencer.begin_tr(this, get_name());
+	  _m_tr_recorder = uvm_recorder.get_recorder_from_handle(handle);
+	}
+	else {
+	  stream = _m_sequencer.get_tr_stream(get_root_sequence_name(), "Transactions");
+	  handle = _m_sequencer.begin_child_tr(this,
+					       (_m_parent_sequence.m_tr_recorder is null) ? 0 : _m_parent_sequence.m_tr_recorder.get_handle(), 
+					       get_root_sequence_name());
+	  _m_tr_recorder = uvm_recorder.get_recorder_from_handle(handle);
 	}
       }
 
@@ -340,15 +420,25 @@ class uvm_sequence_base: uvm_sequence_item
       }
     }
 
-    auto seqFork = fork({
+    // Change the state to PRE_START, do this before the fork so that
+    // the "if (!(m_sequence_state inside {...}" works
+    m_sequence_state = UVM_PRE_START;
+    
+    auto seqFork = fork!("uvm_sequence_base/start")({
 	m_sequence_process = Process.self;
 
-	m_sequence_state = PRE_START;
 	wait(0);
+
+        // Raise the objection if enabled
+        // (This will lock the uvm_get_to_lock_dap)
+        if (get_automatic_phase_objection()) {
+	  m_safe_raise_starting_phase("automatic phase objection");
+	}
+         
 	pre_start();
 
 	if (call_pre_post is true) {
-	  m_sequence_state = PRE_FRAME;
+	  m_sequence_state = UVM_PRE_FRAME;
 	  wait(0);
 	  pre_frame();
 	}
@@ -358,11 +448,11 @@ class uvm_sequence_base: uvm_sequence_item
 	  parent_sequence.mid_do(this); // function
 	}
 
-	m_sequence_state = FRAME;
+	m_sequence_state = UVM_FRAME;
 	wait(0);
 	frame();
 
-	m_sequence_state = ENDED;
+	m_sequence_state = UVM_ENDED;
 	wait(0);
 
 	if(parent_sequence !is null) {
@@ -370,16 +460,21 @@ class uvm_sequence_base: uvm_sequence_item
 	}
 
 	if (call_pre_post is true) {
-	  m_sequence_state = POST_FRAME;
+	  m_sequence_state = UVM_POST_FRAME;
 	  wait(0);
 	  post_frame();
 	}
 
-	m_sequence_state = POST_START;
+	m_sequence_state = UVM_POST_START;
 	wait(0);
 	post_start();
 
-	m_sequence_state = FINISHED;
+        // Drop the objection if enabled
+        if (get_automatic_phase_objection()) {
+	  m_safe_drop_starting_phase("automatic phase objection");
+        }
+         
+	m_sequence_state = UVM_FINISHED;
 	wait(0);
 
       });
@@ -392,7 +487,7 @@ class uvm_sequence_base: uvm_sequence_item
 
       // Clean up any sequencer queues after exiting; if we
       // were forcibly stoped, this step has already taken place
-      if (_m_sequence_state != STOPPED) {
+      if (_m_sequence_state != UVM_STOPPED) {
 	if (_m_sequencer !is null) {
 	  _m_sequencer.m_sequence_exiting(this);
 	}
@@ -401,6 +496,14 @@ class uvm_sequence_base: uvm_sequence_item
 
     wait(0); // allow stopped and finish waiters to resume
 
+    if ((m_parent_sequence !is null) &&
+	(m_parent_sequence.in_children_array(this))) {
+      m_parent_sequence.rem_children_array(this);
+    }
+
+    bool old_automatic_phase_objection = get_automatic_phase_objection();
+    m_init_phase_daps(true);
+    set_automatic_phase_objection(old_automatic_phase_objection);
   }
 
 
@@ -411,7 +514,7 @@ class uvm_sequence_base: uvm_sequence_item
   // This method should not be called directly by the user.
 
   // task
-  public void pre_start() {
+  void pre_start() {
     return;
   }
 
@@ -425,7 +528,7 @@ class uvm_sequence_base: uvm_sequence_item
   // This method should not be called directly by the user.
 
   // task
-  public void pre_frame() {
+  void pre_frame() {
     return;
   }
 
@@ -433,7 +536,7 @@ class uvm_sequence_base: uvm_sequence_item
   // Task: pre_do
   //
   // This task is a user-definable callback task that is called ~on the
-  // parent sequence~, if any.the
+  // parent sequence~, if any
   // sequence has issued a wait_for_grant() call and after the sequencer has
   // selected this sequence, and before the item is randomized.
   //
@@ -443,7 +546,7 @@ class uvm_sequence_base: uvm_sequence_item
   // This method should not be called directly by the user.
 
   // task
-  public void pre_do(bool is_item) {
+  void pre_do(bool is_item) {
     return;
   }
 
@@ -452,9 +555,9 @@ class uvm_sequence_base: uvm_sequence_item
   //
   // This function is a user-definable callback function that is called after
   // the sequence item has been randomized, and just before the item is sent
-  // to the driver.  This mehod should not be called directly by the user.
+  // to the driver.  This method should not be called directly by the user.
 
-  public void mid_do(uvm_sequence_item this_item) {
+  void mid_do(uvm_sequence_item this_item) {
     return;
   }
 
@@ -465,7 +568,7 @@ class uvm_sequence_base: uvm_sequence_item
   // This method should not be called directly by the user.
 
   // task
-  public void frame() {
+  void frame() {
     uvm_report_warning("uvm_sequence_base", "Frame definition undefined");
     return;
   }
@@ -477,7 +580,7 @@ class uvm_sequence_base: uvm_sequence_item
   // this item_done or put methods. This method should not be called directly
   // by the user.
 
-  public void post_do(uvm_sequence_item this_item) {
+  void post_do(uvm_sequence_item this_item) {
     return;
   }
 
@@ -493,7 +596,7 @@ class uvm_sequence_base: uvm_sequence_item
   // This method should not be called directly by the user.
 
   // task
-  public void post_frame() {
+  void post_frame() {
     return;
   }
 
@@ -505,28 +608,209 @@ class uvm_sequence_base: uvm_sequence_item
   // This method should not be called directly by the user.
 
   // task
-  public void post_start() {
+  void post_start() {
     return;
   }
 
 
-  // Variable: starting_phase
+  // Group: Run-Time Phasing
   //
-  // If non-null, specifies the phase in which this sequence was started.
-  // The ~starting_phase~ is set automatically when this sequence is
-  // started as the default sequence. See
-  // <uvm_sequencer_base::start_phase_sequence>.
-  //
-  //| virtual task user_sequence::frame();
-  //|    if (starting_phase !is null)
-  //|       starting_phase.raise_objection(this,"user_seq not finished");
-  //|    ...
-  //|    if (starting_phase !is null)
-  //|       starting_phase.drop_objection(this,"user_seq finished");
-  //| endtask
-  //
-  @uvm_public_sync private uvm_phase _starting_phase;
 
+  // Automatic Phase Objection DAP
+  private uvm_get_to_lock_dap!(bool) _m_automatic_phase_objection_dap;
+  // Starting Phase DAP
+  private uvm_get_to_lock_dap!(uvm_phase) _m_starting_phase_dap;
+
+  // Function- m_init_phase_daps
+  // Either creates or renames DAPS
+  void m_init_phase_daps(bool create) {
+    synchronized(this) {
+      string apo_name = format("%s.automatic_phase_objection",
+			       get_full_name());
+      string sp_name = format("%s.starting_phase", get_full_name());
+
+      if(create) {
+	_m_automatic_phase_objection_dap =
+	  uvm_get_to_lock_dap!(bool).type_id.create(apo_name, get_sequencer());
+	_m_starting_phase_dap =
+	  uvm_get_to_lock_dap!(uvm_phase).type_id.create(sp_name, get_sequencer());
+      }
+      else {
+	_m_automatic_phase_objection_dap.set_name(apo_name);
+	_m_starting_phase_dap.set_name(sp_name);
+      }
+    }
+  }
+
+  version(UVM_DEPRECATED_STARTING_PHASE) {
+    // DEPRECATED!! Use get/set_starting_phase accessors instead!
+    uvm_phase _starting_phase;
+    // Value set via set_starting_phase
+    uvm_phase _m_set_starting_phase;
+    // Ensures we only warn once per sequence
+    bool _m_warn_deprecated_set;
+  }
+   
+    // Function: get_starting_phase
+    // Returns the 'starting phase'.
+    //
+    // If non-~null~, the starting phase specifies the phase in which this
+    // sequence was started.  The starting phase is set automatically when
+    // this sequence is started as the default sequence on a sequencer.
+    // See <uvm_sequencer_base::start_phase_sequence> for more information.
+    //
+    // Internally, the <uvm_sequence_base> uses an <uvm_get_to_lock_dap> to 
+    // protect the starting phase value from being modified 
+    // after the reference has been read.  Once the sequence has ended 
+    // its execution (either via natural termination, or being killed),
+    // then the starting phase value can be modified again.
+    //
+  uvm_phase get_starting_phase() {
+    synchronized(this) {
+      version(UVM_DEPRECATED_STARTING_PHASE) {
+      	bool throw_error;
+
+      	if (_starting_phase !is _m_set_starting_phase) {
+      	  if (! _m_warn_deprecated_set) {
+      	    uvm_warning("UVM_DEPRECATED", "'starting_phase' is deprecated and" ~
+      			" not part of the UVM standard.  See documentation" ~
+      			" for uvm_sequence_base::set_starting_phase");
+      	    _m_warn_deprecated_set = true;
+      	  }
+           
+      	  if (_m_starting_phase_dap.try_set(_starting_phase)) {
+      	    _m_set_starting_phase = _starting_phase;
+      	  }
+      	  else {
+      	    uvm_phase dap_phase = _m_starting_phase_dap.get();
+      	    uvm_error("UVM/SEQ/LOCK_DEPR",
+      		      "The deprecated 'starting_phase' variable has been"~
+      		      " set to '" ~ (_starting_phase is null) ? "<null>" :
+      		      _starting_phase.get_full_name() ~ "' after a call to" ~
+      		      " get_starting_phase locked the value to '" ~
+      		      (dap_phase is null) ? "<null>" :
+      		      dap_phase.get_full_name() ~ "'.  See documentation" ~
+      		      " for uvm_sequence_base::set_starting_phase.");
+      	  }
+      	}
+      }
+      return _m_starting_phase_dap.get();
+    }
+  }
+
+  // Function: set_starting_phase
+  // Sets the 'starting phase'.
+  //
+  // Internally, the <uvm_sequence_base> uses a <uvm_get_to_lock_dap> to 
+  // protect the starting phase value from being modified 
+  // after the reference has been read.  Once the sequence has ended 
+  // its execution (either via natural termination, or being killed),
+  // then the starting phase value can be modified again.
+  //
+  void set_starting_phase(uvm_phase phase) {
+    synchronized(this) {
+      version(UVM_DEPRECATED_STARTING_PHASE) {
+      	if (_starting_phase !is _m_set_starting_phase) {
+      	  if (!_m_warn_deprecated_set) {
+      	    uvm_warning("UVM_DEPRECATED", 
+      			"The deprecated 'starting_phase' variable has been" ~
+      			" set to '" ~ _starting_phase.get_full_name() ~
+      			"' manually.  See documentation for " ~
+      			"uvm_sequence_base::set_starting_phase.");
+      	    _m_warn_deprecated_set = true;
+      	  }
+
+      	  _starting_phase = phase;
+      	  _m_set_starting_phase = phase;
+      	}
+      }
+      _m_starting_phase_dap.set(phase);
+    }
+  }
+   
+  // Function: set_automatic_phase_objection
+  // Sets the 'automatically object to starting phase' bit.
+  //
+  // The most common interaction with the starting phase
+  // within a sequence is to simply ~raise~ the phase's objection
+  // prior to executing the sequence, and ~drop~ the objection
+  // after ending the sequence (either naturally, or
+  // via a call to <kill>). In order to 
+  // simplify this interaction for the user, the UVM
+  // provides the ability to perform this functionality
+  // automatically.
+  //
+  // For example:
+  //| function my_sequence::new(string name="unnamed");
+  //|   super.new(name);
+  //|   set_automatic_phase_objection(1);
+  //| endfunction : new
+  //
+  // From a timeline point of view, the automatic phase objection
+  // looks like:
+  //| start() is executed
+  //|   --! Objection is raised !--
+  //|   pre_start() is executed
+  //|   pre_body() is optionally executed
+  //|   body() is executed
+  //|   post_body() is optionally executed
+  //|   post_start() is executed
+  //|   --! Objection is dropped !--
+  //| start() unblocks
+  //
+  // This functionality can also be enabled in sequences
+  // which were not written with UVM Run-Time Phasing in mind:
+  //| my_legacy_seq_type seq = new("seq");
+  //| seq.set_automatic_phase_objection(1);
+  //| seq.start(my_sequencer);
+  //
+  // Internally, the <uvm_sequence_base> uses a <uvm_get_to_lock_dap> to 
+  // protect the ~automatic_phase_objection~ value from being modified 
+  // after the reference has been read.  Once the sequence has ended 
+  // its execution (either via natural termination, or being killed),
+  // then the ~automatic_phase_objection~ value can be modified again.
+  //
+  // NEVER set the automatic phase objection bit to 1 if your sequence
+  // runs with a forever loop inside of the body, as the objection will
+  // never get dropped!
+  void set_automatic_phase_objection(bool value) {
+    synchronized(this) {
+      _m_automatic_phase_objection_dap.set(value);
+    }
+  }
+
+  // Function: get_automatic_phase_objection
+  // Returns (and locks) the value of the 'automatically object to 
+  // starting phase' bit.
+  //
+  // If 1, then the sequence will automatically raise an objection
+  // to the starting phase (if the starting phase is not ~null~) immediately
+  // prior to <pre_start> being called.  The objection will be dropped
+  // after <post_start> has executed, or <kill> has been called.
+  //
+  bool get_automatic_phase_objection() {
+    synchronized(this) {
+      return _m_automatic_phase_objection_dap.get();
+    }
+  }
+
+  // m_safe_raise_starting_phase
+  void m_safe_raise_starting_phase(string description = "",
+				   int count = 1) {
+    uvm_phase starting_phase = get_starting_phase();
+    if (starting_phase !is null) {
+      starting_phase.raise_objection(this, description, count);
+    }
+  }
+  // m_safe_drop_starting_phase
+  void m_safe_drop_starting_phase(string description = "",
+				  int count = 1) {
+    uvm_phase starting_phase = get_starting_phase();
+    if(starting_phase !is null) {
+      starting_phase.drop_objection(this, description, count);
+    }
+  }
+   
   //------------------------
   // Group: Sequence Control
   //------------------------
@@ -540,7 +824,7 @@ class uvm_sequence_base: uvm_sequence_item
   // The default priority value for a sequence is 100.  Higher values result
   // in higher priorities.
 
-  public void set_priority (int value) {
+  void set_priority (int value) {
     synchronized(this) {
       _m_priority = value;
     }
@@ -551,7 +835,7 @@ class uvm_sequence_base: uvm_sequence_item
   //
   // This function returns the current priority of the sequence.
 
-  public int get_priority() {
+  int get_priority() {
     synchronized(this) {
       return _m_priority;
     }
@@ -578,7 +862,7 @@ class uvm_sequence_base: uvm_sequence_item
   // wait_for_relevant so that the sequencer has a way to wait for a
   // sequence to become relevant.
 
-  public bool is_relevant() {
+  bool is_relevant() {
     synchronized(this) {
       _is_rel_default = true;
       return true;
@@ -601,7 +885,7 @@ class uvm_sequence_base: uvm_sequence_item
   // a wait_for_relevant method.
 
   // task
-  public void wait_for_relevant() {
+  void wait_for_relevant() {
     synchronized(this) {
       _wait_rel_default = true;
       if (_is_rel_default !is _wait_rel_default) {
@@ -616,7 +900,7 @@ class uvm_sequence_base: uvm_sequence_item
 
   // Task: lock
   //
-  // Requests a lock on the specified sequencer. If sequencer is null, the lock
+  // Requests a lock on the specified sequencer. If sequencer is ~null~, the lock
   // will be requested on the current default sequencer.
   //
   // A lock request will be arbitrated the same as any other request.  A lock is
@@ -626,7 +910,7 @@ class uvm_sequence_base: uvm_sequence_item
   // The lock call will return when the lock has been granted.
 
   // task
-  public void lock(uvm_sequencer_base sequencer = null) {
+  void lock(uvm_sequencer_base sequencer = null) {
     if (sequencer is null) {
       sequencer = m_sequencer;
     }
@@ -644,14 +928,14 @@ class uvm_sequence_base: uvm_sequence_item
   // Requests a lock on the specified sequencer.  If no argument is supplied,
   // the lock will be requested on the current default sequencer.
   //
-  // A grab equest is put in front of the arbitration queue. It will be
+  // A grab request is put in front of the arbitration queue. It will be
   // arbitrated before any other requests. A grab is granted when no other grabs
   // or locks are blocking this sequence.
   //
   // The grab call will return when the grab has been granted.
 
   // task
-  public void grab(uvm_sequencer_base sequencer = null) {
+  void grab(uvm_sequencer_base sequencer = null) {
     if (sequencer is null) {
       if (m_sequencer is null) {
 	uvm_report_fatal("GRAB", "Null m_sequencer reference", UVM_NONE);
@@ -667,10 +951,10 @@ class uvm_sequence_base: uvm_sequence_item
   // Function: unlock
   //
   // Removes any locks or grabs obtained by this sequence on the specified
-  // sequencer. If sequencer is null, then the unlock will be done on the
+  // sequencer. If sequencer is ~null~, then the unlock will be done on the
   // current default sequencer.
 
-  public void  unlock(uvm_sequencer_base sequencer = null) {
+  void  unlock(uvm_sequencer_base sequencer = null) {
     synchronized(this) {
       if (sequencer is null) {
 	if (_m_sequencer is null) {
@@ -687,10 +971,10 @@ class uvm_sequence_base: uvm_sequence_item
   // Function: ungrab
   //
   // Removes any locks or grabs obtained by this sequence on the specified
-  // sequencer. If sequencer is null, then the unlock will be done on the
+  // sequencer. If sequencer is ~null~, then the unlock will be done on the
   // current default sequencer.
 
-  public void  ungrab(uvm_sequencer_base sequencer = null) {
+  void  ungrab(uvm_sequencer_base sequencer = null) {
     unlock(sequencer);
   }
 
@@ -704,7 +988,7 @@ class uvm_sequence_base: uvm_sequence_item
   // is possible for another sequence to issue a lock or grab before this
   // sequence can issue a request.
 
-  public bool is_blocked() {
+  bool is_blocked() {
     synchronized(this) {
       return _m_sequencer.is_blocked(this);
     }
@@ -719,7 +1003,7 @@ class uvm_sequence_base: uvm_sequence_item
   // a lock, in which case the sequence is still blocked from issuing
   // operations on the sequencer.
 
-  public bool has_lock() {
+  bool has_lock() {
     synchronized(this) {
       return _m_sequencer.has_lock(this);
     }
@@ -730,25 +1014,33 @@ class uvm_sequence_base: uvm_sequence_item
   //
   // This function will kill the sequence, and cause all current locks and
   // requests in the sequence's default sequencer to be removed. The sequence
-  // state will change to STOPPED, and its post_frame() method, if  will not b
+  // state will change to UVM_STOPPED, and its post_frame() method, if  will not b
   //
   // If a sequence has issued locks, grabs, or requests on sequencers other than
   // the default sequencer, then care must be taken to unregister the sequence
   // with the other sequencer(s) using the sequencer unregister_sequence()
   // method.
 
-  public void kill() {
+  void kill() {
     synchronized(this) {
       if (_m_sequence_process !is null) {
 	// If we are not connected to a sequencer, then issue
 	// kill locally.
 	if (_m_sequencer is null) {
 	  m_kill();
+	  // We need to drop the objection if we raised it...
+	  if (get_automatic_phase_objection()) {
+	    m_safe_drop_starting_phase("automatic phase objection");
+	  }
 	  return;
 	}
 	// If we are attached to a sequencer, then the sequencer
 	// will clear out queues, and then kill this sequence
 	_m_sequencer.kill_sequence(this);
+	// We need to drop the objection if we raised it...
+	if (get_automatic_phase_objection()) {
+	  m_safe_drop_starting_phase("automatic phase objection");
+	}
 	return;
       }
     }
@@ -760,18 +1052,25 @@ class uvm_sequence_base: uvm_sequence_item
   // terminated by using either sequence.kill() or sequencer.stop_sequences()
   // (which effectively calls sequence.kill()).
 
-  public void do_kill() {
+  void do_kill() {
     return;
   }
 
-  public void m_kill() {
+  void m_kill() {
     synchronized(this) {
       do_kill();
-      if (_m_sequence_process !is null) {
+      foreach(child; _children_array.keys) {
+	child.kill();
+      }
+      if(_m_sequence_process !is null) {
 	_m_sequence_process.abort();
 	_m_sequence_process = null;
       }
-      _m_sequence_state = STOPPED;
+      _m_sequence_state = UVM_STOPPED;
+      if((_m_parent_sequence !is null) &&
+	 (_m_parent_sequence.in_children_array(this))) {
+	m_parent_sequence.rem_children_array(this);
+      }
     }
   }
 
@@ -789,13 +1088,12 @@ class uvm_sequence_base: uvm_sequence_item
 					  uvm_sequencer_base l_sequencer,
 					  string name) {
     synchronized(this) {
-      uvm_factory f_ = uvm_factory.get();
-      auto seq_item =
-	cast(uvm_sequence_item) f_.create_object_by_type(type_var,
-							 this.get_full_name(),
-							 name);
-      seq_item.set_item_context(this, l_sequencer);
-      return seq_item;
+      uvm_coreservice_t cs = uvm_coreservice_t.get();
+      uvm_factory factory = cs.get_factory();
+      auto create_item_ = cast(uvm_sequence_item)
+	factory.create_object_by_type(type_var, this.get_full_name(), name);
+      create_item_.set_item_context(this, l_sequencer);
+      return create_item_;
     }
   }
 
@@ -810,9 +1108,9 @@ class uvm_sequence_base: uvm_sequence_item
   //
 
   // task
-  public void start_item (uvm_sequence_item item,
-			  int set_priority = -1,
-			  uvm_sequencer_base sequencer = null) {
+  void start_item (uvm_sequence_item item,
+			  int set_priority=-1,
+			  uvm_sequencer_base sequencer=null) {
     synchronized(this) {
       if(item is null) {
 	uvm_report_fatal("NULLITM",
@@ -853,9 +1151,14 @@ class uvm_sequence_base: uvm_sequence_item
 
     sequencer.wait_for_grant(this, set_priority);
 
-    version(UVM_DISABLE_AUTO_ITEM_RECORDING) {}
-    else {
-      sequencer.begin_child_tr(item, m_tr_handle, item.get_root_sequence_name());
+    synchronized(this) {
+      if (sequencer.is_auto_item_recording_enabled()) {
+	sequencer.begin_child_tr(item, 
+				 (_m_tr_recorder is null) ?
+				 0 : _m_tr_recorder.get_handle(), 
+				 item.get_root_sequence_name(),
+				 "Transactions");
+      }
     }
     pre_do(true);
   }
@@ -869,24 +1172,23 @@ class uvm_sequence_base: uvm_sequence_item
   //
 
   // task
-  public void finish_item (uvm_sequence_item item,
+  void finish_item (uvm_sequence_item item,
 			   int set_priority = -1) {
-    uvm_sequencer_base sequencer;
-    synchronized(this) {
-      sequencer = item.get_sequencer();
+    uvm_sequencer_base sequencer = item.get_sequencer();
 
-      if (sequencer is null) {
-	uvm_report_fatal("STRITM", "sequence_item has null sequencer", UVM_NONE);
-      }
-
-      mid_do(item);
-      sequencer.send_request(this, item);
+    if (sequencer is null) {
+      uvm_report_fatal("STRITM", "sequence_item has null sequencer", UVM_NONE);
     }
+
+    mid_do(item);
+    sequencer.send_request(this, item);
+
     sequencer.wait_for_item_done(this, -1);
-    version(UVM_DISABLE_AUTO_ITEM_RECORDING) {}
-    else {
+
+    if (sequencer.is_auto_item_recording_enabled()) {
       sequencer.end_tr(item);
     }
+
     post_do(item);
 
   }
@@ -906,7 +1208,7 @@ class uvm_sequence_base: uvm_sequence_item
   // item to be sent via the send_request call.
 
   // task
-  public void wait_for_grant(int item_priority = -1, bool lock_request = false) {
+  void wait_for_grant(int item_priority = -1, bool lock_request = false) {
     if (m_sequencer is null) {
       uvm_report_fatal("WAITGRANT", "Null m_sequencer reference", UVM_NONE);
     }
@@ -921,7 +1223,7 @@ class uvm_sequence_base: uvm_sequence_item
   // it to the driver. If the rerandomize bool is set, the item will be
   // randomized before being sent to the driver.
 
-  public void send_request(uvm_sequence_item request, bool rerandomize = 0) {
+  void send_request(uvm_sequence_item request, bool rerandomize = false) {
     synchronized(this) {
       if (_m_sequencer is null) {
 	uvm_report_fatal("SENDREQ", "Null m_sequencer reference", UVM_NONE);
@@ -944,7 +1246,7 @@ class uvm_sequence_base: uvm_sequence_item
   // will hang, having missed the earlier notification.
 
   // task
-  public void wait_for_item_done(int transaction_id = -1) {
+  void wait_for_item_done(int transaction_id = -1) {
     if (m_sequencer is null) {
       uvm_report_fatal("WAITITEMDONE", "Null m_sequencer reference", UVM_NONE);
     }
@@ -967,7 +1269,7 @@ class uvm_sequence_base: uvm_sequence_item
   // An alternative method is for the sequencer to call the response_handler
   // function with each response.
 
-  public void use_response_handler(bool enable) {
+  void use_response_handler(bool enable) {
     synchronized(this) {
       _m_use_response_handler = enable;
     }
@@ -978,7 +1280,7 @@ class uvm_sequence_base: uvm_sequence_item
   //
   // Returns the state of the use_response_handler bool.
 
-  public bool get_use_response_handler() {
+  bool get_use_response_handler() {
     synchronized(this) {
       return _m_use_response_handler;
     }
@@ -987,10 +1289,10 @@ class uvm_sequence_base: uvm_sequence_item
 
   // Function: response_handler
   //
-  // When the use_reponse_handler bool is set to 1, this virtual task is called
+  // When the use_response_handler bool is set to 1, this virtual task is called
   // by the sequencer for each response that arrives for this sequence.
 
-  public void response_handler(uvm_sequence_item response) {
+  void response_handler(uvm_sequence_item response) {
     return;
   }
 
@@ -1002,7 +1304,7 @@ class uvm_sequence_base: uvm_sequence_item
   // from the driver than get_response calls are made. Setting value to 0
   // disables these errors, while setting it to 1 enables them.
 
-  public void set_response_queue_error_report_disabled(bool value) {
+  void set_response_queue_error_report_disabled(bool value) {
     synchronized(this) {
       _response_queue_error_report_disabled = value;
     }
@@ -1015,7 +1317,7 @@ class uvm_sequence_base: uvm_sequence_item
   // the response queue overflows. When this bool is 1, no such error
   // reports are generated.
 
-  public bool get_response_queue_error_report_disabled() {
+  bool get_response_queue_error_report_disabled() {
     synchronized(this) {
       return _response_queue_error_report_disabled;
     }
@@ -1030,7 +1332,7 @@ class uvm_sequence_base: uvm_sequence_item
   // Setting the response_queue_depth to -1 indicates an arbitrarily deep
   // response queue.  No checking is done.
 
-  public void set_response_queue_depth(int value) {
+  void set_response_queue_depth(int value) {
     synchronized(this) {
       _response_queue_depth = value;
     }
@@ -1041,7 +1343,7 @@ class uvm_sequence_base: uvm_sequence_item
   //
   // Returns the current depth setting for the response queue.
 
-  public int get_response_queue_depth() {
+  int get_response_queue_depth() {
     synchronized(this) {
       return _response_queue_depth;
     }
@@ -1052,22 +1354,22 @@ class uvm_sequence_base: uvm_sequence_item
   //
   // Empties the response queue for this sequence.
 
-  public void clear_response_queue() {
+  void clear_response_queue() {
     synchronized(this) {
       _response_queue.clear();
     }
   }
 
 
-  public void put_base_response(uvm_sequence_item response) {
+  void put_base_response(uvm_sequence_item response) {
     synchronized(this) {
-      if ((_response_queue_depth is -1) ||
+      if ((_response_queue_depth == -1) ||
 	  (_response_queue.length < _response_queue_depth)) {
 	_response_queue.pushBack(response);
 	_response_queue_event.notify();
 	return;
       }
-      if (_response_queue_error_report_disabled is 0) {
+      if (_response_queue_error_report_disabled == 0) {
 	uvm_report_error(get_full_name(), "Response queue overflow, "
 			 "response was dropped", UVM_NONE);
       }
@@ -1079,7 +1381,7 @@ class uvm_sequence_base: uvm_sequence_item
   //
   // Internal method.
 
-  public void put_response (uvm_sequence_item response_item) {
+  void put_response (uvm_sequence_item response_item) {
     put_base_response(response_item); // no error-checking
   }
 
@@ -1087,13 +1389,13 @@ class uvm_sequence_base: uvm_sequence_item
   // Function- get_base_response
 
   // task
-  public void get_base_response(out uvm_sequence_item response,
+  void get_base_response(out uvm_sequence_item response,
 				int transaction_id = -1) {
 
     // if (_response_queue.length is 0) {
     //   wait(_response_queue.length !is 0);
     // }
-    while(response_queue.length is 0) {
+    while(response_queue_length == 0) {
       _response_queue_event.wait();
     }
 
@@ -1106,8 +1408,9 @@ class uvm_sequence_base: uvm_sequence_item
     }
 
     while(true) {
-      size_t queue_size = response_queue.length;
+      size_t queue_size;
       synchronized(this) {
+	queue_size = _response_queue.length;
 	for (size_t i = 0; i < queue_size; i++) {
 	  if (_response_queue[i].get_transaction_id() == transaction_id) {
 	    response = cast(uvm_sequence_item) _response_queue[i];
@@ -1117,7 +1420,7 @@ class uvm_sequence_base: uvm_sequence_item
 	}
       }
       // wait(response_queue.length != queue_size);
-      while(response_queue.length == queue_size) {
+      while(response_queue_length() == queue_size) {
 	_response_queue_event.wait();
       }
     }
@@ -1129,8 +1432,7 @@ class uvm_sequence_base: uvm_sequence_item
   // Group- Sequence Library DEPRECATED
   //------------------------
 
-  version(UVM_NO_DEPRECATED) {}
-  else {
+  version(UVM_INCLUDE_DEPRECATED) {
 
     mixin Randomization;
     
@@ -1141,9 +1443,9 @@ class uvm_sequence_base: uvm_sequence_item
     @uvm_public_sync private @rand uint _seq_kind;
     private uint _num_seq;
 
-    public void preRandomize() {
+    void preRandomize() {
       synchronized(this) {
-	_num_seq = num_sequences();
+  	_num_seq = num_sequences();
       }
     }
 
@@ -1164,12 +1466,12 @@ class uvm_sequence_base: uvm_sequence_item
     //
     // Returns the number of sequences in the sequencer's sequence library.
 
-    public int num_sequences() {
+    int num_sequences() {
       synchronized(this) {
-	if(_m_sequencer is null) {
-	  return 0;
-	}
-	return cast(int) _m_sequencer.num_sequences();
+  	if(_m_sequencer is null) {
+  	  return 0;
+  	}
+  	return cast(int) _m_sequencer.num_sequences();
       }
     }
 
@@ -1181,20 +1483,18 @@ class uvm_sequence_base: uvm_sequence_item
     // been registerd with the sequencer.  The return value may be used with
     // the <get_sequence> or <do_sequence_kind> methods.
 
-    public int get_seq_kind(string type_name) {
-      uvm_warning("UVM_DEPRECATED",
-		  format("uvm_sequence_base.get_seq_kind deprecated."));
+    int get_seq_kind(string type_name) {
       synchronized(this) {
-	if(_m_sequencer !is null) {
-	  return _m_sequencer.get_seq_kind(type_name);
-	}
-	else {
-	  uvm_report_warning("NULLSQ", format("%0s sequencer is null.",
-					      get_type_name()), UVM_NONE);
-	  // The return statement in the next line is not there in the SV verison
-	  // But DMD cribs without it.
-	  return 0;
-	}
+  	uvm_warning("UVM_DEPRECATED",
+  		    format("uvm_sequence_base.get_seq_kind deprecated."));
+  	if(_m_sequencer !is null) {
+  	  return _m_sequencer.get_seq_kind(type_name);
+  	}
+  	else {
+  	  uvm_report_warning("NULLSQ", format("%0s sequencer is null.",
+  					      get_type_name()), UVM_NONE);
+  	  return 0;
+  	}
       }
     }
 
@@ -1204,27 +1504,28 @@ class uvm_sequence_base: uvm_sequence_item
     // This function returns a reference to a sequence specified by ~req_kind~,
     // which can be obtained using the <get_seq_kind> method.
 
-    public uvm_sequence_base get_sequence(uint req_kind) {
-      uvm_warning("UVM_DEPRECATED",
-		  format("uvm_sequence_base.get_sequence deprecated."));
+    uvm_sequence_base get_sequence(uint req_kind) {
       synchronized(this) {
-	uvm_factory factory = uvm_factory.get();
-	if (req_kind < 0 || req_kind >= _m_sequencer.sequences.length) {
-	  uvm_report_error("SEQRNG",
-			   format("Kind arg '%0d' out of range. Need 0-%0d",
-				  req_kind, _m_sequencer.sequences.length-1),
-			   UVM_NONE);
-	}
-	string m_seq_type = _m_sequencer.sequences[req_kind];
-	uvm_sequence_base m_seq = cast(uvm_sequence_base)
-	  factory.create_object_by_name(m_seq_type, get_full_name(), m_seq_type);
-	if(m_seq is null) {
-	  uvm_report_fatal("FCTSEQ",
-			   format("Factory can not produce a sequence of type"
-				  " %0s.", m_seq_type), UVM_NONE);
-	}
-	m_seq.set_use_sequence_info(true);
-	return m_seq;
+  	uvm_coreservice_t cs = uvm_coreservice_t.get();
+  	uvm_factory factory = cs.get_factory();
+  	uvm_warning("UVM_DEPRECATED",
+  		    format("uvm_sequence_base.get_sequence deprecated."));
+  	if (req_kind < 0 || req_kind >= _m_sequencer.sequences.length) {
+  	  uvm_report_error("SEQRNG",
+  			   format("Kind arg '%0d' out of range. Need 0-%0d",
+  				  req_kind, _m_sequencer.sequences.length-1),
+  			   UVM_NONE);
+  	}
+  	string m_seq_type = _m_sequencer.sequences[req_kind];
+  	uvm_sequence_base m_seq = cast(uvm_sequence_base)
+  	  factory.create_object_by_name(m_seq_type, get_full_name(), m_seq_type);
+  	if(m_seq is null) {
+  	  uvm_report_fatal("FCTSEQ",
+  			   format("Factory cannot produce a sequence of type"
+  				  " %0s.", m_seq_type), UVM_NONE);
+  	}
+  	m_seq.set_use_sequence_info(true);
+  	return m_seq;
       }
     }
 
@@ -1235,27 +1536,28 @@ class uvm_sequence_base: uvm_sequence_item
     // which can be obtained using the <get_seq_kind> method.
 
     //task
-    public void do_sequence_kind(uint req_kind) {
+    void do_sequence_kind(uint req_kind) {
       uvm_warning("UVM_DEPRECATED",
-		  format("uvm_sequence_base.do_sequence_kind deprecated."));
-      uvm_factory factory = uvm_factory.get();
+  		  format("uvm_sequence_base.do_sequence_kind deprecated."));
+      uvm_coreservice_t cs = uvm_coreservice_t.get();
+      uvm_factory factory = cs.get_factory();
       string m_seq_type = m_sequencer.sequences[req_kind];
       uvm_sequence_base m_seq = cast(uvm_sequence_base)
-	factory.create_object_by_name(m_seq_type, get_full_name(), m_seq_type);
+  	factory.create_object_by_name(m_seq_type, get_full_name(), m_seq_type);
       if (m_seq is null) {
-	uvm_report_fatal("FCTSEQ",
-			 format("Factory can not produce a sequence of type"
-				" %0s.", m_seq_type), UVM_NONE);
+  	uvm_report_fatal("FCTSEQ",
+  			 format("Factory cannot produce a sequence of type"
+  				" %0s.", m_seq_type), UVM_NONE);
       }
 
       m_seq.set_item_context(this, m_sequencer);
 
       try {
-	m_seq.randomize();
+  	m_seq.randomize();
       }
       catch {
-	uvm_report_warning("RNDFLD", "Randomization failed in"
-			   " do_sequence_kind()");
+  	uvm_report_warning("RNDFLD", "Randomization failed in"
+  			   " do_sequence_kind()");
       }
       m_seq.start(m_sequencer, this, get_priority(), 0);
     }
@@ -1265,15 +1567,16 @@ class uvm_sequence_base: uvm_sequence_item
     //
     // Internal method.
 
-    public uvm_sequence_base get_sequence_by_name(string seq_name) {
+    uvm_sequence_base get_sequence_by_name(string seq_name) {
       uvm_warning("UVM_DEPRECATED",
 		  format("uvm_sequence_base.get_sequence_by_name deprecated."));
-      uvm_factory factory = uvm_factory.get();
+      uvm_coreservice_t cs = uvm_coreservice_t.get();
+      uvm_factory factory = cs.get_factory();
       uvm_sequence_base m_seq = cast(uvm_sequence_base)
 	factory.create_object_by_name(seq_name, get_full_name(), seq_name);
       if (m_seq is null) {
 	uvm_report_fatal("FCTSEQ",
-			 format("Factory can not produce a sequence of type"
+			 format("Factory cannot produce a sequence of type"
 				" %0s.", seq_name), UVM_NONE);
       }
       m_seq.set_use_sequence_info(true);
@@ -1286,14 +1589,15 @@ class uvm_sequence_base: uvm_sequence_item
     // Internal method.
 
     // task
-    public void create_and_start_sequence_by_name(string seq_name) {
+    void create_and_start_sequence_by_name(string seq_name) {
       uvm_warning("UVM_DEPRECATED",
-		  format("uvm_sequence_base.create_and_start_sequence_by_name"
-			 " deprecated."));
+  		  format("uvm_sequence_base.create_and_start_sequence_by_name"
+  			 " deprecated."));
       uvm_sequence_base m_seq = get_sequence_by_name(seq_name);
       m_seq.start(m_sequencer, this, this.get_priority(), 0);
     }
-  } // UVM_NO_DEPRECATED
+  }
+  // UVM_INCLUDE_DEPRECATED
 
   //----------------------
   // Misc Internal methods
@@ -1303,7 +1607,7 @@ class uvm_sequence_base: uvm_sequence_item
   // m_get_sqr_sequence_id
   // ---------------------
 
-  public int m_get_sqr_sequence_id(int sequencer_id, bool update_sequence_id) {
+  int m_get_sqr_sequence_id(int sequencer_id, bool update_sequence_id) {
     synchronized(this) {
       if (sequencer_id in _m_sqr_seq_ids) {
 	if (update_sequence_id is true) {
@@ -1324,27 +1628,13 @@ class uvm_sequence_base: uvm_sequence_item
   // m_set_sqr_sequence_id
   // ---------------------
 
-  public void m_set_sqr_sequence_id(int sequencer_id, int sequence_id) {
+  void m_set_sqr_sequence_id(int sequencer_id, int sequence_id) {
     synchronized(this) {
       _m_sqr_seq_ids[sequencer_id] = sequence_id;
       set_sequence_id(sequence_id);
     }
   }
 
-
-  // Function- create_request
-  //
-  // Returns an instance of teh ~REQ~ type in a <uvm_sequence_item> base handle
-  public uvm_sequence_item create_request () {
-    return null;
-  }
-
-  // Function- create_response
-  //
-  // Returns an instance of teh ~RSP~ type in a <uvm_sequence_item> base handle
-  public uvm_sequence_item create_response () {
-    return null;
-  }
 
   // Title: Sequence-Related Macros
 
@@ -1369,7 +1659,7 @@ class uvm_sequence_base: uvm_sequence_item
   // does zero processing.  After this action completes, the user can manually set
   // values, manipulate rand_mode and constraint_mode, etc.
 
-  public void uvm_create(T)(ref T SEQ_OR_ITEM) if(is(T: uvm_sequence_item)){
+  void uvm_create(T)(ref T SEQ_OR_ITEM) if(is(T: uvm_sequence_item)){
     uvm_create_on(SEQ_OR_ITEM, m_sequencer());
   }
 
@@ -1415,7 +1705,7 @@ class uvm_sequence_base: uvm_sequence_item
   //|   sub_seq.post_start()        (task)
   //|
 
-  public void uvm_do(T) (ref T SEQ_OR_ITEM) if(is(T: uvm_sequence_item)) {
+  void uvm_do(T) (ref T SEQ_OR_ITEM) if(is(T: uvm_sequence_item)) {
     uvm_do_on_pri_with!q{}(SEQ_OR_ITEM, m_sequencer(), -1);
   }
 
@@ -1427,7 +1717,7 @@ class uvm_sequence_base: uvm_sequence_item
   // This is the same as `uvm_do except that the sequene item or sequence is
   // executed with the priority specified in the argument
 
-  public void uvm_do_pri(T) (ref T SEQ_OR_ITEM, int PRIORITY)
+  void uvm_do_pri(T) (ref T SEQ_OR_ITEM, int PRIORITY)
     if(is(T: uvm_sequence_item)){
       uvm_do_on_pri_with!q{}(SEQ_OR_ITEM, m_sequencer, PRIORITY);
     }
@@ -1452,7 +1742,7 @@ class uvm_sequence_base: uvm_sequence_item
   // argument is applied to the item or sequence in a randomize with statement
   // before execution.
 
-  public void uvm_do_with(string CONSTRAINTS, T, V...)
+  void uvm_do_with(string CONSTRAINTS, T, V...)
     (ref T SEQ_OR_ITEM, V values) if(is(T: uvm_sequence_item)) {
     uvm_do_on_pri_with!CONSTRAINTS(SEQ_OR_ITEM, m_sequencer(), -1, values);
   }
@@ -1466,7 +1756,7 @@ class uvm_sequence_base: uvm_sequence_item
   // applied to the item or sequence in a randomize with statement before
   // execution.
 
-  public void uvm_do_pri_with(string CONSTRAINTS, T, V...)
+  void uvm_do_pri_with(string CONSTRAINTS, T, V...)
     (ref T SEQ_OR_ITEM, int PRIORITY, values) if(is(T: uvm_sequence_item)) {
     uvm_do_on_pri_with!CONSTRAINTS(SEQ_OR_ITEM, m_sequencer(),
 				   PRIORITY, values);
@@ -1491,7 +1781,7 @@ class uvm_sequence_base: uvm_sequence_item
   // the specified ~SEQR~ argument.
 
   // FIXME -- consider changing SEQ_OR_ITEM and SEQR to aliases passed as temaplte arguments
-  public void uvm_create_on(T, U)(ref T SEQ_OR_ITEM, U SEQR)
+  void uvm_create_on(T, U)(ref T SEQ_OR_ITEM, U SEQR)
     if(is(T: uvm_sequence_item) && is(U: uvm_sequencer_base)) {
       uvm_object_wrapper w_ = SEQ_OR_ITEM.get_type();
       SEQ_OR_ITEM = cast(T) create_item(w_, SEQR, "SEQ_OR_ITEM");
@@ -1506,7 +1796,7 @@ class uvm_sequence_base: uvm_sequence_item
   // the sequence in which the macro is invoked, and it sets the sequencer to the
   // specified ~SEQR~ argument.
 
-  public void uvm_do_on(T, U)(ref T SEQ_OR_ITEM, U SEQR)
+  void uvm_do_on(T, U)(ref T SEQ_OR_ITEM, U SEQR)
     if(is(T: uvm_sequence_item) && is(U: uvm_sequencer_base)) {
       uvm_do_on_pri_with!q{}(SEQ_OR_ITEM, SEQR, -1);
     }
@@ -1520,7 +1810,7 @@ class uvm_sequence_base: uvm_sequence_item
   // to the sequence in which the macro is invoked, and it sets the sequencer to
   // the specified ~SEQR~ argument.
 
-  public void uvm_do_on_pri(T, U)(ref T SEQ_OR_ITEM, U SEQR, int PRIORITY)
+  void uvm_do_on_pri(T, U)(ref T SEQ_OR_ITEM, U SEQR, int PRIORITY)
     if(is(T: uvm_sequence_item) && is(U: uvm_sequencer_base)) {
       uvm_do_on_pri_with!q{}(SEQ_OR_ITEM, SEQR, PRIORITY);
     }
@@ -1534,7 +1824,7 @@ class uvm_sequence_base: uvm_sequence_item
   // sequencer to the specified ~SEQR~ argument.
   // The user must supply brackets around the constraints.
 
-  public void uvm_do_on_with(string CONSTRAINTS, T, U, V...)
+  void uvm_do_on_with(string CONSTRAINTS, T, U, V...)
     (ref T SEQ_OR_ITEM, U SEQR, V values)
     if(is(T: uvm_sequence_item) && is(U: uvm_sequencer_base)) {
       uvm_do_on_pri_with!CONSTRAINTS(SEQ_OR_ITEM, SEQR, -1, values);
@@ -1549,19 +1839,19 @@ class uvm_sequence_base: uvm_sequence_item
   // sequence to the sequence in which the macro is invoked, and it sets the
   // sequencer to the specified ~SEQR~ argument.
 
-  public void uvm_do_on_pri_with(string CONSTRAINTS, T, U, V...)
+  void uvm_do_on_pri_with(string CONSTRAINTS, T, U, V...)
     (ref T SEQ_OR_ITEM, U SEQR, int PRIORITY, V values)
     if(is(T: uvm_sequence_item) && is(U: uvm_sequencer_base)) {
       uvm_create_on(SEQ_OR_ITEM, SEQR);
-      uvm_sequence_base _seq =
+      uvm_sequence_base seq_ =
 	cast(uvm_sequence_base) start_item(SEQ_OR_ITEM, PRIORITY);
-      if((_seq is null || ! _seq.do_not_randomize) &&
+      if((seq_ is null || ! seq_.do_not_randomize) &&
 	 ! SEQ_OR_ITEM.randomizeWith!(CONSTRAINTS)(values)) {
 	uvm_warning("RNDFLD", "Randomization failed in uvm_do_with action");
       }
-      _seq = cast(uvm_sequence_base) SEQ_OR_ITEM;
-      if(_seq is null) finish_item(SEQ_OR_ITEM, PRIORITY);
-      else _seq.start(SEQR, this, PRIORITY, 0);
+      seq_ = cast(uvm_sequence_base) SEQ_OR_ITEM;
+      if(seq_ is null) finish_item(SEQ_OR_ITEM, PRIORITY);
+      else seq_.start(SEQR, this, PRIORITY, 0);
     }
 
 
@@ -1582,7 +1872,7 @@ class uvm_sequence_base: uvm_sequence_item
   // `uvm_create.  The processing is done without randomization.  Essentially, an
   // `uvm_do without the create or randomization.
 
-  public void uvm_send(T)(ref T SEQ_OR_ITEM) if(is(T: uvm_sequence_item)) {
+  void uvm_send(T)(ref T SEQ_OR_ITEM) if(is(T: uvm_sequence_item)) {
     uvm_send_pri(SEQ_OR_ITEM, -1);
   }
 
@@ -1594,7 +1884,7 @@ class uvm_sequence_base: uvm_sequence_item
   // This is the same as `uvm_send except that the sequene item or sequence is
   // executed with the priority specified in the argument.
 
-  public void uvm_send_pri(T)(T SEQ_OR_ITEM, int PRIORITY)
+  void uvm_send_pri(T)(T SEQ_OR_ITEM, int PRIORITY)
     if(is(T: uvm_sequence_item)) {
       uvm_sequence_base _seq = cast(uvm_sequence_base) SEQ_OR_ITEM;
       if (_seq is null) {
@@ -1613,7 +1903,7 @@ class uvm_sequence_base: uvm_sequence_item
   // allocated (possibly with `uvm_create). The processing is done with
   // randomization.  Essentially, an `uvm_do without the create.
 
-  public void uvm_rand_send(T)(ref T SEQ_OR_ITEM)
+  void uvm_rand_send(T)(ref T SEQ_OR_ITEM)
     if(is(T: uvm_sequence_item)) {
       uvm_rand_send_pri_with!q{}(SEQ_OR_ITEM, -1);
     }
@@ -1626,7 +1916,7 @@ class uvm_sequence_base: uvm_sequence_item
   // This is the same as `uvm_rand_send except that the sequene item or sequence
   // is executed with the priority specified in the argument.
 
-  public void uvm_rand_send_pri(T)(ref T SEQ_OR_ITEM, int PRIORITY)
+  void uvm_rand_send_pri(T)(ref T SEQ_OR_ITEM, int PRIORITY)
     if(is(T: uvm_sequence_item)) {
       uvm_rand_send_pri_with!q{}(SEQ_OR_ITEM, PRIORITY);
     }
@@ -1639,7 +1929,7 @@ class uvm_sequence_base: uvm_sequence_item
   // applied to the item or sequence in a randomize with statement before
   // execution.
 
-  public void uvm_rand_send_with(string CONSTRAINTS, T, V...)
+  void uvm_rand_send_with(string CONSTRAINTS, T, V...)
     (ref T SEQ_OR_ITEM, V values) if(is(T: uvm_sequence_item)) {
     uvm_rand_send_pri_with!CONSTRAINTS(SEQ_OR_ITEM, -1, values);
   }
@@ -1652,31 +1942,31 @@ class uvm_sequence_base: uvm_sequence_item
   // is applied to the item or sequence in a randomize with statement before
   // execution.
 
-  public void uvm_rand_send_pri_with(string CONSTRAINTS, T, V...)
+  void uvm_rand_send_pri_with(string CONSTRAINTS, T, V...)
     (ref T SEQ_OR_ITEM, int PRIORITY, V values) if(is(T: uvm_sequence_item)) {
-    uvm_sequence_base _seq = cast(uvm_sequence_base) SEQ_OR_ITEM;
-    if (_seq is null) start_item(SEQ_OR_ITEM, PRIORITY);
-    else _seq.set_item_context(this,SEQ_OR_ITEM.get_sequencer());
-    if ((_seq is null || !_seq.do_not_randomize) &&
+    uvm_sequence_base seq_ = cast(uvm_sequence_base) SEQ_OR_ITEM;
+    if (seq_ is null) start_item(SEQ_OR_ITEM, PRIORITY);
+    else seq_.set_item_context(this,SEQ_OR_ITEM.get_sequencer());
+    if ((seq_ is null || !seq_.do_not_randomize) &&
 	!SEQ_OR_ITEM.randomizeWith!(CONSTRAINTS)(values)) {
       uvm_warning("RNDFLD",
 		  "Randomization failed in uvm_rand_send_with action");
     }
-    _seq = cast(uvm_sequence_base) SEQ_OR_ITEM;
-    if(_seq is null) finish_item(SEQ_OR_ITEM, PRIORITY);
-    else __seq.start(__seq.get_sequencer(), this, PRIORITY, 0);
+    seq_ = cast(uvm_sequence_base) SEQ_OR_ITEM;
+    if(seq_ is null) finish_item(SEQ_OR_ITEM, PRIORITY);
+    else _seq_.start(_seq_.get_sequencer(), this, PRIORITY, 0);
   }
 
 
-  public void uvm_create_seq(T, U)(ref T UVM_SEQ, U SEQR_CONS_IF) {
+  void uvm_create_seq(T, U)(ref T UVM_SEQ, U SEQR_CONS_IF) {
     uvm_create_on(UVM_SEQ, SEQR_CONS_IF.consumer_seqr);
   }
 
-  public void uvm_do_seq(T, U)(ref T UVM_SEQ, U SEQR_CONS_IF) {
+  void uvm_do_seq(T, U)(ref T UVM_SEQ, U SEQR_CONS_IF) {
     uvm_do_on(UVM_SEQ, SEQR_CONS_IF.consumer_seqr);
   }
 
-  public void uvm_do_seq_with(string CONSTRAINTS, T, U, V...)
+  void uvm_do_seq_with(string CONSTRAINTS, T, U, V...)
     (ref T UVM_SEQ, U SEQR_CONS_IF, V values) {
     uvm_do_on_with!CONSTRAINTS(UVM_SEQ, SEQR_CONS_IF.consumer_seqr, values);
   }
@@ -1714,7 +2004,7 @@ class uvm_sequence_base: uvm_sequence_item
 
   mixin template uvm_declare_p_sequencer(SEQUENCER) {
     SEQUENCER p_sequencer;
-    override public void m_set_p_sequencer() {
+    override void m_set_p_sequencer() {
       super.m_set_p_sequencer();
       p_sequencer = cast(SEQUENCER) m_sequencer;
       if(p_sequencer is null) {

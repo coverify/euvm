@@ -42,7 +42,7 @@ import uvm.base.uvm_object;
 
 class uvm_built_in_comp(T=int)
 {
-  public static bool comp(T a, T b) {
+  static bool comp(T a, T b) {
     return a == b;
   }
 }
@@ -59,7 +59,7 @@ class uvm_built_in_comp(T=int)
 
 class uvm_built_in_converter(T=int)
 {
-  public static string convert2string(T t) {
+  static string convert2string(T t) {
     string s = t.to!string();
     // `ifndef UVM_USE_P_FORMAT
     //     $swrite(s, t);
@@ -82,7 +82,7 @@ class uvm_built_in_converter(T=int)
 
 class uvm_built_in_clone(T=int)
 {
-  public static T clone(T from) {
+  static T clone(T from) {
     return from;
   }
 }
@@ -100,7 +100,7 @@ class uvm_built_in_clone(T=int)
 
 class uvm_class_comp(T=uvm_object) // (T=int)
 {
-  public static bool comp(T a, T b) {
+  static bool comp(T a, T b) {
     return a.compare(b);
   }
 }
@@ -118,7 +118,7 @@ class uvm_class_comp(T=uvm_object) // (T=int)
 
 class uvm_class_converter(T=uvm_object) // (T=int)
 {
-  public static string convert2string(T t) {
+  static string convert2string(T t) {
     return t.convert2string();
   }
 }
@@ -138,7 +138,7 @@ class uvm_class_converter(T=uvm_object) // (T=int)
 
 class uvm_class_clone(T=uvm_object) // (T=int)
 {
-  public static uvm_object clone(T from) {
+  static uvm_object clone(T from) {
     return from.clone();
   }
 }

@@ -56,7 +56,7 @@ abstract class uvm_subscriber(T=int): uvm_component
   // constructor arguments for <uvm_component>: ~name~ is the name of the
   // instance, and ~parent~ is the handle to the hierarchical parent, if any.
 
-  public this(string name, uvm_component parent) {
+  this(string name, uvm_component parent) {
     synchronized(this) {
       super(name, parent);
       analysis_export = new uvm_analysis_imp!(T, this_type)("analysis_imp", this);

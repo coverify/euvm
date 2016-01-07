@@ -1,8 +1,9 @@
 //----------------------------------------------------------------------
 //   Copyright 2007-2011 Mentor Graphics Corporation
 //   Copyright 2007-2011 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2014 Coverify Systems Technology
+//   Copyright 2010      Synopsys, Inc.
+//   Copyright 2014      NVIDIA Corporation
+//   Copyright 2014-2016 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -36,6 +37,7 @@ import uvm.base.uvm_object_defines;
 import uvm.tlm1.uvm_sqr_connections;
 
 import uvm.meta.misc;
+import uvm.meta.meta;
 
 //------------------------------------------------------------------------------
 //
@@ -48,7 +50,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
 {
   mixin uvm_sync;
 
-  alias uvm_sequencer!(REQ , RSP) this_type;
+  alias this_type = uvm_sequencer!(REQ , RSP);
 
   @uvm_private_sync
     private bool _sequence_item_requested;
@@ -57,46 +59,20 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
 
   mixin uvm_component_utils;
 
-  // Variable: seq_item_export
-  //
-  // This export provides access to this sequencer's implementation of the
-  // sequencer interface, <uvm_sqr_if_base #(REQ,RSP)>, which defines the following
-  // methods:
-  //
-  //| Requests:
-  //|  virtual task          get_next_item      (output REQ request);
-  //|  virtual task          try_next_item      (output REQ request);
-  //|  virtual task          get                (output REQ request);
-  //|  virtual task          peek               (output REQ request);
-  //| Responses:
-  //|  virtual function void item_done          (input RSP response=null);
-  //|  virtual task          put                (input RSP response);
-  //| Sync Control:
-  //|  virtual task          wait_for_sequences ();
-  //|  virtual function bit  has_do_available   ();
-  //
-  // See <uvm_sqr_if_base #(REQ,RSP)> for information about this interface.
-
-
-  @uvm_immutable_sync
-    private uvm_seq_item_pull_imp!(REQ, RSP, this_type) _seq_item_export;
-
-
 
   // Function: new
   //
   // Standard component constructor that creates an instance of this class
   // using the given ~name~ and ~parent~, if any.
   //
-  public this(string name, uvm_component parent = null) {
+  this(string name, uvm_component parent = null) {
     synchronized(this) {
       super(name, parent);
       _seq_item_export =
 	new uvm_seq_item_pull_imp!(REQ, RSP, this_type)("seq_item_export", this);
     }
   }
-
-
+  
 
   // Function: stop_sequences
   //
@@ -106,7 +82,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   // idle state.
   //
 
-  override public void stop_sequences() {
+  override void stop_sequences() {
     synchronized(this) {
       REQ t;
       super.stop_sequences();
@@ -121,24 +97,42 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
     }
   }
 
-
-  override public string get_type_name() {
-    return "uvm_sequencer";
+  override string get_type_name() {
+    return qualifiedTypeName!(typeof(this));
   }
 
+  // Group: Sequencer Interface
+  // This is an interface for communicating with sequencers.
+  //
+  // The interface is defined as:
+  //| Requests:
+  //|  virtual task          get_next_item      (output REQ request);
+  //|  virtual task          try_next_item      (output REQ request);
+  //|  virtual task          get                (output REQ request);
+  //|  virtual task          peek               (output REQ request);
+  //| Responses:
+  //|  virtual function void item_done          (input RSP response=null);
+  //|  virtual task          put                (input RSP response);
+  //| Sync Control:
+  //|  virtual task          wait_for_sequences ();
+  //|  virtual function bit  has_do_available   ();
+  //
+  // See <uvm_sqr_if_base #(REQ,RSP)> for information about this interface.
+   
+  // Variable: seq_item_export
+  //
+  // This export provides access to this sequencer's implementation of the
+  // sequencer interface.
+  //
 
-  //-----------------
-  // Internal Methods
-  //-----------------
-  // Do not use directly; not part of standard
+  @uvm_immutable_sync
+    private uvm_seq_item_pull_imp!(REQ, RSP, this_type) _seq_item_export;
 
-  // Access to following internal methods provided via seq_item_export
-
-  // get_next_item
-  // -------------
-
+  // Task: get_next_item
+  // Retrieves the next available item from a sequence.
+  //
   // task
-  public void get_next_item(out REQ t) {
+  void get_next_item(out REQ t) {
     // declared in SV -- but does not seem to be used
     // REQ req_item;
 
@@ -151,7 +145,9 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
 		       " or get in between", UVM_NONE);
     }
 
-    if (! sequence_item_requested) m_select_sequence();
+    if (! sequence_item_requested) {
+      m_select_sequence();
+    }
 
     // Set flag indicating that the item has been requested to ensure that item_done or get
     // is called between requests
@@ -163,10 +159,11 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   }
 
 
-  // try_next_item
-  // -------------
+  // Task: try_next_item
+  // Retrieves the next available item from a sequence if one is available.
+  //
 
-  public void try_next_item(out REQ t) {
+  void try_next_item(out REQ t) {
 
     // declared in SV version, but nowhere used
     // time arb_time;
@@ -192,6 +189,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
 	return;
       }
 
+      // _arb_sequence_q is in the base class -- keep it under guard
       // now, allow chosen sequence to resume
       m_set_arbitration_completed(_arb_sequence_q[selected_sequence].request_id);
       seq = _arb_sequence_q[selected_sequence].sequence_ptr;
@@ -216,10 +214,12 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
 
   }
 
-  // item_done
-  // ---------
 
-  public void item_done(RSP item = null) {
+  // Function: item_done
+  // Indicates that the request is completed.
+  //
+
+  void item_done(RSP item = null) {
     synchronized(this) {
 
       // Set flag to allow next get_next_item or peek to get a new sequence_item
@@ -247,19 +247,22 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
     }
   }
 
-  // put
-  // ---
+
+  // Task: put
+  // Sends a response back to the sequence that issued the request.
+  //
 
   // task
-  public void put (RSP t) {
+  void put (RSP t) {
     put_response(t);
   }
 
-  // get
-  // ---
+  // Task: get
+  // Retrieves the next available item from a sequence.
+  //
 
   // task
-  final public void get(out REQ t) {
+  final void get(out REQ t) {
     if (sequence_item_requested is false) {
       m_select_sequence();
     }
@@ -268,16 +271,20 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
     item_done();
   }
 
-  final public REQ get() {
+  // task
+  final REQ get() {
     REQ t;
     this.get(t);
     return t;
   }
 
-  // peek
-  // ----
 
-  final public void peek(out REQ t) {
+  // Task: peek
+  // Returns the current request item if one is in the FIFO.
+  //
+
+  // task
+  final void peek(out REQ t) {
     if (sequence_item_requested is false) {
       m_select_sequence();
     }
@@ -287,20 +294,38 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
     m_req_fifo.peek(t);
   }
 
-  final public REQ peek() {
+  // task
+  final REQ peek() {
     REQ t;
     this.peek(t);
     return t;
   }
 
+  /// Documented here for clarity, implemented in uvm_sequencer_base
+
+  // Task: wait_for_sequences
+  // Waits for a sequence to have a new item available.
+  //
+
+  // Function: has_do_available
+  // Returns 1 if any sequence running on this sequencer is ready to supply
+  // a transaction, 0 otherwise.
+  //
+   
+  //-----------------
+  // Internal Methods
+  //-----------------
+  // Do not use directly, not part of standard
+
+
   // item_done_trigger
   // -----------------
 
-  final public void item_done_trigger(RSP item = null) {
+  final void item_done_trigger(RSP item = null) {
     item_done(item);
   }
 
-  final public RSP item_done_get_trigger_data() {
+  final RSP item_done_get_trigger_data() {
     return last_rsp(0);
   }
 

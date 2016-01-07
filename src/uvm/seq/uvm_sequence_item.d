@@ -1,8 +1,8 @@
 //----------------------------------------------------------------------
 //   Copyright 2007-2011 Mentor Graphics Corporation
 //   Copyright 2007-2010 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2014 Coverify Systems Technology
+//   Copyright 2010      Synopsys, Inc.
+//   Copyright 2014-2016 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -36,6 +36,7 @@
 //------------------------------------------------------------------------------
 
 module uvm.seq.uvm_sequence_item;
+import uvm.base.uvm_coreservice;
 import uvm.base.uvm_factory;
 import uvm.base.uvm_printer;
 import uvm.base.uvm_object_globals;
@@ -43,6 +44,7 @@ import uvm.base.uvm_transaction;
 import uvm.base.uvm_registry;
 import uvm.base.uvm_report_object;
 import uvm.base.uvm_report_handler;
+import uvm.base.uvm_report_message;
 import uvm.base.uvm_root;
 
 import uvm.seq.uvm_sequence_base;
@@ -51,22 +53,28 @@ import esdl.data.queue;
 import esdl.data.rand;
 
 import uvm.meta.misc;
+import uvm.meta.meta;
 
 class uvm_sequence_item: uvm_transaction
 {
   mixin uvm_sync;
   mixin Randomization;
 
-  private    int                _m_sequence_id = -1;
-  @uvm_protected_sync private bool _m_use_sequence_info;
-  @uvm_protected_sync private int  _m_depth = -1;
-  @rand!false @uvm_protected_sync protected uvm_sequencer_base _m_sequencer;
-  @rand!false @uvm_protected_sync protected uvm_sequence_base  _m_parent_sequence;
+  private int  _m_sequence_id = -1;
+  @uvm_protected_sync
+  private bool _m_use_sequence_info;
+  @uvm_protected_sync
+  private int  _m_depth = -1;
+  @rand!false @uvm_protected_sync
+  protected uvm_sequencer_base _m_sequencer;
+  @rand!false @uvm_protected_sync
+  protected uvm_sequence_base  _m_parent_sequence;
 
   // issued1 and issued2 seem redundant -- declared in SV version though
   // static     bool               issued1,issued2;
 
-  @uvm_public_sync private bool _print_sequence_info;
+  @uvm_public_sync
+  private bool _print_sequence_info;
 
 
   // Function: new
@@ -77,26 +85,27 @@ class uvm_sequence_item: uvm_transaction
     super(name);
   }
 
-  override public string get_type_name() {
-    return "uvm_sequence_item";
+  override string get_type_name() {
+    return qualifiedTypeName!(typeof(this));
   }
 
   // Macro for factory creation
   // `uvm_object_registry(uvm_sequence_item, "uvm_sequence_item")
 
-  alias uvm_object_registry!(uvm_sequence_item, "uvm_sequence_item") type_id;
-  public static type_id get_type() {
+  alias type_id = uvm_object_registry!(uvm_sequence_item, "uvm_sequence_item");
+
+  static type_id get_type() {
     return type_id.get();
   }
   // overridable
-  override public uvm_object_wrapper get_object_type() {
+  override uvm_object_wrapper get_object_type() {
     return type_id.get();
   }
 
 
   // Function- set_sequence_id
 
-  public void set_sequence_id(int id) {
+  void set_sequence_id(int id) {
     synchronized(this) {
       _m_sequence_id = id;
     }
@@ -118,7 +127,7 @@ class uvm_sequence_item: uvm_transaction
   // request, and to uniquely identify transactions.
   //
   // The sequence_id is assigned automatically by a sequencer when a sequence
-  // initiates communication through any sequencer calls (i.e. `uvm_do_xxx,
+  // initiates communication through any sequencer calls (i.e. `uvm_do_*,
   // wait_for_grant).  A sequence_id will remain unique for this sequence
   // until it ends or it is killed.  However, a single sequence may have
   // multiple valid sequence ids at any point in time.  Should a sequence
@@ -133,7 +142,7 @@ class uvm_sequence_item: uvm_transaction
   // sequence may use the transaction_id to correlate responses with their
   // requests.
 
-  public int get_sequence_id() {
+  int get_sequence_id() {
     synchronized(this) {
       return _m_sequence_id;
     }
@@ -144,14 +153,18 @@ class uvm_sequence_item: uvm_transaction
   //
   // Set the sequence and sequencer execution context for a sequence item
 
-  public void set_item_context(uvm_sequence_base parent_seq,
+  void set_item_context(uvm_sequence_base parent_seq,
 			       uvm_sequencer_base sequencer = null) {
     synchronized(this) {
       set_use_sequence_info(true);
-      if (parent_seq !is null) set_parent_sequence(parent_seq);
-      if (sequencer is null && _m_parent_sequence !is null) sequencer = _m_parent_sequence.get_sequencer();
+      if(parent_seq !is null) set_parent_sequence(parent_seq);
+      if(sequencer is null && _m_parent_sequence !is null) {
+	sequencer = _m_parent_sequence.get_sequencer();
+      }
       set_sequencer(sequencer);
-      if (_m_parent_sequence !is null) set_depth(_m_parent_sequence.get_depth() + 1);
+      if(_m_parent_sequence !is null) {
+	set_depth(_m_parent_sequence.get_depth() + 1);
+      }
       reseed();
     }
   }
@@ -160,7 +173,7 @@ class uvm_sequence_item: uvm_transaction
   // Function: set_use_sequence_info
   //
 
-  public void set_use_sequence_info(bool value) {
+  void set_use_sequence_info(bool value) {
     synchronized(this) {
       _m_use_sequence_info = value;
     }
@@ -176,7 +189,7 @@ class uvm_sequence_item: uvm_transaction
   // sequence information is not used. When use_sequence_info is set to 1,
   // the sequence information will be used in printing and copying.
 
-  public bool get_use_sequence_info() {
+  bool get_use_sequence_info() {
     synchronized(this) {
       return _m_use_sequence_info;
     }
@@ -190,10 +203,11 @@ class uvm_sequence_item: uvm_transaction
   // the calling item.  This routine should always be used by drivers to
   // initialize responses for future compatibility.
 
-  public void set_id_info(uvm_sequence_item item) {
+  void set_id_info(uvm_sequence_item item) {
     synchronized(this) {
       if (item is null) {
-	uvm_report_fatal(get_full_name(), "set_id_info called with null parameter", UVM_NONE);
+	uvm_report_fatal(get_full_name(),
+			 "set_id_info called with null parameter", UVM_NONE);
       }
       this.set_transaction_id(item.get_transaction_id());
       this.set_sequence_id(item.get_sequence_id());
@@ -207,7 +221,7 @@ class uvm_sequence_item: uvm_transaction
   // effect immediately, so it should not be called while the sequence is
   // actively communicating with the sequencer.
 
-  public void set_sequencer(uvm_sequencer_base sequencer) {
+  void set_sequencer(uvm_sequencer_base sequencer) {
     synchronized(this) {
       _m_sequencer = sequencer;
       m_set_p_sequencer();
@@ -219,7 +233,7 @@ class uvm_sequence_item: uvm_transaction
   //
   // Returns a reference to the default sequencer used by this sequence.
 
-  public uvm_sequencer_base get_sequencer() {
+  uvm_sequencer_base get_sequencer() {
     synchronized(this) {
       return _m_sequencer;
     }
@@ -231,7 +245,7 @@ class uvm_sequence_item: uvm_transaction
   // Sets the parent sequence of this sequence_item.  This is used to identify
   // the source sequence of a sequence_item.
 
-  public void set_parent_sequence(uvm_sequence_base parent) {
+  void set_parent_sequence(uvm_sequence_base parent) {
     synchronized(this) {
       _m_parent_sequence = parent;
     }
@@ -241,9 +255,9 @@ class uvm_sequence_item: uvm_transaction
   // Function: get_parent_sequence
   //
   // Returns a reference to the parent sequence of any sequence on which this
-  // method was called. If this is a parent sequence, the method returns null.
+  // method was called. If this is a parent sequence, the method returns ~null~.
 
-  public uvm_sequence_base get_parent_sequence() {
+  uvm_sequence_base get_parent_sequence() {
     synchronized(this) {
       return _m_parent_sequence;
     }
@@ -257,7 +271,7 @@ class uvm_sequence_item: uvm_transaction
   // method will override the automatically calculated depth, even if it is
   // incorrect.
 
-  public void set_depth(int value) {
+  void set_depth(int value) {
     synchronized(this) {
       _m_depth = value;
     }
@@ -266,14 +280,14 @@ class uvm_sequence_item: uvm_transaction
 
   // Function: get_depth
   //
-  // Returns the depth of a sequence from it's parent.  A  parent sequence will
-  // have a depth of 1, it's child will have a depth  of 2, and it's grandchild
+  // Returns the depth of a sequence from its parent.  A  parent sequence will
+  // have a depth of 1, its child will have a depth  of 2, and its grandchild
   // will have a depth of 3.
 
-  public int get_depth() {
+  int get_depth() {
     synchronized(this) {
       // If depth has been set or calculated, then use that
-      if (_m_depth !is -1) {
+      if (_m_depth != -1) {
 	return (_m_depth);
       }
       // Calculate the depth, store it, and return the value
@@ -293,7 +307,7 @@ class uvm_sequence_item: uvm_transaction
   // This function may be called on any sequence_item or sequence. It will
   // return 1 for items and 0 for sequences (which derive from this class).
 
-  public bool is_item() {
+  bool is_item() {
     return true;
   }
 
@@ -302,22 +316,22 @@ class uvm_sequence_item: uvm_transaction
   //
   // Internal method; overrides must follow same naming convention
 
-  override public string get_full_name() {
+  override string get_full_name() {
     synchronized(this) {
-      string retval;
+      string get_full_name_;
       if(_m_parent_sequence !is null) {
-	retval = _m_parent_sequence.get_full_name() ~ ".";
+	get_full_name_ = _m_parent_sequence.get_full_name() ~ ".";
       }
       else if(_m_sequencer !is null) {
-	retval = _m_sequencer.get_full_name() ~ ".";
+	get_full_name_ = _m_sequencer.get_full_name() ~ ".";
       }
       if(get_name() != "") {
-	retval ~= get_name();
+	get_full_name_ ~= get_name();
       }
       else {
-	retval ~= "_item";
+	get_full_name_ ~= "_item";
       }
-      return retval;
+      return get_full_name_;
     }
   }
 
@@ -326,7 +340,7 @@ class uvm_sequence_item: uvm_transaction
   //
   // Provides the name of the root sequence (the top-most parent sequence).
 
-  public string get_root_sequence_name() {
+  string get_root_sequence_name() {
     uvm_sequence_base root_seq = get_root_sequence();
     if (root_seq is null) {
       return "";
@@ -340,7 +354,7 @@ class uvm_sequence_item: uvm_transaction
   //
   // Internal method
 
-  public void m_set_p_sequencer() {
+  void m_set_p_sequencer() {
     return;
   }
 
@@ -349,7 +363,7 @@ class uvm_sequence_item: uvm_transaction
   //
   // Provides a reference to the root sequence (the top-most parent sequence).
 
-  public uvm_sequence_base get_root_sequence() {
+  uvm_sequence_base get_root_sequence() {
     uvm_sequence_base root_seq;
     uvm_sequence_item root_seq_base = this;
     while(true) {
@@ -369,7 +383,7 @@ class uvm_sequence_item: uvm_transaction
   // Provides a string of names of each sequence in the full hierarchical
   // path. A "." is used as the separator between each sequence.
 
-  public string get_sequence_path() {
+  string get_sequence_path() {
     uvm_sequence_item this_item = this;
     string seq_path = this.get_name();
     while(true) {
@@ -405,82 +419,140 @@ class uvm_sequence_item: uvm_transaction
   // information continuously, we save the info here. The m_get_client_info function
   // should only be called for a message that has passed the is_enabled check,
   // e.g. from the `uvm_info macro.
-  @uvm_protected_sync private string _m_client_str;
-  @uvm_protected_sync private uvm_report_object _m_client;
-  @uvm_protected_sync private uvm_report_handler _m_rh;
 
-  public string m_get_client_info(out uvm_report_object client) {
+  uvm_report_object uvm_get_report_object() {
     synchronized(this) {
-      if(_m_client_str != "") {
-	client = _m_client;
-	return _m_client_str;
-      }
-      if(_m_sequencer !is null) {
-	_m_client = _m_sequencer;
+      if(_m_sequencer is null) {
+	uvm_coreservice_t cs = uvm_coreservice_t.get();
+	return cs.get_root();
       }
       else {
-	_m_client = uvm_root.get();
+	return _m_sequencer;
       }
-      _m_rh = _m_client.get_report_handler();
-      client = _m_client;
-
-      _m_client_str = client.get_full_name();
-      if(_m_client_str == "") {
-	_m_client_str = "reporter@@" ~ get_sequence_path();
-      }
-      else {
-	_m_client_str ~= "@@" ~ get_sequence_path();
-      }
-      return _m_client_str;
     }
+  }
+
+  bool uvm_report_enabled(int verbosity, 
+			 uvm_severity severity=UVM_INFO, string id="") {
+    synchronized(this) {
+      uvm_report_object l_report_object = uvm_get_report_object();
+      if(l_report_object.get_report_verbosity_level(severity, id) <
+	 verbosity) {
+      return false;
+      }
+      return true;
+    }
+  }
+
+  void uvm_report(string file = __FILE__,
+		  size_t line = __LINE__)( uvm_severity severity,
+					   string id,
+					   string message,
+					   int verbosity = -1,
+					   string context_name = "",
+					   bool report_enabled_checked = false) {
+      if(verbosity == -1) {
+	verbosity = (severity == UVM_ERROR) ? UVM_LOW :
+	  (severity == UVM_FATAL) ? UVM_NONE : UVM_MEDIUM;
+      }
+      uvm_report(severity, id, message, verbosity, file,
+		 line, context_name, report_enabled_checked);
+  }
+
+  // Function: uvm_report
+  void uvm_report( uvm_severity severity,
+		   string id,
+		   string message,
+		   int verbosity,
+		   string filename,
+		   size_t line,
+		   string context_name = "",
+		   bool report_enabled_checked = false) {
+    if (report_enabled_checked == false) {
+      if (!uvm_report_enabled(verbosity, severity, id)) {
+	return;
+      }
+    }
+    uvm_report_message l_report_message =
+      uvm_report_message.new_report_message();
+    l_report_message.set_report_message(severity, id, message, 
+					verbosity, filename, line,
+					context_name);
+    uvm_process_report_message(l_report_message);
   }
 
   // Function: uvm_report_info
 
-  public void uvm_report_info(string id,
-			      string message,
-			      int verbosity = UVM_MEDIUM,
-			      string filename = "",
-			      int line = 0) {
-    synchronized(this) {
-      uvm_report_object client;
-      string str = m_get_client_info(client);
+  void uvm_report_info(string file = __FILE__,
+		       size_t line = __LINE__)( string id,
+						string message,
+						int verbosity = UVM_MEDIUM,
+						string context_name = "",
+						bool report_enabled_checked = false) {
 
-      _m_rh.report(UVM_INFO, str, id, message, verbosity, filename,
-		   line, client);
-    }
+    this.uvm_report_info(id, message, verbosity, file, line,
+			 context_name, report_enabled_checked);
+  }
+
+  void uvm_report_info( string id,
+			string message,
+			int verbosity,
+			string filename,
+			size_t line,
+			string context_name = "",
+			bool report_enabled_checked = false) {
+
+    this.uvm_report(UVM_INFO, id, message, verbosity, filename, line,
+                    context_name, report_enabled_checked);
   }
 
   // Function: uvm_report_warning
 
-  public void uvm_report_warning(string id,
-				 string message,
-				 int verbosity = UVM_MEDIUM,
-				 string filename = "",
-				 int line = 0) {
-    synchronized(this) {
-      uvm_report_object client;
-      string str = m_get_client_info(client);
+  void uvm_report_warning(string file = __FILE__,
+			  size_t line = __LINE__)( string id,
+						   string message,
+						   int verbosity = UVM_MEDIUM,
+						   string context_name = "",
+						   bool report_enabled_checked = false) {
 
-      _m_rh.report(UVM_WARNING, str, id, message, verbosity, filename,
-		   line, client);
-    }
+    this.uvm_report_warning(id, message, verbosity, file, line,
+			    context_name, report_enabled_checked);
+  }
+
+  void uvm_report_warning( string id,
+			   string message,
+			   int verbosity,
+			   string filename,
+			   size_t line,
+			   string context_name = "",
+			   bool report_enabled_checked = false) {
+
+    this.uvm_report(UVM_WARNING, id, message, verbosity, filename, line,
+                    context_name, report_enabled_checked);
   }
 
   // Function: uvm_report_error
 
-  public void uvm_report_error(string id,
-			       string message,
-			       int verbosity = UVM_LOW,
-			       string filename = "",
-			       int line = 0) {
-    synchronized(this) {
-      uvm_report_object client;
-      string str = m_get_client_info(client);
+  void uvm_report_error(string file = __FILE__,
+			size_t line = __LINE__)( string id,
+						 string message,
+						 int verbosity = UVM_LOW,
+						 string context_name = "",
+						 bool report_enabled_checked = false) {
 
-      _m_rh.report(UVM_ERROR, str, id, message, verbosity, filename,
-		   line, client);
-    }
+    this.uvm_report_error(id, message, verbosity, file, line,
+			  context_name, report_enabled_checked);
+  }
+
+  void uvm_report_error( string id,
+			 string message,
+			 int verbosity = UVM_LOW,
+			 string filename = "",
+			 size_t line = 0,
+			 string context_name = "",
+			 bool report_enabled_checked = false) {
+    this.uvm_report(UVM_ERROR, id, message, verbosity, filename, line,
+                    context_name, report_enabled_checked);
   }
 
   // Function: uvm_report_fatal
@@ -490,50 +562,48 @@ class uvm_sequence_item: uvm_transaction
   // if they have one, or to the global reporter. See <uvm_report_object::Reporting>
   // for details on the messaging functions.
 
-  public void uvm_report_fatal(string id,
-			       string message,
-			       int verbosity = UVM_NONE,
-			       string filename = "",
-			       int line = 0) {
-    synchronized(this) {
-      uvm_report_object client;
-      string str = m_get_client_info(client);
+  void uvm_report_fatal(string file = __FILE__,
+			size_t line = __LINE__)( string id,
+						 string message,
+						 int verbosity = UVM_NONE,
+						 string context_name = "",
+						 bool report_enabled_checked = false) {
 
-      _m_rh.report(UVM_FATAL, str, id, message, verbosity, filename,
-		   line, client);
-    }
+    this.uvm_report_fatal(id, message, verbosity, file, line,
+			  context_name, report_enabled_checked);
   }
 
-
-  public bool uvm_report_enabled(int verbosity,
-				 uvm_severity severity = UVM_INFO, string id = "") {
-    synchronized(this) {
-      if(_m_client is null) {
-	if(_m_sequencer !is null) _m_client = _m_sequencer;
-	else _m_client = uvm_root.get();
-      }
-      if (_m_client.get_report_verbosity_level(severity, id) < verbosity ||
-	  _m_client.get_report_action(severity,id) is UVM_NO_ACTION) {
-	return false;
-      }
-      else {
-	return true;
-      }
-    }
+  void uvm_report_fatal( string id,
+			 string message,
+			 int verbosity,
+			 string filename,
+			 size_t line,
+			 string context_name = "",
+			 bool report_enabled_checked = false) {
+    this.uvm_report(UVM_FATAL, id, message, verbosity, filename, line,
+                    context_name, report_enabled_checked);
   }
 
+  void uvm_process_report_message (uvm_report_message report_message) {
+    uvm_report_object l_report_object = uvm_get_report_object();
+    report_message.set_report_object(l_report_object);
+    if(report_message.get_context() == "") {
+      report_message.set_context(get_sequence_path());
+    }
+    l_report_object.m_rh.process_report_message(report_message);
+  }
 
   // Function- do_print
   //
   // Internal method
 
-  override public void do_print (uvm_printer printer) {
+  override void do_print (uvm_printer printer) {
     synchronized(this) {
       string temp_str0, temp_str1;
       int depth = get_depth();
       super.do_print(printer);
       if(_print_sequence_info || _m_use_sequence_info) {
-	printer.print_int("depth", depth, UVM_DEC, '.', "int");
+	printer.print("depth", depth, UVM_DEC, '.', "int");
 	if(_m_parent_sequence !is null) {
 	  temp_str0 = _m_parent_sequence.get_name();
 	  temp_str1 = _m_parent_sequence.get_full_name();

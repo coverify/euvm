@@ -256,9 +256,8 @@ void main() {
 
   test.forkSim();
 
-  auto root = test.tb.get_uvm_root();
+  auto root = test.tb.get_root();
   
-  root.wait_for_end_of_elaboration();
   auto env = root.lookup("env");
   for (size_t i=0; i!=200; ++i) {
     bus_req req;

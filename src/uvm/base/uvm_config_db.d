@@ -1,7 +1,8 @@
 //----------------------------------------------------------------------
-//   Copyright 2011 Cypress Semiconductor
+//   Copyright 2011      Cypress Semiconductor
 //   Copyright 2010-2011 Mentor Graphics Corporation
-//   Copyright 2014 Coverify Systems Technology
+//   Copyright 2014      NVIDIA Corporation
+//   Copyright 2014-2016 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -40,6 +41,7 @@
 module uvm.base.uvm_config_db;
 
 import uvm.base.uvm_component;
+import uvm.base.uvm_coreservice;
 import uvm.base.uvm_phase;
 import uvm.base.uvm_pool;
 import uvm.base.uvm_resource_db;
@@ -49,24 +51,30 @@ import uvm.base.uvm_root;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_factory;	// uvm_object_wrapper
 import uvm.meta.misc;
+import uvm.base.uvm_object;
+import uvm.base.uvm_object_globals;
 
 import esdl.base.core;
 
 final private class m_uvm_waiter
 {
   mixin uvm_sync;
-  @uvm_immutable_sync private string _inst_name;
+  @uvm_immutable_sync
+  private string _inst_name;
   // _field_name is present in the SV version but is not used
   // private string _field_name;
-  @uvm_immutable_sync private Event _trigger;
+  @uvm_immutable_sync
+  private Event _trigger;
   this(string inst_name) { // , string field_name
-    _trigger.init("_trigger");
-    this._inst_name = inst_name;
-    // this._field_name = field_name;
+    synchronized(this) {
+      _trigger.init("_trigger");
+      _inst_name = inst_name;
+      // _field_name = field_name;
+    }
   }
 
-  final public void wait_for_trigger() {
-    _trigger.wait();
+  final void wait_for_trigger() {
+    trigger.wait();
   }
 
 }
@@ -96,7 +104,7 @@ class uvm_once_config_db
 // The parameter value "int" identifies the configuration type as
 // an int property.
 //
-// The <set> and <get> methods provide the same api and
+// The <set> and <get> methods provide the same API and
 // semantics as the set/get_config_* functions in <uvm_component>.
 //----------------------------------------------------------------------
 
@@ -110,9 +118,9 @@ class uvm_config_db (T = int): uvm_resource_db!T
   // pointer/handle and therefor unique
   // Internal lookup of config settings so they can be reused
   // The context has a pool that is keyed by the inst/field name.
-  __gshared uvm_pool!(string, uvm_resource!T)[uvm_component] _m_rsc;
+  private __gshared uvm_pool!(string, uvm_resource!T)[uvm_component] _m_rsc;
 
-  alias uvm_config_db!T this_type;
+  alias this_type = uvm_config_db!T;
 
   // function: get
   //
@@ -122,22 +130,24 @@ class uvm_config_db (T = int): uvm_resource_db!T
   // instance that the configuration object applies to. ~field_name~
   // is the specific field in the scope that is being searched for.
   //
-  // The basic get_config_* methods from <uvm_component> are mapped to
+  // The basic ~get_config_*~ methods from <uvm_component> are mapped to
   // this function as:
   //
   //| get_config_int(...) => uvm_config_db!(uvm_bitstream_t).get(cntxt,...)
   //| get_config_string(...) => uvm_config_db!(string).get(cntxt,...)
   //| get_config_object(...) => uvm_config_db!(uvm_object).get(cntxt,...)
 
-  static public bool get(uvm_component cntxt,
-			 string inst_name,
-			 string field_name,
-			 ref T value) {
+  static bool get(uvm_component cntxt,
+		  string inst_name,
+		  string field_name,
+		  ref T value) {
     //TBD: add file/line
     uvm_resource_pool rp = uvm_resource_pool.get();
 
+    uvm_coreservice_t cs = uvm_coreservice_t.get();
+
     if(cntxt is null) {
-      cntxt = uvm_root.get();
+      cntxt = cs.get_root();
     }
     if(inst_name == "") {
       inst_name = cntxt.get_full_name();
@@ -170,7 +180,7 @@ class uvm_config_db (T = int): uvm_resource_db!T
   // Create a new or update an existing configuration setting for
   // ~field_name~ in ~inst_name~ from ~cntxt~.
   // The setting is made at ~cntxt~, with the full scope of the set
-  // being {~cntxt~,".",~inst_name~}. If ~cntxt~ is null then ~inst_name~
+  // being {~cntxt~,".",~inst_name~}. If ~cntxt~ is ~null~ then ~inst_name~
   // provides the complete scope information of the setting.
   // ~field_name~ is the target field. Both ~inst_name~ and ~field_name~
   // may be glob style or regular expression style expressions.
@@ -181,7 +191,7 @@ class uvm_config_db (T = int): uvm_resource_db!T
   // precedence. Settings from the same level of hierarchy have
   // a last setting wins semantic. A precedence setting of
   // <uvm_resource_base.default_precedence>  is used for uvm_top, and
-  // each hierarcical level below the top is decremented by 1.
+  // each hierarchical level below the top is decremented by 1.
   //
   // After build time, all settings use the default precedence and thus
   // have a last wins semantic. So, if at run time, a low level
@@ -189,28 +199,34 @@ class uvm_config_db (T = int): uvm_resource_db!T
   // will have precedence over a setting from the test level that was
   // made earlier in the simulation.
   //
-  // The basic set_config_* methods from <uvm_component> are mapped to
+  // The basic ~set_config_*~ methods from <uvm_component> are mapped to
   // this function as:
   //
   //| set_config_int(...) => uvm_config_db!(uvm_bitstream_t).set(cntxt,...)
   //| set_config_string(...) => uvm_config_db!(string).set(cntxt,...)
   //| set_config_object(...) => uvm_config_db!(uvm_object).set(cntxt,...)
 
-  static public void set(uvm_component cntxt,
-			 string inst_name,
-			 string field_name,
-			 T value) {
+  static void set(uvm_component cntxt,
+		  string inst_name,
+		  string field_name,
+		  T value) {
     import esdl.base.core: Process;
 
     uvm_resource!T r;
     bool exists = false;
     uvm_pool!(string, uvm_resource!T) pool;
+    Random rstate;
 
+    uvm_coreservice_t cs = uvm_coreservice_t.get();
     // take care of random stability during allocation
     Process p = Process.self();
-    auto rstate = p.getRandState();
-    uvm_root top = uvm_root.get();
+
+    if(p !is null) {
+      rstate = p.getRandState();
+    }
+    uvm_root top = cs.get_root();
     uvm_phase curr_phase = top.m_current_phase;
+
 
     if(cntxt is null) {
       cntxt = top;
@@ -223,10 +239,14 @@ class uvm_config_db (T = int): uvm_resource_db!T
     }
 
     synchronized(typeid(this_type)) {
-      if(cntxt !in _m_rsc) {
-	_m_rsc[cntxt] = new uvm_pool!(string, uvm_resource!T);
+      auto prsc = cntxt in _m_rsc;
+      if(prsc !is null) {
+	pool = *prsc;
       }
-      pool = _m_rsc[cntxt];
+      else {
+	pool = new uvm_pool!(string, uvm_resource!T);
+	_m_rsc[cntxt] = pool;
+      }
     }
 
     // Insert the token in the middle to prevent cache
@@ -268,12 +288,16 @@ class uvm_config_db (T = int): uvm_resource_db!T
 	m_uvm_waiter w;
 	for(int i = 0; i < _m_waiters[field_name].size(); ++i) {
 	  w = _m_waiters[field_name].get(i);
-	  if(uvm_re_match(uvm_glob_to_re(inst_name), w.inst_name) is 0)
-	    w._trigger.notify();
+	  if(uvm_re_match(uvm_glob_to_re(inst_name), w.inst_name) == 0) {
+	    w.trigger.notify();
+	  }
 	}
       }
     }
-    p.setRandState(rstate);
+
+    if(p !is null) {
+      p.setRandState(rstate);
+    }
 
     if(uvm_config_db_options.is_tracing()) {
       m_show_msg("CFGDB/SET", "Configuration","set", inst_name, field_name, cntxt, r);
@@ -293,10 +317,11 @@ class uvm_config_db (T = int): uvm_resource_db!T
   // returns 1 if a config parameter exists and 0 if it doesn't exist.
   //
 
-  static public bool exists(uvm_component cntxt, string inst_name,
-			    string field_name, bool spell_chk = false) {
+  static bool exists(uvm_component cntxt, string inst_name,
+		     string field_name, bool spell_chk = false) {
+    uvm_coreservice_t cs = uvm_coreservice_t.get();
     if(cntxt is null) {
-      cntxt = uvm_root.get();
+      cntxt = cs.get_root();
     }
     if(inst_name == "") {
       inst_name = cntxt.get_full_name();
@@ -304,7 +329,8 @@ class uvm_config_db (T = int): uvm_resource_db!T
     else if(cntxt.get_full_name() != "") {
       inst_name = cntxt.get_full_name() ~ "." ~ inst_name;
     }
-    return (uvm_resource_db!T.get_by_name(inst_name, field_name, spell_chk) !is null);
+    return (uvm_resource_db!T.get_by_name(inst_name, field_name, spell_chk)
+	    !is null);
   }
 
   // Function: wait_modified
@@ -314,15 +340,16 @@ class uvm_config_db (T = int): uvm_resource_db!T
   // setting is applied that effects the specified field.
 
   // task
-  static public void wait_modified(uvm_component cntxt, string inst_name,
-				   string field_name) {
+  static void wait_modified(uvm_component cntxt, string inst_name,
+			    string field_name) {
+    uvm_coreservice_t cs = uvm_coreservice_t.get();
     Process p = Process.self();
     auto rstate = p.getRandState();
 
     if(cntxt is null) {
-      cntxt = uvm_root.get();
+      cntxt = cs.get_root();
     }
-    if(cntxt !is uvm_root.get()) {
+    if(cntxt !is cs.get_root()) {
       if(inst_name != "") {
 	inst_name = cntxt.get_full_name() ~ "." ~ inst_name;
       }
@@ -358,9 +385,40 @@ class uvm_config_db (T = int): uvm_resource_db!T
 
 }
 
-// class uvm_object_wrapper {}
+// Section: Types
 
-alias uvm_config_db!uvm_object_wrapper uvm_config_wrapper;
+//----------------------------------------------------------------------
+// Topic: uvm_config_int
+//
+// Convenience type for uvm_config_db#(uvm_bitstream_t)
+//
+//| typedef uvm_config_db#(uvm_bitstream_t) uvm_config_int;
+alias uvm_config_int = uvm_config_db!uvm_bitstream_t;
+
+//----------------------------------------------------------------------
+// Topic: uvm_config_string
+//
+// Convenience type for uvm_config_db#(string)
+//
+//| typedef uvm_config_db#(string) uvm_config_string;
+alias uvm_config_string = uvm_config_db!string;
+
+//----------------------------------------------------------------------
+// Topic: uvm_config_object
+//
+// Convenience type for uvm_config_db#(uvm_object)
+//
+//| typedef uvm_config_db#(uvm_object) uvm_config_object;
+alias uvm_config_object = uvm_config_db!uvm_object;
+
+//----------------------------------------------------------------------
+// Topic: uvm_config_wrapper
+//
+// Convenience type for uvm_config_db#(uvm_object_wrapper)
+//
+//| typedef uvm_config_db#(uvm_object_wrapper) uvm_config_wrapper;
+
+alias uvm_config_wrapper = uvm_config_db!uvm_object_wrapper;
 
 
 //----------------------------------------------------------------------
@@ -392,7 +450,7 @@ package class uvm_config_db_options
   }
 
 
-  mixin uvm_once_sync;
+  mixin(uvm_once_sync_string);
 
   // Function: turn_on_tracing
   //
@@ -402,10 +460,12 @@ package class uvm_config_db_options
   //
   // This method is implicitly called by the ~+UVM_CONFIG_DB_TRACE~.
 
-  static public void turn_on_tracing() {
+  static void turn_on_tracing() {
     synchronized(once) {
-      if (!_ready) _init();
-      _tracing = true;
+      if (!once._ready) {
+	init_trace();
+      }
+      once._tracing = true;
     }
   }
 
@@ -413,10 +473,12 @@ package class uvm_config_db_options
   //
   // Turn tracing off for the configuration database.
 
-  static public void turn_off_tracing() {
+  static void turn_off_tracing() {
     synchronized(once) {
-      if (!_ready) _init();
-      _tracing = false;
+      if (!once._ready) {
+	init_trace();
+      }
+      once._tracing = false;
     }
   }
 
@@ -424,24 +486,26 @@ package class uvm_config_db_options
   //
   // Returns 1 if the tracing facility is on and 0 if it is off.
 
-  static public bool is_tracing() {
+  static bool is_tracing() {
     synchronized(once) {
-      if (!_ready) _init();
-      return _tracing;
+      if (!once._ready) {
+	init_trace();
+      }
+      return once._tracing;
     }
   }
 
 
-  static private void _init() {
+  static private void init_trace() {
     synchronized(once) {
       string[] trace_args;
 
       uvm_cmdline_processor clp = uvm_cmdline_processor.get_inst();
 
       if (clp.get_arg_matches(`\+UVM_CONFIG_DB_TRACE`, trace_args)) {
-	_tracing = true;
+	once._tracing = true;
       }
-      _ready = true;
+      once._ready = true;
     }
   }
 

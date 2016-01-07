@@ -2,8 +2,8 @@
 //-----------------------------------------------------------------------------
 //   Copyright 2007-2011 Mentor Graphics Corporation
 //   Copyright 2007-2011 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2014 Coverify Systems Technology
+//   Copyright 2010      Synopsys, Inc.
+//   Copyright 2014-2016 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -30,8 +30,11 @@ import uvm.base.uvm_recorder;
 import uvm.base.uvm_printer;
 import uvm.base.uvm_pool;
 import uvm.base.uvm_object_globals;
+import uvm.base.uvm_tr_stream;
+import uvm.base.uvm_tr_database;
 import uvm.meta.mcd;
 import uvm.meta.misc;
+import uvm.base.uvm_links;
 
 import esdl.base.core: SimTime, getRootEntity;
 import std.string: format;
@@ -45,7 +48,7 @@ import std.string: format;
 // CLASS: uvm_transaction
 //
 // The uvm_transaction class is the root base class for UVM transactions.
-// Inheriting all the methods of uvm_object, uvm_transaction adds a timing and
+// Inheriting all the methods of <uvm_object>, uvm_transaction adds a timing and
 // recording interface.
 //
 // This class provides timestamp properties, notification events, and transaction
@@ -55,24 +58,25 @@ import std.string: format;
 // is deprecated. Its subtype, <uvm_sequence_item>, shall be used as the
 // base class for all user-defined transaction types.
 //
-// The intended use of this API is via a <uvm_driver> to call <uvm_component::accept_tr>,
+// The intended use of this API is via a <uvm_driver #(REQ,RSP)> to call <uvm_component::accept_tr>,
 // <uvm_component::begin_tr>, and <uvm_component::end_tr> during the course of
 // sequence item execution. These methods in the component base class will
 // call into the corresponding methods in this class to set the corresponding
-// timestamps (accept_time, begin_time, and end_tr), trigger the
+// timestamps (~accept_time~, ~begin_time~, and ~end_time~), trigger the
 // corresponding event (<begin_event> and <end_event>, and, if enabled,
 // record the transaction contents to a vendor-specific transaction database.
 //
-// Note that start_item/finish_item (or `uvm_do* macro) executed from a
-// <uvm_sequence #(REQ,RSP)> will automatically trigger
-// the begin_event and end_events via calls to begin_tr and end_tr. While
-// convenient, it is generally the responsibility of drivers to mark a
-// transaction's progress during execution.  To allow the driver to control
-// sequence item timestamps, events, and recording, you must add
-// +define+UVM_DISABLE_AUTO_ITEM_RECORDING when compiling the UVM package.
-// Alternatively, users may use the transaction's event pool, <events>,
+// Note that get_next_item/item_done when called on a uvm_seq_item_pull_port
+// will automatically trigger the begin_event and end_events via calls to begin_tr and end_tr.
+// While convenient, it is generally the responsibility of drivers to mark a
+// transaction's progress during execution.  To allow the driver or layering sequence
+// to control sequence item timestamps, events, and recording, you must call
+// <uvm_sqr_if_base#(REQ,RSP)::disable_auto_item_recording> at the beginning
+// of the driver's ~run_phase~ task.
+//
+// Users may also use the transaction's event pool, <events>,
 // to define custom events for the driver to trigger and the sequences to wait on. Any
-// in-between events such as marking the begining of the address and data
+// in-between events such as marking the beginning of the address and data
 // phases of transaction execution could be implemented via the
 // <events> pool.
 //
@@ -161,14 +165,14 @@ abstract class uvm_transaction: uvm_object
   // Function: accept_tr
   //
   // Calling ~accept_tr~ indicates that the transaction item has been received by
-  // a consumer component. Typically a <uvm_driver> would call <uvm_component::accept_tr>,
-  // which calls this method-- upon return from a get_next_item(), get(), or peek()
-  // call on its sequencer port, <uvm_driver::seq_item_port>.
+  // a consumer component. Typically a <uvm_driver #(REQ,RSP)> would call <uvm_component::accept_tr>,
+  // which calls this method-- upon return from a ~get_next_item()~, ~get()~, or ~peek()~
+  // call on its sequencer port, <uvm_driver#(REQ,RSP)::seq_item_port>.
   //
   // With some
   // protocols, the received item may not be started immediately after it is
   // accepted. For example, a bus driver, having accepted a request transaction,
-  // may still have to wait for a bus grant before begining to execute
+  // may still have to wait for a bus grant before beginning to execute
   // the request.
   //
   // This function performs the following actions:
@@ -186,9 +190,9 @@ abstract class uvm_transaction: uvm_object
   // accept_tr
   // ---------
 
-  final public void accept_tr (SimTime accept_time = 0) {
+  final void accept_tr (SimTime accept_time = 0) {
     synchronized(this) {
-      uvm_event e;
+      uvm_event!uvm_object e;
 
       if(accept_time != 0) {
 	_accept_time = accept_time;
@@ -198,7 +202,7 @@ abstract class uvm_transaction: uvm_object
       }
 
       do_accept_tr();
-      e = events.get("accept");
+      e = _events.get("accept");
 
       if(e !is null) {
 	e.trigger();
@@ -217,7 +221,7 @@ abstract class uvm_transaction: uvm_object
   // do_accept_tr
   // -------------
 
-  public void do_accept_tr() {
+  void do_accept_tr() {
     return;
   }
 
@@ -227,7 +231,7 @@ abstract class uvm_transaction: uvm_object
   // the child of another transaction. Generally, a consumer component begins
   // execution of a transactions it receives.
   //
-  // Typically a <uvm_driver> would call <uvm_component::begin_tr>, which
+  // Typically a <uvm_driver #(REQ,RSP)> would call <uvm_component::begin_tr>, which
   // calls this method, before actual execution of a sequence item transaction.
   // Sequence items received by a driver are always a child of a parent sequence.
   // In this case, begin_tr obtains the parent handle and delegates to <begin_child_tr>.
@@ -257,8 +261,8 @@ abstract class uvm_transaction: uvm_object
   // begin_tr
   // -----------
 
-  final public int begin_tr (SimTime begin_time = 0) {
-    return m_begin_tr(begin_time, 0, false);
+  final int begin_tr(SimTime begin_time = 0) {
+    return m_begin_tr(begin_time);
   }
 
   // Function: begin_child_tr
@@ -279,7 +283,7 @@ abstract class uvm_transaction: uvm_object
   //   any time, past or future, but should not be less than the accept time.
   //
   // - If recording is enabled, then a new database-transaction is started with
-  //   the same begin time as above. The record method inherited from <uvm_object>
+  //   the same begin time as above. The inherited <uvm_object::record> method
   //   is then called, which records the current property values to this new
   //   transaction. Finally, the newly started transaction is linked to the
   //   parent transaction given by parent_handle.
@@ -297,9 +301,9 @@ abstract class uvm_transaction: uvm_object
   // --------------
 
   //Use a parent handle of zero to link to the parent after begin
-  final public int begin_child_tr (SimTime begin_time = 0,
-				   int parent_handle = 0) {
-    return m_begin_tr(begin_time, parent_handle, true);
+  final int begin_child_tr (SimTime begin_time = 0,
+			    int parent_handle = 0) {
+    return m_begin_tr(begin_time, parent_handle);
   }
 
   // Function: do_begin_tr
@@ -324,7 +328,7 @@ abstract class uvm_transaction: uvm_object
   // You must have previously called <begin_tr> or <begin_child_tr> for this
   // call to be successful.
   //
-  // Typically a <uvm_driver> would call <uvm_component::end_tr>, which
+  // Typically a <uvm_driver #(REQ,RSP)> would call <uvm_component::end_tr>, which
   // calls this method, upon completion of a sequence item transaction.
   // Sequence items received by a driver are always a child of a parent sequence.
   // In this case, begin_tr obtain the parent handle and delegate to <begin_child_tr>.
@@ -350,30 +354,24 @@ abstract class uvm_transaction: uvm_object
   // end_tr
   // ------
 
-  final public void end_tr (SimTime end_time = 0, bool free_handle = true) {
+  final void end_tr(SimTime end_time = 0, bool free_handle = true) {
     synchronized(this) {
-      if(end_time != 0) {
-	_end_time = end_time;
-      }
-      else {
-	_end_time = getRootEntity().getSimTime();
-      }
+      _end_time = (end_time == 0) ? getRootEntity.getSimTime : end_time;
 
       do_end_tr(); // Callback prior to actual ending of transaction
 
-      if(is_active()) {
-	_m_recorder.tr_handle = _tr_handle;
-	record(_m_recorder);
+      if(is_recording_enabled() && (_tr_recorder !is null)) {
+	record(_tr_recorder);
 
-	_m_recorder.end_tr(_tr_handle, _end_time);
+	_tr_recorder.close(_end_time);
 
-	if(free_handle &&
-	   _m_recorder.check_handle_kind("Transaction", _tr_handle) is true) {
+	if(free_handle) {
 	  // once freed, can no longer link to
-	  _m_recorder.free_tr(_tr_handle);
-	}
-	_tr_handle = 0;
-      }
+	  _tr_recorder.free();
+        }
+      } // if (is_active())
+
+      _tr_recorder = null;
 
       _end_event.trigger();
     }
@@ -388,7 +386,7 @@ abstract class uvm_transaction: uvm_object
   // do_end_tr
   // ----------
 
-  public void do_end_tr() {
+  void do_end_tr() {
     return;
   }
 
@@ -400,9 +398,14 @@ abstract class uvm_transaction: uvm_object
   // get_tr_handle
   // ---------
 
-  final public int get_tr_handle () {
+  int get_tr_handle () {
     synchronized(this) {
-      return _tr_handle;
+      if (_tr_recorder !is null) {
+	return _tr_recorder.get_handle();
+      }
+      else { 
+	return 0;
+      }
     }
   }
 
@@ -414,47 +417,28 @@ abstract class uvm_transaction: uvm_object
   // disable_recording
   // -----------------
 
-  final public void disable_recording () {
+  final void disable_recording () {
     synchronized(this) {
-      _record_enable = false;
+      _stream_handle = null;
     }
   }
 
 
 
   // Function: enable_recording
+  // Turns on recording to the ~stream~ specified.
   //
-  // Turns on recording to the stream specified by stream, whose interpretation
-  // is implementation specific. The optional ~recorder~ argument specifies
-  //
-  // If transaction recording is on, then a call to record is made when the
-  // transaction is started and when it is ended.
+  // If transaction recording is on, then a call to ~record~ is made when the
+  // transaction is ended.
+
+  // extern function void enable_recording (uvm_tr_stream stream);
 
   // enable_recording
   // ----------------
 
-  final public void enable_recording (string stream,
-				      uvm_recorder recorder = null) {
+  final void enable_recording (uvm_tr_stream stream) {
     synchronized(this) {
-      string rscope;
-      size_t lastdot;
-
-      for(lastdot = stream.length-1; lastdot > 0; --lastdot) {
-	if(stream[lastdot] is '.') break;
-      }
-
-      if(lastdot != 0) {
-	rscope = stream[0..lastdot];
-	stream = stream[lastdot+1..$];
-      }
-
-      if (recorder is null) {
-	recorder = uvm_default_recorder;
-      }
-      _m_recorder = recorder;
-
-      _stream_handle = _m_recorder.create_stream(stream, "TVM", rscope);
-      _record_enable = true;
+      _stream_handle = stream;
     }
   }
 
@@ -465,9 +449,9 @@ abstract class uvm_transaction: uvm_object
   // is_recording_enabled
   // --------------------
 
-  final public bool is_recording_enabled () {
+  final bool is_recording_enabled () {
     synchronized(this) {
-      return _record_enable;
+      return (_stream_handle !is null);
     }
   }
 
@@ -479,9 +463,9 @@ abstract class uvm_transaction: uvm_object
   // is_active
   // ---------
 
-  final public bool is_active() {
+  final bool is_active() {
     synchronized(this) {
-      return (_tr_handle !is 0);
+      return (_end_time == -1);
     }
   }
 
@@ -491,14 +475,16 @@ abstract class uvm_transaction: uvm_object
   //
   // By default, the event pool contains the events: begin, accept, and end.
   // Events can also be added by derivative objects. An event pool is a
-  // specialization of an <uvm_pool #(T)>, e.g. a ~uvm_pool#(uvm_event)~.
+  // specialization of <uvm_pool #(KEY,T)>, e.g. a ~uvm_pool#(uvm_event)~.
 
   // get_event_pool
   // --------------
 
-  final public uvm_event_pool get_event_pool() {
+  final uvm_event_pool get_event_pool() {
+    // _events is effectively immutable
+    // synchronization guard can be removed
     synchronized(this) {
-      return events;
+      return _events;
     }
   }
 
@@ -513,7 +499,7 @@ abstract class uvm_transaction: uvm_object
   // set_initiator
   // ------------
 
-  final public void set_initiator(uvm_component initiator) {
+  final void set_initiator(uvm_component initiator) {
     synchronized(this) {
       _initiator = initiator;
     }
@@ -527,7 +513,7 @@ abstract class uvm_transaction: uvm_object
   // get_initiator
   // ------------
 
-  final public uvm_component get_initiator() {
+  final uvm_component get_initiator() {
     synchronized(this) {
       return _initiator;
     }
@@ -538,7 +524,7 @@ abstract class uvm_transaction: uvm_object
   // get_accept_time
   // ---------------
 
-  final public SimTime get_accept_time () {
+  final SimTime get_accept_time () {
     synchronized(this) {
       return _accept_time;
     }
@@ -550,7 +536,7 @@ abstract class uvm_transaction: uvm_object
   // get_begin_time
   // --------------
 
-  final public SimTime get_begin_time () {
+  final SimTime get_begin_time () {
     synchronized(this) {
       return _begin_time;
     }
@@ -564,7 +550,7 @@ abstract class uvm_transaction: uvm_object
   // get_end_time
   // ------------
 
-  final public SimTime get_end_time () {
+  final SimTime get_end_time () {
     synchronized(this) {
       return _end_time;
     }
@@ -580,7 +566,7 @@ abstract class uvm_transaction: uvm_object
   // responses to requests.
 
   // set_transaction_id
-  final public void set_transaction_id(int id) {
+  final void set_transaction_id(int id) {
     synchronized(this) {
       _m_transaction_id = id;
     }
@@ -598,7 +584,7 @@ abstract class uvm_transaction: uvm_object
   // responses to requests.
 
   // get_transaction_id
-  final public int get_transaction_id() {
+  final int get_transaction_id() {
     synchronized(this) {
       return _m_transaction_id;
     }
@@ -609,7 +595,7 @@ abstract class uvm_transaction: uvm_object
   // Variable: events
   //
   // The event pool instance for this transaction. This pool is used to track
-  // various The <begin_event>
+  // various milestones: by default, begin, accept, and end
 
   @uvm_immutable_sync
   private uvm_event_pool _events;
@@ -617,26 +603,26 @@ abstract class uvm_transaction: uvm_object
 
   // Variable: begin_event
   //
-  // A <uvm_event> that is triggered when this transaction's actual execution on the
+  // A ~uvm_event#(uvm_object)~ that is triggered when this transaction's actual execution on the
   // bus begins, typically as a result of a driver calling <uvm_component::begin_tr>.
   // Processes that wait on this event will block until the transaction has
   // begun.
   //
   // For more information, see the general discussion for <uvm_transaction>.
-  // See <uvm_event> for details on the event API.
+  // See <uvm_event#(T)> for details on the event API.
   //
   @uvm_immutable_sync		// gets initialized in the constructor
-    private uvm_event _begin_event;
+  private uvm_event!uvm_object _begin_event;
 
   // Variable: end_event
   //
-  // A <uvm_event> that is triggered when this transaction's actual execution on
+  // A ~uvm_event#(uvm_object)~ that is triggered when this transaction's actual execution on
   // the bus ends, typically as a result of a driver calling <uvm_component::end_tr>.
   // Processes that wait on this event will block until the transaction has
   // ended.
   //
   // For more information, see the general discussion for <uvm_transaction>.
-  // See <uvm_event> for details on the event API.
+  // See <uvm_event#(T)> for details on the event API.
   //
   //| virtual task my_sequence::frame();
   //|  ...
@@ -648,7 +634,7 @@ abstract class uvm_transaction: uvm_object
   //|  ...
   //
   @uvm_immutable_sync		// gets initialized in the constructor
-    private uvm_event _end_event;
+  private uvm_event!uvm_object _end_event;
 
   //----------------------------------------------------------------------------
   //
@@ -661,7 +647,7 @@ abstract class uvm_transaction: uvm_object
   // do_print
   // --------
 
-  override public void do_print (uvm_printer printer) {
+  override void do_print (uvm_printer printer) {
     synchronized(this) {
       super.do_print(printer);
       if(_accept_time != -1) {
@@ -686,7 +672,7 @@ abstract class uvm_transaction: uvm_object
   // do_record
   // ---------
 
-  override public void do_record (uvm_recorder recorder) {
+  override void do_record (uvm_recorder recorder) {
     synchronized(this) {
       super.do_record(recorder);
       if(_accept_time != -1) {
@@ -706,10 +692,14 @@ abstract class uvm_transaction: uvm_object
   // do_copy
   // -------
 
-  override public void do_copy (uvm_object rhs) {
-    synchronized(this) {
+  override void do_copy (uvm_object rhs) {
+    // In SV version super.do_copy is invoked before checking for null
+    // But then what would a uvm_object do with a null object copy
+    if(rhs is null) {
+      return;
+    }
+    synchronized(this, rhs) {
       super.do_copy(rhs);
-      if(rhs is null) return;
       auto txn = cast(uvm_transaction) rhs;
       if(txn is null) return;
 
@@ -718,81 +708,92 @@ abstract class uvm_transaction: uvm_object
       _end_time = txn.end_time;
       _initiator = txn.initiator;
       _stream_handle = txn.stream_handle;
-      _tr_handle = txn.tr_handle;
-      _record_enable = txn.record_enable;
+      _tr_recorder = txn.tr_recorder;
     }
   }
 
   // m_begin_tr
   // -----------
 
-  public int m_begin_tr (SimTime begin_time = 0,
-			 int parent_handle = 0,
-			 bool has_parent = false) {
+  int m_begin_tr (SimTime begin_time = 0,
+		  int parent_handle = 0) {
     synchronized(this) {
-      if(begin_time != 0) {
-	_begin_time = begin_time;
-      }
-      else {
-	_begin_time = getRootEntity().getSimTime();
+      int m_begin_tr_;
+      SimTime tmp_time =
+	(begin_time == 0) ? getRootEntity.getSimTime : begin_time;
+      uvm_recorder parent_recorder;
+
+      if (parent_handle != 0) {
+	parent_recorder = uvm_recorder.get_recorder_from_handle(parent_handle);
       }
 
-      // May want to establish predecessor/successor relation
+      // If we haven't ended the previous record, end it.
+      if (_tr_recorder !is null) {
+	// Don't free the handle, someone else may be using it...
+	end_tr(tmp_time);
+      }
+
+      // May want to establish predecessor/successor relation 
       // (don't free handle until then)
-      if(_record_enable) {
-	if(_m_recorder.check_handle_kind("Transaction", _tr_handle) is true) {
-	  end_tr();
-	}
-
-	if(!has_parent) {
-	  _tr_handle = _m_recorder.begin_tr("Begin_No_Parent, Link",
-					    _stream_handle, get_type_name(),
-					    "", "", _begin_time);
+      if(is_recording_enabled()) {
+	uvm_tr_database db = _stream_handle.get_db();
+      
+	_end_time = -1;
+	_begin_time = tmp_time;
+      
+	if(parent_recorder is null) {
+	  _tr_recorder = _stream_handle.open_recorder(get_type_name(),
+						      _begin_time,
+						      "Begin_No_Parent, Link");
 	}
 	else {
-	  _tr_handle = _m_recorder.begin_tr("Begin_End, Link",
-					    _stream_handle, get_type_name(),
-					    "", "", _begin_time);
-	  if(parent_handle) {
-	    _m_recorder.link_tr(parent_handle, _tr_handle, "child");
+	  _tr_recorder = _stream_handle.open_recorder(get_type_name(),
+						      _begin_time,
+						      "Begin_End, Link");
+	  if (_tr_recorder !is null) {
+	    db.establish_link(uvm_parent_child_link.get_link(parent_recorder,
+							     _tr_recorder));
 	  }
 	}
-	_m_recorder.tr_handle = _tr_handle;
-	if(_m_recorder.check_handle_kind("Transaction", _tr_handle) is false) {
-	  vdisplay("tr handle %0d not valid!", _tr_handle);
+
+	if (_tr_recorder !is null) {
+	  m_begin_tr_ = _tr_recorder.get_handle();
+	}
+	else {
+	  m_begin_tr_ = 0;
 	}
       }
       else {
-	_tr_handle = 0;
+	_tr_recorder = null;
+	_end_time = -1;
+	_begin_time = tmp_time;
+
+	m_begin_tr_ = 0;
       }
-
+   
       do_begin_tr(); //execute callback before event trigger
-
+   
       _begin_event.trigger();
 
-      return _tr_handle;
+      return m_begin_tr_;
     }
   }
 
 
 
+  @uvm_private_sync
   private int _m_transaction_id = -1;
-
   @uvm_private_sync
-    private SimTime _begin_time = -1;
+  private SimTime _begin_time = -1;
   @uvm_private_sync
-    private SimTime _end_time = -1;
+  private SimTime _end_time = -1;
   @uvm_private_sync
-    private SimTime _accept_time = -1;
+  private SimTime _accept_time = -1;
   @uvm_private_sync
-    private uvm_component _initiator;
+  private uvm_component _initiator;
   @uvm_private_sync
-    private int _stream_handle = 0;
+  private uvm_tr_stream _stream_handle;
   @uvm_private_sync
-    private int _tr_handle = 0;
-  @uvm_private_sync
-    private bool _record_enable;
-  @uvm_private_sync
-    private uvm_recorder _m_recorder;
+  private uvm_recorder _tr_recorder;
 
 }

@@ -101,9 +101,9 @@ mixin template uvm_report_mixin()
   // the message text. The file and line are also sent to the uvm_report_info call.
   //
 
-  public void uvm_info(string file=__FILE__,
-		       size_t line=__LINE__)(string id, string message,
-					     int verbosity = UVM_MEDIUM) {
+  void uvm_info(string file=__FILE__,
+		size_t line=__LINE__)(string id, string message,
+				      int verbosity = UVM_MEDIUM) {
     if (uvm_report_enabled(verbosity, UVM_INFO, id))
       uvm_report_info(id, message, verbosity, file, line);
   }
@@ -119,8 +119,8 @@ mixin template uvm_report_mixin()
   // ~MSG~ is given as the message text. The file and line are also sent to the
   // uvm_report_warning call.
 
-  public void uvm_warning(string file=__FILE__,
-			  size_t line=__LINE__)(string id, string message) {
+  void uvm_warning(string file=__FILE__,
+		   size_t line=__LINE__)(string id, string message) {
     if (uvm_report_enabled(UVM_NONE, UVM_WARNING, id))
       uvm_report_warning(id, message, UVM_NONE, file, line);
   }
@@ -135,8 +135,8 @@ mixin template uvm_report_mixin()
   // ~MSG~ is given as the message text. The file and line are also sent to the
   // uvm_report_error call.
 
-  public void uvm_error(string file=__FILE__,
-			size_t line=__LINE__)(string id, string message) {
+  void uvm_error(string file=__FILE__,
+		 size_t line=__LINE__)(string id, string message) {
     if (uvm_report_enabled(UVM_NONE, UVM_ERROR, id))
       uvm_report_error(id, message, UVM_NONE, file, line);
   }
@@ -151,8 +151,8 @@ mixin template uvm_report_mixin()
   // ~MSG~ is given as the message text. The file and line are also sent to the
   // uvm_report_fatal call.
 
-  public void uvm_fatal(string file=__FILE__,
-			size_t line=__LINE__)(string id, string message) {
+  void uvm_fatal(string file=__FILE__,
+		 size_t line=__LINE__)(string id, string message) {
     if (uvm_report_enabled(UVM_NONE, UVM_FATAL, id))
       uvm_report_fatal(id, message, UVM_NONE, file, line);
   }
@@ -165,7 +165,7 @@ mixin template uvm_report_mixin()
   // context, or <uvm_report_object>, in which the message is printed be
   // explicitly supplied as a macro argument.
 
-  public void uvm_info_context(string file=__FILE__,
+  static void uvm_info_context(string file=__FILE__,
 			       size_t line=__LINE__)(string id, string message,
 						     int verbosity,
 						     uvm_report_object context) {
@@ -181,7 +181,7 @@ mixin template uvm_report_mixin()
   // context, or <uvm_report_object>, in which the message is printed be
   // explicitly supplied as a macro argument.
 
-  public void uvm_warning_context(string file=__FILE__,
+  static void uvm_warning_context(string file=__FILE__,
 				  size_t line=__LINE__)
     (string id, string message, uvm_report_object context) {
     if (context.uvm_report_enabled(UVM_NONE, UVM_WARNING, id))
@@ -196,7 +196,7 @@ mixin template uvm_report_mixin()
   // context, or <uvm_report_object> in which the message is printed be
   // explicitly supplied as a macro argument.
 
-  public void uvm_error_context(string file=__FILE__,
+  static void uvm_error_context(string file=__FILE__,
 				size_t line=__LINE__)
     (string id, string message, uvm_report_object context) {
     if (context.uvm_report_enabled(UVM_NONE, UVM_ERROR, id))
@@ -211,7 +211,7 @@ mixin template uvm_report_mixin()
   // context, or <uvm_report_object>, in which the message is printed be
   // explicitly supplied as a macro argument.
 
-  public void uvm_fatal_context(string file=__FILE__,
+  static void uvm_fatal_context(string file=__FILE__,
 				size_t line=__LINE__)
     (string id, string message, uvm_report_object context) {
     if (context.uvm_report_enabled(UVM_NONE, UVM_FATAL, id))

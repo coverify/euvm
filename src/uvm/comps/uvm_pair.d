@@ -62,7 +62,7 @@ class uvm_class_pair(T1=uvm_object, T2=T1): uvm_object
   // Creates an instance that holds a handle to two objects.
   // The optional name argument gives a name to the new pair object.
 
-  public this(string name="", T1 f=null, T2 s=null) {
+  this(string name="", T1 f=null, T2 s=null) {
     synchronized(this) {
       super(name);
 
@@ -74,17 +74,17 @@ class uvm_class_pair(T1=uvm_object, T2=T1): uvm_object
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return type_name;
   }
 
-  public string convert2string() {
+  string convert2string() {
     string s = format("pair : %s, %s",
 		      first.convert2string(), second.convert2string());
     return s;
   }
 
-  public bool do_compare(uvm_object rhs, uvm_comparer comparer) {
+  bool do_compare(uvm_object rhs, uvm_comparer comparer) {
     this_type rhs_ = cast(this_type) rhs;
     if(rhs is null) {
       uvm_error("WRONG_TYPE",
@@ -95,7 +95,7 @@ class uvm_class_pair(T1=uvm_object, T2=T1): uvm_object
     return first.compare(rhs_.first) && second.compare(rhs_.second);
   }
 
-  public void do_copy(uvm_object rhs) {
+  void do_copy(uvm_object rhs) {
     this_type rhs_ = cast(this_type) rhs;
     if(rhs is null) {
       uvm_fatal("WRONG_TYPE",
@@ -140,15 +140,15 @@ class uvm_built_in_pair (T1=int, T2=T1): uvm_object
   // Creates an instance that holds two built-in type values.
   // The optional name argument gives a name to the new pair object.
 
-  public this(string name="") {
+  this(string name="") {
     super(name);
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return type_name;
   }
 
-  public string convert2string() {
+  string convert2string() {
     string s = format("built-in pair: %s, %s", first, second);
     // `ifdef UVM_USE_P_FORMAT
     //   $sformat(s, "built-in pair : %p, %p", first, second);
@@ -158,7 +158,7 @@ class uvm_built_in_pair (T1=int, T2=T1): uvm_object
     return s;
   }
 
-  public bool do_compare(uvm_object rhs, uvm_comparer comparer) {
+  bool do_compare(uvm_object rhs, uvm_comparer comparer) {
     this_type rhs_ = cast(this_type) rhs;
     if(rhs is null) {
       uvm_error("WRONG_TYPE",
@@ -169,7 +169,7 @@ class uvm_built_in_pair (T1=int, T2=T1): uvm_object
     return first == rhs_.first && second == rhs_.second;
   }
 
-  public void do_copy (uvm_object rhs) {
+  void do_copy (uvm_object rhs) {
     this_type rhs_ = cast(this_type) rhs;
     if(rhs is null) {
       uvm_fatal("WRONG_TYPE",
