@@ -70,7 +70,12 @@ mixin template uvm_object_utils(T=void)
 
   // Add a defaultConstructor for Object.factory to work
   static if(! HasDefaultConstructor!U) {
-    this() {this("");}
+    static if(__traits(compiles, this(""))) {
+      this() {this("");}
+    }
+    else {
+      this() {}
+    }
   }
 }
 
