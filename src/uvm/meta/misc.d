@@ -423,9 +423,8 @@ return root.root_once._" ~ U.stringof ~ "_once;
     }
     else {
       enum string uvm_once_sync = uvm_once_sync!(T, U, ITER+1) ~
-	"static if(uvm_sync_access!(0, __traits(getAttributes, once."
-	~ mem ~ "))
-		   != \"none\") {
+	"static if(uvm_sync_access!(0, __traits(getAttributes, " ~
+	T.stringof ~ "." ~ mem ~ ")) != \"none\") {
 static private ref " ~ " auto " ~ " " ~ mem ~ "() {
 	 return once." ~ mem ~ ";
        }
