@@ -90,7 +90,7 @@ abstract class uvm_object: uvm_void
   // Can not use "mixin uvm_once_sync" template due to forward reference error
   // Using string Mixin function
   // mixin uvm_once_sync;
-  mixin(uvm_once_sync!(uvm_once, typeof(this)));
+  mixin(uvm_once_sync_string);
   mixin uvm_sync;
 
   mixin Randomization;

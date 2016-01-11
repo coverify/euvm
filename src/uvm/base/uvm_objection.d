@@ -139,7 +139,7 @@ class uvm_objection: uvm_report_object
   }
 
 
-  mixin(uvm_once_sync!(uvm_once, typeof(this)));
+  mixin(uvm_once_sync_string);
 
   @uvm_protected_sync
     private bool _m_trace_mode;
@@ -1311,7 +1311,7 @@ class uvm_test_done_objection: m_uvm_test_done_objection_base
     // }
   }
 
-  mixin(uvm_once_sync!(uvm_once, typeof(this)));
+  mixin(uvm_once_sync_string);
   mixin uvm_sync;
 
   // Seems redundant -- not used anywhere -- declared in SV version

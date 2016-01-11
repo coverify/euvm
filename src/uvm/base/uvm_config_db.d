@@ -100,7 +100,7 @@ class uvm_once_config_db
 // semantics as the set/get_config_* functions in <uvm_component>.
 //----------------------------------------------------------------------
 
-mixin(uvm_once_sync!(uvm_once_config_db, "uvm_config_db"));
+mixin(uvm_once_sync_string!(uvm_once_config_db, "uvm_config_db"));
 
 class uvm_config_db (T = int): uvm_resource_db!T
 {

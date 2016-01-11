@@ -72,7 +72,7 @@ final class uvm_once_domain_globals
   @uvm_public_sync uvm_phase _report_ph;
 }
 
-mixin(uvm_once_sync!(uvm_once_domain_globals, "uvm_domain_globals"));
+mixin(uvm_once_sync_string!(uvm_once_domain_globals, "uvm_domain_globals"));
 
 //------------------------------------------------------------------------------
 //

@@ -542,7 +542,7 @@ final class uvm_seed_map {
     }
   }
 
-  mixin(uvm_once_sync!(uvm_once, typeof(this)));
+  mixin(uvm_once_sync_string!(uvm_once, typeof(this)));
 
   private uint[string] _seed_table;
   private uint[string] _count;

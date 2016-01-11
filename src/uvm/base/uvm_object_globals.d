@@ -654,7 +654,8 @@ import uvm.base.uvm_recorder;
 import uvm.base.uvm_root;
 
 
-mixin(uvm_once_sync!(uvm_once_object_globals, "uvm_object_globals"));
+mixin(uvm_once_sync_string!(uvm_once_object_globals,
+			    "uvm_object_globals"));
 
 final class uvm_once_object_globals
 {
