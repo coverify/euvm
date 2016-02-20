@@ -58,6 +58,7 @@ import uvm.base.uvm_object;
 import uvm.base.uvm_object_defines;
 import uvm.base.uvm_printer;
 import uvm.base.uvm_version;
+import uvm.base.uvm_globals: uvm_report_enabled;
 import uvm.meta.misc;
 import uvm.base.uvm_root: uvm_top, uvm_root_entity_base;
 import std.string: format;

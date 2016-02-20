@@ -57,6 +57,8 @@ import esdl.data.bvec;
 import esdl.data.bstr;
 import esdl.base.core: SimTime, getRootEntity;
 import esdl.data.bvec;
+import std.conv: to;
+
 
 
 import std.traits: isNumeric, isFloatingPoint, isIntegral, isBoolean;
