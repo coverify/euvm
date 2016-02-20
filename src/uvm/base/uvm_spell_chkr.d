@@ -27,13 +27,19 @@
 
 module uvm.base.uvm_spell_chkr;
 
+import uvm.base.uvm_globals;	// uvm_info
+import std.string: format;
+import uvm.base.uvm_object_globals: UVM_NONE;
+
+
+
 // A stateless template class. Need no synchronization.
 class uvm_spell_chkr(T=int)
 {
   private enum uint max = uint.max;
 
   // typedef T tab_t[string];
-  alias T[string] tab_t;
+  alias tab_t = T[string];
 
   //--------------------------------------------------------------------
   // check
@@ -49,7 +55,7 @@ class uvm_spell_chkr(T=int)
   // match.
   //
   // First, we do the simple thing and see if the string already is in
-  // the string table by calling the exists() method.  If it does exist
+  // the string table by calling the ~exists()~ method.  If it does exist
   // then there is a match and we're done.  If the string doesn't exist
   // in the table then we invoke the spell checker algorithm to see if
   // our string is a misspelled variation on a string that does exist in
@@ -70,7 +76,13 @@ class uvm_spell_chkr(T=int)
   // If, on average, that proves to be an invalid assumption then we'll
   // have to find ways to optimize this algorithm.
   //--------------------------------------------------------------------
-  public static bool check (tab_t strtab, string s) {
+  //
+  // note: strtab should not be modified inside check()
+
+  // SV version declares strtab argument as a ref
+  // not required for dlang since assoc arrays are anyways passed by
+  // ref in dlang
+  static bool check ( /* const ref */ tab_t strtab, in string s) {
 
     // SV version uses a queue, but a dynamic array would be fine too
     // string min_key[$];
@@ -98,18 +110,27 @@ class uvm_spell_chkr(T=int)
       }
     }
 
-    import uvm.meta.mcd;
-    vdisplay("%s not located", s);
 
     // if (min is max) then the string table is empty
-    if(min is max) {
-      vdisplay("  no alternatives to suggest");
-      return 0;
+    if(min == max) {
+      uvm_root_info("UVM/CONFIGDB/SPELLCHK",
+	       format("%s not located, no alternatives to suggest", s),
+	       UVM_NONE);
     }
-
-    // dump all the alternatives with the minimum distance
-    foreach(r; min_key) {
-      vdisplay("  did you mean %s?", r);
+    else {
+      // dump all the alternatives with the minimum distance
+      string q;
+	    
+      foreach(key; min_key) {
+	q ~= key;
+	q ~= "|";
+      }
+      if(q.length) {
+	q = q[0..$-1];
+      }
+	   		
+      uvm_root_info("UVM/CONFIGDB/SPELLCHK",
+	       format("%s not located, did you mean %s", s, q), UVM_NONE);
     }
     return 0;
   }

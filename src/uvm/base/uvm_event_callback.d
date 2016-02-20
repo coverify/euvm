@@ -2,8 +2,8 @@
 //------------------------------------------------------------------------------
 //   Copyright 2007-2010 Mentor Graphics Corporation
 //   Copyright 2007-2010 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2012-2014 Coverify Systems Technology
+//   Copyright 2010      Synopsys, Inc.
+//   Copyright 2012-2016 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -30,7 +30,7 @@ import uvm.base.uvm_event;
 // CLASS: uvm_event_callback
 //
 // The uvm_event_callback class is an abstract class that is used to create
-// callback objects which may be attached to <uvm_events>. To use, you
+// callback objects which may be attached to <uvm_event#(T)>s. To use, you
 // derive a new class and override any or both <pre_trigger> and <post_trigger>.
 //
 // Callbacks are an alternative to using processes that wait on events. When a
@@ -39,7 +39,7 @@ import uvm.base.uvm_event;
 //
 //------------------------------------------------------------------------------
 
-abstract class uvm_event_callback: uvm_object
+abstract class uvm_event_callback(T=uvm_object): uvm_object
 {
 
   // Function: new
@@ -49,7 +49,7 @@ abstract class uvm_event_callback: uvm_object
   // new funciton not required -- since verlang uvm_object does not take
   // a name argument
 
-  public this(string name = "") {
+  this(string name = "") {
     super(name);
   }
 
@@ -64,10 +64,10 @@ abstract class uvm_event_callback: uvm_object
   // post-trigger callback is not called. This provides a way for a callback
   // to prevent the event from triggering.
   //
-  // In the function, ~e~ is the <uvm_event> that is being triggered, and ~data~
+  // In the function, ~e~ is the <uvm_event#(T)> that is being triggered, and ~data~
   // is the optional data associated with the event trigger.
 
-  public bool pre_trigger (uvm_event e, uvm_object data = null) {
+  bool pre_trigger (uvm_event!T e, T data = T.init) {
     return false;
   }
 
@@ -79,14 +79,14 @@ abstract class uvm_event_callback: uvm_object
   // functionality.
   //
   //
-  // In the function, ~e~ is the <uvm_event> that is being triggered, and ~data~
+  // In the function, ~e~ is the <uvm_event#(T)> that is being triggered, and ~data~
   // is the optional data associated with the event trigger.
 
-  public void post_trigger (uvm_event e, uvm_object data = null) {
+  void post_trigger (uvm_event!T e, T data = T.init) {
     return;
   }
 
-  public override uvm_object create (string name = "") {
+  override uvm_object create (string name = "") {
     return null;
   }
 

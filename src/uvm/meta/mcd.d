@@ -30,7 +30,7 @@ private struct mcdPair
   import std.stdio;
   File _fd;
   MCD  _mcd;
-  public this(File fd, MCD mcd)
+  this(File fd, MCD mcd)
   {
     _fd = fd;
     _mcd = mcd;
@@ -50,7 +50,7 @@ alias MCDFile.writefln vfdisplay;
 // alias writefln         vdisplay;
 alias writef           vwrite;
 
-public void vdisplay(T...)(T args) {
+void vdisplay(T...)(T args) {
   static if(args.length == 0) {
     writeln();
   }
@@ -62,97 +62,113 @@ public void vdisplay(T...)(T args) {
 class MCDFile
 {
   import std.stdio;
-  static mcdPair[] files;
+  __gshared File[MCD] files;
   static this()
   {
-    files ~= mcdPair(stdout, STDOUT);
-    files ~= mcdPair(stderr, STDERR);
+    synchronized(typeid(MCDFile)) {
+      files[STDOUT] = stdout; //  ~= mcdPair(stdout, STDOUT);
+      files[STDERR] = stderr; // files ~= mcdPair(stderr, STDERR);
+    }
   }
 
-  static MCD open(string name)
+  static MCD open(string name, string mode="w")
   {
-    import std.exception;
-    File fd = void;
-    bool opened = true;
-    MCD mcd = (cast (MCD) 1) << files.length;
+    synchronized(typeid(MCDFile)) {
+      import std.exception;
+      File fd = void;
+      bool opened = true;
+      MCD mcd = (cast (MCD) 1) << files.length;
 
-    enforce (files.length < 8*MCD.sizeof, "Can not open any more MCD files");
-    try
-      {
-	fd = File(name, "w");
-      }
-    catch (Exception e)
-      {
-	stderr.writefln("Error: %s", e.msg);
-	opened = false;
-      }
-    if(opened)
-      {
-	files ~= mcdPair(fd, mcd);
-	return mcd;
-      }
-    else
-      {
-	return 0L;
-      }
+      enforce (files.length < 8*MCD.sizeof, "Can not open any more MCD files");
+      try
+	{
+	  fd = File(name, mode);
+	}
+      catch (Exception e)
+	{
+	  stderr.writefln("Error: %s", e.msg);
+	  opened = false;
+	}
+      if(opened)
+	{
+	  files[mcd] = fd; //  ~= mcdPair(fd, mcd);
+	  return mcd;
+	}
+      else
+	{
+	  return 0L;
+	}
+    }
   }
 
   static void close(MCD mcd)
   {
-    foreach(file; files)
-      {
-	if(file._mcd & mcd)
-	  {
-	    if(file._mcd == 1 || file._mcd == 2)
-	      {
-		stderr.writeln("Error: can not close stdout or stderr!");
-	      }
-	    else
-	      {
-		if(file._fd.isOpen()) file._fd.close();
-	      }
-	  }
-      }
+    synchronized(typeid(MCDFile)) {
+      foreach(_mcd, _fd; files)
+	{
+	  if(_mcd & mcd)
+	    {
+	      if(_mcd == 1 || _mcd == 2)
+		{
+		  stderr.writeln("Error: can not close stdout or stderr!");
+		}
+	      else
+		{
+		  if(_fd.isOpen()) _fd.close();
+		}
+	    }
+	}
+    }
   }
 
   static void flush(MCD mcd)
   {
-    foreach(file; files)
-      {
-	if((file._mcd & mcd) && file._fd.isOpen) file._fd.flush();
-      }
+    synchronized(typeid(MCDFile)) {
+      foreach(_mcd, _fd; files)
+	{
+	  if((_mcd & mcd) && _fd.isOpen) _fd.flush();
+	}
+    }
   }
 
   static void write(S...)(MCD mcd, S args)
   {
-    foreach(file; files)
-      {
-	if((file._mcd & mcd) && file._fd.isOpen) file._fd.write(args);
-      }
+    synchronized(typeid(MCDFile)) {
+      foreach(_mcd, _fd; files)
+	{
+	  if((_mcd & mcd) && _fd.isOpen) _fd.write(args);
+	}
+    }
   }
-
+  
   static void writeln(S...)(MCD mcd, S args)
   {
-    foreach(file; files)
-      {
-	if((file._mcd & mcd) && file._fd.isOpen) file._fd.writeln(args);
-      }
+    synchronized(typeid(MCDFile)) {
+      foreach(_mcd, _fd; files)
+	{
+	  if((_mcd & mcd) && _fd.isOpen) _fd.writeln(args);
+	}
+    }
   }
 
   static void writef(S...)(MCD mcd, S args)
   {
-    foreach(file; files)
-      {
-	if((file._mcd & mcd) && file._fd.isOpen) file._fd.writef(args);
-      }
+    synchronized(typeid(MCDFile)) {
+      foreach(_mcd, _fd; files)
+	{
+	  if((_mcd & mcd) && _fd.isOpen) _fd.writef(args);
+	}
+    }
   }
 
   static void writefln(S...)(MCD mcd, S args)
   {
-    foreach(file; files)
-      {
-	if((file._mcd & mcd) && file._fd.isOpen) file._fd.writefln(args);
-      }
+    synchronized(typeid(MCDFile)) {
+      foreach(_mcd, _fd; files)
+	{
+	  if((_mcd & mcd) && _fd.isOpen) _fd.writefln(args);
+	}
+    }
   }
 
 }

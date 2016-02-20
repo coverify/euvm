@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------
-//   Copyright 2010 Mentor Graphics Corporation
-//   Copyright 2014 Coverify Systems Technology
+//   Copyright 2010      Mentor Graphics Corporation
+//   Copyright 2014-2016 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -58,7 +58,7 @@ mixin template UVM_RESOURCE_GET_FCNS(base_type)
       uvm_resource!base_type.get_by_name(rscope, name, rpterr);
     this_subtype t = cast(this_subtype) b;
     if(t is null) {
-      uvm_fatal("BADCAST", "cannot cast resource to resource subtype");
+      uvm_root_fatal("BADCAST", "cannot cast resource to resource subtype");
     }
     return t;
   }
@@ -69,7 +69,7 @@ mixin template UVM_RESOURCE_GET_FCNS(base_type)
       uvm_resource!base_type.get_by_type(rscope, type_handle);
     this_subtype t = cast(this_subtype) b;
     if(t is null) {
-      uvm_fatal("BADCAST", "cannot cast resource to resource subtype");
+      uvm_root_fatal("BADCAST", "cannot cast resource to resource subtype");
     }
     return t;
   }
@@ -83,18 +83,18 @@ mixin template UVM_RESOURCE_GET_FCNS(base_type)
 //----------------------------------------------------------------------
 class uvm_int_rsrc: uvm_resource!int
 {
-  alias uvm_int_rsrc this_subtype;
-  public this(string name, string s = "*") {
+  alias this_subtype = uvm_int_rsrc;
+  this(string name, string s = "*") {
     super(name, s);
   }
 
-  public string to(T)() if(is(T == string)) {
+  string to(T)() if(is(T == string)) {
     // read is defined in the base class -- uvm_resource!int
     // Since read is guarded not need for synchronization guards here
     return format("%0d", read());
   }
 
-  override public string convert2string() {
+  override string convert2string() {
     return this.to!string;
   }
 
@@ -110,17 +110,17 @@ class uvm_string_rsrc: uvm_resource!string
 {
   alias uvm_string_rsrc this_subtype;
 
-  public this(string name, string s = "*") {
+  this(string name, string s = "*") {
     super(name, s);
   }
 
-  public string to(T)() if(is(T == string)) {
+  string to(T)() if(is(T == string)) {
     // read is defined in the base class -- uvm_resource!int
     // Since read is guarded not need for synchronization guards here
     return read();
   }
 
-  override public string convert2string() {
+  override string convert2string() {
     return this.to!string;
   }
 
@@ -136,7 +136,7 @@ class uvm_obj_rsrc: uvm_resource!uvm_object
 {
   alias uvm_obj_rsrc this_subtype;
 
-  public this(string name, string s = "*") {
+  this(string name, string s = "*") {
     super(name, s);
   }
 
@@ -152,17 +152,17 @@ class uvm_bit_rsrc(size_t N=1): uvm_resource!(UBit!N)
 {
   alias uvm_bit_rsrc!N this_subtype;
 
-  public this(string name, string s = "*") {
+  this(string name, string s = "*") {
     super(name, s);
   }
 
-  public string to(T)() if(is(T == string)) {
+  string to(T)() if(is(T == string)) {
     // read is defined in the base class -- uvm_resource!int
     // Since read is guarded not need for synchronization guards here
     return format("%0b", read());
   }
 
-  override public string convert2string() {
+  override string convert2string() {
     return this.to!string;
   }
 
@@ -170,7 +170,7 @@ class uvm_bit_rsrc(size_t N=1): uvm_resource!(UBit!N)
 }
 
 // This class is not used anywhere else in UVM baseclasses.
-// We can code this one once we have multi-dimensional Bits working
+// We can code this once we have multi-dimensional Bits working
 
 // //----------------------------------------------------------------------
 // // uvm_byte_rsrc

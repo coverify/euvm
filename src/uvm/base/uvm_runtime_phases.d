@@ -2,8 +2,8 @@
 //----------------------------------------------------------------------
 //   Copyright 2007-2011 Mentor Graphics Corporation
 //   Copyright 2007-2010 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2014 Coverify Systems Technology
+//   Copyright 2010      Synopsys, Inc.
+//   Copyright 2014-2016 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -29,6 +29,16 @@
 // are synchronized with respect to the pre-defined phases in the schedule.
 // It is possible for components to belong to different domains
 // in which case their schedules can be unsynchronized.
+//
+// The names of the UVM phases (which will be returned by get_name() for a
+// phase instance) match the class names specified below with the "uvm_"
+// and "_phase" removed.  For example, the main phase corresponds to the 
+// uvm_main_phase class below and has the name "main", which means that 
+// the following can be used to call foo() at the start of main phase:
+//
+// | function void phase_started(uvm_phase phase) ;
+// |    if (phase.get_name()=="main") foo() ;
+// | endfunction
 //
 // The run-time phases are executed in the sequence they are specified below.
 //
@@ -69,30 +79,31 @@ import uvm.base.uvm_task_phase;
 import uvm.base.uvm_phase;
 import uvm.base.uvm_component;
 import uvm.meta.misc;
+import uvm.meta.meta;
 
 class uvm_pre_reset_phase: uvm_task_phase
 {
   static class uvm_once
   {
+    @uvm_immutable_sync
     uvm_pre_reset_phase _m_inst;
-    uvm_pre_reset_phase m_inst() {
+    this() {
       synchronized(this) {
-	if(_m_inst is null) {
-	  _m_inst = new uvm_pre_reset_phase();
-	}
-	return _m_inst;
+	_m_inst = new uvm_pre_reset_phase();
       }
     }
   }
 
   mixin uvm_once_sync;
   // task
-  final override public void exec_task(uvm_component comp, uvm_phase phase) {
+  final override void exec_task(uvm_component comp, uvm_phase phase) {
     comp.pre_reset_phase(phase);
   }
-  enum string type_name = "uvm_pre_reset_phase";
+  enum string type_name = qualifiedTypeName!(typeof(this));
 
-  static public uvm_pre_reset_phase get() {
+  // Function: get
+  // Returns the singleton phase handle 
+  static uvm_pre_reset_phase get() {
     return m_inst;
   }
 
@@ -100,7 +111,7 @@ class uvm_pre_reset_phase: uvm_task_phase
     super(name);
   }
 
-  final override public string get_type_name() {
+  final override string get_type_name() {
     return type_name;
   }
 }
@@ -136,13 +147,11 @@ class uvm_reset_phase: uvm_task_phase
 {
   static class uvm_once
   {
+    @uvm_immutable_sync
     uvm_reset_phase _m_inst;
-    uvm_reset_phase m_inst() {
+    this() {
       synchronized(this) {
-	if(_m_inst is null) {
-	  _m_inst = new uvm_reset_phase();
-	}
-	return _m_inst;
+	_m_inst = new uvm_reset_phase();
       }
     }
   }
@@ -150,12 +159,14 @@ class uvm_reset_phase: uvm_task_phase
   mixin uvm_once_sync;
 
   // task
-  final override public void exec_task(uvm_component comp, uvm_phase phase) {
+  final override void exec_task(uvm_component comp, uvm_phase phase) {
     comp.reset_phase(phase);
   }
-  enum string type_name = "uvm_reset_phase";
+  enum string type_name = qualifiedTypeName!(typeof(this));
 
-  static public uvm_reset_phase get() {
+  // Function: get
+  // Returns the singleton phase handle 
+  static uvm_reset_phase get() {
       return m_inst;
   }
   
@@ -163,7 +174,7 @@ class uvm_reset_phase: uvm_task_phase
     super(name);
   }
 
-  final override public string get_type_name() {
+  final override string get_type_name() {
     return type_name;
   }
 }
@@ -191,25 +202,25 @@ class uvm_post_reset_phase: uvm_task_phase
 {
   static class uvm_once
   {
+    @uvm_immutable_sync
     uvm_post_reset_phase _m_inst;
-    uvm_post_reset_phase m_inst() {
+    this() {
       synchronized(this) {
-	if(_m_inst is null) {
-	  _m_inst = new uvm_post_reset_phase();
-	}
-	return _m_inst;
+	_m_inst = new uvm_post_reset_phase();
       }
     }
   }
 
   mixin uvm_once_sync;
   // task
-  final override public void exec_task(uvm_component comp, uvm_phase phase) {
+  final override void exec_task(uvm_component comp, uvm_phase phase) {
     comp.post_reset_phase(phase);
   }
-  enum string type_name = "uvm_post_reset_phase";
+  enum string type_name = qualifiedTypeName!(typeof(this));
 
-  static public uvm_post_reset_phase get() {
+  // Function: get
+  // Returns the singleton phase handle 
+  static uvm_post_reset_phase get() {
     return m_inst;
   }
   
@@ -217,7 +228,7 @@ class uvm_post_reset_phase: uvm_task_phase
     super(name);
   }
 
-  final override public string get_type_name() {
+  final override string get_type_name() {
     return type_name;
   }
 }
@@ -247,25 +258,25 @@ class uvm_pre_configure_phase: uvm_task_phase
 {
   static class uvm_once
   {
+    @uvm_immutable_sync
     uvm_pre_configure_phase _m_inst;
-    uvm_pre_configure_phase m_inst() {
+    this() {
       synchronized(this) {
-	if(_m_inst is null) {
-	  _m_inst = new uvm_pre_configure_phase();
-	}
-	return _m_inst;
+	_m_inst = new uvm_pre_configure_phase();
       }
     }
   }
 
   mixin uvm_once_sync;
   // task
-  final override public void exec_task(uvm_component comp, uvm_phase phase) {
+  final override void exec_task(uvm_component comp, uvm_phase phase) {
     comp.pre_configure_phase(phase);
   }
-  enum string type_name = "uvm_pre_configure_phase";
+  enum string type_name = qualifiedTypeName!(typeof(this));
 
-  static public uvm_pre_configure_phase get() {
+  // Function: get
+  // Returns the singleton phase handle 
+  static uvm_pre_configure_phase get() {
     return m_inst;
   }
 
@@ -273,7 +284,7 @@ class uvm_pre_configure_phase: uvm_task_phase
     super(name);
   }
 
-  final override public string get_type_name() {
+  final override string get_type_name() {
     return type_name;
   }
 }
@@ -302,26 +313,26 @@ class uvm_configure_phase: uvm_task_phase
 {
   static class uvm_once
   {
+    @uvm_immutable_sync
     uvm_configure_phase _m_inst;
-    uvm_configure_phase m_inst() {
+    this() {
       synchronized(this) {
-	if(_m_inst is null) {
-	  _m_inst = new uvm_configure_phase();
-	}
-	return _m_inst;
+	_m_inst = new uvm_configure_phase();
       }
     }
   }
 
   mixin uvm_once_sync;
   // task
-  final override public void exec_task(uvm_component comp, uvm_phase phase) {
+  final override void exec_task(uvm_component comp, uvm_phase phase) {
     comp.configure_phase(phase);
   }
 
-  enum string type_name = "uvm_configure_phase";
+  enum string type_name = qualifiedTypeName!(typeof(this));
 
-  static public uvm_configure_phase get() {
+  // Function: get
+  // Returns the singleton phase handle 
+  static uvm_configure_phase get() {
     return m_inst;
   }
 
@@ -329,7 +340,7 @@ class uvm_configure_phase: uvm_task_phase
     super(name);
   }
   
-  final override public string get_type_name() {
+  final override string get_type_name() {
     return type_name;
   }
 }
@@ -358,25 +369,25 @@ class uvm_post_configure_phase: uvm_task_phase
 {
   static class uvm_once
   {
+    @uvm_immutable_sync
     uvm_post_configure_phase _m_inst;
-    uvm_post_configure_phase m_inst() {
+    this() {
       synchronized(this) {
-	if(_m_inst is null) {
-	  _m_inst = new uvm_post_configure_phase();
-	}
-	return _m_inst;
+	_m_inst = new uvm_post_configure_phase();
       }
     }
   }
 
   mixin uvm_once_sync;
   // task
-  final override public void exec_task(uvm_component comp, uvm_phase phase) {
+  final override void exec_task(uvm_component comp, uvm_phase phase) {
     comp.post_configure_phase(phase);
   }
-  enum string type_name = "uvm_post_configure_phase";
+  enum string type_name = qualifiedTypeName!(typeof(this));
 
-  static public uvm_post_configure_phase get() {
+  // Function: get
+  // Returns the singleton phase handle 
+  static uvm_post_configure_phase get() {
     return m_inst;
   }
 
@@ -384,7 +395,7 @@ class uvm_post_configure_phase: uvm_task_phase
     super(name);
   }
   
-  final override public string get_type_name() {
+  final override string get_type_name() {
     return type_name;
   }
 }
@@ -410,25 +421,25 @@ class uvm_pre_main_phase: uvm_task_phase
 {
   static class uvm_once
   {
+    @uvm_immutable_sync
     uvm_pre_main_phase _m_inst;
-    uvm_pre_main_phase m_inst() {
+    this() {
       synchronized(this) {
-	if(_m_inst is null) {
-	  _m_inst = new uvm_pre_main_phase();
-	}
-	return _m_inst;
+	_m_inst = new uvm_pre_main_phase();
       }
     }
   }
 
   mixin uvm_once_sync;
   // task
-  final override public void exec_task(uvm_component comp, uvm_phase phase) {
+  final override void exec_task(uvm_component comp, uvm_phase phase) {
     comp.pre_main_phase(phase);
   }
-  enum string type_name = "uvm_pre_main_phase";
+  enum string type_name = qualifiedTypeName!(typeof(this));
 
-  static public uvm_pre_main_phase get() {
+  // Function: get
+  // Returns the singleton phase handle 
+  static uvm_pre_main_phase get() {
     return m_inst;
   }
 
@@ -436,7 +447,7 @@ class uvm_pre_main_phase: uvm_task_phase
     super(name);
   }
   
-  final override public string get_type_name() {
+  final override string get_type_name() {
     return type_name;
   }
 }
@@ -466,25 +477,25 @@ class uvm_main_phase: uvm_task_phase
 {
   static class uvm_once
   {
+    @uvm_immutable_sync
     uvm_main_phase _m_inst;
-    uvm_main_phase m_inst() {
+    this() {
       synchronized(this) {
-	if(_m_inst is null) {
-	  _m_inst = new uvm_main_phase();
-	}
-	return _m_inst;
+	_m_inst = new uvm_main_phase();
       }
     }
   }
 
   mixin uvm_once_sync;
   // task
-  final override public void exec_task(uvm_component comp, uvm_phase phase) {
+  final override void exec_task(uvm_component comp, uvm_phase phase) {
     comp.main_phase(phase);
   }
-  enum string type_name = "uvm_main_phase";
+  enum string type_name = qualifiedTypeName!(typeof(this));
 
-  static public uvm_main_phase get() {
+  // Function: get
+  // Returns the singleton phase handle 
+  static uvm_main_phase get() {
     return m_inst;
   }
 
@@ -492,7 +503,7 @@ class uvm_main_phase: uvm_task_phase
     super(name);
   }
 
-  final override public string get_type_name() {
+  final override string get_type_name() {
     return type_name;
   }
 }
@@ -518,25 +529,25 @@ class uvm_post_main_phase: uvm_task_phase
 {
   static class uvm_once
   {
+    @uvm_immutable_sync
     uvm_post_main_phase _m_inst;
-    uvm_post_main_phase m_inst() {
+    this() {
       synchronized(this) {
-	if(_m_inst is null) {
-	  _m_inst = new uvm_post_main_phase();
-	}
-	return _m_inst;
+	_m_inst = new uvm_post_main_phase();
       }
     }
   }
 
   mixin uvm_once_sync;
   // task
-  final override public void exec_task(uvm_component comp, uvm_phase phase) {
+  final override void exec_task(uvm_component comp, uvm_phase phase) {
     comp.post_main_phase(phase);
   }
-  enum string type_name = "uvm_post_main_phase";
+  enum string type_name = qualifiedTypeName!(typeof(this));
 
-  static public uvm_post_main_phase get() {
+  // Function: get
+  // Returns the singleton phase handle 
+  static uvm_post_main_phase get() {
     return m_inst;
   }
 
@@ -544,7 +555,7 @@ class uvm_post_main_phase: uvm_task_phase
     super(name);
   }
 
-  final override public string get_type_name() {
+  final override string get_type_name() {
     return type_name;
   }
 }
@@ -570,25 +581,25 @@ class uvm_pre_shutdown_phase: uvm_task_phase
 {
   static class uvm_once
   {
+    @uvm_immutable_sync
     uvm_pre_shutdown_phase _m_inst;
-    uvm_pre_shutdown_phase m_inst() {
+    this() {
       synchronized(this) {
-	if(_m_inst is null) {
-	  _m_inst = new uvm_pre_shutdown_phase();
-	}
-	return _m_inst;
+	_m_inst = new uvm_pre_shutdown_phase();
       }
     }
   }
 
   mixin uvm_once_sync;
   // task
-  final override public void exec_task(uvm_component comp, uvm_phase phase) {
+  final override void exec_task(uvm_component comp, uvm_phase phase) {
     comp.pre_shutdown_phase(phase);
   }
-  enum string type_name = "uvm_pre_shutdown_phase";
+  enum string type_name = qualifiedTypeName!(typeof(this));
 
-  static public uvm_pre_shutdown_phase get() {
+  // Function: get
+  // Returns the singleton phase handle 
+  static uvm_pre_shutdown_phase get() {
     return m_inst;
   }
 
@@ -596,7 +607,7 @@ class uvm_pre_shutdown_phase: uvm_task_phase
     super(name);
   }
 
-  final override public string get_type_name() {
+  final override string get_type_name() {
     return type_name;
   }
 }
@@ -625,25 +636,25 @@ class uvm_shutdown_phase: uvm_task_phase
 {
   static class uvm_once
   {
+    @uvm_immutable_sync
     uvm_shutdown_phase _m_inst;
-    uvm_shutdown_phase m_inst() {
+    this() {
       synchronized(this) {
-	if(_m_inst is null) {
-	  _m_inst = new uvm_shutdown_phase();
-	}
-	return _m_inst;
+	_m_inst = new uvm_shutdown_phase();
       }
     }
   }
 
   mixin uvm_once_sync;
   // task
-  final override public void exec_task(uvm_component comp, uvm_phase phase) {
+  final override void exec_task(uvm_component comp, uvm_phase phase) {
     comp.shutdown_phase(phase);
   }
-  enum string type_name = "uvm_shutdown_phase";
+  enum string type_name = qualifiedTypeName!(typeof(this));
 
-  static public uvm_shutdown_phase get() {
+  // Function: get
+  // Returns the singleton phase handle 
+  static uvm_shutdown_phase get() {
     return m_inst;
   }
   
@@ -651,7 +662,7 @@ class uvm_shutdown_phase: uvm_task_phase
     super(name);
   }
 
-  final override public string get_type_name() {
+  final override string get_type_name() {
     return type_name;
   }
 }
@@ -681,25 +692,25 @@ class uvm_post_shutdown_phase: uvm_task_phase
 {
   static class uvm_once
   {
+    @uvm_immutable_sync
     uvm_post_shutdown_phase _m_inst;
-    uvm_post_shutdown_phase m_inst() {
+    this() {
       synchronized(this) {
-	if(_m_inst is null) {
-	  _m_inst = new uvm_post_shutdown_phase();
-	}
-	return _m_inst;
+	_m_inst = new uvm_post_shutdown_phase();
       }
     }
   }
 
   mixin uvm_once_sync;
   // task
-  final override public void exec_task(uvm_component comp, uvm_phase phase) {
+  final override void exec_task(uvm_component comp, uvm_phase phase) {
     comp.post_shutdown_phase(phase);
   }
-  enum string type_name = "uvm_post_shutdown_phase";
+  enum string type_name = qualifiedTypeName!(typeof(this));
 
-  static public uvm_post_shutdown_phase get() {
+  // Function: get
+  // Returns the singleton phase handle 
+  static uvm_post_shutdown_phase get() {
     return m_inst;
   }
 
@@ -707,7 +718,7 @@ class uvm_post_shutdown_phase: uvm_task_phase
     super(name);
   }
 
-  final override public string get_type_name() {
+  final override string get_type_name() {
     return type_name;
   }
 }

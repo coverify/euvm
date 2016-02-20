@@ -115,7 +115,7 @@ class uvm_in_order_comparator (T = int ,
 
   int m_matches, m_mismatches;
 
-  public this(string name, uvm_component parent) {
+  this(string name, uvm_component parent) {
     synchronized(this) {
       super(name, parent);
 
@@ -130,11 +130,11 @@ class uvm_in_order_comparator (T = int ,
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return type_name;
   }
 
-  override public void connect_phase(uvm_phase phase) {
+  override void connect_phase(uvm_phase phase) {
     before_export.connect(m_before_fifo.analysis_export);
     after_export.connect(m_after_fifo.analysis_export);
   }
@@ -149,7 +149,7 @@ class uvm_in_order_comparator (T = int ,
   // Each pair is published to the pair_ap analysis port.
 
   // task
-  public void run_phase(uvm_phase phase) {
+  void run_phase(uvm_phase phase) {
     super.run_phase(phase);
     while(true) {
       T b;
@@ -193,7 +193,7 @@ class uvm_in_order_comparator (T = int ,
   // This method sets m_matches and m_mismatches back to zero. The
   // <uvm_tlm_fifo::flush> takes care of flushing the FIFOs.
 
-  public void flush() {
+  void flush() {
     synchronized(this) {
       m_matches = 0;
       m_mismatches = 0;
@@ -219,11 +219,11 @@ class uvm_in_order_built_in_comparator(T=int): uvm_in_order_comparator!T
 
   enum  string type_name = "uvm_in_order_built_in_comparator!T";
 
-  public this(string name, uvm_component parent) {
+  this(string name, uvm_component parent) {
     super(name, parent);
   }
 
-  public string get_type_name () {
+  string get_type_name () {
     return type_name;
   }
 
@@ -249,11 +249,11 @@ class uvm_in_order_class_comparator(T = int ):
 
   enum string type_name = "uvm_in_order_class_comparator!T";
 
-  public this(string name, uvm_component parent) {
+  this(string name, uvm_component parent) {
     super(name, parent);
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return type_name;
   }
 

@@ -70,7 +70,7 @@ class uvm_random_stimulus(T=uvm_transaction): uvm_component
   // In subsequent simulations, set_randstate can be called with the same
   // value to reproduce the same sequence of transactions.
 
-  public this(string name, uvm_component parent) {
+  this(string name, uvm_component parent) {
     synchronized(this) {
       super(name, parent);
       blocking_put_port=new uvm_blocking_put_port("blocking_put_port", this);
@@ -99,7 +99,7 @@ class uvm_random_stimulus(T=uvm_transaction): uvm_component
   // over the blocking_put_port
 
   // task
-  public void generate_stimulus(T t=null, int max_count=0) {
+  void generate_stimulus(T t=null, int max_count=0) {
 
     if (t is null) t = new T;
     for (size_t i=0; (max_count is 0 || i < max_count) && ! m_stop; ++i) {
@@ -122,14 +122,14 @@ class uvm_random_stimulus(T=uvm_transaction): uvm_component
   // processes, those processes will also need to be
   // stopped in an overridden version of this method
 
-  public void stop_stimulus_generation() {
+  void stop_stimulus_generation() {
     synchronized(this) {
       _m_stop = 1;
     }
   }
 
 
-  public string get_type_name() {
+  string get_type_name() {
     return type_name;
   }
 

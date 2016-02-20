@@ -112,7 +112,7 @@ class uvm_algorithmic_comparator(BEFORE=int,
   // which must already be allocated (no null handles) and must implement
   // the transform() method.
 
-  public this(string name=null, uvm_component parent=null, TRANSFORMER transformer=null) {
+  this(string name=null, uvm_component parent=null, TRANSFORMER transformer=null) {
 
     synchronized(this) {
       super( name , parent );
@@ -125,15 +125,15 @@ class uvm_algorithmic_comparator(BEFORE=int,
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return type_name;
   }
 
-  public void connect_phase(uvm_phase phase) {
+  void connect_phase(uvm_phase phase) {
     after_export.connect( comp.after_export );
   }
 
-  public void write(BEFORE b) {
+  void write(BEFORE b) {
     comp.before_export.write( m_transformer.transform( b ) );
   }
 

@@ -45,7 +45,7 @@ class uvm_sequencer_analysis_fifo (RSP = uvm_sequence_item)
   @uvm_public_sync
     private uvm_sequencer_base _sequencer_ptr;
 
-  public this(string name, uvm_component parent = null) {
+  this(string name, uvm_component parent = null) {
     synchronized(this) {
       super(name, parent, 0);
       _analysis_export =
@@ -54,7 +54,7 @@ class uvm_sequencer_analysis_fifo (RSP = uvm_sequence_item)
     }
   }
 
-  public void write(RSP t) {
+  void write(RSP t) {
     if (sequencer_ptr is null) {
       uvm_report_fatal ("SEQRNULL", "The sequencer pointer is null when"
 			" attempting a write", UVM_NONE);

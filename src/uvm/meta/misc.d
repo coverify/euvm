@@ -76,32 +76,32 @@ class QueueWithEvent(T)
   alias _queue this;
   Event _event;
 
-  public void pushFront(T...)(T values) {
+  void pushFront(T...)(T values) {
     synchronized(this) {
       _queue.pushFront(values);
       _event.notify();
     }
   }
-  public void pushBack(T...)(T values) {
+  void pushBack(T...)(T values) {
     synchronized(this) {
       _queue.pushBack(values);
       _event.notify();
     }
   }
 
-  public void removeFront(const size_t numToPop = 1) {
+  void removeFront(const size_t numToPop = 1) {
     synchronized(this) {
       _queue.removeFront(numToPop);
       _event.notify();
     }
   }
-  public void removeBack(const size_t numToPop = 1) {
+  void removeBack(const size_t numToPop = 1) {
     synchronized(this) {
       _queue.removeBack(numToPop);
       _event.notify();
     }
   }
-  public T opIndexAssign(T val, size_t key) {
+  T opIndexAssign(T val, size_t key) {
     synchronized(this) {
       _queue[key] = val;
       _event.notify();
@@ -111,7 +111,7 @@ class QueueWithEvent(T)
   // FIXME
   // insert and remove not covered
 
-  public void wait() {
+  void wait() {
     _event.wait();
   }
 
@@ -136,7 +136,7 @@ class AssocWithEvent(K, V)
 
   alias _assoc this;
 
-  public V opIndexAssign(V val, K key) {
+  V opIndexAssign(V val, K key) {
     synchronized(this) {
       _assoc[key] = val;
       _event.notify();
@@ -144,14 +144,14 @@ class AssocWithEvent(K, V)
     }
   }
 
-  public void remove(K key) {
+  void remove(K key) {
     synchronized(this) {
       _assoc.remove(key);
       _event.notify();
     }
   }
 
-  public void wait() {
+  void wait() {
     _event.wait();
   }
 
@@ -191,7 +191,7 @@ class WithEvent(T) {
     }
   }
 
-  // public void init() {
+  // void init() {
   //   _event.init(Process.self);
   // }
 
@@ -226,7 +226,7 @@ class WithEvent(T) {
     }
   }
 
-  public int opCmp(T)(T other) {
+  int opCmp(T)(T other) {
     synchronized(this) {
       static if(is(T == class)) {
 	return _val.opCmp(other);
@@ -239,7 +239,7 @@ class WithEvent(T) {
     }
   }
 
-  public int opEquals(T)(T other) {
+  int opEquals(T)(T other) {
     synchronized(this) {
       return _val == other;
     }
@@ -265,6 +265,24 @@ class WithEvent(T) {
     _event.notify();
   }
 
+  auto opBinary(string op, V)(V other) {
+    static if(is(V: WithEvent!U, U)) {
+      return mixin("get() " ~ op ~ " other.get()");
+    }
+    else {
+      return mixin("get() " ~ op ~ " other");
+    }
+  }
+  
+  auto opBinaryRight(string op, V)(V other) {
+    static if(is(V: WithEvent!U, U)) {
+      return mixin("other.get() " ~ op ~ " get()");
+    }
+    else {
+      return mixin("other " ~ op ~ " get()");
+    }
+  }
+  
   static if(isNumeric!T) {
     T opUnary(string S)() if(S == "++") {
       synchronized(this) {
@@ -283,9 +301,9 @@ class WithEvent(T) {
 }
 
 class uvm_wrap_obj(T) {
-  public T _wrapped_obj;
+  T _wrapped_obj;
   alias _wrapped_obj this;
-  final public bool isNull() {
+  final bool isNull() {
     static if(is(T unused: Object)) {
       if(_wrapped_obj is null) return true;
       else return false;
@@ -294,6 +312,7 @@ class uvm_wrap_obj(T) {
   }
 }
 
+enum uvm_none_sync;		// no wrapper
 enum uvm_private_sync;
 enum uvm_public_sync;
 enum uvm_protected_sync;
@@ -303,10 +322,13 @@ enum uvm_package_sync;
 
 
 // This one is used to mark the variables that need synchronization
-public template uvm_sync_access(size_t I=0, A...) {
+template uvm_sync_access(size_t I=0, A...) {
   static if(I == A.length) {
     enum string uvm_sync_access = "";
   }
+  else static if(is(A[I] == uvm_none_sync)) {
+      enum string uvm_sync_access = "none";
+    }
   else static if(is(A[I] == uvm_private_sync)) {
       enum string uvm_sync_access = "private";
     }
@@ -328,130 +350,147 @@ public template uvm_sync_access(size_t I=0, A...) {
 } 
 
 mixin template uvm_sync() {
-  mixin(uvm_sync!(typeof(this)));
+  mixin(uvm_sync_string!(typeof(this)));
 }
 
-public template uvm_sync(T, string U="this", size_t ITER=0) {
+string uvm_sync_string() {
+  return "mixin(uvm_sync_string!(typeof(this)));\n";
+}
+
+template uvm_sync_string(T, string U="this", size_t ITER=0) {
   static if(ITER == (__traits(derivedMembers, T).length)) {
-    enum string uvm_sync = "";
+    enum string uvm_sync_string = "";
   }
   else {
     enum string mem = __traits(derivedMembers, T)[ITER];
     static if(mem == "this" || mem == "once" || mem == "_once") {
       // exclude "this" in nested classes
-      enum string uvm_sync = uvm_sync!(T, U, ITER+1);
+      enum string uvm_sync_string =
+	uvm_sync_string!(T, U, ITER+1);
     }
     else {
-      enum string uvm_sync =
-	"static if(! __traits(isVirtualMethod, " ~ U ~ "." ~ mem ~ ")) {
-	  mixin(uvm_sync!(uvm_sync_access!(0, __traits(getAttributes, "
+      enum string uvm_sync_string =
+	"mixin(uvm_sync_string!(\"" ~ T.stringof ~ "\", uvm_sync_access!(0, __traits(getAttributes, "
 	~ U ~ "." ~ mem ~ ")),  \"" ~ mem ~ "\", \"" ~ U ~ "\"));
-        } " ~
-	uvm_sync!(T, U, ITER+1);
+        " ~
+	uvm_sync_string!(T, U, ITER+1);
     }
   }
 }
 
-public template uvm_sync(string A, string M, string U) {
-  // public template uvm_sync(string A, string P, string M) {
+template uvm_check_sync(string C, string A, string M, string U) {
+  enum string F = U ~ "." ~ M;
+  static if(M == "__ctor" || (M.length > 6 && M[0..6] == "_esdl_")) {
+    enum string uvm_check_sync = "";
+  }
+  else {
+    static if(M[0] is '_') {
+      enum string uvm_check_sync =
+	"pragma(msg, \"" ~ C ~ "\" ~ \"::\" ~ typeid(typeof(" ~ F ~
+	")).stringof[7..$-1] ~ \"-> \" ~ \"" ~ A ~ ":  " ~ U ~ "." ~
+	M ~ "\");\n";
+    }
+    else {
+      enum string uvm_check_sync =
+	"static if(__traits(compiles, " ~ F ~
+	".offsetof)) { pragma(msg, typeid(typeof(this)).stringof ~ " ~
+	"\"-> \" ~ \"" ~ A ~ "\" ~ \":  " ~ U ~ "." ~ M ~ "\"); }\n";
+    }
+  }
+}
+
+template uvm_sync_string(string C, string A, string M, string U) {
   static if(U == "_once" || U == "once") enum string SCOPE = "static";
   else enum string SCOPE = "";
-  static if(A == "") {
-    enum string uvm_sync = "";
+  debug(UVM_SYNC_LIST) {
+    enum string uvm_sync_check = uvm_check_sync!(C, A, M, U);
+  }
+  else {
+    enum string uvm_sync_check = "";
+  }
+  static if(A == "" || A == "none") {
+    enum string uvm_sync_string = uvm_sync_check;
   }
   else static if(A == "immutable") {
       static assert(M[0] is '_', "uvm_" ~ A ~ "_sync variable " ~ M ~
 		    " does not have '_' prefix");
-      enum string uvm_sync = SCOPE ~ " public final auto " ~ M[1..$] ~
-	"()() {return " ~ U ~ "." ~ M ~ ";}
-" ~ SCOPE ~ " final void " ~ M[1..$] ~
+      enum string uvm_sync_string = uvm_sync_check ~
+	SCOPE ~ " final auto " ~ M[1..$] ~
+	"()() {return " ~ U ~ "." ~ M ~ ";}\n" ~
+	SCOPE ~ " final void " ~ M[1..$] ~
 	// since the object is immutable, allow only assigns to the
 	// encapsulated object -- like opAssign defined on the object
 	// object being wrapped here -- note that the is expression is
 	// negated with !
 	"(T)(T val) if(! is(T: typeof(" ~ U ~ "." ~ M ~ "))) { " ~
-	U ~ "." ~ M ~ " = val;}
-";
+	U ~ "." ~ M ~ " = val;}\n";
     }
     else {
       static assert(M[0] is '_', "uvm_" ~ A ~ "_sync variable " ~ M ~
 		    " does not have '_' prefix");
-      enum string uvm_sync = A ~ " " ~ SCOPE ~ " final auto " ~ M[1..$] ~
-	"() {synchronized(" ~ U ~ ") return " ~ U ~ "." ~ M ~ ";}
-" ~ A ~ " " ~ SCOPE ~ " final void " ~ M[1..$] ~
+      enum string uvm_sync_string = uvm_sync_check ~ A ~ " " ~ SCOPE ~
+	" final auto " ~ M[1..$] ~ "() {synchronized(" ~ U ~ ") return " ~
+	U ~ "." ~ M ~ ";}\n" ~ A ~ " " ~ SCOPE ~ " final void " ~ M[1..$] ~
 	"(typeof(" ~ U ~ "." ~ M ~ ") val) {synchronized(" ~ U ~ ") " ~
-	U ~ "." ~ M ~ " = val;}
-";
+	U ~ "." ~ M ~ " = val;}\n";
     }
 }
 
 mixin template uvm_once_sync() {
-  // pragma(msg, uvm_once_sync!(uvm_once, typeof(this)));
-  mixin(uvm_once_sync!(uvm_once, typeof(this)));
+  // pragma(msg, uvm_once_sync_string!(uvm_once, typeof(this)));
+  mixin(uvm_once_sync_string!(uvm_once, typeof(this)));
 }
 
-// template uvm_once_sync() {
-//   enum string uvm_once_sync = "uvm_once_sync!(uvm_once, typeof(this))";
+string uvm_once_sync_string() {
+  return "mixin(uvm_once_sync_string!(uvm_once, typeof(this)));\n";
+}
+
+// template uvm_once_sync_string() {
+//   enum string uvm_once_sync_string =
+//     "mixin(uvm_once_sync_string!(uvm_once, typeof(this)));\n";
 // }
 
-template uvm_once_sync(T, U, size_t ITER=0) {
+template uvm_once_sync_string(T, U, size_t ITER=0) {
   static if(ITER == (__traits(derivedMembers, T).length)) {
-    //    enum string uvm_once_sync = "static if(!__traits(compiles, _once)) {public static " ~ T.stringof ~ " _once;}
-    enum string uvm_once_sync = "// public static uvm_once _once;
-public static uvm_once once() {
-import uvm.base.uvm_root;
-// if(_once is null) {
-auto root = uvm_root_entity(); // cast(uvm_root_entity_base) proc.getParentEntity();
-// _once =
-return root.root_once._" ~ U.stringof ~ "_once;
-// }
-// return _once;
-}
-" ~ "mixin(uvm_sync!(" ~ T.stringof ~ ", \"once\"));
-";
+    enum string uvm_once_sync_string = "static uvm_once once() {\n" ~
+      "  import uvm.base.uvm_root;\n" ~
+      "  auto root = uvm_root_entity_base.get();\n" ~
+      "  return root.root_once._" ~ U.stringof ~ "_once;\n}\n" ~
+      "mixin(uvm_sync_string!(" ~ T.stringof ~ ", \"once\"));\n";
   }
   else {
     enum string mem = __traits(derivedMembers, T)[ITER];
     static if(mem == "__ctor" || mem == "__dtor") {
-      enum string uvm_once_sync = uvm_once_sync!(T, U, ITER+1);
+      enum string uvm_once_sync_string = uvm_once_sync_string!(T, U, ITER+1);
     }
     else {
-      enum string uvm_once_sync = uvm_once_sync!(T, U, ITER+1) ~
-	"static private ref " ~ " auto " ~ " " ~ mem ~ "() {
-	 return once." ~ mem ~ ";
-       }
- ";
+      enum string uvm_once_sync_string =
+	uvm_once_sync_string!(T, U, ITER+1) ~
+	"static if(uvm_sync_access!(0, __traits(getAttributes, " ~
+	T.stringof ~ "." ~ mem ~ ")) != \"none\") {\n" ~
+	"  static private ref " ~ " auto " ~ " " ~ mem ~ "() {\n" ~
+	"    return once." ~ mem ~ ";\n    }\n  }\n";
     }
   }
 }
 
-template uvm_once_sync(T, string _inst, size_t ITER=0) {
+template uvm_once_sync_string(T, string _inst, size_t ITER=0) {
   static if(ITER == (__traits(derivedMembers, T).length)) {
-    enum string uvm_once_sync = "// public " ~ T.stringof ~
-      " _" ~ _inst ~ "_uvm_once;
-public " ~ T.stringof ~ " " ~ _inst ~ "_uvm_once() {
-import uvm.base.uvm_root; // : uvm_root_entity_base;
-// if(_" ~ _inst ~ "_uvm_once is null) {
-auto root = uvm_root_entity(); // cast(uvm_root_entity_base) proc.getParentEntity();
-// _" ~ _inst ~ "_uvm_once = 
-return root.root_once._" ~ _inst ~ "_once;
-// }
-// return _" ~ _inst ~ "_uvm_once;
-}
-" ~ "mixin(uvm_sync!(" ~ T.stringof ~ ", \"" ~ _inst ~ "_uvm_once\"));
-";
-  }
+    enum string uvm_once_sync_string = T.stringof ~ " " ~
+      _inst ~ "_uvm_once() {\n  import uvm.base.uvm_root;\n" ~
+      "  auto root = uvm_root_entity_base.get();\n" ~
+      "  return root.root_once._" ~ _inst ~ "_once;\n}" ~
+      "mixin(uvm_sync_string!(" ~ T.stringof ~ ", \"" ~ _inst ~ "_uvm_once\"));\n";
+      }
   else {
     enum string mem = __traits(derivedMembers, T)[ITER];
     static if(mem == "__ctor" || mem == "__dtor") {
-      enum string uvm_once_sync = uvm_once_sync!(T, _inst, ITER+1);
+      enum string uvm_once_sync_string = uvm_once_sync_string!(T, _inst, ITER+1);
     }
     else {
-      enum string uvm_once_sync = uvm_once_sync!(T, _inst, ITER+1) ~
-	"private ref " ~ " auto " ~ " " ~ mem ~ "() {
-	 return " ~ _inst ~ "_uvm_once." ~ mem ~ ";
-       }
- ";
+      enum string uvm_once_sync_string = uvm_once_sync_string!(T, _inst, ITER+1) ~
+	"private ref " ~ " auto " ~ " " ~ mem ~ "() {\n" ~
+	"  return " ~ _inst ~ "_uvm_once." ~ mem ~ ";\n  }\n";
     }
   }
 }

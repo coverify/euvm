@@ -2,8 +2,9 @@
 //-----------------------------------------------------------------------------
 //   Copyright 2007-2011 Mentor Graphics Corporation
 //   Copyright 2007-2011 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2012-2014 Coverify Systems Technology
+//   Copyright 2010      Synopsys, Inc.
+//   Copyright 2013      NVIDIA Corporation
+//   Copyright 2012-2016 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -45,10 +46,12 @@ module uvm.base.uvm_object;
 //
 //------------------------------------------------------------------------------
 import esdl.base.core;
+import uvm.base.uvm_coreservice;
 import uvm.base.uvm_misc;
 
 import esdl.data.rand;
 import esdl.data.obdd;
+import esdl.data.bvec;
 import uvm.base.uvm_recorder;
 
 
@@ -69,7 +72,6 @@ import std.random: uniform;
 
 abstract class uvm_object: uvm_void
 {
-  import esdl.data.bvec;
   static class uvm_once
   {
     @uvm_private_sync
@@ -90,7 +92,7 @@ abstract class uvm_object: uvm_void
   // Can not use "mixin uvm_once_sync" template due to forward reference error
   // Using string Mixin function
   // mixin uvm_once_sync;
-  mixin(uvm_once_sync!(uvm_once, typeof(this)));
+  mixin(uvm_once_sync_string);
   mixin uvm_sync;
 
   mixin Randomization;
@@ -99,10 +101,10 @@ abstract class uvm_object: uvm_void
   // Creates a new uvm_object with the given instance ~name~. If ~name~ is not
   // supplied, the object is unnamed.
 
-  public this(string name="") {
+  this(string name="") {
     int inst_id;
     synchronized(once) {
-      inst_id = _m_inst_count++;
+      inst_id = once._m_inst_count++;
     }
     synchronized(this) {
       _m_inst_id = inst_id;
@@ -125,7 +127,7 @@ abstract class uvm_object: uvm_void
   // Variable: use_uvm_seeding
   //
   // This bit enables or disables the UVM seeding mechanism. It globally affects
-  // the operation of the reseed method.
+  // the operation of the <reseed> method.
   //
   // When enabled, UVM-based objects are seeded based on their type and full
   // hierarchical name rather than allocation order. This improves random
@@ -146,13 +148,13 @@ abstract class uvm_object: uvm_void
   // If the <use_uvm_seeding> static variable is set to 0, then reseed() does
   // not perform any function.
 
-  final public void reseed (int seed) {
+  final void reseed (int seed) {
     this.srandom(seed);
   }
 
-  final public void reseed () {
+  final void reseed () {
     synchronized(this) {
-      if(_use_uvm_seeding) {
+      if(use_uvm_seeding) {
 	this.srandom(uvm_create_random_seed(get_type_name(),
 					    get_full_name()));
       }
@@ -167,7 +169,7 @@ abstract class uvm_object: uvm_void
   // // Sets the instance name of this object, overwriting any previously
   // // given name.
 
-  public void set_name (string name) {
+  void set_name (string name) {
     synchronized(this) {
       _m_leaf_name = name;
     }
@@ -179,7 +181,7 @@ abstract class uvm_object: uvm_void
   // Returns the name of the object, as provided by the ~name~ argument in the
   // <new> constructor or <set_name> method.
 
-  public string get_name () {
+  string get_name () {
     synchronized(this) {
       return _m_leaf_name;
     }
@@ -200,7 +202,7 @@ abstract class uvm_object: uvm_void
   // full name concatenated with the sequence's name. This provides the sequence
   // a full context, which is useful when debugging.
 
-  public string get_full_name () {
+  string get_full_name () {
     return get_name();
   }
 
@@ -210,7 +212,7 @@ abstract class uvm_object: uvm_void
   //
   // Returns the object's unique, numeric instance identifier.
 
-  public int get_inst_id () {
+  int get_inst_id () {
     synchronized(this) {
       return _m_inst_id;
     }
@@ -224,9 +226,9 @@ abstract class uvm_object: uvm_void
   // simulation. The instance counter is used to form a unique numeric instance
   // identifier.
 
-  static public int get_inst_count() {
+  static int get_inst_count() {
     synchronized(once) {
-      return _m_inst_count;
+      return once._m_inst_count;
     }
   }
 
@@ -239,7 +241,7 @@ abstract class uvm_object: uvm_void
   // means of supplying those arguments.
   //
   // The default implementation of this method produces an error and returns
-  // null. To enable use of this method, a user's subtype must implement a
+  // ~null~. To enable use of this method, a user's subtype must implement a
   // version that returns the subtype's wrapper.
   //
   // For example:
@@ -257,7 +259,7 @@ abstract class uvm_object: uvm_void
   //
   // This function is implemented by the `uvm_*_utils macros, if employed.
 
-  static public uvm_object_wrapper get_type () {
+  static uvm_object_wrapper get_type () {
     uvm_report_error("NOTYPID", "get_type not implemented in derived class.",
 		     UVM_NONE);
     return null;
@@ -275,7 +277,7 @@ abstract class uvm_object: uvm_void
   //
   // The default implementation of this method does a factory lookup of the
   // proxy using the return value from <get_type_name>. If the type returned
-  // by <get_type_name> is not registered with the factory, then a null
+  // by <get_type_name> is not registered with the factory, then a ~null~
   // handle is returned.
   //
   // For example:
@@ -292,9 +294,11 @@ abstract class uvm_object: uvm_void
   //
   // This function is implemented by the `uvm_*_utils macros, if employed.
 
-  public uvm_object_wrapper get_object_type () {
+  uvm_object_wrapper get_object_type () {
     if(get_type_name() == "<unknown>") return null;
-    return uvm_factory.get().find_by_name(get_type_name());
+    uvm_coreservice_t cs = uvm_coreservice_t.get();
+    uvm_factory factory = cs.get_factory();
+    return factory.find_wrapper_by_name(get_type_name());
   }
 
 
@@ -328,7 +332,7 @@ abstract class uvm_object: uvm_void
   // auto oci = typeid(this);
   // return oci.to!string();
   // it will then be available via UFCS
-  public string get_type_name () {
+  string get_type_name () {
     return "<unknown>";
   }
 
@@ -337,7 +341,7 @@ abstract class uvm_object: uvm_void
 
   // Function: create
   //
-  // The create method allocates a new object of the same type as this object
+  // The ~create~ method allocates a new object of the same type as this object
   // and returns it via a base uvm_object handle. Every class deriving from
   // uvm_object, directly or indirectly, must implement the create method.
   //
@@ -350,22 +354,23 @@ abstract class uvm_object: uvm_void
   //|      return t;
   //|    endfunction
 
-  public uvm_object create (string name = "") {
+  uvm_object create (string name = "") {
     return null;
   }
 
   // Function: clone
   //
-  // The clone method creates and returns an exact copy of this object.
+  // The ~clone~ method creates and returns an exact copy of this object.
   //
   // The default implementation calls <create> followed by <copy>. As clone is
   // virtual, derived classes may override this implementation if desired.
 
-  public uvm_object clone () {
+  uvm_object clone () {
     uvm_object tmp = this.create(get_name());
     if(tmp is null) {
-      uvm_report_warning("CRFLD", format("The create method failed for %s,  "
-					 "object cannot be cloned", get_name()),
+      uvm_report_warning("CRFLD",
+			 format("The create method failed for %s,  "
+				"object cannot be cloned", get_name()),
 			 UVM_NONE);
     }
     else {
@@ -379,7 +384,7 @@ abstract class uvm_object: uvm_void
 
   // Function: print
   //
-  // The print method deep-prints this object's properties in a format and
+  // The ~print~ method deep-prints this object's properties in a format and
   // manner governed by the given ~printer~ argument; if the ~printer~ argument
   // is not provided, the global <uvm_default_printer> is used. See
   // <uvm_printer> for more information on printer output formatting. See also
@@ -387,16 +392,16 @@ abstract class uvm_object: uvm_void
   // on the pre-defined printer "policies," or formatters, provided by the UVM.
   //
   // The ~print~ method is not virtual and must not be overloaded. To include
-  // custom information in the ~print~ and ~sprint~ operations, derived classes
+  // custom information in the ~print~ and <sprint> operations, derived classes
   // must override the <do_print> method and use the provided printer policy
   // class to format the output.
 
-  final public void print (uvm_printer printer = null) {
+  final void print(uvm_printer printer = null) {
     if (printer is null) {
       printer = uvm_default_printer;
     }
     if (printer is null) {
-      uvm_error("NULLPRINTER","uvm_default_printer is null");
+      uvm_root_error("NULLPRINTER", "uvm_default_printer is null");
     }
     printer.knobs.mcd.vfdisplay(sprint(printer));
   }
@@ -408,19 +413,22 @@ abstract class uvm_object: uvm_void
   // is returned in a string rather than displayed.
   //
   // The ~sprint~ method is not virtual and must not be overloaded. To include
-  // additional fields in the ~print~ and ~sprint~ operation, derived classes
+  // additional fields in the <print> and ~sprint~ operation, derived classes
   // must override the <do_print> method and use the provided printer policy
   // class to format the output. The printer policy will manage all string
   // concatenations and provide the string to ~sprint~ to return to the caller.
 
-  final public string sprint (uvm_printer printer=null) {
+  final string sprint (uvm_printer printer=null) {
 
-    if(printer is null) printer = uvm_default_printer;
+    if(printer is null) {
+      printer = uvm_default_printer;
+    }
 
     // not at top-level, must be recursing into sub-object
     if(! printer.istop()) {
       m_uvm_status_container.printer = printer;
-      m_uvm_field_automation(null, UVM_PRINT, "");
+      // m_uvm_field_automation(null, UVM_PRINT, "");
+      uvm_field_auto_sprint();
       do_print(printer);
       return "";
     }
@@ -428,7 +436,9 @@ abstract class uvm_object: uvm_void
     printer.print_object(get_name(), this);
     // backward compat with sprint knob: if used,
     //    print that, do not call emit()
-    if (printer.m_string != "") return printer.m_string;
+    if (printer.m_string != "") {
+      return printer.m_string;
+    }
 
     return printer.emit();
   }
@@ -455,7 +465,7 @@ abstract class uvm_object: uvm_void
   //|   int f1;
   //|   virtual function void do_print (uvm_printer printer);
   //|     super.do_print(printer);
-  //|     printer.print_int("f1", f1, $bits(f1), DEC);
+  //|     printer.print_field_int("f1", f1, $bits(f1), UVM_DEC);
   //|     printer.print_object("data", data);
   //|   endfunction
   //
@@ -467,7 +477,7 @@ abstract class uvm_object: uvm_void
   //
   // See <uvm_printer> for information about the printer API.
 
-  public void do_print (uvm_printer printer) {
+  void do_print (uvm_printer printer) {
     return;
   }
 
@@ -476,7 +486,7 @@ abstract class uvm_object: uvm_void
   //
   // This virtual function is a user-definable hook, called directly by the
   // user, that allows users to provide object information in the form of
-  // a string. Unlike <sprint>, there is no requirement to use an <uvm_printer>
+  // a string. Unlike <sprint>, there is no requirement to use a <uvm_printer>
   // policy object. As such, the format and content of the output is fully
   // customizable, which may be suitable for applications not requiring the
   // consistent formatting offered by the <print>/<sprint>/<do_print>
@@ -527,16 +537,16 @@ abstract class uvm_object: uvm_void
   // // FIXME -- depends on dmd bug 9249
   // // Does not work due to dmd bug
   // // http://d.puremagic.com/issues/show_bug.cgi?id=9249
-  // public T opCast(T)() if (is(T == string))
+  // T opCast(T)() if (is(T == string))
   //   {
   //     return "";
   //   }
 
-  public T to(T)() if (is(T == string)) {
+  T to(T)() if (is(T == string)) {
     return "";
   }
 
-  public string convert2string() {
+  string convert2string() {
     return this.to!string();
   }
 
@@ -544,42 +554,46 @@ abstract class uvm_object: uvm_void
 
   // Function: record
   //
-  // The record method deep-records this object's properties according to an
+  // The ~record~ method deep-records this object's properties according to an
   // optional ~recorder~ policy. The method is not virtual and must not be
   // overloaded. To include additional fields in the record operation, derived
   // classes should override the <do_record> method.
   //
   // The optional ~recorder~ argument specifies the recording policy, which
-  // governs how recording takes place. If a recorder policy is not provided
-  // explicitly, then the global <uvm_default_recorder> policy is used. See
-  // uvm_recorder for information.
+  // governs how recording takes place. See
+  // <uvm_recorder> for information.
   //
   // A simulator's recording mechanism is vendor-specific. By providing access
   // via a common interface, the uvm_recorder policy provides vendor-independent
   // access to a simulator's recording capabilities.
 
-  final public void record (uvm_recorder recorder = null) {
+  final void record(uvm_recorder recorder=null) {
 
-    if(recorder is null) recorder = uvm_default_recorder;
+    if(recorder is null) {
+      return;
+      // recorder = uvm_default_recorder;
+    }
 
-    if(!recorder.tr_handle) return;
+    // if(!recorder.tr_handle) return;
+
     m_uvm_status_container.recorder = recorder;
 
     recorder.inc_recording_depth();
     m_uvm_field_automation(null, UVM_RECORD, "");
+    // uvm_field_auto_record();
     do_record(recorder);
 
     recorder.dec_recording_depth();
 
-    if(recorder.recording_depth is 0) {
-      recorder.tr_handle = 0;
-    }
+    // if(recorder.recording_depth is 0) {
+    //   recorder.tr_handle = 0;
+    // }
   }
 
 
   // Function: do_record
   //
-  // The do_record method is the user-definable hook called by the <record>
+  // The ~do_record~ method is the user-definable hook called by the <record>
   // method. A derived class should override this method to include its fields
   // in a record operation.
   //
@@ -595,11 +609,11 @@ abstract class uvm_object: uvm_void
   //|   data_obj data;
   //|   int f1;
   //|   function void do_record (uvm_recorder recorder);
-  //|     recorder.record_field_int("f1", f1, $bits(f1), DEC);
+  //|     recorder.record_field("f1", f1, $bits(f1), UVM_DEC);
   //|     recorder.record_object("data", data);
   //|   endfunction
 
-  public void do_record (uvm_recorder recorder) {
+  void do_record (uvm_recorder recorder) {
     return;
   }
 
@@ -610,7 +624,7 @@ abstract class uvm_object: uvm_void
   //
   // The copy makes this object a copy of the specified object.
   //
-  // The copy method is not virtual and should not be overloaded in derived
+  // The ~copy~ method is not virtual and should not be overloaded in derived
   // classes. To copy the fields of a derived class, that class should override
   // the <do_copy> method.
 
@@ -618,27 +632,74 @@ abstract class uvm_object: uvm_void
     uvm_report_warning("NOUTILS", "default uvm_field_auto_setint --"
 		       "no uvm_object_utils", UVM_NONE);
   }
-  
+
+  void uvm_field_auto_setint(string field_name, uvm_integral_t value) {
+    uvm_report_warning("NOUTILS", "default uvm_field_auto_setint --"
+		       "no uvm_object_utils", UVM_NONE);
+  }
+
   void uvm_field_auto_setint(string field_name, ulong value) {
     uvm_report_warning("NOUTILS", "default uvm_field_auto_setint --"
 		       "no uvm_object_utils", UVM_NONE);
   }
-  
+
+  void uvm_field_auto_setint(string field_name, uint value) {
+    uvm_report_warning("NOUTILS", "default uvm_field_auto_setint --"
+		       "no uvm_object_utils", UVM_NONE);
+  }
+
+  void uvm_field_auto_setint(string field_name, ushort value) {
+    uvm_report_warning("NOUTILS", "default uvm_field_auto_setint --"
+		       "no uvm_object_utils", UVM_NONE);
+  }
+
+  void uvm_field_auto_setint(string field_name, ubyte value) {
+    uvm_report_warning("NOUTILS", "default uvm_field_auto_setint --"
+		       "no uvm_object_utils", UVM_NONE);
+  }
+
+  void uvm_field_auto_setint(string field_name, bool value) {
+    uvm_report_warning("NOUTILS", "default uvm_field_auto_setint --"
+		       "no uvm_object_utils", UVM_NONE);
+  }
+
   void uvm_field_auto_copy(uvm_object rhs) {
     uvm_report_warning("NOUTILS", "default uvm_field_auto_copy --"
 		       "no uvm_object_utils", UVM_NONE);
   }
-  
+
+  void uvm_field_auto_sprint() {
+    uvm_report_warning("NOUTILS", "default uvm_field_auto_sprint --"
+		       "no uvm_object_utils", UVM_NONE);
+  }
+
+  void uvm_field_auto_pack() {
+    uvm_report_warning("NOUTILS", "default uvm_field_auto_pack --"
+		       "no uvm_object_utils", UVM_NONE);
+  }
+
+  void uvm_field_auto_unpack() {
+    uvm_report_warning("NOUTILS", "default uvm_field_auto_unpack --"
+		       "no uvm_object_utils", UVM_NONE);
+  }
+
   void uvm_field_auto_compare(uvm_object rhs) {
     uvm_report_warning("NOUTILS", "default uvm_field_auto_compare --"
 		       "no uvm_object_utils", UVM_NONE);
   }
-  
-  final public void copy (uvm_object rhs) {
+
+  static uvm_object[uvm_object] _uvm_global_copy_map;
+
+  final void copy(uvm_object rhs) {
+    // GC hack to make sure that heap allocation with static scope
+    // are covered -- this is because of an error in druntime
+    // https://issues.dlang.org/show_bug.cgi?id=15513
+    // once the bug is rectified, we do not need to use GC explicitly
+    import core.memory: GC;
+
     // Thread static
     static int depth;
-    if(rhs !is null &&
-       uvm_global_copy_map.get(rhs) !is null) {
+    if(rhs !is null && rhs in _uvm_global_copy_map) {
       return;
     }
 
@@ -648,7 +709,14 @@ abstract class uvm_object: uvm_void
       return;
     }
 
-    uvm_global_copy_map.set(rhs, this);
+    if(_uvm_global_copy_map is null) {
+      _uvm_global_copy_map[rhs] = this;
+      GC.addRoot(cast(void*) _uvm_global_copy_map);
+    }
+    else {
+      _uvm_global_copy_map[rhs] = this;
+    }
+
     ++depth;
 
     // SV version -- not required for Vlang
@@ -659,16 +727,17 @@ abstract class uvm_object: uvm_void
     do_copy(rhs);
 
     --depth;
-    if(depth is 0) {
-      uvm_global_copy_map.clear();
+    if(depth == 0) {
+      GC.removeRoot(cast(void*) _uvm_global_copy_map);
+      _uvm_global_copy_map = null;
     }
   }
 
 
   // Function: do_copy
   //
-  // The do_copy method is the user-definable hook called by the copy method.
-  // A derived class should override this method to include its fields in a copy
+  // The ~do_copy~ method is the user-definable hook called by the copy method.
+  // A derived class should override this method to include its fields in a <copy>
   // operation.
   //
   // A typical implementation is as follows:
@@ -686,7 +755,7 @@ abstract class uvm_object: uvm_void
   // The implementation must call ~super.do_copy~, and it must $cast the rhs
   // argument to the derived type before copying.
 
-  public void do_copy (uvm_object rhs) {
+  void do_copy (uvm_object rhs) {
     return;
   }
 
@@ -696,9 +765,9 @@ abstract class uvm_object: uvm_void
   // Function: compare
   //
   // Deep compares members of this data object with those of the object provided
-  // in the ~rhs~ (right-hand side) argument, returning 1 on a match, 0 othewise.
+  // in the ~rhs~ (right-hand side) argument, returning 1 on a match, 0 otherwise.
   //
-  // The compare method is not virtual and should not be overloaded in derived
+  // The ~compare~ method is not virtual and should not be overloaded in derived
   // classes. To compare the fields of a derived class, that class should
   // override the <do_compare> method.
   //
@@ -709,7 +778,7 @@ abstract class uvm_object: uvm_void
   // then the global ~uvm_default_comparer~ policy is used. See <uvm_comparer>
   // for more information.
 
-  final public bool compare (uvm_object rhs, uvm_comparer comparer = null) {
+  final bool compare (uvm_object rhs, uvm_comparer comparer = null) {
     if(comparer !is null) {
       m_uvm_status_container.comparer = comparer;
     }
@@ -719,7 +788,7 @@ abstract class uvm_object: uvm_void
     comparer = m_uvm_status_container.comparer;
 
     if(! m_uvm_status_container.scope_stack.depth()) {
-      comparer.compare_map.clear();
+      comparer.reset_compare_map;
       comparer.result = 0;
       comparer.miscompares = "";
       comparer.scope_stack = m_uvm_status_container.scope_stack;
@@ -748,9 +817,9 @@ abstract class uvm_object: uvm_void
       }
     }
 
-    if(! done && (comparer.compare_map.get(rhs) !is null)) {
-      if(comparer.compare_map.get(rhs) !is this) {
-	comparer.print_msg_object(this, comparer.compare_map.get(rhs));
+    if(! done && (comparer.get_compare_map(rhs) !is null)) {
+      if(comparer.get_compare_map(rhs) !is this) {
+	comparer.print_msg_object(this, comparer.get_compare_map(rhs));
       }
       done = true;  //don't do any more work after this case, but do cleanup
     }
@@ -765,7 +834,7 @@ abstract class uvm_object: uvm_void
     bool dc;
 
     if(! done) {
-      comparer.compare_map.set(rhs, this);
+      comparer.set_compare_map(rhs, this);
       // SV version -- not required for Vlang
       // m_uvm_field_automation(rhs, UVM_COMPARE, "");
 
@@ -774,20 +843,20 @@ abstract class uvm_object: uvm_void
       dc = do_compare(rhs, comparer);
     }
 
-    if(m_uvm_status_container.scope_stack.depth() is 1)  {
+    if(m_uvm_status_container.scope_stack.depth() == 1)  {
       m_uvm_status_container.scope_stack.up();
     }
 
     if(rhs !is null) {
       comparer.print_rollup(this, rhs);
     }
-    return (comparer.result is 0 && dc is true);
+    return (comparer.result == 0 && dc == true);
   }
 
 
   // Function: do_compare
   //
-  // The do_compare method is the user-definable hook called by the <compare>
+  // The ~do_compare~ method is the user-definable hook called by the <compare>
   // method. A derived class should override this method to include its fields
   // in a compare operation. It should return 1 if the comparison succeeds, 0
   // otherwise.
@@ -814,7 +883,7 @@ abstract class uvm_object: uvm_void
   // class to customize how comparisons are performed and how much miscompare
   // information is collected. See uvm_comparer for more details.
 
-  public bool do_compare (uvm_object rhs, uvm_comparer comparer) {
+  bool do_compare (uvm_object rhs, uvm_comparer comparer) {
     return true;
   }
 
@@ -822,13 +891,13 @@ abstract class uvm_object: uvm_void
 
   // Function: pack
 
-  final public size_t pack (ref Bit!1[] bitstream, uvm_packer packer=null) {
+  final size_t pack (ref Bit!1[] bitstream, uvm_packer packer=null) {
     m_pack(packer);
     packer.get_bits(bitstream);
     return packer.get_packed_size();
   }
 
-  final public size_t pack (ref bool[] bitstream, uvm_packer packer=null) {
+  final size_t pack (ref bool[] bitstream, uvm_packer packer=null) {
     m_pack(packer);
     packer.get_bits(bitstream);
     return packer.get_packed_size();
@@ -836,8 +905,8 @@ abstract class uvm_object: uvm_void
 
   // Function: pack_bytes
 
-  final public size_t pack_bytes (ref ubyte[] bytestream,
-				  uvm_packer packer=null) {
+  final size_t pack_bytes (ref ubyte[] bytestream,
+			   uvm_packer packer=null) {
     m_pack(packer);
     packer.get_bytes(bytestream);
     return packer.get_packed_size();
@@ -858,8 +927,8 @@ abstract class uvm_object: uvm_void
   // Use the array's built-in ~size~ method to get the number of bytes or ints
   // consumed during the packing process.
 
-  final public size_t pack_ints (ref uint[] intstream,
-				 uvm_packer packer=null) {
+  final size_t pack_ints (ref uint[] intstream,
+			  uvm_packer packer=null) {
     m_pack(packer);
     packer.get_ints(intstream);
     return packer.get_packed_size();
@@ -868,7 +937,7 @@ abstract class uvm_object: uvm_void
 
   // Function: do_pack
   //
-  // The do_pack method is the user-definable hook called by the <pack> methods.
+  // The ~do_pack~ method is the user-definable hook called by the <pack> methods.
   // A derived class should override this method to include its fields in a pack
   // operation.
   //
@@ -907,8 +976,8 @@ abstract class uvm_object: uvm_void
   //  - For string data types, append a zero byte after packing the string
   //    contents.
   //
-  //  - For objects, pack 4 bits immediately before packing the object. For null
-  //    objects, pack 4'b0000. For non-null objects, pack 4'b0001.
+  //  - For objects, pack 4 bits immediately before packing the object. For ~null~
+  //    objects, pack 4'b0000. For ~non-null~ objects, pack 4'b0001.
   //
   // When the `uvm_field_* macros are used,
   // <Utility and Field Macros for Components and Objects>,
@@ -918,7 +987,7 @@ abstract class uvm_object: uvm_void
   // Packing order does not need to match declaration order. However, unpacking
   // order must match packing order.
 
-  public void do_pack (uvm_packer packer) {
+  void do_pack (uvm_packer packer) {
     return;
   }
 
@@ -927,8 +996,8 @@ abstract class uvm_object: uvm_void
 
   // Function: unpack
 
-  final public size_t unpack (ref Bit!1[] bitstream,
-			      uvm_packer packer = null) {
+  final size_t unpack (ref Bit!1[] bitstream,
+		       uvm_packer packer = null) {
 
     m_unpack_pre(packer);
     packer.put_bits(bitstream);
@@ -937,8 +1006,8 @@ abstract class uvm_object: uvm_void
     return packer.get_packed_size();
   }
 
-  final public size_t unpack (ref bool[] bitstream,
-			      uvm_packer packer = null) {
+  final size_t unpack (ref bool[] bitstream,
+		       uvm_packer packer = null) {
     m_unpack_pre(packer);
     packer.put_bits(bitstream);
     m_unpack_post(packer);
@@ -948,8 +1017,8 @@ abstract class uvm_object: uvm_void
 
   // Function: unpack_bytes
 
-  final public size_t unpack_bytes (ref ubyte[] bytestream,
-				    uvm_packer packer = null) {
+  final size_t unpack_bytes (ref ubyte[] bytestream,
+			     uvm_packer packer = null) {
     m_unpack_pre(packer);
     packer.put_bytes(bytestream);
     m_unpack_post(packer);
@@ -976,8 +1045,8 @@ abstract class uvm_object: uvm_void
   //
   // The return value is the actual number of bits unpacked from the given array.
 
-  final public size_t unpack_ints (ref uint[] intstream,
-				   uvm_packer packer = null) {
+  final size_t unpack_ints (ref uint[] intstream,
+			    uvm_packer packer = null) {
     m_unpack_pre(packer);
     packer.put_ints(intstream);
     m_unpack_post(packer);
@@ -988,7 +1057,7 @@ abstract class uvm_object: uvm_void
 
   // Function: do_unpack
   //
-  // The do_unpack method is the user-definable hook called by the <unpack>
+  // The ~do_unpack~ method is the user-definable hook called by the <unpack>
   // method. A derived class should override this method to include its fields
   // in an unpack operation.
   //
@@ -1019,15 +1088,15 @@ abstract class uvm_object: uvm_void
   //   elements in the array from the 32 bits immediately before unpacking
   //   individual elements, as shown above.
   //
-  // - For string data types, unpack into the new string until a null byte is
+  // - For string data types, unpack into the new string until a ~null~ byte is
   //   encountered.
   //
   // - For objects, unpack 4 bits into a byte or int variable. If the value
-  //   is 0, the target object should be set to null and unpacking continues to
+  //   is 0, the target object should be set to ~null~ and unpacking continues to
   //   the next property, if any. If the least significant bit is 1, then the
   //   target object should be allocated and its properties unpacked.
 
-  public void do_unpack (uvm_packer packer) {
+  void do_unpack (uvm_packer packer) {
     return;
   }
 
@@ -1036,9 +1105,9 @@ abstract class uvm_object: uvm_void
 
   // Function: set_int_local
 
-  public void set_int_local (string      field_name,
-			     uvm_bitstream_t value,
-			     bool         recurse = true) {
+  void set_int_local (string      field_name,
+		      uvm_bitstream_t value,
+		      bool         recurse = true) {
     // presently D has only a funky way to clear up associative arrays
     m_uvm_status_container.remove_all_cycles();
     m_uvm_status_container.reset_cycle_scopes();
@@ -1050,7 +1119,7 @@ abstract class uvm_object: uvm_void
     // m_uvm_field_automation(null, UVM_SETINT, field_name);
 
     uvm_field_auto_setint(field_name, value);
-    
+
 
     if(m_uvm_status_container.warning &&
        ! m_uvm_status_container.status) {
@@ -1060,19 +1129,141 @@ abstract class uvm_object: uvm_void
     m_uvm_status_container.remove_all_cycles();
   }
 
-  // Function: set_int_local
-
-  public void set_int_local (string      field_name,
-			     ulong       value,
-			     bool        recurse = true) {
+  void set_int_local (string      field_name,
+		      uvm_integral_t value,
+		      bool         recurse = true) {
     // presently D has only a funky way to clear up associative arrays
     m_uvm_status_container.remove_all_cycles();
     m_uvm_status_container.reset_cycle_scopes();
 
     m_uvm_status_container.status = false;
-    m_uvm_status_container.bitstream = cast(uvm_bitstream_t) value;
+    m_uvm_status_container.bitstream = cast(uvm_bitstream_t)value;
 
-    m_uvm_field_automation(null, UVM_SETINT, field_name);
+    // Use Vlang auto instead
+    // m_uvm_field_automation(null, UVM_SETINT, field_name);
+
+    uvm_field_auto_setint(field_name, value);
+
+
+    if(m_uvm_status_container.warning &&
+       ! m_uvm_status_container.status) {
+      uvm_report_error("NOMTC", format("did not find a match for field %s",
+				       field_name), UVM_NONE);
+    }
+    m_uvm_status_container.remove_all_cycles();
+  }
+
+  void set_int_local (string      field_name,
+		      ulong       value,
+		      bool         recurse = true) {
+    // presently D has only a funky way to clear up associative arrays
+    m_uvm_status_container.remove_all_cycles();
+    m_uvm_status_container.reset_cycle_scopes();
+
+    m_uvm_status_container.status = false;
+    m_uvm_status_container.bitstream = cast(uvm_bitstream_t)value;
+
+    // Use Vlang auto instead
+    // m_uvm_field_automation(null, UVM_SETINT, field_name);
+
+    uvm_field_auto_setint(field_name, value);
+
+
+    if(m_uvm_status_container.warning &&
+       ! m_uvm_status_container.status) {
+      uvm_report_error("NOMTC", format("did not find a match for field %s",
+				       field_name), UVM_NONE);
+    }
+    m_uvm_status_container.remove_all_cycles();
+  }
+
+  void set_int_local (string      field_name,
+		      uint        value,
+		      bool         recurse = true) {
+    // presently D has only a funky way to clear up associative arrays
+    m_uvm_status_container.remove_all_cycles();
+    m_uvm_status_container.reset_cycle_scopes();
+
+    m_uvm_status_container.status = false;
+    m_uvm_status_container.bitstream = cast(uvm_bitstream_t)value;
+
+    // Use Vlang auto instead
+    // m_uvm_field_automation(null, UVM_SETINT, field_name);
+
+    uvm_field_auto_setint(field_name, value);
+
+
+    if(m_uvm_status_container.warning &&
+       ! m_uvm_status_container.status) {
+      uvm_report_error("NOMTC", format("did not find a match for field %s",
+				       field_name), UVM_NONE);
+    }
+    m_uvm_status_container.remove_all_cycles();
+  }
+
+  void set_int_local (string      field_name,
+		      ushort       value,
+		      bool         recurse = true) {
+    // presently D has only a funky way to clear up associative arrays
+    m_uvm_status_container.remove_all_cycles();
+    m_uvm_status_container.reset_cycle_scopes();
+
+    m_uvm_status_container.status = false;
+    m_uvm_status_container.bitstream = cast(uvm_bitstream_t)value;
+
+    // Use Vlang auto instead
+    // m_uvm_field_automation(null, UVM_SETINT, field_name);
+
+    uvm_field_auto_setint(field_name, value);
+
+
+    if(m_uvm_status_container.warning &&
+       ! m_uvm_status_container.status) {
+      uvm_report_error("NOMTC", format("did not find a match for field %s",
+				       field_name), UVM_NONE);
+    }
+    m_uvm_status_container.remove_all_cycles();
+  }
+
+  void set_int_local (string      field_name,
+		      ubyte       value,
+		      bool         recurse = true) {
+    // presently D has only a funky way to clear up associative arrays
+    m_uvm_status_container.remove_all_cycles();
+    m_uvm_status_container.reset_cycle_scopes();
+
+    m_uvm_status_container.status = false;
+    m_uvm_status_container.bitstream = cast(uvm_bitstream_t)value;
+
+    // Use Vlang auto instead
+    // m_uvm_field_automation(null, UVM_SETINT, field_name);
+
+    uvm_field_auto_setint(field_name, value);
+
+
+    if(m_uvm_status_container.warning &&
+       ! m_uvm_status_container.status) {
+      uvm_report_error("NOMTC", format("did not find a match for field %s",
+				       field_name), UVM_NONE);
+    }
+    m_uvm_status_container.remove_all_cycles();
+  }
+
+  void set_int_local (string      field_name,
+		      bool value,
+		      bool         recurse = true) {
+    // presently D has only a funky way to clear up associative arrays
+    m_uvm_status_container.remove_all_cycles();
+    m_uvm_status_container.reset_cycle_scopes();
+
+    m_uvm_status_container.status = false;
+    m_uvm_status_container.bitstream = cast(uvm_bitstream_t)value;
+
+    // Use Vlang auto instead
+    // m_uvm_field_automation(null, UVM_SETINT, field_name);
+
+    uvm_field_auto_setint(field_name, value);
+
 
     if(m_uvm_status_container.warning &&
        ! m_uvm_status_container.status) {
@@ -1084,9 +1275,9 @@ abstract class uvm_object: uvm_void
 
   // Function: set_string_local
 
-  public void set_string_local (string field_name,
-				string value,
-				bool   recurse = true) {
+  void set_string_local (string field_name,
+			 string value,
+			 bool   recurse = true) {
     m_uvm_status_container.remove_all_cycles();
     m_uvm_status_container.reset_cycle_scopes();
 
@@ -1167,16 +1358,18 @@ abstract class uvm_object: uvm_void
   // for command-line debugging and auto-configuration) and should not be called
   // directly by the user.
 
-  public void set_object_local (string      field_name,
-				uvm_object  value,
-				bool        clone = true,
-				bool        recurse = true) {
+  void set_object_local (string      field_name,
+			 uvm_object  value,
+			 bool        clone = true,
+			 bool        recurse = true) {
     m_uvm_status_container.remove_all_cycles();
     m_uvm_status_container.reset_cycle_scopes();
 
     if(clone && (value !is null)) {
       uvm_object cc = value.clone();
-      if(cc !is null) cc.set_name(field_name);
+      if(cc !is null) {
+	cc.set_name(field_name);
+      }
       value = cc;
     }
 
@@ -1257,16 +1450,18 @@ abstract class uvm_object: uvm_void
   // The print_matches bit causes an informative message to be printed
   // when a field is set using one of the set methods.
 
-  @uvm_private_sync private string _m_leaf_name;
+  @uvm_private_sync
+  private string _m_leaf_name;
 
-  @uvm_private_sync private int _m_inst_id;
+  @uvm_private_sync
+  private int _m_inst_id;
 
   // static protected int m_inst_count;
   // static /*protected*/ uvm_status_container m_uvm_status_container = new;
 
-  public void m_uvm_field_automation (uvm_object tmp_data__,
-				      int        what__,
-				      string     str__) {
+  void m_uvm_field_automation (uvm_object tmp_data__,
+			       int        what__,
+			       string     str__) {
     return;
   }
 
@@ -1274,18 +1469,4 @@ abstract class uvm_object: uvm_void
     return null;
   }
 
-} // endclass
-
-
-
-private uvm_copy_map uvm_global_copy_map() {
-  // This static variable is required to be thread specific
-  // No need to share this variable
-  static uvm_copy_map copy_map = null;
-
-  if (copy_map is null) {
-    copy_map = new uvm_copy_map();
-  }
-
-  return copy_map;
 }

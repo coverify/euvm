@@ -75,7 +75,7 @@ class uvm_driver(REQ=uvm_sequence_item, RSP=REQ): uvm_component
   // constructor arguments for <uvm_component>: ~name~ is the name of the
   // instance, and ~parent~ is the handle to the hierarchical parent, if any.
 
-  public this(string name, uvm_component parent) {
+  this(string name, uvm_component parent) {
     synchronized(this) {
       super(name, parent);
       seq_item_port    = new uvm_seq_item_pull_port!(REQ, RSP)("sqr_pull_port", this);
@@ -86,7 +86,7 @@ class uvm_driver(REQ=uvm_sequence_item, RSP=REQ): uvm_component
 
   enum string type_name = "uvm_driver!(REQ,RSP)";
 
-  override public string get_type_name() {
+  override string get_type_name() {
     return type_name;
   }
 }

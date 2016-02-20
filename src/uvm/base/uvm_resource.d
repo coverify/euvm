@@ -1,8 +1,8 @@
 //----------------------------------------------------------------------
-//   Copyright 2011 Cypress Semiconductor
-//   Copyright 2010 Mentor Graphics Corporation
-//   Copyright 2011 Cadence Design Systems, Inc.
-//   Copyright 2014 Coverify Systems Technology
+//   Copyright 2011      Cypress Semiconductor
+//   Copyright 2010      Mentor Graphics Corporation
+//   Copyright 2011      Cadence Design Systems, Inc.
+//   Copyright 2014-2016 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -36,7 +36,7 @@
 // interfaces.
 //
 // Resources are stored in a resource database so that each resource can
-// be retrieved by name or by type. The databse has both a name table
+// be retrieved by name or by type. The database has both a name table
 // and a type table and each resource is entered into both. The database
 // is globally accessible.
 //
@@ -51,7 +51,7 @@
 // each resource has a static type handle that uniquely identifies the
 // type of each specialized resource container.
 //
-// Mutliple resources that have the same name are stored in a queue.
+// Multiple resources that have the same name are stored in a queue.
 // Each resource is pushed into a queue with the first one at the front
 // of the queue and each subsequent one behind it.  The same happens for
 // multiple resources that have the same type.  The resource queues are
@@ -89,7 +89,7 @@
 // <uvm_resource#(T)>: parameterized resource container.  This class
 // includes the interfaces for reading and writing each resource.
 // Because the class is parameterized, all the access functions are type
-// sace.
+// safe.
 //
 // <uvm_resource_pool>: the resource database. This is a singleton
 // class object.
@@ -111,14 +111,17 @@ module uvm.base.uvm_resource;
 import std.string;
 import uvm.base.uvm_object;
 import uvm.base.uvm_globals;
+import uvm.base.uvm_object_globals;
 import uvm.base.uvm_root;
 import uvm.base.uvm_printer;
+import uvm.base.uvm_spell_chkr;
 import esdl.base.core: SimTime, getRootEntity;
 
-import std.conv: to;
+import std.random: Random;
 import std.algorithm: sort;
 import uvm.meta.meta;
-
+import std.conv: to;
+import core.memory: GC;
 //----------------------------------------------------------------------
 // Class: uvm_resource_types
 //
@@ -146,7 +149,7 @@ class uvm_resource_types
   mixin(declareEnums!override_e());
 
   // general purpose queue of resourcex
-  alias uvm_queue!uvm_resource_base rsrc_q_t;
+  alias rsrc_q_t = uvm_queue!uvm_resource_base;
 
   // enum for setting resource search priority
   enum priority_e: bool
@@ -193,7 +196,8 @@ class uvm_resource_options
   // static private bool auditing = true;
   static class uvm_once
   {
-    @uvm_private_sync private bool _auditing = true;
+    @uvm_none_sync
+    private bool _auditing = true;
   }
 
   mixin uvm_once_sync;
@@ -204,8 +208,10 @@ class uvm_resource_options
   // reads and writes to the database to store information about
   // the accesses. Auditing is turned on by default.
 
-  static public void turn_on_auditing() {
-    auditing = true;
+  static void turn_on_auditing() {
+    synchronized(once) {
+      once._auditing = true;
+    }
   }
 
   // Function: turn_off_auditing
@@ -214,19 +220,30 @@ class uvm_resource_options
   // it is not possible to get extra information about resource
   // database accesses.
 
-  static public void turn_off_auditing() {
-    auditing = false;
+  static void turn_off_auditing() {
+    synchronized(once) {
+      once._auditing = false;
+    }
   }
 
   // Function: is_auditing
   //
   // Returns 1 if the auditing facility is on and 0 if it is off.
 
-  static public bool is_auditing() {
-    return auditing;
+  static bool is_auditing() {
+    synchronized(once) {
+      return once._auditing;
+    }
   }
 }
 
+//----------------------------------------------------------------------
+// Class: uvm_resource_base
+//
+// Non-parameterized base class for resources.  Supports interfaces for
+// scope matching, and virtual functions for printing the resource and
+// for printing the accessor list
+//----------------------------------------------------------------------
 
 abstract class uvm_resource_base: uvm_object
 {
@@ -239,7 +256,8 @@ abstract class uvm_resource_base: uvm_object
     // found has precedence.
     //
 
-    @uvm_public_sync private uint _default_precedence = 1000;
+    @uvm_public_sync
+    private uint _default_precedence = 1000;
   }
 
   mixin uvm_once_sync;
@@ -247,10 +265,8 @@ abstract class uvm_resource_base: uvm_object
 
   protected string _rscope;
   @uvm_immutable_sync
-    protected WithEvent!bool _modified;
+  protected WithEvent!bool _modified;
   protected bool _read_only;
-
-  private bool _m_is_regex_name;
 
   uvm_resource_types.access_t[string] _access;
 
@@ -262,13 +278,13 @@ abstract class uvm_resource_base: uvm_object
   // and may be set to a higher or lower precedence as desired.
 
   @uvm_public_sync
-    private uint _precedence;
+  private uint _precedence;
 
 
   // Function: new
   //
   // constructor for uvm_resource_base.  The constructor takes two
-  // arguments, the name of the resource and a resgular expression which
+  // arguments, the name of the resource and a regular expression which
   // represents the set of scopes over which this resource is visible.
 
   this(string name = null, string s = "*") {
@@ -276,13 +292,9 @@ abstract class uvm_resource_base: uvm_object
       super(name);
       _modified = new WithEvent!bool();
       set_scope(s);
-      _modified = false;
+      modified = false;
       _read_only = false;
       _precedence = default_precedence;
-      import uvm.base.uvm_misc: uvm_has_wildcard;
-      if(uvm_has_wildcard(name)) {
-	_m_is_regex_name = true;
-      }
     }
   }
 
@@ -291,7 +303,7 @@ abstract class uvm_resource_base: uvm_object
   // Pure virtual function that returns the type handle of the resource
   // container.
 
-  public TypeInfo get_type_handle();
+  abstract TypeInfo get_type_handle();
 
 
   //---------------------------
@@ -303,7 +315,7 @@ abstract class uvm_resource_base: uvm_object
   // Establishes this resource as a read-only resource.  An attempt
   // to call <uvm_resource#(T).write> on the resource will cause an error.
 
-  public void set_read_only() {
+  void set_read_only() {
     synchronized(this) {
       _read_only = true;
     }
@@ -318,7 +330,7 @@ abstract class uvm_resource_base: uvm_object
   // that.  If anyone can flip the read_only bit then the resource is not
   // truly read_only.
 
-  public void set_read_write() {
+  void set_read_write() {
     synchronized(this) {
       _read_only = false;
     }
@@ -326,9 +338,9 @@ abstract class uvm_resource_base: uvm_object
 
   // Function: is_read_only
   //
-  // Retruns one if this resource has been set to read-only, zero
+  // Retuns one if this resource has been set to read-only, zero
   // otherwise
-  public bool is_read_only() {
+  bool is_read_only() {
     synchronized(this) {
       return _read_only;
     }
@@ -348,8 +360,8 @@ abstract class uvm_resource_base: uvm_object
   // it can be called repeatedly.
 
   // task
-  public void wait_modified() {
-    while(modified == false) {
+  void wait_modified() {
+    while(modified is false) {
       modified.wait();
     }
     modified = false;
@@ -388,11 +400,11 @@ abstract class uvm_resource_base: uvm_object
   //|    top\.u[1-5]\.*		all of the scopes rooted and named u1, u2, u3,
   //                             u4, or u5, and any of their subscopes.
   //
-  // The examples above use posix regular expression notation.  This is
+  // The examples above use POSIX regular expression notation.  This is
   // a very general and expressive notation.  It is not always the case
   // that so much expressiveness is required.  Sometimes an expression
   // syntax that is easy to read and easy to write is useful, even if
-  // the syntax is not as expressive as the full power of posix regular
+  // the syntax is not as expressive as the full power of POSIX regular
   // expressions.  A popular substitute for regular expressions is
   // globs.  A glob is a simplified regular expression. It only has
   // three metacharacters -- *, +, and ?.  Character ranges are not
@@ -424,13 +436,13 @@ abstract class uvm_resource_base: uvm_object
   // are treated as glob expressions. They are converted from glob
   // notation to regular expression notation internally.  Regular expression
   // compilation and matching as well as glob-to-regular expression
-  // conversion are handled by three DPI functions:
+  // conversion are handled by two DPI functions:
   //
   //|    function int uvm_re_match(string re, string str);
   //|    function string uvm_glob_to_re(string glob);
   //
   // uvm_re_match both compiles and matches the regular expression.
-  // of the matching is done using regular expressions, so globs are
+  // All of the matching is done using regular expressions, so globs are
   // converted to regular expressions and then processed.
 
 
@@ -442,9 +454,8 @@ abstract class uvm_resource_base: uvm_object
   // before it is stored.
   //
 
-  public void set_scope(string s) {
+  void set_scope(string s) {
     synchronized(this) {
-      import uvm.base.uvm_globals: uvm_glob_to_re;
       _rscope = uvm_glob_to_re(s);
     }
   }
@@ -454,7 +465,7 @@ abstract class uvm_resource_base: uvm_object
   // Retrieve the regular expression string that identifies the set of
   // scopes over which this resource is visible.
   //
-  public string get_scope() {
+  string get_scope() {
     synchronized(this) {
       return _rscope;
     }
@@ -465,11 +476,10 @@ abstract class uvm_resource_base: uvm_object
   // Using the regular expression facility, determine if this resource
   // is visible in a scope.  Return one if it is, zero otherwise.
   //
-  public bool match_scope(string s) {
+  bool match_scope(string s) {
     synchronized(this) {
-      import uvm.base.uvm_globals: uvm_re_match;
       int err = uvm_re_match(_rscope, s);
-      return (err is 0);
+      return (err == 0);
     }
   }
 
@@ -487,7 +497,7 @@ abstract class uvm_resource_base: uvm_object
   // Change the search priority of the resource based on the value of
   // the priority enum argument.
   //
-  abstract public void set_priority (uvm_resource_types.priority_e pri);
+  abstract void set_priority (uvm_resource_types.priority_e pri);
 
   //-------------------------
   // Group: Utility Functions
@@ -500,11 +510,11 @@ abstract class uvm_resource_base: uvm_object
   // specializations are expected to override this function to produce a
   // proper string representation of the resource value.
 
-  public string to(T)() if(is(T == string)) {
+  string to(T)() if(is(T == string)) {
     return "?";
   }
 
-  override public string convert2string() {
+  override string convert2string() {
     import std.conv: to;
     return to!string(this);
   }
@@ -514,9 +524,9 @@ abstract class uvm_resource_base: uvm_object
   //
   // Implementation of do_print which is called by print().
 
-  override public void do_print (uvm_printer printer) {
-    import uvm.meta.mcd: vdisplay;
-    vdisplay("%s [%s] : %s", get_name(), get_scope(), convert2string());
+  override void do_print (uvm_printer printer) {
+    printer.print("", format("%s [%s] : %s", get_name(),
+			     get_scope(), convert2string()));
   }
 
   //-------------------
@@ -524,8 +534,8 @@ abstract class uvm_resource_base: uvm_object
   //-------------------
   //
   // To find out what is happening as the simulation proceeds, an audit
-  // trail of each read and write is kept. The read and write methods
-  // in uvm_resource#(T) each take an accessor argument.  This is a
+  // trail of each read and write is kept. The <uvm_resource#(T)::read> and
+  // <uvm_resource#(T)::write> methods each take an accessor argument.  This is a
   // handle to the object that performed that resource access.
   //
   //|    function T read(uvm_object accessor = null);
@@ -548,11 +558,11 @@ abstract class uvm_resource_base: uvm_object
   // Each audit record also includes the time of the access (simulation time)
   // and the particular operation performed (read or write).
   //
-  // Auditting is controlled through the <uvm_resource_options> class.
+  // Auditing is controlled through the <uvm_resource_options> class.
 
   // function: record_read_access
 
-  final public void record_read_access(uvm_object accessor = null) {
+  final void record_read_access(uvm_object accessor = null) {
     synchronized(this) {
       string str;
       uvm_resource_types.access_t access_record;
@@ -594,7 +604,7 @@ abstract class uvm_resource_base: uvm_object
 
   // function: record_write_access
 
-  final public void record_write_access(uvm_object accessor = null) {
+  final void record_write_access(uvm_object accessor = null) {
     synchronized(this) {
       // string str;
 
@@ -626,8 +636,10 @@ abstract class uvm_resource_base: uvm_object
   //
   // Dump the access records for this resource
   //
-  final public void print_accessors() {
+  final void print_accessors() {
     synchronized(this) {
+      string qs;
+
       import uvm.meta.mcd;
       // uvm_component comp;
       uvm_resource_types.access_t access_record;
@@ -636,41 +648,30 @@ abstract class uvm_resource_base: uvm_object
 	return;
       }
 
-      vdisplay("  --------");
-
-      foreach (str, unused; _access) {
-	vwrite("  %s", str);
-	access_record = _access[str];
-	vdisplay(" reads: %0d @ %0t  writes: %0d @ %0t",
-		 access_record.read_count,
-		 access_record.read_time,
-		 access_record.write_count,
-		 access_record.write_time);
+      foreach (str, access_record; _access) {
+	qs ~= format("%s reads: %0d @ %0s  writes: %0d @ %0s\n", str,
+		     access_record.read_count,
+		     access_record.read_time,
+		     access_record.write_count,
+		     access_record.write_time);
       }
-
-      vdisplay("");
+      uvm_root_info("UVM/RESOURCE/ACCESSOR", qs, UVM_NONE);
     }
   }
 
 
   // Function: init_access_record
   //
-  // Initalize a new access record
+  // Initialize a new access record
   //
   // this should not be required since in D we can get init value for structs
   // All calls of this function have been replaced with access_t.init assignments
-  // static private void init_access_record (ref uvm_resource_types.access_t
-  //					  access_record) {
-  //   access_record.read_time = 0;
-  //   access_record.write_time = 0;
-  //   access_record.read_count = 0;
-  //   access_record.write_count = 0;
-  // }
-
-  public bool has_regex_name() {
-    synchronized(this) {
-      return _m_is_regex_name;
-    }
+  static private void init_access_record (ref uvm_resource_types.access_t
+					  access_record) {
+    access_record.read_time = 0;
+    access_record.write_time = 0;
+    access_record.read_count = 0;
+    access_record.write_count = 0;
   }
 
 }
@@ -680,11 +681,10 @@ abstract class uvm_resource_base: uvm_object
 // Class - get_t
 //
 // Instances of get_t are stored in the history list as a record of each
-// get.  Failed gets are indicated with rsrc set to null.  This is part
+// get.  Failed gets are indicated with rsrc set to ~null~.  This is part
 // of the audit trail facility for resources.
 //----------------------------------------------------------------------
 struct get_t {
-  import esdl.data.time;
   string name;
   string rscope;
   uvm_resource_base rsrc;
@@ -700,7 +700,7 @@ struct get_t {
 // resource pool contains two associative arrays, one with name as the
 // key and one with the type handle as the key.  Each associative array
 // contains a queue of resources.  Each resource has a regular
-// expression that represents the set of scopes over with it is visible.
+// expression that represents the set of scopes over which it is visible.
 //
 //|  +------+------------+                          +------------+------+
 //|  | name | rsrc queue |                          | rsrc queue | type |
@@ -732,7 +732,7 @@ struct get_t {
 // Resources are added to the pool by calling <set>; they are retrieved
 // from the pool by calling <get_by_name> or <get_by_type>.  When an object
 // creates a new resource and calls <set> the resource is made available to be
-// retrieved by other objects outside of itsef; an object gets a
+// retrieved by other objects outside of itself; an object gets a
 // resource when it wants to access a resource not currently available
 // in its scope.
 //
@@ -747,7 +747,7 @@ struct get_t {
 // history list.  This will tell which resources were successfully
 // located and which were not.  You can use this information
 // to determine if there is some error in name, type, or
-// scope that has caused a resource to not be located or to be incorrrectly
+// scope that has caused a resource to not be located or to be incorrectly
 // located (i.e. the wrong resource is located).
 //
 //----------------------------------------------------------------------
@@ -755,13 +755,13 @@ struct get_t {
 class uvm_resource_pool {
   import esdl.data.queue;
   import std.string: format;
-  import uvm.base.uvm_globals;
 
   static class uvm_once
   {
-    @uvm_public_sync private bool _m_has_wildcard_names;
-    @uvm_immutable_sync private uvm_resource_pool _rp; //  = get();
-    @uvm_immutable_sync private uvm_line_printer _printer;
+    @uvm_immutable_sync
+    private uvm_resource_pool _rp; //  = get();
+    @uvm_immutable_sync
+    private uvm_line_printer _printer;
     this() {
       synchronized(this) {
 	_rp = new uvm_resource_pool();
@@ -780,7 +780,7 @@ class uvm_resource_pool {
   private uvm_resource_types.rsrc_q_t[string]     _rtab;
   private uvm_resource_types.rsrc_q_t[TypeInfo]   _ttab;
 
-  private Queue!get_t _get_record;  // history of gets
+  private get_t[] _get_record;  // history of gets
 
   // To make a proper singleton the constructor should be protected.
   // However, IUS doesn't support protected constructors so we'll just
@@ -788,25 +788,17 @@ class uvm_resource_pool {
   // constructors ever becomes available then this comment can be
   // deleted and the protected constructor uncommented.
 
-  private this() {}
+  private this() { }
 
 
   // Function: get
   //
   // Returns the singleton handle to the resource pool
 
-  // moved to once
-  // static this() {
-  //   synchronized
-  //     rp = get();
-  // }
-
-  static public uvm_resource_pool get() {
-    // synchronized {
-    // if(rp is null)
-    //	rp = new uvm_resource_pool();
-    return rp;
-    // }
+  static uvm_resource_pool get() {
+    synchronized(once) {
+      return rp;
+    }
   }
 
 
@@ -816,9 +808,8 @@ class uvm_resource_pool {
   // correctly spelled strings -- i.e. the dictionary -- is the name
   // map.
 
-  final public bool spell_check(string s) {
+  final bool spell_check(string s) {
     synchronized(this) {
-      import uvm.base.uvm_spell_chkr;
       return uvm_spell_chkr!(uvm_resource_types.rsrc_q_t).check(_rtab, s);
     }
   }
@@ -842,14 +833,14 @@ class uvm_resource_pool {
   // override, a type override or both can be specified.  If an
   // override is specified then the resource is entered at the front of
   // the queue instead of at the back.  It is not recommended that users
-  // specify the override paramterer directly, rather they use the
+  // specify the override parameter directly, rather they use the
   // <set_override>, <set_name_override>, or <set_type_override>
   // functions.
   //
-  final public void set (uvm_resource_base rsrc,
-			 uvm_resource_types.override_e ovrrd =
-			 uvm_resource_types.override_e.NONE_OVERRIDE) {
-    // If resource handle is null then there is nothing to do.
+  final void set (uvm_resource_base rsrc,
+		  uvm_resource_types.override_e ovrrd =
+		  uvm_resource_types.override_e.NONE_OVERRIDE) {
+    // If resource handle is ~null~ then there is nothing to do.
     if(rsrc is null) {
       return;
     }
@@ -864,7 +855,7 @@ class uvm_resource_pool {
 	  rq = _rtab[name];
 	}
 	else {
-	  rq = new uvm_resource_types.rsrc_q_t();
+	  rq = new uvm_resource_types.rsrc_q_t("uvm_resource/set/rq");
 	}
 
 	// Insert the resource into the queue associated with its name.
@@ -886,7 +877,7 @@ class uvm_resource_pool {
 	rq = _ttab[type_handle];
       }
       else {
-	rq = new uvm_resource_types.rsrc_q_t();
+	rq = new uvm_resource_types.rsrc_q_t("uvm_resource/set/rq2");
       }
 
       // insert the resource into the queue associated with its type.  If
@@ -900,12 +891,6 @@ class uvm_resource_pool {
       }
       _ttab[type_handle] = rq;
     }
-    //optimization for name lookups. Since most environments never
-    //use wildcarded names, don't want to incurr a search penalty
-    //unless a wildcarded name has been used.
-    if(rsrc.has_regex_name) {
-      m_has_wildcard_names = true;
-    }
   }
 
   // Function: set_override
@@ -913,7 +898,7 @@ class uvm_resource_pool {
   // The resource provided as an argument will be entered into the pool
   // and will override both by name and type.
 
-  final public void set_override(uvm_resource_base rsrc) {
+  final void set_override(uvm_resource_base rsrc) {
     set(rsrc, (uvm_resource_types.BOTH_OVERRIDE));
   }
 
@@ -923,7 +908,7 @@ class uvm_resource_pool {
   // The resource provided as an argument will entered into the pool
   // using normal precedence in the type map and will override the name.
 
-  final public void set_name_override(uvm_resource_base rsrc) {
+  final void set_name_override(uvm_resource_base rsrc) {
     set(rsrc, uvm_resource_types.NAME_OVERRIDE);
   }
 
@@ -931,9 +916,9 @@ class uvm_resource_pool {
   // Function: set_type_override
   //
   // The resource provided as an argument will be entered into the pool
-  // using noraml precedence in the name map and will override the type.
+  // using normal precedence in the name map and will override the type.
 
-  final public void set_type_override(uvm_resource_base rsrc) {
+  final void set_type_override(uvm_resource_base rsrc) {
     set(rsrc, uvm_resource_types.TYPE_OVERRIDE);
   }
 
@@ -942,11 +927,9 @@ class uvm_resource_pool {
   //
   // Insert a new record into the get history list.
 
-  final public void push_get_record(string name, string rscope,
-				    uvm_resource_base rsrc) {
+  final void push_get_record(string name, string rscope,
+			     uvm_resource_base rsrc) {
     synchronized(this) {
-      get_t impt;
-
       // if auditing is turned off then there is no reason
       // to save a get record
       if(!uvm_resource_options.is_auditing()) {
@@ -955,13 +938,14 @@ class uvm_resource_pool {
 
       // get_t is a struct in vlang so no need to new
       // impt = new get_t();
+      get_t impt;
 
-      impt.name  = name;
+      impt.name   = name;
       impt.rscope = rscope;
-      impt.rsrc  = rsrc;
-      impt.t     = getRootEntity().getSimTime();
+      impt.rsrc   = rsrc;
+      impt.t      = getRootEntity().getSimTime();
 
-      _get_record.pushBack(impt);
+      _get_record ~= impt;
     }
   }
 
@@ -969,20 +953,20 @@ class uvm_resource_pool {
   //
   // Format and print the get history list.
 
-  final public void dump_get_records() {
+  final void dump_get_records() {
     synchronized(this) {
-      import uvm.meta.mcd: vdisplay;
-      get_t record;
       bool success;
+      string qs;
 
-      vdisplay("--- resource get records ---");
+      qs ~= "--- resource get records ---\n";
       foreach (i, record; _get_record) {
 	success = (record.rsrc !is null);
-	vdisplay("get: name=%s  scope=%s  %s @ %s",
-		 record.name, record.rscope,
-		 ((success)?"success":"fail"),
-		 record.t);
+	qs ~= format("get: name=%s  scope=%s  %s @ %s\n",
+		     record.name, record.rscope,
+		     ((success)?"success":"fail"),
+		     record.t);
       }
+      uvm_root_info("UVM/RESOURCE/GETRECORD", qs, UVM_NONE);
     }
   }
 
@@ -996,7 +980,7 @@ class uvm_resource_pool {
   // matches the name or type (respectively) and is visible in the
   // current scope.  These functions return a queue of resources.
   //
-  // <get_highest_precedence> traverese a queue of resources and
+  // <get_highest_precedence> traverse a queue of resources and
   // returns the one with the highest precedence -- i.e. the one whose
   // precedence member has the highest value.
   //
@@ -1011,16 +995,24 @@ class uvm_resource_pool {
   // match the ~name~, ~scope~, and ~type_handle~.  If no resources
   // match the queue is returned empty. If ~rpterr~ is set then a
   // warning is issued if no matches are found, and the spell checker is
-  // invoked on ~name~.  If ~type_handle~ is null then a type check is
+  // invoked on ~name~.  If ~type_handle~ is ~null~ then a type check is
   // not made and resources are returned that match only ~name~ and
   // ~scope~.
 
-  final public uvm_resource_types.rsrc_q_t lookup_name(string rscope = "",
-						       string name = "",
-						       TypeInfo type_handle = null,
-						       bool rpterr = 1) {
+  final uvm_resource_types.rsrc_q_t lookup_name(string rscope = "",
+						string name = "",
+						TypeInfo type_handle = null,
+						bool rpterr = true) {
     synchronized(this) {
-      auto q = new uvm_resource_types.rsrc_q_t();
+      uvm_resource_types.rsrc_q_t q;
+
+      // ensure rand stability during lookup
+      Process p = Process.self();
+      Random s;
+      if(p !is null) s=p.getRandState();
+      q = new  uvm_resource_types.rsrc_q_t("uvm_resource/lookup_name/q");
+      if(p !is null) p.setRandState(s);
+
 
       // resources with empty names are anonymous and do not exist in the name map
       if(name == "") {
@@ -1029,7 +1021,10 @@ class uvm_resource_pool {
 
       // Does an entry in the name map exist with the specified name?
       // If not, then we're done
-      if((rpterr && !spell_check(name)) || (!rpterr && name !in _rtab)) {
+      if(name !in _rtab) {
+	if(rpterr) {
+	  spell_check(name);
+	}
 	return q;
       }
 
@@ -1055,8 +1050,8 @@ class uvm_resource_pool {
   // with the highest precedence value, the first one that has that
   // precedence will be the one that is returned.
 
-  static public uvm_resource_base get_highest_precedence(// ref
-							 uvm_resource_types.rsrc_q_t q) {
+  static uvm_resource_base get_highest_precedence(// ref
+						  uvm_resource_types.rsrc_q_t q) {
     uvm_resource_base rsrc = null;
     foreach(r; q) {
       if(rsrc is null || r.precedence > rsrc.precedence) {
@@ -1074,18 +1069,21 @@ class uvm_resource_pool {
   // be last. Resources that have the same precedence and the same name
   // will be ordered by most recently set first.
 
-  static public void sort_by_precedence(// ref
-					uvm_resource_types.rsrc_q_t q) {
+  static void sort_by_precedence(// ref
+				 uvm_resource_types.rsrc_q_t q) {
     uvm_resource_types.rsrc_q_t[int] all;
     foreach(r; q) {
       if(r.precedence !in all) {
-	all[r.precedence] = new uvm_resource_types.rsrc_q_t();
+	all[r.precedence] =
+	  new uvm_resource_types.rsrc_q_t(format("uvm_resource/sort_by" ~
+						 "_precedence/all[%d]",
+						 r.precedence));
       }
       all[r.precedence].push_front(r); //since we will push_front in the final
     }
     q.remove();
-    foreach(i, a; all) {
-      foreach(r; a) {
+    foreach(i; sort(all.keys)) {
+      foreach(r; all[i]) {
 	q.push_front(r);
       }
     }
@@ -1101,14 +1099,14 @@ class uvm_resource_pool {
   // checker will be invoked and warnings about multiple resources will
   // be produced.
 
-  final public uvm_resource_base get_by_name(string rscope = "",
-					     string name = "",
-					     TypeInfo type_handle = null,
-					     bool rpterr = true) {
+  final uvm_resource_base get_by_name(string rscope,
+				      string name,
+				      TypeInfo type_handle,
+				      bool rpterr = true) {
     synchronized(this) {
       uvm_resource_types.rsrc_q_t q = lookup_name(rscope, name, type_handle,
 						  rpterr);
-      if(q.size() is 0) {
+      if(q.size() == 0) {
 	push_get_record(name, rscope, null);
 	return null;
       }
@@ -1125,10 +1123,10 @@ class uvm_resource_pool {
   // the ~type_handle~ and ~scope~.  If no resources match then the returned
   // queue is empty.
 
-  final public uvm_resource_types.rsrc_q_t lookup_type(string rscope = "",
-						       TypeInfo type_handle=null) {
+  final uvm_resource_types.rsrc_q_t lookup_type(string rscope,
+						TypeInfo type_handle) {
     synchronized(this) {
-      auto q = new uvm_resource_types.rsrc_q_t();
+      auto q = new uvm_resource_types.rsrc_q_t("uvm_resource/lookup_type/q");
 
       if(type_handle is null || type_handle !in _ttab) {
 	return q;
@@ -1149,13 +1147,13 @@ class uvm_resource_pool {
   // Lookup a resource by ~type_handle~ and ~scope~.  Insert a record into
   // the get history list whether or not the get succeeded.
 
-  final public uvm_resource_base get_by_type(string rscope = "",
-					     TypeInfo type_handle=null) {
+  final uvm_resource_base get_by_type(string rscope = "",
+				      TypeInfo type_handle=null) {
     synchronized(this) {
 
       uvm_resource_types.rsrc_q_t q = lookup_type(rscope, type_handle);
 
-      if(q.size() is 0) {
+      if(q.size() == 0) {
 	push_get_record("<type>", rscope, null);
 	return null;
       }
@@ -1169,44 +1167,16 @@ class uvm_resource_pool {
   // Function: lookup_regex_names
   //
   // This utility function answers the question, for a given ~name~,
-  // ~scope~,and ~type_handle~, what are all of the resources with a
-  // matching name (where the resource name may be a regular
-  // expression), a matching scope (where the resoucre scope may be a
-  // regular expression), and a matching type? ~name~ and ~scope~ are
-  // explicit values.
+  // ~scope~, and ~type_handle~, what are all of the resources with requested name,
+  // a matching scope (where the resource scope may be a
+  // regular expression), and a matching type?
+  // ~name~ and ~scope~ are explicit values.
 
-  final public uvm_resource_types.rsrc_q_t lookup_regex_names(string rscope,
-							      string name,
-							      TypeInfo type_handle = null
-							      ) {
-    synchronized(this) {
-      import uvm.base.uvm_globals: uvm_re_match;
-      uvm_resource_types.rsrc_q_t result_q;
-
-      //For the simple case where no wildcard names exist, then we can
-      //just return the queue associated with name.
-      if(!m_has_wildcard_names) {
-	result_q = lookup_name(rscope, name, type_handle, 0);
-	return result_q;
-      }
-
-      result_q = new uvm_resource_types.rsrc_q_t();
-
-      foreach (re, rq; _rtab) {
-	foreach(r; rq) {
-	  import uvm.base.uvm_globals: uvm_glob_to_re;
-	  if(uvm_re_match(uvm_glob_to_re(re), name) is 0) {
-	    // does the type and scope match?
-	    if(((type_handle is null) ||
-		(r.get_type_handle() is type_handle)) &&
-	       r.match_scope(rscope)) {
-	      result_q.push_back(r);
-	    }
-	  }
-	}
-      }
-      return result_q;
-    }
+  final uvm_resource_types.rsrc_q_t lookup_regex_names(string rscope,
+						       string name,
+						       TypeInfo type_handle = null
+						       ) {
+    return lookup_name(rscope, name, type_handle, false);
   }
 
   // Function: lookup_regex
@@ -1214,12 +1184,12 @@ class uvm_resource_pool {
   // Looks for all the resources whose name matches the regular
   // expression argument and whose scope matches the current scope.
 
-  final public uvm_resource_types.rsrc_q_t lookup_regex(string re, string rscope) {
+  final uvm_resource_types.rsrc_q_t lookup_regex(string re, string rscope) {
     synchronized(this) {
-      import uvm.base.uvm_globals: uvm_glob_to_re, uvm_re_match;
 
       re = uvm_glob_to_re(re);
-      auto result_q = new uvm_resource_types.rsrc_q_t();
+      auto result_q =
+	new uvm_resource_types.rsrc_q_t("uvm_resource/lookup_regex/result_q");
 
       foreach (name, rq; _rtab) {
 	if(uvm_re_match(re, name)) {
@@ -1244,9 +1214,9 @@ class uvm_resource_pool {
   // quite expensive, as it has to traverse all of the resources in the
   // database.
 
-  final public uvm_resource_types.rsrc_q_t lookup_scope(string rscope) {
+  final uvm_resource_types.rsrc_q_t lookup_scope(string rscope) {
     synchronized(this) {
-      auto q = new uvm_resource_types.rsrc_q_t();
+      auto q = new uvm_resource_types.rsrc_q_t("uvm_resource/lookup_scope/q");
 
       //iterate in reverse order for the special case of autoconfig
       //of arrays. The array name with no [] needs to be higher priority.
@@ -1269,7 +1239,7 @@ class uvm_resource_pool {
   //
   // Functions for altering the search priority of resources.  Resources
   // are stored in queues in the type and name maps.  When retrieving
-  // resoures, either by type or by name, the resource queue is search
+  // resources, either by type or by name, the resource queue is search
   // from front to back.  The first one that matches the search criteria
   // is the one that is returned.  The ~set_priority~ functions let you
   // change the order in which resources are searched.  For any
@@ -1283,8 +1253,7 @@ class uvm_resource_pool {
   // the front or back of the queue.
 
   private void set_priority_queue(uvm_resource_base rsrc,
-				  // ref
-				  uvm_resource_types.rsrc_q_t q,
+				  /*ref*/ uvm_resource_types.rsrc_q_t q,
 				  uvm_resource_types.priority_e pri) {
     synchronized(this) {
       string name = rsrc.get_name();
@@ -1297,7 +1266,8 @@ class uvm_resource_pool {
       }
 
       if(r !is rsrc) {
-	auto msg = format("Handle for resource named %s is not in the name name; cannot change its priority", name);
+	auto msg = format("Handle for resource named %s is not in the" ~
+			  " name name; cannot change its priority", name);
 	uvm_report_error("NORSRC", msg);
 	return;
       }
@@ -1316,10 +1286,10 @@ class uvm_resource_pool {
   //
   // Change the priority of the ~rsrc~ based on the value of ~pri~, the
   // priority enum argument.  This function changes the priority only in
-  // the type map, leavint the name map untouched.
+  // the type map, leaving the name map untouched.
 
-  final public void set_priority_type(uvm_resource_base rsrc,
-				      uvm_resource_types.priority_e pri) {
+  final void set_priority_type(uvm_resource_base rsrc,
+			       uvm_resource_types.priority_e pri) {
     synchronized(this) {
 
       if(rsrc is null) {
@@ -1349,8 +1319,8 @@ class uvm_resource_pool {
   // priority enum argument.  This function changes the priority only in
   // the name map, leaving the type map untouched.
 
-  final public void set_priority_name(uvm_resource_base rsrc,
-				      uvm_resource_types.priority_e pri) {
+  final void set_priority_name(uvm_resource_base rsrc,
+			       uvm_resource_types.priority_e pri) {
     synchronized(this) {
       if(rsrc is null) {
 	uvm_report_warning("NULLRASRC", "attempting to change the serach"
@@ -1376,8 +1346,8 @@ class uvm_resource_pool {
   // the priority enum argument.  This function changes the priority in
   // both the name and type maps.
 
-  final public void set_priority (uvm_resource_base rsrc,
-				  uvm_resource_types.priority_e pri) {
+  final void set_priority (uvm_resource_base rsrc,
+			   uvm_resource_types.priority_e pri) {
     synchronized(this) {
       set_priority_type(rsrc, pri);
       set_priority_name(rsrc, pri);
@@ -1392,9 +1362,10 @@ class uvm_resource_pool {
   //
   // Locate all the resources that have at least one write and no reads
 
-  final public uvm_resource_types.rsrc_q_t find_unused_resources() {
+  final uvm_resource_types.rsrc_q_t find_unused_resources() {
     synchronized(this) {
-      auto q = new uvm_resource_types.rsrc_q_t();
+      auto q =
+	new uvm_resource_types.rsrc_q_t("uvm_resource/find_unused_resources/q");
       foreach (name, rq; _rtab) {
 	foreach(r; rq) {
 	  int reads = 0;
@@ -1405,7 +1376,7 @@ class uvm_resource_pool {
 	      writes += a.write_count;
 	    }
 	  }
-	  if(writes > 0 && reads is 0) {
+	  if(writes > 0 && reads == 0) {
 	    q.push_back(r);
 	  }
 	}
@@ -1423,8 +1394,8 @@ class uvm_resource_pool {
   // audit trail is printed for each resource along with the name,
   // value, and scope regular expression.
 
-  final public void print_resources(uvm_resource_types.rsrc_q_t rq,
-				    bool audit = false) {
+  final void print_resources(uvm_resource_types.rsrc_q_t rq,
+			     bool audit = false) {
     synchronized(this) {
 
       // moved to once
@@ -1437,7 +1408,7 @@ class uvm_resource_pool {
 
       if(rq is null || rq.size() is 0) {
 	import uvm.meta.mcd;
-	vdisplay("<none>");
+	uvm_root_info("UVM/RESOURCE/PRINT", "<none>", UVM_NONE);
 	return;
       }
 
@@ -1458,16 +1429,16 @@ class uvm_resource_pool {
   // is used to initiate the printing. If the ~audit~ bit is set then
   // the audit trail is dumped for each resource.
 
-  final public void dump(bool audit = false) {
+  final void dump(bool audit = false) {
     synchronized(this) {
       import uvm.meta.mcd;
-      vdisplay("\n=== resource pool ===");
+      uvm_root_info("UVM/RESOURCE/DUMP", "\n=== resource pool ===", UVM_NONE);
 
       foreach (name, rq; _rtab) {
 	print_resources(rq, audit);
       }
 
-      vdisplay("=== end of resource pool ===");
+      uvm_root_info("UVM/RESOURCE/DUMP", "=== end of resource pool ===", UVM_NONE);
 
     }
   }
@@ -1483,7 +1454,7 @@ class uvm_resource_pool {
 class uvm_resource (T=int): uvm_resource_base
 {
 
-  alias uvm_resource!(T) this_type;
+  alias this_type = uvm_resource!(T);
 
   // singleton handle that represents the type of this resource
   // private shared static this_type _my_type;
@@ -1494,7 +1465,7 @@ class uvm_resource (T=int): uvm_resource_base
   // FIXME -- UVM_USE_RESOURCE_CONVERTER needs to be deprecated at some point of time
   version(UVM_USE_RESOURCE_CONVERTER) {
     // Singleton used to convert this resource to a string
-    private shared static m_uvm_resource_converter!(T) m_r2s;
+    private shared static m_uvm_resource_converter!(T) _m_r2s;
 
     // static this() {
     //   _my_type = get_type()
@@ -1504,11 +1475,16 @@ class uvm_resource (T=int): uvm_resource_base
     // Get the conversion policy class that specifies how to convert the value
     // of a resource of this type to a string
     //
-    static public m_uvm_resource_converter!(T) m_get_converter() {
-      synchronized {
-	if (m_r2s is null) m_r2s = cast(shared m_uvm_resource_converter!(T))
-			     (new m_uvm_resource_converter!(T)());
-	return cast(m_uvm_resource_converter!(T)) m_r2s;
+    static m_uvm_resource_converter!(T) m_get_converter() {
+      synchronized(typeid(this_type)) {
+	if (_m_r2s is null) _m_r2s = cast(shared m_uvm_resource_converter!(T))
+			      (new m_uvm_resource_converter!(T)());
+	// GC hack to make sure that heap allocation with static scope
+	// are covered -- this is because of an error in druntime
+	// https://issues.dlang.org/show_bug.cgi?id=15513
+	// once the bug is rectified, we do not need to use GC explicitly
+	GC.addRoot(cast(void*) _m_r2s);
+	return cast(m_uvm_resource_converter!(T)) _m_r2s;
       }
     }
 
@@ -1520,23 +1496,40 @@ class uvm_resource (T=int): uvm_resource_base
     // a default converter that display the name of the resource type is used.
     // Default conversion policies are specified for the built-in type.
     //
-    static public void m_set_converter(m_uvm_resource_converter!(T) r2s) {
-      synchronized {
-	m_r2s = r2s;
+    static void m_set_converter(m_uvm_resource_converter!(T) r2s) {
+      synchronized(typeid(this_type)) {
+	_m_r2s = r2s;
       }
     }
 
   }
 
-  public this(string name="", string rscope="") {
-    super(name, rscope);
+  this(string name="", string rscope="") {
+    synchronized(this) {
+      super(name, rscope);
+
+      version(UVM_INCLUDE_DEPRECATED) {
+      	for(int i=0; i<name.length; i++) {
+      	  if(name[i] == '.' || name[i] == '/' ||
+      	     name[i] == '[' || name[i] == '*' ||
+      	     name[i] == '{') {
+      	    uvm_root_warning("UVM/RSRC/NOREGEX",
+      			     format("a resource with meta characters in the " ~
+      				    "field name has been created \"%s\"",name));
+      	    break;
+      	  }
+      	}
+      }
+    }
   }
 
-  public string to(S)() if(is(S == string)) {
+  string to(S)() if(is(S == string)) {
     synchronized(this) {
       version(UVM_USE_RESOURCE_CONVERTER) {
 	m_get_converter();
-	return m_r2s.convert2string(_val);
+	synchronized(typeid(this_type)) {
+	  return _m_r2s.convert2string(_val);
+	}
       }
       else {
 	import std.string: format;
@@ -1545,7 +1538,7 @@ class uvm_resource (T=int): uvm_resource_base
     }
   }
 
-  override public string convert2string() {
+  override string convert2string() {
     return this.to!string();
   }
 
@@ -1564,7 +1557,7 @@ class uvm_resource (T=int): uvm_resource_base
   // Static function that returns the static type handle.  The return
   // type is this_type, which is the type of the parameterized class.
 
-  static public TypeInfo get_type() {
+  static TypeInfo get_type() {
     return typeid(T);
   }
 
@@ -1575,7 +1568,7 @@ class uvm_resource (T=int): uvm_resource_base
   // uvm_resource_base.  This function is not static and therefore can
   // only be used by instances of a parameterized resource.
 
-  override public TypeInfo get_type_handle() {
+  override TypeInfo get_type_handle() {
     return get_type();
   }
 
@@ -1586,7 +1579,7 @@ class uvm_resource (T=int): uvm_resource_base
   // uvm_resource#(T) provides an interface for setting and getting a
   // resources.  Specifically, a resource can insert itself into the
   // resource pool.  It doesn't make sense for a resource to get itself,
-  // since you can't call a funtion on a handle you don't have.
+  // since you can't call a function on a handle you don't have.
   // However, a static get interface is provided as a convenience.  This
   // obviates the need for the user to get a handle to the global
   // resource pool as this is done for him here.
@@ -1595,7 +1588,7 @@ class uvm_resource (T=int): uvm_resource_base
   //
   // Simply put this resource into the global resource pool
 
-  final public void set() {
+  final void set() {
     uvm_resource_pool rp = uvm_resource_pool.get();
     rp.set(this);
   }
@@ -1610,8 +1603,8 @@ class uvm_resource (T=int): uvm_resource_base
   // type maps.  However, using the ~override~ argument you can specify
   // that either the name map or type map is overridden.
 
-  final public void set_override(uvm_resource_types.override_e ovrrd =
-				 uvm_resource_types.override_e.BOTH_OVERRIDE) {
+  final void set_override(uvm_resource_types.override_e ovrrd =
+			  uvm_resource_types.override_e.BOTH_OVERRIDE) {
     uvm_resource_pool rp = uvm_resource_pool.get();
     rp.set(this, ovrrd);
   }
@@ -1619,7 +1612,7 @@ class uvm_resource (T=int): uvm_resource_base
   // Function: get_by_name
   //
   // looks up a resource by ~name~ in the name map. The first resource
-  // with the specified nam, whose type is the current type, and is
+  // with the specified name, whose type is the current type, and is
   // visible in the specified ~scope~ is returned, if one exists.  The
   // ~rpterr~ flag indicates whether or not an error should be reported
   // if the search fails.  If ~rpterr~ is set to one then a failure
@@ -1627,9 +1620,9 @@ class uvm_resource (T=int): uvm_resource_base
   // on resource names that exist in the database, gathered by the spell
   // checker.
 
-  static public this_type get_by_name(string rscope,
-				      string name,
-				      bool rpterr = true) {
+  static this_type get_by_name(string rscope,
+			       string name,
+			       bool rpterr = true) {
     uvm_resource_pool rp = uvm_resource_pool.get();
     uvm_resource_base rsrc_base = rp.get_by_name(rscope, name,
 						 typeid(T),
@@ -1644,7 +1637,7 @@ class uvm_resource (T=int): uvm_resource_base
       if(rpterr) {
 	string msg = format("Resource with name %s in scope %s has incorrect type",
 			    name, rscope);
-	uvm_warning("RSRCTYPE", msg);
+	uvm_root_warning("RSRCTYPE", msg);
       }
       return null;
     }
@@ -1655,11 +1648,11 @@ class uvm_resource (T=int): uvm_resource_base
   //
   // looks up a resource by ~type_handle~ in the type map. The first resource
   // with the specified ~type_handle~ that is visible in the specified ~scope~ is
-  // returned, if one exists. Null is returned if there is no resource matching
-  // the specifications.
+  // returned, if one exists. If there is no resource matching the specifications,
+  // ~null~ is returned.
 
-  static public this_type get_by_type(string rscope = "",
-				      TypeInfo type_handle=null) {
+  static this_type get_by_type(string rscope = "",
+			       TypeInfo type_handle=null) {
     uvm_resource_pool rp = uvm_resource_pool.get();
 
     if(type_handle is null) {
@@ -1671,8 +1664,9 @@ class uvm_resource (T=int): uvm_resource_base
     }
     auto rsrc = cast(this_type) rsrc_base;
     if(rsrc is null) {
-      string msg = format("Resource with specified type handle in scope %s was not located", rscope);
-      uvm_warning("RSRCNF", msg);
+      string msg = format("Resource with specified type handle in" ~
+			  " scope %s was not located", rscope);
+      uvm_root_warning("RSRCNF", msg);
       return null;
     }
 
@@ -1696,7 +1690,7 @@ class uvm_resource (T=int): uvm_resource_base
   // object is supplied then also update the accessor record for this
   // resource.
 
-  public T read(uvm_object accessor = null) {
+  T read(uvm_object accessor = null) {
     synchronized(this) {
       record_read_access(accessor);
       return _val;
@@ -1716,7 +1710,7 @@ class uvm_resource (T=int): uvm_resource_base
   // write is not done.  That also means that the accessor record is not
   // updated and the modified bit is not set.
 
-  public void write(T t, uvm_object accessor = null) {
+  void write(T t, uvm_object accessor = null) {
     synchronized(this) {
       if(is_read_only()) {
 	uvm_report_error("resource",
@@ -1734,7 +1728,7 @@ class uvm_resource (T=int): uvm_resource_base
 
       // set the value and set the dirty bit
       _val = t;
-      _modified = true;
+      modified = true;
     }
   }
 
@@ -1752,7 +1746,7 @@ class uvm_resource (T=int): uvm_resource_base
   // Change the search priority of the resource based on the value of
   // the priority enum argument, ~pri~.
 
-  override public void set_priority (uvm_resource_types.priority_e pri) {
+  override void set_priority (uvm_resource_types.priority_e pri) {
     uvm_resource_pool rp = uvm_resource_pool.get();
     rp.set_priority(this, pri);
   }
@@ -1764,18 +1758,19 @@ class uvm_resource (T=int): uvm_resource_base
   // precedence whose type is T.  This function is static so that it can
   // be called from anywhere.
 
-  static public this_type get_highest_precedence(// ref
-						 uvm_resource_types.rsrc_q_t q) {
-    if(q.size() is 0) {
+  static this_type get_highest_precedence(/*ref*/ uvm_resource_types.rsrc_q_t q) {
+    if(q.size() == 0) {
       return null;
     }
 
     this_type rsrc;
-    size_t first;
+    size_t first;		// value is taken to the next for loop
     // Locate first resources in the queue whose type is T
     for (first=0; first < q.size; ++first) {
       rsrc = cast(this_type) q.get(first);
-      if(rsrc !is null) break;
+      if(rsrc !is null) {
+	break;
+      }
     }
 
     // no resource in the queue whose type is T
@@ -1798,12 +1793,12 @@ class uvm_resource (T=int): uvm_resource_base
     return rsrc;
   }
 
-}; // Extra semicolon to help indentation (in Emacs) for the next declaration
+};
 
 //----------------------------------------------------------------------
 // static global resource pool handle
 //----------------------------------------------------------------------
 
-public uvm_resource_pool uvm_resources() {
+uvm_resource_pool uvm_resources() {
   return uvm_resource_pool.get();
 }

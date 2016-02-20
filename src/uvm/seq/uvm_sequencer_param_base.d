@@ -2,7 +2,7 @@
 //   Copyright 2007-2011 Mentor Graphics Corporation
 //   Copyright 2007-2011 Cadence Design Systems, Inc.
 //   Copyright 2010-2011 Synopsys, Inc.
-//   Copyright 2014 Coverify Systems Technology
+//   Copyright 2014-2016 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -54,9 +54,9 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
 {
   mixin uvm_sync;
 
-  alias uvm_sequencer_param_base !(REQ , RSP) this_type;
-  alias REQ req_type;
-  alias RSP rsp_type;
+  alias this_type = uvm_sequencer_param_base !(REQ , RSP);
+  alias req_type = REQ;
+  alias rsp_type = RSP;
 
   private Queue!REQ _m_last_req_buffer;
   private Queue!RSP _m_last_rsp_buffer;
@@ -86,17 +86,15 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // new
   // ---
 
-  public this(string name, uvm_component parent) {
+  this(string name, uvm_component parent) {
     synchronized(this) {
       super(name, parent);
-      _rsp_export             =
-	new uvm_analysis_export!RSP ("rsp_export", this);
-      _sqr_rsp_analysis_fifo  =
+      _rsp_export = new uvm_analysis_export!RSP ("rsp_export", this);
+      _sqr_rsp_analysis_fifo =
 	new uvm_sequencer_analysis_fifo!RSP("sqr_rsp_analysis_fifo", this);
-      _m_req_fifo             =
-	new uvm_tlm_fifo!REQ ("req_fifo", this);
       _sqr_rsp_analysis_fifo.print_enabled = false;
-      _m_req_fifo.print_enabled            = false;
+      _m_req_fifo = new uvm_tlm_fifo!REQ ("req_fifo", this);
+      _m_req_fifo.print_enabled = false;
     }
   }
 
@@ -113,7 +111,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // send_request
   // ------------
 
-  override public void send_request(uvm_sequence_base sequence_ptr,
+  override void send_request(uvm_sequence_base sequence_ptr,
 				      uvm_sequence_item t,
 				      bool rerandomize = false) {
     synchronized(this) {
@@ -138,7 +136,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
 	    		       " item in send_request");
 	  }
 	}
-	if (param_t.get_transaction_id() is -1) {
+	if (param_t.get_transaction_id() == -1) {
 	  param_t.set_transaction_id(sequence_ptr.inc_next_transaction_id);
 	}
 	m_last_req_push_front(param_t);
@@ -150,7 +148,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
       param_t.set_sequence_id(sequence_ptr.m_get_sqr_sequence_id(m_sequencer_id,
 								 true));
       t.set_sequencer(this);
-      if (_m_req_fifo.try_put(param_t) !is true) {
+      if (_m_req_fifo.try_put(param_t) is false) {
 	uvm_report_fatal(get_full_name(),
 			 format("Concurrent calls to send_request() not"
 				" supported. Check your driver for concurrent"
@@ -165,18 +163,20 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // Function: get_current_item
   //
   // Returns the request_item currently being executed by the sequencer. If the
-  // sequencer is not currently executing an item, this method will return null.
+  // sequencer is not currently executing an item, this method will return ~null~.
   //
   // The sequencer is executing an item from the time that get_next_item or peek
   // is called until the time that get or item_done is called.
   //
   // Note that a driver that only calls get() will never show a current item,
-  // since the item is completed at the same time as it is requsted.
+  // since the item is completed at the same time as it is requested.
   //
-  final public REQ get_current_item() {
+  final REQ get_current_item() {
     synchronized(this) {
       REQ t;
-      if (_m_req_fifo.try_peek(t) is false) return null;
+      if (_m_req_fifo.try_peek(t) is false) {
+	return null;
+      }
       return t;
     }
   }
@@ -194,7 +194,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // get_num_reqs_sent
   // -----------------
 
-  final public int get_num_reqs_sent() {
+  final int get_num_reqs_sent() {
     synchronized(this) {
       return _m_num_reqs_sent;
     }
@@ -212,7 +212,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // set_num_last_reqs
   // -----------------
 
-  final public void set_num_last_reqs(uint max) {
+  final void set_num_last_reqs(uint max) {
     synchronized(this) {
       if(max > 1024) {
 	uvm_report_warning("HSTOB",
@@ -241,7 +241,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // get_num_last_reqs
   // -----------------
 
-  final public uint get_num_last_reqs() {
+  final uint get_num_last_reqs() {
     synchronized(this) {
       return _m_num_last_reqs;
     }
@@ -251,18 +251,17 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   //
   // Returns the last request item by default.  If n is not 0, then it will get
   // the n�th before last request item.  If n is greater than the last request
-  // buffer size, the function will return null.
+  // buffer size, the function will return ~null~.
   //
-  final public REQ last_req(uint n = 0) {
+  final REQ last_req(uint n = 0) {
     synchronized(this) {
       if(n > _m_num_last_reqs) {
 	uvm_report_warning("HSTOB",
 			   format("Invalid last access (%0d), the max"
-				  " history is %0d", n,
-				  _m_num_last_reqs));
+				  " history is %0d", n, _m_num_last_reqs));
 	return null;
       }
-      if(n is _m_last_req_buffer.length) {
+      if(n == _m_last_req_buffer.length) {
 	return null;
       }
 
@@ -301,7 +300,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // get_num_rsps_received
   // ---------------------
 
-  final public int get_num_rsps_received() {
+  final int get_num_rsps_received() {
     synchronized(this) {
       return _m_num_rsps_received;
     }
@@ -319,7 +318,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // set_num_last_rsps
   // -----------------
 
-  final public void set_num_last_rsps(uint max) {
+  final void set_num_last_rsps(uint max) {
     synchronized(this) {
       if(max > 1024) {
 	uvm_report_warning("HSTOB",
@@ -328,7 +327,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
 	max = 1024;
       }
       //shrink the buffer
-      while((_m_last_rsp_buffer.length !is 0)
+      while((_m_last_rsp_buffer.length != 0)
 	    && (_m_last_rsp_buffer.length > max)) {
 	_m_last_rsp_buffer.removeBack();
       }
@@ -348,7 +347,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // get_num_last_rsps
   // -----------------
 
-  final public uint get_num_last_rsps() {
+  final uint get_num_last_rsps() {
     synchronized(this) {
       return _m_num_last_rsps;
     }
@@ -358,9 +357,9 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   //
   // Returns the last response item by default.  If n is not 0, then it will
   // get the nth-before-last response item.  If n is greater than the last
-  // response buffer size, the function will return null.
+  // response buffer size, the function will return ~null~.
   //
-  final public RSP last_rsp(uint n = 0) {
+  final RSP last_rsp(uint n = 0) {
     synchronized(this) {
       if(n > _m_num_last_rsps) {
 	uvm_report_warning("HSTOB",
@@ -368,7 +367,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
 				  " history is %0d", n, _m_num_last_rsps));
 	return null;
       }
-      if(n is _m_last_rsp_buffer.length) {
+      if(n == _m_last_rsp_buffer.length) {
 	return null;
       }
 
@@ -376,16 +375,18 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
     }
   }
 
-  // Internal methods and variables; do not use directly; not part of standard
+  // Internal methods and variables; do not use directly, not part of standard
 
   // m_last_rsp_push_front
   // ---------------------
 
-  final public void m_last_rsp_push_front(RSP item) {
+  final void m_last_rsp_push_front(RSP item) {
     synchronized(this) {
-      if(!_m_num_last_rsps) return;
+      if(!_m_num_last_rsps) {
+	return;
+      }
 
-      if(_m_last_rsp_buffer.length is _m_num_last_rsps) {
+      if(_m_last_rsp_buffer.length == _m_num_last_rsps) {
 	_m_last_rsp_buffer.removeBack();
       }
 
@@ -397,7 +398,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // put_response
   // ------------
 
-  final public void put_response (RSP t) {
+  final void put_response (RSP t) {
     synchronized(this) {
 
       uvm_sequence_base sequence_ptr;
@@ -410,10 +411,10 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
       _m_num_rsps_received++;
 
       // Check that set_id_info was called
-      if (t.get_sequence_id() is -1) {
+      if (t.get_sequence_id() == -1) {
 	version(CDNS_NO_SQR_CHK_SEQ_ID) {}
 	else {
-	  uvm_report_fatal("SQRPUT", "Driver put a response with null"
+	  uvm_report_fatal("SQRPUT", "Driver put a response with null" ~
 			   " sequence_id", UVM_NONE);
 	}
 	return;
@@ -424,7 +425,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
       if (sequence_ptr !is null) {
 	// If the response_handler is enabled for this sequence,
 	// then call the response handler
-	if (sequence_ptr.get_use_response_handler() is 1) {
+	if (sequence_ptr.get_use_response_handler() == 1) {
 	  sequence_ptr.response_handler(t);
 	  return;
 	}
@@ -444,7 +445,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // build_phase
   // -----------
 
-  override public void build_phase(uvm_phase phase) {
+  override void build_phase(uvm_phase phase) {
     synchronized(this) {
       super.build_phase(phase);
       sqr_rsp_analysis_fifo.sequencer_ptr = this;
@@ -456,7 +457,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // connect_phase
   // -------------
 
-  override public void connect_phase(uvm_phase phase) {
+  override void connect_phase(uvm_phase phase) {
     synchronized(this) {
       super.connect_phase(phase);
       rsp_export.connect(sqr_rsp_analysis_fifo.analysis_export);
@@ -468,15 +469,11 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // do_print
   // --------
 
-  override public void do_print (uvm_printer printer) {
+  override void do_print (uvm_printer printer) {
     synchronized(this) {
       super.do_print(printer);
-      printer.print_int("num_last_reqs", _m_num_last_reqs,
-			// $bits(_m_num_last_reqs),
-			UVM_DEC);
-      printer.print_int("num_last_rsps", _m_num_last_rsps,
-			// $bits(_m_num_last_rsps),
-			UVM_DEC);
+      printer.print("num_last_reqs", _m_num_last_reqs, UVM_DEC);
+      printer.print("num_last_rsps", _m_num_last_rsps, UVM_DEC);
     }
   }
 
@@ -484,7 +481,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // analysis_write
   // --------------
 
-  override public void analysis_write(uvm_sequence_item t) {
+  override void analysis_write(uvm_sequence_item t) {
     synchronized(this) {
       RSP response = cast(RSP) t;
 
@@ -500,11 +497,13 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // m_last_req_push_front
   // ---------------------
 
-  final public void m_last_req_push_front(REQ item) {
+  final void m_last_req_push_front(REQ item) {
     synchronized(this) {
-      if(!_m_num_last_reqs) return;
+      if(!_m_num_last_reqs) {
+	return;
+      }
 
-      if(_m_last_req_buffer.length is _m_num_last_reqs) {
+      if(_m_last_req_buffer.length == _m_num_last_reqs) {
 	_m_last_req_buffer.removeBack();
       }
 

@@ -51,7 +51,7 @@ abstract class uvm_topdown_phase: uvm_phase
   //
   // Create a new instance of a top-down phase
   //
-  public this(string name) {
+  this(string name) {
     super(name,UVM_PHASE_IMP);
   }
 
@@ -61,7 +61,7 @@ abstract class uvm_topdown_phase: uvm_phase
   // Traverses the component tree in top-down order, calling <execute> for
   // each component.
   //
-  override public void traverse(uvm_component comp,
+  override void traverse(uvm_component comp,
 				uvm_phase phase,
 				uvm_phase_state state) {
     uvm_domain phase_domain = phase.get_domain();
@@ -69,7 +69,7 @@ abstract class uvm_topdown_phase: uvm_phase
 
     synchronized(this) {
       if (m_phase_trace) {
-	uvm_info("PH_TRACE", format("topdown-phase phase=%s state=%s comp=%s "
+	uvm_root_info("PH_TRACE", format("topdown-phase phase=%s state=%s comp=%s "
 				    "comp.domain=%s phase.domain=%s",
 				    phase.get_name(), state,
 				    comp.get_full_name(), comp_domain.get_name(),
@@ -89,8 +89,9 @@ abstract class uvm_topdown_phase: uvm_phase
 	  if (!(phase.get_name() == "build" && comp.m_build_done)) {
 	    uvm_phase ph = this;
 	    comp.inc_phasing_active();
-	    if (this in comp.m_phase_imps) {
-	      ph = comp.m_phase_imps[this];
+	    auto pphase = this in comp.m_phase_imps;
+	    if (pphase !is null) {
+	      ph = cast(uvm_phase) *pphase;
 	    }
 	    ph.execute(comp, phase);
 	    comp.dec_phasing_active();
@@ -104,7 +105,7 @@ abstract class uvm_topdown_phase: uvm_phase
 	  comp.m_current_phase = null;
 	  break;
 	default:
-	  uvm_fatal("PH_BADEXEC","topdown phase traverse internal error");
+	  uvm_root_fatal("PH_BADEXEC","topdown phase traverse internal error");
 	}
       }
     }
@@ -119,7 +120,7 @@ abstract class uvm_topdown_phase: uvm_phase
   //
   // Executes the top-down phase ~phase~ for the component ~comp~.
   //
-  override public void execute(uvm_component comp,
+  override void execute(uvm_component comp,
 			       uvm_phase phase) {
     // reseed this process for random stability
     auto proc = Process.self;

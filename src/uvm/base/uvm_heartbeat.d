@@ -1,8 +1,9 @@
 //----------------------------------------------------------------------
 //   Copyright 2007-2011 Mentor Graphics Corporation
 //   Copyright 2007-2009 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2014 Coverify Systems Technology
+//   Copyright 2010      Synopsys, Inc.
+//   Copyright 2013      NVIDIA Corporation
+//   Copyright 2014-2016 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -26,6 +27,7 @@
 module uvm.base.uvm_heartbeat;
 
 import uvm.base.uvm_root;
+import uvm.base.uvm_coreservice;
 import uvm.base.uvm_object;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_component;
@@ -34,6 +36,7 @@ import uvm.base.uvm_event;
 import uvm.base.uvm_objection;
 import esdl.base.core;
 import esdl.data.time;
+import esdl.data.queue;
 
 import std.string: format;
 
@@ -49,8 +52,8 @@ enum uvm_heartbeat_modes
 mixin(declareEnums!uvm_heartbeat_modes());
 
 // typedef class uvm_heartbeat_callback;
-alias uvm_callbacks!(uvm_callbacks_objection, uvm_heartbeat_callback)
-  uvm_heartbeat_cbs_t;
+alias uvm_heartbeat_cbs_t =
+  uvm_callbacks!(uvm_objection, uvm_heartbeat_callback);
 
 
 //------------------------------------------------------------------------------
@@ -62,8 +65,7 @@ alias uvm_callbacks!(uvm_callbacks_objection, uvm_heartbeat_callback)
 // descendants are alive. A uvm_heartbeat is associated with a specific
 // objection object. A component that is being tracked by the heartbeat
 // object must raise (or drop) the synchronizing objection during
-// the heartbeat window. The synchronizing objection must be a
-// <uvm_callbacks_objection> type.
+// the heartbeat window.
 //
 // The uvm_heartbeat object has a list of participating objects. The heartbeat
 // can be configured so that all components (UVM_ALL_ACTIVE), exactly one
@@ -74,46 +76,50 @@ alias uvm_callbacks!(uvm_callbacks_objection, uvm_heartbeat_callback)
 // typedef class uvm_objection_callback;
 class uvm_heartbeat: uvm_object
 {
-  import esdl.data.queue;
   mixin uvm_sync;
 
-  protected uvm_callbacks_objection _m_objection;
+  @uvm_protected_sync
+  private uvm_objection _m_objection;
 
   @uvm_immutable_sync
-    protected uvm_heartbeat_callback _m_cb;
+  private uvm_heartbeat_callback _m_cb;
 
-  protected uvm_component   _m_cntxt;
-  protected uvm_heartbeat_modes   _m_mode;
+  @uvm_protected_sync
+  private uvm_component   _m_cntxt;
+  @uvm_protected_sync
+  private uvm_heartbeat_modes   _m_mode;
   // protected Queue!uvm_component   _m_hblist; // FIXME -- variable not used anywhere
   @uvm_private_sync
-    protected uvm_event       _m_event;
+  private uvm_event!(uvm_object)  _m_event;
 
-  protected bool             _m_started;
-  protected Event           _m_stop_event;
+  @uvm_private_sync
+  private bool             _m_started;
+  @uvm_immutable_sync
+  private Event           _m_stop_event;
 
   // Function: new
   //
   // Creates a new heartbeat instance associated with ~cntxt~. The context
   // is the hierarchical location that the heartbeat objections will flow
   // through and be monitored at. The ~objection~ associated with the heartbeat
-  // is optional, if it is left null but it must be set before the heartbeat
+  // is optional, if it is left ~null~ but it must be set before the heartbeat
   // monitor will activate.
   //
-  //| uvm_callbacks_objection myobjection = new("myobjection"); //some shared objection
+  //| uvm_callbacks myobjection = new("myobjection"); //some shared objection
   //| class myenv extends uvm_env;
   //|    uvm_heartbeat hb = new("hb", this, myobjection);
   //|    ...
   //| endclass
 
-  public this(string name, uvm_component cntxt,
-	      uvm_callbacks_objection objection = null) {
+  this(string name, uvm_component cntxt, uvm_objection objection = null) {
     synchronized(this) {
       super(name);
       _m_objection = objection;
 
+      uvm_coreservice_t cs = uvm_coreservice_t.get();
       //if a cntxt is given it will be used for reporting.
       if(cntxt !is null) _m_cntxt = cntxt;
-      else _m_cntxt = uvm_root.get();
+      else _m_cntxt = cs.get_root();
 
       _m_cb = new uvm_heartbeat_callback(name ~ "_cb", _m_cntxt);
 
@@ -128,15 +134,15 @@ class uvm_heartbeat: uvm_object
   // mode is returned. If an argument is specified to change the mode then the
   // mode is changed to the new value.
 
-  final public uvm_heartbeat_modes set_mode(uvm_heartbeat_modes mode
-					    = UVM_NO_HB_MODE) {
+  final uvm_heartbeat_modes set_mode(uvm_heartbeat_modes mode
+				     = UVM_NO_HB_MODE) {
     synchronized(this) {
-      auto retval = _m_mode;
-      if(mode is UVM_ANY_ACTIVE || mode is UVM_ONE_ACTIVE
-	 || mode is UVM_ALL_ACTIVE) {
+      auto set_mode_ = _m_mode;
+      if(mode == UVM_ANY_ACTIVE || mode == UVM_ONE_ACTIVE
+	 || mode == UVM_ALL_ACTIVE) {
 	_m_mode = mode;
       }
-      return retval;
+      return set_mode_;
     }
   }
 
@@ -149,12 +155,12 @@ class uvm_heartbeat: uvm_object
   // monitor event results in an error. To change trigger events, you
   // must first <stop> the monitor and then <start> with a new event trigger.
   //
-  // If the trigger event ~e~ is null and there was no previously set
+  // If the trigger event ~e~ is ~null~ and there was no previously set
   // trigger event, then the monitoring is not started. Monitoring can be
   // started by explicitly calling <start>.
 
-  final public void set_heartbeat(uvm_event e, // ref
-				  Queue!uvm_component comps) {
+  final void set_heartbeat(uvm_event!uvm_object e, // ref
+			   Queue!uvm_component comps) {
     synchronized(m_cb) {
       foreach(c; comps) {
 	if(c !in m_cb._cnt) {
@@ -164,13 +170,15 @@ class uvm_heartbeat: uvm_object
 	  m_cb._last_trigger[c] = 0;
 	}
       }
-      if(e is null && m_event is null) return;
+      if(e is null && m_event is null) {
+	return;
+      }
       start(e);
     }
   }
 
-  final public void set_heartbeat(uvm_event e,
-				  uvm_component[] comps) {
+  final void set_heartbeat(uvm_event!(uvm_object) e,
+			   uvm_component[] comps) {
     synchronized(m_cb) {
       foreach(c; comps) {
 	if(c !in m_cb._cnt) {
@@ -180,7 +188,9 @@ class uvm_heartbeat: uvm_object
 	  m_cb._last_trigger[c] = 0;
 	}
       }
-      if(e is null && m_event is null) return;
+      if(e is null && m_event is null) {
+	return;
+      }
       start(e);
     }
   }
@@ -193,10 +203,12 @@ class uvm_heartbeat: uvm_object
   // to the list of components and will be expected to participate
   // in the currently active event window.
 
-  final public void add (uvm_component comp) {
+  final void add (uvm_component comp) {
     synchronized(m_cb) {
       uvm_object c = comp;
-      if(c in m_cb._cnt) return;
+      if(c in m_cb._cnt) {
+	return;
+      }
       m_cb._cnt[c] = 0;
       m_cb._last_trigger[c] = 0;
     }
@@ -208,7 +220,7 @@ class uvm_heartbeat: uvm_object
   // Monitoring is not stopped, even if the last component has been
   // removed (an explicit stop is required).
 
-  final public void remove (uvm_component comp) {
+  final void remove (uvm_component comp) {
     synchronized(m_cb) {
       uvm_object c = comp;
       if(c in m_cb._cnt) m_cb._cnt.remove(c);
@@ -219,19 +231,18 @@ class uvm_heartbeat: uvm_object
 
   // Function: start
   //
-  // Starts the heartbeat monitor. If ~e~ is null then whatever event
+  // Starts the heartbeat monitor. If ~e~ is ~null~ then whatever event
   // was previously set is used. If no event was previously set then
   // a warning is issued. It is an error if the monitor is currently
   // running and ~e~ is specifying a different trigger event from the
   // current event.
 
-  final public void start (uvm_event e = null) {
+  final void start (uvm_event!uvm_object e = null) {
     synchronized(this) {
       if(_m_event is null && e is null) {
 	_m_cntxt.uvm_report_warning("NOEVNT", "start() was called for: " ~
-				    get_name() ~
-				    " with a null trigger and no currently"
-				    " set trigger",
+				    get_name() ~ " with a null trigger " ~
+				    "and no currently set trigger",
 				    UVM_NONE);
 	return;
       }
@@ -243,7 +254,9 @@ class uvm_heartbeat: uvm_object
 				  _m_event.get_name(), UVM_NONE);
 	return;
       }
-      if(e !is null) _m_event = e;
+      if(e !is null) {
+	_m_event = e;
+      }
       m_enable_cb();
       m_start_hb_process();
     }
@@ -255,7 +268,7 @@ class uvm_heartbeat: uvm_object
   // that if <start> is called again the process will wait for the first
   // event trigger to start the monitoring.
 
-  final public void stop () {
+  final void stop () {
     synchronized(this) {
       _m_started = 0;
       _m_stop_event.notify();
@@ -263,20 +276,25 @@ class uvm_heartbeat: uvm_object
     }
   }
 
-  final public void m_start_hb_process() {
+  final void m_start_hb_process() {
     synchronized(this) {
-      if(_m_started) return;
+      if(_m_started) {
+	return;
+      }
       _m_started = 1;
-      fork({m_hb_process();});
+      fork!("uvm_heartbeat/start_hb_process")({m_hb_process();});
     }
   }
 
+  @uvm_protected_sync
   protected bool _m_added;
 
-  final public void m_enable_cb() {
+  final void m_enable_cb() {
     synchronized(this) {
       _m_cb.callback_mode(true);
-      if(_m_objection is null) return;
+      if(_m_objection is null) {
+	return;
+      }
       if(!_m_added) {
 	uvm_heartbeat_cbs_t.add(_m_objection, _m_cb);
       }
@@ -284,14 +302,14 @@ class uvm_heartbeat: uvm_object
     }
   }
 
-  final public void m_disable_cb() {
+  final void m_disable_cb() {
     synchronized(this) {
       m_cb.callback_mode(false);
     }
   }
 
   // task
-  final public void m_hb_process_1() {
+  final void m_hb_process_1() {
     bool  triggered = false;
     SimTime last_trigger = 0;
     // The process waits for the event trigger. The first trigger is
@@ -304,7 +322,7 @@ class uvm_heartbeat: uvm_object
 	  final switch (_m_mode) {
 	  case UVM_ALL_ACTIVE:
 	    foreach(obj, c; m_cb._cnt) {
-	      if(! m_cb._cnt[obj]) {
+	      if(! c) {
 		_m_cntxt.uvm_report_fatal("HBFAIL",
 					  format("Did not recieve an update of"
 						 " %s for component %s since"
@@ -340,7 +358,7 @@ class uvm_heartbeat: uvm_object
 	    if(m_cb.objects_triggered() > 1) {
 	      string s;
 	      foreach(obj, c; m_cb._cnt)  {
-		if(m_cb._cnt[obj]) {
+		if(c) {
 		  s = format("%s\n  %s (updated: %0t)",
 			     s, obj.get_full_name(), m_cb._last_trigger[obj]);
 		}
@@ -384,14 +402,14 @@ class uvm_heartbeat: uvm_object
   }
 
   // task
-  final public void m_hb_process() {
+  final void m_hb_process() {
     // uvm_object obj;
-    Fork hb_process = fork({
+    Fork hb_process = fork!("uvm_heartbeat/hb_process")({
 	m_hb_process_1();
       },
       {
 	// _m_stop_event is effectively immutable
-	wait(_m_stop_event);
+	wait(m_stop_event);
       });
     hb_process.joinAny();
     hb_process.abortTree();
@@ -405,23 +423,24 @@ class uvm_heartbeat_callback: uvm_objection_callback
   private SimTime[uvm_object] _last_trigger;
   private uvm_object _target;
 
-  public this(string name, uvm_object target) {
+  this(string name, uvm_object target) {
     synchronized(this) {
       super(name);
       if (target !is null) {
 	_target = target;
       }
       else {
-	_target = uvm_root.get();
+	uvm_coreservice_t cs = uvm_coreservice_t.get();
+	_target = cs.get_root();
       }
     }
   }
 
-  override public void raised (uvm_objection objection,
-			       uvm_object obj,
-			       uvm_object source_obj,
-			       string description,
-			       int count) {
+  override void raised (uvm_objection objection,
+			uvm_object obj,
+			uvm_object source_obj,
+			string description,
+			int count) {
     synchronized(this) {
       if(obj is _target) {
 	if(source_obj !in _cnt) {
@@ -433,29 +452,31 @@ class uvm_heartbeat_callback: uvm_objection_callback
     }
   }
 
-  override public void dropped (uvm_objection objection,
-				uvm_object obj,
-				uvm_object source_obj,
-				string description,
-				int count) {
+  override void dropped (uvm_objection objection,
+			 uvm_object obj,
+			 uvm_object source_obj,
+			 string description,
+			 int count) {
     raised(objection, obj, source_obj, description, count);
   }
 
-  final public void reset_counts() {
+  final void reset_counts() {
     synchronized(this) {
-      foreach(ref c; _cnt) c = 0;
+      foreach(ref c; _cnt) {
+	c = 0;
+      }
     }
   }
 
-  final public int objects_triggered() {
+  final int objects_triggered() {
     synchronized(this) {
-      int retval = 0;
+      int objects_triggered_ = 0;
       foreach(c; _cnt) {
-	if (c !is 0) {
-	  ++retval;
+	if (c != 0) {
+	  ++objects_triggered_;
 	}
       }
-      return retval;
+      return objects_triggered_;
     }
   }
 

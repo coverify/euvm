@@ -2,8 +2,8 @@
 //------------------------------------------------------------------------------
 //   Copyright 2007-2010 Mentor Graphics Corporation
 //   Copyright 2007-2010 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2014 Coverify Systems Technology
+//   Copyright 2010      Synopsys, Inc.
+//   Copyright 2014-2016 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -34,20 +34,20 @@ module uvm.base.uvm_array;
 //------------------------------------------------------------------------------
 
 import uvm.base.uvm_object;
+import uvm.base.uvm_globals: uvm_report_warning;
+import std.string: format;
 
 class uvm_array (T=int): uvm_object
 {
-  import uvm.base.uvm_globals: uvm_report_warning;
-  import std.string: format;
   // const static string type_name = "uvm_array";
 
-  alias uvm_array!T this_type;
+  alias this_type = uvm_array!T;
 
   // No this aliasing -- this aliasing is making the array object
   // escape from the synchronization guards
 
   // // For this aliasing
-  // @property public ref auto get_array() {
+  // @property ref auto get_array() {
   //   synchronized(this) {
   //     return _array;
   //   }
@@ -56,7 +56,7 @@ class uvm_array (T=int): uvm_object
   // // Some DMD bug is not allowing this alias here
   // alias get_array this;
 
-  protected T[] _array;
+  private T[] _array;
 
   // Function: new
   //
@@ -67,13 +67,13 @@ class uvm_array (T=int): uvm_object
   }
 
 
-  public T opIndex(size_t index) {
+  T opIndex(size_t index) {
     synchronized(this) {
       return _array[index];
     }
   }
 
-  public T opIndexAssign(T item, size_t index) {
+  T opIndexAssign(T item, size_t index) {
     synchronized(this) {
       _array[index] = item;
       return item;
@@ -100,7 +100,7 @@ class uvm_array (T=int): uvm_object
   // If no item exists by that key, a new item is created with that key
   // and returned.
 
-  public T get (ptrdiff_t index) {
+  T get (ptrdiff_t index) {
     synchronized(this) {
       T default_value;
       if (index >= size() || index < 0) {
@@ -118,18 +118,18 @@ class uvm_array (T=int): uvm_object
   //
   // Returns the number of items stored in the array.
 
-  public size_t length() {
+  size_t length() {
     synchronized(this) {
       return _array.length;
     }
   }
 
-  alias length size;
+  alias size = length;
   // Function: insert
   //
   // Inserts the item at the given ~index~ in the array.
 
-  public void insert (ptrdiff_t index, T item) {
+  void insert (ptrdiff_t index, T item) {
     synchronized(this) {
       if (index >= size() || index < 0) {
 	import uvm.base.uvm_globals;
@@ -152,7 +152,7 @@ class uvm_array (T=int): uvm_object
 
   // it is named delete in systemverilog version -- but D reserves
   // delete as a keyword
-  public void remove (ptrdiff_t index=-1) {
+  void remove (ptrdiff_t index=-1) {
     synchronized(this) {
       if (index >= size() || index < -1) {
 	uvm_report_warning("ARRAYDEL",
@@ -175,7 +175,7 @@ class uvm_array (T=int): uvm_object
   // Returns the first element in the array (index=0),
   // or ~null~ if the array is empty.
 
-  public T pop_front() {
+  T pop_front() {
     synchronized(this) {
       auto pop = _array[0];
       _array = _array[1..$];
@@ -189,7 +189,7 @@ class uvm_array (T=int): uvm_object
   // Returns the last element in the array (index=size()-1),
   // or ~null~ if the array is empty.
 
-  public T pop_back() {
+  T pop_back() {
     synchronized(this) {
       auto pop = _array[$-1];
       _array = _array[0..$-1];
@@ -202,54 +202,55 @@ class uvm_array (T=int): uvm_object
   //
   // Inserts the given ~item~ at the back of the array.
 
-  public void push_back(T item) {
+  void push_back(T item) {
     synchronized(this) {
       _array ~= item;
     }
   }
 
-  public void opOpAssign(string op, R)(R other)
+  void opOpAssign(string op, R)(R other)
     if(op == "~" && is(R unused: T)) {
       synchronized(this) {
 	_array ~= other;
       }
     }
 
-  override public uvm_object create (string name = "") {
+  override uvm_object create (string name = "") {
     synchronized(this) {
       this_type v = new this_type (name);
       return v;
     }
   }
 
-  override public string get_type_name () {
+  override string get_type_name () {
     synchronized(this) {
       import std.conv: to;
       return to!string(typeid(this));
     }
   }
 
-  override public void do_copy (uvm_object rhs) {
+  override void do_copy (uvm_object rhs) {
     synchronized(this) {
       super.do_copy(rhs);
       this_type p = cast(this_type) rhs;
       if (rhs is null || p is null) {
 	return;
       }
-      _array = p._array.dup;
+      synchronized(p) {
+	_array = p._array.dup;
+      }
     }
   }
 
-  override public string convert2string() {
+  override string convert2string() {
     import std.conv: to;
     return to!string(this);
   }
 
-  public string to(S)() if(is(S == string)) {
+  string to(S)() if(is(S == string)) {
     synchronized(this) {
       import std.conv: to;
-      return std.conv.to!string(this._array);
+      return std.conv.to!string(_array);
     }
   }
-
 }

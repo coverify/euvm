@@ -2,7 +2,8 @@
 //------------------------------------------------------------------------------
 //   Copyright 2007-2011 Mentor Graphics Corporation
 //   Copyright 2007-2010 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
+//   Copyright 2010-2013 Synopsys, Inc.
+//   Copyright 2013      NVIDIA Corporation
 //   Copyright 2012-2015 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
@@ -41,37 +42,27 @@ import uvm.meta.misc;
 // Group: Field automation
 //------------------------
 
-// Macro: `UVM_MAX_STREAMBITS
-//
-// Defines the maximum bit vector size for integral types.
-
-enum int UVM_MAX_STREAMBITS=4096;
-
-
-// Macro: `UVM_PACKER_MAX_BYTES
-//
-// Defines the maximum bytes to allocate for packing an object using
-// the <uvm_packer>. Default is <`UVM_MAX_STREAMBITS>, in ~bytes~.
-
+enum int UVM_MAX_STREAMBITS = 4096;
 enum int UVM_STREAMBITS = UVM_MAX_STREAMBITS;
-alias UVM_STREAMBITS UVM_PACKER_MAX_BYTES;
 
-// Macro: `UVM_DEFAULT_TIMEOUT
-//
-// The default timeout for simulation, if not overridden by
-// <uvm_root::set_timeout> or <+UVM_TIMEOUT>
-//
-
-enum Time UVM_DEFAULT_TIMEOUT = 9200.sec;
 
 
 // Type: uvm_bitstream_t
 //
 // The bitstream type is used as a argument type for passing integral values
-// in such methods as set_int_local, get_int_local, get_config_int, report,
-// pack and unpack.
+// in such methods as <uvm_object::set_int_local>, <uvm_config_int>,
+// <uvm_printer::print_field>, <uvm_recorder::record_field>,
+// <uvm_packer::pack_field> and <uvm_packer::unpack_field>.
+alias uvm_bitstream_t = LogicVec!UVM_STREAMBITS;
 
-alias LogicVec!UVM_STREAMBITS uvm_bitstream_t;
+// Type: uvm_integral_t
+//
+// The integral type is used as a argument type for passing integral values
+// of 64 bits or less in such methods as
+// <uvm_printer::print_field_int>, <uvm_recorder::record_field_int>,
+// <uvm_packer::pack_field_int> and <uvm_packer::unpack_field_int>.
+//
+alias uvm_integral_t = LogicVec!64;
 
 
 
@@ -82,11 +73,17 @@ alias LogicVec!UVM_STREAMBITS uvm_bitstream_t;
 // UVM_BIN       - Selects binary (%b) format
 // UVM_DEC       - Selects decimal (%d) format
 // UVM_UNSIGNED  - Selects unsigned decimal (%u) format
+// UVM_UNFORMAT2 - Selects unformatted 2 value data (%u) format
+// UVM_UNFORMAT4 - Selects unformatted 4 value data (%z) format
 // UVM_OCT       - Selects octal (%o) format
-// UVM_HEX       - Selects hexidecimal (%h) format
+// UVM_HEX       - Selects hexadecimal (%h) format
 // UVM_STRING    - Selects string (%s) format
 // UVM_TIME      - Selects time (%t) format
 // UVM_ENUM      - Selects enumeration value (name) format
+// UVM_REAL      - Selects real (%g) in exponential or decimal format,
+//                 whichever format results in the shorter printed output
+// UVM_REAL_DEC  - Selects real (%f) in decimal format
+// UVM_REAL_EXP  - Selects real (%e) in exponential format
 
 enum uvm_radix_enum: int
   {   UVM_BIN       = 0x1000000,
@@ -112,7 +109,7 @@ enum int UVM_RADIX = 0xf000000; //4 bits setting the radix
 
 // Function- uvm_radix_to_string
 
-public char uvm_radix_to_string(uvm_radix_enum radix) {
+char uvm_radix_to_string(uvm_radix_enum radix) {
   switch (radix) {
   case UVM_BIN:        return 'b';
   case UVM_OCT:        return 'o';
@@ -135,7 +132,7 @@ public char uvm_radix_to_string(uvm_radix_enum radix) {
 //
 // Specifies the policy for copying objects.
 //
-// UVM_DEEP      - Objects are deep copied (object must implement copy method)
+// UVM_DEEP      - Objects are deep copied (object must implement <uvm_object::copy> method)
 // UVM_SHALLOW   - Objects are shallow copied using default SV copy.
 // UVM_REFERENCE - Only object handles are copied.
 
@@ -153,6 +150,9 @@ mixin(declareEnums!uvm_recursion_policy_enum());
 //
 // Convenience value to define whether a component, usually an agent,
 // is in "active" mode or "passive" mode.
+//
+// UVM_PASSIVE - "Passive" mode
+// UVM_ACTIVE  - "Active" mode
 
 enum uvm_active_passive_enum: bool
   {   UVM_PASSIVE=false,
@@ -193,7 +193,6 @@ mixin(declareEnums!uvm_auto_enum());
 // UVM_READONLY  - Object field will NOT be automatically configured.
 
 
-enum int UVM_MACRO_NUMFLAGS    = 17;
 //A=ABSTRACT Y=PHYSICAL
 //F=REFERENCE, S=SHALLOW, D=DEEP
 //K=PACK, R=RECORD, P=PRINT, M=COMPARE, C=COPY
@@ -205,7 +204,7 @@ enum uvm_field_auto_enum: int
       UVM_FLAGS_ON    = 0b000000101010101,
       UVM_FLAGS_OFF   = 0,
 
-      //Values are or'ed into a 32 bit value
+      //Values are OR'ed into a 32 bit value
       //and externally
       UVM_COPY         = (1 << 0),
       UVM_NOCOPY       = (1 << 1),
@@ -228,26 +227,32 @@ enum uvm_field_auto_enum: int
 
 mixin(declareEnums!uvm_field_auto_enum());
 
-
+enum int UVM_MACRO_NUMFLAGS    = 17;
 //Extra values that are used for extra methods
-enum int UVM_MACRO_EXTRAS   = (1 << UVM_MACRO_NUMFLAGS);
-enum int UVM_FLAGS          = UVM_MACRO_EXTRAS + 1;
-enum int UVM_UNPACK         = UVM_MACRO_EXTRAS + 2;
-enum int UVM_CHECK_FIELDS   = UVM_MACRO_EXTRAS + 3;
-enum int UVM_END_DATA_EXTRA = UVM_MACRO_EXTRAS + 4;
+
+enum uvm_field_xtra_enum: int
+  {   UVM_MACRO_EXTRAS   = (1 << UVM_MACRO_NUMFLAGS),
+      UVM_FLAGS          = UVM_MACRO_EXTRAS + 1,
+      UVM_UNPACK         = UVM_MACRO_EXTRAS + 2,
+      UVM_CHECK_FIELDS   = UVM_MACRO_EXTRAS + 3,
+      UVM_END_DATA_EXTRA = UVM_MACRO_EXTRAS + 4,
 
 
-//Get and set methods (in uvm_object). Used by the set/get* functions
-//to tell the object what operation to perform on the fields.
-enum int UVM_START_FUNCS   = UVM_END_DATA_EXTRA + 1;
-enum int UVM_SET           = UVM_START_FUNCS + 1;
-enum int UVM_SETINT        = UVM_SET;
-enum int UVM_SETOBJ        = UVM_START_FUNCS + 2;
-enum int UVM_SETSTR        = UVM_START_FUNCS + 3;
-enum int UVM_END_FUNCS     = UVM_SETSTR;
+      //Get and set methods (in uvm_object). Used by the set/get* functions
+      //to tell the object what operation to perform on the fields.
+      UVM_START_FUNCS   = UVM_END_DATA_EXTRA + 1,
+      UVM_SET           = UVM_START_FUNCS + 1,
+      UVM_SETINT        = UVM_SET,
+      UVM_SETOBJ        = UVM_START_FUNCS + 2,
+      UVM_SETSTR        = UVM_START_FUNCS + 3,
+      UVM_END_FUNCS     = UVM_SETSTR
+      }
+mixin(declareEnums!uvm_field_xtra_enum());
+
 
 //Global string variables
-string uvm_aa_string_key;
+// declared in SV but never used
+// string uvm_aa_string_key;
 
 
 
@@ -259,24 +264,27 @@ string uvm_aa_string_key;
 //
 // Defines all possible values for report severity.
 //
-//   UVM_INFO    - Informative messsage.
+//   UVM_INFO    - Informative message.
 //   UVM_WARNING - Indicates a potential problem.
 //   UVM_ERROR   - Indicates a real problem. Simulation continues subject
 //                 to the configured message action.
-//   UVM_FATAL   - Indicates a problem from which simulation can not
+//   UVM_FATAL   - Indicates a problem from which simulation cannot
 //                 recover. Simulation exits via $finish after a #0 delay.
 
 // typedef bit [1:0] uvm_severity;
-alias byte uvm_severity;
 
-enum uvm_severity_type: uvm_severity
+enum uvm_severity: byte
   {   UVM_INFO,
       UVM_WARNING,
       UVM_ERROR,
       UVM_FATAL
       }
 
-mixin(declareEnums!uvm_severity_type());
+mixin(declareEnums!uvm_severity());
+
+version(UVM_INCLUDE_DEPRECATED) {
+  alias uvm_severity_type = uvm_severity;
+}
 
 // Enum: uvm_action
 //
@@ -293,18 +301,20 @@ mixin(declareEnums!uvm_severity_type());
 //   UVM_CALL_HOOK - Callback the report hook methods
 //   UVM_STOP      - Causes ~$stop~ to be executed, putting the simulation into
 //                   interactive mode.
+//   UVM_RM_RECORD - Sends the report to the recorder
 
 
-alias int uvm_action;
+alias uvm_action = int;
 
 enum uvm_action_type: byte
-  {   UVM_NO_ACTION = 0b000000,
-      UVM_DISPLAY   = 0b000001,
-      UVM_LOG       = 0b000010,
-      UVM_COUNT     = 0b000100,
-      UVM_EXIT      = 0b001000,
-      UVM_CALL_HOOK = 0b010000,
-      UVM_STOP      = 0b100000
+  {   UVM_NO_ACTION = 0b0000000,
+      UVM_DISPLAY   = 0b0000001,
+      UVM_LOG       = 0b0000010,
+      UVM_COUNT     = 0b0000100,
+      UVM_EXIT      = 0b0001000,
+      UVM_CALL_HOOK = 0b0010000,
+      UVM_STOP      = 0b0100000,
+      UVM_RM_RECORD = 0b1000000
       }
 
 mixin(declareEnums!uvm_action_type());
@@ -313,7 +323,7 @@ mixin(declareEnums!uvm_action_type());
 //
 // Defines standard verbosity levels for reports.
 //
-//  UVM_NONE   - Report is always printed. Verbosity level setting can not
+//  UVM_NONE   - Report is always printed. Verbosity level setting cannot
 //               disable it.
 //  UVM_LOW    - Report is issued if configured verbosity is set to UVM_LOW
 //               or above.
@@ -337,7 +347,7 @@ mixin(declareEnums!uvm_verbosity());
 
 import uvm.meta.mcd;
 
-alias MCD UVM_FILE;
+alias UVM_FILE = MCD;
 
 
 //-----------------
@@ -373,69 +383,69 @@ mixin(declareEnums!uvm_port_type_e());
 //
 // Specifies a sequencer's arbitration mode
 //
-// SEQ_ARB_FIFO          - Requests are granted in FIFO order (default)
-// SEQ_ARB_WEIGHTED      - Requests are granted randomly by weight
-// SEQ_ARB_RANDOM        - Requests are granted randomly
-// SEQ_ARB_STRICT_FIFO   - Requests at highest priority granted in fifo order
-// SEQ_ARB_STRICT_RANDOM - Requests at highest priority granted in randomly
-// SEQ_ARB_USER          - Arbitration is delegated to the user-defined
+// UVM_SEQ_ARB_FIFO          - Requests are granted in FIFO order (default)
+// UVM_SEQ_ARB_WEIGHTED      - Requests are granted randomly by weight
+// UVM_SEQ_ARB_RANDOM        - Requests are granted randomly
+// UVM_SEQ_ARB_STRICT_FIFO   - Requests at highest priority granted in fifo order
+// UVM_SEQ_ARB_STRICT_RANDOM - Requests at highest priority granted in randomly
+// UVM_SEQ_ARB_USER          - Arbitration is delegated to the user-defined
 //                         function, user_priority_arbitration. That function
 //                         will specify the next sequence to grant.
 
 
 enum uvm_sequencer_arb_mode: byte
-  {   SEQ_ARB_FIFO,
-      SEQ_ARB_WEIGHTED,
-      SEQ_ARB_RANDOM,
-      SEQ_ARB_STRICT_FIFO,
-      SEQ_ARB_STRICT_RANDOM,
-      SEQ_ARB_USER
+  {   UVM_SEQ_ARB_FIFO,
+      UVM_SEQ_ARB_WEIGHTED,
+      UVM_SEQ_ARB_RANDOM,
+      UVM_SEQ_ARB_STRICT_FIFO,
+      UVM_SEQ_ARB_STRICT_RANDOM,
+      UVM_SEQ_ARB_USER
       }
 
 mixin(declareEnums!uvm_sequencer_arb_mode());
 
-alias uvm_sequencer_arb_mode SEQ_ARB_TYPE; // backward compat
+alias UVM_SEQ_ARB_TYPE = uvm_sequencer_arb_mode; // backward compat
 
 
 // Enum: uvm_sequence_state_enum
 //
 // Defines current sequence state
 //
-// CREATED            - The sequence has been allocated.
-// PRE_START          - The sequence is started and the
+// UVM_CREATED            - The sequence has been allocated.
+// UVM_PRE_START          - The sequence is started and the
 //                      <uvm_sequence_base::pre_start()> task is
 //                      being executed.
-// PRE_FRAME           - The sequence is started and the
+// UVM_PRE_FRAME           - The sequence is started and the
 //                      <uvm_sequence_base::pre_frame()> task is
 //                      being executed.
-// FRAME               - The sequence is started and the
+// UVM_FRAME               - The sequence is started and the
 //                      <uvm_sequence_base::frame()> task is
 //                      being executed.
-// ENDED              - The sequence has completed the execution of the
+// UVM_ENDED              - The sequence has completed the execution of the
 //                      <uvm_sequence_base::frame()> task.
-// POST_FRAME          - The sequence is started and the
+// UVM_POST_FRAME          - The sequence is started and the
 //                      <uvm_sequence_base::post_frame()> task is
 //                      being executed.
-// POST_START         - The sequence is started and the
+// UVM_POST_START         - The sequence is started and the
 //                      <uvm_sequence_base::post_start()> task is
 //                      being executed.
-// STOPPED            - The sequence has been forcibly ended by issuing a
+// UVM_STOPPED            - The sequence has been forcibly ended by issuing a
 //                      <uvm_sequence_base::kill()> on the sequence.
-// FINISHED           - The sequence is completely finished executing.
+// UVM_FINISHED           - The sequence is completely finished executing.
 
 enum uvm_sequence_state: int
-  {   CREATED   = 1,
-      PRE_START = 2,
-      PRE_FRAME = 4,
-      FRAME     = 8,
-      POST_FRAME= 16,
-      POST_START= 32,
-      ENDED     = 64,
-      STOPPED   = 128,
-      FINISHED  = 256
+  {   UVM_CREATED   = 1,
+      UVM_PRE_START = 2,
+      UVM_PRE_FRAME = 4,
+      UVM_FRAME     = 8,
+      UVM_POST_FRAME= 16,
+      UVM_POST_START= 32,
+      UVM_ENDED     = 64,
+      UVM_STOPPED   = 128,
+      UVM_FINISHED  = 256
       }
 
-alias uvm_sequence_state uvm_sequence_state_enum; // backward compat
+alias uvm_sequence_state_enum = uvm_sequence_state; // backward compat
 
 mixin(declareEnums!uvm_sequence_state());
 
@@ -513,7 +523,12 @@ mixin(declareEnums!uvm_phase_type());
 // The set of possible states of a phase. This is an attribute of a schedule
 // node in the graph, not of a phase, to maintain independent per-domain state
 //
-//   UVM_PHASE_DORMANT -  Nothing has happened with the phase in this domain.
+//   UVM_PHASE_UNINITIALIZED - The state is uninitialized.  This is the default
+//             state for phases, and for nodes which have not yet been added to
+//             a schedule.
+//
+//   UVM_PHASE_DORMANT -  The schedule is not currently operating on the phase
+//             node, however it will be scheduled at some point in the future.
 //
 //   UVM_PHASE_SCHEDULED - At least one immediate predecessor has completed.
 //              Scheduled phases block until all predecessors complete or
@@ -525,7 +540,7 @@ mixin(declareEnums!uvm_phase_type());
 //   UVM_PHASE_STARTED - phase ready to execute, running phase_started() callback
 //
 //   UVM_PHASE_EXECUTING - An executing phase is one where the phase callbacks are
-//              being executed. It's process is tracked by the phaser.
+//              being executed. Its process is tracked by the phaser.
 //
 //   UVM_PHASE_READY_TO_END - no objections remain in this phase or in any
 //              predecessors of its successors or in any sync'd phases. This
@@ -540,6 +555,9 @@ mixin(declareEnums!uvm_phase_type());
 //
 //   UVM_PHASE_ENDED - phase completed execution, now running phase_ended() callback
 //
+//   UVM_PHASE_JUMPING - all processes related to phase are being killed and all
+//                       predecessors are forced into the DONE state.
+//
 //   UVM_PHASE_CLEANUP - all processes related to phase are being killed
 //
 //   UVM_PHASE_DONE - A phase is done after it terminated execution.  Becoming
@@ -547,45 +565,27 @@ mixin(declareEnums!uvm_phase_type());
 //
 //    The state transitions occur as follows:
 //
-//|   DORMANT -> SCHED -> SYNC -> START -> EXEC -> READY -> END -> CLEAN -> DONE
-//|      ^                                                            |
-//|      |                      <-- jump_to                           v
-//|      +------------------------------------------------------------+
+//|   UNINITIALIZED -> DORMANT -> SCHED -> SYNC -> START -> EXEC -> READY -> END -+-> CLEAN -> DONE
+//|                       ^                                                       |
+//|                       |                      <-- jump_to                      |
+//|                       +-------------------------------------------- JUMPING< -+
 
 enum uvm_phase_state: int
-  {   UVM_PHASE_DORMANT      = 1,
-      UVM_PHASE_SCHEDULED    = 2,
-      UVM_PHASE_SYNCING      = 4,
-      UVM_PHASE_STARTED      = 8,
-      UVM_PHASE_EXECUTING    = 16,
-      UVM_PHASE_READY_TO_END = 32,
-      UVM_PHASE_ENDED        = 64,
-      UVM_PHASE_CLEANUP      = 128,
-      UVM_PHASE_DONE         = 256,
-      UVM_PHASE_JUMPING      = 512
+  {   UVM_PHASE_UNINITIALIZED = 0,
+      UVM_PHASE_DORMANT       = 1,
+      UVM_PHASE_SCHEDULED     = 2,
+      UVM_PHASE_SYNCING       = 4,
+      UVM_PHASE_STARTED       = 8,
+      UVM_PHASE_EXECUTING     = 16,
+      UVM_PHASE_READY_TO_END  = 32,
+      UVM_PHASE_ENDED         = 64,
+      UVM_PHASE_CLEANUP       = 128,
+      UVM_PHASE_DONE          = 256,
+      UVM_PHASE_JUMPING       = 512
       }
 
 mixin(declareEnums!uvm_phase_state());
 
-
-// Enum: uvm_phase_transition
-//
-// These are the phase state transition for callbacks which provide
-// additional information that may be useful during callbacks
-//
-// UVM_COMPLETED   - the phase completed normally
-// UVM_FORCED_STOP - the phase was forced to terminate prematurely
-// UVM_SKIPPED     - the phase was in the path of a forward jump
-// UVM_RERUN       - the phase was in the path of a backwards jump
-//
-enum uvm_phase_transition: byte
-  {   UVM_COMPLETED   = 0x01,
-      UVM_FORCED_STOP = 0x02,
-      UVM_SKIPPED     = 0x04,
-      UVM_RERUN       = 0x08
-      }
-
-mixin(declareEnums!uvm_phase_transition());
 
 
 // Enum: uvm_wait_op
@@ -647,19 +647,22 @@ mixin(declareEnums!uvm_objection_event());
 // typedef class uvm_packer;
 // typedef class uvm_recorder;
 
-import uvm.base.uvm_printer;
-import uvm.base.uvm_packer;
-import uvm.base.uvm_comparer;
-import uvm.base.uvm_recorder;
-import uvm.base.uvm_root;
 
-
-mixin(uvm_once_sync!(uvm_once_object_globals, "uvm_object_globals"));
+mixin(uvm_once_sync_string!(uvm_once_object_globals,
+			    "uvm_object_globals"));
 
 final class uvm_once_object_globals
 {
+  import uvm.base.uvm_printer: uvm_printer, uvm_table_printer,
+    uvm_tree_printer, uvm_line_printer;
+  import uvm.base.uvm_packer: uvm_packer;
+  import uvm.base.uvm_comparer: uvm_comparer;
+  import uvm.base.uvm_recorder: uvm_recorder;
+  import uvm.base.uvm_root: uvm_root;
+
   ////// shared variables from uvm_object_globals
-  @uvm_immutable_sync private uvm_table_printer _uvm_default_table_printer;
+  @uvm_immutable_sync
+  private uvm_table_printer _uvm_default_table_printer;
 
   // Variable: uvm_default_tree_printer
   //
@@ -668,7 +671,8 @@ final class uvm_once_object_globals
 
   // uvm_tree_printer uvm_default_tree_printer  = new();
 
-  @uvm_immutable_sync private uvm_tree_printer _uvm_default_tree_printer;
+  @uvm_immutable_sync
+  private uvm_tree_printer _uvm_default_tree_printer;
   // Variable: uvm_default_line_printer
   //
   // The line printer is a global object that can be used with
@@ -676,7 +680,8 @@ final class uvm_once_object_globals
 
   // uvm_line_printer uvm_default_line_printer  = new();
 
-  @uvm_immutable_sync private uvm_line_printer _uvm_default_line_printer;
+  @uvm_immutable_sync
+  private uvm_line_printer _uvm_default_line_printer;
 
   // Variable: uvm_default_printer
   //
@@ -688,7 +693,8 @@ final class uvm_once_object_globals
 
   // uvm_printer uvm_default_printer = uvm_default_table_printer;
 
-  @uvm_immutable_sync private uvm_printer _uvm_default_printer;
+  @uvm_immutable_sync
+  private uvm_printer _uvm_default_printer;
 
   // Variable: uvm_default_packer
   //
@@ -696,7 +702,8 @@ final class uvm_once_object_globals
   // and <uvm_object::unpack> do not specify a packer policy.
 
   // uvm_packer uvm_default_packer = new();
-  @uvm_immutable_sync private uvm_packer _uvm_default_packer;
+  @uvm_immutable_sync
+  private uvm_packer _uvm_default_packer;
 
 
 
@@ -707,17 +714,9 @@ final class uvm_once_object_globals
   // do not specify a comparer policy.
 
   // uvm_comparer uvm_default_comparer = new(); // uvm_comparer::init();
-  @uvm_immutable_sync private uvm_comparer _uvm_default_comparer;
+  @uvm_immutable_sync
+  private uvm_comparer _uvm_default_comparer;
 
-
-  // Variable: uvm_default_recorder
-  //
-  // The default recording policy. Used when calls to <uvm_object::record>
-  // do not specify a recorder policy.
-
-  // uvm_recorder uvm_default_recorder = new();
-
-  @uvm_immutable_sync private uvm_recorder _uvm_default_recorder;
 
   this() {
     synchronized(this) {
@@ -728,7 +727,6 @@ final class uvm_once_object_globals
       _uvm_default_printer = _uvm_default_table_printer;
       _uvm_default_packer = new uvm_packer;
       _uvm_default_comparer = new uvm_comparer;
-      _uvm_default_recorder = new uvm_recorder;
     }
   }
 }

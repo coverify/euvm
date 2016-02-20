@@ -2,8 +2,9 @@
 //----------------------------------------------------------------------
 //   Copyright 2007-2011 Mentor Graphics Corporation
 //   Copyright 2007-2010 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2014 Coverify Systems Technology
+//   Copyright 2010      Synopsys, Inc.
+//   Copyright 2013      NVIDIA Corporation
+//   Copyright 2014-2016 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -73,7 +74,7 @@ abstract class uvm_task_phase: uvm_phase
   //
   // Create a new instance of a task-based phase
   //
-  public this(string name) {
+  this(string name) {
     super(name,UVM_PHASE_IMP);
   }
 
@@ -85,16 +86,16 @@ abstract class uvm_task_phase: uvm_phase
   // matter, as each component task is executed in a separate process whose
   // starting order is not deterministic.
   //
-  override public void traverse(uvm_component comp,
-				uvm_phase phase,
-				uvm_phase_state state) {
+  override void traverse(uvm_component comp,
+			 uvm_phase phase,
+			 uvm_phase_state state) {
     phase.m_num_procs_not_yet_returned = 0;
     m_traverse(comp, phase, state);
   }
 
-  final public void m_traverse(uvm_component comp,
-			 uvm_phase phase,
-			 uvm_phase_state state) {
+  final void m_traverse(uvm_component comp,
+			uvm_phase phase,
+			uvm_phase_state state) {
     uvm_domain phase_domain = phase.get_domain();
     uvm_domain comp_domain = comp.get_domain();
 
@@ -105,12 +106,12 @@ abstract class uvm_task_phase: uvm_phase
     synchronized(this) {
       import std.string: format;
       if (m_phase_trace) {
-	uvm_info("PH_TRACE",format("topdown-phase phase=%s state=%s comp=%s "
-				   "comp.domain=%s phase.domain=%s",
-				   phase.get_name(), state,
-				   comp.get_full_name(), comp_domain.get_name(),
-				   phase_domain.get_name()),
-		 UVM_DEBUG);
+	uvm_root_info("PH_TRACE",format("topdown-phase phase=%s state=%s comp=%s "
+					"comp.domain=%s phase.domain=%s",
+					phase.get_name(), state,
+					comp.get_full_name(), comp_domain.get_name(),
+					phase_domain.get_name()),
+		      UVM_DEBUG);
       }
 
       if (phase_domain is uvm_domain.get_common_domain() ||
@@ -120,11 +121,16 @@ abstract class uvm_task_phase: uvm_phase
 	  comp.m_current_phase = phase;
 	  comp.m_apply_verbosity_settings(phase);
 	  comp.phase_started(phase);
+	  auto seqr = cast(uvm_sequencer_base) comp;
+          if (seqr !is null) {
+            seqr.start_phase_sequence(phase);
+	  }
 	  break;
 	case UVM_PHASE_EXECUTING:
 	  uvm_phase ph = this;
-	  if (this in comp.m_phase_imps) {
-	    ph = comp.m_phase_imps[this];
+	  auto pphase = this in comp.m_phase_imps;
+	  if (pphase !is null) {
+	    ph = cast(uvm_phase) *pphase;
 	  }
 	  ph.execute(comp, phase);
 	  break;
@@ -132,11 +138,15 @@ abstract class uvm_task_phase: uvm_phase
 	  comp.phase_ready_to_end(phase);
 	  break;
 	case UVM_PHASE_ENDED:
+	  auto seqr = cast(uvm_sequencer_base) comp;
+          if (seqr !is null) {
+            seqr.stop_phase_sequence(phase);
+	  }
 	  comp.phase_ended(phase);
 	  comp.m_current_phase = null;
 	  break;
 	default:
-	  uvm_fatal("PH_BADEXEC","task phase traverse internal error");
+	  uvm_root_fatal("PH_BADEXEC","task phase traverse internal error");
 	  break;
 	}
       }
@@ -147,9 +157,9 @@ abstract class uvm_task_phase: uvm_phase
   //
   // Fork the task-based phase ~phase~ for the component ~comp~.
   //
-  override public void execute(uvm_component comp,
-			       uvm_phase phase) {
-    fork({
+  override void execute(uvm_component comp,
+			uvm_phase phase) {
+    fork!("uvm_task_phase/execute")({
 
 	// reseed this process for random stability
 	auto proc = Process.self;
@@ -157,11 +167,6 @@ abstract class uvm_task_phase: uvm_phase
 					    comp.get_full_name()));
 
 	phase.inc_m_num_procs_not_yet_returned;
-
-	uvm_sequencer_base seqr = cast(uvm_sequencer_base) comp;
-	if (seqr !is null) {
-	  seqr.start_phase_sequence(phase);
-	}
 
 	exec_task(comp, phase);
 

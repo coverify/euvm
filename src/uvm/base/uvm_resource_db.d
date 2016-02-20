@@ -1,7 +1,7 @@
 //----------------------------------------------------------------------
-//   Copyright 2011 Cypress Semiconductor
-//   Copyright 2010 Mentor Graphics Corporation
-//   Copyright 2014 Coverify Systems Technology
+//   Copyright 2011      Cypress Semiconductor
+//   Copyright 2010      Mentor Graphics Corporation
+//   Copyright 2014-2016 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -67,9 +67,9 @@ import std.string;
 //----------------------------------------------------------------------
 class uvm_resource_db (T=uvm_object) {
 
-  alias uvm_resource!T rsrc_t;
+  alias rsrc_t = uvm_resource!T;
 
-  protected this() {}
+  protected this() { }
 
   // function: get_by_type
   //
@@ -77,7 +77,7 @@ class uvm_resource_db (T=uvm_object) {
   // class parameter so the only argument to this function is the
   // ~scope~.
 
-  static public rsrc_t get_by_type(string rscope) {
+  static rsrc_t get_by_type(string rscope) {
     return rsrc_t.get_by_type(rscope, rsrc_t.get_type());
   }
 
@@ -88,9 +88,9 @@ class uvm_resource_db (T=uvm_object) {
   // ~scope~. The ~rpterr~ flag indicates whether or not to generate
   // a warning if no matching resource is found.
 
-  static public rsrc_t get_by_name(string rscope,
-				   string name,
-				   bool rpterr = true) {
+  static rsrc_t get_by_name(string rscope,
+			    string name,
+			    bool rpterr = true) {
     return rsrc_t.get_by_name(rscope, name, rpterr);
   }
 
@@ -100,7 +100,7 @@ class uvm_resource_db (T=uvm_object) {
   // written to so it will have its default value. The resource is
   // created using ~name~ and ~scope~ as the lookup parameters.
 
-  static public rsrc_t set_default(string rscope, string name) {
+  static rsrc_t set_default(string rscope, string name) {
     rsrc_t r = new rsrc_t(name, rscope);
     r.set();
     return r;
@@ -122,7 +122,7 @@ class uvm_resource_db (T=uvm_object) {
 			(accessor !is null) ? accessor.get_full_name() :
 			"<unknown>", rsrc is null ?
 			"null (failed lookup)" : rsrc.convert2string());
-    uvm_info(id, msg, UVM_LOW);
+    uvm_root_info(id, msg, UVM_LOW);
   }
 
   // function: set
@@ -130,8 +130,8 @@ class uvm_resource_db (T=uvm_object) {
   // Create a new resource, write a ~val~ to it, and set it into the
   // database using ~name~ and ~scope~ as the lookup parameters. The
   // ~accessor~ is used for auditting.
-  static public void set(string rscope, string name,
-			 T val, uvm_object accessor = null) {
+  static void set(string rscope, string name,
+		  T val, uvm_object accessor = null) {
     rsrc_t rsrc = new rsrc_t(name, rscope);
     rsrc.write(val, accessor);
     rsrc.set();
@@ -147,8 +147,8 @@ class uvm_resource_db (T=uvm_object) {
   // database.  The resource has no name and therefore will not be
   // entered into the name map. But is does have a ~scope~ for lookup
   // purposes. The ~accessor~ is used for auditting.
-  static public void set_anonymous(string rscope,
-				   T val, uvm_object accessor = null) {
+  static void set_anonymous(string rscope,
+			    T val, uvm_object accessor = null) {
     rsrc_t rsrc = new rsrc_t("", rscope);
     rsrc.write(val, accessor);
     rsrc.set();
@@ -165,8 +165,8 @@ class uvm_resource_db (T=uvm_object) {
   // the name map so that it will be (currently) the highest priority
   // resource with the specified name and type.
 
-  static public void set_override(string rscope, string name,
-				  T val, uvm_object accessor = null) {
+  static void set_override(string rscope, string name,
+			   T val, uvm_object accessor = null) {
     rsrc_t rsrc = new rsrc_t(name, rscope);
     rsrc.write(val, accessor);
     rsrc.set_override();
@@ -187,8 +187,8 @@ class uvm_resource_db (T=uvm_object) {
   // specified type. It will be normal priority (i.e. at the end of the
   // queue) in the name map.
 
-  static public void set_override_type(string rscope, string name,
-				       T val, uvm_object accessor = null) {
+  static void set_override_type(string rscope, string name,
+				T val, uvm_object accessor = null) {
     rsrc_t rsrc = new rsrc_t(name, rscope);
     rsrc.write(val, accessor);
     rsrc.set_override(uvm_resource_types.TYPE_OVERRIDE);
@@ -207,8 +207,8 @@ class uvm_resource_db (T=uvm_object) {
   // specified name. It will be normal priority (i.e. at the end of the
   // queue) in the type map.
 
-  static public void set_override_name(string rscope, string name,
-				       T val, uvm_object accessor = null) {
+  static void set_override_name(string rscope, string name,
+				T val, uvm_object accessor = null) {
     rsrc_t rsrc = new rsrc_t(name, rscope);
     rsrc.write(val, accessor);
     rsrc.set_override(uvm_resource_types.NAME_OVERRIDE);
@@ -225,9 +225,9 @@ class uvm_resource_db (T=uvm_object) {
   // is returned through the output argument ~val~.  The return value is a bit
   // that indicates whether or not the read was successful. The ~accessor~
   // is used for auditting.
-  static public bool read_by_name(string rscope,
-				  string name,
-				  ref T val, uvm_object accessor = null) {
+  static bool read_by_name(string rscope,
+			   string name,
+			   ref T val, uvm_object accessor = null) {
     rsrc_t rsrc = get_by_name(rscope, name);
 
     if(uvm_resource_db_options.is_tracing()) {
@@ -248,9 +248,9 @@ class uvm_resource_db (T=uvm_object) {
   // argument ~val~.  The ~scope~ is used for the lookup. The return
   // value is a bit that indicates whether or not the read is successful.
   // The ~accessor~ is used for auditting.
-  static public bool read_by_type(string rscope,
-				  ref T val,
-				  uvm_object accessor = null) {
+  static bool read_by_type(string rscope,
+			   ref T val,
+			   uvm_object accessor = null) {
     rsrc_t rsrc = get_by_type(rscope);
 
     if(uvm_resource_db_options.is_tracing()) {
@@ -277,8 +277,8 @@ class uvm_resource_db (T=uvm_object) {
   // a <get_by_name> match is found for ~name~ and ~scope~ then ~val~
   // will be written to that matching resource and thus may impact
   // other scopes which also match the resource.
-  static public bool write_by_name(string rscope, string name,
-				   T val, uvm_object accessor = null) {
+  static bool write_by_name(string rscope, string name,
+			    T val, uvm_object accessor = null) {
     rsrc_t rsrc = get_by_name(rscope, name);
 
     if(uvm_resource_db_options.is_tracing()) {
@@ -286,7 +286,9 @@ class uvm_resource_db (T=uvm_object) {
 		 accessor, rsrc);
     }
 
-    if(rsrc is null) return false;
+    if(rsrc is null) {
+      return false;
+    }
 
     rsrc.write(val, accessor);
 
@@ -305,8 +307,8 @@ class uvm_resource_db (T=uvm_object) {
   // a <get_by_name> match is found for ~name~ and ~scope~ then ~val~
   // will be written to that matching resource and thus may impact
   // other scopes which also match the resource.
-  static public bool write_by_type(string rscope,
-				   T val, uvm_object accessor = null) {
+  static bool write_by_type(string rscope,
+			    T val, uvm_object accessor = null) {
     rsrc_t rsrc = get_by_type(rscope);
 
     if(uvm_resource_db_options.is_tracing()) {
@@ -314,7 +316,9 @@ class uvm_resource_db (T=uvm_object) {
 		 accessor, rsrc);
     }
 
-    if(rsrc is null) return false;
+    if(rsrc is null) {
+      return false;
+    }
 
     rsrc.write(val, accessor);
 
@@ -328,7 +332,7 @@ class uvm_resource_db (T=uvm_object) {
   // it will dump the same thing -- the entire database -- no matter the
   // value of the parameter.
 
-  static public void dump() {
+  static void dump() {
     uvm_resource_pool rp = uvm_resource_pool.get();
     rp.dump();
   }
@@ -356,8 +360,10 @@ class uvm_resource_db_options
 {
   static class uvm_once
   {
-    @uvm_public_sync private bool _ready;
-    @uvm_public_sync private bool _tracing;
+    @uvm_public_sync
+    private bool _ready;
+    @uvm_public_sync
+    private bool _tracing;
   }
 
   mixin uvm_once_sync;
@@ -370,9 +376,11 @@ class uvm_resource_db_options
   //
   // This method is implicitly called by the ~+UVM_RESOURCE_DB_TRACE~.
 
-  static public void turn_on_tracing() {
+  static void turn_on_tracing() {
     synchronized(once) {
-      if (! _ready) init();
+      if (! _ready) {
+	init();
+      }
       _tracing = true;
     }
   }
@@ -381,9 +389,11 @@ class uvm_resource_db_options
   //
   // Turn tracing off for the resource database.
 
-  static public void turn_off_tracing() {
+  static void turn_off_tracing() {
     synchronized(once) {
-      if (! _ready) init();
+      if (! _ready) {
+	init();
+      }
       _tracing = false;
     }
   }
@@ -392,7 +402,7 @@ class uvm_resource_db_options
   //
   // Returns 1 if the tracing facility is on and 0 if it is off.
 
-  static public bool is_tracing() {
+  static bool is_tracing() {
     synchronized(once) {
       if (! _ready) init();
       return _tracing;
@@ -410,5 +420,4 @@ class uvm_resource_db_options
       _ready = true;
     }
   }
-
 }

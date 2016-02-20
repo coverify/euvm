@@ -75,7 +75,7 @@ class uvm_push_driver(REQ=uvm_sequence_item,
   // constructor arguments for <uvm_component>: ~name~ is the name of the
   // instance, and ~parent~ is the handle to the hierarchical parent, if any.
 
-  public this(string name, uvm_component parent) {
+  this(string name, uvm_component parent) {
     synchronized(this) {
       super(name, parent);
       req_export = new uvm_blocking_put_imp!(REQ, uvm_push_driver!(REQ,RSP))("req_export", this);
@@ -83,7 +83,7 @@ class uvm_push_driver(REQ=uvm_sequence_item,
     }
   }
 
-  public void check_port_connections() {
+  void check_port_connections() {
     if (req_export.size() != 1) {
       uvm_report_fatal("Connection Error",
 		       format("Must connect to seq_item_port(%0d)",
@@ -91,19 +91,19 @@ class uvm_push_driver(REQ=uvm_sequence_item,
     }
   }
 
-  public void end_of_elaboration_phase(uvm_phase phase) {
+  void end_of_elaboration_phase(uvm_phase phase) {
     super.end_of_elaboration_phase(phase);
     check_port_connections();
   }
 
   // task
-  public void put(REQ item) {
+  void put(REQ item) {
     uvm_report_fatal("UVM_PUSH_DRIVER", "Put task for push driver is not implemented", UVM_NONE);
   }
 
   enum string type_name = "uvm_push_driver!(REQ,RSP)";
 
-  public string get_type_name () {
+  string get_type_name () {
     return type_name;
   }
 }
