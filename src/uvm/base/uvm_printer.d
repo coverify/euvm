@@ -31,11 +31,6 @@ import std.traits: isFloatingPoint;
 import std.string: format;
 
 
-// GC hack to make sure that heap allocation with static scope
-// are covered -- this is because of an error in druntime
-// https://issues.dlang.org/show_bug.cgi?id=15513
-import core.memory: GC;
-
 enum int UVM_STDOUT = 1;  // Writes to standard out and logfile
 
 struct uvm_printer_row_info
@@ -609,21 +604,10 @@ class uvm_table_printer: uvm_printer {
       size_t m = max(_m_max_name, _m_max_type, _m_max_size, _m_max_value, 100);
 
       if(dash.length < m) {
-	// GC hack to make sure that heap allocation with static scope
-	// are covered -- this is because of an error in druntime
-	// https://issues.dlang.org/show_bug.cgi?id=15513
-	GC.disable();
-	if(dash.length != 0) {
-	  GC.removeRoot(dash.ptr);
-	  GC.removeRoot(space.ptr);
-	}
 	dash.length = m;
 	dash[] = '-';
 	space.length = m;
 	space[] = ' ';
-	GC.addRoot(dash.ptr);
-	GC.addRoot(space.ptr);
-	GC.enable();
       }
 
       if(knobs.header) {

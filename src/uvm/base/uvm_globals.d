@@ -48,12 +48,6 @@ import esdl.base.core: wait;
 import std.traits: EnumMembers;
 import std.conv;
 
-// GC hack to make sure that heap allocation with static scope
-// are covered -- this is because of an error in druntime
-// https://issues.dlang.org/show_bug.cgi?id=15513
-// once the bug is rectified, we do not need to use GC explicitly
-import core.memory: GC;
-
 void run_test (string test_name = "") {
   uvm_coreservice_t cs = uvm_coreservice_t.get();
   auto top = cs.get_root();
@@ -804,10 +798,5 @@ struct uvm_enum_wrapper(T=uvm_active_passive_enum)
     foreach(e; EnumMembers!T) {
       _map[e.to!string] = e;
     }
-    // GC hack to make sure that heap allocation with static scope
-    // are covered -- this is because of an error in druntime
-    // https://issues.dlang.org/show_bug.cgi?id=15513
-    // once the bug is rectified, we do not need to use GC explicitly
-    GC.addRoot(cast(void*) _map);
   }
 }
