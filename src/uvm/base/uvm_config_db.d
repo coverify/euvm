@@ -56,6 +56,8 @@ import uvm.base.uvm_object_globals;
 
 import esdl.base.core;
 
+import std.random: Random;
+
 final private class m_uvm_waiter
 {
   mixin uvm_sync;

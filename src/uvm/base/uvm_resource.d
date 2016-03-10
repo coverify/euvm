@@ -108,18 +108,19 @@
 
 module uvm.base.uvm_resource;
 
-import std.string;
 import uvm.base.uvm_object;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_root;
 import uvm.base.uvm_printer;
 import uvm.base.uvm_spell_chkr;
-import esdl.base.core: SimTime, getRootEntity;
+import uvm.meta.meta;
 
+import esdl.base.core: SimTime, getRootEntity, Process;
+
+import std.string;
 import std.random: Random;
 import std.algorithm: sort;
-import uvm.meta.meta;
 import std.conv: to;
 //----------------------------------------------------------------------
 // Class: uvm_resource_types

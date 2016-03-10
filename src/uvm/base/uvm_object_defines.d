@@ -114,6 +114,7 @@ import uvm.base.uvm_root: uvm_root;
 
 mixin template uvm_component_utils(T=void)
 {
+  import uvm.base.uvm_root;
   static if(is(T == void)) {
     alias U = typeof(this);
   }

@@ -61,7 +61,6 @@ import uvm.base.uvm_misc;
 import uvm.base.uvm_report_object;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_globals;
-import std.string: format;
 import uvm.base.uvm_object;
 import uvm.base.uvm_pool;
 import uvm.base.uvm_queue;
@@ -74,6 +73,9 @@ import uvm.base.uvm_globals: uvm_root_warning;
 
 import esdl.data.queue;
 import esdl.data.sync;
+
+import std.string: format;
+import std.conv: to;
 
 //------------------------------------------------------------------------------
 // Class - uvm_callbacks_base
@@ -1394,6 +1396,7 @@ class uvm_callback: uvm_object
 mixin template uvm_register_cb(T, CB) if(is(CB: uvm_callback))
   {
     import uvm.base.uvm_callback;
+    import std.string: format;
     // static this() {
     //   if(uvm_is_uvm_thread) {
     //	uvm_callbacks!(T, CB).m_register_pair();

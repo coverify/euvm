@@ -30,13 +30,14 @@
 
 module uvm.base.uvm_traversal;
 
-import std.regex;
 import uvm.base.uvm_object;
 import uvm.base.uvm_component;
 import uvm.base.uvm_root;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_coreservice;
 
+import std.regex;
+import std.string: format;
 
 abstract class uvm_visitor(NODE=uvm_component): uvm_object
 {

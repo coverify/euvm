@@ -52,7 +52,11 @@ import uvm.base.uvm_tr_database;
 import uvm.base.uvm_tr_stream;
 import uvm.base.uvm_printer;
 
-import esdl.base.core: finish, getRootEntity;
+import esdl.base.core: finish, getRootEntity, Process, SimTime;
+
+import std.traits: EnumMembers;
+import std.string: format;
+import std.conv: to;
 
 class uvm_report_server: /*extends*/ uvm_object
 {

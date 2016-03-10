@@ -44,9 +44,12 @@ import uvm.dap.uvm_simple_lock_dap;
 
 import uvm.meta.mcd;
 import uvm.meta.misc;
-import esdl.base.core;
 import uvm.base.uvm_object_globals;
 
+import esdl.base.core;
+
+import std.string: format;
+import std.random;
 
 
 //------------------------------------------------------------------------------
