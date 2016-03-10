@@ -316,7 +316,7 @@ class uvm_root: uvm_component
   void init_domains() {
     synchronized(this) {
       uvm_domain.get_common_domain(); // FIXME -- comment this line??
-      uvm_root.m_uvm_get_root.m_domain = uvm_domain.get_uvm_domain();
+      m_domain = uvm_domain.get_uvm_domain();
     }
   }
 

@@ -40,7 +40,7 @@ import uvm.base.uvm_globals: uvm_report_warning;
 import std.string: format;
 import esdl.data.queue;
 import uvm.meta.misc;
-static import std.conv;
+import std.conv;
 
 
 class uvm_queue (T=int): uvm_object
