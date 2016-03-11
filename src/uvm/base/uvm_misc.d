@@ -47,6 +47,7 @@ import uvm.base.uvm_config_db;
 import uvm.base.uvm_object_globals;
 // import uvm.base.uvm_object_globals;
 import std.algorithm: find, canFind;
+import std.conv: to;
 
 interface uvm_void_if { }
 abstract class uvm_void: uvm_void_if {
@@ -226,7 +227,6 @@ final class uvm_scope_stack
 
   void set_arg_element (string arg, int ele) {
     synchronized(this) {
-      import std.conv;
       _m_arg = arg ~ "[" ~ ele.to!string ~ "]";
     }
   }
@@ -699,7 +699,6 @@ uint uvm_global_random_seed() {
 //
 import uvm.base.uvm_object: uvm_object;
 string uvm_object_value_str(uvm_object v) {
-  import std.conv;
   if (v is null) {
     return "<null>";
   }
@@ -823,15 +822,24 @@ string uvm_bitvec_to_string(T)(T value, ulong size,
   }
 
   switch(radix) {
-  case uvm_radix_enum.UVM_BIN:      return format("%0s%0b", radix_str, value);
-  case uvm_radix_enum.UVM_OCT:      return format("%0s%0o", radix_str, value);
+  case uvm_radix_enum.UVM_BIN:      return format("%0s%0" ~ size.to!string ~ "b",
+						  radix_str, value);
+  case uvm_radix_enum.UVM_OCT:      return format("%0s%0" ~
+						  ((size+2)/3).to!string ~ "o",
+						  radix_str, value);
   case uvm_radix_enum.UVM_UNSIGNED: return format("%0s%0d", radix_str, value);
   case uvm_radix_enum.UVM_STRING:   return format("%0s%0s", radix_str, value);
-  case uvm_radix_enum.UVM_TIME:     return format("%0s#%0d", radix_str, value);
+  case uvm_radix_enum.UVM_TIME:     return format("%0s%0d", radix_str, value);
   case uvm_radix_enum.UVM_DEC:      return format("%0s%0d", radix_str, value);
-  case uvm_radix_enum.UVM_HEX:      return format("%0s%0x", radix_str, value);
-  case uvm_radix_enum.UVM_ENUM:     return format("%0s%0s (%0x)", radix_str, value, value);
-  default:                          return format("%0s%0x", radix_str, value);
+  case uvm_radix_enum.UVM_HEX:      return format("%0s%0" ~
+						  ((size+3)/4).to!string ~ "x",
+						  radix_str, value);
+  case uvm_radix_enum.UVM_ENUM:     return format("%0s0x%0" ~
+						  ((size+3)/4).to!string ~ "x [%0s]",
+						  radix_str, value, value);
+  default:                          return format("%0s%0" ~
+						  ((size+3)/4).to!string ~ "x",
+						  radix_str, value);
   }
 }
 
@@ -845,7 +853,6 @@ alias uvm_integral_to_string  = uvm_bitvec_to_string!uvm_integral_t;
 // index, and if so, what the index is.
 
 int uvm_get_array_index_int(string arg, out bool is_wildcard) {
-  import std.conv;
   int uvm_get_array_index_int_ = 0;
   is_wildcard = true;
   auto i = arg.length - 1;

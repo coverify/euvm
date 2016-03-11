@@ -88,7 +88,7 @@ import uvm.base.uvm_object_globals;
 import uvm.base.uvm_component;
 import uvm.meta.misc;
 import uvm.meta.meta;
-import std.traits: isIntegral;
+import std.traits: isIntegral, isBoolean;
 
 abstract class uvm_printer
 {
@@ -179,13 +179,25 @@ abstract class uvm_printer
 	if(type_name == "") {
 	  if(radix is UVM_TIME)        type_name = "time";
 	  else if(radix is UVM_STRING) type_name = "string";
-	  else if(radix is UVM_ENUM)   type_name = "enum";
-	  else                         type_name = "integral";
+	  else if(radix is UVM_ENUM)   type_name = qualifiedTypeName!T ~
+					 " (enum)";
+	  else                         type_name = qualifiedTypeName!T;
 	}
 
 	auto sz_str = size.to!string;
 
-	if(radix is UVM_NORADIX) radix = knobs.default_radix;
+	if(radix is UVM_NORADIX) {
+	  static if(isBitVector!T  || isBoolean!T ||
+		    is(T == byte)  || is(T == ubyte)  ||
+		    is(T == short) || is(T == ushort) ||
+		    is(T == int)   || is(T == uint) ||
+		    is(T == long)  || is(T == ulong)) {
+	    radix = knobs.default_radix;
+	  }
+	  else {		// cover the enums
+	    radix = UVM_ENUM;
+	  }
+	}
 
 	auto val_str = uvm_bitvec_to_string(value, size, radix,
 					    knobs.get_radix_str(radix));
@@ -321,8 +333,8 @@ abstract class uvm_printer
 	}
 
 	row_info.level = m_scope.depth();
-	row_info.name = adjust_name(m_scope.get(),scope_separator);
-	row_info.type_name = "string";
+	row_info.name = adjust_name(m_scope.get(), scope_separator);
+	row_info.type_name = T.stringof;
 	row_info.size = format("%0d", value.length);
 	row_info.val = (value == "" ? "\"\"" : value);
 
@@ -1071,7 +1083,7 @@ class uvm_printer_knobs {
   // This string should be prepended to the value of an integral type when a
   // radix of <UVM_BIN> is used for the radix of the integral object.
 
-  private string _bin_radix = "";
+  private string _bin_radix = "0b";
 
 
   // Variable: oct_radix
@@ -1079,7 +1091,7 @@ class uvm_printer_knobs {
   // This string should be prepended to the value of an integral type when a
   // radix of <UVM_OCT> is used for the radix of the integral object.
 
-  private string _oct_radix = "";
+  private string _oct_radix = "0";
 
 
   // Variable: unsigned_radix
@@ -1096,7 +1108,7 @@ class uvm_printer_knobs {
   // This string should be prepended to the value of an integral type when a
   // radix of <UVM_HEX> is used for the radix of the integral object.
 
-  private string _hex_radix = "";
+  private string _hex_radix = "0x";
 
 
   // Function: get_radix_str
