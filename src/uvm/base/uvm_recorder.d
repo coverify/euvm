@@ -1115,7 +1115,7 @@ class uvm_text_recorder: uvm_recorder
   void write_attribute(T)(string nm,
 			  T value,
 			  uvm_radix_enum radix,
-			  ulong numbits=0) {
+			  size_t numbits=0) {
     synchronized(this) {
       if(numbits == 0) {
 	static if(isIntegral!T) { numbits = T.sizeof * 8; }

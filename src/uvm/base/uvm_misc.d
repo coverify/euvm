@@ -781,7 +781,7 @@ string uvm_to_string(T)(T value,
     }
   }
 
-string uvm_bitvec_to_string(T)(T value, ulong size,
+string uvm_bitvec_to_string(T)(T value, size_t size,
 			       uvm_radix_enum radix=UVM_NORADIX,
 			       string radix_str="") {
   // sign extend & don't show radix for negative values
