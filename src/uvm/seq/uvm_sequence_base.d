@@ -144,12 +144,17 @@ import uvm.base.uvm_phase;
 import uvm.base.uvm_message_defines;
 import uvm.base.uvm_tr_stream;
 import uvm.dap.uvm_get_to_lock_dap;
-import std.string;
-import esdl.base.core;
-import esdl.data.queue;
-import esdl.data.rand;
 import uvm.meta.misc;
 
+import esdl.base.core;
+import esdl.data.queue;
+
+version(UVM_NORANDOM) {}
+ else {
+   import esdl.data.rand;
+ }
+
+import std.string;
 version(UVM_INCLUDE_DEPRECATED) {
    version = UVM_DEPRECATED_STARTING_PHASE;
  }
@@ -1440,7 +1445,14 @@ class uvm_sequence_base: uvm_sequence_item
     //
     // Used as an identifier in constraints for a specific sequence type.
 
-    @uvm_public_sync private @rand uint _seq_kind;
+    version(UVM_NORANDOM) {
+      @uvm_public_sync
+	private uint _seq_kind;
+    }
+    else {
+      @uvm_public_sync @rand
+	private uint _seq_kind;
+    }
     private uint _num_seq;
 
     void preRandomize() {
@@ -1552,12 +1564,15 @@ class uvm_sequence_base: uvm_sequence_item
 
       m_seq.set_item_context(this, m_sequencer);
 
-      try {
-  	m_seq.randomize();
-      }
-      catch {
-  	uvm_report_warning("RNDFLD", "Randomization failed in"
-  			   " do_sequence_kind()");
+      version(UVM_NORANDOM) {}
+      else {
+	try {
+	  m_seq.randomize();
+	}
+	catch {
+	  uvm_report_warning("RNDFLD", "Randomization failed in"
+			     " do_sequence_kind()");
+	}
       }
       m_seq.start(m_sequencer, this, get_priority(), 0);
     }
@@ -1845,9 +1860,21 @@ class uvm_sequence_base: uvm_sequence_item
       uvm_create_on(SEQ_OR_ITEM, SEQR);
       uvm_sequence_base seq_ =
 	cast(uvm_sequence_base) start_item(SEQ_OR_ITEM, PRIORITY);
-      if((seq_ is null || ! seq_.do_not_randomize) &&
-	 ! SEQ_OR_ITEM.randomizeWith!(CONSTRAINTS)(values)) {
-	uvm_warning("RNDFLD", "Randomization failed in uvm_do_with action");
+      version(UVM_NORANDOM) {}
+      else {
+	if((seq_ is null || ! seq_.do_not_randomize)) {
+	  try {
+	    SEQ_OR_ITEM.randomizeWith!(CONSTRAINTS)(values);
+	  }
+	  catch {
+	    uvm_warning("RNDFLD",
+			"Randomization failed in uvm_do_with action");
+	  }
+	}
+	else {
+	    uvm_warning("RNDFLD",
+			"Randomization failed in uvm_do_with action (seq_ is null || ! seq_.do_not_randomize)");
+	}
       }
       seq_ = cast(uvm_sequence_base) SEQ_OR_ITEM;
       if(seq_ is null) finish_item(SEQ_OR_ITEM, PRIORITY);
@@ -1947,10 +1974,21 @@ class uvm_sequence_base: uvm_sequence_item
     uvm_sequence_base seq_ = cast(uvm_sequence_base) SEQ_OR_ITEM;
     if (seq_ is null) start_item(SEQ_OR_ITEM, PRIORITY);
     else seq_.set_item_context(this,SEQ_OR_ITEM.get_sequencer());
-    if ((seq_ is null || !seq_.do_not_randomize) &&
-	!SEQ_OR_ITEM.randomizeWith!(CONSTRAINTS)(values)) {
-      uvm_warning("RNDFLD",
-		  "Randomization failed in uvm_rand_send_with action");
+    version(UVM_NORANDOM) {}
+    else {
+      if ((seq_ is null || !seq_.do_not_randomize)) {
+	try {
+	  SEQ_OR_ITEM.randomizeWith!(CONSTRAINTS)(values);
+	}
+	catch {
+	  uvm_warning("RNDFLD",
+		      "Randomization failed in uvm_rand_send_with action");
+	}
+      }
+      else {
+	  uvm_warning("RNDFLD",
+		      "Randomization failed in uvm_rand_send_with action (seq_ is null || !seq_.do_not_randomize)");
+      }
     }
     seq_ = cast(uvm_sequence_base) SEQ_OR_ITEM;
     if(seq_ is null) finish_item(SEQ_OR_ITEM, PRIORITY);

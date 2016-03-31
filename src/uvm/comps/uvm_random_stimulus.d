@@ -104,8 +104,15 @@ class uvm_random_stimulus(T=uvm_transaction): uvm_component
     if (t is null) t = new T;
     for (size_t i=0; (max_count is 0 || i < max_count) && ! m_stop; ++i) {
 
-      if (! t.randomize() ) {
-	uvm_report_warning ("RANDFL", "Randomization failed in generate_stimulus");
+      version(UVM_NORANDOM) {}
+      else {
+	try {
+	  t.randomize();
+	}
+	catch {
+	  uvm_report_warning("RANDFL",
+			     "Randomization failed in generate_stimulus");
+	}
       }
 
       T temp = cast(T) t.clone();

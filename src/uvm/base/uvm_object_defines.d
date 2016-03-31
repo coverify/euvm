@@ -57,7 +57,10 @@ mixin template uvm_object_utils(T=void)
   mixin m_uvm_object_create_func!(U);
   mixin m_uvm_get_type_name_func!(U);
   mixin m_uvm_field_auto_utils!(U);
-  mixin Randomization;
+  version(UVM_NORANDOM) {}
+  else {
+    mixin Randomization;
+  }
   // `uvm_field_utils_begin(U)
 
   // Add a defaultConstructor for Object.factory to work
@@ -371,11 +374,19 @@ mixin template m_uvm_field_auto_utils(T)
   }
 
   void uvm_field_auto_all_fields(alias F, size_t I=0, T)(T t) {
-    import esdl.data.rand;
+    version(UVM_NORANDOM) {}
+    else {
+      import esdl.data.rand;
+    }
     static if(I < t.tupleof.length) {
       alias U=typeof(t.tupleof[I]);
-      static if(! is(U: _esdl__ConstraintBase)) {
+      version(UVM_NORANDOM) {
 	F!(I)(t);
+      }
+      else {
+	static if(! is(U: _esdl__ConstraintBase)) {
+	  F!(I)(t);
+	}
       }
       uvm_field_auto_all_fields!(F, I+1)(t);
     }

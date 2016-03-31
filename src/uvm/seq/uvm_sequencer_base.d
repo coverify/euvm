@@ -39,9 +39,14 @@ import uvm.base.uvm_printer;
 import uvm.base.uvm_misc;
 import uvm.meta.misc;
 
-import esdl.data.rand;
 import esdl.data.queue;
 import esdl.base.core;
+
+version(UVM_NORANDOM) {}
+ else {
+   import esdl.data.rand;
+ }
+  
 import std.random: uniform;
 import std.algorithm;
 import std.string: format;
@@ -380,16 +385,19 @@ class uvm_sequencer_base: uvm_component
       seq.reseed();
       seq.set_starting_phase(phase);
   
-      if(!seq.do_not_randomize) {
-	try {
-	  seq.randomize();
-	}
-	catch(Exception e) {
-	  uvm_warning("STRDEFSEQ",
-		      "Randomization failed for default sequence '" ~
-		      seq.get_type_name() ~ "' for phase '" ~
-		      phase.get_name() ~ "'");
-	  return;
+      version(UVM_NORANDOM) {}
+      else {
+	if(!seq.do_not_randomize) {
+	  try {
+	    seq.randomize();
+	  }
+	  catch(Exception e) {
+	    uvm_warning("STRDEFSEQ",
+			"Randomization failed for default sequence '" ~
+			seq.get_type_name() ~ "' for phase '" ~
+			phase.get_name() ~ "'");
+	    return;
+	  }
 	}
       }
   
@@ -1644,7 +1652,13 @@ class uvm_sequencer_base: uvm_component
     }
     
     protected int[string] _sequence_ids;
-    protected @rand int _seq_kind;
+
+    version(UVM_NORANDOM) {
+      protected int _seq_kind;
+    }
+    else {
+      protected @rand int _seq_kind;
+    }
 
     // add_sequence
     // ------------
@@ -1772,11 +1786,14 @@ class uvm_sequencer_base: uvm_component
 	  m_seq.set_sequencer(this);
 	  m_seq.reseed();
 	}
-	try{
-	  m_seq.randomize();
-	}
-	catch {
-	  uvm_report_warning("STRDEFSEQ", "Failed to randomize sequence");
+	version(UVM_NORANDOM) {}
+	else {
+	  try{
+	    m_seq.randomize();
+	  }
+	  catch {
+	    uvm_report_warning("STRDEFSEQ", "Failed to randomize sequence");
+	  }
 	}
       }
       m_seq.start(this);

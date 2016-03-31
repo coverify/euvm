@@ -45,13 +45,9 @@ module uvm.base.uvm_object;
 // <create> and <get_type_name>.
 //
 //------------------------------------------------------------------------------
-import esdl.base.core;
 import uvm.base.uvm_coreservice;
 import uvm.base.uvm_misc;
 
-import esdl.data.rand;
-import esdl.data.obdd;
-import esdl.data.bvec;
 import uvm.base.uvm_recorder;
 
 
@@ -65,6 +61,15 @@ import uvm.base.uvm_globals;
 import uvm.base.uvm_root;
 import uvm.meta.mcd;
 import uvm.meta.misc;
+
+import esdl.base.core;
+import esdl.data.bvec;
+
+version(UVM_NORANDOM) {}
+ else {
+   import esdl.data.rand;
+ }
+
 import std.traits;
 import std.string: format;
 
@@ -95,7 +100,11 @@ abstract class uvm_object: uvm_void
   mixin(uvm_once_sync_string);
   mixin uvm_sync;
 
-  mixin Randomization;
+  version(UVM_NORANDOM) {}
+  else {
+    mixin Randomization;
+  }
+
   // Function: new
 
   // Creates a new uvm_object with the given instance ~name~. If ~name~ is not
@@ -149,14 +158,20 @@ abstract class uvm_object: uvm_void
   // not perform any function.
 
   final void reseed (int seed) {
-    this.srandom(seed);
+    version(UVM_NORANDOM) {}
+    else {
+      this.srandom(seed);
+    }
   }
 
   final void reseed () {
     synchronized(this) {
       if(use_uvm_seeding) {
-	this.srandom(uvm_create_random_seed(get_type_name(),
-					    get_full_name()));
+	version(UVM_NORANDOM) {}
+	else {
+	  this.srandom(uvm_create_random_seed(get_type_name(),
+					      get_full_name()));
+	}
       }
     }
   }

@@ -37,7 +37,12 @@ import uvm.tlm1.uvm_tlm_fifos;
 import uvm.meta.misc;
 
 import esdl.data.queue;
-import esdl.data.rand;
+
+version(UVM_NORANDOM) {}
+ else {
+  import esdl.data.rand;
+ }   
+
 import std.string: format;
 
 //------------------------------------------------------------------------------
@@ -128,12 +133,15 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
       REQ param_t = cast(REQ) t;
       if (param_t !is null) {
 	if (rerandomize is true) {
-	  try {
-	    param_t.randomize();
-	  }
-	  catch {
-	    uvm_report_warning("SQRSNDREQ", "Failed to rerandomize sequence"
-	    		       " item in send_request");
+	  version(UVM_NORANDOM) {}
+	  else {
+	    try {
+	      param_t.randomize();
+	    }
+	    catch {
+	      uvm_report_warning("SQRSNDREQ", "Failed to rerandomize sequence"
+				 " item in send_request");
+	    }
 	  }
 	}
 	if (param_t.get_transaction_id() == -1) {

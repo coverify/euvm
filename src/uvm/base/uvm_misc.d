@@ -39,13 +39,15 @@ module uvm.base.uvm_misc;
 //
 //------------------------------------------------------------------------------
 import std.string: format;
-import esdl.data.bvec;
-import esdl.data.rand;
 import uvm.base.uvm_coreservice;
 import uvm.base.uvm_factory;
 import uvm.base.uvm_config_db;
 import uvm.base.uvm_object_globals;
 // import uvm.base.uvm_object_globals;
+
+import esdl.data.bvec;
+// import esdl.data.rand;
+
 import std.algorithm: find, canFind;
 import std.conv: to;
 
