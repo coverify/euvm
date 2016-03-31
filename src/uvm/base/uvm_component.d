@@ -373,6 +373,12 @@ abstract class uvm_component: uvm_report_object, ParContext
       return _m_parent;
     }
   }
+
+  // Traverse the component hierarchy and return the uvm_root
+  uvm_root get_root() {
+    return get_parent().get_root();
+  }
+  
   //   extern virtual function uvm_component get_parent ();
 
 
@@ -3120,10 +3126,9 @@ abstract class uvm_component: uvm_report_object, ParContext
     }
   }
 
-
+  // Allow association of non-simulation threads with a uvm_root
   void set_thread_context() {
-    auto cs = uvm_coreservice_t.get();
-    auto top = cs.get_root();
+    auto top = this.get_root();
     top.set_thread_context();
   }
 

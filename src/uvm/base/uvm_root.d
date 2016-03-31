@@ -344,6 +344,12 @@ class uvm_root: uvm_component
     return root;
   }
 
+  // This function is retuired to get the uvm_root of any
+  // uvm_component by way of traversing component hierarchy
+  override uvm_root get_root() {
+    return this;
+  }
+
   @uvm_immutable_sync
   uvm_cmdline_processor _clp;
 
