@@ -43,7 +43,6 @@ class avl_st: uvm_sequence_item
 class avl_st_seq: uvm_sequence!avl_st
 {
   avl_st req;
-  avl_st rsp;
   mixin uvm_object_utils;
 
   @rand uint seq_size;
@@ -73,7 +72,6 @@ class avl_st_seq: uvm_sequence!avl_st
       else {req.end = false;}
       avl_st cloned = cast(avl_st) req.clone;
       uvm_send(cloned);
-      get_response(rsp);
     }
     
     uvm_info("avl_st", "Finishing sequence", UVM_MEDIUM);
@@ -214,7 +212,6 @@ class avl_st_driver: uvm_driver!avl_st
   
     while(true) {
       avl_st req;
-      avl_st rsp;
 
       
       seq_item_port.get_next_item(req);
@@ -229,8 +226,6 @@ class avl_st_driver: uvm_driver!avl_st
       // get the reponse
       // ingress.get(rsp);
       // req.print();
-      rsp = cast(avl_st) req.clone;
-      rsp.set_id_info(req);
 
       // writeln(rsp.convert2string());
 
@@ -239,9 +234,6 @@ class avl_st_driver: uvm_driver!avl_st
       this.trans_executed(req);
       // uvm_do_callbacks(avl_st_driver,avl_st_driver_cbs,trans_executed(this,req));
 
-      seq_item_port.item_done(rsp);
-
-      trig.notify();
     }
   }
 
