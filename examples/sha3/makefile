@@ -72,7 +72,7 @@ sha.vpi: sha.d vpi.o $(VLANGDIR)/src/esdl/sync/*.d $(VLANGDIR)/src/esdl/sys/*.d 
 	$(DMD) -m$(MODEL) -I$(VLANGDIR)/src -I$(UVMDIR)/src $(DFLAGS) -shared -of$@ -L-ldl -L-lvpi -L-l$(PHOBOS) -L-R$(LIBDIR) -L-R$(ICARUSLIBPATH) $^
 
 sha: sha.d $(VLANGDIR)/src/esdl/sync/*.d $(VLANGDIR)/src/esdl/sys/*.d $(VLANGDIR)/src/esdl/intf/*.d $(VLANGDIR)/src/esdl/base/*.d $(VLANGDIR)/src/esdl/data/*.d $(VLANGDIR)/src/esdl/*.d $(VLANGDIR)/src/esdl/posix/sys/net/*.d  $(UVMDIR)/src/uvm/*.d $(UVMDIR)/src/uvm/meta/*.d $(UVMDIR)/src/uvm/base/*.d $(UVMDIR)/src/uvm/comps/*.d $(UVMDIR)/src/uvm/dap/*.d $(UVMDIR)/src/uvm/tlm1/*.d $(UVMDIR)/src/uvm/seq/*.d $(UVMDIR)/src/uvm/vpi/uvm_svcmd_vpi.d $(UVMDIR)/src/uvm/dap/*.d
-	$(DMD) -m$(MODEL) -I$(VLANGDIR)/src -I$(UVMDIR)/src $(DFLAGS) -of$@ -L-ldl -L-l$(MRAALIB) -L-l$(PHOBOS) -L-R$(MRAALIBDIR) -L-L$(MRAALIBDIR) -L-R$(LIBDIR) $^
+	$(DMD) -version=EDISON -m$(MODEL) -I$(VLANGDIR)/src -I$(UVMDIR)/src $(DFLAGS) -of$@ -L-ldl -L-l$(MRAALIB) -L-l$(PHOBOS) -L-R$(MRAALIBDIR) -L-L$(MRAALIBDIR) -L-R$(LIBDIR) $^
 
 sha_norand: sha_norand.d $(VLANGDIR)/src/esdl/sync/*.d \
 	$(VLANGDIR)/src/esdl/sys/*.d \
