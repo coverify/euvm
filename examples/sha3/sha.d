@@ -40,6 +40,57 @@ class avl_st: uvm_sequence_item
 }
 
 @UVM_DEFAULT
+class QuickFoxSeq: uvm_sequence!avl_st
+{
+  enum string phrase = "The quick brown fox jumps over the lazy dog";
+
+  mixin uvm_object_utils;
+
+  avl_st reset;
+  avl_st req;
+  avl_st end;
+
+  this(string name="") {
+    super(name);
+    reset = avl_st.type_id.create(name ~ ".reset");
+    req = avl_st.type_id.create(name ~ ".req");
+    end = avl_st.type_id.create(name ~ ".end");
+    reset.reset = true;
+    end.end = true;
+  }
+
+  // task
+  override void frame() {
+    uvm_info("avl_st_seq", "Starting sequence", UVM_MEDIUM);
+
+    // atomic sequence
+    // uvm_create(req);
+
+    wait_for_grant();
+    
+    send_request(reset);
+
+    for (size_t i=0; i!=phrase.length; ++i) {
+      wait_for_grant();
+      if(i == 0) {req.start = true;}
+      else {req.start = false;}
+      req.data = cast(ubyte) phrase[i];
+      // if(i == seq_size - 1) {req.end = true;}
+      req.end = false;
+      avl_st cloned = cast(avl_st) req.clone;
+      send_request(cloned);
+    }
+    
+    wait_for_grant();
+    
+    send_request(end);
+
+    uvm_info("avl_st", "Finishing sequence", UVM_MEDIUM);
+  } // frame
+
+}
+
+@UVM_DEFAULT
 class avl_st_seq: uvm_sequence!avl_st
 {
   avl_st reset;
@@ -233,6 +284,28 @@ class RandomTest: uvm_test
       sequence.start(env.agent.sequencer, null);
     }
     
+    // waitForks();
+    
+    phase.drop_objection(this);
+  }
+}
+
+class QuickFoxTest: uvm_test
+{
+  mixin uvm_component_utils;
+
+  this(string name, uvm_component parent) {
+    super(name, parent);
+  }
+
+  avl_st_env env;
+  
+  override void run_phase(uvm_phase phase) {
+    phase.raise_objection(this);
+    auto sequence = new QuickFoxSeq("QuickFoxSeq");
+
+    sequence.start(env.agent.sequencer, null);
+
     // waitForks();
     
     phase.drop_objection(this);

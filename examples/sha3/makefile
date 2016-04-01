@@ -34,6 +34,9 @@ all: cvcsim sha.vvp vpi.o sha.vpi
 run_icarus: sha.vvp vpi.o sha.vpi
 	vvp -M. -msha sha.vvp +UVM_TESTNAME=sha.RandomTest
 
+run_quick_fox: sha.vvp vpi.o sha.vpi
+	vvp -M. -msha sha.vvp +UVM_TESTNAME=sha.QuickFoxTest
+
 
 run: cvcsim
 	./cvcsim
