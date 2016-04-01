@@ -18,19 +18,21 @@
 #----------------------------------------------------------------------
 
 MODEL = 32
-DFLAGS = -version=UVM_NO_DEPRECATED -fPIC -w -O # -debug=SEED
+DFLAGS = -version=UVM_NO_DEPRECATED -fPIC -w # -O # -debug=SEED
 MRAALIB = mraa
 MRAALIBDIR = /usr/local/lib/i386-linux-gnu
 VLANGDIR = /home/puneet/code/vlang
 UVMDIR = /home/puneet/code/vlang-uvm
-DMD = /home/puneet/local/dmd32/bin/dmd
-LIBDIR = /home/puneet/local/dmd32/lib
+DMD = /home/puneet/local/dmd$(MODEL)/bin/dmd
+LIBDIR = /home/puneet/local/dmd$(MODEL)/lib
 PHOBOS = phobos2
+ICARUSLIBPATH = /home/puneet/local/icarus$(MODEL)/lib
+ICARUSINCPATH = /home/puneet/local/icarus$(MODEL)/include/iverilog
 
 all: cvcsim sha.vvp vpi.o sha.vpi
 
 run_icarus: sha.vvp vpi.o sha.vpi
-	vvp -M. -msha sha.vvp
+	vvp -M. -msha sha.vvp +UVM_TESTNAME=sha.RandomTest
 
 
 run: cvcsim
@@ -39,7 +41,7 @@ run: cvcsim
 .PHONY: all sha vpi run
 
 vpi.o: vpi.c
-	gcc -m$(MODEL) -c -I /home/puneet/local/open-src-cvc.700c/pli_incs -fPIC -Wall vpi.c -o vpi.o
+	gcc -m$(MODEL) -c -I $(ICARUSINCPATH) -fPIC -Wall vpi.c -o vpi.o
 
 vpi.so: vpi.o libsha.so
 	gcc -m$(MODEL) -L. -Wl,-rpath=. -shared -o vpi.so vpi.o -lsha
@@ -49,20 +51,22 @@ vpi: vpi.so
 clean:
 	rm -fr libsha.so sha.o vpi.o vpi.so cvcsim sha.vvp vpi.o sha.vpi
 
-sha.o: sha_vpi.d
+sha.o: sha.d
 	$(DMD) -m$(MODEL) $(DFLAGS) -c -fPIC  -I$(VLANGDIR)/src -I$(UVMDIR)/src $^
 
 cvcsim: vpi.so libsha.so sha_top.v sha_mem.v
 	$(CVC) -q +loadvpi=./vpi.so:vpi_compat_bootstrap -sv -sv_lib ./libsha.so sha_top.v sha_mem.v
 
-libsha.so: sha_vpi.d $(VLANGDIR)/src/unstd/memory/*.d $(VLANGDIR)/src/unstd/*.d  $(VLANGDIR)/src/esdl/posix/sys/net/*.d $(VLANGDIR)/src/esdl/sync/*.d $(VLANGDIR)/src/esdl/sys/*.d $(VLANGDIR)/src/esdl/intf/*.d $(VLANGDIR)/src/esdl/base/*.d $(VLANGDIR)/src/esdl/data/*.d $(VLANGDIR)/src/esdl/*.d $(UVMDIR)/src/uvm/*.d $(UVMDIR)/src/uvm/meta/*.d $(UVMDIR)/src/uvm/base/*.d $(UVMDIR)/src/uvm/comps/*.d $(UVMDIR)/src/uvm/tlm1/*.d $(UVMDIR)/src/uvm/seq/*.d $(UVMDIR)/src/uvm/vpi/uvm_svcmd_vpi.d $(UVMDIR)/src/uvm/dap/*.d
-	$(DMD) -m$(MODEL) -I$(VLANGDIR)/src -I$(UVMDIR)/src $(DFLAGS) -shared -of$@ -L-ldl -L-lphobos2-ldc-debug -L-R$(LIBDIR) $^
+libsha.so: sha.d $(VLANGDIR)/src/esdl/posix/sys/net/*.d $(VLANGDIR)/src/esdl/sync/*.d $(VLANGDIR)/src/esdl/sys/*.d $(VLANGDIR)/src/esdl/intf/*.d $(VLANGDIR)/src/esdl/base/*.d $(VLANGDIR)/src/esdl/data/*.d $(VLANGDIR)/src/esdl/*.d $(UVMDIR)/src/uvm/*.d $(UVMDIR)/src/uvm/meta/*.d $(UVMDIR)/src/uvm/base/*.d $(UVMDIR)/src/uvm/comps/*.d $(UVMDIR)/src/uvm/tlm1/*.d $(UVMDIR)/src/uvm/seq/*.d $(UVMDIR)/src/uvm/vpi/uvm_svcmd_vpi.d $(UVMDIR)/src/uvm/dap/*.d
+	$(DMD) -m$(MODEL) -I$(VLANGDIR)/src -I$(UVMDIR)/src $(DFLAGS) -shared -of$@ -L-ldl -L-l$(PHOBOS) -L-R$(LIBDIR) $^
 
-sha.vvp: sha_mem.v sha_top.v 
+sha.vvp: verilog/keccak_avst.v verilog/keccak.v verilog/f_permutation.v \
+	verilog/padder.v verilog/rconst.v verilog/round.v \
+	verilog/test_keccak_avst.v
 	iverilog -o $@ $^
 
-sha.vpi: sha_vpi.d vpi.o $(VLANGDIR)/src/esdl/sync/*.d $(VLANGDIR)/src/esdl/sys/*.d $(VLANGDIR)/src/esdl/intf/*.d $(VLANGDIR)/src/esdl/base/*.d $(VLANGDIR)/src/esdl/data/*.d $(VLANGDIR)/src/esdl/*.d $(VLANGDIR)/src/esdl/posix/sys/net/*.d  $(UVMDIR)/src/uvm/*.d $(UVMDIR)/src/uvm/meta/*.d $(UVMDIR)/src/uvm/base/*.d $(UVMDIR)/src/uvm/comps/*.d $(UVMDIR)/src/uvm/dap/*.d $(UVMDIR)/src/uvm/tlm1/*.d $(UVMDIR)/src/uvm/seq/*.d $(UVMDIR)/src/uvm/vpi/uvm_svcmd_vpi.d $(UVMDIR)/src/uvm/dap/*.d
-	$(DMD) -m$(MODEL) -I$(VLANGDIR)/src -I$(UVMDIR)/src $(DFLAGS) -shared -of$@ -L-ldl -L-lvpi -L-lphobos2-ldc-debug -L-R$(LIBDIR) -L-R/home/puneet/local/icarus/lib $^
+sha.vpi: sha.d vpi.o $(VLANGDIR)/src/esdl/sync/*.d $(VLANGDIR)/src/esdl/sys/*.d $(VLANGDIR)/src/esdl/intf/*.d $(VLANGDIR)/src/esdl/base/*.d $(VLANGDIR)/src/esdl/data/*.d $(VLANGDIR)/src/esdl/*.d $(VLANGDIR)/src/esdl/posix/sys/net/*.d  $(UVMDIR)/src/uvm/*.d $(UVMDIR)/src/uvm/meta/*.d $(UVMDIR)/src/uvm/base/*.d $(UVMDIR)/src/uvm/comps/*.d $(UVMDIR)/src/uvm/dap/*.d $(UVMDIR)/src/uvm/tlm1/*.d $(UVMDIR)/src/uvm/seq/*.d $(UVMDIR)/src/uvm/vpi/uvm_svcmd_vpi.d $(UVMDIR)/src/uvm/dap/*.d
+	$(DMD) -m$(MODEL) -I$(VLANGDIR)/src -I$(UVMDIR)/src $(DFLAGS) -shared -of$@ -L-ldl -L-lvpi -L-l$(PHOBOS) -L-R$(LIBDIR) -L-R$(ICARUSLIBPATH) $^
 
 sha: sha.d $(VLANGDIR)/src/esdl/sync/*.d $(VLANGDIR)/src/esdl/sys/*.d $(VLANGDIR)/src/esdl/intf/*.d $(VLANGDIR)/src/esdl/base/*.d $(VLANGDIR)/src/esdl/data/*.d $(VLANGDIR)/src/esdl/*.d $(VLANGDIR)/src/esdl/posix/sys/net/*.d  $(UVMDIR)/src/uvm/*.d $(UVMDIR)/src/uvm/meta/*.d $(UVMDIR)/src/uvm/base/*.d $(UVMDIR)/src/uvm/comps/*.d $(UVMDIR)/src/uvm/dap/*.d $(UVMDIR)/src/uvm/tlm1/*.d $(UVMDIR)/src/uvm/seq/*.d $(UVMDIR)/src/uvm/vpi/uvm_svcmd_vpi.d $(UVMDIR)/src/uvm/dap/*.d
 	$(DMD) -m$(MODEL) -I$(VLANGDIR)/src -I$(UVMDIR)/src $(DFLAGS) -of$@ -L-ldl -L-l$(MRAALIB) -L-l$(PHOBOS) -L-R$(MRAALIBDIR) -L-L$(MRAALIBDIR) -L-R$(LIBDIR) $^
