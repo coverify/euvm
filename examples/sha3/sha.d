@@ -719,7 +719,7 @@ void pull_sha_register(void* tb)
 
 
 
-void main()
+void main(string[] argv)
 {
   import std.random: uniform;
   import std.stdio;
@@ -729,7 +729,7 @@ void main()
 
   TestBench test = new TestBench;
   test.multiCore(1, 0);
-  test.elaborate("test");
+  test.elaborate("test", argv);
   test.tb.set_seed(100);
   test.simulate();
 
