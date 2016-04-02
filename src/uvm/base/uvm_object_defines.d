@@ -550,7 +550,7 @@ mixin template m_uvm_field_auto_utils(T)
 
   // print the Ith field
   void uvm_field_auto_sprint_field(size_t I=0, T)(T t) {
-    import std.traits: isIntegral;
+    import std.traits: isIntegral, isFloatingPoint;
     enum int FLAGS = uvm_field_auto_get_flags!(t, I);
     static if(FLAGS & UVM_PRINT &&
 	      !(FLAGS & UVM_NOPRINT)) {
