@@ -181,10 +181,10 @@ class sha_st_driver: uvm_driver!sha_st
 
   mixin uvm_component_utils;
   
-  uvm_put_port!sha_st egress;
+  uvm_put_port!sha_st req_egress;
   
   /* override void build_phase(uvm_phase phase) { */
-  /*   // egress = new uvm_put_port!sha_st("egress", this); */
+  /*   // req_egress = new uvm_put_port!sha_st("req_egress", this); */
   /*   // fifo_out = new uvm_tlm_fifo_egress!sha_st("fifo_out", this, 0); */
   /*   // ingress = new uvm_get_port!sha_st("ingress", this); */
   /* } */
@@ -209,7 +209,7 @@ class sha_st_driver: uvm_driver!sha_st
 
       // push the transaction
       // ....
-      // egress.put(req);
+      // req_egress.put(req);
 
       this.trans_received(req);
       // uvm_do_callbacks(sha_st_driver,sha_st_driver_cbs,trans_received(this,req));
@@ -220,10 +220,10 @@ class sha_st_driver: uvm_driver!sha_st
       // writeln(rsp.convert2string());
 
       version(EDISON) {
-	egress.put(req);
+	req_egress.put(req);
       }
       else {
-	egress.put(req);
+	req_egress.put(req);
 	// req.print();
       }
       
@@ -237,7 +237,7 @@ class sha_st_driver: uvm_driver!sha_st
   }
 
   override void final_phase(uvm_phase phase) {
-    egress.put(null);
+    req_egress.put(null);
   }
 
   protected void trans_received(sha_st tr) {}
@@ -252,14 +252,14 @@ class sha_st_monitor: uvm_component
 
   mixin uvm_component_utils;
   
-  uvm_get_port!sha_st ingress;
+  uvm_get_port!sha_st rsp_ingress;
 
   // uvm_put_port!sha_phrase_seq egress;
 
   /* override void build_phase(uvm_phase phase) { */
   /*   // egress = new uvm_put_port!sha_st("egress", this); */
   /*   // fifo_out = new uvm_tlm_fifo_egress!sha_st("fifo_out", this, 0); */
-  /*   // ingress = new uvm_get_port!sha_st("ingress", this); */
+  /*   // rsp_ingress = new uvm_get_port!sha_st("rsp_ingress", this); */
   /* } */
 
   // sha_st_vif sigs;
@@ -273,7 +273,7 @@ class sha_st_monitor: uvm_component
   override void connect_phase(uvm_phase phase) {
     /* auto root = cast(sha_st_root) get_root(); */
     /* assert(root !is null); */
-    /* ingress.connect(root.fifo_in.get_export); */
+    /* rsp_ingress.connect(root.fifo_in.get_export); */
   }
 
   override void run_phase(uvm_phase phase) {
@@ -282,7 +282,7 @@ class sha_st_monitor: uvm_component
     
     while(true) {
       sha_st item;
-      ingress.get(item);
+      rsp_ingress.get(item);
 
       if (seq is null) {
 	phase.raise_objection(this);
@@ -336,9 +336,9 @@ class sha_st_agent: uvm_agent
     driver.seq_item_port.connect(sequencer.seq_item_export);
     auto root = cast(sha_st_root) get_root();
     assert(root !is null);
-    output_mon.ingress.connect(root.fifo_in.get_export);
-    driver.egress.connect(root.fifo_out.put_export);
-    // driver.egress_to_mon.connect(input_mon.ingress);
+    output_mon.rsp_ingress.connect(root.fifo_in.get_export);
+    driver.req_egress.connect(root.fifo_out.put_export);
+    // driver.req_egress_to_mon.connect(input_mon.ingress);
   }
 }
 
@@ -431,19 +431,11 @@ class sha_st_root: uvm_root
   uvm_tlm_fifo_egress!sha_st fifo_out;
 
 
-  uvm_put_port!sha_st egress;
-
-  uvm_get_port!sha_st ingress;
+  uvm_put_port!sha_st rsp_egress;
+  uvm_get_port!sha_st req_ingress;
 
   override void initial() {
     set_timeout(0.nsec, false);
-    // ingress = new uvm_get_port!sha_st("ingress", this);
-    // egress = new uvm_put_port!sha_st("egress", this);
-
-    // fifo_out = new uvm_tlm_fifo_egress!sha_st("fifo_out", null, 1);
-    // fifo_in = new uvm_tlm_fifo_ingress!sha_st("fifo_in",  null, 1);
-
-    // env = new sha_st_env("env", null);
     run_test();
   }
 
@@ -515,9 +507,9 @@ class sha_st_root: uvm_root
       }
 
       sha_st tx;
-      assert(ingress !is null);
+      assert(req_ingress !is null);
       
-      auto valid = ingress.try_get(tx);
+      auto valid = req_ingress.try_get(tx);
       if(valid && tx !is null) {
 	// tx.print();
 	import std.stdio;
@@ -546,8 +538,8 @@ class sha_st_root: uvm_root
   
 
   override void connect_phase(uvm_phase phase) {
-    ingress.connect(fifo_out.get_export);
-    egress.connect(fifo_in.put_export);
+    req_ingress.connect(fifo_out.get_export);
+    rsp_egress.connect(fifo_in.put_export);
   }
 
   
@@ -678,7 +670,7 @@ int pull_sha_calltf(char* user_data)
   /* static sha_st invalid; */
   /* if (invalid is null) invalid = new sha_st(); */
 
-  sha_tb.ingress.get(req);
+  sha_tb.req_ingress.get(req);
 
   if(req is null) {
     // if(test.isTerminated()) {
@@ -777,7 +769,7 @@ int resp_sha_calltf(char* user_data)
     }
     rsp.print();
   
-    sha_tb.egress.put(rsp);
+    sha_tb.rsp_egress.put(rsp);
 
   }
   return 0;
