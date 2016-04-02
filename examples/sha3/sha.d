@@ -197,11 +197,6 @@ class sha_st_driver: uvm_driver!sha_st
     super(name,parent);
   }
 
-  override void connect_phase(uvm_phase phase) {
-    auto root = cast(sha_st_root) get_root();
-    assert(root !is null);
-    egress.connect(root.fifo_out.put_export);
-  }
 
   override void run_phase(uvm_phase phase) {
     super.run_phase(phase);
@@ -252,6 +247,61 @@ class sha_st_driver: uvm_driver!sha_st
 
 }
 
+class sha_st_monitor: uvm_component
+{
+
+  mixin uvm_component_utils;
+  
+  uvm_get_port!sha_st ingress;
+
+  // uvm_put_port!sha_phrase_seq egress;
+
+  /* override void build_phase(uvm_phase phase) { */
+  /*   // egress = new uvm_put_port!sha_st("egress", this); */
+  /*   // fifo_out = new uvm_tlm_fifo_egress!sha_st("fifo_out", this, 0); */
+  /*   // ingress = new uvm_get_port!sha_st("ingress", this); */
+  /* } */
+
+  // sha_st_vif sigs;
+  // sha_st_config cfg;
+
+  this(string name, uvm_component parent = null) {
+    super(name, parent);
+    
+  }
+
+  override void connect_phase(uvm_phase phase) {
+    /* auto root = cast(sha_st_root) get_root(); */
+    /* assert(root !is null); */
+    /* ingress.connect(root.fifo_in.get_export); */
+  }
+
+  override void run_phase(uvm_phase phase) {
+    super.run_phase(phase);
+    sha_phrase_seq seq;
+    
+    while(true) {
+      sha_st item;
+      ingress.get(item);
+
+      if (seq is null) {
+	phase.raise_objection(this);
+	seq = new sha_phrase_seq();
+      }
+
+      seq ~= item;
+
+      if (seq.is_finalized()) {
+	phase.drop_objection(this);
+	// TODO
+	// push the sequence to scoreboard
+      }
+    }
+  }
+
+}
+
+
 class sha_st_sequencer: uvm_sequencer!sha_st
 {
   mixin uvm_component_utils;
@@ -268,7 +318,7 @@ class sha_st_agent: uvm_agent
   sha_st_driver    driver;
 
   /* sha_st_monitor   input_mon; */
-  /* sha_st_monitor   output_mon; */
+  sha_st_monitor   output_mon;
 
   mixin uvm_component_utils;
    
@@ -284,6 +334,11 @@ class sha_st_agent: uvm_agent
 
   override void connect_phase(uvm_phase phase) {
     driver.seq_item_port.connect(sequencer.seq_item_export);
+    auto root = cast(sha_st_root) get_root();
+    assert(root !is null);
+    output_mon.ingress.connect(root.fifo_in.get_export);
+    driver.egress.connect(root.fifo_out.put_export);
+    // driver.egress_to_mon.connect(input_mon.ingress);
   }
 }
 
@@ -703,28 +758,28 @@ int resp_sha_calltf(char* user_data)
 
   vpiGetValues(arg_iterator, valid_out);
 
-  /* if (valid_out) { */
-  /*   import std.stdio; */
-  /*   writeln("###############"); */
-  /*   static bool start_out = true; */
-  /*   bool reset; */
-  /*   auto rsp = new sha_st(); */
-  /*   vpiGetValues(arg_iterator, reset, rsp.data, rsp.end); */
-  /*   if(start_out is true) { */
-  /*     rsp.start = true; */
-  /*     start_out = false; */
-  /*   } */
-  /*   else { */
-  /*     rsp.start = false; */
-  /*   } */
-  /*   if (rsp.end == true) { */
-  /*     start_out = true; */
-  /*   } */
-  /*   rsp.print(); */
+  if (valid_out) {
+    import std.stdio;
+    writeln("###############");
+    static bool start_out = true;
+    bool reset;
+    auto rsp = new sha_st();
+    vpiGetValues(arg_iterator, reset, rsp.data, rsp.end);
+    if(start_out is true) {
+      rsp.start = true;
+      start_out = false;
+    }
+    else {
+      rsp.start = false;
+    }
+    if (rsp.end == true) {
+      start_out = true;
+    }
+    rsp.print();
   
-  /*   sha_tb.egress.put(rsp); */
+    sha_tb.egress.put(rsp);
 
-  /* } */
+  }
   return 0;
 }
 
