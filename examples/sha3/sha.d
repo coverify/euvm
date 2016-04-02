@@ -4,8 +4,6 @@ import std.stdio;
 import esdl.intf.vpi;
 import std.string: format;
 
-enum COUNT = 1;
-
 @UVM_DEFAULT
 class avl_st: uvm_sequence_item
 {
@@ -346,27 +344,22 @@ class avl_st_root: uvm_root
 
   // avl_st_env env;
 
-  uvm_tlm_fifo_ingress!avl_st[COUNT] fifo_in;
+  uvm_tlm_fifo_ingress!avl_st fifo_in;
   uvm_tlm_fifo_egress!avl_st fifo_out;
 
 
-  uvm_put_port!avl_st[COUNT] egress;
+  uvm_put_port!avl_st egress;
 
   uvm_get_port!avl_st ingress;
 
   override void initial() {
     set_timeout(0.nsec, false);
-    // for (size_t i=0; i!=COUNT; ++i)
-    //   {
-    // 	ingress[i] = new uvm_get_port!avl_st(format("ingress[%s]", i), this);
-    // 	egress[i] = new uvm_put_port!avl_st(format("egress[%s]", i), this);
+    // ingress = new uvm_get_port!avl_st("ingress", this);
+    // egress = new uvm_put_port!avl_st("egress", this);
 
-    // 	fifo_out[i] = new uvm_tlm_fifo_egress!avl_st(format("fifo_out[%s]", i),
-    // 						     null, 1);
-    // 	fifo_in[i] = new uvm_tlm_fifo_ingress!avl_st(format("fifo_in[%s]", i),
-    // 						     null, 1);
+    // fifo_out = new uvm_tlm_fifo_egress!avl_st("fifo_out", null, 1);
+    // fifo_in = new uvm_tlm_fifo_ingress!avl_st("fifo_in",  null, 1);
 
-    //   }
     // env = new avl_st_env("env", null);
     run_test();
   }
@@ -471,11 +464,7 @@ class avl_st_root: uvm_root
 
   override void connect_phase(uvm_phase phase) {
     ingress.connect(fifo_out.get_export);
-    
-    for (size_t i=0; i!=COUNT; ++i)
-      {
-	egress[i].connect(fifo_in[i].put_export);
-      }
+    egress.connect(fifo_in.put_export);
   }
 
   
@@ -519,8 +508,8 @@ extern(C) int initEsdl() {
 
   void* tb = cast(void*) test;
 
-  /* resp_sha_register(tb); */
   pull_sha_register(tb);
+  resp_sha_register(tb);
   
   s_cb_data elab_cb;
   elab_cb.reason = vpiCbStartOfSimulation;
@@ -565,7 +554,7 @@ int pull_sha_compiletf(char* user_data)
     auto arg_handle = vpi_scan(arg_iterator);
     if((i < 5 && arg_handle is null) || (i == 5 && arg_handle !is null)) {
       writeln("ERROR: $pull_sha requires 5 arguments!");
-      writeln("ERROR: only ", i, " are provided!!");
+      writeln("ERROR: ", i, " are provided!!");
       break;
     }
   }
@@ -638,84 +627,91 @@ void pull_sha_register(void* tb)
   vpi_register_systf(&tf_data);
 }
 
-/* int resp_sha_compiletf(char* user_data) */
-/* { */
-/*   vpiHandle systf_handle, arg_iterator, arg_handle; */
+int resp_sha_compiletf(char* user_data)
+{
+  // do{
+  auto systf_handle = vpi_handle(vpiSysTfCall, null);
+  assert(systf_handle !is null);
 
-/*   // do{ */
-/*   systf_handle = vpi_handle(vpiSysTfCall, null); */
-/*   assert(systf_handle !is null); */
+  auto arg_iterator = vpi_iterate(vpiArgument, systf_handle);
 
-/*   arg_iterator = vpi_iterate(vpiArgument, systf_handle); */
+  assert(arg_iterator !is null);
 
-/*   assert(arg_iterator !is null); */
+  for (size_t i=0; i!=5; ++i) {	/* there have to be 4 arguments */
+    auto arg_handle = vpi_scan(arg_iterator);
+    if((i < 4 && arg_handle is null) || (i == 4 && arg_handle !is null)) {
+      writeln("ERROR: $pull_sha requires 4 arguments!");
+      writeln("ERROR: ", i, " are provided!!");
+      break;
+    }
+  }
+  return 0;
+}
 
-/*   //  else{ */
-/*   for(size_t i=0; i!=5; ++i){ */
-/*     arg_handle = vpi_scan(arg_iterator); */
-/*     if(arg_handle !is null){ */
-/*       writeln("ERROR: $resp_sha requires 5 arguments!"); */
-/*       writeln("ERROR: only ", i, " are provided!!"); */
-/*       break; */
-/*     } */
-/*   } */
-/*   //} */
-/*   return 0; */
-/* } */
+int resp_sha_calltf(char* user_data)
+{
+  TestBench test = cast(TestBench) user_data;
+  assert(test !is null);
 
-/* int resp_sha_calltf(char* user_data) */
-/* { */
-/*   import std.stdio; */
+  auto sha_tb = test.tb.get_root();
+  assert(sha_tb !is null);
 
-/*   vpiHandle systf_handle; */
-/*   vpiHandle arg_iterator; */
-
-/*   uint index; */
- 
-/*   TestBench test = cast(TestBench) user_data; */
-/*   if(test.isTerminated()) { */
-/*     import std.stdio; */
-/*     writeln(" > Sending vpiFinish signal to the Verilog Simulator"); */
-/*     stdout.flush(); */
-/*     vpi_control(vpiFinish, 1); */
-/*   } */
-/*   else { */
-/*     import std.stdio; */
-/*     writeln(" > hmmmm"); */
-/*   } */
-
-/*   systf_handle = vpi_handle(vpiSysTfCall, null); */
-/*   assert(systf_handle !is null); */
+  sha_tb.set_thread_context();
   
-/*   arg_iterator = vpi_iterate(vpiArgument, systf_handle); */
+  /* if(test.isTerminated()) { */
+  /*   import std.stdio; */
+  /*   writeln(" > Sending vpiFinish signal to the Verilog Simulator"); */
+  /*   stdout.flush(); */
+  /*   vpi_control(vpiFinish, 1); */
+  /* } */
+
+  auto systf_handle = vpi_handle(vpiSysTfCall, null);
+  assert(systf_handle !is null);
   
-/*   assert(arg_iterator !is null); */
+  auto arg_iterator = vpi_iterate(vpiArgument, systf_handle);
+  assert(arg_iterator !is null);
 
-/*   vpiGetValues(arg_iterator, index); */
-/*   sha_tb.set_thread_context(); */
-/*   sha_rw rsp = new sha_rw(); */
-/*   vpiGetValues(arg_iterator, rsp.addr, rsp.kind, rsp.wdata, rsp.rdata); */
-/*   rsp.print(); */
+  bool valid_out;
+
+  vpiGetValues(arg_iterator, valid_out);
+
+  /* if (valid_out) { */
+  /*   static bool start_out = true; */
+  /*   bool reset; */
+  /*   auto rsp = new avl_st(); */
+  /*   vpiGetValues(arg_iterator, reset, rsp.data, rsp.end); */
+  /*   if(start_out is true) { */
+  /*     rsp.start = true; */
+  /*     start_out = false; */
+  /*   } */
+  /*   else { */
+  /*     rsp.start = false; */
+  /*   } */
+  /*   if (rsp.end == true) { */
+  /*     start_out = true; */
+  /*   } */
+  /*   rsp.print(); */
   
-/*   sha_tb.egress[index].put(rsp); */
+  /*   // sha_tb.egress.put(rsp); */
 
-/*   return 0; */
-/* } */
+  /* } */
+  return 0;
+}
 
-/* void resp_sha_register(void* tb) */
-/* { */
-/*   import std.string; */
-/*   s_vpi_systf_data af_data; */
+void resp_sha_register(void* tb)
+{
+  import std.string;
+  s_vpi_systf_data af_data;
 
-/*   af_data.type = vpiSysFunc; */
-/*   af_data.sysfunctype = vpiSysFuncSized; */
-/*   af_data.tfname = cast(char*) "$resp_sha".toStringz; */
-/*   af_data.calltf = &resp_sha_calltf; */
-/*   af_data.compiletf = &resp_sha_compiletf; */
-/*   //af_data.sizetf = 0; */
-/*   af_data.user_data = tb; */
-/*   vpi_register_systf(&af_data); */
-/* } */
+  af_data.type = vpiSysFunc;
+  af_data.sysfunctype = vpiSysFuncSized;
+  af_data.tfname = cast(char*) "$resp_sha".toStringz;
+  af_data.calltf = &resp_sha_calltf;
+  af_data.compiletf = &resp_sha_compiletf;
+  //af_data.sizetf = 0;
+  af_data.user_data = tb;
+  vpi_register_systf(&af_data);
+}
 
 
 
