@@ -5,7 +5,7 @@ import esdl.intf.vpi;
 import std.string: format;
 
 @UVM_DEFAULT
-class avl_st: uvm_sequence_item
+class sha_st: uvm_sequence_item
 {
   @rand ubyte data;
   bool start;
@@ -14,7 +14,7 @@ class avl_st: uvm_sequence_item
 
   mixin uvm_object_utils;
    
-  this(string name = "avl_st") {
+  this(string name = "sha_st") {
     super(name);
   }
 
@@ -29,7 +29,7 @@ class avl_st: uvm_sequence_item
   // 		    kind, addr, wdata);
   //   else
   //     return format("kind=%s addr=%x rdata=%x",
- // 		    kind, addr, rdata);
+  // 		    kind, addr, rdata);
   // }
 
   // void postRandomize() {
@@ -38,28 +38,55 @@ class avl_st: uvm_sequence_item
 }
 
 @UVM_DEFAULT
-class QuickFoxSeq: uvm_sequence!avl_st
+class sha_phrase_seq: uvm_sequence!sha_st
 {
-  enum string phrase = "The quick brown fox jumps over the lazy dog";
+  ubyte[] phrase;
 
   mixin uvm_object_utils;
 
-  avl_st reset;
-  avl_st req;
-  avl_st end;
+  sha_st reset;
+  sha_st req;
+  sha_st end;
 
   this(string name="") {
     super(name);
-    reset = avl_st.type_id.create(name ~ ".reset");
-    req = avl_st.type_id.create(name ~ ".req");
-    end = avl_st.type_id.create(name ~ ".end");
-    reset.reset = true;
-    end.end = true;
   }
 
+  void set_phrase(string phrase) {
+    reset = sha_st.type_id.create(get_name() ~ ".reset");
+    reset.reset = true;
+    req = sha_st.type_id.create(get_name() ~ ".req");
+    end = sha_st.type_id.create(get_name() ~ ".end");
+    end.end = true;
+    this.phrase = cast(ubyte[]) phrase;
+  }
+
+  bool is_finalized() {
+    return (end !is null);
+  }
+
+  void opOpAssign(string op)(sha_st item) if(op == "~")
+    {
+      assert(item !is null);
+      assert((end is null), "Adding items to a finalized sha_phrase_seq is illegal");
+
+      if (item.start is true) {
+	assert(phrase.length == 0 && reset is null);
+	reset = sha_st.type_id.create(get_name() ~ ".reset");
+	reset.reset = true;
+      }
+
+      if (item.end is true) {
+	end = sha_st.type_id.create(get_name() ~ ".end");
+	end.end = true;
+      }
+      else {
+	phrase ~= item.data;
+      }
+    }
   // task
   override void frame() {
-    uvm_info("avl_st_seq", "Starting sequence", UVM_MEDIUM);
+    uvm_info("sha_st_seq", "Starting sequence", UVM_MEDIUM);
 
     // atomic sequence
     // uvm_create(req);
@@ -75,7 +102,7 @@ class QuickFoxSeq: uvm_sequence!avl_st
       req.data = cast(ubyte) phrase[i];
       // if(i == seq_size - 1) {req.end = true;}
       req.end = false;
-      avl_st cloned = cast(avl_st) req.clone;
+      sha_st cloned = cast(sha_st) req.clone;
       send_request(cloned);
     }
     
@@ -83,26 +110,26 @@ class QuickFoxSeq: uvm_sequence!avl_st
     
     send_request(end);
 
-    uvm_info("avl_st", "Finishing sequence", UVM_MEDIUM);
+    uvm_info("sha_st", "Finishing sequence", UVM_MEDIUM);
   } // frame
 
 }
 
 @UVM_DEFAULT
-class avl_st_seq: uvm_sequence!avl_st
+class sha_st_seq: uvm_sequence!sha_st
 {
-  avl_st reset;
-  avl_st req;
-  avl_st end;
+  sha_st reset;
+  sha_st req;
+  sha_st end;
   mixin uvm_object_utils;
 
   @rand uint seq_size;
 
   this(string name="") {
     super(name);
-    reset = avl_st.type_id.create(name ~ ".reset");
-    req = avl_st.type_id.create(name ~ ".req");
-    end = avl_st.type_id.create(name ~ ".end");
+    reset = sha_st.type_id.create(name ~ ".reset");
+    req = sha_st.type_id.create(name ~ ".req");
+    end = sha_st.type_id.create(name ~ ".end");
     reset.reset = true;
     end.end = true;
   }
@@ -114,7 +141,7 @@ class avl_st_seq: uvm_sequence!avl_st
 
   // task
   override void frame() {
-    uvm_info("avl_st_seq", "Starting sequence", UVM_MEDIUM);
+    uvm_info("sha_st_seq", "Starting sequence", UVM_MEDIUM);
 
     // atomic sequence
     // uvm_create(req);
@@ -130,7 +157,7 @@ class avl_st_seq: uvm_sequence!avl_st
       else {req.start = false;}
       // if(i == seq_size - 1) {req.end = true;}
       req.end = false;
-      avl_st cloned = cast(avl_st) req.clone;
+      sha_st cloned = cast(sha_st) req.clone;
       send_request(cloned);
     }
     
@@ -138,40 +165,40 @@ class avl_st_seq: uvm_sequence!avl_st
     
     send_request(end);
 
-    uvm_info("avl_st", "Finishing sequence", UVM_MEDIUM);
+    uvm_info("sha_st", "Finishing sequence", UVM_MEDIUM);
   } // frame
 
 }
 
-class avl_st_driver_cbs: uvm_callback
+class sha_st_driver_cbs: uvm_callback
 {
-  void trans_received (avl_st_driver xactor , avl_st cycle) {}
-  void trans_executed (avl_st_driver xactor , avl_st cycle) {}
+  void trans_received (sha_st_driver xactor , sha_st cycle) {}
+  void trans_executed (sha_st_driver xactor , sha_st cycle) {}
 }
 
-class avl_st_driver: uvm_driver!avl_st
+class sha_st_driver: uvm_driver!sha_st
 {
 
   mixin uvm_component_utils;
   
-  uvm_put_port!avl_st egress;
+  uvm_put_port!sha_st egress;
   
   /* override void build_phase(uvm_phase phase) { */
-  /*   // egress = new uvm_put_port!avl_st("egress", this); */
-  /*   // fifo_out = new uvm_tlm_fifo_egress!avl_st("fifo_out", this, 0); */
-  /*   // ingress = new uvm_get_port!avl_st("ingress", this); */
+  /*   // egress = new uvm_put_port!sha_st("egress", this); */
+  /*   // fifo_out = new uvm_tlm_fifo_egress!sha_st("fifo_out", this, 0); */
+  /*   // ingress = new uvm_get_port!sha_st("ingress", this); */
   /* } */
 
   Event trig;
-  // avl_st_vif sigs;
-  // avl_st_config cfg;
+  // sha_st_vif sigs;
+  // sha_st_config cfg;
 
   this(string name, uvm_component parent = null) {
     super(name,parent);
   }
 
   override void connect_phase(uvm_phase phase) {
-    auto root = cast(avl_st_root) get_root();
+    auto root = cast(sha_st_root) get_root();
     assert(root !is null);
     egress.connect(root.fifo_out.put_export);
   }
@@ -180,7 +207,7 @@ class avl_st_driver: uvm_driver!avl_st
     super.run_phase(phase);
 
     while(true) {
-      avl_st req;
+      sha_st req;
 
       
       seq_item_port.get_next_item(req);
@@ -190,7 +217,7 @@ class avl_st_driver: uvm_driver!avl_st
       // egress.put(req);
 
       this.trans_received(req);
-      // uvm_do_callbacks(avl_st_driver,avl_st_driver_cbs,trans_received(this,req));
+      // uvm_do_callbacks(sha_st_driver,sha_st_driver_cbs,trans_received(this,req));
          
       // get the reponse
       // ingress.get(rsp);
@@ -209,7 +236,7 @@ class avl_st_driver: uvm_driver!avl_st
 
       seq_item_port.item_done();
       
-      // uvm_do_callbacks(avl_st_driver,avl_st_driver_cbs,trans_executed(this,req));
+      // uvm_do_callbacks(sha_st_driver,sha_st_driver_cbs,trans_executed(this,req));
 
     }
   }
@@ -218,14 +245,14 @@ class avl_st_driver: uvm_driver!avl_st
     egress.put(null);
   }
 
-  protected void trans_received(avl_st tr) {}
+  protected void trans_received(sha_st tr) {}
     
  
-  protected void trans_executed(avl_st tr) {}
+  protected void trans_executed(sha_st tr) {}
 
 }
 
-class avl_st_sequencer: uvm_sequencer!avl_st
+class sha_st_sequencer: uvm_sequencer!sha_st
 {
   mixin uvm_component_utils;
 
@@ -234,14 +261,14 @@ class avl_st_sequencer: uvm_sequencer!avl_st
   }
 }
 
-class avl_st_agent: uvm_agent
+class sha_st_agent: uvm_agent
 {
 
-  avl_st_sequencer sequencer;
-  avl_st_driver    driver;
-  // avl_st_monitor   mon;
+  sha_st_sequencer sequencer;
+  sha_st_driver    driver;
 
-  // avl_st_vif       vif;
+  /* sha_st_monitor   input_mon; */
+  /* sha_st_monitor   output_mon; */
 
   mixin uvm_component_utils;
    
@@ -250,9 +277,9 @@ class avl_st_agent: uvm_agent
   }
 
   // override void build_phase(uvm_phase phase) {
-  //   sequencer = avl_st_sequencer.type_id.create("sequencer", this);
-  //   driver = avl_st_driver.type_id.create("driver", this);
-  //   // mon = avl_st_monitor::type_id::create("mon", this);
+  //   sequencer = sha_st_sequencer.type_id.create("sequencer", this);
+  //   driver = sha_st_driver.type_id.create("driver", this);
+  //   // mon = sha_st_monitor::type_id::create("mon", this);
   // }
 
   override void connect_phase(uvm_phase phase) {
@@ -268,15 +295,15 @@ class RandomTest: uvm_test
     super(name, parent);
   }
 
-  avl_st_env env;
+  sha_st_env env;
   
   override void run_phase(uvm_phase phase) {
     phase.raise_objection(this);
-    auto rand_sequence = new avl_st_seq("avl_st_seq");
+    auto rand_sequence = new sha_st_seq("sha_st_seq");
 
     for (size_t i=0; i!=100; ++i) {
       rand_sequence.randomize();
-      auto sequence = cast(avl_st_seq) rand_sequence.clone();
+      auto sequence = cast(sha_st_seq) rand_sequence.clone();
       writeln("Generated ", i,
  " seq with ", sequence.seq_size, " transactions");
       sequence.start(env.agent.sequencer, null);
@@ -296,11 +323,12 @@ class QuickFoxTest: uvm_test
     super(name, parent);
   }
 
-  avl_st_env env;
+  sha_st_env env;
   
   override void run_phase(uvm_phase phase) {
     phase.raise_objection(this);
-    auto sequence = new QuickFoxSeq("QuickFoxSeq");
+    auto sequence = new sha_phrase_seq("QuickFoxSeq");
+    sequence.set_phrase("The quick brown fox jumps over the lazy dog");
 
     sequence.start(env.agent.sequencer, null);
 
@@ -310,10 +338,10 @@ class QuickFoxTest: uvm_test
   }
 }
 
-class avl_st_env: uvm_env
+class sha_st_env: uvm_env
 {
   mixin uvm_component_utils;
-  private avl_st_agent agent;
+  private sha_st_agent agent;
 
   this(string name, uvm_component parent) {
     super(name, parent);
@@ -322,11 +350,11 @@ class avl_st_env: uvm_env
   // task
  /*  override void run_phase(uvm_phase phase) { */
  /*    phase.raise_objection(this); */
- /*    auto rand_sequence = new avl_st_seq("avl_st_seq"); */
+ /*    auto rand_sequence = new sha_st_seq("sha_st_seq"); */
 
  /*    for (size_t i=0; i!=100; ++i) { */
  /*      rand_sequence.randomize(); */
- /*      auto sequence = cast(avl_st_seq) rand_sequence.clone(); */
+ /*      auto sequence = cast(sha_st_seq) rand_sequence.clone(); */
  /*      writeln("Generated ", i, */
  /* " seq with ", sequence.seq_size, " transactions"); */
  /*      sequence.start(agent.sequencer, null); */
@@ -338,29 +366,29 @@ class avl_st_env: uvm_env
  /*  } */
 };
 
-class avl_st_root: uvm_root
+class sha_st_root: uvm_root
 {
   mixin uvm_component_utils;
 
-  // avl_st_env env;
+  // sha_st_env env;
 
-  uvm_tlm_fifo_ingress!avl_st fifo_in;
-  uvm_tlm_fifo_egress!avl_st fifo_out;
+  uvm_tlm_fifo_ingress!sha_st fifo_in;
+  uvm_tlm_fifo_egress!sha_st fifo_out;
 
 
-  uvm_put_port!avl_st egress;
+  uvm_put_port!sha_st egress;
 
-  uvm_get_port!avl_st ingress;
+  uvm_get_port!sha_st ingress;
 
   override void initial() {
     set_timeout(0.nsec, false);
-    // ingress = new uvm_get_port!avl_st("ingress", this);
-    // egress = new uvm_put_port!avl_st("egress", this);
+    // ingress = new uvm_get_port!sha_st("ingress", this);
+    // egress = new uvm_put_port!sha_st("egress", this);
 
-    // fifo_out = new uvm_tlm_fifo_egress!avl_st("fifo_out", null, 1);
-    // fifo_in = new uvm_tlm_fifo_ingress!avl_st("fifo_in",  null, 1);
+    // fifo_out = new uvm_tlm_fifo_egress!sha_st("fifo_out", null, 1);
+    // fifo_in = new uvm_tlm_fifo_ingress!sha_st("fifo_in",  null, 1);
 
-    // env = new avl_st_env("env", null);
+    // env = new sha_st_env("env", null);
     run_test();
   }
 
@@ -431,7 +459,7 @@ class avl_st_root: uvm_root
 	mraa_result_print(r);
       }
 
-      avl_st tx;
+      sha_st tx;
       assert(ingress !is null);
       
       auto valid = ingress.try_get(tx);
@@ -472,7 +500,7 @@ class avl_st_root: uvm_root
 
 class TestBench: RootEntity
 {
-  uvm_root_entity!(avl_st_root) tb;
+  uvm_root_entity!(sha_st_root) tb;
 
   // public override void doFinish() {
   //   foreach(p; tb.get_root().fifo_out) {
@@ -591,9 +619,9 @@ int pull_sha_calltf(char* user_data)
   auto arg_iterator = vpi_iterate(vpiArgument, systf_handle);
   assert(arg_iterator !is null);
 
-  avl_st req;
-  /* static avl_st invalid; */
-  /* if (invalid is null) invalid = new avl_st(); */
+  sha_st req;
+  /* static sha_st invalid; */
+  /* if (invalid is null) invalid = new sha_st(); */
 
   sha_tb.ingress.get(req);
 
@@ -676,9 +704,11 @@ int resp_sha_calltf(char* user_data)
   vpiGetValues(arg_iterator, valid_out);
 
   /* if (valid_out) { */
+  /*   import std.stdio; */
+  /*   writeln("###############"); */
   /*   static bool start_out = true; */
   /*   bool reset; */
-  /*   auto rsp = new avl_st(); */
+  /*   auto rsp = new sha_st(); */
   /*   vpiGetValues(arg_iterator, reset, rsp.data, rsp.end); */
   /*   if(start_out is true) { */
   /*     rsp.start = true; */
@@ -692,7 +722,7 @@ int resp_sha_calltf(char* user_data)
   /*   } */
   /*   rsp.print(); */
   
-  /*   // sha_tb.egress.put(rsp); */
+  /*   sha_tb.egress.put(rsp); */
 
   /* } */
   return 0;
