@@ -18,7 +18,7 @@
 #----------------------------------------------------------------------
 
 MODEL = 32
-DFLAGS = -version=UVM_NO_DEPRECATED -fPIC -g -w -O -release  # -debug=SEED
+DFLAGS = -version=UVM_NO_DEPRECATED -fPIC -g -w -O # -release  # -debug=SEED
 MRAALIB = mraa
 MRAALIBDIR = /usr/local/lib/i386-linux-gnu
 VLANGDIR = /home/puneet/code/vlang
