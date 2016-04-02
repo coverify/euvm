@@ -182,6 +182,7 @@ class sha_st_driver: uvm_driver!sha_st
   mixin uvm_component_utils;
   
   uvm_put_port!sha_st req_egress;
+  uvm_analysis_port!sha_st req_analysis;
   
   /* override void build_phase(uvm_phase phase) { */
   /*   // req_egress = new uvm_put_port!sha_st("req_egress", this); */
@@ -219,13 +220,8 @@ class sha_st_driver: uvm_driver!sha_st
 
       // writeln(rsp.convert2string());
 
-      version(EDISON) {
-	req_egress.put(req);
-      }
-      else {
-	req_egress.put(req);
-	// req.print();
-      }
+      req_egress.put(req);
+      req_analysis.write(req);
       
       this.trans_executed(req);
 
@@ -247,58 +243,48 @@ class sha_st_driver: uvm_driver!sha_st
 
 }
 
-class sha_st_monitor: uvm_component
+class sha_scoreboard: uvm_scoreboard
+{
+  this(string name, uvm_component parent = null) {
+    super(name, parent);
+    
+  }
+}
+
+class sha_st_monitor: uvm_monitor
 {
 
   mixin uvm_component_utils;
   
-  uvm_get_port!sha_st rsp_ingress;
+  uvm_analysis_imp!(sha_st, sha_st_monitor) ingress;
+  uvm_analysis_port!sha_phrase_seq egress;
 
-  // uvm_put_port!sha_phrase_seq egress;
-
-  /* override void build_phase(uvm_phase phase) { */
-  /*   // egress = new uvm_put_port!sha_st("egress", this); */
-  /*   // fifo_out = new uvm_tlm_fifo_egress!sha_st("fifo_out", this, 0); */
-  /*   // rsp_ingress = new uvm_get_port!sha_st("rsp_ingress", this); */
-  /* } */
-
-  // sha_st_vif sigs;
-  // sha_st_config cfg;
 
   this(string name, uvm_component parent = null) {
     super(name, parent);
     
   }
 
-  override void connect_phase(uvm_phase phase) {
-    /* auto root = cast(sha_st_root) get_root(); */
-    /* assert(root !is null); */
-    /* rsp_ingress.connect(root.fifo_in.get_export); */
-  }
+  sha_phrase_seq seq;
 
-  override void run_phase(uvm_phase phase) {
-    super.run_phase(phase);
-    sha_phrase_seq seq;
-    
-    while(true) {
-      sha_st item;
-      rsp_ingress.get(item);
+  void write(sha_st item) {
+    if (seq is null) {
+      seq = new sha_phrase_seq();
+    }
 
-      if (seq is null) {
-	phase.raise_objection(this);
-	seq = new sha_phrase_seq();
-      }
-
+    if (item.reset) { // valid will be low
+      // do nothing
+    }
+    else {
       seq ~= item;
+    }
 
-      if (seq.is_finalized()) {
-	phase.drop_objection(this);
-	// TODO
-	// push the sequence to scoreboard
-      }
+    if (seq.is_finalized()) {
+      egress.write(seq);
+      seq = null;
     }
   }
-
+  
 }
 
 
@@ -317,7 +303,7 @@ class sha_st_agent: uvm_agent
   sha_st_sequencer sequencer;
   sha_st_driver    driver;
 
-  /* sha_st_monitor   input_mon; */
+  sha_st_monitor   input_mon;
   sha_st_monitor   output_mon;
 
   mixin uvm_component_utils;
@@ -326,19 +312,13 @@ class sha_st_agent: uvm_agent
     super(name, parent);
   }
 
-  // override void build_phase(uvm_phase phase) {
-  //   sequencer = sha_st_sequencer.type_id.create("sequencer", this);
-  //   driver = sha_st_driver.type_id.create("driver", this);
-  //   // mon = sha_st_monitor::type_id::create("mon", this);
-  // }
-
   override void connect_phase(uvm_phase phase) {
     driver.seq_item_port.connect(sequencer.seq_item_export);
     auto root = cast(sha_st_root) get_root();
     assert(root !is null);
-    output_mon.rsp_ingress.connect(root.fifo_in.get_export);
+    driver.req_analysis.connect(input_mon.ingress);
+    root.rsp_anaylsis.connect(output_mon.ingress);
     driver.req_egress.connect(root.fifo_out.put_export);
-    // driver.req_egress_to_mon.connect(input_mon.ingress);
   }
 }
 
@@ -434,14 +414,25 @@ class sha_st_root: uvm_root
   uvm_put_port!sha_st rsp_egress;
   uvm_get_port!sha_st req_ingress;
 
+  uvm_get_port!sha_st rsp_ingress;
+
+  uvm_analysis_port!sha_st rsp_anaylsis;
+
   override void initial() {
     set_timeout(0.nsec, false);
     run_test();
   }
 
   override void run_phase(uvm_phase phase) {
+    super.run_phase(phase);
     version(EDISON) {
       auto fifoThread = new Thread(&driveGPIO).start();//thread
+    }
+    
+    while(true) {
+      sha_st item;
+      rsp_ingress.get(item);
+      rsp_anaylsis.write(item);
     }
   }
     
@@ -539,6 +530,7 @@ class sha_st_root: uvm_root
 
   override void connect_phase(uvm_phase phase) {
     req_ingress.connect(fifo_out.get_export);
+    rsp_ingress.connect(fifo_in.get_export);
     rsp_egress.connect(fifo_in.put_export);
   }
 
