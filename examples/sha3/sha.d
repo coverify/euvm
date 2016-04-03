@@ -4,6 +4,8 @@ import std.stdio;
 import esdl.intf.vpi;
 import std.string: format;
 
+extern(C) ubyte* sponge(ubyte*, uint);
+
 @UVM_DEFAULT
 class sha_st: uvm_sequence_item
 {
@@ -247,8 +249,47 @@ class sha_scoreboard: uvm_scoreboard
 {
   this(string name, uvm_component parent = null) {
     super(name, parent);
-    
   }
+
+  mixin uvm_component_utils;
+
+  uvm_phase phase_run;
+
+  sha_phrase_seq[] req_queue;
+  sha_phrase_seq[] rsp_queue;
+
+  uvm_analysis_imp!(sha_scoreboard, write_req) req_analysis;
+  uvm_analysis_imp!(sha_scoreboard, write_rsp) rsp_analysis;
+
+  override void run_phase(uvm_phase phase) {
+    phase_run = phase;
+  }
+
+  void write_req(sha_phrase_seq seq) {
+    seq.print();
+    req_queue ~= seq;
+    assert(phase_run !is null);
+    phase_run.raise_objection(this);
+  }
+
+  void write_rsp(sha_phrase_seq seq) {
+    seq.print();
+    rsp_queue ~= seq;
+    auto expected = sponge(req_queue[$-1].phrase.ptr,
+			   cast(uint) req_queue[$-1].phrase.length);
+    import std.stdio;
+    writeln("Ecpected: ", expected[0..64]);
+    if (expected[0..64] == seq.phrase) {
+      uvm_info("MATCHED", "Scoreboard received expected response", UVM_NONE);
+    }
+    else {
+      uvm_error("MISMATCHED", "Scoreboard received unmatched response");
+    }
+      
+    assert(phase_run !is null);
+    phase_run.drop_objection(this);
+  }
+
 }
 
 class sha_st_monitor: uvm_monitor
@@ -303,9 +344,11 @@ class sha_st_agent: uvm_agent
   sha_st_sequencer sequencer;
   sha_st_driver    driver;
 
-  sha_st_monitor   input_mon;
-  sha_st_monitor   output_mon;
+  sha_st_monitor   req_monitor;
+  sha_st_monitor   rsp_monitor;
 
+  sha_scoreboard   scoreboard;
+  
   mixin uvm_component_utils;
    
   this(string name, uvm_component parent = null) {
@@ -316,9 +359,12 @@ class sha_st_agent: uvm_agent
     driver.seq_item_port.connect(sequencer.seq_item_export);
     auto root = cast(sha_st_root) get_root();
     assert(root !is null);
-    driver.req_analysis.connect(input_mon.ingress);
-    root.rsp_anaylsis.connect(output_mon.ingress);
+    driver.req_analysis.connect(req_monitor.ingress);
+    root.rsp_anaylsis.connect(rsp_monitor.ingress);
     driver.req_egress.connect(root.fifo_out.put_export);
+    // scoreboard connections
+    req_monitor.egress.connect(scoreboard.req_analysis);
+    rsp_monitor.egress.connect(scoreboard.rsp_analysis);
   }
 }
 
@@ -540,13 +586,6 @@ class sha_st_root: uvm_root
 class TestBench: RootEntity
 {
   uvm_root_entity!(sha_st_root) tb;
-
-  // public override void doFinish() {
-  //   foreach(p; tb.get_root().fifo_out) {
-  //     p.put(null);
-  //   }
-    
-  // }
 }
 
 
@@ -743,8 +782,6 @@ int resp_sha_calltf(char* user_data)
   vpiGetValues(arg_iterator, valid_out);
 
   if (valid_out) {
-    import std.stdio;
-    writeln("###############");
     static bool start_out = true;
     bool reset;
     auto rsp = new sha_st();
@@ -759,7 +796,7 @@ int resp_sha_calltf(char* user_data)
     if (rsp.end == true) {
       start_out = true;
     }
-    rsp.print();
+    // rsp.print();
   
     sha_tb.rsp_egress.put(rsp);
 
