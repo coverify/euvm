@@ -78,346 +78,352 @@
 //|                int max_size=1)
 
 module uvm.tlm1.uvm_exports;
+import uvm.tlm1.uvm_tlm_ifs;
+import uvm.tlm1.uvm_tlm_defines;
+
+import uvm.base.uvm_port_base;
+import uvm.base.uvm_component;
+import uvm.base.uvm_object_globals;
 
 class uvm_blocking_put_export(T=int): uvm_port_base!(uvm_tlm_if_base!(T,T))
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_BLOCKING_PUT_MASK,"uvm_blocking_put_export")
   // `UVM_BLOCKING_PUT_IMP (this.m_if, T, t)
-  public this(string name=null, uvm_component parent=null,
-	      int min_size=1, int max_size=1) {
+  this(string name=null, uvm_component parent=null,
+       int min_size=1, int max_size=1) {
     synchronized(this) {
       super (name, parent, UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_BLOCKING_PUT_MASK;
     }
   }
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_blocking_put_export";
   }
 
   // task
-  public void put (T t) {
+  void put (T t) {
     m_if.put(t);
   }
 }
 
 class uvm_nonblocking_put_export(T=int):
-  uvm_port_base!(uvm_tlm_if_base!(T,T))
+uvm_port_base!(uvm_tlm_if_base!(T,T))
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_NONBLOCKING_PUT_MASK,"uvm_nonblocking_put_export")
   // `UVM_NONBLOCKING_PUT_IMP (this.m_if, T, t)
-  public this(string name=null, uvm_component parent=null,
-	      int min_size=1, int max_size=1) {
+  this(string name=null, uvm_component parent=null,
+       int min_size=1, int max_size=1) {
     synchronized(this) {
       super(name, parent, UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_NONBLOCKING_PUT_MASK;
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_nonblocking_put_export";
   }
 
-  public bool try_put (T t) {
+  bool try_put (T t) {
     return m_if.try_put(t);
   }
 
-  public bool can_put() {
+  bool can_put() {
     return m_if.can_put();
   }
 }
 
 class uvm_put_export(T=int):
-  uvm_port_base!(uvm_tlm_if_base!(T,T))
+uvm_port_base!(uvm_tlm_if_base!(T,T))
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_PUT_MASK,"uvm_put_export")
   // `UVM_PUT_IMP (this.m_if, T, t)
-  public this(string name=null, uvm_component parent=null,
-	      int min_size=1, int max_size=1) {
+  this(string name=null, uvm_component parent=null,
+       int min_size=1, int max_size=1) {
     synchronized(this) {
       super(name, parent, UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_PUT_MASK;
     }
   }
-  public string get_type_name() {
+  override string get_type_name() {
     return "uvm_put_export";
   }
 
   // task
-  public void put(T t) {
+  override void put(T t) {
     m_if.put(t);
   }
 
-  public bool try_put (T t) {
+  override bool try_put (T t) {
     return m_if.try_put(t);
   }
 
-  public bool can_put() {
+  override bool can_put() {
     return m_if.can_put();
   }
 }
 
 class uvm_blocking_get_export(T=int):
-  uvm_port_base!(uvm_tlm_if_base!(T,T))
+uvm_port_base!(uvm_tlm_if_base!(T,T))
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_BLOCKING_GET_MASK,"uvm_blocking_get_export")
   // `UVM_BLOCKING_GET_IMP (this.m_if, T, t)
-  public this(string name=null, uvm_component parent=null,
-	      int min_size=1, int max_size=1) {
+  this(string name=null, uvm_component parent=null,
+       int min_size=1, int max_size=1) {
     super (name, parent, UVM_EXPORT, min_size, max_size);
     m_if_mask = UVM_TLM_BLOCKING_GET_MASK;
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_blocking_get_export";
   }
 
   // task
-  public void get (out T t) {
+  void get (out T t) {
     m_if.get(t);
   }
 
 }
 
 class uvm_nonblocking_get_export(T=int):
-  uvm_port_base!(uvm_tlm_if_base!(T,T))
+uvm_port_base!(uvm_tlm_if_base!(T,T))
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_NONBLOCKING_GET_MASK,"uvm_nonblocking_get_export")
   // `UVM_NONBLOCKING_GET_IMP (this.m_if, T, t)
-  public this(string name=null, uvm_component parent=null,
-	      int min_size=1, int max_size=1) {
+  this(string name=null, uvm_component parent=null,
+       int min_size=1, int max_size=1) {
     super (name, parent, UVM_EXPORT, min_size, max_size);
     m_if_mask = UVM_TLM_NONBLOCKING_GET_MASK;
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_nonblocking_get_export";
   }
 
-  public bool try_get (out T t) {
+  bool try_get (out T t) {
     return m_if.try_get(t);
   }
 
-  public bool can_get() {
+  bool can_get() {
     return m_if.can_get();
   }
 }
 
 class uvm_get_export(T=int):
-  uvm_port_base!(uvm_tlm_if_base!(T,T))
+uvm_port_base!(uvm_tlm_if_base!(T,T))
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_GET_MASK,"uvm_get_export")
   // `UVM_GET_IMP (this.m_if, T, t)
-  public this(string name=null, uvm_component parent=null,
-	      int min_size=1, int max_size=1) {
+  this(string name=null, uvm_component parent=null,
+       int min_size=1, int max_size=1) {
     synchronized(this) {
       super (name, parent, UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_GET_MASK;
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_get_export";
   }
 
   // task
-  public void get (out T t) {
+  void get (out T t) {
     m_if.get(t);
   }
 
-  public bool try_get (out T t) {
+  bool try_get (out T t) {
     return m_if.try_get(t);
   }
 
-  public bool can_get() {
+  bool can_get() {
     return m_if.can_get();
   }
 }
 
 class uvm_blocking_peek_export(T=int):
-  uvm_port_base!(uvm_tlm_if_base!(T,T))
+uvm_port_base!(uvm_tlm_if_base!(T,T))
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_BLOCKING_PEEK_MASK,"uvm_blocking_peek_export")
   // `UVM_BLOCKING_PEEK_IMP (this.m_if, T, t)
-  public this(string name=null, uvm_component parent=null,
-	      int min_size=1, int max_size=1) {
+  this(string name=null, uvm_component parent=null,
+       int min_size=1, int max_size=1) {
     synchronized(this) {
       super (name, parent, UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_BLOCKING_PEEK_MASK;
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_blocking_peek_export";
   }
 
   // task
-  public void peek (out T t) {
+  void peek (out T t) {
     m_if.peek(t);
   }
 }
 
 class uvm_nonblocking_peek_export(T=int):
-  uvm_port_base!(uvm_tlm_if_base!(T,T))
+uvm_port_base!(uvm_tlm_if_base!(T,T))
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_NONBLOCKING_PEEK_MASK,"uvm_nonblocking_peek_export")
   // `UVM_NONBLOCKING_PEEK_IMP (this.m_if, T, t)
-  public this(string name=null, uvm_component parent=null,
-	      int min_size=1, int max_size=1) {
+  this(string name=null, uvm_component parent=null,
+       int min_size=1, int max_size=1) {
     synchronized(this) {
       super (name, parent, UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_NONBLOCKING_PEEK_MASK;
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_nonblocking_peek_export";
   }
 
-  public bool try_peek (out T t) {
+  bool try_peek (out T t) {
     return m_if.try_peek(t);
   }
 
-  public bool can_peek() {
+  bool can_peek() {
     return m_if.can_peek();
   }
 }
 
 class uvm_peek_export(T=int):
-  uvm_port_base!(uvm_tlm_if_base!(T,T))
+uvm_port_base!(uvm_tlm_if_base!(T,T))
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_PEEK_MASK,"uvm_peek_export")
   // `UVM_PEEK_IMP (this.m_if, T, t)
-  public this(string name=null, uvm_component parent=null,
-	      int min_size=1, int max_size=1) {
+  this(string name=null, uvm_component parent=null,
+       int min_size=1, int max_size=1) {
     synchronized(this) {
       super (name, parent, UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_PEEK_MASK;
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_peek_export";
   }
 
   // task
-  public void peek (out T t) {
+  void peek (out T t) {
     m_if.peek(t);
   }
 
-  public bool try_peek (out T t) {
+  bool try_peek (out T t) {
     return m_if.try_peek(t);
   }
 
-  public bool can_peek() {
+  bool can_peek() {
     return m_if.can_peek();
   }
 
 }
 
 class uvm_blocking_get_peek_export(T=int):
-  uvm_port_base!(uvm_tlm_if_base!(T,T))
+uvm_port_base!(uvm_tlm_if_base!(T,T))
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_BLOCKING_GET_PEEK_MASK,"uvm_blocking_get_peek_export")
   // `UVM_BLOCKING_GET_PEEK_IMP (this.m_if, T, t)
-  public this(string name=null, uvm_component parent=null,
-	      int min_size=1, int max_size=1) {
+  this(string name=null, uvm_component parent=null,
+       int min_size=1, int max_size=1) {
     synchronized(this) {
       super (name, parent, UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_BLOCKING_GET_PEEK_MASK;
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_blocking_get_peek_export";
   }
 
 
   // task
-  public void get (out T t) {
+  void get (out T t) {
     m_if.get(t);
   }
 
   // task
-  public void peek (out T t) {
+  void peek (out T t) {
     m_if.peek(t);
   }
 }
 
 class uvm_nonblocking_get_peek_export(T=int):
-  uvm_port_base!(uvm_tlm_if_base!(T,T))
+uvm_port_base!(uvm_tlm_if_base!(T,T))
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_NONBLOCKING_GET_PEEK_MASK,"uvm_nonblocking_get_peek_export")
   // `UVM_NONBLOCKING_GET_PEEK_IMP (this.m_if, T, t)
-  public this(string name=null, uvm_component parent=null,
-	      int min_size=1, int max_size=1) {
+  this(string name=null, uvm_component parent=null,
+       int min_size=1, int max_size=1) {
     synchronized(this) {
       super (name, parent, UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_NONBLOCKING_GET_PEEK_MASK;
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_nonblocking_get_peek_export";
   }
 
-  public bool try_get (out T t) {
+  bool try_get (out T t) {
     return m_if.try_get(t);
   }
 
-  public bool can_get() {
+  bool can_get() {
     return m_if.can_get();
   }
 
-  public bool try_peek (out T t) {
+  bool try_peek (out T t) {
     return m_if.try_peek(t);
   }
 
-  public bool can_peek() {
+  bool can_peek() {
     return m_if.can_peek();
   }
 
 }
 
 class uvm_get_peek_export(T=int):
-  uvm_port_base!(uvm_tlm_if_base!(T,T))
+uvm_port_base!(uvm_tlm_if_base!(T,T))
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_GET_PEEK_MASK,"uvm_get_peek_export")
   // `UVM_GET_PEEK_IMP (this.m_if, T, t)
-  public this(string name=null, uvm_component parent=null,
-	      int min_size=1, int max_size=1) {
+  this(string name=null, uvm_component parent=null,
+       int min_size=1, int max_size=1) {
     synchronized(this) {
       super (name, parent, UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_GET_PEEK_MASK;
     }
   }
 
-  public string get_type_name() {
+  override string get_type_name() {
     return "uvm_get_peek_export";
   }
 
   // task
-  public void get (out T t) {
+  override void get (out T t) {
     m_if.get(t);
   }
 
   // task
-  public void peek (out T t) {
+  override void peek (out T t) {
     m_if.peek(t);
   }
 
-  public bool try_get (out T t) {
+  override bool try_get (out T t) {
     return m_if.try_get(t);
   }
 
-  public bool can_get() {
+  override bool can_get() {
     return m_if.can_get();
   }
 
-  public bool try_peek (out T t) {
+  override bool try_peek (out T t) {
     return m_if.try_peek(t);
   }
 
-  public bool can_peek() {
+  override bool can_peek() {
     return m_if.can_peek();
   }
 
@@ -472,345 +478,345 @@ class uvm_get_peek_export(T=int):
 
 
 class uvm_blocking_master_export (REQ=int, RSP=REQ):
-  uvm_port_base !(uvm_tlm_if_base !(REQ, RSP))
+uvm_port_base !(uvm_tlm_if_base !(REQ, RSP))
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_BLOCKING_MASTER_MASK,"uvm_blocking_master_export")
   // `UVM_BLOCKING_PUT_IMP (this.m_if, REQ, t)
   // `UVM_BLOCKING_GET_PEEK_IMP (this.m_if, RSP, t)
-  public this (string name=null, uvm_component parent=null,
-	       int min_size=1, int max_size=1) {
+  this (string name=null, uvm_component parent=null,
+	int min_size=1, int max_size=1) {
     synchronized(this) {
       super(name, parent, UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_BLOCKING_MASTER_MASK;
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_blocking_master_export";
   }
 
   // task
-  public void put (REQ t) {
+  void put (REQ t) {
     m_if.put(t);
   }
 
   // task
-  public void get (out RSP t) {
+  void get (out RSP t) {
     m_if.get(t);
   }
 
   // task
-  public void peek (out RSP t) {
+  void peek (out RSP t) {
     m_if.peek(t);
   }
 }
 
 class uvm_nonblocking_master_export (REQ=int, RSP=REQ):
-  uvm_port_base !(uvm_tlm_if_base !(REQ, RSP))
+uvm_port_base !(uvm_tlm_if_base !(REQ, RSP))
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_NONBLOCKING_MASTER_MASK,"uvm_nonblocking_master_export")
   // `UVM_NONBLOCKING_PUT_IMP (this.m_if, REQ, t)
   // `UVM_NONBLOCKING_GET_PEEK_IMP (this.m_if, RSP, t)
-  public this (string name=null, uvm_component parent=null,
-	       int min_size=1, int max_size=1) {
+  this (string name=null, uvm_component parent=null,
+	int min_size=1, int max_size=1) {
     synchronized(this) {
       super(name, parent, UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_NONBLOCKING_MASTER_MASK;
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_nonblocking_master_export";
   }
 
-  public bool try_put (REQ t) {
+  bool try_put (REQ t) {
     return m_if.try_put(t);
   }
 
-  public bool can_put() {
+  bool can_put() {
     return m_if.can_put();
   }
 
-  public bool try_get (out RSP t) {
+  bool try_get (out RSP t) {
     return m_if.try_get(t);
   }
 
-  public bool can_get() {
+  bool can_get() {
     return m_if.can_get();
   }
 
-  public bool try_peek (out RSP t) {
+  bool try_peek (out RSP t) {
     return m_if.try_peek(t);
   }
 
-  public bool can_peek() {
+  bool can_peek() {
     return m_if.can_peek();
   }
 }
 
 class uvm_master_export (REQ=int, RSP=REQ):
-  uvm_port_base !(uvm_tlm_if_base !(REQ, RSP))
+uvm_port_base !(uvm_tlm_if_base !(REQ, RSP))
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_MASTER_MASK,"uvm_master_export")
   // `UVM_PUT_IMP (this.m_if, REQ, t)
   // `UVM_GET_PEEK_IMP (this.m_if, RSP, t)
-  public this (string name=null, uvm_component parent=null,
-	       int min_size=1, int max_size=1) {
+  this (string name=null, uvm_component parent=null,
+	int min_size=1, int max_size=1) {
     synchronized(this) {
       super(name, parent, UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_MASTER_MASK;
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_master_export";
   }
 
   // task
-  public void put (REQ t) {
+  void put (REQ t) {
     m_if.put(t);
   }
 
-  public bool try_put (REQ t) {
+  bool try_put (REQ t) {
     return m_if.try_put(t);
   }
 
-  public bool can_put() {
+  bool can_put() {
     return m_if.can_put();
   }
 
   // task
-  public void get (out RSP t) {
+  void get (out RSP t) {
     m_if.get(t);
   }
 
   // task
-  public void peek (out RSP t) {
+  void peek (out RSP t) {
     m_if.peek(t);
   }
 
-  public bool try_get (out RSP t) {
+  bool try_get (out RSP t) {
     return m_if.try_get(t);
   }
 
-  public bool can_get() {
+  bool can_get() {
     return m_if.can_get();
   }
 
-  public bool try_peek (out RSP t) {
+  bool try_peek (out RSP t) {
     return m_if.try_peek(t);
   }
 
-  public bool can_peek() {
+  bool can_peek() {
     return m_if.can_peek();
   }
 }
 
 class uvm_blocking_slave_export (REQ=int, RSP=REQ):
-  uvm_port_base !(uvm_tlm_if_base !(RSP, REQ))
+uvm_port_base !(uvm_tlm_if_base !(RSP, REQ))
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_BLOCKING_SLAVE_MASK,"uvm_blocking_slave_export")
   // `UVM_BLOCKING_PUT_IMP (this.m_if, RSP, t)
   // `UVM_BLOCKING_GET_PEEK_IMP (this.m_if, REQ, t)
-  public this (string name=null, uvm_component parent=null,
-	       int min_size=1, int max_size=1) {
+  this (string name=null, uvm_component parent=null,
+	int min_size=1, int max_size=1) {
     synchronized(this) {
       super(name, parent, UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_BLOCKING_SLAVE_MASK;
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_blocking_slave_export";
   }
 
   // task
-  public void put (RSP t) {
+  void put (RSP t) {
     m_if.put(t);
   }
 
   // task
-  public void get (out REQ t) {
+  void get (out REQ t) {
     m_if.get(t);
   }
 
   // task
-  public void peek (out REQ t) {
+  void peek (out REQ t) {
     m_if.peek(t);
   }
 }
 
 class uvm_nonblocking_slave_export (REQ=int, RSP=REQ):
-  uvm_port_base !(uvm_tlm_if_base !(RSP, REQ))
+uvm_port_base !(uvm_tlm_if_base !(RSP, REQ))
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_NONBLOCKING_SLAVE_MASK,"uvm_nonblocking_slave_export")
   // `UVM_NONBLOCKING_PUT_IMP (this.m_if, RSP, t)
   // `UVM_NONBLOCKING_GET_PEEK_IMP (this.m_if, REQ, t)
-  public this (string name=null, uvm_component parent=null,
-	       int min_size=1, int max_size=1) {
+  this (string name=null, uvm_component parent=null,
+	int min_size=1, int max_size=1) {
     synchronized(this) {
       super(name, parent, UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_NONBLOCKING_SLAVE_MASK;
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_nonblocking_slave_export";
   }
 
-  public bool try_put (RSP t) {
+  bool try_put (RSP t) {
     return m_if.try_put(t);
   }
 
-  public bool can_put() {
+  bool can_put() {
     uvm_port_base!(uvm_tlm_if_base!(T,T)) _m_if;
     return m_if.can_put();
   }
 
-  public bool try_get (out REQ t) {
+  bool try_get (out REQ t) {
     return m_if.try_get(t);
   }
 
-  public bool can_get() {
+  bool can_get() {
     return m_if.can_get();
   }
 
-  public bool try_peek (out REQ t) {
+  bool try_peek (out REQ t) {
     return m_if.try_peek(t);
   }
 
-  public bool can_peek() {
+  bool can_peek() {
     return m_if.can_peek();
   }
 }
 
 class uvm_slave_export (REQ=int, RSP=REQ):
-  uvm_port_base !(uvm_tlm_if_base !(RSP, REQ))
+uvm_port_base !(uvm_tlm_if_base !(RSP, REQ))
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_SLAVE_MASK,"uvm_slave_export")
   // `UVM_PUT_IMP (this.m_if, RSP, t)
   // `UVM_GET_PEEK_IMP (this.m_if, REQ, t)
-  public this (string name=null, uvm_component parent=null,
-	       int min_size=1, int max_size=1) {
+  this (string name=null, uvm_component parent=null,
+	int min_size=1, int max_size=1) {
     synchronized(this) {
       super(name, parent, UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_SLAVE_MASK;
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_slave_export";
   }
 
   // task
-  public void put (RSP t) {
+  void put (RSP t) {
     m_if.put(t);
   }
 
-  public bool try_put (RSP t) {
+  bool try_put (RSP t) {
     return m_if.try_put(t);
   }
 
-  public bool can_put() {
+  bool can_put() {
     return m_if.can_put();
   }
 
   // task
-  public void get (out REQ t) {
+  void get (out REQ t) {
     m_if.get(t);
   }
 
   // task
-  public void peek (out REQ t) {
+  void peek (out REQ t) {
     m_if.peek(t);
   }
 
-  public bool try_get (out REQ t) {
+  bool try_get (out REQ t) {
     return m_if.try_get(t);
   }
 
-  public bool can_get() {
+  bool can_get() {
     m_if.can_get();
   }
 
-  public bool try_peek (out REQ t) {
+  bool try_peek (out REQ t) {
     return m_if.try_peek(t);
   }
 
-  public bool can_peek() {
+  bool can_peek() {
     return m_if.can_peek();
   }
 }
 
 
 class uvm_blocking_transport_export (REQ=int, RSP=REQ):
-  uvm_port_base!(uvm_tlm_if_base !(REQ, RSP))
+uvm_port_base!(uvm_tlm_if_base !(REQ, RSP))
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_BLOCKING_TRANSPORT_MASK,"uvm_blocking_transport_export")
   // `UVM_BLOCKING_TRANSPORT_IMP (this.m_if, REQ, RSP, req, rsp)
-  public this (string name=null, uvm_component parent=null,
-	       int min_size=1, int max_size=1) {
+  this (string name=null, uvm_component parent=null,
+	int min_size=1, int max_size=1) {
     synchronized(this) {
       super(name, parent, UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_BLOCKING_TRANSPORT_MASK;
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_blocking_transport_export";
   }
 
   // task
-  public void transport (REQ req, out RSP rsp) {
+  void transport (REQ req, out RSP rsp) {
     m_if.transport(req, rsp);
   }
 }
 
 class uvm_nonblocking_transport_export (REQ=int, RSP=REQ):
-  uvm_port_base !(uvm_tlm_if_base !(REQ, RSP))
+uvm_port_base !(uvm_tlm_if_base !(REQ, RSP))
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_NONBLOCKING_TRANSPORT_MASK,"uvm_nonblocking_transport_export")
   // `UVM_NONBLOCKING_TRANSPORT_IMP (this.m_if, REQ, RSP, req, rsp)
-  public this (string name=null, uvm_component parent=null,
-	       int min_size=1, int max_size=1) {
+  this (string name=null, uvm_component parent=null,
+	int min_size=1, int max_size=1) {
     synchronized(this) {
       super(name, parent, UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_NONBLOCKING_TRANSPORT_MASK;
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_nonblocking_transport_export";
   }
 
-  public bool nb_transport (REQ req, out RSP rsp) {
+  bool nb_transport (REQ req, out RSP rsp) {
     return m_if.nb_transport(req, rsp);
   }
 }
 
 class uvm_transport_export (REQ=int, RSP=REQ):
-  uvm_port_base !(uvm_tlm_if_base !(REQ, RSP))
+uvm_port_base !(uvm_tlm_if_base !(REQ, RSP))
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_TRANSPORT_MASK,"uvm_transport_export")
   // `UVM_TRANSPORT_IMP (this.m_if, REQ, RSP, req, rsp)
-  public this (string name=null, uvm_component parent=null,
-	       int min_size=1, int max_size=1) {
+  this (string name=null, uvm_component parent=null,
+	int min_size=1, int max_size=1) {
     synchronized(this) {
       super(name, parent, UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_TRANSPORT_MASK;
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_transport_export";
   }
 
   // task
-  public void transport (REQ req, out RSP rsp) {
+  void transport (REQ req, out RSP rsp) {
     m_if.transport(req, rsp);
   }
 
-  public bool nb_transport (REQ req, out RSP rsp) {
+  bool nb_transport (REQ req, out RSP rsp) {
     return m_if.nb_transport(req, rsp);
   }
 

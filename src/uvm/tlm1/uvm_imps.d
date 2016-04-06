@@ -90,7 +90,7 @@ class uvm_blocking_put_imp(T=int, IMP=int): uvm_port_base!(uvm_tlm_if_base!(T,T)
   // `UVM_BLOCKING_PUT_IMP (m_imp, T, t)
   private IMP m_imp;
 
-  public this(string name, IMP imp) {
+  this(string name, IMP imp) {
     synchronized(this) {
       super(name, imp, UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
@@ -98,12 +98,12 @@ class uvm_blocking_put_imp(T=int, IMP=int): uvm_port_base!(uvm_tlm_if_base!(T,T)
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_blocking_put_imp";
   }
 
   // task
-  public void put (T t) {
+  void put (T t) {
     m_imp.put(t);
   }
 }
@@ -114,7 +114,7 @@ class uvm_nonblocking_put_imp(T=int, IMP=int): uvm_port_base!(uvm_tlm_if_base!(T
   // `UVM_NONBLOCKING_PUT_IMP (m_imp, T, t)
   private IMP m_imp;
 
-  public this(string name, IMP imp) {
+  this(string name, IMP imp) {
     synchronized(this) {
       super(name, imp, UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
@@ -122,15 +122,15 @@ class uvm_nonblocking_put_imp(T=int, IMP=int): uvm_port_base!(uvm_tlm_if_base!(T
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_nonblocking_put_imp";
   }
 
-  public bool try_put (T t) {
+  bool try_put (T t) {
     return m_imp.try_put(t);
   }
 
-  public bool can_put() {
+  bool can_put() {
     return m_imp.can_put();
   }
 }
@@ -141,7 +141,7 @@ class uvm_put_imp(T=int, IMP=int): uvm_port_base!(uvm_tlm_if_base!(T,T))
   // `UVM_PUT_IMP (m_imp, T, t)
   private IMP m_imp;
 
-  public this(string name, IMP imp) {
+  this(string name, IMP imp) {
     synchronized(this) {
       super(name, imp, UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
@@ -149,20 +149,20 @@ class uvm_put_imp(T=int, IMP=int): uvm_port_base!(uvm_tlm_if_base!(T,T))
     }
   }
 
-  override public string get_type_name() {
+  override string get_type_name() {
     return "uvm_put_imp";
   }
 
   // task
-  override public void put (T t) {
+  override void put (T t) {
     m_imp.put(t);
   }
 
-  override public bool try_put (T t) {
+  override bool try_put (T t) {
     return m_imp.try_put(t);
   }
 
-  override public bool can_put() {
+  override bool can_put() {
     return m_imp.can_put();
   }
 }
@@ -174,7 +174,7 @@ class uvm_blocking_get_imp(T=int, IMP=int):
   // `UVM_BLOCKING_GET_IMP (m_imp, T, t)
   private IMP m_imp;
 
-  public this(string name, IMP imp) {
+  this(string name, IMP imp) {
     synchronized(this) {
       super(name, imp, UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
@@ -182,12 +182,12 @@ class uvm_blocking_get_imp(T=int, IMP=int):
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_blocking_get_imp";
   }
 
   // task
-  public void get (out T t) {
+  void get (out T t) {
     m_imp.get(t);
   }
 }
@@ -199,7 +199,7 @@ class uvm_nonblocking_get_imp(T=int, IMP=int):
   // `UVM_NONBLOCKING_GET_IMP (m_imp, T, t)
   private IMP m_imp;
 
-  public this(string name, IMP imp) {
+  this(string name, IMP imp) {
     synchronized(this) {
       super(name, imp, UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
@@ -207,15 +207,15 @@ class uvm_nonblocking_get_imp(T=int, IMP=int):
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_nonblocking_get_imp";
   }
 
-  public bool try_get (out T t) {
+  bool try_get (out T t) {
     return m_imp.try_get(t);
   }
 
-  public bool can_get() {
+  bool can_get() {
     return m_imp.can_get();
   }
 }
@@ -227,7 +227,7 @@ class uvm_get_imp(T=int, IMP=int):
   // `UVM_GET_IMP (m_imp, T, t)
   private IMP m_imp;
 
-  public this(string name, IMP imp) {
+  this(string name, IMP imp) {
     synchronized(this) {
       super(name, imp, UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
@@ -235,19 +235,19 @@ class uvm_get_imp(T=int, IMP=int):
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_get_imp";
   }
   // task
-  public void get (out T t) {
+  void get (out T t) {
     m_imp.get(t);
   }
 
-  public bool try_get (out T t) {
+  bool try_get (out T t) {
     return m_imp.try_get(t);
   }
 
-  public bool can_get() {
+  bool can_get() {
     return m_imp.can_get();
   }
 }
@@ -259,7 +259,7 @@ class uvm_blocking_peek_imp(T=int, IMP=int):
   // `UVM_BLOCKING_PEEK_IMP (m_imp, T, t)
   private IMP m_imp;
 
-  public this(string name, IMP imp) {
+  this(string name, IMP imp) {
     synchronized(this) {
       super(name, imp, UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
@@ -267,11 +267,11 @@ class uvm_blocking_peek_imp(T=int, IMP=int):
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_blocking_peek_imp";
   }
   // task
-  public void peek (out T t) {
+  void peek (out T t) {
     m_imp.peek(t);
   }
 }
@@ -283,7 +283,7 @@ class uvm_nonblocking_peek_imp(T=int, IMP=int):
   // `UVM_NONBLOCKING_PEEK_IMP (m_imp, T, t)
   private IMP m_imp;
 
-  public this(string name, IMP imp) {
+  this(string name, IMP imp) {
     synchronized(this) {
       super(name, imp, UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
@@ -291,15 +291,15 @@ class uvm_nonblocking_peek_imp(T=int, IMP=int):
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_nonblocking_peek_imp";
   }
 
-  public bool try_peek (out T t) {
+  bool try_peek (out T t) {
     return m_imp.try_peek(t);
   }
 
-  public bool can_peek() {
+  bool can_peek() {
     return m_imp.can_peek();
   }
 }
@@ -311,7 +311,7 @@ class uvm_peek_imp(T=int, IMP=int):
   // `UVM_PEEK_IMP (m_imp, T, t)
   private IMP m_imp;
 
-  public this(string name, IMP imp) {
+  this(string name, IMP imp) {
     synchronized(this) {
       super(name, imp, UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
@@ -319,20 +319,20 @@ class uvm_peek_imp(T=int, IMP=int):
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_peek_imp";
   }
 
   // task
-  public void peek (out T t) {
+  void peek (out T t) {
     m_imp.peek(t);
   }
 
-  public bool try_peek (out T t) {
+  bool try_peek (out T t) {
     return m_imp.try_peek(t);
   }
 
-  public bool can_peek() {
+  bool can_peek() {
     return m_imp.can_peek();
   }
 }
@@ -344,7 +344,7 @@ class uvm_blocking_get_peek_imp(T=int, IMP=int):
   // `UVM_BLOCKING_GET_PEEK_IMP (m_imp, T, t)
   private IMP m_imp;
 
-  public this(string name, IMP imp) {
+  this(string name, IMP imp) {
     synchronized(this) {
       super(name, imp, UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
@@ -352,7 +352,7 @@ class uvm_blocking_get_peek_imp(T=int, IMP=int):
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_blocking_get_peek_imp";
   }
 
@@ -372,7 +372,7 @@ class uvm_nonblocking_get_peek_imp(T=int, IMP=int):
   // `UVM_NONBLOCKING_GET_PEEK_IMP (m_imp, T, t)
   private IMP m_imp;
 
-  public this(string name, IMP imp) {
+  this(string name, IMP imp) {
     synchronized(this) {
       super(name, imp, UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
@@ -380,23 +380,23 @@ class uvm_nonblocking_get_peek_imp(T=int, IMP=int):
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_nonblocking_get_peek_imp";
   }
 
-  public bool try_get (out T t) {
+  bool try_get (out T t) {
     return m_imp.try_get(t);
   }
 
-  public bool can_get() {
+  bool can_get() {
     return m_imp.can_get();
   }
 
-  public bool try_peek (out T t) {
+  bool try_peek (out T t) {
     return m_imp.try_peek(t);
   }
 
-  public bool can_peek() {
+  bool can_peek() {
     return m_imp.can_peek();
   }
 }
@@ -407,7 +407,7 @@ class uvm_get_peek_imp(T=int, IMP=int): uvm_port_base!(uvm_tlm_if_base!(T,T))
   // `UVM_GET_PEEK_IMP (m_imp, T, t)
   private IMP m_imp;
 
-  public this(string name, IMP imp) {
+  this(string name, IMP imp) {
     synchronized(this) {
       super(name, imp, UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
@@ -415,33 +415,33 @@ class uvm_get_peek_imp(T=int, IMP=int): uvm_port_base!(uvm_tlm_if_base!(T,T))
     }
   }
 
-  override public string get_type_name() {
+  override string get_type_name() {
     return "uvm_get_peek_imp";
   }
 
   // task
-  override public void  get (out T t) {
+  override void  get (out T t) {
     m_imp.get(t);
   }
 
   // task
-  override public void peek (out T t) {
+  override void peek (out T t) {
     m_imp.peek(t);
   }
 
-  override public bool try_get (out T t) {
+  override bool try_get (out T t) {
     return m_imp.try_get(t);
   }
 
-  override public bool can_get() {
+  override bool can_get() {
     return m_imp.can_get();
   }
 
-  override public bool try_peek (out T t) {
+  override bool try_peek (out T t) {
     return m_imp.try_peek(t);
   }
 
-  override public bool can_peek() {
+  override bool can_peek() {
     return m_imp.can_peek();
   }
 }
@@ -536,7 +536,7 @@ class uvm_blocking_master_imp(REQ=int, RSP=REQ, IMP=int,
   private this_req_type m_req_imp;
   private this_rsp_type m_rsp_imp;
 
-  public this(string name, this_imp_type imp, this_req_type req_imp = null, this_rsp_type rsp_imp = null) {
+  this(string name, this_imp_type imp, this_req_type req_imp = null, this_rsp_type rsp_imp = null) {
     synchronized(this) {
       super(name, imp, UVM_IMPLEMENTATION, 1, 1);
       if(req_imp is null) {
@@ -551,21 +551,21 @@ class uvm_blocking_master_imp(REQ=int, RSP=REQ, IMP=int,
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_blocking_master_imp";
   }
 
   // task
-  public void put (REQ t) {
+  void put (REQ t) {
     m_req_imp.put(t);
   }
 
   // task
-  public void get (out RSP t) {
+  void get (out RSP t) {
     m_rsp_imp.get(t);
   }
   // task
-  public void peek (out RSP t) {
+  void peek (out RSP t) {
     m_rsp_imp.peek(t);
   }
 
@@ -582,7 +582,7 @@ class uvm_nonblocking_master_imp(REQ=int, RSP=REQ, IMP=int,
   // `UVM_NONBLOCKING_GET_PEEK_IMP (m_rsp_imp, RSP, t)
   private this_req_type m_req_imp;
   private this_rsp_type m_rsp_imp;
-  public this(string name, this_imp_type imp, this_req_type req_imp = null, this_rsp_type rsp_imp = null) {
+  this(string name, this_imp_type imp, this_req_type req_imp = null, this_rsp_type rsp_imp = null) {
     synchronized(this) {
       super(name, imp, UVM_IMPLEMENTATION, 1, 1);
       if(req_imp is null) {
@@ -598,27 +598,27 @@ class uvm_nonblocking_master_imp(REQ=int, RSP=REQ, IMP=int,
   }
 
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_nonblocking_master_imp";
   }
 
-  public bool try_put (REQ t) {
+  bool try_put (REQ t) {
     return m_req_imp.try_put(t);
   }
-  public bool can_put() {
+  bool can_put() {
     return m_req_imp.can_put();
   }
 
-  public bool try_get (out RSP t) {
+  bool try_get (out RSP t) {
     return m_rsp_imp.try_get(t);
   }
-  public bool can_get() {
+  bool can_get() {
     return m_rsp_imp.can_get();
   }
-  public bool try_peek (out RSP t) {
+  bool try_peek (out RSP t) {
     return m_rsp_imp.try_peek(t);
   }
-  public bool can_peek() {
+  bool can_peek() {
     return m_rsp_imp.can_peek();
   }
 
@@ -635,7 +635,7 @@ class uvm_master_imp(REQ=int, RSP=REQ, IMP=int,
   // `UVM_GET_PEEK_IMP (m_rsp_imp, RSP, t)
   private this_req_type m_req_imp;
   private this_rsp_type m_rsp_imp;
-  public this(string name, this_imp_type imp, this_req_type req_imp = null, this_rsp_type rsp_imp = null) {
+  this(string name, this_imp_type imp, this_req_type req_imp = null, this_rsp_type rsp_imp = null) {
     synchronized(this) {
       super(name, imp, UVM_IMPLEMENTATION, 1, 1);
       if(req_imp is null) {
@@ -650,39 +650,39 @@ class uvm_master_imp(REQ=int, RSP=REQ, IMP=int,
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_master_imp";
   }
 
   // task
-  public void put (REQ t) {
+  void put (REQ t) {
     m_req_imp.put(t);
   }
-  public bool try_put (REQ t) {
+  bool try_put (REQ t) {
     return m_req_imp.try_put(t);
   }
-  public bool can_put() {
+  bool can_put() {
     return m_req_imp.can_put();
   }
 
   // task
-  public void get (out RSP t) {
+  void get (out RSP t) {
     m_rsp_imp.get(t);
   }
   // task
-  public void peek (out RSP t) {
+  void peek (out RSP t) {
     m_rsp_imp.peek(t);
   }
-  public bool try_get (out RSP t) {
+  bool try_get (out RSP t) {
     return m_rsp_imp.try_get(t);
   }
-  public bool can_get() {
+  bool can_get() {
     return m_rsp_imp.can_get();
   }
-  public bool try_peek (out RSP t) {
+  bool try_peek (out RSP t) {
     return m_rsp_imp.try_peek(t);
   }
-  public bool can_peek() {
+  bool can_peek() {
     return m_rsp_imp.can_peek();
   }
 
@@ -699,7 +699,7 @@ class uvm_blocking_slave_imp(REQ=int, RSP=REQ, IMP=int,
   // `UVM_BLOCKING_GET_PEEK_IMP (m_req_imp, REQ, t)
   private this_req_type m_req_imp;
   private this_rsp_type m_rsp_imp;
-  public this(string name, this_imp_type imp, this_req_type req_imp = null, this_rsp_type rsp_imp = null) {
+  this(string name, this_imp_type imp, this_req_type req_imp = null, this_rsp_type rsp_imp = null) {
     synchronized(this) {
       super(name, imp, UVM_IMPLEMENTATION, 1, 1);
       if(req_imp is null) {
@@ -714,21 +714,21 @@ class uvm_blocking_slave_imp(REQ=int, RSP=REQ, IMP=int,
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_blocking_slave_imp";
   }
 
   // task
-  public void put (RSP t) {
+  void put (RSP t) {
     m_rsp_imp.put(t);
   }
 
   // task
-  public void get (out REQ t) {
+  void get (out REQ t) {
     m_req_imp.get(t);
   }
   // task
-  public void peek (out REQ t) {
+  void peek (out REQ t) {
     m_req_imp.peek(t);
   }
 
@@ -745,7 +745,7 @@ class uvm_nonblocking_slave_imp(REQ=int, RSP=REQ, IMP=int,
   // `UVM_NONBLOCKING_GET_PEEK_IMP (m_req_imp, REQ, t)
   private this_req_type m_req_imp;
   private this_rsp_type m_rsp_imp;
-  public this(string name, this_imp_type imp, this_req_type req_imp = null, this_rsp_type rsp_imp = null) {
+  this(string name, this_imp_type imp, this_req_type req_imp = null, this_rsp_type rsp_imp = null) {
     synchronized(this) {
       super(name, imp, UVM_IMPLEMENTATION, 1, 1);
       if(req_imp is null) {
@@ -760,27 +760,27 @@ class uvm_nonblocking_slave_imp(REQ=int, RSP=REQ, IMP=int,
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_nonblocking_slave_imp";
   }
 
-  public bool try_put (RSP t) {
+  bool try_put (RSP t) {
     return m_rsp_imp.try_put(t);
   }
-  public bool can_put() {
+  bool can_put() {
     return m_rsp_imp.can_put();
   }
 
-  public bool try_get (out REQ t) {
+  bool try_get (out REQ t) {
     return m_req_imp.try_get(t);
   }
-  public bool can_get() {
+  bool can_get() {
     return m_req_imp.can_get();
   }
-  public bool try_peek (out REQ t) {
+  bool try_peek (out REQ t) {
     return m_req_imp.try_peek(t);
   }
-  public bool can_peek() {
+  bool can_peek() {
     return m_req_imp.can_peek();
   }
 
@@ -797,7 +797,7 @@ class uvm_slave_imp(REQ=int, RSP=REQ, IMP=int,
   // `UVM_GET_PEEK_IMP (m_req_imp, REQ, t)
   private this_req_type m_req_imp;
   private this_rsp_type m_rsp_imp;
-  public this(string name, this_imp_type imp, this_req_type req_imp = null, this_rsp_type rsp_imp = null) {
+  this(string name, this_imp_type imp, this_req_type req_imp = null, this_rsp_type rsp_imp = null) {
     synchronized(this) {
       super(name, imp, UVM_IMPLEMENTATION, 1, 1);
       if(req_imp is null) {
@@ -812,39 +812,39 @@ class uvm_slave_imp(REQ=int, RSP=REQ, IMP=int,
     }
   }
 
-  public string get_type_name() {
+  override string get_type_name() {
     return "uvm_slave_imp";
   }
 
   // task
-  public void put (RSP t) {
+  override void put (RSP t) {
     m_rsp_imp.put(t);
   }
-  public bool try_put (RSP t) {
+  override bool try_put (RSP t) {
     return m_rsp_imp.try_put(t);
   }
-  public bool can_put() {
+  override bool can_put() {
     return m_rsp_imp.can_put();
   }
 
   // task
-  public void get (out REQ t) {
+  override void get (out REQ t) {
     m_req_imp.get(t);
   }
   // task
-  public void peek (out REQ t) {
+  override void peek (out REQ t) {
     m_req_imp.peek(t);
   }
-  public bool try_get (out REQ t) {
+  override bool try_get (out REQ t) {
     return m_req_imp.try_get(t);
   }
-  public bool can_get() {
+  override bool can_get() {
     return m_req_imp.can_get();
   }
-  public bool try_peek (out REQ t) {
+  override bool try_peek (out REQ t) {
     return m_req_imp.try_peek(t);
   }
-  public bool can_peek() {
+  override bool can_peek() {
     return m_req_imp.can_peek();
   }
 
@@ -856,7 +856,7 @@ class uvm_blocking_transport_imp(REQ=int, RSP=REQ, IMP=int): uvm_port_base!(uvm_
   // `UVM_BLOCKING_TRANSPORT_IMP (m_imp, REQ, RSP, req, rsp)
   private IMP m_imp;
 
-  public this(string name, IMP imp) {
+  this(string name, IMP imp) {
     synchronized(this) {
       super(name, imp, UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
@@ -864,12 +864,12 @@ class uvm_blocking_transport_imp(REQ=int, RSP=REQ, IMP=int): uvm_port_base!(uvm_
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_blocking_transport_imp";
   }
 
   // task
-  public void transport (REQ req, out RSP rsp) {
+  void transport (REQ req, out RSP rsp) {
     m_imp.transport(req, rsp);
   }
 
@@ -881,7 +881,7 @@ class uvm_nonblocking_transport_imp(REQ=int, RSP=REQ, IMP=int): uvm_port_base!(u
   // `UVM_NONBLOCKING_TRANSPORT_IMP (m_imp, REQ, RSP, req, rsp)
   private IMP m_imp;
 
-  public this(string name, IMP imp) {
+  this(string name, IMP imp) {
     synchronized(this) {
       super(name, imp, UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
@@ -889,11 +889,11 @@ class uvm_nonblocking_transport_imp(REQ=int, RSP=REQ, IMP=int): uvm_port_base!(u
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_nonblocking_transport_imp";
   }
 
-  public bool nb_transport (REQ req, out RSP rsp) {
+  bool nb_transport (REQ req, out RSP rsp) {
     return m_imp.nb_transport(req, rsp);
   }
 
@@ -906,7 +906,7 @@ class uvm_transport_imp(REQ=int, RSP=REQ, IMP=int): uvm_port_base!(uvm_tlm_if_ba
   // `UVM_NONBLOCKING_TRANSPORT_IMP (m_imp, REQ, RSP, req, rsp)
   private IMP m_imp;
 
-  public this(string name, IMP imp) {
+  this(string name, IMP imp) {
     synchronized(this) {
       super(name, imp, UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
@@ -914,16 +914,16 @@ class uvm_transport_imp(REQ=int, RSP=REQ, IMP=int): uvm_port_base!(uvm_tlm_if_ba
     }
   }
 
-  public string get_type_name() {
+  string get_type_name() {
     return "uvm_transport_imp";
   }
 
   // task
-  public void transport (REQ req, out RSP rsp) {
+  void transport (REQ req, out RSP rsp) {
     m_imp.transport(req, rsp);
   }
 
-  public bool nb_transport (REQ req, out RSP rsp) {
+  bool nb_transport (REQ req, out RSP rsp) {
     return m_imp.nb_transport(req, rsp);
   }
 
