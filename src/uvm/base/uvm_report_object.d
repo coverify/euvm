@@ -92,6 +92,11 @@ import uvm.base.uvm_object_globals;
 import uvm.base.uvm_root;
 import esdl.base.core: finish;
 
+version(UVM_NO_DEPRECATED) { }
+ else {
+   version = UVM_INCLUDE_DEPRECATED;
+ }
+
 class uvm_report_object: /*extends*/ uvm_object
 {
   mixin uvm_sync;

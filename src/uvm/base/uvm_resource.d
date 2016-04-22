@@ -122,6 +122,12 @@ import std.string;
 import std.random: Random;
 import std.algorithm: sort;
 import std.conv: to;
+
+version(UVM_NO_DEPRECATED) { }
+ else {
+   version = UVM_INCLUDE_DEPRECATED;
+ }
+
 //----------------------------------------------------------------------
 // Class: uvm_resource_types
 //

@@ -58,6 +58,12 @@ import std.traits: EnumMembers;
 import std.string: format;
 import std.conv: to;
 
+version(UVM_NO_DEPRECATED) { }
+ else {
+   version = UVM_INCLUDE_DEPRECATED;
+ }
+
+
 class uvm_report_server: /*extends*/ uvm_object
 {
   mixin uvm_sync;

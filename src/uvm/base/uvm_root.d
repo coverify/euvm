@@ -99,6 +99,11 @@ import std.string: format;
 
 import core.sync.semaphore: Semaphore;
 
+version(UVM_NO_DEPRECATED) { }
+ else {
+   version = UVM_INCLUDE_DEPRECATED;
+ }
+
 //------------------------------------------------------------------------------
 // Variable: uvm_top
 //
@@ -1303,7 +1308,7 @@ class uvm_root: uvm_component
       	  q ~= "\n  ***********       IMPORTANT RELEASE NOTES         ************\n";
       	}
       	q ~= "\n  You are using a version of the UVM library that has been compiled\n";
-      	q ~= "  with `UVM_INCLUDE_DEPRECATED defined.\n";
+      	q ~= "  with UVM_NO_DEPRECATED undefined.\n";
       	q ~= "  See http://www.eda.org/svdb/view.php?id=3313 for more details.\n";
       	_m_relnotes_done = true;
       }
@@ -1314,7 +1319,7 @@ class uvm_root: uvm_component
 	  q ~= "\n  ***********       IMPORTANT RELEASE NOTES         ************\n";
 	}
 	q ~= "\n  You are using a version of the UVM library that has been compiled\n";
-	q ~= "  with `UVM_OBJECT_DO_NOT_NEED_CONSTRUCTOR undefined.\n";
+	q ~= "  with UVM_OBJECT_DO_NOT_NEED_CONSTRUCTOR undefined.\n";
 	q ~= "  See http://www.eda.org/svdb/view.php?id=3770 for more details.\n";
 	_m_relnotes_done=1;
       }

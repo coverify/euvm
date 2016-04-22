@@ -28,6 +28,11 @@ import esdl.data.bvec;
 import esdl.data.time;
 import uvm.meta.misc;
 
+version(UVM_NO_DEPRECATED) { }
+ else {
+   version = UVM_INCLUDE_DEPRECATED;
+ }
+
 //This bit marks where filtering should occur to remove uvm stuff from a
 //scope
 // bool uvm_start_uvm_declarations = true;

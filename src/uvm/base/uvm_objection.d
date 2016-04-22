@@ -46,6 +46,11 @@ import esdl.data.sync;
 
 import std.string: format;
 
+version(UVM_NO_DEPRECATED) { }
+ else {
+   version = UVM_INCLUDE_DEPRECATED;
+ }
+
 alias uvm_objection_cbs_t =
   uvm_callbacks!(uvm_objection,uvm_objection_callback);
 

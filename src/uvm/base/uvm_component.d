@@ -106,6 +106,12 @@ import uvm.base.uvm_globals: uvm_is_match;
 import uvm.base.uvm_report_object;
 import esdl.base.core;
 
+version(UVM_NO_DEPRECATED) { }
+ else {
+   version = UVM_INCLUDE_DEPRECATED;
+ }
+
+
 struct m_verbosity_setting {
   string comp;
   string phase;
