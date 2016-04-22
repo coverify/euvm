@@ -75,7 +75,7 @@ class MCDFile
   {
     synchronized(typeid(MCDFile)) {
       import std.exception;
-      File fd = void;
+      File fd;
       bool opened = true;
       MCD mcd = (cast (MCD) 1) << files.length;
 

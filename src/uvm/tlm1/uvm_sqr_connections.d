@@ -82,7 +82,7 @@ class uvm_seq_item_pull_port(REQ=int, RSP=REQ):
     return "uvm_seq_item_pull_port";
   }
 
-  mixin UVM_SEQ_ITEM_PULL_IMP!(this.m_if, REQ, RSP);
+  mixin UVM_SEQ_ITEM_PULL_IMP!(m_if, REQ, RSP);
 
   bool print_enabled;
 }

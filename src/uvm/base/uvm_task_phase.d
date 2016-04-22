@@ -159,18 +159,21 @@ abstract class uvm_task_phase: uvm_phase
   //
   override void execute(uvm_component comp,
 			uvm_phase phase) {
-    fork!("uvm_task_phase/execute")({
+    fork("uvm_task_phase/execute(" ~ phase.get_name() ~
+	 ")[" ~ comp.get_full_name() ~ "]",
+	 {
 
-	// reseed this process for random stability
-	auto proc = Process.self;
-	proc.srandom(uvm_create_random_seed(phase.get_type_name(),
-					    comp.get_full_name()));
+	   // reseed this process for random stability
+	   auto proc = Process.self;
+	   proc.srandom(uvm_create_random_seed(phase.get_type_name(),
+					       comp.get_full_name()));
 
-	phase.inc_m_num_procs_not_yet_returned;
+	   phase.inc_m_num_procs_not_yet_returned;
 
-	exec_task(comp, phase);
+	   exec_task(comp, phase);
 
-	phase.dec_m_num_procs_not_yet_returned;
-      }).setAffinity(comp);
+	   phase.dec_m_num_procs_not_yet_returned;
+	 }
+	 ).setAffinity(comp);
   }
 }

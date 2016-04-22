@@ -60,7 +60,7 @@ import uvm.seq.uvm_sequence_item;
 import uvm.seq.uvm_sequence_base;
 import uvm.meta.meta;		// qualifiedTypeName
 
-import std.traits: isIntegral, isAbstractClass;
+import std.traits: isIntegral, isAbstractClass, isArray;
 
 import std.string: format;
 import std.conv: to;
@@ -373,6 +373,12 @@ abstract class uvm_component: uvm_report_object, ParContext
       return _m_parent;
     }
   }
+
+  // Traverse the component hierarchy and return the uvm_root
+  uvm_root get_root() {
+    return get_parent().get_root();
+  }
+  
   //   extern virtual function uvm_component get_parent ();
 
 
@@ -665,7 +671,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   }
 
   // base function for auto build phase
-  @uvm_private_sync
+  @uvm_public_sync
   bool _uvm__auto_elab_done = false;
 
   void uvm__auto_build() {
@@ -3120,10 +3126,9 @@ abstract class uvm_component: uvm_report_object, ParContext
     }
   }
 
-
+  // Allow association of non-simulation threads with a uvm_root
   void set_thread_context() {
-    auto cs = uvm_coreservice_t.get();
-    auto top = cs.get_root();
+    auto top = this.get_root();
     top.set_thread_context();
   }
 
@@ -3356,7 +3361,7 @@ abstract class uvm_component: uvm_report_object, ParContext
     }
   }
 
-  package void set_id() {
+  void _set_id() {
     synchronized(this) {
       uint id;
       if(m_comp_id == -1) {
@@ -3873,7 +3878,7 @@ void uvm__auto_build(T, U, size_t I, N...)(T t, ref U u,
   enum bool isAbstract = isAbstractClass!U;
 
   // the top level we start with should also get an id
-  t.set_id();
+  t._set_id();
 
   bool is_active = true;
   static if(is(T: uvm_agent)) {
@@ -3909,7 +3914,7 @@ void uvm__auto_build(T, U, size_t I, N...)(T t, ref U u,
     // provide an ID to all the components that are not null
     if(u !is null) {
       static if(is(U: uvm_component)) {
-	u.set_id();
+	u._set_id();
       }
     }
   }
@@ -4002,7 +4007,7 @@ void uvm__auto_elab(T, U, size_t I, N...)(T t, ref U u,
 					  uint[] indices = []) {
 
   // the top level we start with should also get an id
-  t.set_id();
+  t._set_id();
   static if(isArray!U) {
     for(size_t j = 0; j < u.length; ++j) {
       alias E = typeof(u[j]);
@@ -4018,7 +4023,7 @@ void uvm__auto_elab(T, U, size_t I, N...)(T t, ref U u,
     auto linfo = _esdl__get_parallelism!(I, T)(t);
     if(u !is null) {
       uvm__config_parallelism(u, linfo);
-      u.set_id();
+      u._set_id();
     }
   }
   static if(N.length > 0) {

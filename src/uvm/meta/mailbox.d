@@ -20,7 +20,7 @@
 //------------------------------------------------------------------------------
 module uvm.meta.mailbox;
 
-private import esdl.base.core: Event, EntityIntf;
+private import esdl.base.core: Event, AsyncEvent, EntityIntf;
 private import core.sync.semaphore: Semaphore;
 
 // Mimics the SystemVerilog mailbox behaviour
@@ -232,13 +232,13 @@ class Mailbox(T): MailboxBase!T
 
 class MailOutbox(T): MailboxBase!T
 {
-  private Event _readEvent;
+  private AsyncEvent _readEvent;
   private Semaphore _writeEvent;
 
   this(size_t bound = 0) {
     synchronized(this) {
       super(bound);
-      _readEvent.init("readEvent", EntityIntf.getContextEntity());
+      _readEvent.init("readEvent(async)", EntityIntf.getContextEntity());
       _writeEvent = new Semaphore;
     }
   }
@@ -252,12 +252,12 @@ class MailOutbox(T): MailboxBase!T
 class MailInbox(T): MailboxBase!T
 {
   private Semaphore _readEvent;
-  private Event _writeEvent;
+  private AsyncEvent _writeEvent;
 
   this(size_t bound = 0) {
     synchronized(this) {
       super(bound);
-      _writeEvent.init("writeEvent", EntityIntf.getContextEntity());
+      _writeEvent.init("writeEvent(async)", EntityIntf.getContextEntity());
       _readEvent = new Semaphore;
     }
   }

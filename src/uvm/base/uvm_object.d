@@ -45,13 +45,9 @@ module uvm.base.uvm_object;
 // <create> and <get_type_name>.
 //
 //------------------------------------------------------------------------------
-import esdl.base.core;
 import uvm.base.uvm_coreservice;
 import uvm.base.uvm_misc;
 
-import esdl.data.rand;
-import esdl.data.obdd;
-import esdl.data.bvec;
 import uvm.base.uvm_recorder;
 
 
@@ -65,6 +61,15 @@ import uvm.base.uvm_globals;
 import uvm.base.uvm_root;
 import uvm.meta.mcd;
 import uvm.meta.misc;
+
+import esdl.base.core;
+import esdl.data.bvec;
+
+version(UVM_NORANDOM) {}
+ else {
+   import esdl.data.rand;
+ }
+
 import std.traits;
 import std.string: format;
 
@@ -95,7 +100,11 @@ abstract class uvm_object: uvm_void
   mixin(uvm_once_sync_string);
   mixin uvm_sync;
 
-  mixin Randomization;
+  version(UVM_NORANDOM) {}
+  else {
+    mixin Randomization;
+  }
+
   // Function: new
 
   // Creates a new uvm_object with the given instance ~name~. If ~name~ is not
@@ -149,14 +158,20 @@ abstract class uvm_object: uvm_void
   // not perform any function.
 
   final void reseed (int seed) {
-    this.srandom(seed);
+    version(UVM_NORANDOM) {}
+    else {
+      this.srandom(seed);
+    }
   }
 
   final void reseed () {
     synchronized(this) {
       if(use_uvm_seeding) {
-	this.srandom(uvm_create_random_seed(get_type_name(),
-					    get_full_name()));
+	version(UVM_NORANDOM) {}
+	else {
+	  this.srandom(uvm_create_random_seed(get_type_name(),
+					      get_full_name()));
+	}
       }
     }
   }
@@ -691,11 +706,6 @@ abstract class uvm_object: uvm_void
   static uvm_object[uvm_object] _uvm_global_copy_map;
 
   final void copy(uvm_object rhs) {
-    // GC hack to make sure that heap allocation with static scope
-    // are covered -- this is because of an error in druntime
-    // https://issues.dlang.org/show_bug.cgi?id=15513
-    // once the bug is rectified, we do not need to use GC explicitly
-    import core.memory: GC;
 
     // Thread static
     static int depth;
@@ -709,13 +719,7 @@ abstract class uvm_object: uvm_void
       return;
     }
 
-    if(_uvm_global_copy_map is null) {
-      _uvm_global_copy_map[rhs] = this;
-      GC.addRoot(cast(void*) _uvm_global_copy_map);
-    }
-    else {
-      _uvm_global_copy_map[rhs] = this;
-    }
+    _uvm_global_copy_map[rhs] = this;
 
     ++depth;
 
@@ -728,7 +732,6 @@ abstract class uvm_object: uvm_void
 
     --depth;
     if(depth == 0) {
-      GC.removeRoot(cast(void*) _uvm_global_copy_map);
       _uvm_global_copy_map = null;
     }
   }

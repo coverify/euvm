@@ -40,6 +40,7 @@ import uvm.base.uvm_globals: uvm_report_warning;
 import std.string: format;
 import esdl.data.queue;
 import uvm.meta.misc;
+import std.conv;
 
 
 class uvm_queue (T=int): uvm_object
@@ -379,8 +380,7 @@ class uvm_queue (T=int): uvm_object
 
   override string get_type_name () {
     synchronized(this) {
-      import std.conv: to;
-      return to!string(typeid(this));
+      return std.conv.to!string(typeid(this));
     }
   }
 

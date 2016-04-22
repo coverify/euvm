@@ -52,11 +52,16 @@ import uvm.meta.misc;
 import uvm.base.uvm_report_message;
 import uvm.base.uvm_tr_stream;
 import uvm.dap.uvm_set_before_get_dap;
+
 import esdl.data.time;
 import esdl.data.bvec;
 import esdl.data.bstr;
-import esdl.base.core: SimTime, getRootEntity;
+import esdl.base.core: SimTime, getRootEntity, Process;
 import esdl.data.bvec;
+
+import std.conv: to;
+import std.string: format;
+
 
 
 import std.traits: isNumeric, isFloatingPoint, isIntegral, isBoolean;
@@ -1110,7 +1115,7 @@ class uvm_text_recorder: uvm_recorder
   void write_attribute(T)(string nm,
 			  T value,
 			  uvm_radix_enum radix,
-			  ulong numbits=0) {
+			  size_t numbits=0) {
     synchronized(this) {
       if(numbits == 0) {
 	static if(isIntegral!T) { numbits = T.sizeof * 8; }

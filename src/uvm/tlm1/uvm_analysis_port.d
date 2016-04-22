@@ -66,7 +66,7 @@ import uvm.tlm1.uvm_tlm_ifs;
 import uvm.tlm1.uvm_tlm_defines;
 
 
-class uvm_analysis_port(T=int): uvm_port_base!(uvm_tlm_if_base!(T,T))
+class uvm_analysis_port(T): uvm_port_base!(uvm_tlm_if_base!(T,T))
 {
   public this(string name=null, uvm_component parent=null) {
     synchronized(this) {
@@ -126,7 +126,8 @@ class uvm_analysis_port(T=int): uvm_port_base!(uvm_tlm_if_base!(T,T))
 //| endclass
 //------------------------------------------------------------------------------
 
-class uvm_analysis_imp(T=int, IMP=int): uvm_port_base!(uvm_tlm_if_base !(T,T))
+class uvm_analysis_imp(T, IMP, string F=""): uvm_port_base!(uvm_tlm_if_base !(T,T))
+if (is(IMP: uvm_component))
 {
   // `UVM_IMP_COMMON(`UVM_TLM_ANALYSIS_MASK,"uvm_analysis_imp",IMP)
   private IMP m_imp;
@@ -143,11 +144,78 @@ class uvm_analysis_imp(T=int, IMP=int): uvm_port_base!(uvm_tlm_if_base !(T,T))
   }
 
   override public void write (T t) {
-    m_imp.write (t);
+    static if(F == "") {
+      m_imp.write(t);
+    }
+    else {
+      mixin("m_imp." ~ F ~ "(t);");
+    }
   }
-
 }
 
+class uvm_analysis_imp(T, IMP, alias F): uvm_port_base!(uvm_tlm_if_base !(T,T))
+if (is(IMP: uvm_component))
+{
+  // `UVM_IMP_COMMON(`UVM_TLM_ANALYSIS_MASK,"uvm_analysis_imp",IMP)
+  private IMP m_imp;
+  public this (string name, IMP imp) {
+    synchronized(this) {
+      super (name, imp, UVM_IMPLEMENTATION, 1, 1);
+      m_imp = imp;
+      m_if_mask = UVM_TLM_ANALYSIS_MASK;
+    }
+  }
+
+  override public string get_type_name() {
+    return "uvm_analysis_imp";
+  }
+
+  override public void write(T t) {
+    auto dg = recreateDelegate!F(m_imp);
+    dg(t);
+  }
+}
+
+template uvm_analysis_imp(IMP, alias F = IMP.write)
+if (is(IMP: uvm_component))
+{
+  // `UVM_IMP_COMMON(`UVM_TLM_ANALYSIS_MASK,"uvm_analysis_imp",IMP)
+  import std.traits: ParameterTypeTuple;
+  alias TT = ParameterTypeTuple!F;
+  static assert(TT.length == 1);
+  alias T = TT[0];
+
+  class uvm_analysis_imp: uvm_port_base!(uvm_tlm_if_base !(T,T))
+  {
+    private IMP m_imp;
+    public this (string name, IMP imp) {
+      synchronized(this) {
+	super (name, imp, UVM_IMPLEMENTATION, 1, 1);
+	m_imp = imp;
+	m_if_mask = UVM_TLM_ANALYSIS_MASK;
+      }
+    }
+
+    override public string get_type_name() {
+      return "uvm_analysis_imp";
+    }
+
+    override public void write(T t) {
+      auto dg = recreateDelegate!F(m_imp);
+      dg(t);
+    }
+  }
+}
+
+private auto recreateDelegate(alias F, T)(T _entity)
+{
+  import std.functional: toDelegate;
+  alias DG = typeof(toDelegate(&F));
+  DG dg;
+  dg.funcptr = &F;
+  dg.ptr = *(cast(void **) (&_entity));
+  return dg;
+}
 
 
 //------------------------------------------------------------------------------
@@ -156,7 +224,7 @@ class uvm_analysis_imp(T=int, IMP=int): uvm_port_base!(uvm_tlm_if_base !(T,T))
 // Exports a lower-level <uvm_analysis_imp> to its parent.
 //------------------------------------------------------------------------------
 
-class uvm_analysis_export(T=int): uvm_port_base!(uvm_tlm_if_base!(T,T))
+class uvm_analysis_export(T): uvm_port_base!(uvm_tlm_if_base!(T,T))
 {
   // Function: new
   // Instantiate the export.

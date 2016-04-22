@@ -58,9 +58,14 @@ import uvm.base.uvm_object;
 import uvm.base.uvm_object_defines;
 import uvm.base.uvm_printer;
 import uvm.base.uvm_version;
+import uvm.base.uvm_globals: uvm_report_enabled;
 import uvm.meta.misc;
 import uvm.base.uvm_root: uvm_top, uvm_root_entity_base;
+
+import esdl.base.core: Process;
+
 import std.string: format;
+import std.conv: to;
 
 alias uvm_id_actions_array = uvm_pool!(string, uvm_action);
 alias uvm_id_file_array = uvm_pool!(string, UVM_FILE);

@@ -316,7 +316,7 @@ class uvm_root: uvm_component
   void init_domains() {
     synchronized(this) {
       uvm_domain.get_common_domain(); // FIXME -- comment this line??
-      uvm_root.m_uvm_get_root.m_domain = uvm_domain.get_uvm_domain();
+      m_domain = uvm_domain.get_uvm_domain();
     }
   }
 
@@ -342,6 +342,12 @@ class uvm_root: uvm_component
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     uvm_root root = cs.get_root();
     return root;
+  }
+
+  // This function is retuired to get the uvm_root of any
+  // uvm_component by way of traversing component hierarchy
+  override uvm_root get_root() {
+    return this;
   }
 
   @uvm_immutable_sync

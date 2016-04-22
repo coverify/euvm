@@ -488,7 +488,6 @@ class uvm_object_string_pool(VAL=uvm_object): /*extends*/ uvm_pool!(string,VAL) 
 	auto val = new VAL(key);
 	_pool[key] = val;
 	return val;
-
       }
       else {
 	return *vptr;

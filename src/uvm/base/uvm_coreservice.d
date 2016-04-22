@@ -27,6 +27,7 @@ import uvm.base.uvm_traversal;
 import uvm.base.uvm_component;
 import uvm.base.uvm_tr_database;
 
+import esdl.base.core: Process;
 import std.random: Random;
 
 //----------------------------------------------------------------------

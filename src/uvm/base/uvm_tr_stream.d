@@ -27,13 +27,16 @@ module uvm.base.uvm_tr_stream;
 import uvm.base.uvm_tr_database;
 import uvm.base.uvm_object;
 import uvm.base.uvm_object_defines;
-import esdl.base.core: SimTime;
 import uvm.base.uvm_recorder;
 import uvm.base.uvm_globals;
 import uvm.meta.misc;
 import uvm.dap.uvm_set_before_get_dap;
-import std.random;
 import uvm.meta.mcd;
+
+import esdl.base.core: SimTime, getRootEntity, Process;
+
+import std.random;
+import std.string: format;
 
 //------------------------------------------------------------------------------
 // File: Transaction Recording Streams

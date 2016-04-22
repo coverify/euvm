@@ -49,26 +49,42 @@ import uvm.base.uvm_root;
 
 import uvm.seq.uvm_sequence_base;
 import uvm.seq.uvm_sequencer_base;
-import esdl.data.queue;
-import esdl.data.rand;
-
 import uvm.meta.misc;
 import uvm.meta.meta;
+import esdl.data.queue;
+
+version(UVM_NORANDOM) {}
+ else {
+   import esdl.data.rand;
+ }
 
 class uvm_sequence_item: uvm_transaction
 {
   mixin uvm_sync;
-  mixin Randomization;
 
+  version(UVM_NORANDOM) {}
+  else {
+    mixin Randomization;
+  }
+  
   private int  _m_sequence_id = -1;
   @uvm_protected_sync
   private bool _m_use_sequence_info;
   @uvm_protected_sync
   private int  _m_depth = -1;
-  @rand!false @uvm_protected_sync
-  protected uvm_sequencer_base _m_sequencer;
-  @rand!false @uvm_protected_sync
-  protected uvm_sequence_base  _m_parent_sequence;
+
+  version(UVM_NORANDOM) {
+    @uvm_protected_sync
+      protected uvm_sequencer_base _m_sequencer;
+    @uvm_protected_sync
+      protected uvm_sequence_base  _m_parent_sequence;
+  }
+  else {
+    @rand!false @uvm_protected_sync
+      protected uvm_sequencer_base _m_sequencer;
+    @rand!false @uvm_protected_sync
+      protected uvm_sequence_base  _m_parent_sequence;
+  }
 
   // issued1 and issued2 seem redundant -- declared in SV version though
   // static     bool               issued1,issued2;

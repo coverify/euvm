@@ -108,20 +108,20 @@
 
 module uvm.base.uvm_resource;
 
-import std.string;
 import uvm.base.uvm_object;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_root;
 import uvm.base.uvm_printer;
 import uvm.base.uvm_spell_chkr;
-import esdl.base.core: SimTime, getRootEntity;
+import uvm.meta.meta;
 
+import esdl.base.core: SimTime, getRootEntity, Process;
+
+import std.string;
 import std.random: Random;
 import std.algorithm: sort;
-import uvm.meta.meta;
 import std.conv: to;
-import core.memory: GC;
 //----------------------------------------------------------------------
 // Class: uvm_resource_types
 //
@@ -1479,11 +1479,6 @@ class uvm_resource (T=int): uvm_resource_base
       synchronized(typeid(this_type)) {
 	if (_m_r2s is null) _m_r2s = cast(shared m_uvm_resource_converter!(T))
 			      (new m_uvm_resource_converter!(T)());
-	// GC hack to make sure that heap allocation with static scope
-	// are covered -- this is because of an error in druntime
-	// https://issues.dlang.org/show_bug.cgi?id=15513
-	// once the bug is rectified, we do not need to use GC explicitly
-	GC.addRoot(cast(void*) _m_r2s);
 	return cast(m_uvm_resource_converter!(T)) _m_r2s;
       }
     }

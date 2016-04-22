@@ -33,7 +33,11 @@ import uvm.base.uvm_report_server;
 import uvm.meta.misc;
 
 import esdl.base.core;
+import esdl.data.bvec;
+
+import std.traits;
 import std.random;
+import std.conv: to;
 
 //------------------------------------------------------------------------------
 //
