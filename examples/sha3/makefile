@@ -18,7 +18,7 @@
 #----------------------------------------------------------------------
 
 MODEL = 32
-DFLAGS = -version=UVM_NO_DEPRECATED -fPIC -g -w -O # -release  # -debug=SEED
+DFLAGS = -version=UVM_NO_DEPRECATED -fPIC -g -w -O # -debug=LOGPROCS # -debug=SCHEDULER # -debug=LOGPROCS -release  # -debug=SEED
 MRAALIB = mraa
 MRAALIBDIR = /usr/local/lib/i386-linux-gnu
 VLANGDIR = /home/puneet/code/vlang
@@ -71,10 +71,13 @@ sha.vvp: verilog/keccak_avst.v verilog/keccak.v verilog/f_permutation.v \
 	$(VERILOG) -o $@ $^
 
 sha.vpi: sha.d vpi.o $(VLANGDIR)/src/esdl/sync/*.d $(VLANGDIR)/src/esdl/sys/*.d $(VLANGDIR)/src/esdl/intf/*.d $(VLANGDIR)/src/esdl/base/*.d $(VLANGDIR)/src/esdl/data/*.d $(VLANGDIR)/src/esdl/*.d $(VLANGDIR)/src/esdl/posix/sys/net/*.d  $(UVMDIR)/src/uvm/*.d $(UVMDIR)/src/uvm/meta/*.d $(UVMDIR)/src/uvm/base/*.d $(UVMDIR)/src/uvm/comps/*.d $(UVMDIR)/src/uvm/dap/*.d $(UVMDIR)/src/uvm/tlm1/*.d $(UVMDIR)/src/uvm/seq/*.d $(UVMDIR)/src/uvm/vpi/uvm_svcmd_vpi.d $(UVMDIR)/src/uvm/dap/*.d
-	$(DMD) -m$(MODEL) -I$(VLANGDIR)/src -I$(UVMDIR)/src $(DFLAGS) -shared -of$@ -L-ldl -L-lsha3 -L-Lc-model/$(MODEL)-bit -L-lvpi -L-l$(PHOBOS) -L-R$(LIBDIR) -L-R$(ICARUSLIBPATH) $^
+	$(DMD) -m$(MODEL) -I$(VLANGDIR)/src -I$(UVMDIR)/src $(DFLAGS) -shared -of$@ -L-ldl -L-lsha3 -L-Lc-model/$(MODEL)-bit -L-lvpi -L-l$(PHOBOS) -L-R$(LIBDIR) -L-R$(ICARUSLIBPATH) -L-Rc-model/$(MODEL)-bit $^
 
 sha: sha.d $(VLANGDIR)/src/esdl/sync/*.d $(VLANGDIR)/src/esdl/sys/*.d $(VLANGDIR)/src/esdl/intf/*.d $(VLANGDIR)/src/esdl/base/*.d $(VLANGDIR)/src/esdl/data/*.d $(VLANGDIR)/src/esdl/*.d $(VLANGDIR)/src/esdl/posix/sys/net/*.d  $(UVMDIR)/src/uvm/*.d $(UVMDIR)/src/uvm/meta/*.d $(UVMDIR)/src/uvm/base/*.d $(UVMDIR)/src/uvm/comps/*.d $(UVMDIR)/src/uvm/dap/*.d $(UVMDIR)/src/uvm/tlm1/*.d $(UVMDIR)/src/uvm/seq/*.d $(UVMDIR)/src/uvm/vpi/uvm_svcmd_vpi.d $(UVMDIR)/src/uvm/dap/*.d
 	$(DMD) -version=EDISON -m$(MODEL) -I$(VLANGDIR)/src -I$(UVMDIR)/src $(DFLAGS) -of$@ -L-ldl -L-l$(MRAALIB) -L-l$(PHOBOS) -L-R$(MRAALIBDIR) -L-L$(MRAALIBDIR) -L-R$(LIBDIR) -L-lsha3 -L-Lc-model/$(MODEL)-bit $^
+
+sha32: sha.d $(VLANGDIR)/src/esdl/sync/*.d $(VLANGDIR)/src/esdl/sys/*.d $(VLANGDIR)/src/esdl/intf/*.d $(VLANGDIR)/src/esdl/base/*.d $(VLANGDIR)/src/esdl/data/*.d $(VLANGDIR)/src/esdl/*.d $(VLANGDIR)/src/esdl/posix/sys/net/*.d  $(UVMDIR)/src/uvm/*.d $(UVMDIR)/src/uvm/meta/*.d $(UVMDIR)/src/uvm/base/*.d $(UVMDIR)/src/uvm/comps/*.d $(UVMDIR)/src/uvm/dap/*.d $(UVMDIR)/src/uvm/tlm1/*.d $(UVMDIR)/src/uvm/seq/*.d $(UVMDIR)/src/uvm/vpi/uvm_svcmd_vpi.d $(UVMDIR)/src/uvm/dap/*.d
+	$(DMD) -version=NODESIGN -m$(MODEL) -I$(VLANGDIR)/src -I$(UVMDIR)/src $(DFLAGS) -of$@ -L-ldl -L-l$(MRAALIB) -L-l$(PHOBOS) -L-R$(MRAALIBDIR) -L-L$(MRAALIBDIR) -L-R$(LIBDIR) -L-lsha3 -L-Lc-model/$(MODEL)-bit -L-Rc-model/$(MODEL)-bit $^
 
 sha_norand: sha_norand.d $(VLANGDIR)/src/esdl/sync/*.d \
 	$(VLANGDIR)/src/esdl/sys/*.d \

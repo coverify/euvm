@@ -1760,9 +1760,11 @@ class uvm_phase: uvm_object
       uvm_phase phase_to_execute;
       m_phase_hopper.get(phase_to_execute);
       (uvm_phase phase) {
-	fork!("uvm_phases/run_phases")({
-	    phase.execute_phase();
-	  });
+	fork("uvm_phases/run_phases(" ~ phase.get_name() ~ ")",
+	     {
+	       phase.execute_phase();
+	     }
+	     );
       } (phase_to_execute);
       wait(0);	// #0;		// let the process start running
     }

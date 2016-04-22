@@ -19,10 +19,44 @@
 //   permissions and limitations under the License.
 //------------------------------------------------------------------------------
 module uvm.meta.meta;
+import std.stdio: stderr;
+import std.conv: to;
+
 // import std.traits: fullyQualifiedName;
 
 template qualifiedTypeName(T) {
   // typeid(T).stringof returns string of the form "&typeid(qualifiedTypeName)"
   enum string qualifiedTypeName = typeid(T).stringof[7..$-1];
   // enum string qualifiedTypeName = fullyQualifiedName!T;
+}
+
+version (X86_64) {
+  extern (C) void* thread_stackBottom();
+  extern (C) char** backtrace_symbols(void**, int size);
+
+  void printStackTrace() {
+    void*[10] callstack;
+    void** stackTop;
+    void** stackBottom = cast(void**) thread_stackBottom();
+
+    asm {
+      mov [stackTop], RBP;
+    }
+
+    auto curr = stackTop;
+
+    size_t i;
+    for (i = 0; stackTop <= curr &&
+	   curr < stackBottom && i < 10;)
+      {
+	callstack[i++] = *(curr+1);
+	curr = cast(void**) *curr;
+      }
+
+    auto ret = backtrace_symbols(callstack.ptr, cast(int) i);
+    for (; i > 0; i--) {
+      stderr.writeln((*ret).to!string());
+      ret++;
+    }
+  }
 }

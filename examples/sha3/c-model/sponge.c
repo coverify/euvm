@@ -34,16 +34,16 @@ uint8_t *sponge(uint8_t* M,int32_t size){
   /*Squeezing phase*/
   int32_t b=0;
   uint64_t *Z=(uint64_t *)calloc(8,sizeof(uint64_t));
-  while(b<8){
-  for(int32_t y=0;y<5;y++){
-    for(int32_t x=0;x<5;x++){
-      if((x+5*y)<(r/w)){
-	*(Z+b)^=S[x][y];
-	b++;
+  while(b<8) {
+    for(int32_t y=0;y<5;y++){
+      for(int32_t x=0;x<5;x++){
+	if((x+5*y) < (r/w) - 1) {
+	  *(Z+b) ^= S[x][y];
+	  b++;
+	}
       }
     }
   }
- }
   return (uint8_t *) Z;
 }
 

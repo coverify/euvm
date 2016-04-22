@@ -46,7 +46,7 @@ import uvm.base.uvm_object_globals;
 // import uvm.base.uvm_object_globals;
 
 import esdl.data.bvec;
-// import esdl.data.rand;
+import esdl.base.core: Event;
 
 import std.algorithm: find, canFind;
 import std.conv: to;
@@ -1078,4 +1078,9 @@ string m_uvm_string_queue_join(string[] strs) {
     result ~= str;
   }
   return result;
+}
+
+void uvm_wait_for_ever() {
+  Event never;
+  never.wait();
 }

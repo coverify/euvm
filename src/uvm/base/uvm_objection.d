@@ -38,6 +38,7 @@ import uvm.base.uvm_domain;
 import uvm.seq.uvm_sequence_base;
 
 import uvm.meta.misc;
+import uvm.meta.meta;
 
 import esdl.base.core: Event, SimTime, Process,
   waitForks, wait, Fork, fork;
