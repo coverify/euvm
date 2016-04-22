@@ -67,6 +67,11 @@ import esdl.base.core: Process;
 import std.string: format;
 import std.conv: to;
 
+version(UVM_NO_DEPRECATED) { }
+ else {
+   version = UVM_INCLUDE_DEPRECATED;
+ }
+
 alias uvm_id_actions_array = uvm_pool!(string, uvm_action);
 alias uvm_id_file_array = uvm_pool!(string, UVM_FILE);
 alias uvm_id_verbosities_array = uvm_pool!(string, int);
@@ -679,6 +684,7 @@ class uvm_report_handler: uvm_object
 
 
   version(UVM_INCLUDE_DEPRECATED) {
+    import uvm.base.uvm_globals: uvm_root_info;
 
     // Function- run_hooks
     //

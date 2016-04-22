@@ -48,6 +48,11 @@ import esdl.base.core: wait;
 import std.traits: EnumMembers;
 import std.conv;
 
+version(UVM_NO_DEPRECATED) { }
+ else {
+   version = UVM_INCLUDE_DEPRECATED;
+ }
+
 void run_test (string test_name = "") {
   uvm_coreservice_t cs = uvm_coreservice_t.get();
   auto top = cs.get_root();
@@ -57,6 +62,7 @@ void run_test (string test_name = "") {
 version (UVM_INCLUDE_DEPRECATED) {
   import uvm.base.uvm_objection;
   import esdl.data.time;
+  import esdl.base.core: EntityIntf, SimTime;
   // Variable- uvm_test_done - DEPRECATED
   //
   // An instance of the <uvm_test_done_objection> class, this object is
