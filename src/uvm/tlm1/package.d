@@ -10,5 +10,6 @@ public import uvm.tlm1.uvm_tlm_defines;
 public import uvm.tlm1.uvm_tlm_fifo_base;
 public import uvm.tlm1.uvm_tlm_fifos;
 public import uvm.tlm1.uvm_tlm_ifs;
+public import uvm.tlm1.uvm_tlm_imps;
 public import uvm.tlm1.uvm_tlm_req_rsp;
 public import uvm.tlm1.uvm_tlm_gen_rsp;
