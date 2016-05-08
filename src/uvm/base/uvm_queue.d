@@ -367,7 +367,7 @@ class uvm_queue (T=int): uvm_object
   void opOpAssign(string op, R)(R other)
     if(op == "~" && is(R unused: T)) {
       synchronized(this) {
-	this.pushBack(other);
+	this.push_back(other);
       }
     }
 
