@@ -1480,6 +1480,7 @@ class uvm_root_once
   import uvm.base.uvm_phase;
   import uvm.base.uvm_runtime_phases;
   import uvm.base.uvm_common_phases;
+  import uvm.reg.uvm_reg_cbs;
 
   uvm_coreservice_t.uvm_once _uvm_coreservice_t_once;
   uvm_tr_stream.uvm_once _uvm_tr_stream_once;
@@ -1529,6 +1530,8 @@ class uvm_root_once
   uvm_check_phase.uvm_once _uvm_check_phase_once;
   uvm_report_phase.uvm_once _uvm_report_phase_once;
   uvm_final_phase.uvm_once _uvm_final_phase_once;
+  uvm_reg_read_only_cbs.uvm_once _uvm_reg_read_only_cbs_once;
+  uvm_reg_write_only_cbs.uvm_once _uvm_reg_write_only_cbs_once;
 
   this(uvm_root_entity_base root_entity_instance) {
     synchronized(this) {
@@ -1595,6 +1598,8 @@ class uvm_root_once
     _uvm_check_phase_once = new uvm_check_phase.uvm_once();
     _uvm_report_phase_once = new uvm_report_phase.uvm_once();
     _uvm_final_phase_once = new uvm_final_phase.uvm_once();
+    _uvm_reg_read_only_cbs_once = new uvm_reg_read_only_cbs.uvm_once();
+    _uvm_reg_write_only_cbs_once = new uvm_reg_write_only_cbs.uvm_once();
   }
 
   void set_seed(int seed) {
