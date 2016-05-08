@@ -1620,7 +1620,7 @@ abstract class uvm_reg_block: uvm_object
       uvm_reg rg = rg_;
       rg.mirror(status, check, path, null,
 		parent, prior, extension, fname, lineno);
-      if (status != UVM_IS_OK && status != UVM_HAS_X) {;
+      if (status != UVM_IS_OK && status != UVM_HAS_X) {
 	final_status = status;
       }
     }
@@ -1629,7 +1629,7 @@ abstract class uvm_reg_block: uvm_object
       uvm_reg_block blk = blk_;
 
       blk.mirror(status, check, path, parent, prior, extension, fname, lineno);
-      if (status != UVM_IS_OK && status != UVM_HAS_X) {;
+      if (status != UVM_IS_OK && status != UVM_HAS_X) {
 	final_status = status;
       }
     }
