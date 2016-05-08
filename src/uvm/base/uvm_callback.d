@@ -1408,6 +1408,12 @@ mixin template uvm_register_cb(T, CB) if(is(CB: uvm_callback))
       }
     }
 
+    void uvm_do_callbacks_reverse(void delegate(CB cb) dg) {
+      foreach_reverse(callb; uvm_callbacks!(T, CB).get_all_enabled(this)) {
+	dg(callb);
+      }
+    }
+
     bool uvm_do_callbacks_exit_on(bool delegate(CB cb) dg, bool val) {
       foreach(callb; uvm_callbacks!(T, CB).get_all_enabled(this)) {
 	if(dg(callb) == val) {
