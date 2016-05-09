@@ -21,14 +21,14 @@
 //   permissions and limitations under the License.
 //------------------------------------------------------------------------------
 
-module uvm.vpi.uvm_svcmd_vpi;
+module uvm.dpi.uvm_svcmd_dpi;
 
 
 import esdl.intf.vpi;
 import esdl.base.core: getRootEntity;
 import std.conv;
 
-public string[][] vpi_get_args() {
+public string[][] uvm_dpi_get_args() {
   s_vpi_vlog_info info;
   string[] argv;
   string[][] argvs;
@@ -78,13 +78,13 @@ public string[][] vpi_get_args() {
   return argvs;
 }
 
-public string vpi_get_tool_name() {
+public string uvm_dpi_get_tool_name() {
   s_vpi_vlog_info info;
   vpi_get_vlog_info(&info);
   return info.product.to!string;
 }
 
-public string vpi_get_tool_version() {
+public string uvm_dpi_get_tool_version() {
   s_vpi_vlog_info info;
   vpi_get_vlog_info(&info);
   return info.product_version.to!string;
