@@ -155,7 +155,7 @@ class uvm_tlm_time
 		       " literal that is smaller than the current timescale");
       }
 
-      _m_time += to_m_res(t, scaled, secs);
+      _m_time += cast(ulong) to_m_res(t, scaled, secs);
     }
   }
 
@@ -185,7 +185,7 @@ class uvm_tlm_time
 		       " literal that is smaller than the current timescale");
       }
 
-      _m_time -= to_m_res(t, scaled, secs);
+      _m_time -= cast(ulong) to_m_res(t, scaled, secs);
 
       if (_m_time < 0.0) {
 	uvm_root_error("UVM/TLM/TOODECR",

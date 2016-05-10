@@ -54,7 +54,7 @@ import std.conv: to;
 
 class uvm_reg_map_info
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
   @uvm_public_sync
     uvm_reg_addr_t         _offset;
   @uvm_public_sync
@@ -1090,7 +1090,7 @@ class uvm_reg_map: uvm_object
   // extern virtual public uvm_reg_addr_t get_base_addr (uvm_hier_e hier=UVM_HIER);
   // get_base_addr
 
-  public uvm_reg_addr_t  get_base_addr(uvm_hier_e hier=UVM_HIER) {
+  public uvm_reg_addr_t  get_base_addr(uvm_hier_e hier = uvm_hier_e.UVM_HIER) {
     synchronized(this) {
       // the next line seems redundant
       // uvm_reg_map child = this;
@@ -1116,7 +1116,7 @@ class uvm_reg_map: uvm_object
 
   // get_n_bytes
 
-  public uint get_n_bytes(uvm_hier_e hier=UVM_HIER) {
+  public uint get_n_bytes(uvm_hier_e hier = uvm_hier_e.UVM_HIER) {
     synchronized(this) {
       if (hier == UVM_NO_HIER) {
 	return _m_n_bytes;
@@ -1154,7 +1154,7 @@ class uvm_reg_map: uvm_object
 
   // get_endian
 
-  public uvm_endianness_e get_endian(uvm_hier_e hier=UVM_HIER) {
+  public uvm_endianness_e get_endian(uvm_hier_e hier = uvm_hier_e.UVM_HIER) {
     synchronized(this) {
       if (hier == UVM_NO_HIER || _m_parent_map is null) {
 	return _m_endian;
@@ -1174,7 +1174,7 @@ class uvm_reg_map: uvm_object
   // extern virtual public uvm_sequencer_base get_sequencer (uvm_hier_e hier=UVM_HIER);
   // get_sequencer
 
-  public uvm_sequencer_base get_sequencer(uvm_hier_e hier=UVM_HIER) {
+  public uvm_sequencer_base get_sequencer(uvm_hier_e hier = uvm_hier_e.UVM_HIER) {
     synchronized(this) {
       if (hier == UVM_NO_HIER || _m_parent_map is null) {
 	return _m_sequencer;
@@ -1196,7 +1196,7 @@ class uvm_reg_map: uvm_object
 
   // get_adapter
 
-  public uvm_reg_adapter get_adapter(uvm_hier_e hier=UVM_HIER) {
+  public uvm_reg_adapter get_adapter(uvm_hier_e hier = uvm_hier_e.UVM_HIER) {
     synchronized(this) {
       if (hier == UVM_NO_HIER || _m_parent_map is null) {
 	return _m_adapter;
@@ -1219,7 +1219,7 @@ class uvm_reg_map: uvm_object
   // get_submaps
 
   public void get_submaps(ref uvm_reg_map[] maps,
-			  uvm_hier_e        hier=UVM_HIER) {
+			  uvm_hier_e        hier = uvm_hier_e.UVM_HIER) {
     synchronized(this) {
       foreach (submap, unused; _m_submaps) {
 	maps ~= submap;
@@ -1246,7 +1246,7 @@ class uvm_reg_map: uvm_object
   // get_registers
 
   public void get_registers(ref uvm_reg[] regs,
-			    uvm_hier_e    hier=UVM_HIER) {
+			    uvm_hier_e    hier = uvm_hier_e.UVM_HIER) {
     synchronized(this) {
       foreach (rg, unused; _m_regs_info) {
 	regs ~= rg;
@@ -1273,7 +1273,7 @@ class uvm_reg_map: uvm_object
   // get_fields
 
   public void get_fields(ref uvm_reg_field[] fields,
-			 uvm_hier_e          hier=UVM_HIER) {
+			 uvm_hier_e          hier = uvm_hier_e.UVM_HIER) {
     synchronized(this) {
       foreach (rg, unused; _m_regs_info) {
 	rg.get_fields(fields);
@@ -1303,7 +1303,7 @@ class uvm_reg_map: uvm_object
   // get_memories
 
   public void get_memories(ref uvm_mem[] mems,
-			   uvm_hier_e    hier=UVM_HIER) {
+			   uvm_hier_e    hier = uvm_hier_e.UVM_HIER) {
     synchronized(this) {
       foreach (mem, unused; _m_mems_info) {
 	mems ~= mem;
@@ -1331,7 +1331,7 @@ class uvm_reg_map: uvm_object
   // get_virtual_registers
 
   public void get_virtual_registers(ref uvm_vreg[] regs,
-				    uvm_hier_e     hier=UVM_HIER) {
+				    uvm_hier_e     hier = uvm_hier_e.UVM_HIER) {
     synchronized(this) {
       uvm_mem[] mems;
       get_memories(mems,hier);
@@ -1357,7 +1357,7 @@ class uvm_reg_map: uvm_object
   // get_virtual_fields
 
   public void get_virtual_fields(ref uvm_vreg_field[] fields,
-				 uvm_hier_e           hier=UVM_HIER) {
+				 uvm_hier_e           hier = uvm_hier_e.UVM_HIER) {
     synchronized(this) {
       uvm_vreg[] regs;
       get_virtual_registers(regs, hier);

@@ -153,9 +153,9 @@ abstract class uvm_report_catcher: uvm_callback
 
     @uvm_none_sync
     private bool _do_report;
-  }
+  };
 
-  mixin uvm_once_sync;
+  mixin(uvm_once_sync_string);
 
   // Flag counts
   enum int DO_NOT_CATCH = 1;

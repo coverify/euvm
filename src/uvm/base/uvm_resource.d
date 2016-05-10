@@ -204,9 +204,9 @@ class uvm_resource_options
   {
     @uvm_none_sync
     private bool _auditing = true;
-  }
+  };
 
-  mixin uvm_once_sync;
+  mixin(uvm_once_sync_string);
 
   // Function: turn_on_auditing
   //
@@ -264,10 +264,10 @@ abstract class uvm_resource_base: uvm_object
 
     @uvm_public_sync
     private uint _default_precedence = 1000;
-  }
+  };
 
-  mixin uvm_once_sync;
-  mixin uvm_sync;
+  mixin(uvm_once_sync_string);
+  mixin(uvm_sync_string);
 
   protected string _rscope;
   @uvm_immutable_sync
@@ -779,9 +779,9 @@ class uvm_resource_pool {
 	_printer.knobs.reference  = 0;
       }
     }
-  }
+  };
 
-  mixin uvm_once_sync;
+  mixin(uvm_once_sync_string);
 
   private uvm_resource_types.rsrc_q_t[string]     _rtab;
   private uvm_resource_types.rsrc_q_t[TypeInfo]   _ttab;

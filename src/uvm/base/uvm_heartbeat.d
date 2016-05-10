@@ -76,7 +76,7 @@ alias uvm_heartbeat_cbs_t =
 // typedef class uvm_objection_callback;
 class uvm_heartbeat: uvm_object
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   @uvm_protected_sync
   private uvm_objection _m_objection;

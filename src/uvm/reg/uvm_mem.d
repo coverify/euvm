@@ -76,7 +76,7 @@ class uvm_mem: uvm_object
   // init_e is not used anywhere 
   // enum init_e: byte {UNKNOWNS, ZEROES, ONES, ADDRESS, VALUE, INCR, DECR}
 
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
   @uvm_private_sync
   private bool               _m_locked;
   @uvm_private_sync
@@ -153,7 +153,7 @@ class uvm_mem: uvm_object
        ulong size,
        uint n_bits,
        string access = "RW",
-       int has_coverage = UVM_NO_COVERAGE) {
+       int has_coverage = uvm_coverage_model_e.UVM_NO_COVERAGE) {
     synchronized(this) {
       super(name);
       _m_locked = 0;
@@ -952,7 +952,7 @@ class uvm_mem: uvm_object
   void write(out uvm_status_e  status,
 	     uvm_reg_addr_t    offset,
 	     uvm_reg_data_t    value,
-	     uvm_path_e        path = UVM_DEFAULT_PATH,
+	     uvm_path_e        path = uvm_path_e.UVM_DEFAULT_PATH,
 	     uvm_reg_map       map = null,
 	     uvm_sequence_base parent = null,
 	     int               prior = -1,
@@ -1014,7 +1014,7 @@ class uvm_mem: uvm_object
   void read(out uvm_status_e  status,
 	    uvm_reg_addr_t     offset,
 	    out uvm_reg_data_t value,
-	    uvm_path_e         path = UVM_DEFAULT_PATH,
+	    uvm_path_e         path = uvm_path_e.UVM_DEFAULT_PATH,
 	    uvm_reg_map        map = null,
 	    uvm_sequence_base  parent = null,
 	    int                prior = -1,
@@ -1074,7 +1074,7 @@ class uvm_mem: uvm_object
   void burst_write(out uvm_status_e   status,
 		   uvm_reg_addr_t     offset,
 		   uvm_reg_data_t[]   value,
-		   uvm_path_e         path = UVM_DEFAULT_PATH,
+		   uvm_path_e         path = uvm_path_e.UVM_DEFAULT_PATH,
 		   uvm_reg_map        map = null,
 		   uvm_sequence_base  parent = null,
 		   int                prior = -1,
@@ -1134,7 +1134,7 @@ class uvm_mem: uvm_object
   void burst_read(out uvm_status_e     status,
 		  uvm_reg_addr_t       offset,
 		  ref uvm_reg_data_t[] value,
-		  uvm_path_e           path = UVM_DEFAULT_PATH,
+		  uvm_path_e           path = uvm_path_e.UVM_DEFAULT_PATH,
 		  uvm_reg_map          map = null,
 		  uvm_sequence_base    parent = null,
 		  int                  prior = -1,
@@ -2251,7 +2251,7 @@ class uvm_mem: uvm_object
   // extern protected function uvm_reg_cvr_t build_coverage(uvm_reg_cvr_t models);
 
   final uvm_reg_cvr_t build_coverage(uvm_reg_cvr_t models) {
-    uvm_reg_cvr_t retval = UVM_NO_COVERAGE;
+    uvm_reg_cvr_t retval = uvm_coverage_model_e.UVM_NO_COVERAGE;
     uvm_reg_cvr_rsrc_db.read_by_name("uvm_reg::" ~ get_full_name(),
 				     "include_coverage",
 				     retval, this);
@@ -2330,7 +2330,7 @@ class uvm_mem: uvm_object
 
   uvm_reg_cvr_t set_coverage(uvm_reg_cvr_t is_on) {
     synchronized(this) {
-      if (is_on == cast(uvm_reg_cvr_t) (UVM_NO_COVERAGE)) {
+      if (is_on == cast(uvm_reg_cvr_t) (uvm_coverage_model_e.UVM_NO_COVERAGE)) {
 	_m_cover_on = is_on;
 	return uvm_reg_cvr_t(_m_cover_on);
       }

@@ -124,7 +124,7 @@ class uvm_mem_mam
   @uvm_private_sync
   uvm_mem_mam_policy _default_alloc;
 
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
   
   @uvm_private_sync
   private uvm_mem _memory;
@@ -502,7 +502,7 @@ class uvm_mem_mam
 class uvm_mem_region
 {
 
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
   @uvm_private_sync
   private ulong _Xstart_offsetX;  // Can't be local since function
   @uvm_private_sync
@@ -687,7 +687,7 @@ class uvm_mem_region
   public void write(out uvm_status_e   status,
 		    uvm_reg_addr_t     offset,
 		    uvm_reg_data_t     value,
-		    uvm_path_e         path = UVM_DEFAULT_PATH,
+		    uvm_path_e         path = uvm_path_e.UVM_DEFAULT_PATH,
 		    uvm_reg_map        map    = null,
 		    uvm_sequence_base  parent = null,
 		    int                prior = -1,
@@ -748,7 +748,7 @@ class uvm_mem_region
   public void read(out uvm_status_e   status,
 		   uvm_reg_addr_t     offset,
 		   out uvm_reg_data_t value,
-		   uvm_path_e         path = UVM_DEFAULT_PATH,
+		   uvm_path_e         path = uvm_path_e.UVM_DEFAULT_PATH,
 		   uvm_reg_map        map    = null,
 		   uvm_sequence_base  parent = null,
 		   int                prior = -1,
@@ -809,7 +809,7 @@ class uvm_mem_region
   public void burst_write(out uvm_status_e   status,
 			  uvm_reg_addr_t     offset,
 			  uvm_reg_data_t[]   value,
-			  uvm_path_e         path = UVM_DEFAULT_PATH,
+			  uvm_path_e         path = uvm_path_e.UVM_DEFAULT_PATH,
 			  uvm_reg_map        map    = null,
 			  uvm_sequence_base  parent = null,
 			  int                prior = -1,
@@ -874,7 +874,7 @@ class uvm_mem_region
   public void burst_read(out uvm_status_e       status,
 			 uvm_reg_addr_t         offset,
 			 out uvm_reg_data_t[]   value,
-			 uvm_path_e             path      = UVM_DEFAULT_PATH,
+			 uvm_path_e             path      = uvm_path_e.UVM_DEFAULT_PATH,
 			 uvm_reg_map            map       = null,
 			 uvm_sequence_base      parent    = null,
 			 int                    prior     = -1,
@@ -1049,7 +1049,7 @@ class uvm_mem_region
 
 class uvm_mem_mam_policy
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
   mixin Randomization;
   // variable: len
   // Number of addresses required
@@ -1102,7 +1102,7 @@ class uvm_mem_mam_policy
 //
 class uvm_mem_mam_cfg
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
   // variable: n_bytes
   // Number of bytes in each memory location
 

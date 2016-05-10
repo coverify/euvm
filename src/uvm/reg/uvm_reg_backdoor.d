@@ -58,7 +58,7 @@ import esdl.data.rand;
 class uvm_reg_backdoor: uvm_object
 {
 
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
   mixin uvm_object_utils;
   mixin uvm_register_cb!(uvm_reg_cbs);
 

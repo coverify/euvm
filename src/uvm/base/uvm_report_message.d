@@ -49,7 +49,7 @@ import std.conv: to;
 
 abstract class uvm_report_message_element_base
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   @uvm_protected_sync
   private uvm_action _action;
@@ -140,7 +140,7 @@ abstract class uvm_report_message_element_base
 class uvm_report_message_element(T) if(isIntegral!T || isBitVector!T):
   uvm_report_message_element_base
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   alias this_type = uvm_report_message_element!T;
 
@@ -216,7 +216,7 @@ class uvm_report_message_element(T) if(isIntegral!T || isBitVector!T):
 class uvm_report_message_int_element(T) if(isIntegral!T || isBitVector!T):
   uvm_report_message_element_base
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   alias this_type = uvm_report_message_int_element!T;
 

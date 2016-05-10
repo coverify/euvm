@@ -366,7 +366,7 @@ class uvm_resource_db_options
     private bool _tracing;
   }
 
-  mixin uvm_once_sync;
+    mixin(uvm_once_sync_string);
 
   // Function: turn_on_tracing
   //

@@ -55,12 +55,11 @@ import uvm.base.uvm_root;
 import uvm.meta.misc;
 
 import std.regex; // : Regex, regex, match
-import uvm.vpi.uvm_svcmd_vpi;
+import uvm.dpi.uvm_svcmd_dpi;
 import std.string: toUpper;
 
 final class uvm_cmdline_processor: /*extends*/ uvm_report_object
 {
-  mixin uvm_sync;
   static class uvm_once
   {
     @uvm_immutable_sync
@@ -71,9 +70,10 @@ final class uvm_cmdline_processor: /*extends*/ uvm_report_object
 	_m_inst = new uvm_cmdline_processor("uvm_cmdline_proc");
       }
     }
-  }
+  };
 
-  mixin uvm_once_sync;
+  mixin(uvm_sync_string);
+  mixin(uvm_once_sync_string);
 
   // Group: Singleton
 
@@ -278,7 +278,7 @@ final class uvm_cmdline_processor: /*extends*/ uvm_report_object
   // This is a vendor specific string.
 
   static string get_tool_name () {
-    return vpi_get_tool_name();
+    return uvm_dpi_get_tool_name();
   }
 
   // Function: get_tool_version
@@ -287,7 +287,7 @@ final class uvm_cmdline_processor: /*extends*/ uvm_report_object
   // This is a vendor specific string.
 
   static string  get_tool_version () {
-    return vpi_get_tool_version();
+    return uvm_dpi_get_tool_version();
   }
 
   // constructor
@@ -298,7 +298,7 @@ final class uvm_cmdline_processor: /*extends*/ uvm_report_object
       string[] plus_argv;
       string[] uvm_argv;
       super(name);
-      foreach(opts; vpi_get_args()) {
+      foreach(opts; uvm_dpi_get_args()) {
 	foreach(opt; opts) {
 	  argv ~= opt;
 	  if(opt[0] is '+') {

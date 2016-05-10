@@ -334,7 +334,7 @@ abstract class uvm_tr_database: uvm_object
 
 class uvm_text_tr_database: uvm_tr_database
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   // Variable- m_filename_dap
   // Data Access Protected Filename

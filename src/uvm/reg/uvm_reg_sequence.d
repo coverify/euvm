@@ -259,7 +259,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
   void write_reg(ref uvm_reg       rg,
 		 out uvm_status_e  status,
 		 uvm_reg_data_t    value,
-		 uvm_path_e        path = UVM_DEFAULT_PATH,
+		 uvm_path_e        path = uvm_path_e.UVM_DEFAULT_PATH,
 		 uvm_reg_map       map = null,
 		 int               prior = -1,
 		 uvm_object        extension = null,
@@ -290,7 +290,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
   void read_reg(ref uvm_reg           rg,
 		out uvm_status_e      status,
 		out uvm_reg_data_t    value,
-		uvm_path_e            path = UVM_DEFAULT_PATH,
+		uvm_path_e            path = uvm_path_e.UVM_DEFAULT_PATH,
 		uvm_reg_map           map = null,
 		int                   prior = -1,
 		uvm_object            extension = null,
@@ -377,7 +377,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
   // task
   void update_reg(ref uvm_reg       rg,
 		  out uvm_status_e  status,
-		  uvm_path_e        path = UVM_DEFAULT_PATH,
+		  uvm_path_e        path = uvm_path_e.UVM_DEFAULT_PATH,
 		  uvm_reg_map       map = null,
 		  int               prior = -1,
 		  uvm_object        extension = null,
@@ -407,8 +407,8 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
   // task
   void mirror_reg(ref uvm_reg       rg,
 		  out uvm_status_e  status,
-		  uvm_check_e       check  = UVM_NO_CHECK,
-		  uvm_path_e        path = UVM_DEFAULT_PATH,
+		  uvm_check_e       check  = uvm_check_e.UVM_NO_CHECK,
+		  uvm_path_e        path = uvm_path_e.UVM_DEFAULT_PATH,
 		  uvm_reg_map       map = null,
 		  int               prior = -1,
 		  uvm_object        extension = null,
@@ -439,7 +439,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
 		 out uvm_status_e  status,
 		 uvm_reg_addr_t    offset,
 		 uvm_reg_data_t    value,
-		 uvm_path_e        path = UVM_DEFAULT_PATH,
+		 uvm_path_e        path = uvm_path_e.UVM_DEFAULT_PATH,
 		 uvm_reg_map       map = null,
 		 int               prior = -1,
 		 uvm_object        extension = null,
@@ -467,16 +467,16 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
   //
   //
   // task
-  void read_mem(ref uvm_mem           mem,
-		out uvm_status_e      status,
-		uvm_reg_addr_t    offset,
-		out uvm_reg_data_t    value,
-		uvm_path_e        path = UVM_DEFAULT_PATH,
-		uvm_reg_map       map = null,
-		int               prior = -1,
-		uvm_object        extension = null,
-		string            fname = "",
-		int               lineno = 0) {
+  void read_mem(ref uvm_mem        mem,
+		out uvm_status_e   status,
+		uvm_reg_addr_t     offset,
+		out uvm_reg_data_t value,
+		uvm_path_e         path = uvm_path_e.UVM_DEFAULT_PATH,
+		uvm_reg_map        map = null,
+		int                prior = -1,
+		uvm_object         extension = null,
+		string             fname = "",
+		int                lineno = 0) {
     if (mem is null) {
       uvm_error("NO_MEM","Memory argument is null");
     }
@@ -578,7 +578,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
 //
 abstract class uvm_reg_frontdoor: uvm_reg_sequence!(uvm_sequence!(uvm_sequence_item))
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
   // Variable: rw_info
   //
   // Holds information about the register being read or written

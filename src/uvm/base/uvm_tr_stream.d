@@ -47,7 +47,7 @@ import std.string: format;
 // initialization values.
 class m_uvm_tr_stream_cfg
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   @uvm_private_sync
   uvm_tr_database _db;

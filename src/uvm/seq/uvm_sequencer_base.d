@@ -58,7 +58,7 @@ alias uvm_config_seq = uvm_config_db!uvm_sequence_base;
 // Utility class for tracking default_sequences
 // TBD -- make this a struct
 class uvm_sequence_process_wrapper {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
   @uvm_private_sync
   Process _pid;
   @uvm_private_sync
@@ -84,10 +84,10 @@ class uvm_sequencer_base: uvm_component
     private int _g_sequence_id = 1;
     @uvm_private_sync
     private int _g_sequencer_id = 1;
-  }
+  };
 
-  mixin uvm_once_sync;
-  mixin uvm_sync;
+  mixin(uvm_once_sync_string);
+  mixin(uvm_sync_string);
 
   mixin uvm_component_utils;
 
@@ -1911,7 +1911,7 @@ mixin(declareEnums!seq_req_t());
 
 class uvm_sequence_request
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
   @uvm_public_sync
   private bool               _grant;
   @uvm_public_sync

@@ -33,7 +33,7 @@ VVP = /home/puneet/local/icarus$(MODEL)/bin/vvp
 
 all: cvcsim sha.vvp vpi.o sha.vpi
 
-run_icarus: sha.vvp vpi.o sha.vpi
+run_icarus: sha.vvp vpi.o
 	$(VVP) -M. -msha sha.vvp +UVM_TESTNAME=sha.RandomTest
 
 run_quick_fox: sha.vvp vpi.o sha.vpi
@@ -62,7 +62,7 @@ sha.o: sha.d
 cvcsim: vpi.so libsha.so sha_top.v sha_mem.v
 	$(CVC) -q +loadvpi=./vpi.so:vpi_compat_bootstrap -sv -sv_lib ./libsha.so sha_top.v sha_mem.v
 
-libsha.so: sha.d $(VLANGDIR)/src/esdl/posix/sys/net/*.d $(VLANGDIR)/src/esdl/sync/*.d $(VLANGDIR)/src/esdl/sys/*.d $(VLANGDIR)/src/esdl/intf/*.d $(VLANGDIR)/src/esdl/base/*.d $(VLANGDIR)/src/esdl/data/*.d $(VLANGDIR)/src/esdl/*.d $(UVMDIR)/src/uvm/*.d $(UVMDIR)/src/uvm/meta/*.d $(UVMDIR)/src/uvm/base/*.d $(UVMDIR)/src/uvm/comps/*.d $(UVMDIR)/src/uvm/tlm1/*.d $(UVMDIR)/src/uvm/seq/*.d $(UVMDIR)/src/uvm/vpi/uvm_svcmd_vpi.d $(UVMDIR)/src/uvm/dap/*.d
+libsha.so: sha.d $(VLANGDIR)/src/esdl/posix/sys/net/*.d $(VLANGDIR)/src/esdl/sync/*.d $(VLANGDIR)/src/esdl/sys/*.d $(VLANGDIR)/src/esdl/intf/*.d $(VLANGDIR)/src/esdl/base/*.d $(VLANGDIR)/src/esdl/data/*.d $(VLANGDIR)/src/esdl/*.d $(UVMDIR)/src/uvm/*.d $(UVMDIR)/src/uvm/meta/*.d $(UVMDIR)/src/uvm/base/*.d $(UVMDIR)/src/uvm/comps/*.d $(UVMDIR)/src/uvm/tlm1/*.d $(UVMDIR)/src/uvm/seq/*.d $(UVMDIR)/src/uvm/dpi/uvm_svcmd_dpi.d $(UVMDIR)/src/uvm/dap/*.d
 	$(DMD) -m$(MODEL) -I$(VLANGDIR)/src -I$(UVMDIR)/src $(DFLAGS) -shared -of$@ -L-ldl -L-l$(PHOBOS) -L-R$(LIBDIR) $^
 
 sha.vvp: verilog/keccak_avst.v verilog/keccak.v verilog/f_permutation.v \
@@ -70,13 +70,13 @@ sha.vvp: verilog/keccak_avst.v verilog/keccak.v verilog/f_permutation.v \
 	verilog/test_keccak_avst.v
 	$(VERILOG) -o $@ $^
 
-sha.vpi: sha.d vpi.o $(VLANGDIR)/src/esdl/sync/*.d $(VLANGDIR)/src/esdl/sys/*.d $(VLANGDIR)/src/esdl/intf/*.d $(VLANGDIR)/src/esdl/base/*.d $(VLANGDIR)/src/esdl/data/*.d $(VLANGDIR)/src/esdl/*.d $(VLANGDIR)/src/esdl/posix/sys/net/*.d  $(UVMDIR)/src/uvm/*.d $(UVMDIR)/src/uvm/meta/*.d $(UVMDIR)/src/uvm/base/*.d $(UVMDIR)/src/uvm/comps/*.d $(UVMDIR)/src/uvm/dap/*.d $(UVMDIR)/src/uvm/tlm1/*.d $(UVMDIR)/src/uvm/seq/*.d $(UVMDIR)/src/uvm/vpi/uvm_svcmd_vpi.d $(UVMDIR)/src/uvm/dap/*.d
+sha.vpi: sha.d vpi.o $(VLANGDIR)/src/esdl/sync/*.d $(VLANGDIR)/src/esdl/sys/*.d $(VLANGDIR)/src/esdl/intf/*.d $(VLANGDIR)/src/esdl/base/*.d $(VLANGDIR)/src/esdl/data/*.d $(VLANGDIR)/src/esdl/*.d $(VLANGDIR)/src/esdl/posix/sys/net/*.d  $(UVMDIR)/src/uvm/*.d $(UVMDIR)/src/uvm/meta/*.d $(UVMDIR)/src/uvm/base/*.d $(UVMDIR)/src/uvm/tlm2/*.d $(UVMDIR)/src/uvm/comps/*.d $(UVMDIR)/src/uvm/dap/*.d $(UVMDIR)/src/uvm/tlm1/*.d $(UVMDIR)/src/uvm/seq/*.d $(UVMDIR)/src/uvm/dpi/uvm_svcmd_dpi.d $(UVMDIR)/src/uvm/dap/*.d
 	$(DMD) -m$(MODEL) -I$(VLANGDIR)/src -I$(UVMDIR)/src $(DFLAGS) -shared -of$@ -L-ldl -L-lsha3 -L-Lc-model/$(MODEL)-bit -L-lvpi -L-l$(PHOBOS) -L-R$(LIBDIR) -L-R$(ICARUSLIBPATH) -L-Rc-model/$(MODEL)-bit $^
 
-sha: sha.d $(VLANGDIR)/src/esdl/sync/*.d $(VLANGDIR)/src/esdl/sys/*.d $(VLANGDIR)/src/esdl/intf/*.d $(VLANGDIR)/src/esdl/base/*.d $(VLANGDIR)/src/esdl/data/*.d $(VLANGDIR)/src/esdl/*.d $(VLANGDIR)/src/esdl/posix/sys/net/*.d  $(UVMDIR)/src/uvm/*.d $(UVMDIR)/src/uvm/meta/*.d $(UVMDIR)/src/uvm/base/*.d $(UVMDIR)/src/uvm/comps/*.d $(UVMDIR)/src/uvm/dap/*.d $(UVMDIR)/src/uvm/tlm1/*.d $(UVMDIR)/src/uvm/seq/*.d $(UVMDIR)/src/uvm/vpi/uvm_svcmd_vpi.d $(UVMDIR)/src/uvm/dap/*.d
+sha: sha.d $(VLANGDIR)/src/esdl/sync/*.d $(VLANGDIR)/src/esdl/sys/*.d $(VLANGDIR)/src/esdl/intf/*.d $(VLANGDIR)/src/esdl/base/*.d $(VLANGDIR)/src/esdl/data/*.d $(VLANGDIR)/src/esdl/*.d $(VLANGDIR)/src/esdl/posix/sys/net/*.d  $(UVMDIR)/src/uvm/*.d $(UVMDIR)/src/uvm/meta/*.d $(UVMDIR)/src/uvm/base/*.d $(UVMDIR)/src/uvm/comps/*.d $(UVMDIR)/src/uvm/dap/*.d $(UVMDIR)/src/uvm/tlm1/*.d $(UVMDIR)/src/uvm/seq/*.d $(UVMDIR)/src/uvm/dpi/uvm_svcmd_dpi.d $(UVMDIR)/src/uvm/dap/*.d
 	$(DMD) -version=EDISON -m$(MODEL) -I$(VLANGDIR)/src -I$(UVMDIR)/src $(DFLAGS) -of$@ -L-ldl -L-l$(MRAALIB) -L-l$(PHOBOS) -L-R$(MRAALIBDIR) -L-L$(MRAALIBDIR) -L-R$(LIBDIR) -L-lsha3 -L-Lc-model/$(MODEL)-bit $^
 
-sha32: sha.d $(VLANGDIR)/src/esdl/sync/*.d $(VLANGDIR)/src/esdl/sys/*.d $(VLANGDIR)/src/esdl/intf/*.d $(VLANGDIR)/src/esdl/base/*.d $(VLANGDIR)/src/esdl/data/*.d $(VLANGDIR)/src/esdl/*.d $(VLANGDIR)/src/esdl/posix/sys/net/*.d  $(UVMDIR)/src/uvm/*.d $(UVMDIR)/src/uvm/meta/*.d $(UVMDIR)/src/uvm/base/*.d $(UVMDIR)/src/uvm/comps/*.d $(UVMDIR)/src/uvm/dap/*.d $(UVMDIR)/src/uvm/tlm1/*.d $(UVMDIR)/src/uvm/seq/*.d $(UVMDIR)/src/uvm/vpi/uvm_svcmd_vpi.d $(UVMDIR)/src/uvm/dap/*.d
+sha32: sha.d $(VLANGDIR)/src/esdl/sync/*.d $(VLANGDIR)/src/esdl/sys/*.d $(VLANGDIR)/src/esdl/intf/*.d $(VLANGDIR)/src/esdl/base/*.d $(VLANGDIR)/src/esdl/data/*.d $(VLANGDIR)/src/esdl/*.d $(VLANGDIR)/src/esdl/posix/sys/net/*.d  $(UVMDIR)/src/uvm/*.d $(UVMDIR)/src/uvm/meta/*.d $(UVMDIR)/src/uvm/base/*.d $(UVMDIR)/src/uvm/comps/*.d $(UVMDIR)/src/uvm/dap/*.d $(UVMDIR)/src/uvm/tlm1/*.d $(UVMDIR)/src/uvm/seq/*.d $(UVMDIR)/src/uvm/dpi/uvm_svcmd_dpi.d $(UVMDIR)/src/uvm/dap/*.d
 	$(DMD) -version=NODESIGN -m$(MODEL) -I$(VLANGDIR)/src -I$(UVMDIR)/src $(DFLAGS) -of$@ -L-ldl -L-l$(MRAALIB) -L-l$(PHOBOS) -L-R$(MRAALIBDIR) -L-L$(MRAALIBDIR) -L-R$(LIBDIR) -L-lsha3 -L-Lc-model/$(MODEL)-bit -L-Rc-model/$(MODEL)-bit $^
 
 sha_norand: sha_norand.d $(VLANGDIR)/src/esdl/sync/*.d \
@@ -100,7 +100,7 @@ sha_norand: sha_norand.d $(VLANGDIR)/src/esdl/sync/*.d \
 	$(UVMDIR)/src/uvm/dap/*.d \
 	$(UVMDIR)/src/uvm/tlm1/*.d \
 	$(UVMDIR)/src/uvm/seq/*.d \
-	$(UVMDIR)/src/uvm/vpi/uvm_svcmd_vpi.d \
+	$(UVMDIR)/src/uvm/dpi/uvm_svcmd_dpi.d \
 	$(UVMDIR)/src/uvm/dap/*.d
 	$(DMD) -version=UVM_NORANDOM -version=ESDL_NORAND -m$(MODEL) -I$(VLANGDIR)/src -I$(UVMDIR)/src $(DFLAGS) -of$@ -L-ldl -L-l$(PHOBOS) -L-R$(LIBDIR) $^
 

@@ -931,7 +931,7 @@ class uvm_tlm_generic_payload: uvm_sequence_item
       }
 
       // we should never get here
-      return "UNKNOWN_RESPONSE";
+      // return "UNKNOWN_RESPONSE";
     }
   }
 

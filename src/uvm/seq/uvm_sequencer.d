@@ -48,7 +48,7 @@ import uvm.meta.meta;
 class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   uvm_sequencer_param_base!(REQ, RSP)
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   alias this_type = uvm_sequencer!(REQ , RSP);
 

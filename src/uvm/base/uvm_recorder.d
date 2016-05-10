@@ -96,11 +96,11 @@ abstract class uvm_recorder: uvm_object
     // Variable- m_id
     // Static int marking the last assigned id.
     // private int _m_id;  // declared in SV -- otherwise unused
-  }
+  };
 
-  mixin uvm_once_sync;
+  mixin(uvm_once_sync_string);
 
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
   // TBD
   // `uvm_object_utils(uvm_recorder)
 

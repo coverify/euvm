@@ -87,7 +87,7 @@ class uvm_report_handler: uvm_object
   }
 
   mixin(uvm_once_sync_string);
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   // internal variables
 

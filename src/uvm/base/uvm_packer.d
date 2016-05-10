@@ -671,7 +671,7 @@ class uvm_packer
     }
   }
 
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   //------------------//
   // Group: Variables //

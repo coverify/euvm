@@ -84,7 +84,7 @@ abstract class uvm_reg_block: uvm_object
 
   // Variable: default_path
   // Default access path for the registers and memories in this block.
-  uvm_path_e               _default_path = UVM_DEFAULT_PATH;
+  uvm_path_e               _default_path = uvm_path_e.UVM_DEFAULT_PATH;
 
   private string           _default_hdl_path = "RTL";
   private uvm_reg_backdoor _backdoor;
@@ -121,7 +121,7 @@ abstract class uvm_reg_block: uvm_object
 
   // new
 
-  this(string name="", int has_coverage=UVM_NO_COVERAGE) {
+  this(string name="", int has_coverage = uvm_coverage_model_e.UVM_NO_COVERAGE) {
     synchronized(this) {
       super(name);
       _hdl_paths_pool = new uvm_object_string_pool!(uvm_queue!string)
@@ -679,13 +679,13 @@ abstract class uvm_reg_block: uvm_object
   // get_blocks
 
   void get_blocks(ref uvm_reg_block[] blks,
-			 in uvm_hier_e hier=UVM_HIER) {
+			 in uvm_hier_e hier=uvm_hier_e.UVM_HIER) {
     synchronized(this) {
 
       foreach (blk_, unused; this._blks) {
 	uvm_reg_block blk = blk_;
 	blks ~= blk;
-	if (hier == UVM_HIER) {
+	if (hier == uvm_hier_e.UVM_HIER) {
 	  blk.get_blocks(blks);
 	}
       }
@@ -730,13 +730,13 @@ abstract class uvm_reg_block: uvm_object
   // get_registers
 
   void get_registers(ref uvm_reg[] regs,
-		     in uvm_hier_e hier=UVM_HIER) {
+		     in uvm_hier_e hier=uvm_hier_e.UVM_HIER) {
     synchronized(this) {
       foreach (rg, unused; this._regs) {
 	regs ~= rg;
       }
 
-      if (hier == UVM_HIER)
+      if (hier == uvm_hier_e.UVM_HIER)
 	foreach (blk_, unused; _blks) {
 	  uvm_reg_block blk = blk_;
 	  blk.get_registers(regs);
@@ -759,14 +759,14 @@ abstract class uvm_reg_block: uvm_object
   // get_fields
 
   void get_fields(ref uvm_reg_field[] fields,
-			 in uvm_hier_e hier=UVM_HIER) {
+			 in uvm_hier_e hier=uvm_hier_e.UVM_HIER) {
     synchronized(this) {
       foreach (rg_, unused; _regs) {
 	uvm_reg rg = rg_;
 	rg.get_fields(fields);
       }
    
-      if (hier == UVM_HIER)
+      if (hier == uvm_hier_e.UVM_HIER)
 	foreach (blk_, unused; _blks) {
 	  uvm_reg_block blk = blk_;
 	  blk.get_fields(fields);
@@ -795,14 +795,14 @@ abstract class uvm_reg_block: uvm_object
   // get_memories
 
   void get_memories(ref uvm_mem[] mems,
-			   in uvm_hier_e hier=UVM_HIER) {
+			   in uvm_hier_e hier=uvm_hier_e.UVM_HIER) {
     synchronized(this) {
       foreach (mem_, unused; this._mems) {
 	uvm_mem mem = mem_;
 	mems ~= mem;
       }
 
-      if (hier == UVM_HIER)
+      if (hier == uvm_hier_e.UVM_HIER)
 	foreach (blk_, unused; _blks) {
 	  uvm_reg_block blk = blk_;
 	  blk.get_memories(mems);
@@ -825,13 +825,13 @@ abstract class uvm_reg_block: uvm_object
   // get_virtual_registers
 
   void get_virtual_registers(ref uvm_vreg[] regs,
-				    in uvm_hier_e hier=UVM_HIER) {
+				    in uvm_hier_e hier=uvm_hier_e.UVM_HIER) {
     synchronized(this) {
       foreach (rg, unused; _vregs) {
 	regs ~= rg;
       }
 
-      if (hier == UVM_HIER)
+      if (hier == uvm_hier_e.UVM_HIER)
 	foreach (blk_, unused; _blks) {
 	  uvm_reg_block blk = blk_;
 	  blk.get_virtual_registers(regs);
@@ -855,14 +855,14 @@ abstract class uvm_reg_block: uvm_object
   // get_virtual_fields
 
   void get_virtual_fields(ref uvm_vreg_field[] fields,
-				 in uvm_hier_e hier=UVM_HIER) {
+				 in uvm_hier_e hier=uvm_hier_e.UVM_HIER) {
     synchronized(this) {
       foreach (vreg_, unused; _vregs) {
 	uvm_vreg vreg = vreg_;
 	vreg.get_fields(fields);
       }
    
-      if (hier == UVM_HIER)
+      if (hier == uvm_hier_e.UVM_HIER)
 	foreach (blk_, unused; _blks) {
 	  uvm_reg_block blk = blk_;
 	  blk.get_virtual_fields(fields);
@@ -904,7 +904,7 @@ abstract class uvm_reg_block: uvm_object
       foreach (blk_, unused; _blks) {
 	uvm_reg_block blk = blk_;
 	uvm_reg_block[] subblks;
-	blk_.get_blocks(subblks, UVM_HIER);
+	blk_.get_blocks(subblks, uvm_hier_e.UVM_HIER);
 
 	foreach (subblk; subblks)
 	  if (subblk.get_name() == name)
@@ -948,7 +948,7 @@ abstract class uvm_reg_block: uvm_object
 
       foreach (map; _maps) {
 	uvm_reg_map[] submaps;
-	map.get_submaps(submaps, UVM_HIER);
+	map.get_submaps(submaps, uvm_hier_e.UVM_HIER);
 
 	foreach (submap; submaps) {
 	  if (submap.get_name() == name) {
@@ -993,7 +993,7 @@ abstract class uvm_reg_block: uvm_object
       foreach (blk_, unused; _blks) {
 	uvm_reg_block blk = blk_;
 	uvm_reg[] subregs;
-	blk_.get_registers(subregs, UVM_HIER);
+	blk_.get_registers(subregs, uvm_hier_e.UVM_HIER);
 
 	foreach (subreg; subregs)
 	  if (subreg.get_name() == name)
@@ -1042,7 +1042,7 @@ abstract class uvm_reg_block: uvm_object
       foreach (blk_, unused; _blks) {
 	uvm_reg_block blk = blk_;
 	uvm_reg[] subregs;
-	blk_.get_registers(subregs, UVM_HIER);
+	blk_.get_registers(subregs, uvm_hier_e.UVM_HIER);
 
 	foreach (subreg; subregs) {
 	  uvm_reg_field[] fields;
@@ -1087,7 +1087,7 @@ abstract class uvm_reg_block: uvm_object
       foreach (blk_, unused; _blks) {
 	uvm_reg_block blk = blk_;
 	uvm_mem[] submems;
-	blk_.get_memories(submems, UVM_HIER);
+	blk_.get_memories(submems, uvm_hier_e.UVM_HIER);
 
 	foreach (submem; submems) {
 	  if (submem.get_name() == name) {
@@ -1134,7 +1134,7 @@ abstract class uvm_reg_block: uvm_object
       foreach (blk_, unused; _blks) {
 	uvm_reg_block blk = blk_;
 	uvm_vreg[] subvregs;
-	blk_.get_virtual_registers(subvregs, UVM_HIER);
+	blk_.get_virtual_registers(subvregs, uvm_hier_e.UVM_HIER);
 
 	foreach (subvreg; subvregs) {
 	  if (subvreg.get_name() == name) {
@@ -1183,7 +1183,7 @@ abstract class uvm_reg_block: uvm_object
       foreach (blk_, unused; _blks) {
 	uvm_reg_block blk = blk_;
 	uvm_vreg[] subvregs;
-	blk_.get_virtual_registers(subvregs, UVM_HIER);
+	blk_.get_virtual_registers(subvregs, uvm_hier_e.UVM_HIER);
 
 	foreach (subvreg; subvregs) {
 	  uvm_vreg_field[] fields;
@@ -1226,7 +1226,7 @@ abstract class uvm_reg_block: uvm_object
 
   uvm_reg_cvr_t build_coverage(uvm_reg_cvr_t models) {
     synchronized(this) {
-      uvm_reg_cvr_t build_coverage_ = UVM_NO_COVERAGE;
+      uvm_reg_cvr_t build_coverage_ = uvm_coverage_model_e.UVM_NO_COVERAGE;
       uvm_reg_cvr_rsrc_db.read_by_name("uvm_reg." ~ get_full_name(),
 				       "include_coverage",
 				       build_coverage_, this);
@@ -1342,7 +1342,7 @@ abstract class uvm_reg_block: uvm_object
   // extern virtual function bool get_coverage(uvm_reg_cvr_t is_on = UVM_CVR_ALL);
   // get_coverage
 
-  bool get_coverage(uvm_reg_cvr_t is_on = UVM_CVR_ALL) {
+  bool get_coverage(uvm_reg_cvr_t is_on = uvm_coverage_model_e.UVM_CVR_ALL) {
     synchronized(this) {
       if (this.has_coverage(is_on) == false) return false;
       return ((this._cover_on & is_on) == is_on);
@@ -1440,7 +1440,7 @@ abstract class uvm_reg_block: uvm_object
 
    uvm_path_e get_default_path() {
     synchronized(this) {
-      if (this._default_path != UVM_DEFAULT_PATH) {
+      if (this._default_path != uvm_path_e.UVM_DEFAULT_PATH) {
 	return this._default_path;
       }
 
@@ -1543,7 +1543,7 @@ abstract class uvm_reg_block: uvm_object
 
   // task
   void update(out uvm_status_e   status,
-	      uvm_path_e         path = UVM_DEFAULT_PATH,
+	      uvm_path_e         path = uvm_path_e.UVM_DEFAULT_PATH,
 	      uvm_sequence_base  parent = null,
 	      int                prior = -1,
 	      uvm_object         extension = null,
@@ -1606,8 +1606,8 @@ abstract class uvm_reg_block: uvm_object
 
   // task
   void mirror(out uvm_status_e   status,
-	      uvm_check_e        check = UVM_NO_CHECK,
-	      uvm_path_e         path = UVM_DEFAULT_PATH,
+	      uvm_check_e        check = uvm_check_e.UVM_NO_CHECK,
+	      uvm_path_e         path = uvm_path_e.UVM_DEFAULT_PATH,
 	      uvm_sequence_base  parent = null,
 	      int                prior = -1,
 	      uvm_object         extension = null,
@@ -1661,7 +1661,7 @@ abstract class uvm_reg_block: uvm_object
   void write_reg_by_name(out uvm_status_e    status,
 			 string              name,
 			 uvm_reg_data_t      data,
-			 uvm_path_e          path = UVM_DEFAULT_PATH,
+			 uvm_path_e          path = uvm_path_e.UVM_DEFAULT_PATH,
 			 uvm_reg_map         map = null,
 			 uvm_sequence_base   parent = null,
 			 int                 prior = -1,
@@ -1705,7 +1705,7 @@ abstract class uvm_reg_block: uvm_object
   void read_reg_by_name(out uvm_status_e       status,
 			string                 name,
 			out uvm_reg_data_t     data,
-			uvm_path_e             path = UVM_DEFAULT_PATH,
+			uvm_path_e             path = uvm_path_e.UVM_DEFAULT_PATH,
 			uvm_reg_map            map = null,
 			uvm_sequence_base      parent = null,
 			int                    prior = -1,
@@ -1749,7 +1749,7 @@ abstract class uvm_reg_block: uvm_object
 			 string             name,
 			 uvm_reg_addr_t     offset,
 			 uvm_reg_data_t     data,
-			 uvm_path_e         path = UVM_DEFAULT_PATH,
+			 uvm_path_e         path = uvm_path_e.UVM_DEFAULT_PATH,
 			 uvm_reg_map        map = null,
 			 uvm_sequence_base  parent = null,
 			 int                prior = -1,
@@ -1795,7 +1795,7 @@ abstract class uvm_reg_block: uvm_object
 			string             name,
 			uvm_reg_addr_t     offset,
 			out uvm_reg_data_t data,
-			uvm_path_e         path = UVM_DEFAULT_PATH,
+			uvm_path_e         path = uvm_path_e.UVM_DEFAULT_PATH,
 			uvm_reg_map        map = null,
 			uvm_sequence_base  parent = null,
 			int                prior = -1,

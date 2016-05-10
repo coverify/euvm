@@ -160,8 +160,8 @@ import esdl.data.queue;
 
 class uvm_phase: uvm_object
 {
-  mixin uvm_sync;
-  mixin uvm_once_sync;
+  mixin(uvm_sync_string);
+  mixin(uvm_once_sync_string);
 
   static class uvm_once
   {
@@ -2383,7 +2383,7 @@ class uvm_phase: uvm_object
 class uvm_phase_state_change: uvm_object
 {
 
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   mixin uvm_object_utils_norand;
 

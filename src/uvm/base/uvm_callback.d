@@ -114,10 +114,10 @@ class uvm_callbacks_base: uvm_object
 	_typeid_map = new uvm_pool!(ClassInfo, uvm_callbacks_base);
       }
     }
-  }
+  };
 
-  mixin uvm_once_sync;
-  mixin uvm_sync;
+  mixin(uvm_once_sync_string);
+  mixin(uvm_sync_string);
 
   alias this_type = uvm_callbacks_base;
 
@@ -219,7 +219,7 @@ class uvm_callbacks_base: uvm_object
 
 class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   @uvm_immutable_sync
   uvm_queue!uvm_callback _m_tw_cb_q;
@@ -569,7 +569,7 @@ class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
 
 class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
   // Parameter: T
   //
   // This type parameter specifies the base object type with which the

@@ -161,7 +161,7 @@ version(UVM_INCLUDE_DEPRECATED) {
 
 class uvm_sequence_base: uvm_sequence_item
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   @uvm_immutable_sync
   private WithEvent!uvm_sequence_state _m_sequence_state;

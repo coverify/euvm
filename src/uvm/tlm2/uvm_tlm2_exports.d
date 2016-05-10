@@ -40,32 +40,9 @@ class uvm_tlm_b_transport_export(T=uvm_tlm_generic_payload) :
   uvm_port_base!(uvm_tlm_if!(T))
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_B_MASK, "uvm_tlm_b_transport_export")
-  this(string name, uvm_component parent,
-       int min_size=1, int max_size=1) {
-    synchronized(this) {
-      super(name, parent, UVM_EXPORT, min_size, max_size);
-      m_if_mask = UVM_TLM_B_MASK;
-    }
-  }
-
-  string get_type_name() {
-    return qualifiedTypeName!(typeof(this));
-  }
-
+  mixin UVM_EXPORT_COMMON!(UVM_TLM_B_MASK);
   // `UVM_TLM_B_TRANSPORT_IMP(this.m_if, T, t, delay)
-  // task
-  void b_transport(T t, uvm_tlm_time delay) {
-    if(delay is null) {
-      uvm_error("UVM/TLM/NULLDELAY", get_full_name() ~
-		".b_transport() called with 'null' delay");
-      return;
-    }
-
-    // m_if could be set in the base class using set_if
-    // TODO: check if set_if is called in a different phase
-    // in that case m_if could be treated as effectively immutable
-    m_if.b_transport(t, delay);
-  }
+  mixin UVM_TLM_B_TRANSPORT_IMP!(this.m_if, T);
 }
 
 
@@ -79,29 +56,10 @@ class uvm_tlm_nb_transport_fw_export(T=uvm_tlm_generic_payload,
   uvm_port_base!(uvm_tlm_if!(T,P))
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_NB_FW_MASK, "uvm_tlm_nb_transport_fw_export")
-  this(string name, uvm_component parent,
-       int min_size=1, int max_size=1) {
-    synchronized(this) {
-      super(name, parent, UVM_EXPORT, min_size, max_size);
-      m_if_mask = UVM_TLM_NB_FW_MASK;
-    }
-  }
-
-  string get_type_name() {
-    return qualifiedTypeName!(typeof(this));
-  }
-
+  mixin UVM_EXPORT_COMMON!(UVM_TLM_NB_FW_MASK);
   // `UVM_TLM_NB_TRANSPORT_FW_IMP(this.m_if, T, P, t, p, delay)
-  // task
-  void b_transport(T t, uvm_tlm_time delay) {
-    if(delay is null) {
-      uvm_error("UVM/TLM/NULLDELAY", get_full_name() ~
-		".b_transport() called with 'null' delay");
-      return;
-    }
+  mixin UVM_TLM_NB_TRANSPORT_FW_IMP!(this.m_if, T, P);
 
-    m_if.b_transport(t, delay);
-  }
 }
 
 
@@ -116,26 +74,7 @@ class uvm_tlm_nb_transport_bw_export(T=uvm_tlm_generic_payload,
 {
   // Function: new
   // `UVM_EXPORT_COMMON(`UVM_TLM_NB_BW_MASK, "uvm_tlm_nb_transport_bw_export")
-  this(string name, uvm_component parent,
-       int min_size=1, int max_size=1) {
-    synchronized(this) {
-      super(name, parent, UVM_EXPORT, min_size, max_size);
-      m_if_mask = UVM_TLM_NB_BW_MASK;
-    }
-  }
-
-  string get_type_name() {
-    return qualifiedTypeName!(typeof(this));
-  }
-
+  mixin UVM_EXPORT_COMMON!(UVM_TLM_NB_BW_MASK);
   // `UVM_TLM_NB_TRANSPORT_BW_IMP(this.m_if, T, P, t, p, delay)
-  uvm_tlm_sync_e nb_transport_bw(T t, ref P p, uvm_tlm_time delay) {
-    if(delay is null) {
-      uvm_error("UVM/TLM/NULLDELAY", get_full_name() ~
-		".nb_transport_bw() called with 'null' delay");
-      return UVM_TLM_COMPLETED;
-    }
-
-    return m_if.nb_transport_bw(t, p, delay);
-  }
+  mixin UVM_TLM_NB_TRANSPORT_BW_IMP!(this.m_if, T, P);
 }

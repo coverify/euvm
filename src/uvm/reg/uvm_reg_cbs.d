@@ -455,9 +455,9 @@ class uvm_reg_read_only_cbs: uvm_reg_cbs
       // effectively immutable
       _m_me = new uvm_reg_read_only_cbs();
     }
-  }
+  };
 
-  mixin uvm_once_sync;
+  mixin(uvm_once_sync_string);
 
   private static uvm_reg_read_only_cbs get() {
     // synchronized(once) {
@@ -564,9 +564,9 @@ class uvm_reg_write_only_cbs: uvm_reg_cbs
       // effectively immutable
       _m_me = new uvm_reg_write_only_cbs();
     }
-  }
+  };
 
-  mixin uvm_once_sync;
+  mixin(uvm_once_sync_string);
 
   private static uvm_reg_write_only_cbs get() {
     // if (m_me == null) m_me = new;

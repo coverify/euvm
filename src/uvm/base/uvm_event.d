@@ -51,7 +51,7 @@ import std.string: format;
 
 abstract class uvm_event_base: uvm_object
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   enum string type_name = "uvm_event_base";
 
@@ -323,7 +323,7 @@ abstract class uvm_event_base: uvm_object
 
 class uvm_event(T=uvm_object): uvm_event_base
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   enum string type_name = "uvm_event";
 

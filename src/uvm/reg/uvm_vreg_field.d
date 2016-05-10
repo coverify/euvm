@@ -289,7 +289,7 @@ class uvm_vreg_field: uvm_object
   void write(ulong               idx,
 	     out uvm_status_e    status,
 	     uvm_reg_data_t      value,
-	     uvm_path_e          path = UVM_DEFAULT_PATH,
+	     uvm_path_e          path = uvm_path_e.UVM_DEFAULT_PATH,
 	     uvm_reg_map         map = null,
 	     uvm_sequence_base   parent = null,
 	     uvm_object          extension = null,
@@ -347,7 +347,7 @@ class uvm_vreg_field: uvm_object
       (this.parent.get_offset_in_memory(idx) + (flsb / segsiz));
 
     // Favor backdoor read to frontdoor read for the RMW operation
-    uvm_path_e rm_path = UVM_DEFAULT_PATH;
+    uvm_path_e rm_path = uvm_path_e.UVM_DEFAULT_PATH;
     if (mem.get_backdoor() !is null) rm_path = UVM_BACKDOOR;
 
     // Any bits on the LSB side we need to RMW?
@@ -463,7 +463,7 @@ class uvm_vreg_field: uvm_object
   void read(ulong               idx,
 	    out uvm_status_e    status,
 	    out uvm_reg_data_t  value,
-	    uvm_path_e          path = UVM_DEFAULT_PATH,
+	    uvm_path_e          path = uvm_path_e.UVM_DEFAULT_PATH,
 	    uvm_reg_map         map = null,
 	    uvm_sequence_base   parent = null,
 	    uvm_object          extension = null,

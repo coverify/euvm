@@ -57,7 +57,7 @@ class uvm_sequencer_param_base (REQ = uvm_sequence_item,
 				RSP = REQ): uvm_sequencer_base
 if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   alias this_type = uvm_sequencer_param_base !(REQ , RSP);
   alias req_type = REQ;

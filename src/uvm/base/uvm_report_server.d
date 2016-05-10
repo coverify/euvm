@@ -66,7 +66,7 @@ version(UVM_NO_DEPRECATED) { }
 
 class uvm_report_server: /*extends*/ uvm_object
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   // Needed for callbacks
   override string get_type_name() {
@@ -268,7 +268,7 @@ class uvm_report_server: /*extends*/ uvm_object
 
 class uvm_default_report_server: uvm_report_server
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   private int _m_max_quit_count;
   private int _m_quit_count;

@@ -73,7 +73,7 @@ import std.string: format;
 //-----------------------------------------------------------------
 abstract class uvm_reg: uvm_object
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
   private bool              _m_locked;
   private uvm_reg_block     _m_parent;
   private uvm_reg_file      _m_regfile_parent;
@@ -1105,7 +1105,7 @@ abstract class uvm_reg: uvm_object
   // task
   void write(out uvm_status_e  status,
 	     uvm_reg_data_t    value,
-	     uvm_path_e        path = UVM_DEFAULT_PATH,
+	     uvm_path_e        path = uvm_path_e.UVM_DEFAULT_PATH,
 	     uvm_reg_map       map = null,
 	     uvm_sequence_base parent = null,
 	     int               prior = -1,
@@ -1176,7 +1176,7 @@ abstract class uvm_reg: uvm_object
   // task
   void read(out uvm_status_e      status,
 	    out uvm_reg_data_t    value,
-	    uvm_path_e            path = UVM_DEFAULT_PATH,
+	    uvm_path_e            path = uvm_path_e.UVM_DEFAULT_PATH,
 	    uvm_reg_map           map = null,
 	    uvm_sequence_base     parent = null,
 	    int                   prior = -1,
@@ -1394,7 +1394,7 @@ abstract class uvm_reg: uvm_object
 
   // task
   void update(out uvm_status_e      status,
-	      uvm_path_e            path = UVM_DEFAULT_PATH,
+	      uvm_path_e            path = uvm_path_e.UVM_DEFAULT_PATH,
 	      uvm_reg_map           map = null,
 	      uvm_sequence_base     parent = null,
 	      int                   prior = -1,
@@ -1458,8 +1458,8 @@ abstract class uvm_reg: uvm_object
 
   // task
   void mirror(out uvm_status_e   status,
-	      uvm_check_e        check = UVM_NO_CHECK,
-	      uvm_path_e         path = UVM_DEFAULT_PATH,
+	      uvm_check_e        check = uvm_check_e.UVM_NO_CHECK,
+	      uvm_path_e         path = uvm_path_e.UVM_DEFAULT_PATH,
 	      uvm_reg_map        map = null,
 	      uvm_sequence_base  parent = null,
 	      int                prior = -1,
@@ -1533,8 +1533,8 @@ abstract class uvm_reg: uvm_object
 
   bool predict (uvm_reg_data_t    value,
 		uvm_reg_byte_en_t be = -1,
-		uvm_predict_e     kind = UVM_PREDICT_DIRECT,
-		uvm_path_e        path = UVM_FRONTDOOR,
+		uvm_predict_e     kind = uvm_predict_e.UVM_PREDICT_DIRECT,
+		uvm_path_e        path = uvm_path_e.UVM_FRONTDOOR,
 		uvm_reg_map       map = null,
 		string            fname = "",
 		int               lineno = 0) {
@@ -2198,7 +2198,7 @@ abstract class uvm_reg: uvm_object
   // do_predict
 
   void do_predict(uvm_reg_item      rw,
-		  uvm_predict_e     kind = UVM_PREDICT_DIRECT,
+		  uvm_predict_e     kind = uvm_predict_e.UVM_PREDICT_DIRECT,
 		  uvm_reg_byte_en_t be = -1) {
     synchronized(this) {
 
@@ -2856,7 +2856,7 @@ abstract class uvm_reg: uvm_object
 
   uvm_reg_cvr_t build_coverage(uvm_reg_cvr_t models) {
     synchronized(this) {
-      uvm_reg_cvr_t build_coverage_ = UVM_NO_COVERAGE;
+      uvm_reg_cvr_t build_coverage_ = uvm_coverage_model_e.UVM_NO_COVERAGE;
       uvm_reg_cvr_rsrc_db.read_by_name("uvm_reg." ~ get_full_name(),
 				       "include_coverage",
 				       build_coverage_, this);
@@ -2930,7 +2930,7 @@ abstract class uvm_reg: uvm_object
 
   uvm_reg_cvr_t set_coverage(uvm_reg_cvr_t is_on) {
     synchronized(this) {
-      if (is_on == cast(uvm_reg_cvr_t) UVM_NO_COVERAGE) {
+      if (is_on == cast(uvm_reg_cvr_t) uvm_coverage_model_e.UVM_NO_COVERAGE) {
 	_m_cover_on = is_on;
 	return uvm_reg_cvr_t(_m_cover_on);
       }

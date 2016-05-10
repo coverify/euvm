@@ -99,7 +99,7 @@ version(UVM_NO_DEPRECATED) { }
 
 class uvm_report_object: /*extends*/ uvm_object
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   // In SV this callback is part of the uvm_report_catcher.sv file
   mixin uvm_register_cb!(uvm_report_catcher);

@@ -72,9 +72,9 @@ class uvm_domain: uvm_phase
     private uvm_domain[string] _m_domains;
     @uvm_private_sync
     private uvm_phase          _m_uvm_schedule;
-  }
+  };
 
-  mixin uvm_once_sync;
+  mixin(uvm_once_sync_string);
 
   // Function: get_domains
   //

@@ -265,7 +265,7 @@ final class uvm_status_container {
   import uvm.base.uvm_object_globals: uvm_bitstream_t,
     uvm_field_auto_enum, uvm_field_xtra_enum;
 
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   //The clone setting is used by the set/get config to know if cloning is on.
   @uvm_public_sync
@@ -1057,7 +1057,7 @@ version(UVM_USE_PROCESS_CONTAINER) {
   import esdl.base.core;
   final class process_container_c
   {
-    mixin uvm_sync;
+    mixin(uvm_sync_string);
 
     @uvm_immutable_sync
     private Process _p;

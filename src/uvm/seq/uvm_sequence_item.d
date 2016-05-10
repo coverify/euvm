@@ -60,7 +60,7 @@ version(UVM_NORANDOM) {}
 
 class uvm_sequence_item: uvm_transaction
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   version(UVM_NORANDOM) {}
   else {

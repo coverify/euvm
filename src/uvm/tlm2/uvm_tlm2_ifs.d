@@ -66,6 +66,8 @@ enum  uvm_tlm_sync_e
     UVM_TLM_COMPLETED
   }
 
+mixin(declareEnums!uvm_tlm_sync_e());
+
 // MACRO: `UVM_TLM_TASK_ERROR
 //
 // Defines Not-Yet-Implemented TLM tasks

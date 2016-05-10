@@ -126,7 +126,7 @@ uvm_root uvm_top() {
 
 class uvm_root_entity_base: Entity
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
   this() {
     synchronized(this) {
       _uvm_root_init_semaphore = new Semaphore(); // count 0
@@ -197,7 +197,7 @@ class uvm_root_entity_base: Entity
 
 class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
   {
-    mixin uvm_sync;
+    mixin(uvm_sync_string);
     
     // alias _get_uvm_root this;
 
@@ -283,7 +283,7 @@ class uvm_root: uvm_component
   // the mixin in the derived classes
   // mixin uvm_component_utils;
   
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   // SV implementation makes this a part of the run_test function
   @UVM_NO_AUTO

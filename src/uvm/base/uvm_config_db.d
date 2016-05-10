@@ -60,7 +60,7 @@ import std.random: Random;
 
 final private class m_uvm_waiter
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
   @uvm_immutable_sync
   private string _inst_name;
   // _field_name is present in the SV version but is not used

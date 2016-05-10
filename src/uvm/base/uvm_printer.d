@@ -93,7 +93,7 @@ import std.traits: isIntegral, isBoolean;
 abstract class uvm_printer
 {
 
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   // Variable: knobs
   //
@@ -919,7 +919,7 @@ class uvm_printer_knobs {
   // Indicates whether the <print_header> function should be called when
   // printing an object.
 
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   @uvm_public_sync
   private bool _header = true;

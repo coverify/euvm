@@ -57,7 +57,7 @@ module uvm.tlm2.uvm_tlm2_imps;
 // for more details on the semantics and rules of the nonblocking
 // transport interface.
 
-mixin template UVM_TLM_NB_TRANSPORT_FW_IMP(alias IMP, T, P)
+mixin template UVM_TLM_NB_TRANSPORT_FW_IMP(alias imp, T, P)
 {
   public uvm_tlm_sync_e nb_transport_fw(T t, ref P p, uvm_tlm_time delay) {
     if (delay is null) {
@@ -65,7 +65,7 @@ mixin template UVM_TLM_NB_TRANSPORT_FW_IMP(alias IMP, T, P)
 		".nb_transport_fw() called with 'null' delay");
       return UVM_TLM_COMPLETED;
     }
-    return IMP.nb_transport_fw(t, p, delay);
+    return imp.nb_transport_fw(t, p, delay);
   }
 }
 

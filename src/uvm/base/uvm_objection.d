@@ -58,7 +58,7 @@ alias uvm_objection_cbs_t =
 // typedef class uvm_callbacks_objection;
 
 class uvm_objection_events {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
   @uvm_private_sync
   private int _waiters;
   private void inc_waiters() {
@@ -121,7 +121,7 @@ class uvm_objection: uvm_report_object
 {
   mixin uvm_register_cb!(uvm_objection_callback);
 
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   static class uvm_once
   {
@@ -1452,7 +1452,7 @@ class uvm_test_done_objection: uvm_objection
   }
 
   mixin(uvm_once_sync_string);
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   // Seems redundant -- not used anywhere -- declared in SV version
   // protected bool m_forced;
@@ -1736,7 +1736,7 @@ class uvm_test_done_objection: uvm_objection
 // Have a pool of context objects to use
 class uvm_objection_context_object
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   @uvm_private_sync
   private uvm_object _obj;

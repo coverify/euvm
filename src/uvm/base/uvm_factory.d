@@ -483,7 +483,7 @@ abstract class uvm_factory
 class uvm_default_factory: uvm_factory
 {
 
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
   // Group: Registering Types
 
   // Function: register
@@ -2017,7 +2017,7 @@ abstract class uvm_object_wrapper
 
 final class uvm_factory_override
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   @uvm_private_sync
   private string _full_inst_path;

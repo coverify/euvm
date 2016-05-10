@@ -46,7 +46,7 @@ version(UVM_NORANDOM) {}
 abstract class uvm_sequence (REQ = uvm_sequence_item, RSP = REQ):
   uvm_sequence_base
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   alias sequencer_t = uvm_sequencer_param_base!(REQ, RSP);
 

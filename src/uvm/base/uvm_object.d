@@ -98,7 +98,7 @@ abstract class uvm_object: uvm_void
   // Using string Mixin function
   // mixin uvm_once_sync;
   mixin(uvm_once_sync_string);
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   version(UVM_NORANDOM) {}
   else {

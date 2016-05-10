@@ -178,7 +178,8 @@ abstract class uvm_component: uvm_report_object, ParContext
     }
   }
 
-  mixin uvm_once_sync;
+  mixin(uvm_once_sync_string);
+
   protected const(uvm_cmdline_parsed_arg_t[]) m_uvm_applied_cl_action() {
     return once.m_uvm_applied_cl_action();
   }
@@ -186,7 +187,7 @@ abstract class uvm_component: uvm_report_object, ParContext
     return once.m_uvm_applied_cl_sev();
   }
 
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   mixin ParContextMixin;
 
@@ -2914,8 +2915,19 @@ abstract class uvm_component: uvm_report_object, ParContext
   // By default, all children are printed. However, this bit allows a parent
   // component to disable the printing of specific children.
 
-  @uvm_public_sync
   private bool _print_enabled = true;
+
+  bool print_enabled() {
+    synchronized(this) {
+      return _print_enabled;
+    }
+  }
+
+  void print_enabled(bool val) {
+    synchronized(this) {
+      _print_enabled = val;
+    }
+  }
 
   // Variable: tr_database
   //
@@ -3791,7 +3803,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 private class uvm_config_object_wrapper
 {
   // pragma(msg, uvm_sync!uvm_config_object_wrapper);
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
   @uvm_private_sync private uvm_object _obj;
   @uvm_private_sync private bool _clone;
 }

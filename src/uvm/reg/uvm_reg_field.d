@@ -59,7 +59,7 @@ import std.conv: to;
 //-----------------------------------------------------------------
 class uvm_reg_field: uvm_object
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
   // Variable: value
   // Mirrored field value.
   // This value can be sampled in a functional coverage model
@@ -189,7 +189,7 @@ class uvm_reg_field: uvm_object
       _m_volatile  = volatile;
       _m_access    = access.toUpper();
       _m_lsb       = lsb_pos;
-      _m_cover_on  = UVM_NO_COVERAGE;
+      _m_cover_on  = uvm_coverage_model_e.UVM_NO_COVERAGE;
       _m_written   = 0;
       _m_check     = volatile ? UVM_NO_CHECK : UVM_CHECK;
       _m_individually_accessible = individually_accessible;
@@ -925,7 +925,7 @@ class uvm_reg_field: uvm_object
   // task
   void write(out uvm_status_e   status,
 	     uvm_reg_data_t     value,
-	     uvm_path_e         path = UVM_DEFAULT_PATH,
+	     uvm_path_e         path = uvm_path_e.UVM_DEFAULT_PATH,
 	     uvm_reg_map        map = null,
 	     uvm_sequence_base  parent = null,
 	     int                prior = -1,
@@ -1001,7 +1001,7 @@ class uvm_reg_field: uvm_object
   // task
   void read(out uvm_status_e   status,
 	    out uvm_reg_data_t value,
-	    uvm_path_e         path = UVM_DEFAULT_PATH,
+	    uvm_path_e         path = uvm_path_e.UVM_DEFAULT_PATH,
 	    uvm_reg_map        map = null,
 	    uvm_sequence_base  parent = null,
 	    int                prior = -1,
@@ -1190,8 +1190,8 @@ class uvm_reg_field: uvm_object
 
   // task
   void mirror(out uvm_status_e  status,
-	      uvm_check_e       check = UVM_NO_CHECK,
-	      uvm_path_e        path = UVM_DEFAULT_PATH,
+	      uvm_check_e       check = uvm_check_e.UVM_NO_CHECK,
+	      uvm_path_e        path = uvm_path_e.UVM_DEFAULT_PATH,
 	      uvm_reg_map       map = null,
 	      uvm_sequence_base parent = null,
 	      int               prior = -1,
@@ -1221,7 +1221,7 @@ class uvm_reg_field: uvm_object
 
   // set_compare
 
-  void set_compare(uvm_check_e check=UVM_CHECK) {
+  void set_compare(uvm_check_e check = uvm_check_e.UVM_CHECK) {
     synchronized(this) {
       _m_check = check;
     }
@@ -1391,8 +1391,8 @@ class uvm_reg_field: uvm_object
 
   bool predict (uvm_reg_data_t    value,
 		uvm_reg_byte_en_t be = -1,
-		uvm_predict_e     kind = UVM_PREDICT_DIRECT,
-		uvm_path_e        path = UVM_FRONTDOOR,
+		uvm_predict_e     kind = uvm_predict_e.UVM_PREDICT_DIRECT,
+		uvm_path_e        path = uvm_path_e.UVM_FRONTDOOR,
 		uvm_reg_map       map = null,
 		string            fname = "",
 		int               lineno = 0) {
@@ -1797,7 +1797,7 @@ class uvm_reg_field: uvm_object
   // do_predict
 
   void do_predict(uvm_reg_item      rw,
-		  uvm_predict_e     kind = UVM_PREDICT_DIRECT,
+		  uvm_predict_e     kind = uvm_predict_e.UVM_PREDICT_DIRECT,
 		  uvm_reg_byte_en_t be = -1) {
     synchronized(this) {
       uvm_reg_data_t field_val = rw.value[0] & ((1 << _m_size)-1);

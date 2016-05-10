@@ -47,7 +47,7 @@ import std.string: format;
 
 class uvm_comparer
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   // Variable: policy
   //
