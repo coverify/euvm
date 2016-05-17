@@ -181,7 +181,17 @@ abstract class uvm_printer
 	  else if(radix is UVM_STRING) type_name = "string";
 	  else if(radix is UVM_ENUM)   type_name = qualifiedTypeName!T ~
 					 " (enum)";
-	  else                         type_name = qualifiedTypeName!T;
+	  else {
+	    static if(isBitVector!T) {
+	      static if(! T.ISSIGNED) type_name = "U";
+	      enum int SIZE = cast(int) T.SIZE;
+	      static if(T.IS4STATE) type_name ~= "Logic!" ~ SIZE.stringof;
+	      else type_name ~= "Bit!" ~ SIZE.stringof;
+	    }
+	    else {
+	      type_name = qualifiedTypeName!T;
+	    }
+	  }
 	}
 
 	auto sz_str = size.to!string;
