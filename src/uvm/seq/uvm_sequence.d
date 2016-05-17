@@ -29,6 +29,9 @@ import uvm.base.uvm_object_globals;
 import uvm.seq.uvm_sequence_item;
 import uvm.seq.uvm_sequence_base;
 import uvm.seq.uvm_sequencer_param_base;
+
+import std.string: format;
+
 version(UVM_NORANDOM) {}
  else {
    import esdl.data.rand;
@@ -173,10 +176,15 @@ abstract class uvm_sequence (REQ = uvm_sequence_item, RSP = REQ):
   // Internal method.
 
   override void put_response(uvm_sequence_item response_item) {
+    if (response_item is null) {
+      uvm_report_fatal("PUTRSP", "Received a null in response",
+		       UVM_NONE);
+    }
     RSP response = cast(RSP) response_item;
     if (response is null) {
-      uvm_report_fatal("PUTRSP", "Failure to cast response in put_response",
-		       UVM_NONE);
+      uvm_report_fatal("PUTRSP",
+		       format("Failure to cast response to type %s in put_response",
+			      RSP.stringof), UVM_NONE);
     }
     put_base_response(response_item);
   }
