@@ -135,7 +135,7 @@ class uvm_report_server: /*extends*/ uvm_object
     synchronized(this) {
       super.do_copy(rhs);
       uvm_report_server rhs_ = cast(uvm_report_server) rhs;
-      if(rhs_ !is null) {
+      if(rhs_ is null) {
 	uvm_root_error("UVM/REPORT/SERVER/RPTCOPY", "cannot copy to report_server from the given datatype");
       }
 
@@ -885,7 +885,7 @@ class uvm_default_report_server: uvm_report_server
 	report_object_name = l_report_handler.get_full_name();
       }
 
-      return sev_string ~ verbosity_str ~ " ", filename_line_string ~
+      return sev_string ~ verbosity_str ~ " " ~ filename_line_string ~
 	"@ " ~ time_str ~ ": " ~ report_object_name ~ context_str ~ " [" ~
 	report_message.get_id() ~ "] " ~ msg_body_str ~ terminator_str;
     }

@@ -310,6 +310,16 @@ void uvm_report( uvm_severity severity,
 
 // Function: uvm_report_info
 
+void uvm_report_info(string file=__FILE__,
+		     size_t line=__LINE__)(string id,
+					   string message,
+					   int verbosity=UVM_MEDIUM,
+					   string context_name = "",
+					   bool report_enabled_checked = false) {
+  uvm_report_info(id, message, verbosity, file, line,
+		  context_name, report_enabled_checked);
+}
+
 void uvm_report_info(string id,
 		     string message,
 		     int verbosity = UVM_MEDIUM,
@@ -325,6 +335,16 @@ void uvm_report_info(string id,
 
 // Function: uvm_report_warning
 
+void uvm_report_warning(string file=__FILE__,
+			size_t line=__LINE__)(string id,
+					      string message,
+					      int verbosity=UVM_MEDIUM,
+					      string context_name = "",
+					      bool report_enabled_checked = false) {
+  uvm_report_warning(id, message, verbosity, file, line,
+		     context_name, report_enabled_checked);
+}
+
 void uvm_report_warning(string id,
 			string message,
 			int verbosity = UVM_MEDIUM,
@@ -339,6 +359,16 @@ void uvm_report_warning(string id,
 }
 
 // Function: uvm_report_error
+
+void uvm_report_error(string file=__FILE__,
+		      size_t line=__LINE__)(string id,
+					    string message,
+					    int verbosity=UVM_LOW,
+					    string context_name = "",
+					    bool report_enabled_checked = false) {
+  uvm_report_error(id, message, verbosity, file, line,
+		   context_name, report_enabled_checked);
+}
 
 void uvm_report_error(string id,
 		      string message,
@@ -363,6 +393,16 @@ void uvm_report_error(string id,
 // *Note:* Verbosity is ignored for warnings, errors, and fatals to ensure users
 // do not inadvertently filter them out. It remains in the methods for backward
 // compatibility.
+
+void uvm_report_fatal(string file=__FILE__,
+		      size_t line=__LINE__)(string id,
+					    string message,
+					    int verbosity=UVM_NONE,
+					    string context_name = "",
+					    bool report_enabled_checked = false) {
+  uvm_report_fatal(id, message, verbosity, file, line,
+		   context_name, report_enabled_checked);
+}
 
 void uvm_report_fatal(string id,
 		      string message,
