@@ -104,7 +104,7 @@ class uvm_reg_backdoor: uvm_object
   // task
   protected void do_post_read(uvm_reg_item rw) {
     // uvm_do_callbacks_reverse((uvm_reg_cbs cb) {cb.decode(rw.value);});
-    uvm_do_callbacks_reverse((uvm_reg_cbs cb) {cb.decode(rw.get_value());});
+    uvm_do_callbacks_reverse((uvm_reg_cbs cb) {cb.decode(rw);});
     uvm_do_callbacks((uvm_reg_cbs cb) {cb.post_read(rw);});
     post_read(rw);
   }
@@ -124,7 +124,7 @@ class uvm_reg_backdoor: uvm_object
     pre_write(rw);
     uvm_do_callbacks((uvm_reg_cbs cb) {cb.pre_read(rw);});
     // uvm_do_callbacks((uvm_reg_cbs cb) {cb.encode(rw.value);});
-    uvm_do_callbacks((uvm_reg_cbs cb) {cb.encode(rw.get_value());});
+    uvm_do_callbacks((uvm_reg_cbs cb) {cb.encode(rw);});
   }
 
 
