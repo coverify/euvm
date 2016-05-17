@@ -661,7 +661,7 @@ abstract class uvm_resource_base: uvm_object
 		     access_record.write_count,
 		     access_record.write_time);
       }
-      uvm_root_info("UVM/RESOURCE/ACCESSOR", qs, UVM_NONE);
+      uvm_info("UVM/RESOURCE/ACCESSOR", qs, UVM_NONE);
     }
   }
 
@@ -972,7 +972,7 @@ class uvm_resource_pool {
 		     ((success)?"success":"fail"),
 		     record.t);
       }
-      uvm_root_info("UVM/RESOURCE/GETRECORD", qs, UVM_NONE);
+      uvm_info("UVM/RESOURCE/GETRECORD", qs, UVM_NONE);
     }
   }
 
@@ -1414,7 +1414,7 @@ class uvm_resource_pool {
 
       if(rq is null || rq.size() is 0) {
 	import uvm.meta.mcd;
-	uvm_root_info("UVM/RESOURCE/PRINT", "<none>", UVM_NONE);
+	uvm_info("UVM/RESOURCE/PRINT", "<none>", UVM_NONE);
 	return;
       }
 
@@ -1438,13 +1438,13 @@ class uvm_resource_pool {
   final void dump(bool audit = false) {
     synchronized(this) {
       import uvm.meta.mcd;
-      uvm_root_info("UVM/RESOURCE/DUMP", "\n=== resource pool ===", UVM_NONE);
+      uvm_info("UVM/RESOURCE/DUMP", "\n=== resource pool ===", UVM_NONE);
 
       foreach (name, rq; _rtab) {
 	print_resources(rq, audit);
       }
 
-      uvm_root_info("UVM/RESOURCE/DUMP", "=== end of resource pool ===", UVM_NONE);
+      uvm_info("UVM/RESOURCE/DUMP", "=== end of resource pool ===", UVM_NONE);
 
     }
   }
@@ -1514,9 +1514,9 @@ class uvm_resource (T=int): uvm_resource_base
       	  if(name[i] == '.' || name[i] == '/' ||
       	     name[i] == '[' || name[i] == '*' ||
       	     name[i] == '{') {
-      	    uvm_root_warning("UVM/RSRC/NOREGEX",
-      			     format("a resource with meta characters in the " ~
-      				    "field name has been created \"%s\"",name));
+      	    uvm_warning("UVM/RSRC/NOREGEX",
+			format("a resource with meta characters in the " ~
+			       "field name has been created \"%s\"",name));
       	    break;
       	  }
       	}
@@ -1638,7 +1638,7 @@ class uvm_resource (T=int): uvm_resource_base
       if(rpterr) {
 	string msg = format("Resource with name %s in scope %s has incorrect type",
 			    name, rscope);
-	uvm_root_warning("RSRCTYPE", msg);
+	uvm_warning("RSRCTYPE", msg);
       }
       return null;
     }
@@ -1667,7 +1667,7 @@ class uvm_resource (T=int): uvm_resource_base
     if(rsrc is null) {
       string msg = format("Resource with specified type handle in" ~
 			  " scope %s was not located", rscope);
-      uvm_root_warning("RSRCNF", msg);
+      uvm_warning("RSRCNF", msg);
       return null;
     }
 

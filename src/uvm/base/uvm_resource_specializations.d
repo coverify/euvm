@@ -58,7 +58,7 @@ mixin template UVM_RESOURCE_GET_FCNS(base_type)
       uvm_resource!base_type.get_by_name(rscope, name, rpterr);
     this_subtype t = cast(this_subtype) b;
     if(t is null) {
-      uvm_root_fatal("BADCAST", "cannot cast resource to resource subtype");
+      uvm_fatal("BADCAST", "cannot cast resource to resource subtype");
     }
     return t;
   }
@@ -69,7 +69,7 @@ mixin template UVM_RESOURCE_GET_FCNS(base_type)
       uvm_resource!base_type.get_by_type(rscope, type_handle);
     this_subtype t = cast(this_subtype) b;
     if(t is null) {
-      uvm_root_fatal("BADCAST", "cannot cast resource to resource subtype");
+      uvm_fatal("BADCAST", "cannot cast resource to resource subtype");
     }
     return t;
   }

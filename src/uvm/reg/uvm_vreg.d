@@ -130,14 +130,14 @@ class uvm_vreg: uvm_object
       super(name);
 
       if (n_bits == 0) {
-	uvm_root_error("RegModel",
-		       format(q{Virtual register "%s" cannot have 0 bits},
+	uvm_error("RegModel",
+		  format(q{Virtual register "%s" cannot have 0 bits},
 			 this.get_full_name()));
 	n_bits = 1;
       }
       if (n_bits > UVM_REG_DATA_WIDTH) {
-	uvm_root_error("RegModel",
-		       format(q{Virtual register "%s" cannot have more} ~
+	uvm_error("RegModel",
+		  format(q{Virtual register "%s" cannot have more} ~
 			 " than %0d bits (%0d)", this.get_full_name(),
 			 UVM_REG_DATA_WIDTH, n_bits));
 	n_bits = UVM_REG_DATA_WIDTH;
@@ -245,7 +245,7 @@ class uvm_vreg: uvm_object
       uvm_mem_region region;
 
       if(n < 1) {
-	uvm_root_error("RegModel", format("Attempting to implement virtual" ~
+	uvm_error("RegModel", format("Attempting to implement virtual" ~
 				     " register \"%s\" with a subscript" ~
 				     " less than one doesn't make sense",
 				     this.get_full_name()));
@@ -253,7 +253,7 @@ class uvm_vreg: uvm_object
       }
 
       if (mem is null) {
-	uvm_root_error("RegModel", format("Attempting to implement virtual" ~
+	uvm_error("RegModel", format("Attempting to implement virtual" ~
 				     " register \"%s\" using a NULL uvm_mem" ~
 				     " reference",
 				     this.get_full_name()));
@@ -261,14 +261,14 @@ class uvm_vreg: uvm_object
       }
 
       if (this.is_static) {
-	uvm_root_error("RegModel", format("Virtual register \"%s\" is static" ~
+	uvm_error("RegModel", format("Virtual register \"%s\" is static" ~
 				     " and cannot be dynamically implemented",
 				     this.get_full_name()));
 	return false;
       }
 
       if (mem.get_block() !is this.parent) {
-	uvm_root_error("RegModel", format("Attempting to implement virtual" ~
+	uvm_error("RegModel", format("Attempting to implement virtual" ~
 				     " register \"%s\" on memory \"%s\"" ~
 				     " in a different block",
 				     this.get_full_name(),
@@ -279,7 +279,7 @@ class uvm_vreg: uvm_object
       int min_incr = (this.get_n_bytes()-1) / mem.get_n_bytes() + 1;
       if (incr == 0) incr = min_incr;
       if (min_incr > incr) {
-	uvm_root_error("RegModel", format("Virtual register \"%s\" increment" ~
+	uvm_error("RegModel", format("Virtual register \"%s\" increment" ~
 				     " is too small (%0d): Each virtual" ~
 				     " register requires at least %0d" ~
 				     " locations in memory \"%s\".",
@@ -290,7 +290,7 @@ class uvm_vreg: uvm_object
 
       // Is the memory big enough for ya?
       if (offset + (n * incr) > mem.get_size()) {
-	uvm_root_error("RegModel", format("Given Offset for Virtual register" ~
+	uvm_error("RegModel", format("Given Offset for Virtual register" ~
 				     " \"%s[%0d]\" is too big for memory" ~
 				     " %s@'h%0h",
 				     this.get_full_name(), n,
@@ -301,14 +301,14 @@ class uvm_vreg: uvm_object
       region = mem.mam.reserve_region(offset, n*incr*mem.get_n_bytes());
 
       if (region is null) {
-	uvm_root_error("RegModel", format("Could not allocate a memory region" ~
+	uvm_error("RegModel", format("Could not allocate a memory region" ~
 				     " for virtual register \"%s\"",
 				     this.get_full_name()));
 	return false;
       }
 
       if (this.mem !is null) {
-	uvm_root_info("RegModel", format("Virtual register \"%s\" is being moved" ~
+	uvm_info("RegModel", format("Virtual register \"%s\" is being moved" ~
 				    " re-implemented from %s@'h%0h to %s@'h%0h",
 				    this.get_full_name(),
 				    this.mem.get_full_name(),
@@ -361,7 +361,7 @@ class uvm_vreg: uvm_object
 
       if(n < 1) {
 
-	uvm_root_error("RegModel", format("Attempting to implement virtual" ~
+	uvm_error("RegModel", format("Attempting to implement virtual" ~
 				     " register \"%s\" with a subscript" ~
 				     " less than one doesn't make sense",
 				     this.get_full_name()));
@@ -369,7 +369,7 @@ class uvm_vreg: uvm_object
       }
 
       if (mam is null) {
-	uvm_root_error("RegModel", format("Attempting to implement virtual" ~
+	uvm_error("RegModel", format("Attempting to implement virtual" ~
 				     " register \"%s\" using a NULL" ~
 				     " uvm_mem_mam reference",
 				     this.get_full_name()));
@@ -377,7 +377,7 @@ class uvm_vreg: uvm_object
       }
 
       if (this.is_static) {
-	uvm_root_error("RegModel", format("Virtual register \"%s\" is static" ~
+	uvm_error("RegModel", format("Virtual register \"%s\" is static" ~
 				     " and cannot be dynamically allocated",
 				     this.get_full_name()));
 	return null;
@@ -385,7 +385,7 @@ class uvm_vreg: uvm_object
 
       mem = mam.get_memory();
       if (mem.get_block() !is this.parent) {
-	uvm_root_error("RegModel", format("Attempting to allocate virtual" ~
+	uvm_error("RegModel", format("Attempting to allocate virtual" ~
 				     " register \"%s\" on memory \"%s\"" ~
 				     " in a different block",
 				     this.get_full_name(),
@@ -396,7 +396,7 @@ class uvm_vreg: uvm_object
       int min_incr = (this.get_n_bytes()-1) / mem.get_n_bytes() + 1;
       if (incr == 0) incr = min_incr;
       if (min_incr < incr) {
-	uvm_root_error("RegModel", format("Virtual register \"%s\" increment" ~
+	uvm_error("RegModel", format("Virtual register \"%s\" increment" ~
 				     " is too small (%0d): Each virtual" ~
 				     " register requires at least %0d" ~
 				     " locations in memory \"%s\".",
@@ -408,14 +408,14 @@ class uvm_vreg: uvm_object
       // Need memory at least of size num_vregs*sizeof(vreg) in bytes.
       allocate_ = mam.request_region(n*incr*mem.get_n_bytes());
       if (allocate_ is null) {
-	uvm_root_error("RegModel", format("Could not allocate a memory region" ~
+	uvm_error("RegModel", format("Could not allocate a memory region" ~
 				     " for virtual register \"%s\"",
 				     this.get_full_name()));
 	return null;
       }
 
       if (this.mem !is null) {
-	uvm_root_info("RegModel", format("Virtual register \"%s\" is being moved" ~
+	uvm_info("RegModel", format("Virtual register \"%s\" is being moved" ~
 				    " re-allocated from %s@'h%0h to %s@'h%0h",
 				    this.get_full_name(),
 				    this.mem.get_full_name(),
@@ -478,7 +478,7 @@ class uvm_vreg: uvm_object
   void release_region() {
     synchronized(this) {
       if (this.is_static) {
-	uvm_root_error("RegModel", format("Virtual register \"%s\" is static" ~
+	uvm_error("RegModel", format("Virtual register \"%s\" is static" ~
 				     " and cannot be dynamically released",
 				     this.get_full_name()));
 	return;
@@ -525,14 +525,14 @@ class uvm_vreg: uvm_object
   void add_field(uvm_vreg_field field) {
     synchronized(this) {
       if (this.locked) {
-	uvm_root_error("RegModel", "Cannot add virtual field to locked virtual" ~
+	uvm_error("RegModel", "Cannot add virtual field to locked virtual" ~
 		  " register model");
 	return;
       }
 
       if (field is null) {
-	uvm_root_fatal("RegModel", "Attempting to register NULL" ~
-		       " virtual field");
+	uvm_fatal("RegModel", "Attempting to register NULL" ~
+		  " virtual field");
       }
 
       // Store fields in LSB to MSB order
@@ -557,7 +557,7 @@ class uvm_vreg: uvm_object
 
       // Check if there are too many fields in the register
       if (this.n_used_bits > this.n_bits) {
-	uvm_root_error("RegModel", format("Virtual fields use more bits (%0d)" ~
+	uvm_error("RegModel", format("Virtual fields use more bits (%0d)" ~
 				     " than available in virtual register" ~
 				     " \"%s\" (%0d)",
 				     this.n_used_bits, this.get_full_name(),
@@ -568,7 +568,7 @@ class uvm_vreg: uvm_object
       if (idx > 0) {
 	if (this.fields[idx-1].get_lsb_pos_in_register() +
 	    this.fields[idx-1].get_n_bits() > offset) {
-	  uvm_root_error("RegModel", format("Field %s overlaps field %s in virtual" ~
+	  uvm_error("RegModel", format("Field %s overlaps field %s in virtual" ~
 				       " register \"%s\"",
 				       this.fields[idx-1].get_name(),
 				       field.get_name(),
@@ -579,7 +579,7 @@ class uvm_vreg: uvm_object
       if (idx < this.fields.length-1) {
 	if (offset + field.get_n_bits() >
 	    this.fields[idx+1].get_lsb_pos_in_register()) {
-	  uvm_root_error("RegModel", format("Field %s overlaps field %s in virtual" ~
+	  uvm_error("RegModel", format("Field %s overlaps field %s in virtual" ~
 				       " register \"%s\"",
 				       field.get_name(),
 				       this.fields[idx+1].get_name(),
@@ -679,7 +679,7 @@ class uvm_vreg: uvm_object
   int get_n_maps() {
     synchronized(this) {
       if (this.mem is null) {
-	uvm_root_error("RegModel", format("Cannot call get_n_maps() on" ~
+	uvm_error("RegModel", format("Cannot call get_n_maps() on" ~
 				     " unimplemented virtual register \"%s\"",
 				     this.get_full_name()));
 	return 0;
@@ -697,7 +697,7 @@ class uvm_vreg: uvm_object
   bool is_in_map(uvm_reg_map map) {
     synchronized(this) {
       if (this.mem is null) {
-	uvm_root_error("RegModel", format("Cannot call is_in_map() on" ~
+	uvm_error("RegModel", format("Cannot call is_in_map() on" ~
 				     " unimplemented virtual register \"%s\"",
 				     this.get_full_name()));
 	return false;
@@ -716,7 +716,7 @@ class uvm_vreg: uvm_object
   void get_maps(ref uvm_reg_map[] maps) {
     synchronized(this) {
       if (this.mem is null) {
-	uvm_root_error("RegModel", format("Cannot call get_maps() on" ~
+	uvm_error("RegModel", format("Cannot call get_maps() on" ~
 				     " unimplemented virtual register \"%s\"",
 				     this.get_full_name()));
 	return;
@@ -749,7 +749,7 @@ class uvm_vreg: uvm_object
   string get_rights(uvm_reg_map map = null) {
     synchronized(this) {
       if (this.mem is null) {
-	uvm_root_error("RegModel", format("Cannot call get_rights() on" ~
+	uvm_error("RegModel", format("Cannot call get_rights() on" ~
 				     " unimplemented virtual register \"%s\"",
 				     this.get_full_name()));
 	return "RW";
@@ -778,7 +778,7 @@ class uvm_vreg: uvm_object
   string get_access(uvm_reg_map map = null) {
     synchronized(this) {
       if (this.mem is null) {
-	uvm_root_error("RegModel", format("Cannot call get_rights() on" ~
+	uvm_error("RegModel", format("Cannot call get_rights() on" ~
 				     " unimplemented virtual register \"%s\"",
 				     this.get_full_name()));
 	return "RW";
@@ -796,7 +796,7 @@ class uvm_vreg: uvm_object
   uint get_size() {
     synchronized(this) {
       if (this.size == 0) {
-	uvm_root_error("RegModel", format("Cannot call get_size() on" ~
+	uvm_error("RegModel", format("Cannot call get_size() on" ~
 				     " unimplemented virtual register \"%s\"",
 				     this.get_full_name()));
 	return 0;
@@ -834,7 +834,7 @@ class uvm_vreg: uvm_object
   uint get_n_memlocs() {
     synchronized(this) {
       if (this.mem is null) {
-	uvm_root_error("RegModel", format("Cannot call get_n_memlocs() on" ~
+	uvm_error("RegModel", format("Cannot call get_n_memlocs() on" ~
 				     " unimplemented virtual register \"%s\"",
 				     this.get_full_name()));
 	return 0;
@@ -854,7 +854,7 @@ class uvm_vreg: uvm_object
   uint get_incr() {
     synchronized(this) {
       if (this.incr == 0) {
-	uvm_root_error("RegModel", format("Cannot call get_incr() on" ~
+	uvm_error("RegModel", format("Cannot call get_incr() on" ~
 				     " unimplemented virtual register \"%s\"",
 				     this.get_full_name()));
 	return 0;
@@ -901,9 +901,9 @@ class uvm_vreg: uvm_object
 	  return field;
 	}
       }
-      uvm_root_warning("RegModel", format("Unable to locate field \"%s\" in" ~
-					  " virtual register \"%s\".",
-					  name, this.get_full_name()));
+      uvm_warning("RegModel", format("Unable to locate field \"%s\" in" ~
+				     " virtual register \"%s\".",
+				     name, this.get_full_name()));
       return null;
     }
   }
@@ -921,7 +921,7 @@ class uvm_vreg: uvm_object
   uvm_reg_addr_t get_offset_in_memory(ulong idx) {
     synchronized(this) {
       if (this.mem is null) {
-	uvm_root_error("RegModel", format("Cannot call get_offset_in_memory() on" ~
+	uvm_error("RegModel", format("Cannot call get_offset_in_memory() on" ~
 				     " unimplemented virtual register \"%s\"",
 				     this.get_full_name()));
 	return UBit!64(0);
@@ -955,7 +955,7 @@ class uvm_vreg: uvm_object
 			     uvm_reg_map map = null) {
     synchronized(this) {
       if (this.mem is null) {
-	uvm_root_error("RegModel", format("Cannot get address of of unimplemented" ~
+	uvm_error("RegModel", format("Cannot get address of of unimplemented" ~
 				     " virtual register \"%s\".",
 				     this.get_full_name()));
 	return UBit!64(0);
@@ -1019,7 +1019,7 @@ class uvm_vreg: uvm_object
     this.fname = fname;
     this.lineno = lineno;
     if (this.mem is null) {
-      uvm_root_error("RegModel", format("Cannot write to unimplemented virtual" ~
+      uvm_error("RegModel", format("Cannot write to unimplemented virtual" ~
 				   " register \"%s\".", this.get_full_name()));
       status = UVM_NOT_OK;
       return;
@@ -1096,7 +1096,7 @@ class uvm_vreg: uvm_object
       value = (value & ~msk) | (tmp << lsb);
     }
 
-    uvm_root_info("RegModel", format("Wrote virtual register \"%s\"[%0d] via" ~
+    uvm_info("RegModel", format("Wrote virtual register \"%s\"[%0d] via" ~
 				" %s with: 'h%h",
 				this.get_full_name(), idx,
 				(path == UVM_FRONTDOOR) ? "frontdoor" : "backdoor",
@@ -1156,7 +1156,7 @@ class uvm_vreg: uvm_object
     this.lineno = lineno;
 
     if (this.mem is null) {
-      uvm_root_error("RegModel", format("Cannot read from unimplemented virtual" ~
+      uvm_error("RegModel", format("Cannot read from unimplemented virtual" ~
 				   " register \"%s\".", this.get_full_name()));
       status = UVM_NOT_OK;
       return;
@@ -1229,7 +1229,7 @@ class uvm_vreg: uvm_object
       value = (value & ~msk) | (tmp << lsb);
     }
 
-    uvm_root_info("RegModel",
+    uvm_info("RegModel",
 	     format("Read virtual register \"%s\"[%0d] via %s:" ~
 		    " 'h%h", this.get_full_name(), idx,
 		    (path == UVM_FRONTDOOR) ? "frontdoor" : "backdoor",
@@ -1272,7 +1272,7 @@ class uvm_vreg: uvm_object
     this.lineno = lineno;
 
     if (this.mem is null) {
-      uvm_root_error("RegModel", format("Cannot poke in unimplemented virtual" ~
+      uvm_error("RegModel", format("Cannot poke in unimplemented virtual" ~
 				   " register \"%s\".", this.get_full_name()));
       status = UVM_NOT_OK;
       return;
@@ -1296,7 +1296,7 @@ class uvm_vreg: uvm_object
       lsb += this.mem.get_n_bytes() * 8;
     }
 
-    uvm_root_info("RegModel", format("Poked virtual register \"%s\"[%0d] with: 'h%h",
+    uvm_info("RegModel", format("Poked virtual register \"%s\"[%0d] with: 'h%h",
 				this.get_full_name(), idx, value),UVM_MEDIUM);
     this.fname = "";
     this.lineno = 0;
@@ -1336,7 +1336,7 @@ class uvm_vreg: uvm_object
     this.lineno = lineno;
 
     if (this.mem is null) {
-      uvm_root_error("RegModel", format("Cannot peek in from unimplemented" ~
+      uvm_error("RegModel", format("Cannot peek in from unimplemented" ~
 				   " virtual register \"%s\".",
 				   this.get_full_name()));
       status = UVM_NOT_OK;
@@ -1362,7 +1362,7 @@ class uvm_vreg: uvm_object
       lsb += this.mem.get_n_bytes() * 8;
     }
 
-    uvm_root_info("RegModel", format("Peeked virtual register \"%s\"[%0d]: 'h%h",
+    uvm_info("RegModel", format("Peeked virtual register \"%s\"[%0d]: 'h%h",
 				this.get_full_name(), idx, value),UVM_MEDIUM);
 
     this.fname = "";

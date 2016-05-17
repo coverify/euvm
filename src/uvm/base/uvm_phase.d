@@ -436,16 +436,16 @@ class uvm_phase: uvm_object
     uvm_phase new_node, begin_node, end_node, tmp_node;
     uvm_phase_state_change state_chg;
     if(phase is null) {
-      uvm_root_fatal("PH/NULL", "add: phase argument is null");
+      uvm_fatal("PH/NULL", "add: phase argument is null");
     }
 
     if(with_phase !is null && with_phase.get_phase_type() == UVM_PHASE_IMP) {
       string nm = with_phase.get_name();
       with_phase = find(with_phase);
       if(with_phase is null) {
-	uvm_root_fatal("PH_BAD_ADD",
-		       "cannot find with_phase '" ~ nm ~ "' within node '" ~
-		       get_name() ~ "'");
+	uvm_fatal("PH_BAD_ADD",
+		  "cannot find with_phase '" ~ nm ~ "' within node '" ~
+		  get_name() ~ "'");
       }
     }
 
@@ -454,9 +454,9 @@ class uvm_phase: uvm_object
       string nm = before_phase.get_name();
       before_phase = find(before_phase);
       if(before_phase is null) {
-	uvm_root_fatal("PH_BAD_ADD",
-		       "cannot find before_phase '" ~ nm ~ "' within node '" ~
-		       get_name() ~ "'");
+	uvm_fatal("PH_BAD_ADD",
+		  "cannot find before_phase '" ~ nm ~ "' within node '" ~
+		  get_name() ~ "'");
       }
     }
 
@@ -465,24 +465,24 @@ class uvm_phase: uvm_object
       string nm = after_phase.get_name();
       after_phase = find(after_phase);
       if(after_phase is null) {
-	uvm_root_fatal("PH_BAD_ADD",
-		       "cannot find after_phase '" ~ nm ~ "' within node '" ~
-		       get_name() ~ "'");
+	uvm_fatal("PH_BAD_ADD",
+		  "cannot find after_phase '" ~ nm ~ "' within node '" ~
+		  get_name() ~ "'");
       }
     }
 
     if(with_phase !is null && (after_phase !is null ||
 			       before_phase !is null)) {
-      uvm_root_fatal("PH_BAD_ADD",
-		     "cannot specify both 'with' and 'before/after' "
-		     "phase relationships");
+      uvm_fatal("PH_BAD_ADD",
+		"cannot specify both 'with' and 'before/after' "
+		"phase relationships");
     }
 
     if(before_phase is this || after_phase is m_end_node ||
        with_phase is m_end_node) {
-      uvm_root_fatal("PH_BAD_ADD",
-		     "cannot add before { node, after end node, or "
-		     "with end nodes");
+      uvm_fatal("PH_BAD_ADD",
+		"cannot add before { node, after end node, or "
+		"with end nodes");
     }
 
     // If we are inserting a new "leaf node"
@@ -527,24 +527,24 @@ class uvm_phase: uvm_object
 
     if(m_phase_trace) {
       uvm_phase_type typ = phase.get_phase_type();
-      uvm_root_info("PH/TRC/ADD_PH",
-		    get_name() ~ " (" ~ m_phase_type.to!string ~
-		    ") ADD_PHASE: phase=" ~ phase.get_full_name() ~ " (" ~
-		    typ.to!string ~ ", inst_id=" ~
-		    format("%0d", phase.get_inst_id()) ~ ")" ~
-		    " with_phase=" ~   ((with_phase is null)   ? "null" :
-					with_phase.get_name()) ~
-		    " after_phase=" ~  ((after_phase is null)  ? "null" :
-					after_phase.get_name()) ~
-		    " before_phase=" ~ ((before_phase is null) ? "null" :
-					before_phase.get_name()) ~
-		    " new_node=" ~     ((new_node is null)     ? "null" :
-					(new_node.get_name() ~ " inst_id=",
-					 format("%0d", new_node.get_inst_id()))) ~
-		    " begin_node=" ~   ((begin_node is null)   ? "null" :
-					begin_node.get_name())  ~
-		    " end_node=" ~     ((end_node is null)     ? "null" :
-					end_node.get_name()), UVM_DEBUG);
+      uvm_info("PH/TRC/ADD_PH",
+	       get_name() ~ " (" ~ m_phase_type.to!string ~
+	       ") ADD_PHASE: phase=" ~ phase.get_full_name() ~ " (" ~
+	       typ.to!string ~ ", inst_id=" ~
+	       format("%0d", phase.get_inst_id()) ~ ")" ~
+	       " with_phase=" ~   ((with_phase is null)   ? "null" :
+				   with_phase.get_name()) ~
+	       " after_phase=" ~  ((after_phase is null)  ? "null" :
+				   after_phase.get_name()) ~
+	       " before_phase=" ~ ((before_phase is null) ? "null" :
+				   before_phase.get_name()) ~
+	       " new_node=" ~     ((new_node is null)     ? "null" :
+				   (new_node.get_name() ~ " inst_id=",
+				    format("%0d", new_node.get_inst_id()))) ~
+	       " begin_node=" ~   ((begin_node is null)   ? "null" :
+				   begin_node.get_name())  ~
+	       " end_node=" ~     ((end_node is null)     ? "null" :
+				   end_node.get_name()), UVM_DEBUG);
     }
 
 
@@ -600,8 +600,8 @@ class uvm_phase: uvm_object
     // IN BETWEEN 'BEFORE' and 'AFTER' PHASES
     else if(before_phase !is null && after_phase !is null) {
       if(!after_phase.is_before(before_phase)) {
-	uvm_root_fatal("PH_ADD_PHASE", "Phase '" ~ before_phase.get_name() ~
-		       "' is not before phase '" ~ after_phase.get_name() ~ "'");
+	uvm_fatal("PH_ADD_PHASE", "Phase '" ~ before_phase.get_name() ~
+		  "' is not before phase '" ~ after_phase.get_name() ~ "'");
       }
       // before and after? add 1 pred and 1 succ
       begin_node.add_predecessor(after_phase);
@@ -724,8 +724,8 @@ class uvm_phase: uvm_object
     }
     auto get_domain_ = cast(uvm_domain) phase;
     if(get_domain_ is null) {
-      uvm_root_fatal("PH/INTERNAL", "get_domain: m_phase_type is DOMAIN but "
-		     "$cast to uvm_domain fails");
+      uvm_fatal("PH/INTERNAL", "get_domain: m_phase_type is DOMAIN but "
+		"$cast to uvm_domain fails");
     }
     return get_domain_;
   }
@@ -866,14 +866,14 @@ class uvm_phase: uvm_object
 	" schedule to find the UVM_PHASE_NODE)";
     }
    
-    uvm_root_error("UVM/PH/NULL_OBJECTION",
-		   format("'%s' attempted to %s on '%s', however '%s' is" ~
-			  " not a task-based phase node! %s",
-			  m_obj_name,
-			  m_action,
-			  get_name(),
-			  get_name(),
-			  m_addon));
+    uvm_error("UVM/PH/NULL_OBJECTION",
+	      format("'%s' attempted to %s on '%s', however '%s' is" ~
+		     " not a task-based phase node! %s",
+		     m_obj_name,
+		     m_action,
+		     get_name(),
+		     get_name(),
+		     m_addon));
   }
                         
    
@@ -991,19 +991,19 @@ class uvm_phase: uvm_object
 		  uvm_phase phase = null,
 		  uvm_phase with_phase = null) {
     if(!this.is_domain()) {
-      uvm_root_fatal("PH_BADSYNC","sync() called from a non-domain phase "
-		     "schedule node");
+      uvm_fatal("PH_BADSYNC","sync() called from a non-domain phase "
+		"schedule node");
     }
     else if(target is null) {
-      uvm_root_fatal("PH_BADSYNC","sync() called with a null target domain");
+      uvm_fatal("PH_BADSYNC","sync() called with a null target domain");
     }
     else if(!target.is_domain()) {
-      uvm_root_fatal("PH_BADSYNC","sync() called with a non-domain phase "
-		     "schedule node as target");
+      uvm_fatal("PH_BADSYNC","sync() called with a non-domain phase "
+		"schedule node as target");
     }
     else if(phase is null && with_phase !is null) {
-      uvm_root_fatal("PH_BADSYNC","sync() called with null phase and non-null "
-		     "with phase");
+      uvm_fatal("PH_BADSYNC","sync() called with null phase and non-null "
+		"with phase");
     }
     else if(phase is null) {
       // whole domain sync - traverse this domain schedule from begin to end node and sync each node
@@ -1054,19 +1054,19 @@ class uvm_phase: uvm_object
 		    uvm_phase phase = null,
 		    uvm_phase with_phase = null) {
     if(!this.is_domain()) {
-      uvm_root_fatal("PH_BADSYNC","unsync() called from a non-domain phase "
-		     "schedule node");
+      uvm_fatal("PH_BADSYNC","unsync() called from a non-domain phase "
+		"schedule node");
     }
     else if(target is null) {
-      uvm_root_fatal("PH_BADSYNC","unsync() called with a null target domain");
+      uvm_fatal("PH_BADSYNC","unsync() called with a null target domain");
     }
     else if(!target.is_domain()) {
-      uvm_root_fatal("PH_BADSYNC","unsync() called with a non-domain phase "
-		     "schedule node as target");
+      uvm_fatal("PH_BADSYNC","unsync() called with a non-domain phase "
+		"schedule node as target");
     }
     else if(phase is null && with_phase !is null) {
-      uvm_root_fatal("PH_BADSYNC","unsync() called with null phase and non-null "
-		     "with phase");
+      uvm_fatal("PH_BADSYNC","unsync() called with null phase and non-null "
+		"with phase");
     }
     else if(phase is null) {
       // whole domain unsync - traverse this domain schedule from begin to end node and unsync each node
@@ -1213,10 +1213,10 @@ class uvm_phase: uvm_object
     if((m_state.get <  UVM_PHASE_STARTED) ||
        (m_state.get >  UVM_PHASE_ENDED) )
       {
-	uvm_root_error("JMPPHIDL", "Attempting to jump from phase \"" ~
-		       get_name() ~  "\" which is not currently active "
-		       "(current state is " ~ m_state.get.to!string ~  "). The "
-		       "jump will not happen until the phase becomes active.");
+	uvm_error("JMPPHIDL", "Attempting to jump from phase \"" ~
+		  get_name() ~  "\" which is not currently active "
+		  "(current state is " ~ m_state.get.to!string ~  "). The "
+		  "jump will not happen until the phase becomes active.");
       }
 
     // A jump can be either forward or backwards in the phase graph.
@@ -1235,23 +1235,23 @@ class uvm_phase: uvm_object
     if(d is null) {
       d = m_find_successor(phase, false);
       if(d is null) {
-	uvm_root_fatal("PH_BADJUMP",
-		       format("phase %s is neither a predecessor or "
-			      "successor of phase %s or is non-existant, "
-			      "so we cannot jump to it. Phase control "
-			      "flow is now undefined so the simulation "
-			      "must terminate", phase.get_name(), get_name()));
+	uvm_fatal("PH_BADJUMP",
+		  format("phase %s is neither a predecessor or "
+			 "successor of phase %s or is non-existant, "
+			 "so we cannot jump to it. Phase control "
+			 "flow is now undefined so the simulation "
+			 "must terminate", phase.get_name(), get_name()));
       }
       else {
 	m_jump_fwd = true;
-	uvm_root_info("PH_JUMPF", format("jumping forward to phase %s",
-					 phase.get_name()), UVM_DEBUG);
+	uvm_info("PH_JUMPF", format("jumping forward to phase %s",
+				    phase.get_name()), UVM_DEBUG);
       }
     }
     else {
       m_jump_bkwd = true;
-      uvm_root_info("PH_JUMPB", format("jumping backward to phase %s",
-				       phase.get_name()), UVM_DEBUG);
+      uvm_info("PH_JUMPB", format("jumping backward to phase %s",
+				  phase.get_name()), UVM_DEBUG);
     }
 
     m_jump_phase = d;
@@ -1281,8 +1281,8 @@ class uvm_phase: uvm_object
   // i.e. a global jump.
   //
   final void jump_all(uvm_phase phase) {
-    uvm_root_warning("NOTIMPL","uvm_phase.jump_all is not implemented and "
-		     "has been replaced by uvm_domain.jump_all");
+    uvm_warning("NOTIMPL","uvm_phase.jump_all is not implemented and "
+		"has been replaced by uvm_domain.jump_all");
   }
 
   // Function: get_jump_target
@@ -1452,10 +1452,10 @@ class uvm_phase: uvm_object
     if(m_phase_type is UVM_PHASE_DOMAIN) {
       level = 0;
     }
-    uvm_root_info("UVM/PHASE/SUCC",
-		  format("%s%s (%s) id=%0d", spaces[0..level*2+1],
-			 get_name(), m_phase_type, get_inst_id()),
-		  UVM_NONE);
+    uvm_info("UVM/PHASE/SUCC",
+	     format("%s%s (%s) id=%0d", spaces[0..level*2+1],
+		    get_name(), m_phase_type, get_inst_id()),
+	     UVM_NONE);
     ++level;
     foreach(succ; get_successors()) {
       succ.m_print_successors();
@@ -2006,10 +2006,10 @@ class uvm_phase: uvm_object
 		  }
 		}
 
-		uvm_root_fatal("PH_TIMEOUT",
-			       format("Default timeout of %s hit, indicating "
-				      "a probable testbench issue",
-				      root.phase_sim_timeout));
+		uvm_fatal("PH_TIMEOUT",
+			  format("Default timeout of %s hit, indicating "
+				 "a probable testbench issue",
+				 root.phase_sim_timeout));
 	      }
 	      else {
 		if(m_phase_trace) {
@@ -2029,10 +2029,10 @@ class uvm_phase: uvm_object
 		  }
 		}
 
-		uvm_root_fatal("PH_TIMEOUT",
-			       format("Explicit timeout of %0s hit, indicating "
-				      "a probable testbench issue",
-				      top.phase_timeout));
+		uvm_fatal("PH_TIMEOUT",
+			  format("Explicit timeout of %0s hit, indicating "
+				 "a probable testbench issue",
+				 top.phase_timeout));
 	      }
 	      if(m_phase_trace)
 		UVM_PH_TRACE("PH/TRC/EXE/3","PHASE EXIT TIMEOUT",
@@ -2071,19 +2071,19 @@ class uvm_phase: uvm_object
 	if(m_jump_phase !is null) {
 	  state_chg.m_jump_to = m_jump_phase;
 
-	  uvm_root_info("PH_JUMP",
-			format("phase %s (schedule %s, domain %s) is "
-			       "jumping to phase %s", get_name(),
-			       get_schedule_name(), get_domain_name(),
-			       m_jump_phase.get_name()),
-			UVM_MEDIUM);
+	  uvm_info("PH_JUMP",
+		   format("phase %s (schedule %s, domain %s) is "
+			  "jumping to phase %s", get_name(),
+			  get_schedule_name(), get_domain_name(),
+			  m_jump_phase.get_name()),
+		   UVM_MEDIUM);
 
 	}
 	else {
-	  uvm_root_info("PH_JUMP",
-			format("phase %s (schedule %s, domain %s) is ending" ~
-			       " prematurely", get_name(), get_schedule_name(),
-			       get_domain_name()), UVM_MEDIUM);
+	  uvm_info("PH_JUMP",
+		   format("phase %s (schedule %s, domain %s) is ending" ~
+			  " prematurely", get_name(), get_schedule_name(),
+			  get_domain_name()), UVM_MEDIUM);
 	}
 	wait(0); // #0; // LET ANY WAITERS ON READY_TO_END TO WAKE UP
 
@@ -2235,16 +2235,16 @@ class uvm_phase: uvm_object
       uvm_coreservice_t cs = uvm_coreservice_t.get();
       uvm_root top = cs.get_root();
       if(phase_done !is null) {
-	uvm_root_info("PH_TERMSTATE",
-		      format("phase %s outstanding objections = %0d",
-			     get_name(), phase_done.get_objection_total(top)),
-		      UVM_DEBUG);
+	uvm_info("PH_TERMSTATE",
+		 format("phase %s outstanding objections = %0d",
+			get_name(), phase_done.get_objection_total(top)),
+		 UVM_DEBUG);
       }
       else {
-	uvm_root_info("PH_TERMSTATE",
-		      format("phase %s has no outstanding objections",
-			     get_name()),
-		      UVM_DEBUG);
+	uvm_info("PH_TERMSTATE",
+		 format("phase %s has no outstanding objections",
+			get_name()),
+		 UVM_DEBUG);
       }
     }
   }
@@ -2293,7 +2293,7 @@ class uvm_phase: uvm_object
 
   final void kill() {
     synchronized(this) {
-      uvm_root_info("PH_KILL", "killing phase '" ~ get_name() ~ "'", UVM_DEBUG);
+      uvm_info("PH_KILL", "killing phase '" ~ get_name() ~ "'", UVM_DEBUG);
 
       if(_m_phase_proc !is null) {
 	_m_phase_proc.abort();
@@ -2504,7 +2504,7 @@ void UVM_PH_TRACE(string file=__FILE__,
 		  size_t line=__LINE__)(string ID, string MSG,
 					uvm_phase PH,
 					uvm_verbosity VERB) {
-  uvm_root_info!(file, line)(ID, format("Phase '%0s' (id=%0d) ",
-					PH.get_full_name(), PH.get_inst_id()) ~
-			     MSG, VERB);
+  uvm_info!(file, line)(ID, format("Phase '%0s' (id=%0d) ",
+				   PH.get_full_name(), PH.get_inst_id()) ~
+			MSG, VERB);
 }

@@ -207,7 +207,7 @@ abstract class uvm_reg_block: uvm_object
 
       uvm_reg_addr_t base_addr_ = base_addr;
       if (this._locked) {
-	uvm_root_error("RegModel", "Cannot add map to locked model");
+	uvm_error("RegModel", "Cannot add map to locked model");
 	return null;
       }
 
@@ -316,11 +316,11 @@ abstract class uvm_reg_block: uvm_object
   final void add_block (uvm_reg_block blk) {
     synchronized(this) {
       if (this.is_locked()) {
-	uvm_root_error("RegModel", "Cannot add subblock to locked block model");
+	uvm_error("RegModel", "Cannot add subblock to locked block model");
 	return;
       }
       if (blk in this._blks) {
-	uvm_root_error("RegModel", "Subblock '" ~ blk.get_name() ~ 
+	uvm_error("RegModel", "Subblock '" ~ blk.get_name() ~ 
 		  "' has already been registered with block '" ~ get_name() ~ "'");
 	return;
       }
@@ -335,12 +335,12 @@ abstract class uvm_reg_block: uvm_object
   final void add_map(uvm_reg_map map) {
     synchronized(this) {
       if (this._locked) {
-	uvm_root_error("RegModel", "Cannot add map to locked model");
+	uvm_error("RegModel", "Cannot add map to locked model");
 	return;
       }
 
       if (map in this._maps) {
-	uvm_root_error("RegModel", "Map '" ~ map.get_name() ~ 
+	uvm_error("RegModel", "Map '" ~ map.get_name() ~ 
 		  "' already exists in '" ~ get_full_name() ~ "'");
 	return;
       }
@@ -359,12 +359,12 @@ abstract class uvm_reg_block: uvm_object
   final void add_reg(uvm_reg rg) {
     synchronized(this) {
       if (this.is_locked()) {
-	uvm_root_error("RegModel", "Cannot add register to locked block model");
+	uvm_error("RegModel", "Cannot add register to locked block model");
 	return;
       }
 
       if (rg in this._regs) {
-	uvm_root_error("RegModel", "Register '" ~ rg.get_name() ~ 
+	uvm_error("RegModel", "Register '" ~ rg.get_name() ~ 
 		  "' has already been registered with block '" ~ get_name() ~ "'");
 	return;
       }
@@ -380,12 +380,12 @@ abstract class uvm_reg_block: uvm_object
   final void add_vreg(uvm_vreg vreg) {
     synchronized(this) {
       if (this.is_locked()) {
-	uvm_root_error("RegModel", "Cannot add virtual register to locked block model");
+	uvm_error("RegModel", "Cannot add virtual register to locked block model");
 	return;
       }
 
       if (vreg in this._vregs) {
-	uvm_root_error("RegModel", "Virtual register '" ~ vreg.get_name() ~ 
+	uvm_error("RegModel", "Virtual register '" ~ vreg.get_name() ~ 
 		  "' has already been registered with block '" ~ get_name() ~ "'");
 	return;
       }
@@ -400,12 +400,12 @@ abstract class uvm_reg_block: uvm_object
   void add_mem(uvm_mem mem) {
     synchronized(this) {
       if (this.is_locked()) {
-	uvm_root_error("RegModel", "Cannot add memory to locked block model");
+	uvm_error("RegModel", "Cannot add memory to locked block model");
 	return;
       }
 
       if (mem in this._mems) {
-	uvm_root_error("RegModel", "Memory '" ~ mem.get_name() ~ 
+	uvm_error("RegModel", "Memory '" ~ mem.get_name() ~ 
 		  "' has already been registered with block '" ~ get_name() ~ "'");
 	return;
       }
@@ -490,7 +490,7 @@ abstract class uvm_reg_block: uvm_object
 	  }
 
 	  if (n > 1) {
-            uvm_root_error("UVM/REG/DUPLROOT",
+            uvm_error("UVM/REG/DUPLROOT",
 		      format("There are %0d root register models named \"%s\". The names of the root register models have to be unique",
 			     n, get_name()));
 	      }
@@ -1565,7 +1565,7 @@ abstract class uvm_reg_block: uvm_object
       if (rg.needs_update()) {
 	rg.update(status, path, null, parent, prior, extension);
 	if (status != UVM_IS_OK && status != UVM_HAS_X) {
-	  uvm_root_error("RegModel", format("Register \"%s\" could not be updated",
+	  uvm_error("RegModel", format("Register \"%s\" could not be updated",
 				       rg.get_full_name()));
 	  return;
 	}
@@ -1994,7 +1994,7 @@ abstract class uvm_reg_block: uvm_object
 	kind = get_default_hdl_path();
 
       if (!has_hdl_path(kind)) {
-	uvm_root_error("RegModel",
+	uvm_error("RegModel",
 		  "Block does not have hdl path defined for abstraction '" ~
 		  kind ~ "'");
 	return;
@@ -2047,7 +2047,7 @@ abstract class uvm_reg_block: uvm_object
       }
 
       if (!has_hdl_path(kind)) {
-	uvm_root_error("RegModel",
+	uvm_error("RegModel",
 		  "Block does not have hdl path defined for abstraction '" ~
 		  kind ~ "'");
 	return;
@@ -2099,7 +2099,7 @@ abstract class uvm_reg_block: uvm_object
 
       if (kind == "") {
 	if (_parent is null) {
-	  uvm_root_error("RegModel", "Block has no parent. " ~
+	  uvm_error("RegModel", "Block has no parent. " ~
 		    "Must specify a valid HDL abstraction (kind)");
 	}
 	kind = _parent.get_default_hdl_path();

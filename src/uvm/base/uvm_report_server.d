@@ -136,7 +136,7 @@ class uvm_report_server: /*extends*/ uvm_object
       super.do_copy(rhs);
       uvm_report_server rhs_ = cast(uvm_report_server) rhs;
       if(rhs_ is null) {
-	uvm_root_error("UVM/REPORT/SERVER/RPTCOPY", "cannot copy to report_server from the given datatype");
+	uvm_error("UVM/REPORT/SERVER/RPTCOPY", "cannot copy to report_server from the given datatype");
       }
 
       uvm_severity[] sev_set;
@@ -926,7 +926,7 @@ class uvm_default_report_server: uvm_report_server
 	  q ~= format("[%s] %5d\n", l_id, l_count);
 	}
       }
-      uvm_root_info("UVM/REPORT/SERVER", q ,UVM_LOW);
+      uvm_info("UVM/REPORT/SERVER", q ,UVM_LOW);
     }
   }
 

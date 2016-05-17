@@ -158,7 +158,7 @@ class uvm_mem: uvm_object
       super(name);
       _m_locked = 0;
       if(n_bits is 0) {
-	uvm_root_error("RegModel", "Memory '" ~ get_full_name() ~ "' cannot have 0 bits");
+	uvm_error("RegModel", "Memory '" ~ get_full_name() ~ "' cannot have 0 bits");
 	n_bits = 1;
       }
       _m_size      = size;
@@ -206,12 +206,12 @@ class uvm_mem: uvm_object
 
     synchronized(this) {
       if (parent is null)
-	uvm_root_fatal("REG/NULL_PARENT", "configure: parent argument is null");
+	uvm_fatal("REG/NULL_PARENT", "configure: parent argument is null");
 
       _m_parent = parent;
 
       if (_m_access != "RW" && _m_access != "RO") {
-	uvm_root_error("RegModel", "Memory '" ~ get_full_name() ~ "' can only be RW or RO");
+	uvm_error("RegModel", "Memory '" ~ get_full_name() ~ "' can only be RW or RO");
 	_m_access = "RW";
       }
 
@@ -257,7 +257,7 @@ class uvm_mem: uvm_object
       uvm_reg_map orig_map = map;
 
       if (_m_maps.length > 1 && map is null) {
-	uvm_root_error("RegModel", "set_offset requires a non-null map when memory '" ~
+	uvm_error("RegModel", "set_offset requires a non-null map when memory '" ~
 		  get_full_name() ~ "' belongs to more than one map.");
 	return;
       }
@@ -466,7 +466,7 @@ class uvm_mem: uvm_object
 	  parent_map = parent_map.get_parent_map();
 	}
       }
-      uvm_root_warning("RegModel", 
+      uvm_warning("RegModel", 
 		  "Memory '" ~ get_full_name() ~ "' is not contained within map '" ~ map.get_full_name() ~ "'" ~
 		  (caller == "" ? "": " (called from " ~ caller ~ ")"));
       return null;
@@ -482,7 +482,7 @@ class uvm_mem: uvm_object
     synchronized(this) {
       // if mem is not associated with any may, return null
       if (_m_maps.length is 0) {
-	uvm_root_warning("RegModel", 
+	uvm_warning("RegModel", 
 		    "Memory '" ~ get_full_name() ~ "' is not registered with any map" ~
 		    (caller == "" ? "": " (called from " ~ caller ~ ")"));
 	return null;
@@ -587,24 +587,24 @@ class uvm_mem: uvm_object
       case "RO":
 	switch(retval) {
 	case "RW", "RO": retval = "RO"; break;
-	case "WO": uvm_root_error("RegModel", "WO memory '" ~ get_full_name() ~
+	case "WO": uvm_error("RegModel", "WO memory '" ~ get_full_name() ~
 			     "' restricted to RO in map '" ~ map.get_full_name() ~ "'");
 	  break;
-	default: uvm_root_error("RegModel", "Memory '" ~ get_full_name() ~
+	default: uvm_error("RegModel", "Memory '" ~ get_full_name() ~
 			   "' has invalid access mode, '" ~ retval ~ "'");
 	}
 	break;
       case "WO":
 	switch(retval) {
 	case "RW", "WO": retval = "WO"; break;
-	case "RO":    uvm_root_error("RegModel", "RO memory '" ~ get_full_name() ~
+	case "RO":    uvm_error("RegModel", "RO memory '" ~ get_full_name() ~
 				"' restricted to WO in map '" ~
 				map.get_full_name() ~ "'");
-	default: uvm_root_error("RegModel", "Memory '" ~ get_full_name() ~
+	default: uvm_error("RegModel", "Memory '" ~ get_full_name() ~
 			   "' has invalid access mode, '" ~ retval ~ "'");
 	}
 	break;
-      default: uvm_root_error("RegModel", "Shared memory '" ~ get_full_name() ~
+      default: uvm_error("RegModel", "Shared memory '" ~ get_full_name() ~
 			 "' is not shared in map '" ~ map.get_full_name() ~ "'");
       }
       return retval;
@@ -730,7 +730,7 @@ class uvm_mem: uvm_object
 	  return vreg;
 	}
       }
-      uvm_root_warning("RegModel", "Unable to find virtual register '" ~ name ~
+      uvm_warning("RegModel", "Unable to find virtual register '" ~ name ~
 		  "' in memory '" ~ get_full_name() ~ "'");
       return null;
     }
@@ -760,7 +760,7 @@ class uvm_mem: uvm_object
 	}
       }
 
-      uvm_root_warning("RegModel", "Unable to find virtual field '" ~ name ~
+      uvm_warning("RegModel", "Unable to find virtual field '" ~ name ~
 		  "' in memory '" ~ get_full_name() ~ "'");
       return null;
     }
@@ -781,7 +781,7 @@ class uvm_mem: uvm_object
 
   uvm_vreg get_vreg_by_offset(uvm_reg_addr_t offset,
 				     uvm_reg_map map = null) {
-    uvm_root_error("RegModel", "uvm_mem::get_vreg_by_offset() not yet implemented");
+    uvm_error("RegModel", "uvm_mem::get_vreg_by_offset() not yet implemented");
     return null;
   }
    
@@ -820,7 +820,7 @@ class uvm_mem: uvm_object
       map_info = map.get_mem_map_info(this);
    
       if (map_info.unmapped) {
-	uvm_root_warning("RegModel", "Memory '" ~ get_name() ~
+	uvm_warning("RegModel", "Memory '" ~ get_name() ~
 		    "' is unmapped in map '" ~
 		    ((orig_map is null) ? map.get_full_name() : orig_map.get_full_name()) ~ "'");
 	return uvm_reg_addr_t(-1);
@@ -900,9 +900,9 @@ class uvm_mem: uvm_object
       map_info = map.get_mem_map_info(this);
 
       if (map_info.unmapped) {
-	uvm_root_warning("RegModel", "Memory '" ~ get_name() ~
-			 "' is unmapped in map '" ~
-			 ((orig_map is null) ? map.get_full_name() : orig_map.get_full_name()) ~ "'");
+	uvm_warning("RegModel", "Memory '" ~ get_name() ~
+		    "' is unmapped in map '" ~
+		    ((orig_map is null) ? map.get_full_name() : orig_map.get_full_name()) ~ "'");
 	return 0;
       }
 
@@ -1211,7 +1211,7 @@ class uvm_mem: uvm_object
       _m_lineno = lineno;
 
       if (bkdr is null && !has_hdl_path(kind)) {
-	uvm_root_error("RegModel", "No backdoor access available in memory '" ~
+	uvm_error("RegModel", "No backdoor access available in memory '" ~
 		  get_full_name() ~ "'");
 	status = UVM_NOT_OK;
 	return;
@@ -1246,7 +1246,7 @@ class uvm_mem: uvm_object
       status = rw.status;
     }
 
-    uvm_root_info("RegModel", format("Poked memory '%s[%0d]' with value 'h%h",
+    uvm_info("RegModel", format("Poked memory '%s[%0d]' with value 'h%h",
 				get_full_name(), offset, value), UVM_HIGH);
   }
 
@@ -1290,7 +1290,7 @@ class uvm_mem: uvm_object
       _m_lineno = lineno;
 
       if (bkdr is null && !has_hdl_path(kind)) {
-	uvm_root_error("RegModel", "No backdoor access available in memory '" ~
+	uvm_error("RegModel", "No backdoor access available in memory '" ~
 		  get_full_name() ~ "'");
 	status = UVM_NOT_OK;
 	return;
@@ -1325,7 +1325,7 @@ class uvm_mem: uvm_object
       value  = rw.get_value(0);
     }
 
-    uvm_root_info("RegModel", format("Peeked memory '%s[%0d]' has value 'h%h",
+    uvm_info("RegModel", format("Peeked memory '%s[%0d]' has value 'h%h",
 				get_full_name(), offset, value), UVM_HIGH);
   }
 
@@ -1348,7 +1348,7 @@ class uvm_mem: uvm_object
 
     synchronized(rw) {
       if (rw.offset >= size) {
-	uvm_root_error(get_type_name(), 
+	uvm_error(get_type_name(), 
 		  format("Offset 'h%0h exceeds size of memory, 'h%0h",
 			 rw.offset, size));
 	rw.status = UVM_NOT_OK;
@@ -1361,7 +1361,7 @@ class uvm_mem: uvm_object
 
       if (rw.path is UVM_BACKDOOR) {
 	if (get_backdoor() is null && !has_hdl_path()) {
-	  uvm_root_warning("RegModel",
+	  uvm_warning("RegModel",
 		      "No backdoor access available for memory '" ~ get_full_name() ~
 		      "' . Using frontdoor instead.");
 	  rw.path = UVM_FRONTDOOR;
@@ -1375,7 +1375,7 @@ class uvm_mem: uvm_object
 	rw.local_map = get_local_map(rw.map, caller);
 
 	if (rw.local_map is null) {
-	  uvm_root_error(get_type_name(), 
+	  uvm_error(get_type_name(), 
 		    "No transactor available to physically access memory from map '" ~
 		    rw.map.get_full_name() ~ "'");
 	  rw.status = UVM_NOT_OK;
@@ -1386,7 +1386,7 @@ class uvm_mem: uvm_object
 
 	if (map_info.frontdoor is null) {
 	  if (map_info.unmapped) {
-	    uvm_root_error("RegModel", "Memory '" ~ get_full_name() ~
+	    uvm_error("RegModel", "Memory '" ~ get_full_name() ~
 		      "' unmapped in map '" ~ rw.map.get_full_name() ~
 		      "' and does not have a user-defined frontdoor");
 	    rw.status = UVM_NOT_OK;
@@ -1396,7 +1396,7 @@ class uvm_mem: uvm_object
 	  // if ((rw.value.length > 1)) {
 	  if ((rw.num_values > 1)) {
 	    if (get_n_bits() > rw.local_map.get_n_bytes()*8) {
-	      uvm_root_error("RegModel",
+	      uvm_error("RegModel",
 			format("Cannot burst a %0d-bit memory through a narrower data path (%0d bytes)",
 			       get_n_bits(), rw.local_map.get_n_bytes()*8));
 	      rw.status = UVM_NOT_OK;
@@ -1404,7 +1404,7 @@ class uvm_mem: uvm_object
 	    }
 	    // if (rw.offset + rw.value.length > size) {
 	    if (rw.offset + rw.num_values > size) {
-	      uvm_root_error("RegModel",
+	      uvm_error("RegModel",
 			format("Burst of size 'd%0d starting at offset 'd%0d exceeds size of memory, 'd%0d",
 			       rw.num_values, rw.offset, size));
 	      return false;
@@ -1697,7 +1697,7 @@ class uvm_mem: uvm_object
       map = get_local_map(map, "set_frontdoor()");
 
       if (map is null) {
-	uvm_root_error("RegModel", "Memory '" ~ get_full_name() ~
+	uvm_error("RegModel", "Memory '" ~ get_full_name() ~
 		  "' not found in map '" ~ map.get_full_name() ~ "'");
 	return;
       }
@@ -1728,7 +1728,7 @@ class uvm_mem: uvm_object
       map = get_local_map(map, "set_frontdoor()");
 
       if (map is null) {
-	uvm_root_error("RegModel", "Memory '" ~ get_full_name() ~
+	uvm_error("RegModel", "Memory '" ~ get_full_name() ~
 		  "' not found in map '" ~ map.get_full_name() ~ "'");
 	return null;
       }
@@ -1830,7 +1830,7 @@ class uvm_mem: uvm_object
       }
 
       if(kind !in _m_hdl_paths_pool) {
-	uvm_root_warning("RegModel", "Unknown HDL Abstraction '" ~ kind ~ "'");
+	uvm_warning("RegModel", "Unknown HDL Abstraction '" ~ kind ~ "'");
 	return;
       }
 
@@ -1952,7 +1952,7 @@ class uvm_mem: uvm_object
       }
 
       if (!has_hdl_path(kind)) {
-	uvm_root_error("RegModel",
+	uvm_error("RegModel",
 		  "Memory does not have hdl path defined for abstraction '" ~ kind ~ "'");
 	return;
       }
@@ -1996,7 +1996,7 @@ class uvm_mem: uvm_object
       }
    
       if (!has_hdl_path(kind)) {
-	uvm_root_error("RegModel",
+	uvm_error("RegModel",
 		  "Memory does not have hdl path defined for abstraction '" ~ kind ~ "'");
 	return;
       }
@@ -2090,7 +2090,7 @@ class uvm_mem: uvm_object
       foreach (i, path; paths) {
 	uvm_hdl_path_concat hdl_concat = path;
 	foreach(j, sl; hdl_concat.slices) {
-	  uvm_root_info("RegModel", format("backdoor_write to %s ", sl.path), UVM_DEBUG);
+	  uvm_info("RegModel", format("backdoor_write to %s ", sl.path), UVM_DEBUG);
 	  if (sl.offset < 0) {
 	    ok &= uvm_hdl_deposit(sl.path ~ "[" ~ idx ~ "]", v);
 	    continue;
@@ -2137,7 +2137,7 @@ class uvm_mem: uvm_object
 	  foreach (j, sl; hdl_concat.slices) {
 	    string hdl_path = sl.path ~ "[" ~ idx ~ "]";
 	    
-	    uvm_root_info("RegModel", "backdoor_read from " ~ hdl_path, UVM_DEBUG);
+	    uvm_info("RegModel", "backdoor_read from " ~ hdl_path, UVM_DEBUG);
  
 	    if(sl.offset < 0) {
 	      ok &= uvm_hdl_read(hdl_path, val);
@@ -2159,14 +2159,14 @@ class uvm_mem: uvm_object
 	    v = val;
 
 	  if (val != v) {
-	    uvm_root_error("RegModel", format("Backdoor read of register %s with"
-					      " multiple HDL copies: values are not"
-					      " the same: %0h at path '%s', and %0h"
-					      " at path '%s'. Returning first value.",
-					      // get_full_name(), rw.value[mem_idx],
-					      get_full_name(), rw.get_value(mem_idx),
-					      uvm_hdl_concat2string(paths[0]),
-					      val, uvm_hdl_concat2string(path))); 
+	    uvm_error("RegModel", format("Backdoor read of register %s with"
+					 " multiple HDL copies: values are not"
+					 " the same: %0h at path '%s', and %0h"
+					 " at path '%s'. Returning first value.",
+					 // get_full_name(), rw.value[mem_idx],
+					 get_full_name(), rw.get_value(mem_idx),
+					 uvm_hdl_concat2string(paths[0]),
+					 val, uvm_hdl_concat2string(path))); 
 	    return UVM_NOT_OK;
 	  }
 	}
@@ -2489,7 +2489,7 @@ class uvm_mem: uvm_object
 
 
   override uvm_object clone() {
-    uvm_root_fatal("RegModel","RegModel memories cannot be cloned");
+    uvm_fatal("RegModel","RegModel memories cannot be cloned");
     return null;
   }
 
@@ -2497,7 +2497,7 @@ class uvm_mem: uvm_object
   // do_copy
 
   override void do_copy(uvm_object rhs) {
-    uvm_root_fatal("RegModel","RegModel memories cannot be copied");
+    uvm_fatal("RegModel","RegModel memories cannot be copied");
   }
 
 
@@ -2507,7 +2507,7 @@ class uvm_mem: uvm_object
 
   override bool do_compare (uvm_object  rhs,
 			    uvm_comparer comparer) {
-    uvm_root_warning("RegModel","RegModel memories cannot be compared");
+    uvm_warning("RegModel","RegModel memories cannot be compared");
     return false;
   }
 
@@ -2515,14 +2515,14 @@ class uvm_mem: uvm_object
   // do_pack
 
   override void do_pack (uvm_packer packer) {
-    uvm_root_warning("RegModel","RegModel memories cannot be packed");
+    uvm_warning("RegModel","RegModel memories cannot be packed");
   }
 
   // extern virtual function void do_unpack (uvm_packer packer);
   // do_unpack
 
   override void do_unpack (uvm_packer packer) {
-    uvm_root_warning("RegModel","RegModel memories cannot be unpacked");
+    uvm_warning("RegModel","RegModel memories cannot be unpacked");
   }
 
 }

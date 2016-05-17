@@ -684,7 +684,7 @@ class uvm_report_handler: uvm_object
 
 
   version(UVM_INCLUDE_DEPRECATED) {
-    import uvm.base.uvm_globals: uvm_root_info;
+    import uvm.base.uvm_globals: uvm_info;
 
     // Function- run_hooks
     //
@@ -837,7 +837,7 @@ class uvm_report_handler: uvm_object
 
 	q ~= "---------------------------------" ~
 	  "-------------------------------------";
-	uvm_root_info("UVM/REPORT/HANDLER", q, UVM_LOW);
+	uvm_info("UVM/REPORT/HANDLER", q, UVM_LOW);
       
       }
     }

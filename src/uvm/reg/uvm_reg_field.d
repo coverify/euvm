@@ -185,8 +185,8 @@ class uvm_reg_field: uvm_object
     synchronized(this) {
       _m_parent = parent;
       if (size == 0) {
-	uvm_root_error("RegModel",
-		       format("Field \"%s\" cannot have 0 bits", get_full_name()));
+	uvm_error("RegModel",
+		  format("Field \"%s\" cannot have 0 bits", get_full_name()));
 	size = 1;
       }
 
@@ -208,9 +208,9 @@ class uvm_reg_field: uvm_object
       _m_parent.add_field(this);
 
       if (_m_access !in _m_policy_names) {
-	uvm_root_error("RegModel", "Access policy '" ~ access ~
-		       "' for field '" ~ get_full_name() ~
-		       "' is not defined. Setting to RW");
+	uvm_error("RegModel", "Access policy '" ~ access ~
+		  "' for field '" ~ get_full_name() ~
+		  "' is not defined. Setting to RW");
 	_m_access = "RW";
       }
 
@@ -227,7 +227,7 @@ class uvm_reg_field: uvm_object
       }
 
       if (!is_rand) {
-	uvm_root_info("RANDMODE", "TBD -- implement rand_mode", UVM_NONE);
+	uvm_info("RANDMODE", "TBD -- implement rand_mode", UVM_NONE);
 	// _value.rand_mode(0);
       }
     }
@@ -384,8 +384,8 @@ class uvm_reg_field: uvm_object
       string set_access_ = _m_access;
       _m_access = mode.toUpper();
       if (_m_access !in _m_policy_names) {
-	uvm_root_error("RegModel", "Access policy '" ~ _m_access ~
-		       "' is not a defined field access policy");
+	uvm_error("RegModel", "Access policy '" ~ _m_access ~
+		  "' is not a defined field access policy");
 	_m_access = set_access_;
       }
       return set_access_;
@@ -510,9 +510,9 @@ class uvm_reg_field: uvm_object
 	  break;
         
 	case "WO", "WOC", "WOS", "WO1":
-	  uvm_root_error("RegModel",
-			 format("%s field \"%s\" restricted to RO in map \"%s\"",
-				get_access(), get_name(), map.get_full_name()));
+	  uvm_error("RegModel",
+		    format("%s field \"%s\" restricted to RO in map \"%s\"",
+			   get_access(), get_name(), map.get_full_name()));
 	  break;
 	  // No change for the other modes
 	default: assert(false);
@@ -525,16 +525,16 @@ class uvm_reg_field: uvm_object
 	  get_access_ = "WO";
 	  break;
 	default:
-	  uvm_root_error("RegModel", get_access_ ~ " field '" ~ get_full_name() ~ 
-			 "' restricted to WO in map '" ~ map.get_full_name() ~ "'");
+	  uvm_error("RegModel", get_access_ ~ " field '" ~ get_full_name() ~ 
+		    "' restricted to WO in map '" ~ map.get_full_name() ~ "'");
 	  break;
 	  // No change for the other modes
 	}
 
       default:
-	uvm_root_error("RegModel", "Register '" ~ _m_parent.get_full_name() ~ 
-		       "' containing field '" ~ get_name() ~ "' is mapped in map '" ~ 
-		       map.get_full_name() ~ "' with unknown access right '" ~  _m_parent.get_rights(map) ~  "'");
+	uvm_error("RegModel", "Register '" ~ _m_parent.get_full_name() ~ 
+		  "' containing field '" ~ get_name() ~ "' is mapped in map '" ~ 
+		  map.get_full_name() ~ "' with unknown access right '" ~  _m_parent.get_rights(map) ~  "'");
 	break;
       }
       return get_access_;
@@ -654,19 +654,19 @@ class uvm_reg_field: uvm_object
       _m_fname = fname;
       _m_lineno = lineno;
       if (value >> _m_size) {
-	uvm_root_warning("RegModel",
-			 format("Specified value (0x%h) greater than field \"%s\" size (%0d bits)",
-				value, get_name(), _m_size));
+	uvm_warning("RegModel",
+		    format("Specified value (0x%h) greater than field \"%s\" size (%0d bits)",
+			   value, get_name(), _m_size));
 	value &= mask;
       }
 
       if (_m_parent.is_busy()) {
-	uvm_root_warning("UVM/FLD/SET/BSY",
-			 format("Setting the value of field \"%s\" while containing register \"%s\"" ~
-				" is being accessed may result in loss of desired field value. A" ~
-				" race condition between threads concurrently accessing the register" ~
-				" model is the likely cause of the problem.", get_name(),
-				_m_parent.get_full_name()));
+	uvm_warning("UVM/FLD/SET/BSY",
+		    format("Setting the value of field \"%s\" while containing register \"%s\"" ~
+			   " is being accessed may result in loss of desired field value. A" ~
+			   " race condition between threads concurrently accessing the register" ~
+			   " model is the likely cause of the problem.", get_name(),
+			   _m_parent.get_full_name()));
       }
 
       switch(_m_access) {
@@ -1092,9 +1092,9 @@ class uvm_reg_field: uvm_object
       _m_lineno = lineno;
 
       if (value >> _m_size) {
-	uvm_root_warning("RegModel",
-			 "poke(): Value exceeds size of field '" ~
-			 get_name() ~ "'");
+	uvm_warning("RegModel",
+		    "poke(): Value exceeds size of field '" ~
+		    get_name() ~ "'");
 	value &= value & ((1<<_m_size)-1);
       }
       m_parent_ = _m_parent;
@@ -1108,9 +1108,9 @@ class uvm_reg_field: uvm_object
     m_parent_.peek(status, tmp, kind, parent, extension, fname, lineno);
 
     if (status == UVM_NOT_OK) {
-      uvm_root_error("RegModel", "poke(): Peek of register '" ~ 
-		     m_parent_.get_full_name() ~ "' returned status " ~
-		     status.to!string);
+      uvm_error("RegModel", "poke(): Peek of register '" ~ 
+		m_parent_.get_full_name() ~ "' returned status " ~
+		status.to!string);
       m_parent_.XatomicX(0);
       m_parent_.m_is_locked_by_field = false;
       return;
@@ -1277,25 +1277,25 @@ class uvm_reg_field: uvm_object
 				uvm_reg_map local_map) {
     synchronized(this) {
       if(path == UVM_BACKDOOR) {
-	uvm_root_warning("RegModel",
-			 "Individual BACKDOOR field access not available for field '" ~ 
-			 get_full_name() ~  "'. Accessing complete register instead.");
+	uvm_warning("RegModel",
+		    "Individual BACKDOOR field access not available for field '" ~ 
+		    get_full_name() ~  "'. Accessing complete register instead.");
 	return false;
       }
 
       if(! _m_individually_accessible) {
-	uvm_root_warning("RegModel",
-			 "Individual field access not available for field '" ~ 
-			 get_full_name() ~  "'. Accessing complete register instead.");
+	uvm_warning("RegModel",
+		    "Individual field access not available for field '" ~ 
+		    get_full_name() ~  "'. Accessing complete register instead.");
 	return false;
       }
 
       // Cannot access individual fields if the container register
       // has a user-defined front-door
       if(_m_parent.get_frontdoor(local_map) !is null) {
-	uvm_root_warning("RegModel",
-			 "Individual field access not available for field '" ~ 
-			 get_name() ~  "' because register '" ~  _m_parent.get_full_name() ~  "' has a user-defined front-door. Accessing complete register instead.");
+	uvm_warning("RegModel",
+		    "Individual field access not available for field '" ~ 
+		    get_name() ~  "' because register '" ~  _m_parent.get_full_name() ~  "' has a user-defined front-door. Accessing complete register instead.");
 	return false;
       }
    
@@ -1365,11 +1365,11 @@ class uvm_reg_field: uvm_object
 	}
       }
    
-      uvm_root_warning("RegModel", 
-		       "Target bus does not support byte enabling ~  and the field '" ~ 
-		       get_full_name() ~ "' is not the only field within the entire bus width. " ~ 
-		       "Individual field access will not be available. " ~ 
-		       "Accessing complete register instead.");
+      uvm_warning("RegModel", 
+		  "Target bus does not support byte enabling ~  and the field '" ~ 
+		  get_full_name() ~ "' is not the only field within the entire bus width. " ~ 
+		  "Individual field access will not be available. " ~ 
+		  "Accessing complete register instead.");
 
       return false;
     }
@@ -1473,7 +1473,7 @@ class uvm_reg_field: uvm_object
       default:      return wr_val;
       }
       // this statement is not even reachable, but there in the SV version
-      uvm_root_fatal("RegModel", "XpredictX(): Internal error");
+      uvm_fatal("RegModel", "XpredictX(): Internal error");
       return uvm_reg_data_t(0);
     }
   }
@@ -1538,9 +1538,9 @@ class uvm_reg_field: uvm_object
 
       if (rw.path == UVM_BACKDOOR) {
 	if (_m_parent.get_backdoor() is null && !_m_parent.has_hdl_path()) {
-	  uvm_root_warning("RegModel",
-			   "No backdoor access available for field '" ~ get_full_name() ~ 
-			   "' . Using frontdoor instead.");
+	  uvm_warning("RegModel",
+		      "No backdoor access available for field '" ~ get_full_name() ~ 
+		      "' . Using frontdoor instead.");
 	  rw.path = UVM_FRONTDOOR;
 	}
 	else
@@ -1552,9 +1552,9 @@ class uvm_reg_field: uvm_object
 	rw.local_map = _m_parent.get_local_map(rw.map,caller);
 
 	if (rw.local_map is null) {
-	  uvm_root_error(get_type_name(), 
-			 "No transactor available to physically access memory from map '" ~ 
-			 rw.map.get_full_name() ~ "'");
+	  uvm_error(get_type_name(), 
+		    "No transactor available to physically access memory from map '" ~ 
+		    rw.map.get_full_name() ~ "'");
 	  rw.status = UVM_NOT_OK;
 	  return false;
 	}
@@ -1562,10 +1562,10 @@ class uvm_reg_field: uvm_object
 	map_info = rw.local_map.get_reg_map_info(_m_parent);
 
 	if (map_info.frontdoor is null && map_info.unmapped) {
-	  uvm_root_error("RegModel", "Field '" ~ get_full_name() ~ 
-			 "' in register that is unmapped in map '" ~ 
-			 rw.map.get_full_name() ~ 
-			 "' and does not have a user-defined frontdoor");
+	  uvm_error("RegModel", "Field '" ~ get_full_name() ~ 
+		    "' in register that is unmapped in map '" ~ 
+		    rw.map.get_full_name() ~ 
+		    "' and does not have a user-defined frontdoor");
 	  rw.status = UVM_NOT_OK;
 	  return false;
 	}
@@ -1610,8 +1610,8 @@ class uvm_reg_field: uvm_object
 
       // if (rw.value[0] >> _m_size) {
       if (rw.get_value(0) >> _m_size) {
-	uvm_root_warning("RegModel", "write(): Value greater than field '" ~ 
-			 get_full_name() ~ "'");
+	uvm_warning("RegModel", "write(): Value greater than field '" ~ 
+		    get_full_name() ~ "'");
 	// rw.value[0] &= ((1L << _m_size)-1);
 	rw.and_value(0, ((1L << _m_size)-1));
       }
@@ -1671,10 +1671,10 @@ class uvm_reg_field: uvm_object
 	m_parent_.do_write(rw);
 
 	if (bad_side_effect) {
-	  uvm_root_warning("RegModel", format("Writing field \"%s\" will cause unintended" ~
-					      " side effects in adjoining Write-to-Clear" ~
-					      " or Write-to-Set fields in the same register",
-					      this.get_full_name()));
+	  uvm_warning("RegModel", format("Writing field \"%s\" will cause unintended" ~
+					 " side effects in adjoining Write-to-Clear" ~
+					 " or Write-to-Set fields in the same register",
+					 this.get_full_name()));
 	}
       }
       else {
@@ -1809,9 +1809,9 @@ class uvm_reg_field: uvm_object
 	    mode == "W1CRS" ||
 	    mode == "W0SRC" ||
 	    mode == "W0CRS") {
-	  uvm_root_warning("RegModel", "Reading field '" ~ get_full_name() ~ 
-			   "' will cause unintended side effects in adjoining " ~ 
-			   "Read-to-Clear or Read-to-Set fields in the same register");
+	  uvm_warning("RegModel", "Reading field '" ~ get_full_name() ~ 
+		      "' will cause unintended side effects in adjoining " ~ 
+		      "Read-to-Clear or Read-to-Set fields in the same register");
 	}
       }
     }
@@ -1893,9 +1893,9 @@ class uvm_reg_field: uvm_object
 
       case UVM_PREDICT_DIRECT:
 	if (_m_parent.is_busy()) {
-	  uvm_root_warning("RegModel", "Trying to predict value of field '" ~
-			   get_name() ~ "' while register '" ~
-			   _m_parent.get_full_name() ~ "' is being accessed");
+	  uvm_warning("RegModel", "Trying to predict value of field '" ~
+		      get_name() ~ "' while register '" ~
+		      _m_parent.get_full_name() ~ "' is being accessed");
 	  rw.status = UVM_NOT_OK;
 	}
 	break;
@@ -2072,7 +2072,7 @@ class uvm_reg_field: uvm_object
   // clone
 
   override uvm_object clone() {
-    uvm_root_fatal("RegModel","RegModel field cannot be cloned");
+    uvm_fatal("RegModel","RegModel field cannot be cloned");
     return null;
   }
 
@@ -2080,7 +2080,7 @@ class uvm_reg_field: uvm_object
   // do_copy
 
   override void do_copy(uvm_object rhs) {
-    uvm_root_warning("RegModel","RegModel field copy not yet implemented");
+    uvm_warning("RegModel","RegModel field copy not yet implemented");
     // just a set(rhs.get()) ?
   }
 
@@ -2091,7 +2091,7 @@ class uvm_reg_field: uvm_object
 
   override bool do_compare (uvm_object  rhs,
 			    uvm_comparer comparer) {
-    uvm_root_warning("RegModel","RegModel field compare not yet implemented");
+    uvm_warning("RegModel","RegModel field compare not yet implemented");
     // just a return (get() == rhs.get()) ?
     return false;
   }
@@ -2101,14 +2101,14 @@ class uvm_reg_field: uvm_object
   // do_pack
 
   override void do_pack (uvm_packer packer) {
-    uvm_root_warning("RegModel","RegModel field cannot be packed");
+    uvm_warning("RegModel","RegModel field cannot be packed");
   }
 
   // extern virtual function void do_unpack (uvm_packer packer);
   // do_unpack
 
   override void do_unpack (uvm_packer packer) {
-    uvm_root_warning("RegModel","RegModel field cannot be unpacked");
+    uvm_warning("RegModel","RegModel field cannot be unpacked");
   }
 
 }

@@ -443,8 +443,8 @@ class uvm_reg_read_only_cbs: uvm_reg_cbs
       name = rg.get_full_name();
     }
 
-    uvm_root_error("UVM/REG/READONLY", name ~
-		   " is read-only. Cannot call write() method.");
+    uvm_error("UVM/REG/READONLY", name ~
+	      " is read-only. Cannot call write() method.");
 
     rw.status = UVM_NOT_OK;
   }
@@ -553,8 +553,8 @@ class uvm_reg_write_only_cbs: uvm_reg_cbs
       name = rg.get_full_name();
     }
 
-    uvm_root_error("UVM/REG/WRTEONLY",
-		   name ~ " is write-only. Cannot call read() method.");
+    uvm_error("UVM/REG/WRTEONLY",
+	      name ~ " is write-only. Cannot call read() method.");
     rw.status = UVM_NOT_OK;
   }
 

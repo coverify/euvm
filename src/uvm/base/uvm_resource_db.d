@@ -122,7 +122,7 @@ class uvm_resource_db (T=uvm_object) {
 			(accessor !is null) ? accessor.get_full_name() :
 			"<unknown>", rsrc is null ?
 			"null (failed lookup)" : rsrc.convert2string());
-    uvm_root_info(id, msg, UVM_LOW);
+    uvm_info(id, msg, UVM_LOW);
   }
 
   // function: set

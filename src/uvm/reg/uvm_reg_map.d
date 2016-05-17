@@ -197,9 +197,9 @@ class uvm_reg_map: uvm_object
 	      else {
 		string a;
 		a = format("%0h",addr);
-		uvm_root_warning("RegModel", "In map '" ~ get_full_name() ~ "' register '" ~ 
-				 rg.get_full_name() ~  "' maps to same address as register '" ~ 
-				 top_map._m_regs_by_offset[addr].get_full_name() ~ "': 'h" ~ a);
+		uvm_warning("RegModel", "In map '" ~ get_full_name() ~ "' register '" ~ 
+			    rg.get_full_name() ~  "' maps to same address as register '" ~ 
+			    top_map._m_regs_by_offset[addr].get_full_name() ~ "': 'h" ~ a);
 	      }
 	    }
 	    else
@@ -210,10 +210,10 @@ class uvm_reg_map: uvm_object
 		string a,b;
 		a = format("%0h",addr);
 		b = format("[%0h:%0h]",range.min,range.max);
-		uvm_root_warning("RegModel", "In map '" ~ get_full_name() ~ "' register '" ~ 
-				 rg.get_full_name() ~  "' with address " ~ a ~ 
-				 "maps to same address as memory '" ~ 
-				 top_map._m_mems_by_offset[range].get_full_name() ~ "': " ~ b);
+		uvm_warning("RegModel", "In map '" ~ get_full_name() ~ "' register '" ~ 
+			    rg.get_full_name() ~  "' with address " ~ a ~ 
+			    "maps to same address as memory '" ~ 
+			    top_map._m_mems_by_offset[range].get_full_name() ~ "': " ~ b);
 	      }
 	    }
 	  }
@@ -244,9 +244,9 @@ class uvm_reg_map: uvm_object
 	    if (reg_addr >= min && reg_addr <= max) {
 	      string a;
 	      a = format("%0h",reg_addr);
-	      uvm_root_warning("RegModel", "In map '" ~ get_full_name() ~ "' memory '" ~ 
-			       mem.get_full_name() ~  "' maps to same address as register '" ~ 
-			       reg_by_offset.get_full_name() ~ "': 'h" ~ a);
+	      uvm_warning("RegModel", "In map '" ~ get_full_name() ~ "' memory '" ~ 
+			  mem.get_full_name() ~  "' maps to same address as register '" ~ 
+			  reg_by_offset.get_full_name() ~ "': 'h" ~ a);
 	    }
 	  }
 
@@ -256,9 +256,9 @@ class uvm_reg_map: uvm_object
 		min >= range.min && max <= range.max) {
 	      string a;
 	      a = format("[%0h:%0h]",min,max);
-	      uvm_root_warning("RegModel", "In map '" ~ get_full_name() ~ "' memory '" ~ 
-			       mem.get_full_name() ~  "' overlaps with address range of memory '" ~ 
-			       top_map._m_mems_by_offset[range].get_full_name() ~ "': 'h" ~ a);
+	      uvm_warning("RegModel", "In map '" ~ get_full_name() ~ "' memory '" ~ 
+			  mem.get_full_name() ~  "' overlaps with address range of memory '" ~ 
+			  top_map._m_mems_by_offset[range].get_full_name() ~ "': 'h" ~ a);
 	    }
 	  }
 
@@ -411,15 +411,15 @@ class uvm_reg_map: uvm_object
     synchronized(this) {
 
       if (rg in _m_regs_info) {
-	uvm_root_error("RegModel", "Register '" ~ rg.get_name() ~ 
-		       "' has already been added to map '" ~ get_name() ~ "'");
+	uvm_error("RegModel", "Register '" ~ rg.get_name() ~ 
+		  "' has already been added to map '" ~ get_name() ~ "'");
 	return;
       }
 
       if (rg.get_parent() !is get_parent()) {
-	uvm_root_error("RegModel",
-		       "Register '" ~ rg.get_full_name() ~ "' may not be added to address map '" ~ 
-		       get_full_name() ~ "' : they are not in the same block");
+	uvm_error("RegModel",
+		  "Register '" ~ rg.get_full_name() ~ "' may not be added to address map '" ~ 
+		  get_full_name() ~ "' : they are not in the same block");
 	return;
       }
    
@@ -475,15 +475,15 @@ class uvm_reg_map: uvm_object
 		      uvm_reg_frontdoor frontdoor=null) {
     synchronized(this) {
       if (mem in _m_mems_info) {
-	uvm_root_error("RegModel",  "Memory '" ~ mem.get_name() ~ 
-		       "' has already been added to map '" ~ get_name() ~ "'");
+	uvm_error("RegModel",  "Memory '" ~ mem.get_name() ~ 
+		  "' has already been added to map '" ~ get_name() ~ "'");
 	return;
       }
 
       if (mem.get_parent() !is get_parent()) {
-	uvm_root_error("RegModel",
-		       "Memory '" ~ mem.get_full_name() ~ "' may not be added to address map '" ~ 
-		       get_full_name() ~ "' : they are not in the same block");
+	uvm_error("RegModel",
+		  "Memory '" ~ mem.get_full_name() ~ "' may not be added to address map '" ~ 
+		  get_full_name() ~ "' : they are not in the same block");
 	return;
       }
    
@@ -531,7 +531,7 @@ class uvm_reg_map: uvm_object
       uvm_reg_map parent_map;
 
       if (child_map is null) {
-	uvm_root_error("RegModel", "Attempting to add NULL map to map '" ~ get_full_name() ~ "'");
+	uvm_error("RegModel", "Attempting to add NULL map to map '" ~ get_full_name() ~ "'");
 	return;
       }
 
@@ -539,38 +539,38 @@ class uvm_reg_map: uvm_object
 
       // Can not have more than one parent (currently)
       if (parent_map !is null) {
-	uvm_root_error("RegModel", "Map '" ~  child_map.get_full_name() ~ 
-		       "' is already a child of map '" ~ 
-		       parent_map.get_full_name() ~ 
-		       "'. Cannot also be a child of map '" ~ 
-		       get_full_name() ~ 
-		       "'");
+	uvm_error("RegModel", "Map '" ~  child_map.get_full_name() ~ 
+		  "' is already a child of map '" ~ 
+		  parent_map.get_full_name() ~ 
+		  "'. Cannot also be a child of map '" ~ 
+		  get_full_name() ~ 
+		  "'");
 	return;
       }
 
       { // parent_block_check
 	uvm_reg_block child_blk = child_map.get_parent();
 	if (child_blk is null) {
-	  uvm_root_error("RegModel", "Cannot add submap '" ~ child_map.get_full_name() ~ 
-			 "' because it does not have a parent block");
+	  uvm_error("RegModel", "Cannot add submap '" ~ child_map.get_full_name() ~ 
+		    "' because it does not have a parent block");
 	  return;
 	}
 	if (get_parent() !is child_blk.get_parent()) {
-	  uvm_root_error("RegModel",
-			 "Submap '" ~ child_map.get_full_name() ~ "' may not be added to this " ~ 
-			 "address map ~  '" ~  get_full_name() ~ "' ~  as the submap's parent block ~  '" ~ 
-			 child_blk.get_full_name() ~ "' ~  is not a child of this map's parent block ~  '" ~ 
-			 _m_parent.get_full_name() ~ "'");
+	  uvm_error("RegModel",
+		    "Submap '" ~ child_map.get_full_name() ~ "' may not be added to this " ~ 
+		    "address map ~  '" ~  get_full_name() ~ "' ~  as the submap's parent block ~  '" ~ 
+		    child_blk.get_full_name() ~ "' ~  is not a child of this map's parent block ~  '" ~ 
+		    _m_parent.get_full_name() ~ "'");
 	  return;
 	}
       }
    
       { // n_bytes_match_check
 	if (_m_n_bytes > child_map.get_n_bytes(UVM_NO_HIER)) {
-	  uvm_root_warning("RegModel",
-			   format("Adding %0d-byte submap '%s' to %0d-byte parent map '%s'",
-				  child_map.get_n_bytes(UVM_NO_HIER), child_map.get_full_name(),
-				  _m_n_bytes, get_full_name()));
+	  uvm_warning("RegModel",
+		      format("Adding %0d-byte submap '%s' to %0d-byte parent map '%s'",
+			     child_map.get_n_bytes(UVM_NO_HIER), child_map.get_full_name(),
+			     _m_n_bytes, get_full_name()));
 	}
       }
 
@@ -594,16 +594,16 @@ class uvm_reg_map: uvm_object
 			    uvm_reg_adapter adapter=null) {
     synchronized(this) {
       if (sequencer is null) {
-	uvm_root_error("REG_NULL_SQR", "Null reference specified for bus sequencer");
+	uvm_error("REG_NULL_SQR", "Null reference specified for bus sequencer");
 	return;
       }
 
       if (adapter is null) {
-	uvm_root_info("REG_NO_ADAPT", "Adapter not specified for map '" ~
-		      get_full_name() ~
-		      "'. Accesses via this map will send abstract " ~
-		      "'uvm_reg_item' items to sequencer '" ~
-		      sequencer.get_full_name() ~ "'", UVM_MEDIUM);
+	uvm_info("REG_NO_ADAPT", "Adapter not specified for map '" ~
+		 get_full_name() ~
+		 "'. Accesses via this map will send abstract " ~
+		 "'uvm_reg_item' items to sequencer '" ~
+		 sequencer.get_full_name() ~ "'", UVM_MEDIUM);
       }
 
       _m_sequencer = sequencer;
@@ -624,7 +624,7 @@ class uvm_reg_map: uvm_object
   public void set_submap_offset(uvm_reg_map submap, uvm_reg_addr_t offset) {
     synchronized(this) {
       if (submap is null) {
-	uvm_root_error("REG/NULL","set_submap_offset: submap handle is null");
+	uvm_error("REG/NULL","set_submap_offset: submap handle is null");
 	return;
       }
       _m_submaps[submap] = offset;
@@ -647,12 +647,12 @@ class uvm_reg_map: uvm_object
   public uvm_reg_addr_t get_submap_offset(uvm_reg_map submap) {
     synchronized(this) {
       if (submap is null) {
-	uvm_root_error("REG/NULL","set_submap_offset: submap handle is null");
+	uvm_error("REG/NULL","set_submap_offset: submap handle is null");
 	return uvm_reg_addr_t(-1);
       }
       if (submap !in _m_submaps) {
-	uvm_root_error("RegModel","Map '" ~ submap.get_full_name() ~ 
-		       "' is not a submap of '" ~ get_full_name() ~ "'");
+	uvm_error("RegModel","Map '" ~ submap.get_full_name() ~ 
+		  "' is not a submap of '" ~ get_full_name() ~ "'");
 	return uvm_reg_addr_t(-1);
       }
       return _m_submaps[submap];
@@ -724,17 +724,17 @@ class uvm_reg_map: uvm_object
     synchronized(this) {
 
       if (parent_map is null) {
-	uvm_root_error("RegModel",
-		       "Attempting to add NULL parent map to map '" ~
-		       get_full_name() ~ "'");
+	uvm_error("RegModel",
+		  "Attempting to add NULL parent map to map '" ~
+		  get_full_name() ~ "'");
 	return;
       }
 
       if (_m_parent_map !is null) {
-	uvm_root_error("RegModel",
-		       format("Map \"%s\" already a submap of map \"%s\" at offset 'h%h",
-			      get_full_name(), _m_parent_map.get_full_name(),
-			      _m_parent_map.get_submap_offset(this)));
+	uvm_error("RegModel",
+		  format("Map \"%s\" already a submap of map \"%s\" at offset 'h%h",
+			 get_full_name(), _m_parent_map.get_full_name(),
+			 _m_parent_map.get_submap_offset(this)));
 	return;
       }
 
@@ -754,20 +754,20 @@ class uvm_reg_map: uvm_object
       uvm_reg_map root_map = get_root_map();
 
       if (root_map.get_adapter() is null) {
-	uvm_root_error("RegModel", "Map '" ~ root_map.get_full_name() ~ 
-		       "' does not have an adapter registered");
+	uvm_error("RegModel", "Map '" ~ root_map.get_full_name() ~ 
+		  "' does not have an adapter registered");
 	// error++;
 	error = true;
       }
       if (root_map.get_sequencer() is null) {
-	uvm_root_error("RegModel", "Map '" ~ root_map.get_full_name() ~ 
-		       "' does not have a sequencer registered");
+	uvm_error("RegModel", "Map '" ~ root_map.get_full_name() ~ 
+		  "' does not have a sequencer registered");
 	// error++;
 	error = true;
       }
       if (error) {
-	uvm_root_fatal("RegModel", "Must register an adapter and sequencer " ~
-		       "for each top-level map in RegModel model");
+	uvm_fatal("RegModel", "Must register an adapter and sequencer " ~
+		  "for each top-level map in RegModel model");
 	return;
       }
 
@@ -785,10 +785,10 @@ class uvm_reg_map: uvm_object
 			       bool unmapped) {
     synchronized(this) {
       if (rg !in _m_regs_info) {
-	uvm_root_error("RegModel",
-		       "Cannot modify offset of register '" ~ rg.get_full_name() ~ 
-		       "' in address map '" ~ get_full_name() ~ 
-		       "' : register not mapped in that address map");
+	uvm_error("RegModel",
+		  "Cannot modify offset of register '" ~ rg.get_full_name() ~ 
+		  "' in address map '" ~ get_full_name() ~ 
+		  "' : register not mapped in that address map");
 	return;
       }
 
@@ -853,9 +853,9 @@ class uvm_reg_map: uvm_object
 	      else {
 		string a;
 		a = format("%0h",addr);
-		uvm_root_warning("RegModel", "In map '" ~ get_full_name() ~ "' register '" ~ 
-				 rg.get_full_name() ~  "' maps to same address as register '" ~ 
-				 top_map._m_regs_by_offset[addr].get_full_name() ~ "': 'h" ~ a);
+		uvm_warning("RegModel", "In map '" ~ get_full_name() ~ "' register '" ~ 
+			    rg.get_full_name() ~  "' maps to same address as register '" ~ 
+			    top_map._m_regs_by_offset[addr].get_full_name() ~ "': 'h" ~ a);
 	      }
 	    }
 	    else
@@ -865,9 +865,9 @@ class uvm_reg_map: uvm_object
 	      if (addr >= range.min && addr <= range.max) {
 		string a;
 		a = format("%0h",addr);
-		uvm_root_warning("RegModel", "In map '" ~ get_full_name() ~ "' register '" ~ 
-				 rg.get_full_name() ~  "' overlaps with address range of memory '" ~ 
-				 top_map._m_mems_by_offset[range].get_full_name() ~ "': 'h" ~ a);
+		uvm_warning("RegModel", "In map '" ~ get_full_name() ~ "' register '" ~ 
+			    rg.get_full_name() ~  "' overlaps with address range of memory '" ~ 
+			    top_map._m_mems_by_offset[range].get_full_name() ~ "': 'h" ~ a);
 	      }
 	    }
 	  }
@@ -898,10 +898,10 @@ class uvm_reg_map: uvm_object
 			bool unmapped) {
 
     if (mem !in _m_mems_info) {
-      uvm_root_error("RegModel",
-		     "Cannot modify offset of memory '" ~ mem.get_full_name() ~ 
-		     "' in address map '" ~ get_full_name() ~ 
-		     "' : memory not mapped in that address map");
+      uvm_error("RegModel",
+		"Cannot modify offset of memory '" ~ mem.get_full_name() ~ 
+		"' in address map '" ~ get_full_name() ~ 
+		"' : memory not mapped in that address map");
       return;
     }
 
@@ -945,10 +945,10 @@ class uvm_reg_map: uvm_object
 	    string a,b;
 	    a = format("[%0h:%0h]",min,max);
 	    b = format("%0h",reg_addr);
-	    uvm_root_warning("RegModel", "In map '" ~ get_full_name() ~ "' memory '" ~ 
-			     mem.get_full_name() ~  "' with range " ~ a ~ 
-			     " overlaps with address of existing register '" ~ 
-			     regoff.get_full_name() ~ "': 'h" ~ b);
+	    uvm_warning("RegModel", "In map '" ~ get_full_name() ~ "' memory '" ~ 
+			mem.get_full_name() ~  "' with range " ~ a ~ 
+			" overlaps with address of existing register '" ~ 
+			regoff.get_full_name() ~ "': 'h" ~ b);
 	  }
 	}
 
@@ -959,10 +959,10 @@ class uvm_reg_map: uvm_object
 	    string a,b;
 	    a = format("[%0h:%0h]",min,max);
 	    b = format("[%0h:%0h]",range.min,range.max);
-	    uvm_root_warning("RegModel", "In map '" ~ get_full_name() ~ "' memory '" ~ 
-			     mem.get_full_name() ~  "' with range " ~ a ~ 
-			     " overlaps existing memory with range '" ~ 
-			     top_map._m_mems_by_offset[range].get_full_name() ~ "': " ~ b);
+	    uvm_warning("RegModel", "In map '" ~ get_full_name() ~ "' memory '" ~ 
+			mem.get_full_name() ~  "' with range " ~ a ~ 
+			" overlaps existing memory with range '" ~ 
+			top_map._m_mems_by_offset[range].get_full_name() ~ "': " ~ b);
 	  }
 	}
 
@@ -1379,17 +1379,17 @@ class uvm_reg_map: uvm_object
       uvm_reg_map_info result;
       if (rg !in _m_regs_info) {
 	if (error) {
-	  uvm_root_error("REG_NO_MAP", "Register '" ~ rg.get_name() ~
-			 "' not in map '" ~ get_name() ~ "'");
+	  uvm_error("REG_NO_MAP", "Register '" ~ rg.get_name() ~
+		    "' not in map '" ~ get_name() ~ "'");
 	}
 	return null;
       }
       result = _m_regs_info[rg];
       if(! result.is_initialized) {
-	uvm_root_warning("RegModel", "map '" ~ get_name() ~
-			 "' does not seem to be initialized " ~
-			 "correctly, check that the top register " ~
-			 "model is locked()");
+	uvm_warning("RegModel", "map '" ~ get_name() ~
+		    "' does not seem to be initialized " ~
+		    "correctly, check that the top register " ~
+		    "model is locked()");
       }
       return result;
     }
@@ -1403,8 +1403,8 @@ class uvm_reg_map: uvm_object
     synchronized(this) {
       if (mem !in _m_mems_info) {
 	if (error) {
-	  uvm_root_error("REG_NO_MAP", "Memory '" ~ mem.get_name() ~
-			 "' not in map '" ~ get_name() ~ "'");
+	  uvm_error("REG_NO_MAP", "Memory '" ~ mem.get_name() ~
+		    "' not in map '" ~ get_name() ~ "'");
 	}
 	return null;
       }
@@ -1490,9 +1490,9 @@ class uvm_reg_map: uvm_object
       synchronized(this) {
 
 	if (n_bytes <= 0) {
-	  uvm_root_fatal("RegModel",
-			 format("Cannot access %0d bytes. Must be greater than 0",
-				n_bytes));
+	  uvm_fatal("RegModel",
+		    format("Cannot access %0d bytes. Must be greater than 0",
+			   n_bytes));
 	  return 0;
 	}
 
@@ -1531,11 +1531,11 @@ class uvm_reg_map: uvm_object
 	    }
 	    break;
 	  default:
-	    uvm_root_error("RegModel",
-			   "Map has no specified endianness. " ~
-			   format("Cannot access %0d bytes register " ~
-				  "via its %0d byte \"%s\" interface",
-				  n_bytes, bus_width, get_full_name()));
+	    uvm_error("RegModel",
+		      "Map has no specified endianness. " ~
+		      format("Cannot access %0d bytes register " ~
+			     "via its %0d byte \"%s\" interface",
+			     n_bytes, bus_width, get_full_name()));
 	    break;
 	  }
 	}
@@ -1609,9 +1609,9 @@ class uvm_reg_map: uvm_object
 				   bool           read = true) {
     synchronized(this) {
       if (!_m_parent.is_locked()) {
-	uvm_root_error("RegModel", format("Cannot get register by offset: " ~
-					  "Block %s is not locked.",
-					  _m_parent.get_full_name()));
+	uvm_error("RegModel", format("Cannot get register by offset: " ~
+				     "Block %s is not locked.",
+				     _m_parent.get_full_name()));
 	return null;
       }
 
@@ -1646,9 +1646,9 @@ class uvm_reg_map: uvm_object
   public uvm_mem get_mem_by_offset(uvm_reg_addr_t offset) {
     synchronized(this) {
       if (! _m_parent.is_locked()) {
-	uvm_root_error("RegModel", format("Cannot memory register by offset: " ~
-					  "Block %s is not locked.",
-					  _m_parent.get_full_name()));
+	uvm_error("RegModel", format("Cannot memory register by offset: " ~
+				     "Block %s is not locked.",
+				     _m_parent.get_full_name()));
 	return null;
       }
 
@@ -1829,9 +1829,9 @@ class uvm_reg_map: uvm_object
 
 	data = (value >> (curr_byte*8)) & ((1L << (bus_width * 8))-1);
        
-	uvm_root_info(get_type_name(),
-		      format("Writing 'h%0h at 'h%0h via map \"%s\"...",
-			     data, addr, rw.map.get_full_name()), UVM_FULL);
+	uvm_info(get_type_name(),
+		 format("Writing 'h%0h at 'h%0h via map \"%s\"...",
+			data, addr, rw.map.get_full_name()), UVM_FULL);
 
 	if (rw.element_kind == UVM_FIELD) {
 	  for (int z=0; z<bus_width; z++) {
@@ -1850,9 +1850,9 @@ class uvm_reg_map: uvm_object
 	adapter.m_set_item(null);
       
 	if (bus_req is null) {
-	  uvm_root_fatal("RegMem",
-			 "adapter [" ~ adapter.get_name() ~
-			 "] didnt return a bus transaction");
+	  uvm_fatal("RegMem",
+		    "adapter [" ~ adapter.get_name() ~
+		    "] didnt return a bus transaction");
 	}
       
 	bus_req.set_sequencer(sequencer);
@@ -1882,10 +1882,10 @@ class uvm_reg_map: uvm_object
 
 	rw.status = rw_access.status;
 
-	uvm_root_info(get_type_name(),
-		      format("Wrote 'h%0h at 'h%0h via map \"%s\": %s...",
-			     data, addr, rw.map.get_full_name(),
-			     rw.status), UVM_FULL);
+	uvm_info(get_type_name(),
+		 format("Wrote 'h%0h at 'h%0h via map \"%s\": %s...",
+			data, addr, rw.map.get_full_name(),
+			rw.status), UVM_FULL);
 
 	if (rw.status == UVM_NOT_OK) break;
 
@@ -1980,9 +1980,9 @@ class uvm_reg_map: uvm_object
 	uvm_reg_data_logic_t data;
        
 
-	uvm_root_info(get_type_name(),
-		      format("Reading address 'h%0h via map \"%s\"...",
-			     addr, get_full_name()), UVM_FULL);
+	uvm_info(get_type_name(),
+		 format("Reading address 'h%0h via map \"%s\"...",
+			addr, get_full_name()), UVM_FULL);
                 
 	if (rw.element_kind == UVM_FIELD) {
 	  for (int z=0;z<bus_width;z++) {
@@ -2000,9 +2000,9 @@ class uvm_reg_map: uvm_object
 	bus_req = adapter.reg2bus(rw_access);
 	adapter.m_set_item(null);
 	if (bus_req is null) {
-	  uvm_root_fatal("RegMem",
-			 "adapter [" ~ adapter.get_name() ~
-			 "] didnt return a bus transaction");
+	  uvm_fatal("RegMem",
+		    "adapter [" ~ adapter.get_name() ~
+		    "] didnt return a bus transaction");
 	}
 	bus_req.set_sequencer(sequencer);
 	rw.parent.start_item(bus_req,rw.prior);
@@ -2033,10 +2033,10 @@ class uvm_reg_map: uvm_object
 	  rw.status = UVM_HAS_X;
 	}
          
-	uvm_root_info(get_type_name(),
-		      format("Read 'h%0h at 'h%0h via map \"%s\": %s...",
-			     data, addr, get_full_name(), rw.status),
-		      UVM_FULL);
+	uvm_info(get_type_name(),
+		 format("Read 'h%0h at 'h%0h via map \"%s\": %s...",
+			data, addr, get_full_name(), rw.status),
+		 UVM_FULL);
 
 	if (rw.status == UVM_NOT_OK) break;
 
@@ -2169,10 +2169,10 @@ class uvm_reg_map: uvm_object
     if (rw.element_kind == UVM_MEM) {
       auto mem = cast(uvm_mem) rw.element;
       if(rw.element is null || mem is null) {
-	uvm_root_fatal("REG/CAST",
-		       "uvm_reg_item 'element_kind' is UVM_MEM, " ~ 
-		       "but 'element' does not point to a memory: " ~
-		       rw.get_name());
+	uvm_fatal("REG/CAST",
+		  "uvm_reg_item 'element_kind' is UVM_MEM, " ~ 
+		  "but 'element' does not point to a memory: " ~
+		  rw.get_name());
       }
       map_info = get_mem_map_info(mem);
       size = mem.get_n_bits();
@@ -2180,10 +2180,10 @@ class uvm_reg_map: uvm_object
     else if (rw.element_kind == UVM_REG) {
       auto rg = cast (uvm_reg) rw.element;
       if(rw.element is null || rg is null) {
-	uvm_root_fatal("REG/CAST",
-		       "uvm_reg_item 'element_kind' is UVM_REG, " ~ 
-		       "but 'element' does not point to a register: " ~
-		       rw.get_name());
+	uvm_fatal("REG/CAST",
+		  "uvm_reg_item 'element_kind' is UVM_REG, " ~ 
+		  "but 'element' does not point to a register: " ~
+		  rw.get_name());
       }
       map_info = get_reg_map_info(rg);
       size = rg.get_n_bits();
@@ -2191,10 +2191,10 @@ class uvm_reg_map: uvm_object
     else if (rw.element_kind == UVM_FIELD) {
       auto field = cast(uvm_reg_field) rw.element;
       if(rw.element is null || field is null) {
-	uvm_root_fatal("REG/CAST",
-		       "uvm_reg_item 'element_kind' is UVM_FIELD, " ~ 
-		       "but 'element' does not point to a field: " ~
-		       rw.get_name());
+	uvm_fatal("REG/CAST",
+		  "uvm_reg_item 'element_kind' is UVM_FIELD, " ~ 
+		  "but 'element' does not point to a field: " ~
+		  rw.get_name());
       }
       map_info = get_reg_map_info(field.get_parent());
       size = field.get_n_bits();

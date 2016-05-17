@@ -1458,7 +1458,7 @@ class uvm_default_factory: uvm_factory
       qs ~= "(*) Types with no associated type name will be printed" ~
 	" as <unknown>\n\n####\n\n";
 
-      uvm_root_info("UVM/FACTORY/PRINT", qs, UVM_NONE);
+      uvm_info("UVM/FACTORY/PRINT", qs, UVM_NONE);
 
     }
   }
@@ -1606,7 +1606,7 @@ class uvm_default_factory: uvm_factory
 
       qs ~= "\n(*) Types with no associated type name will be printed as <unknown>\n\n####\n\n";
 
-      uvm_root_info("UVM/FACTORY/DUMP", qs, UVM_NONE);
+      uvm_info("UVM/FACTORY/DUMP", qs, UVM_NONE);
     }
   }
 

@@ -226,7 +226,7 @@ abstract class uvm_reg_file: uvm_object
       }
 
       if (!hdl_paths_pool.exists(kind)) {
-	uvm_root_warning("RegModel", "Unknown HDL Abstraction '" ~ kind ~ "'");
+	uvm_warning("RegModel", "Unknown HDL Abstraction '" ~ kind ~ "'");
 	return;
       }
 
@@ -321,7 +321,7 @@ abstract class uvm_reg_file: uvm_object
       }
 
       if (!has_hdl_path(kind)) {
-	uvm_root_error("RegModel", "Register does not have hdl path" ~
+	uvm_error("RegModel", "Register does not have hdl path" ~
 		  " defined for abstraction '" ~ kind ~ "'");
 	return;
       }
@@ -366,7 +366,7 @@ abstract class uvm_reg_file: uvm_object
 	kind = get_default_hdl_path();
 
       if (!has_hdl_path(kind)) {
-	uvm_root_error("RegModel", "Register file does not have" ~
+	uvm_error("RegModel", "Register file does not have" ~
 		  " hdl path defined for abstraction '" ~ kind ~ "'");
 	  return;
       }
@@ -426,7 +426,7 @@ abstract class uvm_reg_file: uvm_object
 	  kind = parent.get_default_hdl_path();
 	}
 	else {
-	  uvm_root_error("RegModel", "Register file has no parent. " ~
+	  uvm_error("RegModel", "Register file has no parent. " ~
 		    "Must specify a valid HDL abstraction (kind)");
 	  return;
 	}
@@ -480,7 +480,7 @@ abstract class uvm_reg_file: uvm_object
   // convert2string
 
   override string convert2string() {
-    uvm_root_fatal("RegModel",
+    uvm_fatal("RegModel",
 	      "RegModel register files cannot be converted to strings");
     return "";
   }
@@ -491,7 +491,7 @@ abstract class uvm_reg_file: uvm_object
   // clone
 
   override uvm_object clone() {
-    uvm_root_fatal("RegModel","RegModel register files cannot be cloned");
+    uvm_fatal("RegModel","RegModel register files cannot be cloned");
     return null;
   }
 
@@ -501,7 +501,7 @@ abstract class uvm_reg_file: uvm_object
   // do_copy
 
   override void do_copy(uvm_object rhs) {
-    uvm_root_fatal("RegModel","RegModel register files cannot be copied");
+    uvm_fatal("RegModel","RegModel register files cannot be copied");
   }
 
 
@@ -512,7 +512,7 @@ abstract class uvm_reg_file: uvm_object
 
   override bool do_compare(uvm_object  rhs,
 			   uvm_comparer comparer) {
-    uvm_root_warning("RegModel","RegModel register files cannot be compared");
+    uvm_warning("RegModel","RegModel register files cannot be compared");
     return 0;
   }
 
@@ -521,7 +521,7 @@ abstract class uvm_reg_file: uvm_object
   // do_pack
 
   override void do_pack (uvm_packer packer) {
-    uvm_root_warning("RegModel","RegModel register files cannot be packed");
+    uvm_warning("RegModel","RegModel register files cannot be packed");
   }
 
   // extern virtual function void          do_unpack  (uvm_packer packer);
@@ -529,6 +529,6 @@ abstract class uvm_reg_file: uvm_object
   // do_unpack
 
   override void do_unpack (uvm_packer packer) {
-    uvm_root_warning("RegModel","RegModel register files cannot be unpacked");
+    uvm_warning("RegModel","RegModel register files cannot be unpacked");
   }
 }

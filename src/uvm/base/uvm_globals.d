@@ -136,8 +136,8 @@ version (UVM_INCLUDE_DEPRECATED) {
 // the message text. The file and line are also sent to the uvm_report_info call.
 //
 
-void uvm_root_info(string file=__FILE__,
-		   size_t line=__LINE__)(string id, string message,
+void uvm_info(string file=__FILE__,
+	      size_t line=__LINE__)(string id, string message,
 					 int verbosity = UVM_MEDIUM) {
   if (uvm_report_enabled(verbosity, UVM_INFO, id))
     uvm_report_info(id, message, verbosity, file, line);
@@ -154,8 +154,8 @@ void uvm_root_info(string file=__FILE__,
 // ~MSG~ is given as the message text. The file and line are also sent to the
 // uvm_report_warning call.
 
-void uvm_root_warning(string file=__FILE__,
-		      size_t line=__LINE__)(string id, string message) {
+void uvm_warning(string file=__FILE__,
+		 size_t line=__LINE__)(string id, string message) {
   if (uvm_report_enabled(UVM_NONE, UVM_WARNING, id))
     uvm_report_warning(id, message, UVM_NONE, file, line);
 }
@@ -170,8 +170,8 @@ void uvm_root_warning(string file=__FILE__,
 // ~MSG~ is given as the message text. The file and line are also sent to the
 // uvm_report_error call.
 
-void uvm_root_error(string file=__FILE__,
-		    size_t line=__LINE__)(string id, string message) {
+void uvm_error(string file=__FILE__,
+	       size_t line=__LINE__)(string id, string message) {
   if (uvm_report_enabled(UVM_NONE, UVM_ERROR, id))
     uvm_report_error(id, message, UVM_NONE, file, line);
 }
@@ -186,8 +186,8 @@ void uvm_root_error(string file=__FILE__,
 // ~MSG~ is given as the message text. The file and line are also sent to the
 // uvm_report_fatal call.
 
-void uvm_root_fatal(string file=__FILE__,
-		    size_t line=__LINE__)(string id, string message) {
+void uvm_fatal(string file=__FILE__,
+	       size_t line=__LINE__)(string id, string message) {
   if (uvm_report_enabled(UVM_NONE, UVM_FATAL, id))
     uvm_report_fatal(id, message, UVM_NONE, file, line);
 }
@@ -506,7 +506,7 @@ version(UVM_INCLUDE_DEPRECATED) {
 			  uvm_object value,
 			  bool clone=true) {
     if (!uvm_component.m_config_deprecated_warned) {
-      uvm_root_warning("UVM/CFG/SET/DPR", "get/set_config_* API has been deprecated. Use uvm_config_db instead.");
+      uvm_warning("UVM/CFG/SET/DPR", "get/set_config_* API has been deprecated. Use uvm_config_db instead.");
       uvm_component.m_config_deprecated_warned = true;
     }
     uvm_coreservice_t cs = uvm_coreservice_t.get();
@@ -527,7 +527,7 @@ version(UVM_INCLUDE_DEPRECATED) {
 			  string field_name,
 			  string value) {
     if (!uvm_component.m_config_deprecated_warned) {
-      uvm_root_warning("UVM/CFG/SET/DPR", "get/set_config_* API has been deprecated. Use uvm_config_db instead.");
+      uvm_warning("UVM/CFG/SET/DPR", "get/set_config_* API has been deprecated. Use uvm_config_db instead.");
       uvm_component.m_config_deprecated_warned = true;
     }
     uvm_coreservice_t cs = uvm_coreservice_t.get();

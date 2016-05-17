@@ -69,7 +69,6 @@ import uvm.base.uvm_component;
 import uvm.base.uvm_coreservice;
 import uvm.meta.mcd;
 import uvm.meta.meta;
-import uvm.base.uvm_globals: uvm_root_warning;
 
 import esdl.data.queue;
 import esdl.data.sync;
@@ -317,8 +316,8 @@ class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
 			     string name, string where) {
     foreach(cb; q) {
       if(cb.get_name() == name) {
-	uvm_root_warning("UVM/CB/NAM/SAM", "A callback named \"" ~ name ~
-			 "\" is already registered with " ~ where);
+	uvm_warning("UVM/CB/NAM/SAM", "A callback named \"" ~ name ~
+		    "\" is already registered with " ~ where);
 	return true;
       }
     }
@@ -527,7 +526,7 @@ class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
 		   blanks[0..max_cb_name-cbq[i].length], inst_q[i],
 		   blanks[0..max_inst_name - inst_q[i].length], mode_q[i]);
     }
-    uvm_root_info("UVM/CB/DISPLAY", qs, UVM_NONE);
+    uvm_info("UVM/CB/DISPLAY", qs, UVM_NONE);
 
     m_tracing = true; //allow tracing to be resumed
   }
@@ -640,7 +639,7 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
       // }
 
       if (m_inst is null) {
-	uvm_root_fatal("CB/INTERNAL", "get(): m_inst is null");
+	uvm_fatal("CB/INTERNAL", "get(): m_inst is null");
       }
     }
     return m_inst;

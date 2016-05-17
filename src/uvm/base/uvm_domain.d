@@ -200,8 +200,8 @@ class uvm_domain: uvm_phase
     super(name,UVM_PHASE_DOMAIN);
     synchronized(once) {
       if (name in once._m_domains) {
-	uvm_root_error("UNIQDOMNAM",
-		       format("Domain created with non-unique name '%s'", name));
+	uvm_error("UNIQDOMNAM",
+		  format("Domain created with non-unique name '%s'", name));
       }
       once._m_domains[name] = this;
     }

@@ -81,10 +81,10 @@ class uvm_get_to_lock_dap(T=int): uvm_set_get_dap_base!T
   override void set(T value) {
     synchronized(this) {
       if(_m_locked) {
-	uvm_root_error("UVM/GET_TO_LOCK_DAP/SAG",
-		       format("Attempt to set new value on '%s', " ~
-			      "but the data access policy forbids" ~
-			      " setting after a get!", get_full_name()));
+	uvm_error("UVM/GET_TO_LOCK_DAP/SAG",
+		  format("Attempt to set new value on '%s', " ~
+			 "but the data access policy forbids" ~
+			 " setting after a get!", get_full_name()));
       }
       else {
 	_m_value = value;
@@ -144,18 +144,18 @@ class uvm_get_to_lock_dap(T=int): uvm_set_get_dap_base!T
   // A call to any of these methods will result in an error.
 
   override void do_copy(uvm_object rhs) {
-    uvm_root_error("UVM/GET_TO_LOCK_DAP/CPY",
-		   "'copy()' is not supported for 'uvm_get_to_lock_dap!T'");
+    uvm_error("UVM/GET_TO_LOCK_DAP/CPY",
+	      "'copy()' is not supported for 'uvm_get_to_lock_dap!T'");
   }
 
   override void do_pack(uvm_packer packer) {
-    uvm_root_error("UVM/GET_TO_LOCK_DAP/PCK",
-		   "'pack()' is not supported for 'uvm_get_to_lock_dap!T'");
+    uvm_error("UVM/GET_TO_LOCK_DAP/PCK",
+	      "'pack()' is not supported for 'uvm_get_to_lock_dap!T'");
   }
 
   override void do_unpack(uvm_packer packer) {
-    uvm_root_error("UVM/GET_TO_LOCK_DAP/UPK",
-		   "'unpack()' is not supported for 'uvm_get_to_lock_dap!T'");
+    uvm_error("UVM/GET_TO_LOCK_DAP/UPK",
+	      "'unpack()' is not supported for 'uvm_get_to_lock_dap!T'");
   }
 
   // Group- Reporting

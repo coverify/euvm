@@ -243,33 +243,33 @@ abstract class uvm_tr_database: uvm_object
       uvm_tr_database db;
 
       if(lhs is null) {
-	uvm_root_warning("UVM/TR_DB/BAD_LINK",
-			 "left hand side '<null>' is not supported" ~
-			 " in links for 'uvm_tr_database'");
+	uvm_warning("UVM/TR_DB/BAD_LINK",
+		    "left hand side '<null>' is not supported" ~
+		    " in links for 'uvm_tr_database'");
 	return;
       }
       if(rhs is null) {
-	uvm_root_warning("UVM/TR_DB/BAD_LINK",
-			 "right hand side '<null>' is not supported" ~
-			 " in links for 'uvm_tr_database'");
+	uvm_warning("UVM/TR_DB/BAD_LINK",
+		    "right hand side '<null>' is not supported" ~
+		    " in links for 'uvm_tr_database'");
 	return;
       }
       uvm_tr_stream s_lhs = cast(uvm_tr_stream) lhs;
       uvm_recorder r_lhs = cast(uvm_recorder) lhs;
       if (s_lhs is null && r_lhs is null) {
-	uvm_root_warning("UVM/TR_DB/BAD_LINK",
-			 format("left hand side of type '%s' not supported" ~
-				" in links for 'uvm_tr_database'",
-				lhs.get_type_name()));
+	uvm_warning("UVM/TR_DB/BAD_LINK",
+		    format("left hand side of type '%s' not supported" ~
+			   " in links for 'uvm_tr_database'",
+			   lhs.get_type_name()));
 	return;
       }
       uvm_tr_stream s_rhs = cast(uvm_tr_stream) rhs;
       uvm_recorder r_rhs = cast(uvm_recorder) rhs;
       if (s_rhs is null && r_rhs is null) {
-	uvm_root_warning("UVM/TR_DB/BAD_LINK",
-			 format("right hand side of type '%s' not supported" ~
-				" in links for 'uvm_record_datbasae'",
-				rhs.get_type_name()));
+	uvm_warning("UVM/TR_DB/BAD_LINK",
+		    format("right hand side of type '%s' not supported" ~
+			   " in links for 'uvm_record_datbasae'",
+			   rhs.get_type_name()));
 	return;
       }
 
@@ -282,16 +282,16 @@ abstract class uvm_tr_database: uvm_object
 
       if ((s_lhs !is null) && (s_lhs.get_db() !is this)) {
 	db = s_lhs.get_db();
-	uvm_root_warning("UVM/TR_DB/BAD_LINK",
-			 format("attempt to link stream from '%s' into '%s'",
-				db.get_name(), this.get_name()));
+	uvm_warning("UVM/TR_DB/BAD_LINK",
+		    format("attempt to link stream from '%s' into '%s'",
+			   db.get_name(), this.get_name()));
 	return;
       }
       if ((s_rhs !is null) && (s_rhs.get_db() !is this)) {
 	db = s_rhs.get_db();
-	uvm_root_warning("UVM/TR_DB/BAD_LINK",
-			 format("attempt to link stream from '%s' into '%s'",
-				db.get_name(), this.get_name()));
+	uvm_warning("UVM/TR_DB/BAD_LINK",
+		    format("attempt to link stream from '%s' into '%s'",
+			   db.get_name(), this.get_name()));
 	return;
       }
 
@@ -469,14 +469,14 @@ class uvm_text_tr_database: uvm_tr_database
   void set_file_name(string filename) {
     synchronized(this) {
       if(filename == "") {
-	uvm_root_warning("UVM/TXT_DB/EMPTY_NAME",
-			 "Ignoring attempt to set file name to ''!");
+	uvm_warning("UVM/TXT_DB/EMPTY_NAME",
+		    "Ignoring attempt to set file name to ''!");
 	return;
       }
 
       if(!_m_filename_dap.try_set(filename)) {
-	uvm_root_warning("UVM/TXT_DB/SET_AFTER_OPEN",
-			 "Ignoring attempt to change file name after opening the db!");
+	uvm_warning("UVM/TXT_DB/SET_AFTER_OPEN",
+		    "Ignoring attempt to change file name after opening the db!");
 	return;
       }
     }

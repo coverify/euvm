@@ -69,7 +69,7 @@ abstract class uvm_topdown_phase: uvm_phase
 
     synchronized(this) {
       if (m_phase_trace) {
-	uvm_root_info("PH_TRACE", format("topdown-phase phase=%s state=%s comp=%s "
+	uvm_info("PH_TRACE", format("topdown-phase phase=%s state=%s comp=%s "
 				    "comp.domain=%s phase.domain=%s",
 				    phase.get_name(), state,
 				    comp.get_full_name(), comp_domain.get_name(),
@@ -105,7 +105,7 @@ abstract class uvm_topdown_phase: uvm_phase
 	  comp.m_current_phase = null;
 	  break;
 	default:
-	  uvm_root_fatal("PH_BADEXEC","topdown phase traverse internal error");
+	  uvm_fatal("PH_BADEXEC","topdown phase traverse internal error");
 	}
       }
     }

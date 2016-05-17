@@ -87,10 +87,10 @@ bool uvm_hdl_set_vlog(T)(string path, T value, vpiFlagsTypeT flag=vpiNoDelay) {
   vpiHandle r = vpiGetHandleByName(path, null);
 
   if(r is null) {
-    uvm_root_error("UVM/DPI/HDL_SET",
-		   format("set: unable to locate hdl path (%s)\n Either the" ~
-			  " name is incorrect, or you may not have PLI/ACC " ~
-			  "visibility to that name", path));
+    uvm_error("UVM/DPI/HDL_SET",
+	      format("set: unable to locate hdl path (%s)\n Either the" ~
+		     " name is incorrect, or you may not have PLI/ACC " ~
+		     "visibility to that name", path));
     return false;
   }
   else {
@@ -121,10 +121,10 @@ bool uvm_hdl_get_vlog(T)(string path, ref T value) {
   vpiHandle r = vpiGetHandleByName(path, null);
 
   if(r is null) {
-    uvm_root_error("UVM/DPI/HDL_GET",
-		   format("get: unable to locate hdl path (%s)\n Either the" ~
-			  " name is incorrect, or you may not have PLI/ACC " ~
-			  "visibility to that name", path));
+    uvm_error("UVM/DPI/HDL_GET",
+	      format("get: unable to locate hdl path (%s)\n Either the" ~
+		     " name is incorrect, or you may not have PLI/ACC " ~
+		     "visibility to that name", path));
     // Exiting is too harsh. Just return instead.
     // tf_dofinish();
     return false;
@@ -136,12 +136,12 @@ bool uvm_hdl_get_vlog(T)(string path, ref T value) {
 
     auto size = vpi_get(vpiSize, r);
     if(size > maxsize) {
-      uvm_root_error("UVM/DPI/HDL_SET",
-		     format("uvm_reg : hdl path '%s' is %0d bits, but the" ~
-			    " maximum size is %0d.  You can increase the " ~
-			    "maximum via a compile-time flag: " ~
-			    "+define+UVM_HDL_MAX_WIDTH=<value>",
-			    path, size, maxsize));
+      uvm_error("UVM/DPI/HDL_SET",
+		format("uvm_reg : hdl path '%s' is %0d bits, but the" ~
+		       " maximum size is %0d.  You can increase the " ~
+		       "maximum via a compile-time flag: " ~
+		       "+define+UVM_HDL_MAX_WIDTH=<value>",
+		       path, size, maxsize));
       return false;
     }
     // chunks = (size-1)/32 + 1;
@@ -276,10 +276,10 @@ bool uvm_hdl_release(string path) {
   vpiHandle r = vpiGetHandleByName(path, null);
 
   if(r is null) {
-    uvm_root_error("UVM/DPI/HDL_SET",
-		   format("set: unable to locate hdl path (%s)\n Either the" ~
-			  " name is incorrect, or you may not have PLI/ACC " ~
-			  "visibility to that name", path));
+    uvm_error("UVM/DPI/HDL_SET",
+	      format("set: unable to locate hdl path (%s)\n Either the" ~
+		     " name is incorrect, or you may not have PLI/ACC " ~
+		     "visibility to that name", path));
     return false;
   }
   else {

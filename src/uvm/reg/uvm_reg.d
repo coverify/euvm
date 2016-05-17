@@ -137,7 +137,7 @@ abstract class uvm_reg: uvm_object
     synchronized(this) {
       super(name);
       if (n_bits == 0) {
-	uvm_root_error("RegModel", format("Register \"%s\" cannot have 0 bits", get_name()));
+	uvm_error("RegModel", format("Register \"%s\" cannot have 0 bits", get_name()));
 	n_bits = 1;
       }
       _m_n_bits      = n_bits;
@@ -217,9 +217,9 @@ abstract class uvm_reg: uvm_object
       uvm_reg_map orig_map = map;
 
       if (_m_maps.length > 1 && map is null) {
-	uvm_root_error("RegModel",
-		       "set_offset requires a non-null map when register '" ~
-		       get_full_name() ~ "' belongs to more than one map.");
+	uvm_error("RegModel",
+		  "set_offset requires a non-null map when register '" ~
+		  get_full_name() ~ "' belongs to more than one map.");
 	return;
       }
 
@@ -258,12 +258,12 @@ abstract class uvm_reg: uvm_object
       long idx;
    
       if (_m_locked) {
-	uvm_root_error("RegModel", "Cannot add field to locked register model");
+	uvm_error("RegModel", "Cannot add field to locked register model");
 	return;
       }
 
       if (field is null)
-	uvm_root_fatal("RegModel", "Attempting to register NULL field");
+	uvm_fatal("RegModel", "Attempting to register NULL field");
 
       // Store fields in LSB to MSB order
       offset = field.get_lsb_pos();
@@ -286,27 +286,27 @@ abstract class uvm_reg: uvm_object
    
       // Check if there are too many fields in the register
       if (_m_n_used_bits > _m_n_bits) {
-	uvm_root_error("RegModel",
-		       format("Fields use more bits (%0d) than available in register \"%s\" (%0d)",
-			      _m_n_used_bits, get_name(), _m_n_bits));
+	uvm_error("RegModel",
+		  format("Fields use more bits (%0d) than available in register \"%s\" (%0d)",
+			 _m_n_used_bits, get_name(), _m_n_bits));
       }
 
       // Check if there are overlapping fields
       if (idx > 0) {
 	if (_m_fields[idx-1].get_lsb_pos() +
 	    _m_fields[idx-1].get_n_bits() > offset) {
-	  uvm_root_error("RegModel", format("Field %s overlaps field %s in register \"%s\"",
-					    _m_fields[idx-1].get_name(),
-					    field.get_name(), get_name()));
+	  uvm_error("RegModel", format("Field %s overlaps field %s in register \"%s\"",
+				       _m_fields[idx-1].get_name(),
+				       field.get_name(), get_name()));
 	}
       }
       if (idx < _m_fields.length-1) {
 	if (offset + field.get_n_bits() >
 	    _m_fields[idx+1].get_lsb_pos()) {
-	  uvm_root_error("RegModel", format("Field %s overlaps field %s in register \"%s\"",
-					    field.get_name(),
-					    _m_fields[idx+1].get_name(),
-					    get_name()));
+	  uvm_error("RegModel", format("Field %s overlaps field %s in register \"%s\"",
+				       field.get_name(),
+				       _m_fields[idx+1].get_name(),
+				       get_name()));
 	}
       }
     }
@@ -486,11 +486,11 @@ abstract class uvm_reg: uvm_object
 	  parent_map = parent_map.get_parent_map();
 	}
       }
-      uvm_root_warning("RegModel", 
-		       "Register '" ~ get_full_name() ~
-		       "' is not contained within map '" ~
-		       map.get_full_name() ~ "'" ~
-		       (caller == "" ? "": " (called from " ~ caller ~ ")"));
+      uvm_warning("RegModel", 
+		  "Register '" ~ get_full_name() ~
+		  "' is not contained within map '" ~
+		  map.get_full_name() ~ "'" ~
+		  (caller == "" ? "": " (called from " ~ caller ~ ")"));
       return null;
     }
   }
@@ -502,10 +502,10 @@ abstract class uvm_reg: uvm_object
     synchronized(this) {
       // if reg is not associated with any map, return null
       if (_m_maps.length == 0) {
-	uvm_root_warning("RegModel",
-			 "Register '" ~ get_full_name() ~
-			 "' is not registered with any map" ~
-			 (caller == "" ? "": " (called from " ~ caller ~ ")"));
+	uvm_warning("RegModel",
+		    "Register '" ~ get_full_name() ~
+		    "' is not registered with any map" ~
+		    (caller == "" ? "": " (called from " ~ caller ~ ")"));
 	return null;
       }
 
@@ -649,8 +649,8 @@ abstract class uvm_reg: uvm_object
 	if (field.get_name() == name)
 	  return field;
       }
-      uvm_root_warning("RegModel", "Unable to locate field '" ~ name ~
-		       "' in register '" ~ get_name() ~ "'");
+      uvm_warning("RegModel", "Unable to locate field '" ~ name ~
+		  "' in register '" ~ get_name() ~ "'");
       return null;
     }
   }
@@ -721,10 +721,10 @@ abstract class uvm_reg: uvm_object
       map_info = map.get_reg_map_info(this);
    
       if (map_info.unmapped) {
-	uvm_root_warning("RegModel", "Register '" ~ get_name() ~ 
-			 "' is unmapped in map '" ~
-			 ((orig_map is null) ? map.get_full_name() :
-			  orig_map.get_full_name()) ~ "'");
+	uvm_warning("RegModel", "Register '" ~ get_name() ~ 
+		    "' is unmapped in map '" ~
+		    ((orig_map is null) ? map.get_full_name() :
+		     orig_map.get_full_name()) ~ "'");
 	return uvm_reg_addr_t(-1);
       }
          
@@ -799,10 +799,10 @@ abstract class uvm_reg: uvm_object
       map_info = map.get_reg_map_info(this);
 
       if (map_info.unmapped) {
-	uvm_root_warning("RegModel", "Register '" ~ get_name() ~
-			 "' is unmapped in map '" ~
-			 ((orig_map is null) ? map.get_full_name() :
-			  orig_map.get_full_name()) ~ "'");
+	uvm_warning("RegModel", "Register '" ~ get_name() ~
+		    "' is unmapped in map '" ~
+		    ((orig_map is null) ? map.get_full_name() :
+		     orig_map.get_full_name()) ~ "'");
 	return -1;
       }
  
@@ -1244,9 +1244,9 @@ abstract class uvm_reg: uvm_object
 
 
     if (bkdr is null && !has_hdl_path(kind)) {
-      uvm_root_error("RegModel",
-		     "No backdoor access available to poke register '" ~
-		     get_full_name() ~ "'");
+      uvm_error("RegModel",
+		"No backdoor access available to poke register '" ~
+		get_full_name() ~ "'");
       status = UVM_NOT_OK;
       return;
     }
@@ -1282,8 +1282,8 @@ abstract class uvm_reg: uvm_object
       status = rw.status;
     }
 
-    uvm_root_info("RegModel", format("Poked register \"%s\": 'h%h",
-				     get_full_name(), value),UVM_HIGH);
+    uvm_info("RegModel", format("Poked register \"%s\": 'h%h",
+				get_full_name(), value),UVM_HIGH);
 
     do_predict(rw, UVM_PREDICT_WRITE);
 
@@ -1334,8 +1334,8 @@ abstract class uvm_reg: uvm_object
     }
 
     if (bkdr is null && !has_hdl_path(kind)) {
-      uvm_root_error("RegModel", format("No backdoor access available to peek register \"%s\"",
-					get_full_name()));
+      uvm_error("RegModel", format("No backdoor access available to peek register \"%s\"",
+				   get_full_name()));
       status = UVM_NOT_OK;
       return;
     }
@@ -1371,8 +1371,8 @@ abstract class uvm_reg: uvm_object
       value = rw.get_value(0);
     }
     
-    uvm_root_info("RegModel", format("Peeked register \"%s\": 'h%h",
-				     get_full_name(), value),UVM_HIGH);
+    uvm_info("RegModel", format("Peeked register \"%s\": 'h%h",
+				get_full_name(), value),UVM_HIGH);
 
     do_predict(rw, UVM_PREDICT_READ);
 
@@ -1686,9 +1686,9 @@ abstract class uvm_reg: uvm_object
 
       if (rw.path == UVM_BACKDOOR) {
 	if (get_backdoor() is null && !has_hdl_path()) {
-	  uvm_root_warning("RegModel",
-			   "No backdoor access available for register '" ~
-			   get_full_name() ~ "' . Using frontdoor instead.");
+	  uvm_warning("RegModel",
+		      "No backdoor access available for register '" ~
+		      get_full_name() ~ "' . Using frontdoor instead.");
 	  rw.path = UVM_FRONTDOOR;
 	}
 	else {
@@ -1702,9 +1702,9 @@ abstract class uvm_reg: uvm_object
 	rw.local_map = get_local_map(rw.map,caller);
 
 	if (rw.local_map is null) {
-	  uvm_root_error(get_type_name(), 
-			 "No transactor available to physically access register on map '" ~
-			 rw.map.get_full_name() ~ "'");
+	  uvm_error(get_type_name(), 
+		    "No transactor available to physically access register on map '" ~
+		    rw.map.get_full_name() ~ "'");
 	  rw.status = UVM_NOT_OK;
 	  return false;
 	}
@@ -1712,11 +1712,11 @@ abstract class uvm_reg: uvm_object
 	map_info = rw.local_map.get_reg_map_info(this);
 
 	if (map_info.frontdoor is null && map_info.unmapped) {
-	  uvm_root_error("RegModel", "Register '" ~ get_full_name() ~
-			 "' unmapped in map '" ~
-			 (rw.map is null)? rw.local_map.get_full_name() :
-			 rw.map.get_full_name() ~
-			 "' and does not have a user-defined frontdoor");
+	  uvm_error("RegModel", "Register '" ~ get_full_name() ~
+		    "' unmapped in map '" ~
+		    (rw.map is null)? rw.local_map.get_full_name() :
+		    rw.map.get_full_name() ~
+		    "' and does not have a user-defined frontdoor");
           rw.status = UVM_NOT_OK;
           return false;
 	}
@@ -1762,11 +1762,11 @@ abstract class uvm_reg: uvm_object
 
       if ((actual|dc) is (expected|dc)) return true;
    
-      uvm_root_error("RegModel",
-		     format("Register \"%s\" value read from DUT (0x%h)" ~
-			    " does not match mirrored value (0x%h)",
-			    get_full_name(), actual,
-			    (expected ^ (LOGIC_X & dc))));
+      uvm_error("RegModel",
+		format("Register \"%s\" value read from DUT (0x%h)" ~
+		       " does not match mirrored value (0x%h)",
+		       get_full_name(), actual,
+		       (expected ^ (LOGIC_X & dc))));
                                      
       foreach(field; _m_fields) {
 	string acc = field.get_access(map);
@@ -1778,14 +1778,14 @@ abstract class uvm_reg: uvm_object
 	  uvm_reg_data_t exp   = expected >> field.get_lsb_pos() & mask;
 
 	  if (val !is exp) {
-	    uvm_root_info("RegModel",
-			  format("Field %s (%s[%0d:%0d]) mismatch read=%0d'h%0h mirrored=%0d'h%0h ",
-				 field.get_name(), get_full_name(),
-				 field.get_lsb_pos() + field.get_n_bits() - 1,
-				 field.get_lsb_pos(),
-				 field.get_n_bits(), val,
-				 field.get_n_bits(), exp),
-			  UVM_NONE);
+	    uvm_info("RegModel",
+		     format("Field %s (%s[%0d:%0d]) mismatch read=%0d'h%0h mirrored=%0d'h%0h ",
+			    field.get_name(), get_full_name(),
+			    field.get_lsb_pos() + field.get_n_bits() - 1,
+			    field.get_lsb_pos(),
+			    field.get_n_bits(), val,
+			    field.get_n_bits(), exp),
+		     UVM_NONE);
 	  }
 	}
       }
@@ -2253,8 +2253,8 @@ abstract class uvm_reg: uvm_object
       rw.status = UVM_IS_OK;
 
       if (_m_is_busy && kind is UVM_PREDICT_DIRECT) {
-	uvm_root_warning("RegModel", "Trying to predict value of register '" ~
-			 get_full_name() ~ "' while it is being accessed");
+	uvm_warning("RegModel", "Trying to predict value of register '" ~
+		    get_full_name() ~ "' while it is being accessed");
 	rw.status = UVM_NOT_OK;
 	return;
       }
@@ -2380,7 +2380,7 @@ abstract class uvm_reg: uvm_object
       bkdr.lineno = lineno;
       if (_m_backdoor !is null &&
 	  _m_backdoor.has_update_threads()) {
-	uvm_root_warning("RegModel", "Previous register backdoor still has update threads running. Backdoors with active mirroring should only be set before simulation starts.");
+	uvm_warning("RegModel", "Previous register backdoor still has update threads running. Backdoors with active mirroring should only be set before simulation starts.");
       }
       _m_backdoor = bkdr;
     }
@@ -2448,7 +2448,7 @@ abstract class uvm_reg: uvm_object
 	}
       }
       if (!_m_hdl_paths_pool.exists(kind)) {
-	uvm_root_warning("RegModel", "Unknown HDL Abstraction '" ~ kind ~ "'");
+	uvm_warning("RegModel", "Unknown HDL Abstraction '" ~ kind ~ "'");
 	return;
       }
 
@@ -2594,9 +2594,9 @@ abstract class uvm_reg: uvm_object
       }
 
       if (!has_hdl_path(kind)) {
-	uvm_root_error("RegModel",
-		       "Register does not have hdl path defined for abstraction '" ~
-		       kind ~ "'");
+	uvm_error("RegModel",
+		  "Register does not have hdl path defined for abstraction '" ~
+		  kind ~ "'");
 	return;
       }
 
@@ -2661,9 +2661,9 @@ abstract class uvm_reg: uvm_object
       }
    
       if (!has_hdl_path(kind)) {
-	uvm_root_error("RegModel",
-		       "Register " ~ get_full_name() ~
-		       " does not have hdl path defined for abstraction '" ~ kind ~ "'");
+	uvm_error("RegModel",
+		  "Register " ~ get_full_name() ~
+		  " does not have hdl path defined for abstraction '" ~ kind ~ "'");
 	return;
       }
 
@@ -2736,8 +2736,8 @@ abstract class uvm_reg: uvm_object
     foreach (path; paths) {
       uvm_hdl_path_concat hdl_concat = path;
       foreach (hdl_slice; hdl_concat.slices) {
-	uvm_root_info("RegMem", "backdoor_write to " ~
-		      hdl_slice.path, UVM_DEBUG);
+	uvm_info("RegMem", "backdoor_write to " ~
+		 hdl_slice.path, UVM_DEBUG);
 
 	if (hdl_slice.offset < 0) {
 	  // ok &= uvm_hdl_deposit(hdl_slice.path, rw.value[0]);
@@ -2776,8 +2776,8 @@ abstract class uvm_reg: uvm_object
 	uvm_hdl_path_concat hdl_concat = path;
 	val = 0;
 	foreach (hdl_slice; hdl_concat.slices) {
-	  uvm_root_info("RegMem", "backdoor_read from %s " ~
-			hdl_slice.path, UVM_DEBUG);
+	  uvm_info("RegMem", "backdoor_read from %s " ~
+		   hdl_slice.path, UVM_DEBUG);
 
 	  if (hdl_slice.offset < 0) {
 	    ok &= uvm_hdl_read(hdl_slice.path,val);
@@ -2803,22 +2803,22 @@ abstract class uvm_reg: uvm_object
 	
 	// if (val !is rw.value[0]) {
 	if (val !is rw.get_value(0)) {
-	  uvm_root_error("RegModel",
-			 format("Backdoor read of register %s with " ~
-				"multiple HDL copies: values are not" ~
-				" the same: %0h at path '%s', and %0h" ~
-				" at path '%s'. Returning first value.",
-				get_full_name(),
-				// rw.value[0], uvm_hdl_concat2string(paths[0]),
-				rw.get_value(0), uvm_hdl_concat2string(paths[0]),
-				val, uvm_hdl_concat2string(paths[i]))); 
+	  uvm_error("RegModel",
+		    format("Backdoor read of register %s with " ~
+			   "multiple HDL copies: values are not" ~
+			   " the same: %0h at path '%s', and %0h" ~
+			   " at path '%s'. Returning first value.",
+			   get_full_name(),
+			   // rw.value[0], uvm_hdl_concat2string(paths[0]),
+			   rw.get_value(0), uvm_hdl_concat2string(paths[0]),
+			   val, uvm_hdl_concat2string(paths[i]))); 
 	  return UVM_NOT_OK;
 	}
 	
-	uvm_root_info("RegMem", 
-		      // format("returned backdoor value 0x%0x", rw.value[0]),
-		      format("returned backdoor value 0x%0x", rw.get_value(0)),
-		      UVM_DEBUG);
+	uvm_info("RegMem", 
+		 // format("returned backdoor value 0x%0x", rw.value[0]),
+		 format("returned backdoor value 0x%0x", rw.get_value(0)),
+		 UVM_DEBUG);
       
       }
 
@@ -3233,7 +3233,7 @@ abstract class uvm_reg: uvm_object
   // clone
 
   override uvm_object clone() {
-    uvm_root_fatal("RegModel","RegModel registers cannot be cloned");
+    uvm_fatal("RegModel","RegModel registers cannot be cloned");
     return null;
   }
 
@@ -3241,7 +3241,7 @@ abstract class uvm_reg: uvm_object
   // do_copy
 
   override void do_copy(uvm_object rhs) {
-    uvm_root_fatal("RegModel","RegModel registers cannot be copied");
+    uvm_fatal("RegModel","RegModel registers cannot be copied");
   }
 
   // extern virtual function bool             do_compare (uvm_object  rhs,
@@ -3250,7 +3250,7 @@ abstract class uvm_reg: uvm_object
 
   override bool do_compare (uvm_object  rhs,
 			    uvm_comparer comparer) {
-    uvm_root_warning("RegModel","RegModel registers cannot be compared");
+    uvm_warning("RegModel","RegModel registers cannot be compared");
     return 0;
   }
 
@@ -3258,14 +3258,14 @@ abstract class uvm_reg: uvm_object
   // do_pack
 
   override void do_pack (uvm_packer packer) {
-    uvm_root_warning("RegModel","RegModel registers cannot be packed");
+    uvm_warning("RegModel","RegModel registers cannot be packed");
   }
 
   // extern virtual function void            do_unpack  (uvm_packer packer);
   // do_unpack
 
   override void do_unpack (uvm_packer packer) {
-    uvm_root_warning("RegModel","RegModel registers cannot be unpacked");
+    uvm_warning("RegModel","RegModel registers cannot be unpacked");
   }
 
 }

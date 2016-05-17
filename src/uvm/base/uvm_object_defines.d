@@ -422,37 +422,37 @@ mixin template m_uvm_field_auto_utils(T)
 
   override void uvm_field_auto_setint(string field_name,
 				      uvm_bitstream_t value) {
-    uvm_root_error("uvm_field_auto_setint", "not yet implemented");
+    uvm_error("uvm_field_auto_setint", "not yet implemented");
   }
 
   override void uvm_field_auto_setint(string field_name,
 				      uvm_integral_t value) {
-    uvm_root_error("uvm_field_auto_setint", "not yet implemented");
+    uvm_error("uvm_field_auto_setint", "not yet implemented");
   }
 
   override void uvm_field_auto_setint(string field_name,
 				      ulong value) {
-    uvm_root_error("uvm_field_auto_setint", "not yet implemented");
+    uvm_error("uvm_field_auto_setint", "not yet implemented");
   }
   
   override void uvm_field_auto_setint(string field_name,
 				      uint value) {
-    uvm_root_error("uvm_field_auto_setint", "not yet implemented");
+    uvm_error("uvm_field_auto_setint", "not yet implemented");
   }
   
   override void uvm_field_auto_setint(string field_name,
 				      ushort value) {
-    uvm_root_error("uvm_field_auto_setint", "not yet implemented");
+    uvm_error("uvm_field_auto_setint", "not yet implemented");
   }
   
   override void uvm_field_auto_setint(string field_name,
 				      ubyte value) {
-    uvm_root_error("uvm_field_auto_setint", "not yet implemented");
+    uvm_error("uvm_field_auto_setint", "not yet implemented");
   }
   
   override void uvm_field_auto_setint(string field_name,
 				      bool value) {
-    uvm_root_error("uvm_field_auto_setint", "not yet implemented");
+    uvm_error("uvm_field_auto_setint", "not yet implemented");
   }
   
   // return true if a match occured
@@ -498,7 +498,7 @@ mixin template m_uvm_field_auto_utils(T)
   override void uvm_field_auto_copy(uvm_object rhs) {
     auto rhs_ = cast(T) rhs;
     if(rhs_ is null) {
-      uvm_root_error("uvm_field_auto_copy", "cast failed, check type compatability");
+      uvm_error("uvm_field_auto_copy", "cast failed, check type compatability");
     }
     uvm_field_auto_all_fields!uvm_field_auto_copy_field(this, rhs_);
   }
@@ -520,7 +520,7 @@ mixin template m_uvm_field_auto_utils(T)
   override void uvm_field_auto_compare(uvm_object rhs) {
     auto rhs_ = cast(T) rhs;
     if(rhs_ is null) {
-      uvm_root_error("uvm_field_auto_compare", "cast failed, check type compatability");
+      uvm_error("uvm_field_auto_compare", "cast failed, check type compatability");
     }
     uvm_field_auto_all_fields!uvm_field_auto_compare_field(this, rhs_);
   }

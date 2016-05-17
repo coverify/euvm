@@ -178,9 +178,9 @@ abstract class uvm_tr_stream: uvm_object
       m_uvm_tr_stream_cfg m_cfg;
       if(!_m_cfg_dap.try_get(m_cfg)) {
 	if(_m_warn_null_cfg is true) {
-	  uvm_root_warning("UVM/REC_STR/NO_CFG",
-			   format("attempt to retrieve DB from '%s' before it was set!",
-				  get_name()));
+	  uvm_warning("UVM/REC_STR/NO_CFG",
+		      format("attempt to retrieve DB from '%s' before it was set!",
+			     get_name()));
 	}
 	_m_warn_null_cfg = false;
 	return null;
@@ -200,9 +200,9 @@ abstract class uvm_tr_stream: uvm_object
       m_uvm_tr_stream_cfg m_cfg;
       if(!_m_cfg_dap.try_get(m_cfg)) {
 	if(_m_warn_null_cfg is true) {
-	  uvm_root_warning("UVM/REC_STR/NO_CFG",
-			   format("attempt to retrieve scope from '%s' before it was set!",
-				  get_name()));
+	  uvm_warning("UVM/REC_STR/NO_CFG",
+		      format("attempt to retrieve scope from '%s' before it was set!",
+			     get_name()));
 	}
 	_m_warn_null_cfg = false;
 	return "";
@@ -222,9 +222,9 @@ abstract class uvm_tr_stream: uvm_object
       m_uvm_tr_stream_cfg m_cfg;
       if(!_m_cfg_dap.try_get(m_cfg)) {
 	if(_m_warn_null_cfg is true) {
-	  uvm_root_warning("UVM/REC_STR/NO_CFG",
-			   format("attempt to retrieve STREAM_TYPE_NAME from '%s' before it was set!",
-				  get_name()));
+	  uvm_warning("UVM/REC_STR/NO_CFG",
+		      format("attempt to retrieve STREAM_TYPE_NAME from '%s' before it was set!",
+			     get_name()));
 	}
 	_m_warn_null_cfg = false;
 	return "";
@@ -348,16 +348,16 @@ abstract class uvm_tr_stream: uvm_object
       m_uvm_tr_stream_cfg m_cfg;
       uvm_tr_database m_db;
       if(db is null) {
-	uvm_root_error("UVM/REC_STR/NULL_DB",
-		       format("Illegal attempt to set DB for '%s' to '<null>'",
-			      this.get_full_name()));
+	uvm_error("UVM/REC_STR/NULL_DB",
+		  format("Illegal attempt to set DB for '%s' to '<null>'",
+			 this.get_full_name()));
 	return;
       }
 
       if(_m_cfg_dap.try_get(m_cfg)) {
-	uvm_root_error("UVM/REC_STR/RE_CFG",
-		       format("Illegal attempt to re-open '%s'",
-			      this.get_full_name()));
+	uvm_error("UVM/REC_STR/RE_CFG",
+		  format("Illegal attempt to re-open '%s'",
+			 this.get_full_name()));
       }
       else {
 	// Never set before

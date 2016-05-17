@@ -157,8 +157,8 @@ class uvm_reg_backdoor: uvm_object
 
   // task
   void write(uvm_reg_item rw) {
-    uvm_root_fatal("RegModel", "uvm_reg_backdoor::write() method has" ~
-		   " not been overloaded");
+    uvm_fatal("RegModel", "uvm_reg_backdoor::write() method has" ~
+	      " not been overloaded");
   }
 
 
@@ -202,8 +202,8 @@ class uvm_reg_backdoor: uvm_object
   // read_func
 
   void read_func(uvm_reg_item rw) {
-    uvm_root_fatal("RegModel", "uvm_reg_backdoor::read_func() method has" ~
-		   " not been overloaded");
+    uvm_fatal("RegModel", "uvm_reg_backdoor::read_func() method has" ~
+	      " not been overloaded");
     // SV version has this -- would it ever be executed after uvm_fatal
     rw.status = UVM_NOT_OK;
   }
@@ -242,8 +242,8 @@ class uvm_reg_backdoor: uvm_object
 
   // task
   private void wait_for_change(uvm_object element) {
-    uvm_root_fatal("RegModel", "uvm_reg_backdoor::wait_for_change() method" ~
-		   " has not been overloaded");
+    uvm_fatal("RegModel", "uvm_reg_backdoor::wait_for_change() method" ~
+	      " has not been overloaded");
   }
 
 
@@ -279,8 +279,8 @@ class uvm_reg_backdoor: uvm_object
 	    // val = r_item.value[0];
 	    val = r_item.get_value(0);
 	    if (r_item.status != UVM_IS_OK) {
-	      uvm_root_error("RegModel", format("Backdoor read of register" ~
-						" '%s' failed.", rg.get_name()));
+	      uvm_error("RegModel", format("Backdoor read of register" ~
+					   " '%s' failed.", rg.get_name()));
 	    }
 	    foreach (field; fields) {
 	      if (this.is_auto_updated(field)) {

@@ -178,11 +178,11 @@ class uvm_packer
       }
 
       if (size > value.length) {
-	uvm_root_error("UVM/BASE/PACKER/BAD_SIZE",
-		       format("pack_bits called with size '%0d', which" ~
-			      " exceeds value.size() of '%0d'",
-			      size,
-			      value.length));
+	uvm_error("UVM/BASE/PACKER/BAD_SIZE",
+		  format("pack_bits called with size '%0d', which" ~
+			 " exceeds value.size() of '%0d'",
+			 size,
+			 value.length));
 	return;
       }
 
@@ -217,12 +217,12 @@ class uvm_packer
 	}
 
 	if (size > max_size) {
-	  uvm_root_error("UVM/BASE/PACKER/BAD_SIZE",
-			 format("pack_%ss called with size '%0d', which" ~
-				" exceeds value size of '%0d'",
-				T.stringof,
-				size,
-				max_size));
+	  uvm_error("UVM/BASE/PACKER/BAD_SIZE",
+		    format("pack_%ss called with size '%0d', which" ~
+			   " exceeds value size of '%0d'",
+			   T.stringof,
+			   size,
+			   max_size));
 	  return;
 	}
 	else {
@@ -502,10 +502,10 @@ class uvm_packer
       }
 
       if(size > value.length) {
-	uvm_root_error("UVM/BASE/PACKER/BAD_SIZE",
-		       format("unpack_bits called with size '%0d', which exceeds value.size() of '%0d'",
-			      size,
-			      value.length));
+	uvm_error("UVM/BASE/PACKER/BAD_SIZE",
+		  format("unpack_bits called with size '%0d', which exceeds value.size() of '%0d'",
+			 size,
+			 value.length));
 	return;
       }
 
@@ -542,12 +542,12 @@ class uvm_packer
 
 
       if (size > max_size) {
-	uvm_root_error("UVM/BASE/PACKER/BAD_SIZE",
-		       format("unpack_%ss called with size '%0d'," ~
-			      " which exceeds value size of '%0d'",
-			      T.stringof,
-			      size,
-			      max_size));
+	uvm_error("UVM/BASE/PACKER/BAD_SIZE",
+		  format("unpack_%ss called with size '%0d'," ~
+			 " which exceeds value size of '%0d'",
+			 T.stringof,
+			 size,
+			 max_size));
 	return;
       }
       else {

@@ -416,7 +416,7 @@ abstract class uvm_object: uvm_void
       printer = uvm_default_printer;
     }
     if (printer is null) {
-      uvm_root_error("NULLPRINTER", "uvm_default_printer is null");
+      uvm_error("NULLPRINTER", "uvm_default_printer is null");
     }
     printer.knobs.mcd.vfdisplay(sprint(printer));
   }

@@ -125,12 +125,12 @@ class uvm_vreg_field: uvm_object
     synchronized(this) {
       this.parent = parent;
       if (size == 0) {
-	uvm_root_error("RegModel", format("Virtual field \"%s\" cannot have" ~
+	uvm_error("RegModel", format("Virtual field \"%s\" cannot have" ~
 				     " 0 bits", this.get_full_name()));
 	size = 1;
       }
       if (size > UVM_REG_DATA_WIDTH) {
-	uvm_root_error("RegModel", format("Virtual field \"%s\" cannot have more" ~
+	uvm_error("RegModel", format("Virtual field \"%s\" cannot have more" ~
 				     " than %0d bits", this.get_full_name(),
 				     UVM_REG_DATA_WIDTH));
 	size = UVM_REG_DATA_WIDTH;
@@ -237,7 +237,7 @@ class uvm_vreg_field: uvm_object
   string get_access(uvm_reg_map map = null) {
     synchronized(this) {
       if (this.parent.get_memory() is null) {
-	uvm_root_error("RegModel",
+	uvm_error("RegModel",
 		  format("Cannot call uvm_vreg_field::get_rights() on" ~
 			 " unimplemented virtual field \"%s\"",
 			 this.get_full_name()));
@@ -308,7 +308,7 @@ class uvm_vreg_field: uvm_object
     uvm_mem mem = this.parent.get_memory();
 
     if (mem is null) {
-      uvm_root_error("RegModel", format("Cannot call uvm_vreg_field::write() on" ~
+      uvm_error("RegModel", format("Cannot call uvm_vreg_field::write() on" ~
 				   " unimplemented virtual register \"%s\"",
 				   this.get_full_name()));
       status = UVM_NOT_OK;
@@ -325,10 +325,10 @@ class uvm_vreg_field: uvm_object
     this.parent.XatomicX(1);
 
     if (value >> this.size) {
-      uvm_root_warning("RegModel", format("Writing value 'h%h that is greater" ~
-					  " than field \"%s\" size (%0d bits)",
-					  value, this.get_full_name(),
-					  this.get_n_bits()));
+      uvm_warning("RegModel", format("Writing value 'h%h that is greater" ~
+				     " than field \"%s\" size (%0d bits)",
+				     value, this.get_full_name(),
+				     this.get_n_bits()));
       value &= ((1<<this.size)-1);
     }
     uvm_reg_data_t  tmp = 0;
@@ -363,7 +363,7 @@ class uvm_vreg_field: uvm_object
       mem.read(st, segoff, tmp, rm_path, map, parent, -1,
 	       extension, fname, lineno);
       if (st != UVM_IS_OK && st != UVM_HAS_X) {
-	uvm_root_error("RegModel",
+	uvm_error("RegModel",
 		  format("Unable to read LSB bits in %s[%0d] to for RMW" ~
 			 " cycle on virtual field %s.",
 			 mem.get_full_name(), segoff, this.get_full_name()));
@@ -383,7 +383,7 @@ class uvm_vreg_field: uvm_object
 	mem.read(st, cast(uvm_reg_addr_t) (segoff + segn - 1), tmp,
 		 rm_path, map, parent, -1, extension, fname, lineno);
 	if (st != UVM_IS_OK && st != UVM_HAS_X) {
-	  uvm_root_error("RegModel",
+	  uvm_error("RegModel",
 		    format("Unable to read MSB bits in %s[%0d] to for RMW" ~
 			   " cycle on virtual field %s.",
 			   mem.get_full_name(), segoff+segn-1,
@@ -418,10 +418,10 @@ class uvm_vreg_field: uvm_object
     this.parent.XatomicX(0);
 
 
-    uvm_root_info("RegModel", format("Wrote virtual field \"%s\"[%0d] via %s" ~
-				     " with: 'h%h", this.get_full_name(), idx,
-				     (path == UVM_FRONTDOOR) ? "frontdoor" : "backdoor",
-				     value),UVM_MEDIUM);
+    uvm_info("RegModel", format("Wrote virtual field \"%s\"[%0d] via %s" ~
+				" with: 'h%h", this.get_full_name(), idx,
+				(path == UVM_FRONTDOOR) ? "frontdoor" : "backdoor",
+				value),UVM_MEDIUM);
 
     write_in_progress = false;
     this.fname = "";
@@ -480,7 +480,7 @@ class uvm_vreg_field: uvm_object
     read_in_progress = true;
     uvm_mem mem = this.parent.get_memory();
     if (mem is null) {
-      uvm_root_error("RegModel",
+      uvm_error("RegModel",
 		format("Cannot call uvm_vreg_field::read() on " ~
 		       "unimplemented virtual register \"%s\"",
 		       this.get_full_name()));
@@ -546,10 +546,10 @@ class uvm_vreg_field: uvm_object
 
     this.parent.XatomicX(0);
 
-    uvm_root_info("RegModel", format("Read virtual field \"%s\"[%0d] via %s: 'h%h",
-				     this.get_full_name(), idx,
-				     (path == UVM_FRONTDOOR) ? "frontdoor" : "backdoor",
-				     value),UVM_MEDIUM);
+    uvm_info("RegModel", format("Read virtual field \"%s\"[%0d] via %s: 'h%h",
+				this.get_full_name(), idx,
+				(path == UVM_FRONTDOOR) ? "frontdoor" : "backdoor",
+				value),UVM_MEDIUM);
 
 
     read_in_progress = false;
@@ -597,7 +597,7 @@ class uvm_vreg_field: uvm_object
 
     uvm_mem mem = this.parent.get_memory();
     if (mem is null) {
-      uvm_root_error("RegModel",
+      uvm_error("RegModel",
 		format("Cannot call uvm_vreg_field::poke() " ~
 		       "on unimplemented virtual register \"%s\"",
 		       this.get_full_name()));
@@ -610,10 +610,10 @@ class uvm_vreg_field: uvm_object
     this.parent.XatomicX(1);
 
     if (value >> this.size) {
-      uvm_root_warning("RegModel", format("Writing value 'h%h that is greater " ~
-					  "than field \"%s\" size (%0d bits)",
-					  value, this.get_full_name(),
-					  this.get_n_bits()));
+      uvm_warning("RegModel", format("Writing value 'h%h that is greater " ~
+				     "than field \"%s\" size (%0d bits)",
+				     value, this.get_full_name(),
+				     this.get_n_bits()));
       value &= value & ((1<<this.size)-1);
     }
     uvm_reg_data_t  tmp = 0;
@@ -635,7 +635,7 @@ class uvm_vreg_field: uvm_object
 
       mem.peek(st, segoff, tmp, "", parent, extension, fname, lineno);
       if (st != UVM_IS_OK && st != UVM_HAS_X) {
-	uvm_root_error("RegModel",
+	uvm_error("RegModel",
 		  format("Unable to read LSB bits in %s[%0d] to " ~
 			 "for RMW cycle on virtual field %s.",
 			 mem.get_full_name(), segoff,
@@ -656,7 +656,7 @@ class uvm_vreg_field: uvm_object
 	mem.peek(st, cast(uvm_reg_addr_t) (segoff + segn - 1), tmp,
 		 "", parent, extension, fname, lineno);
 	if (st != UVM_IS_OK && st != UVM_HAS_X) {
-	  uvm_root_error("RegModel",
+	  uvm_error("RegModel",
 		    format("Unable to read MSB bits in %s[%0d] to " ~
 			   "for RMW cycle on virtual field %s.",
 			   mem.get_full_name(), segoff+segn-1,
@@ -681,8 +681,8 @@ class uvm_vreg_field: uvm_object
 
     this.parent.XatomicX(0);
 
-    uvm_root_info("RegModel", format("Wrote virtual field \"%s\"[%0d] with: 'h%h",
-				     this.get_full_name(), idx, value),UVM_MEDIUM);
+    uvm_info("RegModel", format("Wrote virtual field \"%s\"[%0d] with: 'h%h",
+				this.get_full_name(), idx, value),UVM_MEDIUM);
 
     this.fname = "";
     this.lineno = 0;
@@ -732,10 +732,10 @@ class uvm_vreg_field: uvm_object
 
     uvm_mem mem = this.parent.get_memory();
     if (mem is null) {
-      uvm_root_error("RegModel",
-		     format("Cannot call uvm_vreg_field::peek() " ~
-			    "on unimplemented virtual register \"%s\"",
-			    this.get_full_name()));
+      uvm_error("RegModel",
+		format("Cannot call uvm_vreg_field::peek() " ~
+		       "on unimplemented virtual register \"%s\"",
+		       this.get_full_name()));
       status = UVM_NOT_OK;
       return;
     }
@@ -778,9 +778,9 @@ class uvm_vreg_field: uvm_object
 
     this.parent.XatomicX(0);
 
-    uvm_root_info("RegModel",
-		  format("Peeked virtual field \"%s\"[%0d]: 'h%h",
-			 this.get_full_name(), idx, value),UVM_MEDIUM);
+    uvm_info("RegModel",
+	     format("Peeked virtual field \"%s\"[%0d]: 'h%h",
+		    this.get_full_name(), idx, value),UVM_MEDIUM);
 
     this.fname = "";
     this.lineno = 0;

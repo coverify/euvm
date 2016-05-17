@@ -113,7 +113,7 @@ class uvm_spell_chkr(T=int)
 
     // if (min is max) then the string table is empty
     if(min == max) {
-      uvm_root_info("UVM/CONFIGDB/SPELLCHK",
+      uvm_info("UVM/CONFIGDB/SPELLCHK",
 	       format("%s not located, no alternatives to suggest", s),
 	       UVM_NONE);
     }
@@ -129,7 +129,7 @@ class uvm_spell_chkr(T=int)
 	q = q[0..$-1];
       }
 	   		
-      uvm_root_info("UVM/CONFIGDB/SPELLCHK",
+      uvm_info("UVM/CONFIGDB/SPELLCHK",
 	       format("%s not located, did you mean %s", s, q), UVM_NONE);
     }
     return 0;

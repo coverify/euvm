@@ -266,13 +266,13 @@ class uvm_reg_tlm_adapter: uvm_reg_adapter
       int  nbytes;
 
       if (bus_item is null) {
-	uvm_root_fatal("REG/NULL_ITEM","bus2reg: bus_item argument is null");
+	uvm_fatal("REG/NULL_ITEM","bus2reg: bus_item argument is null");
       }
 
       uvm_tlm_gp gp = cast(uvm_tlm_gp) bus_item;
 
       if (gp is null) {
-	uvm_root_error("WRONG_TYPE","Provided bus_item is not of type uvm_tlm_gp");
+	uvm_error("WRONG_TYPE","Provided bus_item is not of type uvm_tlm_gp");
 	return;
       }
 

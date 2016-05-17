@@ -236,9 +236,9 @@ abstract class uvm_recorder: uvm_object
       uvm_tr_stream get_stream_;
       if (!_m_stream_dap.try_get(get_stream_)) {
 	if (_m_warn_null_stream == true) {
-	  uvm_root_warning("UVM/REC/NO_CFG",
-			   format("attempt to retrieve STREAM from" ~
-				  " '%s' before it was set!", get_name()));
+	  uvm_warning("UVM/REC/NO_CFG",
+		      format("attempt to retrieve STREAM from" ~
+			     " '%s' before it was set!", get_name()));
 	}
 	_m_warn_null_stream = false;
       }
@@ -395,16 +395,16 @@ abstract class uvm_recorder: uvm_object
     synchronized(this) {
       uvm_tr_stream m_stream;
       if(stream is null) {
-	uvm_root_error("UVM/REC/NULL_STREAM",
-		       format("Illegal attempt to set STREAM for '%s' to '<null>'",
-			      this.get_name()));
+	uvm_error("UVM/REC/NULL_STREAM",
+		  format("Illegal attempt to set STREAM for '%s' to '<null>'",
+			 this.get_name()));
 	return;
       }
 
       if(_m_stream_dap.try_get(m_stream)) {
-	uvm_root_error("UVM/REC/RE_INIT",
-		       format("Illegal attempt to re-initialize '%s'",
-			      this.get_name()));
+	uvm_error("UVM/REC/RE_INIT",
+		  format("Illegal attempt to re-initialize '%s'",
+			 this.get_name()));
 	return;
       }
 

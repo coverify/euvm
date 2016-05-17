@@ -145,14 +145,14 @@ class uvm_tlm_time
   void incr(real t, Time scaled, real secs = 1.0e-9) {
     synchronized(this) {
       if (t < 0.0) {
-	uvm_root_error("UVM/TLM/TIMENEG", "Cannot increment uvm_tlm_time " ~
-		       "variable " ~ _m_name ~ " by a negative value");
+	uvm_error("UVM/TLM/TIMENEG", "Cannot increment uvm_tlm_time " ~
+		  "variable " ~ _m_name ~ " by a negative value");
 	return;
       }
       if (scaled.isZero()) {
-	uvm_root_fatal("UVM/TLM/BADSCALE",
-		       "uvm_tlm_time::incr() called with a scaled time" ~
-		       " literal that is smaller than the current timescale");
+	uvm_fatal("UVM/TLM/BADSCALE",
+		  "uvm_tlm_time::incr() called with a scaled time" ~
+		  " literal that is smaller than the current timescale");
       }
 
       _m_time += cast(ulong) to_m_res(t, scaled, secs);
@@ -175,22 +175,22 @@ class uvm_tlm_time
   void decr(real t, Time scaled, real secs) {
     synchronized(this) {
       if (t < 0.0) {
-	uvm_root_error("UVM/TLM/TIMENEG", "Cannot decrement uvm_tlm_time" ~
-		       " variable " ~ _m_name ~ " by a negative value");
+	uvm_error("UVM/TLM/TIMENEG", "Cannot decrement uvm_tlm_time" ~
+		  " variable " ~ _m_name ~ " by a negative value");
 	return;
       }
       if (scaled.isZero()) {
-	uvm_root_fatal("UVM/TLM/BADSCALE",
-		       "uvm_tlm_time::decr() called with a scaled time" ~
-		       " literal that is smaller than the current timescale");
+	uvm_fatal("UVM/TLM/BADSCALE",
+		  "uvm_tlm_time::decr() called with a scaled time" ~
+		  " literal that is smaller than the current timescale");
       }
 
       _m_time -= cast(ulong) to_m_res(t, scaled, secs);
 
       if (_m_time < 0.0) {
-	uvm_root_error("UVM/TLM/TOODECR",
-		       "Cannot decrement uvm_tlm_time variable " ~ _m_name ~
-		       " to a negative value");
+	uvm_error("UVM/TLM/TOODECR",
+		  "Cannot decrement uvm_tlm_time variable " ~ _m_name ~
+		  " to a negative value");
 	reset();
       }
     }
