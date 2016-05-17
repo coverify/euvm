@@ -550,11 +550,11 @@ class uvm_phase: uvm_object
 
     // INSERT IN PARALLEL WITH 'WITH' PHASE
     if(with_phase !is null) {
-      synchronized(with_phase, begin_node) {
-	begin_node._m_predecessors = with_phase._m_predecessors.dup;
+      synchronized(begin_node) {
+	begin_node._m_predecessors = with_phase.dup_predecessors();
       }
-      synchronized(with_phase, end_node) {
-	end_node._m_successors = with_phase._m_successors.dup;
+      synchronized(end_node) {
+	end_node._m_successors = with_phase.dup_successors();
       }
       foreach(pred; with_phase.get_predecessors()) {
 	pred.add_successor(begin_node);
@@ -566,8 +566,8 @@ class uvm_phase: uvm_object
 
     // INSERT BEFORE PHASE
     else if(before_phase !is null && after_phase is null) {
-      synchronized(before_phase, begin_node) {
-	begin_node._m_predecessors = before_phase._m_predecessors.dup;
+      synchronized(begin_node) {
+	begin_node._m_predecessors = before_phase.dup_predecessors();
       }
       end_node.add_successor(before_phase);
       foreach(pred; before_phase.get_predecessors()) {
@@ -583,8 +583,8 @@ class uvm_phase: uvm_object
 
     // INSERT AFTER PHASE
     else if(before_phase is null && after_phase !is null) {
-      synchronized(end_node, after_phase) {
-	end_node._m_successors = after_phase._m_successors.dup;
+      synchronized(end_node) {
+	end_node._m_successors = after_phase.dup_successors();
       }
       begin_node.add_predecessor(after_phase);
       foreach(succ; after_phase.get_successors()) {
@@ -1514,7 +1514,11 @@ class uvm_phase: uvm_object
       return _m_predecessors.keys;
     }
   }
-    
+  auto dup_predecessors() {
+    synchronized(this) {
+      return _m_predecessors.dup;
+    }
+  }
   
   private bool[uvm_phase] _m_successors;
   bool has_successors() {
@@ -1550,6 +1554,11 @@ class uvm_phase: uvm_object
   uvm_phase[] get_successors() {
     synchronized(this) {
       return _m_successors.keys;
+    }
+  }
+  auto dup_successors() {
+    synchronized(this) {
+      return _m_successors.dup;
     }
   }
 

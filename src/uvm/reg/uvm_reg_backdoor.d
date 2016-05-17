@@ -103,7 +103,8 @@ class uvm_reg_backdoor: uvm_object
 
   // task
   protected void do_post_read(uvm_reg_item rw) {
-    uvm_do_callbacks_reverse((uvm_reg_cbs cb) {cb.decode(rw.value);});
+    // uvm_do_callbacks_reverse((uvm_reg_cbs cb) {cb.decode(rw.value);});
+    uvm_do_callbacks_reverse((uvm_reg_cbs cb) {cb.decode(rw.get_value());});
     uvm_do_callbacks((uvm_reg_cbs cb) {cb.post_read(rw);});
     post_read(rw);
   }
@@ -122,7 +123,8 @@ class uvm_reg_backdoor: uvm_object
   protected void do_pre_write(uvm_reg_item rw) {
     pre_write(rw);
     uvm_do_callbacks((uvm_reg_cbs cb) {cb.pre_read(rw);});
-    uvm_do_callbacks((uvm_reg_cbs cb) {cb.encode(rw.value);});
+    // uvm_do_callbacks((uvm_reg_cbs cb) {cb.encode(rw.value);});
+    uvm_do_callbacks((uvm_reg_cbs cb) {cb.encode(rw.get_value());});
   }
 
 
@@ -274,15 +276,18 @@ class uvm_reg_backdoor: uvm_object
 	    r_item.element = rg;
 	    r_item.element_kind = UVM_REG;
 	    this.read(r_item);
-	    val = r_item.value[0];
+	    // val = r_item.value[0];
+	    val = r_item.get_value(0);
 	    if (r_item.status != UVM_IS_OK) {
 	      uvm_root_error("RegModel", format("Backdoor read of register" ~
 						" '%s' failed.", rg.get_name()));
 	    }
 	    foreach (field; fields) {
 	      if (this.is_auto_updated(field)) {
-		r_item.value[0] = (val >> field.get_lsb_pos()) &
-		  ((1 << field.get_n_bits())-1);
+		// r_item.value[0] = (val >> field.get_lsb_pos()) &
+		//   ((1 << field.get_n_bits())-1);
+		r_item.set_value(0, (val >> field.get_lsb_pos()) &
+				 ((1 << field.get_n_bits())-1));
 		field.do_predict(r_item);
 	      }
 	    }

@@ -453,16 +453,16 @@ abstract class uvm_recorder: uvm_object
   // and no longer has a valid ID.
   //
   int get_handle() {
-    synchronized(this, once) {
-      if (!is_open() && !is_closed()) {
-	return 0;
-      }
-      else {
-	int handle = get_inst_id();
-
+    if (!is_open() && !is_closed()) {
+      return 0;
+    }
+    else {
+      int handle = get_inst_id();
+      synchronized(once) {
 	// Check for the weird case where our handle changed.
 	auto pid = this in once._m_ids_by_recorder;
 	if(pid !is null && *pid !is handle) {
+	  assert(false, "The weird case where our handle changed!");
 	  once._m_recorders_by_id.remove(*pid);
 	}
 

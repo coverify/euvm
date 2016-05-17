@@ -42,6 +42,8 @@ import uvm.reg.uvm_reg_field;
 import uvm.reg.uvm_reg_sequence;
 import uvm.reg.uvm_reg_backdoor;
 
+import uvm.meta.misc;
+
 import std.conv: to;
 import std.string: format;
 
@@ -68,11 +70,14 @@ class uvm_reg_item: uvm_sequence_item
   import esdl.data.rand;
   mixin uvm_object_utils;
 
+  mixin(uvm_sync_string);
+
   // Variable: element_kind
   //
   // Kind of element being accessed: REG, MEM, or FIELD. See <uvm_elem_kind_e>.
   //
-  uvm_elem_kind_e element_kind;
+  @uvm_public_sync
+  uvm_elem_kind_e _element_kind;
 
 
   // Variable: element
@@ -81,14 +86,16 @@ class uvm_reg_item: uvm_sequence_item
   // Use <element_kind> to determine the type to cast  to: <uvm_reg>,
   // <uvm_mem>, or <uvm_reg_field>.
   //
-  uvm_object element;
+  @uvm_public_sync
+  uvm_object _element;
 
 
   // Variable: kind
   //
   // Kind of access: READ or WRITE.
   //
-  @rand uvm_access_e kind;
+  @uvm_public_sync
+  @rand uvm_access_e _kind;
 
 
   // Variable: value
@@ -96,12 +103,49 @@ class uvm_reg_item: uvm_sequence_item
   // The value to write to, or after completion, the value read from the DUT.
   // Burst operations use the <values> property.
   //
-  @rand!1024 uvm_reg_data_t[] value;
+  @rand!1024 uvm_reg_data_t[] _value;
+
+  uvm_reg_data_t[] get_value() {
+    synchronized(this) {
+      return _value.dup;
+    }
+  }
+  
+  uvm_reg_data_t get_value(size_t index) {
+    synchronized(this) {
+      return _value[index];
+    }
+  }
+  
+  void set_value(uvm_reg_data_t[] val) {
+    synchronized(this) {
+      _value = val;
+    }
+  }
+  
+  void set_value(T)(size_t index, T val) {
+    synchronized(this) {
+      _value[index] = val;
+    }
+  }
+  
+  void and_value(T)(size_t index, T val) {
+    synchronized(this) {
+      _value[index] &= val;
+    }
+  }
+  
+  size_t num_values() {
+    synchronized(this) {
+      return _value.length;
+    }
+  }
+  
 
 
   // TODO: parameterize
   Constraint! q{
-    value.length > 0 && value.length < 1000;
+    _value.length > 0 && _value.length < 1000;
   } max_values;
 
     // Variable: offset
@@ -109,7 +153,8 @@ class uvm_reg_item: uvm_sequence_item
     // For memory accesses, the offset address. For bursts,
     // the ~starting~ offset address.
     //
-  @rand uvm_reg_addr_t offset;
+  @uvm_public_sync
+  @rand uvm_reg_addr_t _offset;
 
 
   // Variable: status
@@ -117,7 +162,8 @@ class uvm_reg_item: uvm_sequence_item
   // The result of the transaction: IS_OK, HAS_X, or ERROR.
   // See <uvm_status_e>.
   //
-  uvm_status_e status;
+  @uvm_public_sync
+  uvm_status_e _status;
 
 
   // Variable: local_map
@@ -128,7 +174,8 @@ class uvm_reg_item: uvm_sequence_item
   // then calling <uvm_reg_map::get_sequencer> and
   // <uvm_reg_map::get_adapter>.
   //
-  uvm_reg_map local_map;
+  @uvm_public_sync
+  uvm_reg_map _local_map;
 
 
   // Variable: map
@@ -137,21 +184,24 @@ class uvm_reg_item: uvm_sequence_item
   // used may differ when a test or sequence written at the block
   // level is reused at the system level.
   //
-  uvm_reg_map map;
+  @uvm_public_sync
+  uvm_reg_map _map;
 
 
   // Variable: path
   //
   // The path being used: <UVM_FRONTDOOR> or <UVM_BACKDOOR>.
   //
-  uvm_path_e path;
+  @uvm_public_sync
+  uvm_path_e _path;
 
 
   // Variable: parent
   //
   // The sequence from which the operation originated.
   //
-  @rand uvm_sequence_base parent;
+  @uvm_public_sync
+  @rand uvm_sequence_base _parent;
 
 
   // Variable: prior
@@ -159,7 +209,8 @@ class uvm_reg_item: uvm_sequence_item
   // The priority requested of this transfer, as defined by
   // <uvm_sequence_base::start_item>.
   //
-  int prior = -1;
+  @uvm_public_sync
+  int _prior = -1;
 
 
   // Variable: extension
@@ -167,7 +218,8 @@ class uvm_reg_item: uvm_sequence_item
   // Handle to optional user data, as conveyed in the call to
   // write(), read(), mirror(), or update() used to trigger the operation.
   //
-  @rand uvm_object extension;
+  @uvm_public_sync
+  @rand uvm_object _extension;
 
 
   // Variable: bd_kind
@@ -175,7 +227,8 @@ class uvm_reg_item: uvm_sequence_item
   // If path is UVM_BACKDOOR, this member specifies the abstraction
   // kind for the backdoor access, e.g. "RTL" or "GATES".
   //
-  string bd_kind;
+  @uvm_public_sync
+  string _bd_kind;
 
 
   // Variable: fname
@@ -183,7 +236,8 @@ class uvm_reg_item: uvm_sequence_item
   // The file name from where this transaction originated, if provided
   // at the call site.
   //
-  string fname;
+  @uvm_public_sync
+  string _fname;
 
 
   // Variable: lineno
@@ -191,7 +245,8 @@ class uvm_reg_item: uvm_sequence_item
   // The file name from where this transaction originated, if provided
   // at the call site.
   //
-  int lineno;
+  @uvm_public_sync
+  int _lineno;
 
 
   // Function: new
@@ -201,7 +256,7 @@ class uvm_reg_item: uvm_sequence_item
   this(string name="") {
     synchronized(this) {
       super(name);
-      value.length = 1; //  = new[1];
+      _value.length = 1; //  = new[1];
     }
   }
 
@@ -217,25 +272,25 @@ class uvm_reg_item: uvm_sequence_item
 	" ele_name=" ~ (element is null? "null" : element.get_full_name());
 
       char[] value_s;
-      if (value.length > 1 &&
+      if (_value.length > 1 &&
 	  uvm_report_enabled(UVM_HIGH, UVM_INFO, "RegModel")) {
 	value_s = cast(char[]) "'{";
-	foreach (v; value) {
+	foreach (v; _value) {
 	  value_s ~= cast(char[]) format("%0h,", v);
 	}
 	value_s[$-1] = '}';
       }
       else {
-	value_s = cast(char[]) format("%0h", value[0]);
+	value_s = cast(char[]) format("%0h", _value[0]);
       }
       s ~= " value=" ~ value_s;
 
-      if (element_kind == UVM_MEM) {
-	s ~= format(" offset=%0h", offset);
+      if (_element_kind == UVM_MEM) {
+	s ~= format(" offset=%0h", _offset);
       }
-      s ~= " map=" ~ (map is null ? "null" : map.get_full_name()) ~
-	" path=" ~ path.to!string;
-      s ~= " status=" ~ status.to!string;
+      s ~= " map=" ~ (_map is null ? "null" : _map.get_full_name()) ~
+	" path=" ~ _path.to!string;
+      s ~= " status=" ~ _status.to!string;
       return s;
     }
   }
@@ -246,33 +301,35 @@ class uvm_reg_item: uvm_sequence_item
   // derive from <uvm_reg_item>.
   //
   override void do_copy(uvm_object rhs) {
+    if (rhs is null) {
+      uvm_fatal("REG/NULL","do_copy: rhs argument is null");
+    }
+
+    uvm_reg_item rhs_ = cast(uvm_reg_item) rhs;
+    if (rhs is null) {
+      uvm_error("WRONG_TYPE","Provided rhs is not of type uvm_reg_item");
+      return;
+    }
+
     synchronized(this) {
-      if (rhs is null) {
-	uvm_fatal("REG/NULL","do_copy: rhs argument is null");
+      synchronized(rhs) {
+	super.copy(rhs);
+	_element_kind = rhs_.element_kind;
+	_element = rhs_.element;
+	_kind = rhs_.kind;
+	_value = rhs_.get_value();
+	_offset = rhs_.offset;
+	_status = rhs_.status;
+	_local_map = rhs_.local_map;
+	_map = rhs_.map;
+	_path = rhs_.path;
+	_extension = rhs_.extension;
+	_bd_kind = rhs_.bd_kind;
+	_parent = rhs_.parent;
+	_prior = rhs_.prior;
+	_fname = rhs_.fname;
+	_lineno = rhs_.lineno;
       }
-
-      uvm_reg_item rhs_ = cast(uvm_reg_item) rhs;
-      if (rhs is null) {
-	uvm_error("WRONG_TYPE","Provided rhs is not of type uvm_reg_item");
-	return;
-      }
-
-      super.copy(rhs);
-      element_kind = rhs_.element_kind;
-      element = rhs_.element;
-      kind = rhs_.kind;
-      value = rhs_.value;
-      offset = rhs_.offset;
-      status = rhs_.status;
-      local_map = rhs_.local_map;
-      map = rhs_.map;
-      path = rhs_.path;
-      extension = rhs_.extension;
-      bd_kind = rhs_.bd_kind;
-      parent = rhs_.parent;
-      prior = rhs_.prior;
-      fname = rhs_.fname;
-      lineno = rhs_.lineno;
     }
   }
 }

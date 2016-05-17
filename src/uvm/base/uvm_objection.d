@@ -1411,12 +1411,14 @@ class uvm_objection: uvm_report_object
   }
 
   override void do_copy (uvm_object rhs) {
-    synchronized(this, rhs) {
-      uvm_objection rhs_ = cast(uvm_objection) rhs;
-      _m_source_count = rhs_._m_source_count.dup;
-      _m_total_count  = rhs_._m_total_count.dup;
-      _m_drain_time   = rhs_._m_drain_time.dup;
-      _m_prop_mode    = rhs_._m_prop_mode;
+    uvm_objection rhs_ = cast(uvm_objection) rhs;
+    synchronized(this) {
+      synchronized(rhs_) {
+	_m_source_count = rhs_._m_source_count.dup;
+	_m_total_count  = rhs_._m_total_count.dup;
+	_m_drain_time   = rhs_._m_drain_time.dup;
+	_m_prop_mode    = rhs_._m_prop_mode;
+      }
     }
   }
 

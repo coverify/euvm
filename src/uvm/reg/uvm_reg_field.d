@@ -24,6 +24,7 @@
 module uvm.reg.uvm_reg_field;
 
 import uvm.base.uvm_object;
+import uvm.base.uvm_object_globals;
 import uvm.base.uvm_object_defines;
 import uvm.base.uvm_callback;
 import uvm.base.uvm_comparer;
@@ -88,6 +89,10 @@ class uvm_reg_field: uvm_object
   private static int              _m_max_size;
   private static bool[string]     _m_policy_names;
 
+  static this() {
+    m_predefine_policies();
+  }
+  
   Constraint!q{
     if (UVM_REG_DATA_WIDTH > _m_size) {
       // _value < (UVM_REG_DATA_WIDTH'h1 << _m_size);
@@ -218,11 +223,11 @@ class uvm_reg_field: uvm_object
 	"W1C", "W1S", "W1T", "W0C", "W0S", "W0T",
 	"W1SRC", "W1CRS", "W0SRC", "W0CRS", "WSRC", "WCRS",
 	"WOC", "WOS": is_rand = 0; break;
-      default: assert(0);
+      default: break;		// do nothing
       }
 
       if (!is_rand) {
-	assert(false, "TBD -- implement rand_mode");
+	uvm_root_info("RANDMODE", "TBD -- implement rand_mode", UVM_NONE);
 	// _value.rand_mode(0);
       }
     }
@@ -923,6 +928,20 @@ class uvm_reg_field: uvm_object
 
   // write
   // task
+  void write(T)(out uvm_status_e   status,
+		T                  value,
+		uvm_path_e         path = uvm_path_e.UVM_DEFAULT_PATH,
+		uvm_reg_map        map = null,
+		uvm_sequence_base  parent = null,
+		int                prior = -1,
+		uvm_object         extension = null,
+		string             fname = "",
+		int                lineno = 0) {
+    uvm_reg_data_t value_ = value;
+    write(status, value_, path, map, parent, prior, extension,
+	  fname, lineno);
+  }
+
   void write(out uvm_status_e   status,
 	     uvm_reg_data_t     value,
 	     uvm_path_e         path = uvm_path_e.UVM_DEFAULT_PATH,
@@ -939,7 +958,8 @@ class uvm_reg_field: uvm_object
       rw.element      = this;
       rw.element_kind = UVM_FIELD;
       rw.kind         = UVM_WRITE;
-      rw.value[0]     = value;
+      // rw.value[0]     = value;
+      rw.set_value(0, value);
       rw.path         = path;
       rw.map          = map;
       rw.parent       = parent;
@@ -1015,7 +1035,8 @@ class uvm_reg_field: uvm_object
       rw.element      = this;
       rw.element_kind = UVM_FIELD;
       rw.kind         = UVM_READ;
-      rw.value[0]     = 0;
+      // rw.value[0]     = 0;
+      rw.set_value(0, 0);
       rw.path         = path;
       rw.map          = map;
       rw.parent       = parent;
@@ -1027,7 +1048,8 @@ class uvm_reg_field: uvm_object
     do_read(rw);
 
     synchronized(rw) {
-      value = rw.value[0];
+      // value = rw.value[0];
+      value = rw.get_value(0);
       status = rw.status;
     }
   }
@@ -1398,7 +1420,8 @@ class uvm_reg_field: uvm_object
 		int               lineno = 0) {
     uvm_reg_item rw = new uvm_reg_item();
     synchronized(rw) {
-      rw.value[0] = _value;
+      // rw.value[0] = value;
+      rw.set_value(0, value);
       rw.path = path;
       rw.map = map;
       rw.fname = fname;
@@ -1585,10 +1608,12 @@ class uvm_reg_field: uvm_object
 
       _m_write_in_progress = 1;
 
-      if (rw.value[0] >> _m_size) {
+      // if (rw.value[0] >> _m_size) {
+      if (rw.get_value(0) >> _m_size) {
 	uvm_root_warning("RegModel", "write(): Value greater than field '" ~ 
 			 get_full_name() ~ "'");
-	rw.value[0] &= ((1L << _m_size)-1);
+	// rw.value[0] &= ((1L << _m_size)-1);
+	rw.and_value(0, ((1L << _m_size)-1));
       }
 
       // Get values to write to the other fields in register
@@ -1596,7 +1621,8 @@ class uvm_reg_field: uvm_object
       foreach (i, field; fields) {
 
 	if (field == this) {
-	  value_adjust |= rw.value[0] << _m_lsb;
+	  // value_adjust |= rw.value[0] << _m_lsb;
+	  value_adjust |= rw.get_value(0) << _m_lsb;
 	  continue;
 	}
 
@@ -1639,7 +1665,8 @@ class uvm_reg_field: uvm_object
 	synchronized(this) {
 	  rw.element_kind = UVM_REG;
 	  rw.element = m_parent_;
-	  rw.value[0] = value_adjust;
+	  // rw.value[0] = value_adjust;
+	  rw.set_value(0, value_adjust);
 	}
 	m_parent_.do_write(rw);
 
@@ -1721,7 +1748,8 @@ class uvm_reg_field: uvm_object
 	rw.element = _m_parent;
 	bad_side_effect = 1;
 	_m_parent.do_read(rw);
-	rw.value[0] = (rw.value[0] >> _m_lsb) & ((1<<_m_size))-1;
+	// rw.value[0] = (rw.value[0] >> _m_lsb) & ((1<<_m_size))-1;
+	rw.set_value(0, (rw.get_value(0) >> _m_lsb) & ((1<<_m_size))-1);
       }
       else {
 
@@ -1800,7 +1828,8 @@ class uvm_reg_field: uvm_object
 		  uvm_predict_e     kind = uvm_predict_e.UVM_PREDICT_DIRECT,
 		  uvm_reg_byte_en_t be = -1) {
     synchronized(this) {
-      uvm_reg_data_t field_val = rw.value[0] & ((1 << _m_size)-1);
+      // uvm_reg_data_t field_val = rw.value[0] & ((1 << _m_size)-1);
+      uvm_reg_data_t field_val = rw.get_value(0) & ((1 << _m_size)-1);
 
       if (rw.status != UVM_NOT_OK)
 	rw.status = UVM_IS_OK;

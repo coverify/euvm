@@ -47,6 +47,7 @@ import uvm.base.uvm_object_globals;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_pool;
 import uvm.base.uvm_queue;
+import uvm.base.uvm_root: uvm_root_entity_base;
 
 import uvm.dpi.uvm_hdl;
 
@@ -141,7 +142,7 @@ abstract class uvm_reg: uvm_object
       }
       _m_n_bits      = n_bits;
       _m_has_cover   = has_coverage;
-      _m_atomic      = new SemaphoreObj(1);
+      _m_atomic      = new SemaphoreObj(1, uvm_root_entity_base.get());
       _m_n_used_bits = 0;
       _m_locked      = 0;
       _m_is_busy     = 0;
@@ -1124,7 +1125,7 @@ abstract class uvm_reg: uvm_object
       rw.element      = this;
       rw.element_kind = UVM_REG;
       rw.kind         = UVM_WRITE;
-      rw.value[0]     = value;
+      rw.set_value(0, value); // rw.value[0]    = value;
       rw.path         = path;
       rw.map          = map;
       rw.parent       = parent;
@@ -1143,6 +1144,21 @@ abstract class uvm_reg: uvm_object
     XatomicX(0);
 
   }
+
+  void write(T)(out uvm_status_e  status,
+		T                 value,
+		uvm_path_e        path = uvm_path_e.UVM_DEFAULT_PATH,
+		uvm_reg_map       map = null,
+		uvm_sequence_base parent = null,
+		int               prior = -1,
+		uvm_object        extension = null,
+		string            fname = "",
+		int               lineno = 0) {
+    uvm_reg_data_t data = value;
+    this.write(status, data, path, map, parent, prior, extension,
+	       fname, lineno);
+  }
+  
 
   // Task: read
   //
@@ -1247,7 +1263,8 @@ abstract class uvm_reg: uvm_object
       rw.element_kind = UVM_REG;
       rw.kind         = UVM_WRITE;
       rw.bd_kind      = kind;
-      rw.value[0]     = value & ((1 << _m_n_bits)-1);
+      // rw.value[0]     = value & ((1 << _m_n_bits)-1);
+      rw.set_value(0, value & ((1 << _m_n_bits)-1));
       rw.parent       = parent;
       rw.extension    = extension;
       rw.fname        = fname;
@@ -1350,7 +1367,8 @@ abstract class uvm_reg: uvm_object
 
     synchronized(rw) {
       status = rw.status;
-      value = rw.value[0];
+      // value = rw.value[0];
+      value = rw.get_value(0);
     }
     
     uvm_root_info("RegModel", format("Peeked register \"%s\": 'h%h",
@@ -1540,7 +1558,8 @@ abstract class uvm_reg: uvm_object
 		int               lineno = 0) {
     uvm_reg_item rw = new uvm_reg_item();
     synchronized(rw) {
-      rw.value[0] = value;
+      // rw.value[0] = value;
+      rw.set_value(0, value);
       rw.path = path;
       rw.map = map;
       rw.fname = fname;
@@ -1606,7 +1625,8 @@ abstract class uvm_reg: uvm_object
       rw.element      = this;
       rw.element_kind = UVM_REG;
       rw.kind         = UVM_READ;
-      rw.value[0]     = 0;
+      // rw.value[0]     = 0;
+      rw.set_value(0, 0);
       rw.path         = path;
       rw.map          = map;
       rw.parent       = parent;
@@ -1619,9 +1639,9 @@ abstract class uvm_reg: uvm_object
 
     synchronized(rw) {
       status = rw.status;
-      value = rw.value[0];
+      // value = rw.value[0];
+      value = rw.get_value(0);
     }
-
   }
 
   // /*local*/ extern task XatomicX(bool on);
@@ -1797,11 +1817,11 @@ abstract class uvm_reg: uvm_object
 
     synchronized(this) {
       _m_write_in_progress = true;
-
-      rw.value[0] &= ((1 << _m_n_bits)-1);
+      // rw.value[0] &= ((1 << _m_n_bits)-1);
+      rw.and_value(0, ((1 << _m_n_bits)-1));
     }
-    value = rw.value[0];
-
+    // value = rw.value[0];
+    value = rw.get_value(0);
     rw.status = UVM_IS_OK;
 
     // PRE-WRITE CBS - FIELDS
@@ -1813,20 +1833,22 @@ abstract class uvm_reg: uvm_object
       uvm_reg_field f = field;
       int lsb = f.get_lsb_pos();
       msk = ((1 << f.get_n_bits())-1) << lsb;
-      rw.value[0] = (value & msk) >> lsb;
+      // rw.value[0] = (value & msk) >> lsb;
+      rw.set_value(0, (value & msk) >> lsb);
       f.pre_write(rw);
       for (uvm_reg_cbs cb=lcbs.first(); cb !is null; cb=lcbs.next()) {
 	rw.element = f;
 	rw.element_kind = UVM_FIELD;
 	cb.pre_write(rw);
       }
-
-      value = (value & ~msk) | (rw.value[0] << lsb);
+      // value = (value & ~msk) | (rw.value[0] << lsb);
+      value = (value & ~msk) | (rw.get_value(0) << lsb);
     }
 
     rw.element = this;
     rw.element_kind = UVM_REG;
-    rw.value[0] = value;
+    // rw.value[0] = value;
+    rw.set_value(0, value);
 
     // PRE-WRITE CBS - REG
     pre_write(rw);
@@ -1850,8 +1872,8 @@ abstract class uvm_reg: uvm_object
 	uvm_reg_data_t final_val;
 	uvm_reg_backdoor bkdr = get_backdoor();
 
-	value = rw.value[0];
-
+	// value = rw.value[0];
+	value = rw.get_value(0);
 	// Mimick the final value after a physical read
 	rw.kind = UVM_READ;
 	if (bkdr !is null) {
@@ -1870,13 +1892,17 @@ abstract class uvm_reg: uvm_object
 	  uvm_reg_data_t field_val;
 	  int lsb = field.get_lsb_pos();
 	  int sz  = field.get_n_bits();
-	  field_val = field.XpredictX((rw.value[0] >> lsb) & ((1<<sz)-1),
+	  // field_val = field.XpredictX((rw.value[0] >> lsb) & ((1<<sz)-1),
+	  // 			      (value >> lsb) & ((1<<sz)-1),
+	  // 			      rw.local_map);
+	  field_val = field.XpredictX((rw.get_value(0) >> lsb) & ((1<<sz)-1),
 				      (value >> lsb) & ((1<<sz)-1),
 				      rw.local_map);
 	  final_val |= field_val << lsb;
 	}
 	rw.kind = UVM_WRITE;
-	rw.value[0] = final_val;
+	// rw.value[0] = final_val;
+	rw.set_value(0, final_val);
 
 	if (bkdr !is null) {
 	  bkdr.write(rw);
@@ -1927,7 +1953,8 @@ abstract class uvm_reg: uvm_object
     default: assert(0);
     }
 
-    value = rw.value[0];
+    // value = rw.value[0];
+    value = rw.get_value(0);
 
     // POST-WRITE CBS - REG
     for (uvm_reg_cbs cb=cbs.first(); cb !is null; cb=cbs.next()) {
@@ -1942,7 +1969,8 @@ abstract class uvm_reg: uvm_object
       
       rw.element = f;
       rw.element_kind = UVM_FIELD;
-      rw.value[0] = (value >> f.get_lsb_pos()) & ((1<<f.get_n_bits())-1);
+      // rw.value[0] = (value >> f.get_lsb_pos()) & ((1<<f.get_n_bits())-1);
+      rw.set_value(0, (value >> f.get_lsb_pos()) & ((1<<f.get_n_bits())-1));
       
       for (uvm_reg_cbs cb=lcbs.first(); cb !is null; cb=lcbs.next()) {
 	cb.post_write(rw);
@@ -1950,7 +1978,8 @@ abstract class uvm_reg: uvm_object
       f.post_write(rw);
     }
    
-    rw.value[0] = value;
+    // rw.value[0] = value;
+    rw.set_value(0, value);
     rw.element = this;
     rw.element_kind = UVM_REG;
 
@@ -1964,7 +1993,8 @@ abstract class uvm_reg: uvm_object
       else {
 	path_s = (get_backdoor() !is null) ? "user backdoor" : "DPI backdoor";
       }
-      value_s = format("=0x%0h",rw.value[0]);
+      // value_s = format("=0x%0h",rw.value[0]);
+      value_s = format("=0x%0h",rw.get_value(0));
 
       uvm_report_info("RegModel", "Wrote register via " ~ path_s ~ ": " ~
 		      get_full_name() ~ value_s, UVM_HIGH);
@@ -2047,7 +2077,8 @@ abstract class uvm_reg: uvm_object
 	  backdoor_read(rw);
 	}
 
-	value = rw.value[0];
+	// value = rw.value[0];
+	value = rw.get_value(0);
 
 	// Need to clear RC fields, set RS fields and mask WO fields
 	if (rw.status != UVM_NOT_OK) {
@@ -2080,24 +2111,30 @@ abstract class uvm_reg: uvm_object
 	    }
 	  }
 
-	  if (value != rw.value[0]) {
+	  // if (value != rw.value[0]) {
+	  if (value != rw.get_value(0)) {
 	    uvm_reg_data_t saved;
-	    saved = rw.value[0];
-	    rw.value[0] = value;
+	    // saved = rw.value[0];
+	    saved = rw.get_value(0);
+	    // rw.value[0] = value;
+	    rw.set_value(0, value);
 	    if (bkdr !is null) {
 	      bkdr.write(rw);
 	    }
 	    else {
 	      backdoor_write(rw);
 	    }
-	    rw.value[0] = saved;
+	    // rw.value[0] = saved;
+	    rw.set_value(0, saved);
 	  }
 
-	  rw.value[0] &= ~wo_mask;
+	  // rw.value[0] &= ~wo_mask;
+	  rw.and_value(0, ~wo_mask);
 
 	  if (map.get_check_on_read() &&
 	      rw.status != UVM_NOT_OK) {
-	    do_check(exp, rw.value[0], map);
+	    // do_check(exp, rw.value[0], map);
+	    do_check(exp, rw.get_value(0), map);
 	  }
        
 	  do_predict(rw, UVM_PREDICT_READ);
@@ -2131,11 +2168,13 @@ abstract class uvm_reg: uvm_object
 	  uvm_status_e status;
 	  if (rw.local_map.get_check_on_read() &&
 	      rw.status != UVM_NOT_OK) {
-	    do_check(exp, rw.value[0], system_map);
+	    // do_check(exp, rw.value[0], system_map);
+	    do_check(exp, rw.get_value(0), system_map);
 	  }
 
 	  if (rw.status != UVM_NOT_OK) {
-	    sample(rw.value[0], uvm_reg_addr_t(-1), true, rw.map);
+	    // sample(rw.value[0], uvm_reg_addr_t(-1), true, rw.map);
+	    sample(rw.get_value(0), uvm_reg_addr_t(-1), true, rw.map);
 	    _m_parent.XsampleX(map_info.offset, 1, rw.map);
 	  }
 
@@ -2148,7 +2187,8 @@ abstract class uvm_reg: uvm_object
     default: assert(0);
     }
 
-    value = rw.value[0]; // preserve 
+    // value = rw.value[0]; // preserve 
+    value = rw.get_value(0); // preserve 
 
     // POST-READ CBS - REG
     for (uvm_reg_cbs cb = cbs.first(); cb !is null; cb = cbs.next())
@@ -2163,14 +2203,16 @@ abstract class uvm_reg: uvm_object
 
       rw.element = f;
       rw.element_kind = UVM_FIELD;
-      rw.value[0] = (value >> f.get_lsb_pos()) & ((1<<f.get_n_bits())-1);
+      // rw.value[0] = (value >> f.get_lsb_pos()) & ((1<<f.get_n_bits())-1);
+      rw.set_value(0, (value >> f.get_lsb_pos()) & ((1<<f.get_n_bits())-1));
 
       for (uvm_reg_cbs cb=cbsi.first(); cb !is null; cb=cbsi.next())
 	cb.post_read(rw);
       f.post_read(rw);
     }
 
-    rw.value[0] = value; // restore
+    // rw.value[0] = value; // restore
+    rw.set_value(0, value); // restore
     rw.element = this;
     rw.element_kind = UVM_REG;
 
@@ -2183,7 +2225,8 @@ abstract class uvm_reg: uvm_object
       else
 	path_s = (get_backdoor() !is null) ? "user backdoor" : "DPI backdoor";
 
-      value_s = format("=%0h", rw.value[0]);
+      // value_s = format("=%0h", rw.value[0]);
+      value_s = format("=%0h", rw.get_value(0));
 
       uvm_report_info("RegModel", "Read  register via " ~ path_s ~ ": " ~
 		      get_full_name() ~ value_s, UVM_HIGH);
@@ -2202,7 +2245,8 @@ abstract class uvm_reg: uvm_object
 		  uvm_reg_byte_en_t be = -1) {
     synchronized(this) {
 
-      uvm_reg_data_t reg_value = rw.value[0];
+      // uvm_reg_data_t reg_value = rw.value[0];
+      uvm_reg_data_t reg_value = rw.get_value(0);
       _m_fname = rw.fname;
       _m_lineno = rw.lineno;
 
@@ -2216,12 +2260,15 @@ abstract class uvm_reg: uvm_object
       }
    
       foreach (field; _m_fields) {
-	rw.value[0] = (reg_value >> field.get_lsb_pos()) &
-	  ((1 << field.get_n_bits())-1);
+	// rw.value[0] = (reg_value >> field.get_lsb_pos()) &
+	//   ((1 << field.get_n_bits())-1);
+	rw.set_value(0, (reg_value >> field.get_lsb_pos()) &
+		     ((1 << field.get_n_bits())-1));
 	field.do_predict(rw, kind, be>>(field.get_lsb_pos()/8));
       }
 
-      rw.value[0] = reg_value;
+      // rw.value[0] = reg_value;
+      rw.set_value(0, reg_value);
     }
   }
 
@@ -2693,10 +2740,12 @@ abstract class uvm_reg: uvm_object
 		      hdl_slice.path, UVM_DEBUG);
 
 	if (hdl_slice.offset < 0) {
-	  ok &= uvm_hdl_deposit(hdl_slice.path,rw.value[0]);
+	  // ok &= uvm_hdl_deposit(hdl_slice.path, rw.value[0]);
+	  ok &= uvm_hdl_deposit(hdl_slice.path, rw.get_value(0));
 	  continue;
 	}
-	uvm_reg_data_t slice = rw.value[0] >> hdl_slice.offset;
+	// uvm_reg_data_t slice = rw.value[0] >> hdl_slice.offset;
+	uvm_reg_data_t slice = rw.get_value(0) >> hdl_slice.offset;
 	slice &= (1 << hdl_slice.size)-1;
 	ok &= uvm_hdl_deposit(hdl_slice.path, slice);
       }
@@ -2748,23 +2797,27 @@ abstract class uvm_reg: uvm_object
 	val &= (1 << _m_n_bits)-1;
 
 	if (i == 0) {
-	  rw.value[0] = val;
+	  // rw.value[0] = val;
+	  rw.set_value(0, val);
 	}
 	
-	if (val !is rw.value[0]) {
+	// if (val !is rw.value[0]) {
+	if (val !is rw.get_value(0)) {
 	  uvm_root_error("RegModel",
 			 format("Backdoor read of register %s with " ~
 				"multiple HDL copies: values are not" ~
 				" the same: %0h at path '%s', and %0h" ~
 				" at path '%s'. Returning first value.",
 				get_full_name(),
-				rw.value[0], uvm_hdl_concat2string(paths[0]),
+				// rw.value[0], uvm_hdl_concat2string(paths[0]),
+				rw.get_value(0), uvm_hdl_concat2string(paths[0]),
 				val, uvm_hdl_concat2string(paths[i]))); 
 	  return UVM_NOT_OK;
 	}
 	
 	uvm_root_info("RegMem", 
-		      format("returned backdoor value 0x%0x", rw.value[0]),
+		      // format("returned backdoor value 0x%0x", rw.value[0]),
+		      format("returned backdoor value 0x%0x", rw.get_value(0)),
 		      UVM_DEBUG);
       
       }

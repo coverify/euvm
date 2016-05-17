@@ -46,14 +46,21 @@ import std.string: format;
 //Instance overrides by requested type lookup
 final class uvm_factory_queue_class
 {
-  private Queue!(uvm_factory_override) _queue;
+  Queue!(uvm_factory_override) _queue;
+
+  private Queue!(uvm_factory_override) get_queue() {
+    synchronized(this) {
+      return _queue.dup;
+    }
+  }
 
   uvm_factory_queue_class clone() {
     auto clone_ = new uvm_factory_queue_class;
-    synchronized(this, clone_) {
-      clone_._queue = _queue;
-      return clone_;
+    auto q = get_queue();
+    synchronized(clone_) {
+      clone_._queue = q;
     }
+    return clone_;
   }
 
   final uvm_factory_override opIndex(size_t index) {

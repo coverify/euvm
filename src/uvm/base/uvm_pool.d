@@ -58,13 +58,19 @@ class uvm_pool(KEY=int, VAL=uvm_void): /*extends*/ uvm_object
   // Allow no aliasing, since aliasing leaks out the original assoc
   // array thus putting concurrency in peril
   // For this aliasing
-  // @property ref auto get_pool() {
-  //   synchronized(this) {
-  //     return _pool;
-  //   }
-  // }
+  VAL[KEY] dup_pool() {
+    synchronized(this) {
+      static if(__traits(compiles, _pool.dup)) {
+	return _pool.dup;
+      }
+      else {
+	assert(false, "Cannot copy: " ~ typeof(_pool).stringof);
+	return null;
+      }
+    }
+  }
 
-  // alias get_pool this;
+  // alias dup_pool this;
 
   // Function: new
   //
@@ -378,14 +384,16 @@ class uvm_pool(KEY=int, VAL=uvm_void): /*extends*/ uvm_object
   }
 
   override void do_copy(uvm_object rhs) {
-    synchronized(this, rhs) {
-      super.do_copy(rhs);
-      auto p = cast(this_type) rhs;
-      // KEY key;
-      if(rhs is null || p is null) {
-	return;
-      }
-      _pool = p._pool;
+    if(rhs is null) {
+      return;
+    }
+    auto p = cast(this_type) rhs;
+    if(p is null) {
+      return;
+    }
+    super.do_copy(rhs);
+    synchronized(this) {
+      _pool = p.dup_pool;
     }
   }
 

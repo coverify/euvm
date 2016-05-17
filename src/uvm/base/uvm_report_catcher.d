@@ -179,8 +179,10 @@ abstract class uvm_report_catcher: uvm_callback
   // should generally be provided to aid in debugging.
 
   this(string name = "uvm_report_catcher") {
-    synchronized(this, once) {
+    synchronized(this) {
       super(name);
+    }
+    synchronized(once) {
       // do_report is a static variable and still it is being
       // initialized in the constructor. We inherit this functionality
       // from the SV version of UVM
@@ -623,11 +625,11 @@ abstract class uvm_report_catcher: uvm_callback
     this.uvm_process_report_message(l_report_message);
   }
 
-  protected void uvm_process_report_message(uvm_report_message msg) {
-    synchronized(this, once) {
+  // protected
+  static void uvm_process_report_message(uvm_report_message msg) {
+    synchronized(once) {
       uvm_report_object ro = once._m_modified_report_message.get_report_object();
       uvm_action a = ro.get_report_action(msg.get_severity(), msg.get_id());
-
       if(a) {
 	string composed_message;
 	uvm_report_server rs = once._m_modified_report_message.get_report_server();
@@ -637,10 +639,10 @@ abstract class uvm_report_catcher: uvm_callback
 	msg.set_report_server(rs);
 	msg.set_file(ro.get_report_file_handle(msg.get_severity(), msg.get_id()));
 	msg.set_action(a);
-
 	// no need to compose when neither UVM_DISPLAY nor UVM_LOG is set
-	if (a & (UVM_LOG|UVM_DISPLAY))
+	if (a & (UVM_LOG|UVM_DISPLAY)) {
 	  composed_message = rs.compose_report_message(msg);
+	}
 	rs.execute_report_message(msg, composed_message);
       }
     }

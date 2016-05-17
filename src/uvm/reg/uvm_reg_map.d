@@ -1790,7 +1790,7 @@ class uvm_reg_map: uvm_object
       }
     }
 
-    foreach (uvm_reg_data_t value; rw.value) { // foreach_value
+    foreach (uvm_reg_data_t value; rw.get_value()) { // foreach_value
 
       /* calculate byte_enables */
       if (rw.element_kind == UVM_FIELD) {
@@ -1944,7 +1944,7 @@ class uvm_reg_map: uvm_object
       }
     }
     
-    foreach (ref value; rw.value) { // : foreach_value
+    foreach (ref value; rw.get_value()) { // : foreach_value
 
       /* calculate byte_enables */
       if (rw.element_kind == UVM_FIELD) {

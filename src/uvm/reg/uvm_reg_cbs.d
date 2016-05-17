@@ -275,7 +275,10 @@ abstract class uvm_reg_cbs: uvm_callback
   //
   // virtual function void encode(ref uvm_reg_data_t data[]);
 
-  void encode(ref uvm_reg_data_t[] data) {}
+  // FIXME SV version has ref and the callback is supposed to modify the data
+  // Since this can not be done safely in multicore, we have to find
+  // alternative ways
+  void encode(uvm_reg_item rw) {}
 
 
   // Function: decode
@@ -295,7 +298,10 @@ abstract class uvm_reg_cbs: uvm_callback
   //
   // virtual function void decode(ref uvm_reg_data_t data[]);
 
-  void decode(ref uvm_reg_data_t[] data) {}
+  // FIXME SV version has ref and the callback is supposed to modify the data
+  // Since this can not be done safely in multicore, we have to find
+  // alternative ways
+  void decode(uvm_reg_item rw) {}
 
 }
 

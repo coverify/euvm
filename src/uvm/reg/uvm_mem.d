@@ -968,7 +968,8 @@ class uvm_mem: uvm_object
       rw.element_kind = UVM_MEM;
       rw.kind         = UVM_WRITE;
       rw.offset       = offset;
-      rw.value[0]     = value;
+      // rw.value[0]     = value;
+      rw.set_value(0, value);
       rw.path         = path;
       rw.map          = map;
       rw.parent       = parent;
@@ -1026,7 +1027,8 @@ class uvm_mem: uvm_object
       rw.element      = this;
       rw.element_kind = UVM_MEM;
       rw.kind         = UVM_READ;
-      rw.value[0]     = 0;
+      // rw.value[0]     = 0;
+      rw.set_value(0, 0);
       rw.offset       = offset;
       rw.path         = path;
       rw.map          = map;
@@ -1042,7 +1044,8 @@ class uvm_mem: uvm_object
 
     synchronized(rw) {
       status = rw.status;
-      value = rw.value[0];
+      // value = rw.value[0];
+      value = rw.get_value(0);
     }
   }
 
@@ -1087,7 +1090,8 @@ class uvm_mem: uvm_object
       rw.element_kind = UVM_MEM;
       rw.kind         = UVM_BURST_WRITE;
       rw.offset       = offset;
-      rw.value        = value;
+      // rw.value        = value;
+      rw.set_value(value);
       rw.path         = path;
       rw.map          = map;
       rw.parent       = parent;
@@ -1148,7 +1152,8 @@ class uvm_mem: uvm_object
       rw.element_kind = UVM_MEM;
       rw.kind         = UVM_BURST_READ;
       rw.offset       = offset;
-      rw.value        = value;
+      // rw.value        = value;
+      rw.set_value(value);
       rw.path         = path;
       rw.map          = map;
       rw.parent       = parent;
@@ -1163,7 +1168,8 @@ class uvm_mem: uvm_object
 
     synchronized(rw) {
       status = rw.status;
-      value  = rw.value;
+      // value  = rw.value;
+      value  = rw.get_value();
     }
   }
 
@@ -1220,7 +1226,8 @@ class uvm_mem: uvm_object
       rw.element_kind = UVM_MEM;
       rw.kind         = UVM_WRITE;
       rw.offset       = offset;
-      rw.value[0]     = value & ((1 << _m_n_bits)-1);
+      // rw.value[0]     = value & ((1 << _m_n_bits)-1);
+      rw.set_value(0, value & ((1 << _m_n_bits)-1));
       rw.bd_kind      = kind;
       rw.parent       = parent;
       rw.extension    = extension;
@@ -1314,7 +1321,8 @@ class uvm_mem: uvm_object
 
     synchronized(rw) {
       status = rw.status;
-      value  = rw.value[0];
+      // value  = rw.value[0];
+      value  = rw.get_value(0);
     }
 
     uvm_root_info("RegModel", format("Peeked memory '%s[%0d]' has value 'h%h",
@@ -1385,7 +1393,8 @@ class uvm_mem: uvm_object
 	    return false;
 	  }
 
-	  if ((rw.value.length > 1)) {
+	  // if ((rw.value.length > 1)) {
+	  if ((rw.num_values > 1)) {
 	    if (get_n_bits() > rw.local_map.get_n_bytes()*8) {
 	      uvm_root_error("RegModel",
 			format("Cannot burst a %0d-bit memory through a narrower data path (%0d bytes)",
@@ -1393,10 +1402,11 @@ class uvm_mem: uvm_object
 	      rw.status = UVM_NOT_OK;
 	      return false;
 	    }
-	    if (rw.offset + rw.value.length > size) {
+	    // if (rw.offset + rw.value.length > size) {
+	    if (rw.offset + rw.num_values > size) {
 	      uvm_root_error("RegModel",
 			format("Burst of size 'd%0d starting at offset 'd%0d exceeds size of memory, 'd%0d",
-			       rw.value.length, rw.offset, size));
+			       rw.num_values, rw.offset, size));
 	      return false;
 	    }
 	  }
@@ -1462,7 +1472,8 @@ class uvm_mem: uvm_object
 
       if (rw.status !is UVM_NOT_OK) {
 	for (uvm_reg_addr_t idx = rw.offset;
-	     idx <= rw.offset + rw.value.length;
+	     // idx <= rw.offset + rw.value.length;
+	     idx <= rw.offset + rw.num_values;
 	     idx++) {
 	  XsampleX(cast(uvm_reg_addr_t)(map_info.mem_range.stride * idx),
 		   false, rw.map);
@@ -1506,17 +1517,21 @@ class uvm_mem: uvm_object
       else {
 	path_s = (get_backdoor() !is null) ? "user backdoor" : "DPI backdoor";
       }
-      if (rw.value.length > 1) {
+      // if (rw.value.length > 1) {
+      if (rw.num_values > 1) {
 	value_s = "='{";
 	pre_s = "Burst ";
-	foreach (i, val; rw.value) {
+	// foreach (i, val; rw.value) {
+	foreach (i, val; rw.get_value()) {
 	  value_s = value_s ~ format("%0h,", val);
 	}
 	value_s = value_s[0..$-1] ~ '}';
-	range_s = format("[%0d:%0d]", rw.offset, rw.offset+rw.value.length);
+	// range_s = format("[%0d:%0d]", rw.offset, rw.offset+rw.value.length);
+	range_s = format("[%0d:%0d]", rw.offset, rw.offset+rw.num_values);
       }
       else {
-	value_s = format("=%0h", rw.value[0]);
+	// value_s = format("=%0h", rw.value[0]);
+	value_s = format("=%0h", rw.get_value(0));
 	range_s = format("[%0d]", rw.offset);
       }
 
@@ -1580,7 +1595,8 @@ class uvm_mem: uvm_object
 
       if (rw.status !is UVM_NOT_OK)
 	for (uvm_reg_addr_t idx = rw.offset;
-	     idx <= rw.offset + rw.value.length;
+	     // idx <= rw.offset + rw.value.length;
+	     idx <= rw.offset + rw.num_values;
 	     idx++) {
 	  XsampleX(cast(uvm_reg_addr_t)(map_info.mem_range.stride * idx),
 			true, rw.map);
@@ -1617,17 +1633,21 @@ class uvm_mem: uvm_object
       else {
 	path_s = (get_backdoor() !is null) ? "user backdoor" : "DPI backdoor";
       }
-      if (rw.value.length > 1) {
+      // if (rw.value.length > 1) {
+      if (rw.num_values > 1) {
 	value_s = "='{";
 	pre_s = "Burst ";
-	foreach (i, v; rw.value) {
+	// foreach (i, v; rw.value) {
+	foreach (i, v; rw.get_value()) {
 	  value_s = value_s ~ format("%0h,", v);
 	}
 	value_s = value_s[0..$-1] ~ '}';
-	range_s = format("[%0d:%0d]", rw.offset, (rw.offset + rw.value.length));
+	// range_s = format("[%0d:%0d]", rw.offset, (rw.offset + rw.value.length));
+	range_s = format("[%0d:%0d]", rw.offset, (rw.offset + rw.num_values));
       }
       else {
-	value_s = format("=%0h", rw.value[0]);
+	// value_s = format("=%0h", rw.value[0]);
+	value_s = format("=%0h", rw.get_value(0));
 	range_s = format("[%0d]", rw.offset);
       }
 
@@ -2063,7 +2083,8 @@ class uvm_mem: uvm_object
    
     get_full_hdl_path(paths, rw.bd_kind);
    
-    foreach (mem_idx, v; rw.value) {
+    // foreach (mem_idx, v; rw.value) {
+    foreach (mem_idx, v; rw.get_value()) {
       import std.conv: to;
       string idx = (rw.offset + mem_idx).to!string;
       foreach (i, path; paths) {
@@ -2106,7 +2127,8 @@ class uvm_mem: uvm_object
 
       get_full_hdl_path(paths, rw.bd_kind);
 
-      foreach (mem_idx, ref v; rw.value) {
+      // foreach (mem_idx, ref v; rw.value) {
+      foreach (mem_idx, ref v; rw.get_value) {
 	import std.conv: to;
 	string idx = (rw.offset + mem_idx).to!string;
 	foreach (i, path; paths) {
@@ -2138,12 +2160,13 @@ class uvm_mem: uvm_object
 
 	  if (val != v) {
 	    uvm_root_error("RegModel", format("Backdoor read of register %s with"
-					 " multiple HDL copies: values are not"
-					 " the same: %0h at path '%s', and %0h"
-					 " at path '%s'. Returning first value.",
-					 get_full_name(), rw.value[mem_idx],
-					 uvm_hdl_concat2string(paths[0]),
-					 val, uvm_hdl_concat2string(path))); 
+					      " multiple HDL copies: values are not"
+					      " the same: %0h at path '%s', and %0h"
+					      " at path '%s'. Returning first value.",
+					      // get_full_name(), rw.value[mem_idx],
+					      get_full_name(), rw.get_value(mem_idx),
+					      uvm_hdl_concat2string(paths[0]),
+					      val, uvm_hdl_concat2string(path))); 
 	    return UVM_NOT_OK;
 	  }
 	}

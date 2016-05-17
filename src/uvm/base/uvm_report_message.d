@@ -172,19 +172,19 @@ class uvm_report_message_element(T) if(isIntegral!T || isBitVector!T):
   }
 
 
-  void do_print(uvm_printer printer) {
+  override void do_print(uvm_printer printer) {
     synchronized(this) {
       printer.print(_name, _val, _radix);
     }
   }
 
-  void do_record(uvm_recorder recorder) {
+  override void do_record(uvm_recorder recorder) {
     synchronized(this) {
       recorder.record(_name, _val, _radix);
     }
   }
 
-  void do_copy(uvm_report_message_element_base rhs) {
+  override void do_copy(uvm_report_message_element_base rhs) {
     synchronized(this) {
       this_type _rhs = cast(this_type) rhs;
       assert(_rhs !is null);
@@ -195,7 +195,7 @@ class uvm_report_message_element(T) if(isIntegral!T || isBitVector!T):
     }
   }
 
-  uvm_report_message_element_base do_clone() {
+  override uvm_report_message_element_base do_clone() {
     synchronized(this) {
       this_type tmp = new this_type;
       tmp.copy(this);
@@ -335,13 +335,11 @@ class uvm_report_message_element(T) if(is(T == string))
   }
 
   override void do_copy(uvm_report_message_element_base rhs) {
-    synchronized(this, rhs) {
-      this_type _rhs = cast(this_type) rhs;
-      assert(_rhs !is null);
-      _name   = _rhs._name;
-      _val    = _rhs._val;
-      _action = rhs._action;
-    }
+    this_type rhs_ = cast(this_type) rhs;
+    assert(rhs_ !is null);
+    set_name   = rhs_.get_name;
+    set_value  = rhs_.get_value;
+    set_action = rhs_.get_action;
   }
 
   override uvm_report_message_element_base do_clone() {
@@ -406,13 +404,11 @@ class uvm_report_message_element(T) if(is(T: uvm_object))
   }
 
   override void do_copy(uvm_report_message_element_base rhs) {
-    synchronized(this) {
-      this_type _rhs = cast(this_type) rhs;
-      assert(_rhs !is null);
-      _name   = _rhs._name;
-      _val    = _rhs._val;
-      _action = rhs._action;
-    }
+    this_type rhs_ = cast(this_type) rhs;
+    assert(rhs_ !is null);
+    set_name   = rhs_.get_name;
+    set_value  = rhs_.get_value;
+    set_action = rhs_.get_action;
   }
 
   override uvm_report_message_element_base do_clone() {
@@ -468,7 +464,7 @@ class uvm_report_message_element_container: uvm_object
   // Delete the ~index~-th element in the container
   //
 
-  void remove(int index) {
+  void remove(size_t index) {
     synchronized(this) {
       _elements = _elements[0..index] ~ _elements[index+1..$];
     }
@@ -494,7 +490,7 @@ class uvm_report_message_element_container: uvm_object
 
   uvm_report_message_element_base[] get_elements() {
     synchronized(this) {
-      return _elements;
+      return _elements.dup;
     }
   }
 
@@ -662,16 +658,15 @@ class uvm_report_message_element_container: uvm_object
   }
 
   override void do_copy(uvm_object rhs) {
-    synchronized(this, rhs) {
-      auto urme_container = cast(uvm_report_message_element_container) rhs;
-      super.do_copy(rhs);
-
-      if(urme_container is null) {
-	return;
-      }
-
-      remove_elements();
-      foreach (element; urme_container._elements) {
+    auto urme_container = cast(uvm_report_message_element_container) rhs;
+    super.do_copy(rhs);
+    if(urme_container is null) {
+      return;
+    }
+    remove_elements();
+    
+    synchronized(this) {
+      foreach (element; urme_container.get_elements) {
 	_elements ~= element.clone();
       }
     }
@@ -713,8 +708,8 @@ class uvm_report_message: uvm_object
   private UVM_FILE _file;
 
   // Not documented.
+  // Effectively Immutable
   private uvm_report_message_element_container _report_message_element_container;
-
 
   // Function: new
   //
@@ -820,15 +815,13 @@ class uvm_report_message: uvm_object
 
   // Not documented.
   override void do_copy (uvm_object rhs) {
-    synchronized(this, rhs) {
+    super.do_copy(rhs);
 
-      super.do_copy(rhs);
-
-      uvm_report_message report_message = cast(uvm_report_message) rhs;
-      if(report_message is null) {
-	return;
-      }
-
+    uvm_report_message report_message = cast(uvm_report_message) rhs;
+    if(report_message is null) {
+      return;
+    }
+    synchronized(this) {
       _report_object = report_message.get_report_object();
       _report_handler = report_message.get_report_handler();
       _report_server = report_message.get_report_server();
@@ -842,7 +835,7 @@ class uvm_report_message: uvm_object
       _message = report_message.get_message();
       _verbosity = report_message.get_verbosity();
 
-      _report_message_element_container.copy(report_message._report_message_element_container);
+      _report_message_element_container.copy(report_message.get_element_container());
     }
   }
 
@@ -1106,10 +1099,9 @@ class uvm_report_message: uvm_object
   //
   // Get the element_container of the message
 
+  // _report_message_element_container is effectively immutable
   uvm_report_message_element_container get_element_container() {
-    synchronized(this) {
-      return _report_message_element_container;
-    }
+    return _report_message_element_container;
   }
 
 
@@ -1200,9 +1192,9 @@ class uvm_report_message: uvm_object
 	      uvm_radix_enum radix,
 	      uvm_action action = (UVM_LOG|UVM_RM_RECORD))
     if(isIntegral!T || isBitVector!T) {
-      synchronized(this) {
-	_report_message_element_container.add(name, value, radix, action);
-      }
+      // synchronized(this) {
+      _report_message_element_container.add(name, value, radix, action);
+      // }
     }
 
   void add_int(T)(string name, T value,
@@ -1210,9 +1202,9 @@ class uvm_report_message: uvm_object
 		  uvm_radix_enum radix,
 		  uvm_action action = (UVM_LOG|UVM_RM_RECORD))
     if(isIntegral!T || isBitVector!T) {
-      synchronized(this) {
-	_report_message_element_container.add_int(name, value, size, radix, action);
-      }
+      // synchronized(this) {
+      _report_message_element_container.add_int(name, value, size, radix, action);
+      // }
     }
 
 
@@ -1226,9 +1218,9 @@ class uvm_report_message: uvm_object
   void add(T)(string name, T value,
 	      uvm_action action = (UVM_LOG|UVM_RM_RECORD))
     if(is(T == string)) {
-      synchronized(this) {
-	_report_message_element_container.add_string(name, value, action);
-      }
+      // synchronized(this) {
+      _report_message_element_container.add_string(name, value, action);
+      // }
     }
 
   alias add_string = add!string;
@@ -1243,9 +1235,9 @@ class uvm_report_message: uvm_object
   void add(T)(string name, T obj,
 	      uvm_action action = (UVM_LOG|UVM_RM_RECORD))
     if(is(T: uvm_object)) {
-      synchronized(this) {
-	_report_message_element_container.add_object(name, obj, action);
-      }
+      // synchronized(this) {
+      _report_message_element_container.add_object(name, obj, action);
+      // }
     }
 
   alias add_object = add!uvm_object;

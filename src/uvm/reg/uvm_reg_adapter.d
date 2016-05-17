@@ -1,8 +1,8 @@
 //
 // -------------------------------------------------------------
 //    Copyright 2004-2009 Synopsys, Inc.
-//    Copyright 2010 Mentor Graphics Corporation
-//    Copyright 2014 Coverify Systems Technology
+//    Copyright 2010      Mentor Graphics Corporation
+//    Copyright 2014-2016 Coverify Systems Technology
 //    All Rights Reserved Worldwide
 //
 //    Licensed under the Apache License, Version 2.0 (the
@@ -72,12 +72,15 @@ abstract class uvm_reg_adapter: uvm_object
   }
 
 
+  mixin(uvm_sync_string);
+
   // Variable: supports_byte_enable
   //
   // Set this bit in extensions of this class if the bus protocol supports
   // byte enables.
    
-  bool supports_byte_enable;
+  @uvm_public_sync
+  bool _supports_byte_enable;
 
 
   // Variable: provides_responses
@@ -85,7 +88,8 @@ abstract class uvm_reg_adapter: uvm_object
   // Set this bit in extensions of this class if the bus driver provides
   // separate response items.
 
-  bool provides_responses; 
+  @uvm_public_sync
+  bool _provides_responses; 
 
 
   // Variable: parent_sequence
@@ -94,7 +98,8 @@ abstract class uvm_reg_adapter: uvm_object
   // bus items be executed via a particular sequence base type. The sequence
   // assigned to this member must implement do_clone().
 
-  uvm_sequence_base parent_sequence; 
+  @uvm_public_sync  
+  uvm_sequence_base _parent_sequence; 
 
 
   // Function: reg2bus
@@ -212,12 +217,12 @@ class uvm_reg_tlm_adapter: uvm_reg_adapter
   //
   // Converts a <uvm_reg_bus_op> struct to a <uvm_tlm_gp> item.
 
-  override public uvm_sequence_item reg2bus(const ref uvm_reg_bus_op rw) {
-    synchronized(this) {
-
-      uvm_tlm_gp gp = uvm_tlm_gp.type_id.create("tlm_gp", null,
-						this.get_full_name());
-      int  nbytes = (rw.n_bits-1)/8+1;
+  override uvm_sequence_item reg2bus(const ref uvm_reg_bus_op rw) {
+    // rw is struct instance -- can not synchronize
+    uvm_tlm_gp gp = uvm_tlm_gp.type_id.create("tlm_gp", null,
+					      this.get_full_name());
+    synchronized(gp) {
+      int  nbytes = (rw.n_bits-1)/8 + 1;
       uvm_reg_addr_t addr=rw.addr;
 
       if (rw.kind == UVM_WRITE) {
@@ -229,21 +234,25 @@ class uvm_reg_tlm_adapter: uvm_reg_adapter
 
       gp.set_address(addr);
 
-      gp.set_streaming_width (nbytes);
-
       auto byte_enable = new ubyte[nbytes];
-      auto data = new ubyte[gp.get_streaming_width()];
+      gp.set_byte_enable_length(nbytes);
+
+      auto data = new ubyte[nbytes];
+      gp.set_data_length(nbytes);
+
+      gp.set_streaming_width(nbytes);
 
       for (int i = 0; i < nbytes; i++) {
 	data[i] = rw.data.getByte(i); // [i*8+:8]
-	byte_enable[i] = (i > nbytes) ? 0 : rw.byte_en[i];
+	// SV UVM has it this way, but how can i be > nbytes in this loop?
+	// byte_enable[i] = (i > nbytes) ? 0 : rw.byte_en[i];
+	byte_enable[i] = rw.byte_en[i];
       }
 
       gp.set_byte_enable(byte_enable);
       gp.set_data(data);
       
       return gp;
-
     }
   }
   // Function: bus2reg

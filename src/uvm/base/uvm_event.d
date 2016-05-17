@@ -78,6 +78,12 @@ abstract class uvm_event_base: uvm_object
   // private state variable, make sure that all read-writes are guarded
   private Queue!(uvm_event_callback!(uvm_object)) _callbacks;
 
+  Queue!(uvm_event_callback!(uvm_object)) get_callbacks() {
+    synchronized(this) {
+      return _callbacks.dup;
+    }
+  }
+
   // Function: new
   //
   // Creates a new event object.
@@ -294,18 +300,19 @@ abstract class uvm_event_base: uvm_object
 
 
   override void do_copy (uvm_object rhs) {
-    synchronized(this, rhs) {
+    synchronized(this) {
       super.do_copy(rhs);
       auto e = cast(uvm_event_base) rhs;
       if (e is null) {
 	return;
       }
-
-      // m_event = e.m_event;	// crazy??
-      _num_waiters  = e._num_waiters;
-      _on           = e._on;
-      _trigger_time = e._trigger_time;
-      _callbacks    = e._callbacks.dup;
+      synchronized(e) {
+	// m_event = e.m_event;	// crazy??
+	_num_waiters  = e.get_num_waiters();
+	_on           = e.is_on();
+	_trigger_time = e.get_trigger_time();
+	_callbacks    = e.get_callbacks();
+      }
     }
   }
 } //endclass : uvm_event

@@ -444,23 +444,25 @@ class uvm_tlm_generic_payload: uvm_sequence_item
   // Function- do_copy
   //
   override void do_copy(uvm_object rhs) {
-    synchronized(this, rhs) {
-      super.do_copy(rhs);
-      auto gp = cast(uvm_tlm_generic_payload) rhs;
-      assert(gp !is null);
-      _m_address            = gp._m_address;
-      _m_command            = gp._m_command;
-      _m_data               = gp._m_data.dup;
-      _m_dmi                = gp._m_dmi;
-      _m_length             = gp._m_length;
-      _m_response_status    = gp._m_response_status;
-      _m_byte_enable        = gp._m_byte_enable.dup;
-      _m_streaming_width    = gp._m_streaming_width;
-      _m_byte_enable_length = gp._m_byte_enable_length;
-      // _m_extensions         = gp._m_extensions.dup;
-      _m_extensions = null;
-      foreach(key, val; gp._m_extensions) {
-	_m_extensions[key] = cast(uvm_tlm_extension_base) val.clone;
+    super.do_copy(rhs);
+    auto gp = cast(uvm_tlm_generic_payload) rhs;
+    assert(gp !is null);
+    synchronized(this) {
+      synchronized(rhs) {
+	_m_address            = gp._m_address;
+	_m_command            = gp._m_command;
+	_m_data               = gp._m_data.dup;
+	_m_dmi                = gp._m_dmi;
+	_m_length             = gp._m_length;
+	_m_response_status    = gp._m_response_status;
+	_m_byte_enable        = gp._m_byte_enable.dup;
+	_m_streaming_width    = gp._m_streaming_width;
+	_m_byte_enable_length = gp._m_byte_enable_length;
+	// _m_extensions         = gp._m_extensions.dup;
+	_m_extensions = null;
+	foreach(key, val; gp._m_extensions) {
+	  _m_extensions[key] = cast(uvm_tlm_extension_base) val.clone;
+	}
       }
     }
   }
@@ -468,66 +470,67 @@ class uvm_tlm_generic_payload: uvm_sequence_item
   // Function- do_compare
   //
   override bool do_compare(uvm_object rhs, uvm_comparer comparer) {
-    synchronized(this, rhs) {
-      bool do_compare_;
-      do_compare_ = super.do_compare(rhs, comparer);
-      auto gp = cast(uvm_tlm_generic_payload) rhs;
-      assert(gp !is null);
-
-      do_compare_ = (_m_address == gp._m_address &&
-		     _m_command == gp._m_command &&
-		     _m_length  == gp._m_length  &&
-		     _m_dmi     == gp._m_dmi &&
-		     _m_byte_enable_length == gp._m_byte_enable_length  &&
-		     _m_response_status    == gp._m_response_status &&
-		     _m_streaming_width    == gp._m_streaming_width );
+    bool do_compare_;
+    do_compare_ = super.do_compare(rhs, comparer);
+    auto gp = cast(uvm_tlm_generic_payload) rhs;
+    assert(gp !is null);
+    synchronized(this) {
+      synchronized(rhs) {
+	do_compare_ = (_m_address == gp._m_address &&
+		       _m_command == gp._m_command &&
+		       _m_length  == gp._m_length  &&
+		       _m_dmi     == gp._m_dmi &&
+		       _m_byte_enable_length == gp._m_byte_enable_length  &&
+		       _m_response_status    == gp._m_response_status &&
+		       _m_streaming_width    == gp._m_streaming_width );
     
-      if (do_compare_ && _m_length == gp._m_length) {
-        ubyte lhs_be, rhs_be;
-        for(int i=0; do_compare_ && i < _m_length && i < _m_data.length; ++i) {
-          if(_m_byte_enable_length) {
-            lhs_be = _m_byte_enable[i % _m_byte_enable_length];
-            rhs_be = gp._m_byte_enable[i % gp._m_byte_enable_length];
-            do_compare_ = ((_m_data[i] & lhs_be) == (gp._m_data[i] & rhs_be));
-          }
-          else {
-            do_compare_ = (_m_data[i] == gp._m_data[i]);
+	if (do_compare_ && _m_length == gp._m_length) {
+	  ubyte lhs_be, rhs_be;
+	  for(int i=0; do_compare_ && i < _m_length && i < _m_data.length; ++i) {
+	    if(_m_byte_enable_length) {
+	      lhs_be = _m_byte_enable[i % _m_byte_enable_length];
+	      rhs_be = gp._m_byte_enable[i % gp._m_byte_enable_length];
+	      do_compare_ = ((_m_data[i] & lhs_be) == (gp._m_data[i] & rhs_be));
+	    }
+	    else {
+	      do_compare_ = (_m_data[i] == gp._m_data[i]);
+	    }
 	  }
 	}
-      }
 
-      if (do_compare_) {
-	foreach (key, val; _m_extensions) {
-	  auto pval = key in gp._m_extensions;
-	  uvm_tlm_extension_base rhs_val =  (pval !is null) ? *pval : null;
-	  do_compare_ = comparer.compare_object(key.get_name(),
-					       val, rhs_val);
-	  if (!do_compare_) break;
-	}
-      }
-
-      if (do_compare_) {
-	foreach (key, val; gp._m_extensions) {
-	  if (key !in gp._m_extensions) {
+	if (do_compare_) {
+	  foreach (key, val; _m_extensions) {
+	    auto pval = key in gp._m_extensions;
+	    uvm_tlm_extension_base rhs_val =  (pval !is null) ? *pval : null;
 	    do_compare_ = comparer.compare_object(key.get_name(),
-						 null, val);
+						  val, rhs_val);
 	    if (!do_compare_) break;
 	  }
 	}
-      }
-      
-      if (!do_compare_ && comparer.show_max > 0) {
-	string msg =
-	  format("GP miscompare between '%s' and '%s':\nlhs = %s\nrhs = %s",
-		 get_full_name(), gp.get_full_name(), this.convert2string(),
-		 gp.convert2string());
-	switch (comparer.sev) {
-        case UVM_WARNING: uvm_warning("MISCMP", msg); break;
-	case UVM_ERROR:   uvm_error("MISCMP", msg); break;
-        default:          uvm_info("MISCMP", msg, UVM_LOW); break;
+
+	if (do_compare_) {
+	  foreach (key, val; gp._m_extensions) {
+	    if (key !in gp._m_extensions) {
+	      do_compare_ = comparer.compare_object(key.get_name(),
+						    null, val);
+	      if (!do_compare_) break;
+	    }
+	  }
 	}
+      
+	if (!do_compare_ && comparer.show_max > 0) {
+	  string msg =
+	    format("GP miscompare between '%s' and '%s':\nlhs = %s\nrhs = %s",
+		   get_full_name(), gp.get_full_name(), this.convert2string(),
+		   gp.convert2string());
+	  switch (comparer.sev) {
+	  case UVM_WARNING: uvm_warning("MISCMP", msg); break;
+	  case UVM_ERROR:   uvm_error("MISCMP", msg); break;
+	  default:          uvm_info("MISCMP", msg, UVM_LOW); break;
+	  }
+	}
+	return do_compare_;
       }
-      return do_compare_;
     }
   }
    
