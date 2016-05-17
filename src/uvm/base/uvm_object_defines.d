@@ -350,10 +350,25 @@ mixin template m_uvm_field_auto_utils(T)
   import uvm.seq.uvm_sequence_base;
   import uvm.base.uvm_object_globals;
   void uvm_field_auto_all_fields(alias F, size_t I=0, T)(T lhs, T rhs) {
+    version(UVM_NORANDOM) {}
+    else {
+      import esdl.data.rand;
+    }
     static if(I < lhs.tupleof.length) {
-      if(F!(I)(lhs, rhs)) {
-	// shortcircuit useful for compare etc
-	return;
+      alias U=typeof(T.tupleof[I]);
+      version(UVM_NORANDOM) {
+	if(F!(I)(lhs, rhs)) {
+	  // shortcircuit useful for compare etc
+	  return;
+	}
+      }
+      else {
+	static if(! is(U: _esdl__ConstraintBase)) {
+	  if(F!(I)(lhs, rhs)) {
+	    // shortcircuit useful for compare etc
+	    return;
+	  }
+	}
       }
       uvm_field_auto_all_fields!(F, I+1)(lhs, rhs);
     }
@@ -519,16 +534,16 @@ mixin template m_uvm_field_auto_utils(T)
       auto comparer = m_uvm_status_container.comparer;
       alias typeof(lhs.tupleof[I]) U;
       static if(isBitVector!U) {
-	if(! lhs.tupleof[I].isLogicEqual(rhs.tupleof[I])) {
-	  comparer.compare_field(__traits(identifier, T.tupleof[I]),
-				 lhs.tupleof[I], rhs.tupleof[I]);
+	if(lhs.tupleof[I] !is rhs.tupleof[I]) {
+	  comparer.compare(__traits(identifier, T.tupleof[I]),
+			   lhs.tupleof[I], rhs.tupleof[I]);
 	}
       }
       else // static if(isIntegral!U || isBoolean!U )
 	{
 	  if(lhs.tupleof[I] != rhs.tupleof[I]) {
-	    comparer.compare_field(__traits(identifier, T.tupleof[I]),
-				   lhs.tupleof[I], rhs.tupleof[I]);
+	    comparer.compare(__traits(identifier, T.tupleof[I]),
+			     lhs.tupleof[I], rhs.tupleof[I]);
 	  }
 	}
       // else {
