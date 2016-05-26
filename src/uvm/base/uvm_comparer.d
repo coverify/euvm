@@ -208,7 +208,7 @@ class uvm_comparer
 	if(lhs != rhs) {
 	  import std.string: format;
 	  uvm_object.m_uvm_status_container.scope_stack.set_arg(name);
-	  msg = format("lhs = ", lhs, " : rhs = ", rhs);
+	  msg = format("lhs = %s,  : rhs = %s", lhs, rhs);
 	  print_msg(msg);
 	  return false;
 	}
@@ -225,6 +225,24 @@ class uvm_comparer
 	if(lhs != rhs) {
 	  uvm_object.m_uvm_status_container.scope_stack.set_arg(name);
 	  msg = "lhs = \"" ~ lhs ~ "\" : rhs = \"" ~ rhs ~ "\"";
+	  print_msg(msg);
+	  return false;
+	}
+	return true;
+      }
+    }
+
+  bool compare(T)(string name,
+		  T lhs,
+		  T rhs)
+    if(isArray!T && !is(T == string)) {
+      synchronized(this) {
+	string msg;
+
+	if(lhs != rhs) {
+	  import std.string: format;
+	  uvm_object.m_uvm_status_container.scope_stack.set_arg(name);
+	  msg = format("lhs = %s,  : rhs = %s", lhs, rhs);
 	  print_msg(msg);
 	  return false;
 	}
