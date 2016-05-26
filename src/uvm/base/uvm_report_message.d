@@ -39,6 +39,70 @@ import std.traits;
 import std.random;
 import std.conv: to;
 
+// add_tag, add_string and add_object
+uvm_report_message_element_base
+uvm_message_add(alias VAR, string LABEL="",
+		uvm_action ACTION=(UVM_LOG|UVM_RM_RECORD))()
+  if (is(typeof(VAR) == string) || is(typeof(VAR): uvm_object)) {
+    static if (is (typeof(VAR): string)) {
+      alias V = string;
+    }
+    else {
+      alias V = uvm_object;
+    }
+    static if (VAR.stringof[0] == '"' &&
+	       VAR.stringof[$-1] == '"') { // add_tag
+      static assert(LABEL != "", "Must supply label for uvm_message_add!");
+      return new uvm_report_message_element!V(VAR.stringof[1..$-1], LABEL, ACTION);
+    }
+    else static if (LABEL == "") {
+      return new uvm_report_message_element!V(VAR.stringof, VAR, ACTION);
+    }
+    else {
+      return new uvm_report_message_element!V(LABEL, VAR, ACTION);
+    }
+  }
+
+// add_int
+uvm_report_message_element_base
+uvm_message_add(alias VAR, uvm_radix_enum RADIX=UVM_HEX, string LABEL="",
+		uvm_action ACTION=(UVM_LOG|UVM_RM_RECORD))()
+  if (isIntegral!(typeof(VAR)) || isBitVector!(typeof(VAR))) {
+    static if (LABEL == "") {
+      return new uvm_report_message_element!(typeof(VAR))(VAR.stringof, VAR, ACTION, RADIX);
+    }
+    else {
+      return new uvm_report_message_element!(typeof(VAR))(LABEL, VAR, ACTION, RADIX);
+    }
+  }
+
+uvm_report_message
+uvm_report_message_create(T...)(uvm_severity severity,
+				string id,
+				string message,
+				int verbosity,
+				string fname,
+				size_t line,
+				string context_name,
+				T fields) {
+  static if(T.length == 0) {
+    uvm_report_message l_report_message =
+      uvm_report_message.new_report_message();
+    l_report_message.set_report_message(severity, id, message, verbosity,
+					fname, line, context_name);
+    return l_report_message;
+  }
+  else {
+    // process the last field and add it to the message
+    uvm_report_message l_report_message =
+      uvm_report_message_create(severity, id, message, verbosity, fname,
+				line, context_name, fields[0..$-1]);
+    static assert(is(T[$-1]: uvm_report_message_element_base));
+    l_report_message.add(fields[$-1]);
+    return l_report_message;
+  }
+}
+
 //------------------------------------------------------------------------------
 //
 // CLASS: uvm_report_message_element_base
@@ -57,6 +121,13 @@ abstract class uvm_report_message_element_base
   private string     _name;
 
 
+  this(string name="", uvm_action action=(UVM_LOG|UVM_RM_RECORD)) {
+    synchronized(this) {
+      _name = name;
+      _action = action;
+    }
+  }
+  
   // Function: get_name
   //
 
@@ -148,6 +219,15 @@ class uvm_report_message_element(T) if(isIntegral!T || isBitVector!T):
   private T _val;
   @uvm_protected_sync
   private uvm_radix_enum  _radix;
+
+  this(string name="", T value=T.init, uvm_action action=(UVM_LOG|UVM_RM_RECORD),
+       uvm_radix_enum radix=UVM_NORADIX) {
+    synchronized(this) {
+      super(name, action);
+      _val = value;
+      _radix = radix;
+    }
+  }
 
   // Function: get_value
   //
@@ -301,6 +381,13 @@ class uvm_report_message_element(T) if(is(T == string))
   private string  _val;
 
 
+  this(string name="", T value=T.init, uvm_action action=(UVM_LOG|UVM_RM_RECORD)) {
+    synchronized(this) {
+      super(name, action);
+      _val = value;
+    }
+  }
+
   // Function: get_value
   //
 
@@ -365,9 +452,16 @@ alias uvm_report_message_string_element = uvm_report_message_element!string;
 class uvm_report_message_element(T) if(is(T: uvm_object))
   : uvm_report_message_element_base
 {
-  alias this_type = uvm_report_message_object_element;
+  alias this_type = uvm_report_message_element!T;
   private T _val;
 
+
+  this(string name="", T value=T.init, uvm_action action=(UVM_LOG|UVM_RM_RECORD)) {
+    synchronized(this) {
+      super(name, action);
+      _val = value;
+    }
+  }
 
   // Function: get_value
   //
@@ -616,6 +710,12 @@ class uvm_report_message_element_container: uvm_object
 	_elements ~= urme;
       }
     }
+
+  void add(uvm_report_message_element_base urme) {
+    synchronized(this) {
+      _elements ~= urme;
+    }
+  }
 
   void add_object(string name, uvm_object obj,
 		  uvm_action action = (UVM_LOG|UVM_RM_RECORD)) {
@@ -1241,4 +1341,8 @@ class uvm_report_message: uvm_object
     }
 
   alias add_object = add!uvm_object;
+
+  void add(uvm_report_message_element_base urme) {
+    _report_message_element_container.add(urme);
+  }
 }

@@ -138,10 +138,29 @@ version (UVM_INCLUDE_DEPRECATED) {
 
 void uvm_info(string file=__FILE__,
 	      size_t line=__LINE__)(string id, string message,
-					 int verbosity = UVM_MEDIUM) {
-  if (uvm_report_enabled(verbosity, UVM_INFO, id))
+				    int verbosity = UVM_MEDIUM) {
+  if (uvm_report_enabled(verbosity, UVM_INFO, id)) {
     uvm_report_info(id, message, verbosity, file, line);
+  }
 }
+
+void uvm_info(string file=__FILE__,
+	      size_t line=__LINE__,
+	      T...)(string id, string message, T t)
+if(T.length > 0 && is(T[0]: uvm_report_message_element_base)) {
+  if (uvm_report_enabled(UVM_MEDIUM, UVM_INFO, id)) {
+    uvm_report_info(id, message, UVM_MEDIUM, file, line, "", false, t);
+  }
+ }
+
+void uvm_info(string file=__FILE__,
+	      size_t line=__LINE__,
+	      T...)(string id, string message, int verbosity, T t)
+if(T.length > 0 && is(T[0]: uvm_report_message_element_base)) {
+  if (uvm_report_enabled(verbosity, UVM_INFO, id)) {
+    uvm_report_info(id, message, verbosity, file, line, "", false, t);
+  }
+ }
 
 
 // MACRO: `uvm_warning
@@ -331,6 +350,34 @@ void uvm_report_info(string id,
   uvm_root top = cs.get_root();
   top.uvm_report_info(id, message, verbosity, filename, line,
 		      context_name, report_enabled_checked);
+}
+
+void uvm_report_info(string file=__FILE__,
+		     size_t line=__LINE__,
+		     T...)(string id,
+			   string message,
+			   int verbosity,
+			   string context_name,
+			   bool report_enabled_checked,
+			   T t)
+if(T.length > 0 && is(T[0 ]: uvm_report_message_element_base)) {
+  uvm_report_info(id, message, verbosity, file, line,
+		  context_name, report_enabled_checked, t);
+}
+
+void uvm_report_info(T...)(string id,
+			   string message,
+			   int verbosity,
+			   string filename,
+			   size_t line,
+			   string context_name,
+			   bool report_enabled_checked,
+			   T t)
+if(T.length > 0 && is(T[0]: uvm_report_message_element_base)) {
+  uvm_coreservice_t cs = uvm_coreservice_t.get();
+  uvm_root top = cs.get_root();
+  top.uvm_report_info(id, message, verbosity, filename, line,
+		      context_name, report_enabled_checked, t);
 }
 
 // Function: uvm_report_warning
