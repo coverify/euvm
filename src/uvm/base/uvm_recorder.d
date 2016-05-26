@@ -463,7 +463,7 @@ abstract class uvm_recorder: uvm_object
 	auto pid = this in once._m_ids_by_recorder;
 	if(pid !is null && *pid !is handle) {
 	  assert(false, "The weird case where our handle changed!");
-	  once._m_recorders_by_id.remove(*pid);
+	  // once._m_recorders_by_id.remove(*pid);
 	}
 
 	once._m_recorders_by_id[handle] = this;

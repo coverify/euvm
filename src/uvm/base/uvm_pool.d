@@ -65,7 +65,7 @@ class uvm_pool(KEY=int, VAL=uvm_void): /*extends*/ uvm_object
       }
       else {
 	assert(false, "Cannot copy: " ~ typeof(_pool).stringof);
-	return null;
+	// return null;
       }
     }
   }

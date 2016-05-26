@@ -599,7 +599,7 @@ class uvm_mem: uvm_object
 	case "RW", "WO": retval = "WO"; break;
 	case "RO":    uvm_error("RegModel", "RO memory '" ~ get_full_name() ~
 				"' restricted to WO in map '" ~
-				map.get_full_name() ~ "'");
+				map.get_full_name() ~ "'"); break;
 	default: uvm_error("RegModel", "Memory '" ~ get_full_name() ~
 			   "' has invalid access mode, '" ~ retval ~ "'");
 	}

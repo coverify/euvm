@@ -163,13 +163,13 @@ class uvm_reg_field: uvm_object
 		    uint           size,
 		    uint           lsb_pos,
 		    string         access,
-		    bool           volatile,
+		    bool           is_volatile,
 		    T              reset,
 		    bool           has_reset,
 		    bool           is_rand,
 		    bool           individually_accessible) {
     uvm_reg_data_t reset_ = reset;
-    configure(parent, size, lsb_pos, access, volatile, reset_,
+    configure(parent, size, lsb_pos, access, is_volatile, reset_,
 	      has_reset, is_rand, individually_accessible);
   }
 
@@ -177,7 +177,7 @@ class uvm_reg_field: uvm_object
 		 uint           size,
 		 uint           lsb_pos,
 		 string         access,
-		 bool           volatile,
+		 bool           is_volatile,
 		 uvm_reg_data_t reset,
 		 bool           has_reset,
 		 bool           is_rand,
@@ -191,12 +191,12 @@ class uvm_reg_field: uvm_object
       }
 
       _m_size      = size;
-      _m_volatile  = volatile;
+      _m_volatile  = is_volatile;
       _m_access    = access.toUpper();
       _m_lsb       = lsb_pos;
       _m_cover_on  = uvm_coverage_model_e.UVM_NO_COVERAGE;
       _m_written   = 0;
-      _m_check     = volatile ? UVM_NO_CHECK : UVM_CHECK;
+      _m_check     = is_volatile ? UVM_NO_CHECK : UVM_CHECK;
       _m_individually_accessible = individually_accessible;
 
       if (has_reset)
@@ -517,7 +517,7 @@ class uvm_reg_field: uvm_object
 	  // No change for the other modes
 	default: assert(false);
 	}
-	
+	break;
 
       case "WO":
 	switch (get_access_) {
@@ -530,7 +530,7 @@ class uvm_reg_field: uvm_object
 	  break;
 	  // No change for the other modes
 	}
-
+	break;
       default:
 	uvm_error("RegModel", "Register '" ~ _m_parent.get_full_name() ~ 
 		  "' containing field '" ~ get_name() ~ "' is mapped in map '" ~ 
@@ -578,9 +578,9 @@ class uvm_reg_field: uvm_object
   // extern virtual function void set_volatility(bool volatile);
   // set_volatility
 
-  void set_volatility(bool volatile) {
+  void set_volatility(bool is_volatile) {
     synchronized(this) {
-      _m_volatile = volatile;
+      _m_volatile = is_volatile;
     }
   }
 
@@ -674,7 +674,7 @@ class uvm_reg_field: uvm_object
       case "RW":    _m_desired = value; break;
       case "RC":    _m_desired = _m_desired; break;
       case "RS":    _m_desired = _m_desired; break;
-      case "WC":    _m_desired = 0;
+      case "WC":    _m_desired = 0; break;
       case "WS":    _m_desired = mask; break;
       case "WRC":   _m_desired = value; break;
       case "WRS":   _m_desired = value; break;
@@ -1473,8 +1473,8 @@ class uvm_reg_field: uvm_object
       default:      return wr_val;
       }
       // this statement is not even reachable, but there in the SV version
-      uvm_fatal("RegModel", "XpredictX(): Internal error");
-      return uvm_reg_data_t(0);
+      // uvm_fatal("RegModel", "XpredictX(): Internal error");
+      // return uvm_reg_data_t(0);
     }
   }
 
@@ -1890,6 +1890,7 @@ class uvm_reg_field: uvm_object
 			  UVM_PREDICT_READ, rw.path, rw.map);
 	}
 	field_val &= (1L << _m_size)-1;
+	break;
 
       case UVM_PREDICT_DIRECT:
 	if (_m_parent.is_busy()) {
