@@ -112,11 +112,11 @@ version(UVM_NO_DEPRECATED) { }
 //------------------------------------------------------------------------------
 
 uvm_root uvm_top() {
-  auto root_entity_instance = uvm_root_entity_base.get(); // static function call
-  if(root_entity_instance is null) {
+  auto uvm_entity_inst = uvm_entity_base.get(); // static function call
+  if(uvm_entity_inst is null) {
     return null;
   }
-  return root_entity_instance._get_uvm_root();
+  return uvm_entity_inst._get_uvm_root();
 }
 
 // This is where the uvm gets instantiated as part of the ESDL
@@ -124,7 +124,7 @@ uvm_root uvm_top() {
 // singleton, we can have multiple instances of uvm_root, but each
 // ESDL RootEntity could have only one instance of uvm_root.
 
-class uvm_root_entity_base: Entity
+class uvm_entity_base: Entity
 {
   mixin(uvm_sync_string);
   this() {
@@ -137,7 +137,7 @@ class uvm_root_entity_base: Entity
   }
 
   // Only for use by the uvm_root constructor -- use nowhere else
-  static private uvm_root_entity_base _root_entity_instance;
+  static private uvm_entity_base _uvm_entity_inst;
 
   // effectively immutable
   @uvm_immutable_sync
@@ -166,10 +166,10 @@ class uvm_root_entity_base: Entity
     }
   }
 
-  static uvm_root_entity_base get() {
+  static uvm_entity_base get() {
     auto context = EntityIntf.getContextEntity();
     if(context !is null) {
-      auto entity = cast(uvm_root_entity_base) context;
+      auto entity = cast(uvm_entity_base) context;
       assert(entity !is null);
       return entity;
     }
@@ -187,7 +187,7 @@ class uvm_root_entity_base: Entity
   void set_thread_context() {
     auto proc = Process.self();
     if(proc !is null) {
-      auto _entity = cast(uvm_root_entity_base) proc.getParentEntity();
+      auto _entity = cast(uvm_entity_base) proc.getParentEntity();
       assert(_entity is null, "Default context already set to: " ~
 	     _entity.getFullName());
     }
@@ -195,7 +195,7 @@ class uvm_root_entity_base: Entity
   }
 }
 
-class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
+class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
   {
     mixin(uvm_sync_string);
     
@@ -217,7 +217,7 @@ class uvm_root_entity(T): uvm_root_entity_base if(is(T: uvm_root))
 	// the uvm_root constructor since the constructor has no
 	// argument. If an argument is introduced, that will spoil
 	// uvm_root user API.
-	uvm_root_entity_base._root_entity_instance = this;
+	uvm_entity_base._uvm_entity_inst = this;
 	_uvm_root_instance = new T();
 	resetThreadContext();
       }
@@ -289,7 +289,7 @@ class uvm_root: uvm_component
   @UVM_NO_AUTO
   uvm_component uvm_test_top;
   @uvm_immutable_sync
-  private uvm_root_entity_base _uvm_root_entity_instance;
+  private uvm_entity_base _uvm_entity_instance;
   
   this() {
     synchronized(this) {
@@ -297,11 +297,11 @@ class uvm_root: uvm_component
       _elab_done_semaphore = new Semaphore(); // count 0
 
       // from static variable
-      _uvm_root_entity_instance =
-	uvm_root_entity_base._root_entity_instance;
+      _uvm_entity_instance =
+	uvm_entity_base._uvm_entity_inst;
       _phase_timeout = new WithEvent!Time(UVM_DEFAULT_TIMEOUT,
-					  _uvm_root_entity_instance);
-      _m_phase_all_done = new WithEvent!bool(_uvm_root_entity_instance);
+					  _uvm_entity_instance);
+      _m_phase_all_done = new WithEvent!bool(_uvm_entity_instance);
       _clp = uvm_cmdline_processor.get_inst();
       m_rh.set_name("reporter");
       report_header();
@@ -312,7 +312,7 @@ class uvm_root: uvm_component
   }
 
   override void set_thread_context() {
-    uvm_root_entity_instance.set_thread_context();
+    uvm_entity_instance.set_thread_context();
   }
 
 
@@ -725,7 +725,7 @@ class uvm_root: uvm_component
 
   SimTime phase_sim_timeout() {
     synchronized(this) {
-      return SimTime(_uvm_root_entity_instance, _phase_timeout);
+      return SimTime(_uvm_entity_instance, _phase_timeout);
     }
   }
 
@@ -1421,11 +1421,11 @@ class uvm_root: uvm_component
   // instead detect what root the present caller needs using the
   // context of the request being made
   static uvm_root m_uvm_get_root() {
-    auto root_entity_instance = uvm_root_entity_base.get();
-    if(root_entity_instance is null) {
+    auto uvm_entity_inst = uvm_entity_base.get();
+    if(uvm_entity_inst is null) {
       assert("Null uvm_top");
     }
-    return root_entity_instance._get_uvm_root();
+    return uvm_entity_inst._get_uvm_root();
   }
 
   version(UVM_INCLUDE_DEPRECATED) {
@@ -1533,9 +1533,9 @@ class uvm_root_once
   uvm_reg_read_only_cbs.uvm_once _uvm_reg_read_only_cbs_once;
   uvm_reg_write_only_cbs.uvm_once _uvm_reg_write_only_cbs_once;
 
-  this(uvm_root_entity_base root_entity_instance) {
+  this(uvm_entity_base uvm_entity_inst) {
     synchronized(this) {
-      root_entity_instance._set_root_once(this);
+      uvm_entity_inst._set_root_once(this);
       import std.random;
       auto seed = uniform!int;
       _uvm_coreservice_t_once = new uvm_coreservice_t.uvm_once();
@@ -1646,7 +1646,7 @@ class uvm_root_once
 
 // auto uvm_simulate(T)(string name, uint seed,
 // 			    uint multi=1, uint first=0) {
-//   auto root = new uvm_root_entity!T(name, seed);
+//   auto root = new uvm_entity!T(name, seed);
 //   root.multiCore(multi, first);
 //   root.elaborate();
 //   root.simulate();
@@ -1655,7 +1655,7 @@ class uvm_root_once
 
 // auto uvm_elaborate(T)(string name, uint seed,
 // 			     uint multi=1, uint first=0) {
-//   auto root = new uvm_root_entity!T(name, seed);
+//   auto root = new uvm_entity!T(name, seed);
 //   root.multiCore(multi, first);
 //   root.elaborate();
 //   // root.simulate();
@@ -1664,7 +1664,7 @@ class uvm_root_once
 
 // auto uvm_fork(T)(string name, uint seed,
 // 			uint multi=1, uint first=0) {
-//   auto root = new uvm_root_entity!T(name, seed);
+//   auto root = new uvm_entity!T(name, seed);
 //   root.multiCore(multi, first);
 //   root.elaborate();
 //   root.fork();

@@ -36,7 +36,7 @@ import uvm.base.uvm_printer;
 import uvm.base.uvm_comparer;
 import uvm.base.uvm_packer;
 import uvm.base.uvm_globals;
-import uvm.base.uvm_root: uvm_root_entity_base;
+import uvm.base.uvm_root: uvm_entity_base;
 
 import uvm.seq.uvm_sequence_base;
 
@@ -195,7 +195,7 @@ class uvm_vreg: uvm_object
       }
       this.parent.add_vreg(this);
 
-      this.atomic = new SemaphoreObj(1, uvm_root_entity_base.get());
+      this.atomic = new SemaphoreObj(1, uvm_entity_base.get());
     }
   }
 

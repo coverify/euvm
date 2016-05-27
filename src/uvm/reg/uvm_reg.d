@@ -47,7 +47,7 @@ import uvm.base.uvm_object_globals;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_pool;
 import uvm.base.uvm_queue;
-import uvm.base.uvm_root: uvm_root_entity_base;
+import uvm.base.uvm_root: uvm_entity_base;
 
 import uvm.dpi.uvm_hdl;
 
@@ -142,7 +142,7 @@ abstract class uvm_reg: uvm_object
       }
       _m_n_bits      = n_bits;
       _m_has_cover   = has_coverage;
-      _m_atomic      = new SemaphoreObj(1, uvm_root_entity_base.get());
+      _m_atomic      = new SemaphoreObj(1, uvm_entity_base.get());
       _m_n_used_bits = 0;
       _m_locked      = 0;
       _m_is_busy     = 0;

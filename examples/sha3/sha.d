@@ -801,7 +801,7 @@ class sha_st_root: uvm_root
 
 class TestBench: RootEntity
 {
-  uvm_root_entity!(sha_st_root) tb;
+  uvm_entity!(sha_st_root) tb;
 }
 
 

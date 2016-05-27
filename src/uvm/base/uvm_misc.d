@@ -548,7 +548,7 @@ final class uvm_seed_map
       }
     }
 
-    // Call this function only from uvm_root_entity.set_seed
+    // Call this function only from uvm_entity.set_seed
     @uvm_none_sync
     void set_seed(uint seed) {
       import uvm.base.uvm_root: uvm_top;

@@ -239,7 +239,7 @@ class my_root: uvm_root
 @timePrecision(100.psec)
 class TestBench: RootEntity
 {
-  uvm_root_entity!(my_root) tb;
+  uvm_entity!(my_root) tb;
   this(string name) {
     super(name);
   }

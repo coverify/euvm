@@ -454,7 +454,7 @@ template uvm_once_sync_string(T, U, size_t ITER=0) {
   static if(ITER == (__traits(derivedMembers, T).length)) {
     enum string uvm_once_sync_string = "static uvm_once once() {\n" ~
       "  import uvm.base.uvm_root;\n" ~
-      "  auto root = uvm_root_entity_base.get();\n" ~
+      "  auto root = uvm_entity_base.get();\n" ~
       "  return root.root_once._" ~ U.stringof ~ "_once;\n}\n" ~
       "mixin(uvm_sync_string!(" ~ T.stringof ~ ", \"once\"));\n";
   }
@@ -478,7 +478,7 @@ template uvm_once_sync_string(T, string _inst, size_t ITER=0) {
   static if(ITER == (__traits(derivedMembers, T).length)) {
     enum string uvm_once_sync_string = T.stringof ~ " " ~
       _inst ~ "_uvm_once() {\n  import uvm.base.uvm_root;\n" ~
-      "  auto root = uvm_root_entity_base.get();\n" ~
+      "  auto root = uvm_entity_base.get();\n" ~
       "  return root.root_once._" ~ _inst ~ "_once;\n}" ~
       "mixin(uvm_sync_string!(" ~ T.stringof ~ ", \"" ~ _inst ~ "_uvm_once\"));\n";
       }
