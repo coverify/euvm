@@ -89,7 +89,7 @@ sha.vvp: verilog/keccak_avst.v verilog/keccak.v verilog/f_permutation.v \
 	verilog/test_keccak_avst.v
 	$(VERILOG) -o $@ $^
 
-sha.vpi: sha.d vpi.o libesdl.so libvlang.so c-model/64-bit/libsha3.a
+sha.vpi: sha.d vpi.o libesdl.so libvlang.so c-model/$(MODEL)-bit/libsha3.a
 	$(DMD) -m$(MODEL) -g -I$(VLANGDIR)/src -I$(ESDLDIR)/src $(DFLAGS) -shared -fPIC -of$@ -L-ldl -L-l$(PHOBOS) -L-R$(LIBDIR) -L-lesdl -L-lvlang -L-L. -L-R. $^
 
 sha: sha.d $(ESDLDIR)/src/esdl/sync/*.d $(ESDLDIR)/src/esdl/sys/*.d $(ESDLDIR)/src/esdl/intf/*.d $(ESDLDIR)/src/esdl/base/*.d $(ESDLDIR)/src/esdl/data/*.d $(ESDLDIR)/src/esdl/*.d $(ESDLDIR)/src/esdl/posix/sys/net/*.d  $(VLANGDIR)/src/uvm/*.d $(VLANGDIR)/src/uvm/meta/*.d $(VLANGDIR)/src/uvm/base/*.d $(VLANGDIR)/src/uvm/comps/*.d $(VLANGDIR)/src/uvm/dap/*.d $(VLANGDIR)/src/uvm/tlm1/*.d $(VLANGDIR)/src/uvm/seq/*.d $(VLANGDIR)/src/uvm/dpi/uvm_svcmd_dpi.d $(VLANGDIR)/src/uvm/dap/*.d

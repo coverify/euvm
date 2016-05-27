@@ -537,7 +537,7 @@ class uvm_vreg: uvm_object
 
       // Store fields in LSB to MSB order
       int offset = field.get_lsb_pos_in_register();
-      long idx = -1;
+      ptrdiff_t idx = -1;
       foreach (i, fd; this.fields) {
 	if (offset < fd.get_lsb_pos_in_register()) {
 	  // insert field at ith position

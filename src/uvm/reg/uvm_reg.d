@@ -255,7 +255,7 @@ abstract class uvm_reg: uvm_object
   void add_field(uvm_reg_field field) {
     synchronized(this) {
       int offset;
-      long idx;
+      ptrdiff_t idx;
    
       if (_m_locked) {
 	uvm_error("RegModel", "Cannot add field to locked register model");
