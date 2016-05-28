@@ -24,11 +24,14 @@ import uvm.base.uvm_root: uvm_root;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_once;
+import uvm.base.uvm_misc;
 
 import uvm.meta.misc;
 import uvm.meta.meta;
 import esdl.base.core;
 import core.sync.semaphore: Semaphore;
+
+import std.random;
 
 // This is where the uvm gets instantiated as part of the ESDL
 // simulator. Unlike the SystemVerilog version where uvm_root is a
@@ -43,7 +46,7 @@ class uvm_entity_base: Entity
       _uvm_root_init_semaphore = new Semaphore(); // count 0
       // uvm_once has some events etc that need to know the context for init
       set_thread_context();
-      _root_once = new uvm_root_once(this);
+      _root_once = new uvm_root_once();
     }
   }
 
@@ -58,22 +61,6 @@ class uvm_entity_base: Entity
   
   uvm_root_once root_once() {
     return _root_once;
-  }
-
-  // do not give public access -- this function is to be called from
-  // inside the uvm_root_once constructor -- just to make sure that it
-  // is set since some of the uvm_once class instances require this
-  // variable to be already set
-  package void _set_root_once(uvm_root_once once) {
-    synchronized(this) {
-      // The assert below makes sure that this function is being
-      // called only from the constructor (since the constructor also
-      // sets _root_once variable) To make this variable effectively
-      // immutable, it is important to ensure that this variable is
-      // set from uvm_root_once constructor only
-      assert(_root_once is null);
-      _root_once = once;
-    }
   }
 
   static uvm_entity_base get() {
@@ -130,6 +117,7 @@ class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
       uvm_entity_base._uvm_entity_inst = this;
       _uvm_root_instance = new T();
       resetThreadContext();
+      _seed = uniform!int;
     }
   }
 
@@ -158,9 +146,6 @@ class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
 
   void initial() {
     lockStage();
-    // instatiating phases (part of once initialization) needs the
-    // simulation to be running
-    root_once.build_phases_once();
     fileCaveat();
     // init_domains can not be moved to the constructor since it
     // results in notification of some events, which can only
@@ -169,10 +154,13 @@ class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
     wait(0);
     uvm_root_initialized = true;
     uvm_root_init_semaphore.notify();
+    uvm_seed_map.set_seed(_seed);
     uvm_root_instance.initial();
   }
 
   Task!(initial) _init;
+
+  uint _seed;
 
   void set_seed(uint seed) {
     synchronized(this) {
@@ -182,7 +170,7 @@ class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
 			 " the simulation has started",
 			 uvm_verbosity.UVM_NONE);
       }
-      root_once().set_seed(seed);
+      _seed = seed;
     }
   }
 }

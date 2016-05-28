@@ -115,6 +115,7 @@ import uvm.base.uvm_root;
 import uvm.base.uvm_printer;
 import uvm.base.uvm_spell_chkr;
 import uvm.base.uvm_entity;
+import uvm.base.uvm_once;
 
 import uvm.meta.meta;
 
@@ -202,7 +203,7 @@ class uvm_resource_types
 class uvm_resource_options
 {
   // static private bool auditing = true;
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_none_sync
     private bool _auditing = true;
@@ -255,7 +256,7 @@ class uvm_resource_options
 
 abstract class uvm_resource_base: uvm_object
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     // variable: default_precedence
     //
@@ -764,7 +765,7 @@ class uvm_resource_pool {
   import esdl.data.queue;
   import std.string: format;
 
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
     private uvm_resource_pool _rp; //  = get();

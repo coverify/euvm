@@ -25,6 +25,7 @@
 module uvm.base.uvm_object_globals;
 
 import uvm.base.uvm_entity;
+import uvm.base.uvm_once;
 
 import esdl.data.bvec;
 import esdl.data.time;
@@ -654,11 +655,10 @@ mixin(declareEnums!uvm_objection_event());
 // typedef class uvm_packer;
 // typedef class uvm_recorder;
 
-
 mixin(uvm_once_sync_string!(uvm_once_object_globals,
 			    "uvm_object_globals"));
 
-final class uvm_once_object_globals
+final class uvm_once_object_globals: uvm_once_base
 {
   import uvm.base.uvm_printer: uvm_printer, uvm_table_printer,
     uvm_tree_printer, uvm_line_printer;

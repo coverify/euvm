@@ -29,13 +29,14 @@ import uvm.base.uvm_runtime_phases;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_entity;
+import uvm.base.uvm_once;
 import uvm.meta.misc;
 
 import esdl.data.queue;
 
 import std.algorithm;
 
-final class uvm_once_domain_globals
+final class uvm_once_domain_globals: uvm_once_base
 {
   @uvm_public_sync uvm_phase _build_ph;
   @uvm_public_sync uvm_phase _connect_ph;
@@ -64,7 +65,7 @@ class uvm_domain: uvm_phase
 {
   import std.string: format;
 
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_private_sync
     private uvm_domain         _m_common_domain;

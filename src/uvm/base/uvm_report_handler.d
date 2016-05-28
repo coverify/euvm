@@ -60,6 +60,7 @@ import uvm.base.uvm_printer;
 import uvm.base.uvm_version;
 import uvm.base.uvm_globals: uvm_report_enabled;
 import uvm.base.uvm_entity;
+import uvm.base.uvm_once;
 
 import uvm.meta.misc;
 
@@ -81,7 +82,7 @@ alias uvm_sev_override_array = uvm_pool!(uvm_severity, uvm_severity);
 class uvm_report_handler: uvm_object
 {
 
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_private_sync
     private bool _m_relnotes_done;

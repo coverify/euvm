@@ -39,6 +39,7 @@ import uvm.base.uvm_callback;
 import uvm.base.uvm_object_defines;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_entity;
+import uvm.base.uvm_once;
 
 import esdl.data.rand;
 
@@ -452,7 +453,7 @@ class uvm_reg_read_only_cbs: uvm_reg_cbs
   }
 
 
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     // @uvm_private_sync
     @uvm_immutable_sync
@@ -461,7 +462,9 @@ class uvm_reg_read_only_cbs: uvm_reg_cbs
       // SV version does lazy initialization
       // vlang takes another approach so that we can make this variable
       // effectively immutable
-      _m_me = new uvm_reg_read_only_cbs();
+      synchronized(this) {
+	_m_me = new uvm_reg_read_only_cbs();
+      }
     }
   };
 
@@ -561,7 +564,7 @@ class uvm_reg_write_only_cbs: uvm_reg_cbs
   }
 
 
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     // @uvm_private_sync
     @uvm_immutable_sync
@@ -570,7 +573,9 @@ class uvm_reg_write_only_cbs: uvm_reg_cbs
       // SV version does lazy initialization
       // vlang takes another approach so that we can make this variable
       // effectively immutable
-      _m_me = new uvm_reg_write_only_cbs();
+      synchronized(this) {
+	_m_me = new uvm_reg_write_only_cbs();
+      }
     }
   };
 

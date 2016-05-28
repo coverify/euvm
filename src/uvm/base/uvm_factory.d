@@ -32,6 +32,7 @@ import uvm.base.uvm_coreservice;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_entity;
+import uvm.base.uvm_once;
 
 import uvm.meta.misc;
 import uvm.meta.mcd;
@@ -189,7 +190,7 @@ final class uvm_factory_queue_class
 
 abstract class uvm_factory
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_private_sync
     private bool _m_debug_pass;

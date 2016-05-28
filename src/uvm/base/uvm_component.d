@@ -56,6 +56,7 @@ import uvm.base.uvm_tr_database;
 import uvm.comps.uvm_agent;
 import uvm.base.uvm_coreservice;
 import uvm.base.uvm_entity;
+import uvm.base.uvm_once;
 
 import uvm.seq.uvm_sequence_item;
 import uvm.seq.uvm_sequence_base;
@@ -123,7 +124,7 @@ struct m_verbosity_setting {
 
 abstract class uvm_component: uvm_report_object, ParContext
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     version(UVM_INCLUDE_DEPRECATED) {
       @uvm_public_sync

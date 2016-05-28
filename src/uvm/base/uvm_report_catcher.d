@@ -31,6 +31,7 @@ import uvm.base.uvm_callback;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_root;
 import uvm.base.uvm_entity;
+import uvm.base.uvm_once;
 import uvm.base.uvm_object;
 import uvm.base.uvm_globals;
 import uvm.meta.misc;
@@ -125,7 +126,7 @@ alias uvm_report_cb_iter = uvm_callback_iter!(uvm_report_object, uvm_report_catc
 abstract class uvm_report_catcher: uvm_callback
 {
 
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_none_sync
     private uvm_report_message _m_modified_report_message;

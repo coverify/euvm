@@ -113,6 +113,7 @@ import uvm.meta.meta;
 import uvm.base.uvm_report_object;
 import uvm.base.uvm_object;
 import uvm.base.uvm_root;
+import uvm.base.uvm_once;
 
 import esdl.data.time: sec;
 import esdl.base.core: EntityIntf;
@@ -124,7 +125,7 @@ class uvm_objection: uvm_report_object
 
   mixin(uvm_sync_string);
 
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_none_sync
     private uvm_objection[] _m_objections;
@@ -1445,7 +1446,7 @@ class uvm_objection: uvm_report_object
 
 class uvm_test_done_objection: uvm_objection
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_protected_sync
     private uvm_test_done_objection _m_inst;

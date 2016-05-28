@@ -26,6 +26,7 @@ import uvm.base.uvm_coreservice;
 import uvm.seq.uvm_sequence_item;
 import uvm.seq.uvm_sequence_base;
 import uvm.base.uvm_component;
+import uvm.base.uvm_once;
 import uvm.base.uvm_config_db;
 import uvm.base.uvm_entity;
 import uvm.base.uvm_factory;
@@ -77,7 +78,7 @@ class uvm_sequence_process_wrapper {
 
 class uvm_sequencer_base: uvm_component
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_private_sync
     private int _g_request_id;

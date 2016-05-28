@@ -52,6 +52,7 @@ import uvm.base.uvm_recorder;
 
 
 import uvm.base.uvm_entity;
+import uvm.base.uvm_once;
 import uvm.base.uvm_factory;
 import uvm.base.uvm_printer;
 import uvm.base.uvm_comparer;
@@ -78,7 +79,7 @@ import std.random: uniform;
 
 abstract class uvm_object: uvm_void
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_private_sync
     private bool _use_uvm_seeding = true;

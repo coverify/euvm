@@ -44,6 +44,7 @@ import uvm.base.uvm_factory;
 import uvm.base.uvm_config_db;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_entity;
+import uvm.base.uvm_once;
 // import uvm.base.uvm_object_globals;
 
 import esdl.data.bvec;
@@ -527,7 +528,7 @@ struct uvm_copy_map {
 //
 final class uvm_seed_map
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     // ** from uvm_misc
     // Variable- m_global_random_seed
@@ -541,26 +542,13 @@ final class uvm_seed_map
 
     // ** from uvm_misc -- global variable in SV
     private uvm_seed_map[string] _uvm_random_seed_table_lookup;
-
-
-    this(uint seed) {
-      synchronized(this) {
-	_m_global_random_seed = seed;
-      }
-    }
-
-    // Call this function only from uvm_entity.set_seed
-    @uvm_none_sync
-    void set_seed(uint seed) {
-      import uvm.base.uvm_root: uvm_top;
-      import uvm.base.uvm_globals: uvm_report_fatal;
-      synchronized(this) {
-	_m_global_random_seed = seed;
-      }
-    }
   }
 
-  mixin(uvm_once_sync_string!(uvm_once, typeof(this)));
+  mixin(uvm_once_sync_string);
+
+  static void set_seed(uint seed) {
+    m_global_random_seed = seed;
+  }
 
   private uint[string] _seed_table;
   private uint[string] _count;
@@ -785,7 +773,7 @@ string uvm_to_string(T)(T value,
   }
 
 string uvm_bitvec_to_string(T)(T value, size_t size,
-			       uvm_radix_enum radix=UVM_NORADIX,
+			       uvm_radix_enum radix=uvm_radix_enum.UVM_NORADIX,
 			       string radix_str="") {
   // sign extend & don't show radix for negative values
   static if(isBitVector!T && T.ISSIGNED) {

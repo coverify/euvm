@@ -53,6 +53,7 @@ import uvm.base.uvm_object_globals;
 import uvm.base.uvm_root: uvm_top;
 import uvm.base.uvm_root;
 import uvm.base.uvm_entity;
+import uvm.base.uvm_once;
 import uvm.meta.misc;
 
 import std.regex; // : Regex, regex, match
@@ -61,7 +62,7 @@ import std.string: toUpper;
 
 final class uvm_cmdline_processor: /*extends*/ uvm_report_object
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
     private uvm_cmdline_processor _m_inst;

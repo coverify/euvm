@@ -70,12 +70,13 @@ import uvm.base.uvm_component;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_task_phase;
 import uvm.base.uvm_entity;
+import uvm.base.uvm_once;
 import uvm.meta.misc;
 import uvm.meta.meta;
 
 final class uvm_build_phase: uvm_topdown_phase
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
     private uvm_build_phase _m_inst;
@@ -141,7 +142,7 @@ final class uvm_build_phase: uvm_topdown_phase
 
 final class uvm_connect_phase: uvm_bottomup_phase
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
     uvm_connect_phase _m_inst;
@@ -176,7 +177,7 @@ final class uvm_connect_phase: uvm_bottomup_phase
 
 final class uvm_elaboration_phase: uvm_topdown_phase
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
     uvm_elaboration_phase _m_inst;
@@ -237,7 +238,7 @@ final class uvm_elaboration_phase: uvm_topdown_phase
 
 final class uvm_end_of_elaboration_phase: uvm_bottomup_phase
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
     uvm_end_of_elaboration_phase _m_inst;
@@ -297,7 +298,7 @@ final class uvm_end_of_elaboration_phase: uvm_bottomup_phase
 
 final class uvm_start_of_simulation_phase: uvm_bottomup_phase
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
     uvm_start_of_simulation_phase _m_inst;
@@ -380,7 +381,7 @@ final class uvm_start_of_simulation_phase: uvm_bottomup_phase
 //
 final class uvm_run_phase: uvm_task_phase
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
     uvm_run_phase _m_inst;
@@ -440,7 +441,7 @@ final class uvm_run_phase: uvm_task_phase
 //
 final class uvm_extract_phase: uvm_bottomup_phase
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
     uvm_extract_phase _m_inst;
@@ -492,7 +493,7 @@ final class uvm_extract_phase: uvm_bottomup_phase
 //
 final class uvm_check_phase: uvm_bottomup_phase
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
     uvm_check_phase _m_inst;
@@ -545,7 +546,7 @@ final class uvm_check_phase: uvm_bottomup_phase
 //
 final class uvm_report_phase: uvm_bottomup_phase
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
     uvm_report_phase _m_inst;
@@ -600,7 +601,7 @@ final class uvm_report_phase: uvm_bottomup_phase
 
 final class uvm_final_phase: uvm_topdown_phase
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
     uvm_final_phase _m_inst;

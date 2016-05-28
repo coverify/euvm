@@ -65,6 +65,7 @@ import uvm.base.uvm_object;
 import uvm.base.uvm_pool;
 import uvm.base.uvm_queue;
 import uvm.base.uvm_root;
+import uvm.base.uvm_once;
 import uvm.base.uvm_entity;
 import uvm.base.uvm_component;
 import uvm.base.uvm_coreservice;
@@ -97,7 +98,7 @@ import std.conv: to;
 class uvm_callbacks_base: uvm_object
 {
 
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_public_sync
     private bool _m_tracing = true;

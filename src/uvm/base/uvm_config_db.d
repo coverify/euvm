@@ -49,10 +49,12 @@ import uvm.base.uvm_resource;
 import uvm.base.uvm_array;
 import uvm.base.uvm_root;
 import uvm.base.uvm_entity;
+import uvm.base.uvm_once;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_factory;	// uvm_object_wrapper
 import uvm.meta.misc;
 import uvm.base.uvm_object;
+import uvm.base.uvm_entity;
 import uvm.base.uvm_object_globals;
 
 import esdl.base.core;
@@ -90,7 +92,7 @@ final private class m_uvm_waiter
 // separate _m_waiters instance. It is really not required since the
 // string KEY is going to be unique for every field_name irrespective
 // of the type of the field.
-class uvm_once_config_db
+  class uvm_once_config_db: uvm_once_base
 {
   // Internal waiter list for wait_modified
   private uvm_array!(m_uvm_waiter)[string] _m_waiters;
@@ -446,7 +448,7 @@ package class uvm_config_db_options
 {
   import uvm.base.uvm_cmdline_processor;
 
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     private bool _ready;
     private bool _tracing;

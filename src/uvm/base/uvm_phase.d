@@ -141,6 +141,7 @@ import uvm.base.uvm_callback;
 import uvm.base.uvm_domain;
 import uvm.base.uvm_root;
 import uvm.base.uvm_entity;
+import uvm.base.uvm_once;
 import uvm.base.uvm_coreservice;
 import uvm.base.uvm_task_phase;
 import uvm.meta.misc;
@@ -164,7 +165,7 @@ class uvm_phase: uvm_object
   mixin(uvm_sync_string);
   mixin(uvm_once_sync_string);
 
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_none_sync
     private bool[uvm_phase] _m_executing_phases;

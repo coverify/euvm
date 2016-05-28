@@ -70,12 +70,13 @@ import std.traits: isNumeric, isFloatingPoint, isIntegral, isBoolean;
 import std.random;
 import uvm.base.uvm_object_defines;
 import uvm.base.uvm_tr_database;
+import uvm.base.uvm_once;
 
 
 abstract class uvm_recorder: uvm_object
 {
 
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     // Variable- m_ids_by_recorder
     // An associative array of integers, indexed by uvm_recorders.  This

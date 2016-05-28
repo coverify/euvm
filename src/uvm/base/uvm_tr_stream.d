@@ -30,6 +30,7 @@ import uvm.base.uvm_object_defines;
 import uvm.base.uvm_recorder;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_entity;
+import uvm.base.uvm_once;
 import uvm.meta.misc;
 import uvm.dap.uvm_set_before_get_dap;
 import uvm.meta.mcd;
@@ -107,7 +108,7 @@ class m_uvm_tr_stream_cfg
 abstract class uvm_tr_stream: uvm_object
 {
 
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     // Variable- m_ids_by_stream
     // An associative array of integers, indexed by uvm_tr_streams.  This
