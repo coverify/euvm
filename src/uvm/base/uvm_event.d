@@ -443,7 +443,7 @@ class uvm_event(T=uvm_object): uvm_event_base
     synchronized(this) {
       import std.algorithm;
       if(countUntil(_callbacks[], cb) != -1) {
-	uvm_report_warning("CBRGED","add_callback: Callback already registered. Ignoring.", UVM_NONE);
+	uvm_report_warning("CBRGED","add_callback: Callback already registered. Ignoring.", uvm_verbosity.UVM_NONE);
 	return;
       }
       if (append) {
@@ -467,7 +467,7 @@ class uvm_event(T=uvm_object): uvm_event_base
 	_callbacks.remove(r);
       }
       else {
-	uvm_report_warning("CBNTFD", "delete_callback: Callback not found. Ignoring delete request.", UVM_NONE);
+	uvm_report_warning("CBNTFD", "delete_callback: Callback not found. Ignoring delete request.", uvm_verbosity.UVM_NONE);
       }
     }
   }

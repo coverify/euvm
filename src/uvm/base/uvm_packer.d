@@ -772,7 +772,8 @@ class uvm_packer
   // int   word_size     = 16; //set up worksize for endianess
   // bool  nopack;             //only count packable bits
 
-  @uvm_public_sync private uvm_recursion_policy_enum _policy = UVM_DEFAULT_POLICY;
+  @uvm_public_sync private uvm_recursion_policy_enum _policy =
+    uvm_recursion_policy_enum.UVM_DEFAULT_POLICY;
 
   // uvm_pack_bitstream_t _m_bits;
   private packer _m_bits;			// esdl.data.packer

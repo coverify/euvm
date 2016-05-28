@@ -38,6 +38,8 @@ import uvm.meta.misc;
 import uvm.base.uvm_callback;
 import uvm.base.uvm_object_defines;
 import uvm.base.uvm_globals;
+import uvm.base.uvm_entity;
+
 import esdl.data.rand;
 
 // typedef class uvm_reg;

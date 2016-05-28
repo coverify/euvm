@@ -52,6 +52,7 @@ import uvm.base.uvm_report_object;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_root: uvm_top;
 import uvm.base.uvm_root;
+import uvm.base.uvm_entity;
 import uvm.meta.misc;
 
 import std.regex; // : Regex, regex, match

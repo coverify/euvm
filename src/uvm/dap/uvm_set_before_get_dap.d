@@ -29,7 +29,6 @@ import uvm.dap.uvm_set_get_dap_base;
 import uvm.base.uvm_printer;
 import uvm.base.uvm_globals;	// uvm_info
 import std.string: format;
-import uvm.base.uvm_object_globals: UVM_NONE;
 import uvm.base.uvm_object_defines;
 import uvm.base.uvm_packer;
 

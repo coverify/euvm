@@ -121,7 +121,8 @@ abstract class uvm_report_message_element_base
   private string     _name;
 
 
-  this(string name="", uvm_action action=(UVM_LOG|UVM_RM_RECORD)) {
+  this(string name="", uvm_action action=(uvm_action_type.UVM_LOG |
+					  uvm_action_type.UVM_RM_RECORD)) {
     synchronized(this) {
       _name = name;
       _action = action;
@@ -381,7 +382,9 @@ class uvm_report_message_element(T) if(is(T == string))
   private string  _val;
 
 
-  this(string name="", T value=T.init, uvm_action action=(UVM_LOG|UVM_RM_RECORD)) {
+  this(string name="", T value=T.init,
+       uvm_action action=(uvm_action_type.UVM_LOG |
+			  uvm_action_type.UVM_RM_RECORD)) {
     synchronized(this) {
       super(name, action);
       _val = value;
@@ -456,7 +459,9 @@ class uvm_report_message_element(T) if(is(T: uvm_object))
   private T _val;
 
 
-  this(string name="", T value=T.init, uvm_action action=(UVM_LOG|UVM_RM_RECORD)) {
+  this(string name="", T value=T.init,
+       uvm_action action=(uvm_action_type.UVM_LOG |
+			  uvm_action_type.UVM_RM_RECORD)) {
     synchronized(this) {
       super(name, action);
       _val = value;
@@ -656,7 +661,8 @@ class uvm_report_message_element_container: uvm_object
   //
 
   void add(T)(string name, T value,
-	      uvm_action action = (UVM_LOG|UVM_RM_RECORD))
+	      uvm_action action = (uvm_action_type.UVM_LOG |
+				   uvm_action_type.UVM_RM_RECORD))
     if(is(T == string)) {
       synchronized(this) {
 	Random rand_state;
@@ -718,7 +724,8 @@ class uvm_report_message_element_container: uvm_object
   }
 
   void add_object(string name, uvm_object obj,
-		  uvm_action action = (UVM_LOG|UVM_RM_RECORD)) {
+		  uvm_action action = (uvm_action_type.UVM_LOG |
+				       uvm_action_type.UVM_RM_RECORD)) {
     synchronized(this) {
       Random rand_state;
       uvm_report_message_object_element urme;
@@ -1316,7 +1323,8 @@ class uvm_report_message: uvm_object
   //
 
   void add(T)(string name, T value,
-	      uvm_action action = (UVM_LOG|UVM_RM_RECORD))
+	      uvm_action action = (uvm_action_type.UVM_LOG |
+				   uvm_action_type.UVM_RM_RECORD))
     if(is(T == string)) {
       // synchronized(this) {
       _report_message_element_container.add_string(name, value, action);
@@ -1333,7 +1341,8 @@ class uvm_report_message: uvm_object
   //
 
   void add(T)(string name, T obj,
-	      uvm_action action = (UVM_LOG|UVM_RM_RECORD))
+	      uvm_action action = (uvm_action_type.UVM_LOG |
+				   uvm_action_type.UVM_RM_RECORD))
     if(is(T: uvm_object)) {
       // synchronized(this) {
       _report_message_element_container.add_object(name, obj, action);

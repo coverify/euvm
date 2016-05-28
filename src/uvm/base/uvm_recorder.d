@@ -51,6 +51,7 @@ import uvm.meta.mcd;
 import uvm.meta.misc;
 import uvm.base.uvm_report_message;
 import uvm.base.uvm_tr_stream;
+import uvm.base.uvm_entity;
 import uvm.dap.uvm_set_before_get_dap;
 
 import esdl.data.time;
@@ -154,7 +155,7 @@ abstract class uvm_recorder: uvm_object
   // a radix.
 
   @uvm_public_sync
-  private uvm_radix_enum _default_radix = UVM_HEX;
+  private uvm_radix_enum _default_radix = uvm_radix_enum.UVM_HEX;
 
 
   // Variable: physical
@@ -199,7 +200,8 @@ abstract class uvm_recorder: uvm_object
   // The default policy is deep (which means to recurse an object).
 
   @uvm_public_sync
-  private uvm_recursion_policy_enum _policy = UVM_DEFAULT_POLICY;
+  private uvm_recursion_policy_enum _policy =
+    uvm_recursion_policy_enum.UVM_DEFAULT_POLICY;
 
   // Variable- m_ids_by_recorder
   // An associative array of integers, indexed by uvm_recorders.  This

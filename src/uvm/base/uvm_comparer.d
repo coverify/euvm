@@ -53,7 +53,7 @@ class uvm_comparer
   //
   // Determines whether comparison is UVM_DEEP, UVM_REFERENCE, or UVM_SHALLOW.
 
-  private uvm_recursion_policy_enum _policy = UVM_DEFAULT_POLICY;
+  private uvm_recursion_policy_enum _policy = uvm_recursion_policy_enum.UVM_DEFAULT_POLICY;
 
 
   // Variable: show_max
@@ -73,7 +73,7 @@ class uvm_comparer
   // whether messages should be suppressed or shown.
 
   @uvm_public_sync
-  private uint _verbosity = UVM_LOW;
+  private uint _verbosity = uvm_verbosity.UVM_LOW;
 
 
   // Variable: sev
@@ -84,7 +84,7 @@ class uvm_comparer
   // filtering messages.
 
   @uvm_public_sync
-  private uvm_severity _sev = UVM_INFO;
+  private uvm_severity _sev = uvm_severity.UVM_INFO;
 
 
   // Variable: miscompares
@@ -339,7 +339,7 @@ class uvm_comparer
 		     uvm_bitstream_t lhs,
 		     uvm_bitstream_t rhs,
 		     int size,
-		     uvm_radix_enum radix=UVM_NORADIX) {
+		     uvm_radix_enum radix=uvm_radix_enum.UVM_NORADIX) {
     synchronized(this) {
       uvm_bitstream_t mask;
       string msg;
@@ -401,7 +401,7 @@ class uvm_comparer
 			 uvm_integral_t lhs,
 			 uvm_integral_t rhs,
 			 int     size,
-			 uvm_radix_enum radix=UVM_NORADIX) {
+			 uvm_radix_enum radix=uvm_radix_enum.UVM_NORADIX) {
     synchronized(this) {
       LogicVec!64 mask;
       string msg;

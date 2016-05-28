@@ -43,6 +43,7 @@ import uvm.base.uvm_coreservice;
 import uvm.base.uvm_factory;
 import uvm.base.uvm_config_db;
 import uvm.base.uvm_object_globals;
+import uvm.base.uvm_entity;
 // import uvm.base.uvm_object_globals;
 
 import esdl.data.bvec;

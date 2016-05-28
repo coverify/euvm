@@ -30,7 +30,6 @@ import uvm.base.uvm_printer;
 import uvm.base.uvm_packer;
 import uvm.base.uvm_globals;	// uvm_info
 import std.string: format;
-import uvm.base.uvm_object_globals: UVM_NONE;
 import uvm.base.uvm_object_defines;
 
 // Class: uvm_get_to_lock_dap

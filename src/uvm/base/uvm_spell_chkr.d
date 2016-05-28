@@ -29,7 +29,7 @@ module uvm.base.uvm_spell_chkr;
 
 import uvm.base.uvm_globals;	// uvm_info
 import std.string: format;
-import uvm.base.uvm_object_globals: UVM_NONE;
+import uvm.base.uvm_object_globals;
 
 
 

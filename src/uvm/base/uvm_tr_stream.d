@@ -29,6 +29,7 @@ import uvm.base.uvm_object;
 import uvm.base.uvm_object_defines;
 import uvm.base.uvm_recorder;
 import uvm.base.uvm_globals;
+import uvm.base.uvm_entity;
 import uvm.meta.misc;
 import uvm.dap.uvm_set_before_get_dap;
 import uvm.meta.mcd;

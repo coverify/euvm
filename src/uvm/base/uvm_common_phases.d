@@ -69,6 +69,7 @@ import uvm.base.uvm_topdown_phase;
 import uvm.base.uvm_component;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_task_phase;
+import uvm.base.uvm_entity;
 import uvm.meta.misc;
 import uvm.meta.meta;
 

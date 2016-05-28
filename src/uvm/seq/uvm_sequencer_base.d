@@ -27,6 +27,7 @@ import uvm.seq.uvm_sequence_item;
 import uvm.seq.uvm_sequence_base;
 import uvm.base.uvm_component;
 import uvm.base.uvm_config_db;
+import uvm.base.uvm_entity;
 import uvm.base.uvm_factory;
 import uvm.base.uvm_message_defines;
 import uvm.base.uvm_object_globals;
@@ -155,7 +156,7 @@ class uvm_sequencer_base: uvm_component
   @uvm_protected_sync
   protected SimTime                _m_last_wait_relevant_time = 0 ;
 
-  private uvm_sequencer_arb_mode       _m_arbitration = UVM_SEQ_ARB_FIFO;
+  private uvm_sequencer_arb_mode       _m_arbitration = uvm_sequencer_arb_mode.UVM_SEQ_ARB_FIFO;
 
 
   // Function: new

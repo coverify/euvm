@@ -45,6 +45,8 @@ import uvm.base.uvm_resource;
 import uvm.base.uvm_object;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_object_globals;
+import uvm.base.uvm_entity;
+
 import uvm.meta.misc;
 
 import esdl.data.queue;

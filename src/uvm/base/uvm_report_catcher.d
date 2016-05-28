@@ -30,6 +30,7 @@ import uvm.base.uvm_report_message;
 import uvm.base.uvm_callback;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_root;
+import uvm.base.uvm_entity;
 import uvm.base.uvm_object;
 import uvm.base.uvm_globals;
 import uvm.meta.misc;
@@ -412,7 +413,8 @@ abstract class uvm_report_catcher: uvm_callback
 				int size,
 				uvm_radix_enum radix,
 				uvm_action action =
-				(UVM_LOG|UVM_RM_RECORD)) {
+				(uvm_action_type.UVM_LOG |
+				 uvm_action_type.UVM_RM_RECORD)) {
     synchronized(once) {
       once._m_modified_report_message.add_int(name, value, size, radix, action);
     }
@@ -428,7 +430,8 @@ abstract class uvm_report_catcher: uvm_callback
   static protected void add(T)(string name,
 			       T value,
 			       uvm_action action =
-			       (UVM_LOG|UVM_RM_RECORD))
+			       (uvm_action_type.UVM_LOG |
+				uvm_action_type.UVM_RM_RECORD))
     if(is(T == string)) {
       synchronized(once) {
 	once._m_modified_report_message.add(name, value, action);
@@ -446,7 +449,8 @@ abstract class uvm_report_catcher: uvm_callback
   static protected void add(T)(string name,
 			       T obj,
 			       uvm_action action =
-			       (UVM_LOG|UVM_RM_RECORD))
+			       (uvm_action_type.UVM_LOG |
+				uvm_action_type.UVM_RM_RECORD))
     if(is(T: uvm_object)) {
       synchronized(once) {
 	once._m_modified_report_message.add(name, obj, action);

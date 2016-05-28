@@ -48,6 +48,7 @@ import uvm.base.uvm_resource_db;
 import uvm.base.uvm_resource;
 import uvm.base.uvm_array;
 import uvm.base.uvm_root;
+import uvm.base.uvm_entity;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_factory;	// uvm_object_wrapper
 import uvm.meta.misc;

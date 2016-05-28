@@ -34,6 +34,7 @@ import uvm.base.uvm_object_globals;
 import uvm.base.uvm_queue;
 import uvm.base.uvm_registry;
 import uvm.base.uvm_domain;
+import uvm.base.uvm_entity;
 
 import uvm.seq.uvm_sequence_base;
 

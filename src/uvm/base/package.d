@@ -11,6 +11,7 @@ public import uvm.base.uvm_component;
 public import uvm.base.uvm_config_db;
 public import uvm.base.uvm_coreservice;
 public import uvm.base.uvm_domain;
+public import uvm.base.uvm_entity;
 public import uvm.base.uvm_event_callback;
 public import uvm.base.uvm_event;
 public import uvm.base.uvm_factory;

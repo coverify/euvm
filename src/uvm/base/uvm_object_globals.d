@@ -24,6 +24,8 @@
 
 module uvm.base.uvm_object_globals;
 
+import uvm.base.uvm_entity;
+
 import esdl.data.bvec;
 import esdl.data.time;
 import uvm.meta.misc;
@@ -170,8 +172,8 @@ enum uvm_auto_enum: byte
   {   UVM_NO_AUTO=0,
       UVM_AUTO=1
       }
-
-mixin(declareEnums!uvm_auto_enum());
+enum UVM_NO_AUTO = uvm_auto_enum.UVM_NO_AUTO;
+enum UVM_AUTO = uvm_auto_enum.UVM_AUTO;
 
 // Parameter: `uvm_field_* macro flags
 //

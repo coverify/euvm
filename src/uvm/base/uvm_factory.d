@@ -31,6 +31,7 @@ import uvm.base.uvm_component;
 import uvm.base.uvm_coreservice;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_object_globals;
+import uvm.base.uvm_entity;
 
 import uvm.meta.misc;
 import uvm.meta.mcd;

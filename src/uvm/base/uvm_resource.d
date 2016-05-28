@@ -114,6 +114,8 @@ import uvm.base.uvm_object_globals;
 import uvm.base.uvm_root;
 import uvm.base.uvm_printer;
 import uvm.base.uvm_spell_chkr;
+import uvm.base.uvm_entity;
+
 import uvm.meta.meta;
 
 import esdl.base.core: SimTime, getRootEntity, Process;

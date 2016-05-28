@@ -65,6 +65,7 @@ import uvm.base.uvm_object;
 import uvm.base.uvm_pool;
 import uvm.base.uvm_queue;
 import uvm.base.uvm_root;
+import uvm.base.uvm_entity;
 import uvm.base.uvm_component;
 import uvm.base.uvm_coreservice;
 import uvm.meta.mcd;

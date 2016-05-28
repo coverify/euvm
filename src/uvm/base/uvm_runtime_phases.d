@@ -78,6 +78,7 @@ module uvm.base.uvm_runtime_phases;
 import uvm.base.uvm_task_phase;
 import uvm.base.uvm_phase;
 import uvm.base.uvm_component;
+import uvm.base.uvm_entity;
 import uvm.meta.misc;
 import uvm.meta.meta;
 

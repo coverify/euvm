@@ -59,6 +59,8 @@ import uvm.base.uvm_object_defines;
 import uvm.base.uvm_printer;
 import uvm.base.uvm_version;
 import uvm.base.uvm_globals: uvm_report_enabled;
+import uvm.base.uvm_entity;
+
 import uvm.meta.misc;
 
 import esdl.base.core: Process;
@@ -462,7 +464,7 @@ class uvm_report_handler: uvm_object
   // return that.  Else, if there is a verbosity associated with the ~id~, return
   // that.  Else, return the max verbosity setting.
 
-  final int get_verbosity_level(uvm_severity severity=UVM_INFO,
+  final int get_verbosity_level(uvm_severity severity=uvm_severity.UVM_INFO,
 				string id="" ) {
     synchronized(this) {
       uvm_id_verbosities_array array;
@@ -655,7 +657,7 @@ class uvm_report_handler: uvm_object
 	      string name,
 	      string id,
 	      string message,
-	      int verbosity_level = UVM_MEDIUM,
+	      int verbosity_level=uvm_verbosity.UVM_MEDIUM,
 	      string filename = "",
 	      size_t line = 0,
 	      uvm_report_object client = null

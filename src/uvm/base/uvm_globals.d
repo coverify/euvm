@@ -299,7 +299,7 @@ uvm_report_object uvm_get_report_object() {
 // the <uvm_report_object::uvm_report_enabled>, which is non-static.
 // Static methods cannot call non-static methods of the same class.
 int uvm_report_enabled (int verbosity,
-			uvm_severity severity = UVM_INFO,
+			uvm_severity severity = uvm_severity.UVM_INFO,
 			string id = "") {
   uvm_coreservice_t cs = uvm_coreservice_t.get();
   uvm_root top = cs.get_root();
@@ -341,7 +341,7 @@ void uvm_report_info(string file=__FILE__,
 
 void uvm_report_info(string id,
 		     string message,
-		     int verbosity = UVM_MEDIUM,
+		     int verbosity = uvm_verbosity.UVM_MEDIUM,
 		     string filename = "",
 		     size_t line = 0,
 		     string context_name = "",
@@ -385,7 +385,7 @@ if(T.length > 0 && is(T[0]: uvm_report_message_element_base)) {
 void uvm_report_warning(string file=__FILE__,
 			size_t line=__LINE__)(string id,
 					      string message,
-					      int verbosity=UVM_MEDIUM,
+					      int verbosity=uvm_verbosity.UVM_MEDIUM,
 					      string context_name = "",
 					      bool report_enabled_checked = false) {
   uvm_report_warning(id, message, verbosity, file, line,
@@ -394,7 +394,7 @@ void uvm_report_warning(string file=__FILE__,
 
 void uvm_report_warning(string id,
 			string message,
-			int verbosity = UVM_MEDIUM,
+			int verbosity = uvm_verbosity.UVM_MEDIUM,
 			string filename = "",
 			size_t line = 0,
 			string context_name = "",
@@ -419,7 +419,7 @@ void uvm_report_error(string file=__FILE__,
 
 void uvm_report_error(string id,
 		      string message,
-		      int verbosity = UVM_LOW,
+		      int verbosity = uvm_verbosity.UVM_LOW,
 		      string filename = "",
 		      size_t line = 0,
 		      string context_name = "",
@@ -453,7 +453,7 @@ void uvm_report_fatal(string file=__FILE__,
 
 void uvm_report_fatal(string id,
 		      string message,
-		      int verbosity = UVM_NONE,
+		      int verbosity = uvm_verbosity.UVM_NONE,
 		      string filename = "",
 		      size_t line = 0,
 		      string context_name = "",

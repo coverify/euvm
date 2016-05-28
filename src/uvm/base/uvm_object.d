@@ -51,6 +51,7 @@ import uvm.base.uvm_misc;
 import uvm.base.uvm_recorder;
 
 
+import uvm.base.uvm_entity;
 import uvm.base.uvm_factory;
 import uvm.base.uvm_printer;
 import uvm.base.uvm_comparer;

@@ -55,6 +55,7 @@ import uvm.base.uvm_tr_stream;
 import uvm.base.uvm_tr_database;
 import uvm.comps.uvm_agent;
 import uvm.base.uvm_coreservice;
+import uvm.base.uvm_entity;
 
 import uvm.seq.uvm_sequence_item;
 import uvm.seq.uvm_sequence_base;

@@ -449,7 +449,8 @@ class uvm_sequence_item: uvm_transaction
   }
 
   bool uvm_report_enabled(int verbosity, 
-			 uvm_severity severity=UVM_INFO, string id="") {
+			 uvm_severity severity=uvm_severity.UVM_INFO,
+			  string id="") {
     synchronized(this) {
       uvm_report_object l_report_object = uvm_get_report_object();
       if(l_report_object.get_report_verbosity_level(severity, id) <
@@ -552,7 +553,7 @@ class uvm_sequence_item: uvm_transaction
   void uvm_report_error(string file = __FILE__,
 			size_t line = __LINE__)( string id,
 						 string message,
-						 int verbosity = UVM_LOW,
+						 int verbosity=uvm_verbosity.UVM_LOW,
 						 string context_name = "",
 						 bool report_enabled_checked = false) {
 
@@ -562,7 +563,7 @@ class uvm_sequence_item: uvm_transaction
 
   void uvm_report_error( string id,
 			 string message,
-			 int verbosity = UVM_LOW,
+			 int verbosity = uvm_verbosity.UVM_LOW,
 			 string filename = "",
 			 size_t line = 0,
 			 string context_name = "",

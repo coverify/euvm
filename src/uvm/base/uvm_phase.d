@@ -140,6 +140,7 @@ import uvm.base.uvm_component;
 import uvm.base.uvm_callback;
 import uvm.base.uvm_domain;
 import uvm.base.uvm_root;
+import uvm.base.uvm_entity;
 import uvm.base.uvm_coreservice;
 import uvm.base.uvm_task_phase;
 import uvm.meta.misc;
@@ -232,7 +233,7 @@ class uvm_phase: uvm_object
   //   type   - a value in <uvm_phase_type>
   //
   this(string name="uvm_phase",
-       uvm_phase_type phase_type=UVM_PHASE_SCHEDULE,
+       uvm_phase_type phase_type=uvm_phase_type.UVM_PHASE_SCHEDULE,
        uvm_phase parent=null) {
     synchronized(this) {
       super(name);
@@ -1122,7 +1123,7 @@ class uvm_phase: uvm_object
 
   // task
   final void wait_for_state(uvm_phase_state state,
-			    uvm_wait_op op = UVM_EQ) {
+			    uvm_wait_op op = uvm_wait_op.UVM_EQ) {
     final switch(op) {
       // wait((state & m_state) !is 0);
     case UVM_EQ:  while((m_state.get & state) is 0)
@@ -1717,7 +1718,7 @@ class uvm_phase: uvm_object
   // clear
   // -----
   // for internal graph maintenance after a forward jump
-  final void clear(uvm_phase_state state = UVM_PHASE_DORMANT) {
+  final void clear(uvm_phase_state state = uvm_phase_state.UVM_PHASE_DORMANT) {
     synchronized(this) {
       _m_state = state;
       _m_phase_proc = null;
@@ -1734,7 +1735,7 @@ class uvm_phase: uvm_object
   // - called only by execute_phase()
   // - depth-first traversal of the DAG, calliing clear() on each node
   // - do not clear the end phase or beyond
-  final void clear_successors(uvm_phase_state state = UVM_PHASE_DORMANT,
+  final void clear_successors(uvm_phase_state state=uvm_phase_state.UVM_PHASE_DORMANT,
 			      uvm_phase end_state = null) {
     if(this is end_state) {
       return;

@@ -147,7 +147,8 @@ class uvm_report_object: /*extends*/ uvm_object
   // <uvm_report_enabled>.
 
   final bool uvm_report_enabled(int verbosity,
-				uvm_severity severity=UVM_INFO,	string id="") {
+				uvm_severity severity=uvm_severity.UVM_INFO,
+				string id="") {
     if (get_report_verbosity_level(severity, id) < verbosity) {
       return false;
     }
@@ -411,7 +412,7 @@ class uvm_report_object: /*extends*/ uvm_object
   // and tag arguments check if the verbosity level has been modified for
   // specific severity/tag combinations.
 
-  final int get_report_verbosity_level(uvm_severity severity=UVM_INFO,
+  final int get_report_verbosity_level(uvm_severity severity=uvm_severity.UVM_INFO,
 				       string id="") {
     return m_rh.get_verbosity_level(severity, id);
   }

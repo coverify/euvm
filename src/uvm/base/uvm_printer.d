@@ -1074,7 +1074,7 @@ class uvm_printer_knobs {
   // enum is explicitly supplied to the print_int() method.
 
   @uvm_public_sync
-  private uvm_radix_enum _default_radix = UVM_HEX;
+  private uvm_radix_enum _default_radix = uvm_radix_enum.UVM_HEX;
 
 
   // Variable: dec_radix
