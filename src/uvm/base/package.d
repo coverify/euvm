@@ -25,6 +25,7 @@ public import uvm.base.uvm_object;
 public import uvm.base.uvm_object_defines;
 public import uvm.base.uvm_object_globals;
 public import uvm.base.uvm_objection;
+public import uvm.base.uvm_once;
 public import uvm.base.uvm_packer;
 public import uvm.base.uvm_phase;
 public import uvm.base.uvm_pool;
