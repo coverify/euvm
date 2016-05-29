@@ -123,7 +123,21 @@ class uvm_config_db (T = int): uvm_resource_db!T
   // pointer/handle and therefor unique
   // Internal lookup of config settings so they can be reused
   // The context has a pool that is keyed by the inst/field name.
-  private __gshared uvm_pool!(string, uvm_resource!T)[uvm_component] _m_rsc;
+
+  // private __gshared uvm_pool!(string, uvm_resource!T)[uvm_component] _m_rsc;
+
+  static class uvm_once: uvm_once_base
+  {
+    @uvm_immutable_sync
+    private uvm_pool!(string, uvm_resource!T) _m_rsc;
+    this() {
+      synchronized(this) {
+	_m_rsc = new uvm_pool!(string, uvm_resource!T);
+      }
+    }
+  }
+
+  mixin(uvm_once_sync_string);
 
   alias this_type = uvm_config_db!T;
 
@@ -219,7 +233,7 @@ class uvm_config_db (T = int): uvm_resource_db!T
 
     uvm_resource!T r;
     bool exists = false;
-    uvm_pool!(string, uvm_resource!T) pool;
+    // uvm_pool!(string, uvm_resource!T) pool;
     Random rstate;
 
     uvm_coreservice_t cs = uvm_coreservice_t.get();
@@ -243,16 +257,16 @@ class uvm_config_db (T = int): uvm_resource_db!T
       inst_name = cntxt.get_full_name() ~ "." ~ inst_name;
     }
 
-    synchronized(typeid(this_type)) {
-      auto prsc = cntxt in _m_rsc;
-      if(prsc !is null) {
-	pool = *prsc;
-      }
-      else {
-	pool = new uvm_pool!(string, uvm_resource!T);
-	_m_rsc[cntxt] = pool;
-      }
-    }
+    // synchronized(typeid(this_type)) {
+    //   auto prsc = cntxt in _m_rsc;
+    //   if(prsc !is null) {
+    // 	pool = *prsc;
+    //   }
+    //   else {
+    // 	pool = new uvm_pool!(string, uvm_resource!T);
+    // 	_m_rsc[cntxt] = pool;
+    //   }
+    // }
 
     // Insert the token in the middle to prevent cache
     // oddities like i=foobar,f=xyz and i=foo,f=barxyz.
@@ -260,12 +274,12 @@ class uvm_config_db (T = int): uvm_resource_db!T
     // in field names
     string lookup = inst_name ~ "__M_UVM__" ~ field_name;
 
-    if(lookup !in pool) {
+    if(lookup !in m_rsc) {
       r = new uvm_resource!T(field_name, inst_name);
-      pool.add(lookup, r);
+      m_rsc.add(lookup, r);
     }
     else {
-      r = pool.get(lookup);
+      r = m_rsc.get(lookup);
       exists = true;
     }
 

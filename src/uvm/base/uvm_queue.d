@@ -36,6 +36,7 @@ module uvm.base.uvm_queue;
 import uvm.base.uvm_object;
 import uvm.base.uvm_coreservice;
 import uvm.base.uvm_root;
+import uvm.base.uvm_once;
 import uvm.base.uvm_globals: uvm_report_warning;
 import std.string: format;
 import esdl.data.queue;
@@ -62,7 +63,6 @@ class uvm_queue (T=int): uvm_object
   // // Some DMD bug is not allowing this alias here
   // alias get_queue this;
 
-  __gshared private this_type[uvm_object] _m_global_queue;
   private Queue!T _queue;
 
   // Function: new
@@ -81,21 +81,36 @@ class uvm_queue (T=int): uvm_object
   // This allows items to be shared amongst components throughout the
   // verification environment.
 
-  static this_type get_global_queue () {
-    synchronized(typeid(this_type)) {
-      uvm_coreservice_t cs = uvm_coreservice_t.get();
-      uvm_root top = cs.get_root();
-      auto pq = top in _m_global_queue;
-      this_type q;
-      if(pq is null) {
-	q = new this_type("global_queue");
-	_m_global_queue[top] = q;
+  // __gshared private this_type[uvm_object] _m_global_queue;
+  static class uvm_once: uvm_once_base
+  {
+    @uvm_immutable_sync
+    this_type _m_global_queue;
+    this() {
+      synchronized(this) {
+	_m_global_queue = new this_type("global_queue");
       }
-      else {
-	q = *pq;
-      }
-      return q;
     }
+  }
+
+  mixin(uvm_once_sync_string);
+
+  static this_type get_global_queue () {
+    // synchronized(typeid(this_type)) {
+    //   uvm_coreservice_t cs = uvm_coreservice_t.get();
+    //   uvm_root top = cs.get_root();
+    //   auto pq = top in _m_global_queue;
+    //   this_type q;
+    //   if(pq is null) {
+    // 	q = new this_type("global_queue");
+    // 	_m_global_queue[top] = q;
+    //   }
+    //   else {
+    // 	q = *pq;
+    //   }
+    //   return q;
+    // }
+    return m_global_queue;
   }
 
   // Function: get_global
@@ -103,11 +118,7 @@ class uvm_queue (T=int): uvm_object
   // Returns the specified item instance from the global item queue.
 
   static T get_global (ptrdiff_t index) {
-    synchronized(typeid(this_type)) {
-      this_type gqueue;
-      gqueue = get_global_queue();
-      return gqueue.get(index);
-    }
+    return m_global_queue.get(index);
   }
 
   final T opIndex(size_t index) {

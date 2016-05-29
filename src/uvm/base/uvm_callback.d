@@ -220,6 +220,13 @@ class uvm_callbacks_base: uvm_object
 
 class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
 {
+  static class uvm_once: uvm_once_base
+  {
+    @uvm_private_sync
+    private this_type _m_t_inst;
+  }
+  
+  mixin(uvm_once_sync_string);
   mixin(uvm_sync_string);
 
   @uvm_immutable_sync
@@ -231,26 +238,26 @@ class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
 
   //The actual global object from the derivative class. Note that this is
   //just a reference to the object that is generated in the derived class.
-  __gshared private this_type[uvm_object] _m_t_inst_pool;
-  // getter
-  static this_type m_t_inst() {
-    uvm_coreservice_t cs = uvm_coreservice_t.get();
-    uvm_root top = cs.get_root();
-    synchronized(typeid(this_type)) {
-      if(top in _m_t_inst_pool) {
-	return _m_t_inst_pool[top];
-      }
-      else return null;
-    }
-  }
-  // setter
-  static void m_t_inst(this_type inst) {
-    uvm_coreservice_t cs = uvm_coreservice_t.get();
-    uvm_root top = cs.get_root();
-    synchronized(typeid(this_type)) {
-      _m_t_inst_pool[top] = inst;
-    }
-  }
+  // __gshared private this_type[uvm_object] _m_t_inst_pool;
+  // // getter
+  // static this_type m_t_inst() {
+  //   uvm_coreservice_t cs = uvm_coreservice_t.get();
+  //   uvm_root top = cs.get_root();
+  //   synchronized(typeid(this_type)) {
+  //     if(top in _m_t_inst_pool) {
+  // 	return _m_t_inst_pool[top];
+  //     }
+  //     else return null;
+  //   }
+  // }
+  // // setter
+  // static void m_t_inst(this_type inst) {
+  //   uvm_coreservice_t cs = uvm_coreservice_t.get();
+  //   uvm_root top = cs.get_root();
+  //   synchronized(typeid(this_type)) {
+  //     _m_t_inst_pool[top] = inst;
+  //   }
+  // }
 
   this() {
     synchronized(this) {
@@ -570,6 +577,13 @@ class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
 
 class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
 {
+  static class uvm_once: uvm_once_base
+  {
+    @uvm_private_sync
+    this_type _m_inst;
+  }
+
+  mixin(uvm_once_sync_string);
   mixin(uvm_sync_string);
   // Parameter: T
   //
@@ -589,25 +603,25 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
   alias this_type  = uvm_callbacks!(T, CB);
 
 
-  // Singleton instance is used for type checking
-  __gshared this_type[uvm_object] _m_inst_pool;
-  // getter
-  static this_type m_inst() {
-    uvm_root top = uvm_root.get();
-    synchronized(typeid(this_type)) {
-      if(top in _m_inst_pool) {
-	return _m_inst_pool[top];
-      }
-      else return null;
-    }
-  }
-  // setter
-  static void m_inst(this_type inst) {
-    uvm_root top = uvm_root.get();
-    synchronized(typeid(this_type)) {
-      _m_inst_pool[top] = inst;
-    }
-  }
+  // // Singleton instance is used for type checking
+  // __gshared this_type[uvm_object] _m_inst_pool;
+  // // getter
+  // static this_type m_inst() {
+  //   uvm_root top = uvm_root.get();
+  //   synchronized(typeid(this_type)) {
+  //     if(top in _m_inst_pool) {
+  // 	return _m_inst_pool[top];
+  //     }
+  //     else return null;
+  //   }
+  // }
+  // // setter
+  // static void m_inst(this_type inst) {
+  //   uvm_root top = uvm_root.get();
+  //   synchronized(typeid(this_type)) {
+  //     _m_inst_pool[top] = inst;
+  //   }
+  // }
 
 
   enum string m_typename = qualifiedTypeName!T;
@@ -954,6 +968,7 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
 
   static void m_get_q (ref uvm_queue!(uvm_callback) q, T obj) {
     if(obj !in m_pool) { //no instance specific
+      assert(m_t_inst !is null);
       q = (obj is null) ? m_t_inst.m_tw_cb_q : m_t_inst.m_get_tw_cb_q(obj);
     }
     else {

@@ -36,7 +36,8 @@ class uvm_once_base
 
 class uvm_root_once
 {
-  uvm_once_base[string] once_pool;
+  // uvm_once_base[string] once_pool;
+  uvm_once_base[ClassInfo] once_pool;
   
   static string get_instance_name(T)() {
     char[] name = (fullyQualifiedName!T).dup;
@@ -65,14 +66,17 @@ class uvm_root_once
 	}
       }
       else {
-	auto lookup = instName in once.once_pool;
+	// auto lookup = instName in once.once_pool;
+	auto tid = typeid(T);
+	auto lookup = tid in once.once_pool;
 	if (lookup !is null) {
 	  instance = cast(T) *lookup;
 	  assert(instance !is null);
 	}
 	else {
 	  instance = new T();
-	  once.once_pool[instName] = instance;
+	  // once.once_pool[instName] = instance;
+	  once.once_pool[tid] = instance;
 	}
       }
       return instance;

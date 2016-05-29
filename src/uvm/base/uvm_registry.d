@@ -23,6 +23,7 @@
 
 module uvm.base.uvm_registry;
 import uvm.base.uvm_root;
+import uvm.base.uvm_once;
 import uvm.base.uvm_coreservice;
 
 // `ifndef UVM_REGISTRY_SVH
@@ -56,8 +57,7 @@ import uvm.base.uvm_coreservice;
 class uvm_component_registry(T=uvm_component, string Tname="<unknown>"):
   uvm_object_wrapper if(is(T: uvm_component))
   {
-    alias uvm_component_registry!(T,Tname) this_type;
-
+    alias this_type = uvm_component_registry!(T,Tname);
 
     // Function: create_component
     //
@@ -85,8 +85,21 @@ class uvm_component_registry(T=uvm_component, string Tname="<unknown>"):
       return type_name;
     }
 
-    private __gshared this_type[uvm_root] _me_pool; //  = get();
-    private static this_type _me; //  = get();
+    static class uvm_once: uvm_once_base
+    {
+      @uvm_immutable_sync
+      this_type _me;
+      this() {
+	synchronized(this) {
+	  _me = new this_type();
+	}
+      }
+    }
+    
+    mixin(uvm_once_sync_string);
+    
+    // private __gshared this_type[uvm_root] _me_pool; //  = get();
+    // private static this_type _me; //  = get();
 
     // Function: get
     //
@@ -94,22 +107,23 @@ class uvm_component_registry(T=uvm_component, string Tname="<unknown>"):
     // depends on there being a single proxy instance for each registered type.
 
     static this_type get() {
-      synchronized(typeid(this_type)) {
-	if(_me is null) {
-	  uvm_coreservice_t cs = uvm_coreservice_t.get();
-	  uvm_root top = cs.get_root();
-	  auto pme = top in _me_pool;
-	  if (pme is null) {
-	    _me = new this_type;
-	    _me_pool[top] = _me;
-	    cs.get_factory().register(_me);
-	  }
-	  else {
-	    _me = *pme;
-	  }
-	}
-	return _me;
-      }
+      // synchronized(typeid(this_type)) {
+      // 	if(_me is null) {
+      // 	  uvm_coreservice_t cs = uvm_coreservice_t.get();
+      // 	  uvm_root top = cs.get_root();
+      // 	  auto pme = top in _me_pool;
+      // 	  if (pme is null) {
+      // 	    _me = new this_type;
+      // 	    _me_pool[top] = _me;
+      // 	    cs.get_factory().register(_me);
+      // 	  }
+      // 	  else {
+      // 	    _me = *pme;
+      // 	  }
+      // 	}
+      // 	return _me;
+      // }
+      return me;
     }
 
 
@@ -256,8 +270,21 @@ class uvm_object_registry (T = uvm_object, string Tname = "<unknown>"):
       return type_name;
     }
 
-    private __gshared this_type[uvm_root] _me_pool; //  = get();
-    private static this_type _me; //  = get();
+    static class uvm_once: uvm_once_base
+    {
+      @uvm_immutable_sync
+      this_type _me;
+      this() {
+	synchronized(this) {
+	  _me = new this_type();
+	}
+      }
+    }
+    
+    mixin(uvm_once_sync_string);
+    
+    // private __gshared this_type[uvm_root] _me_pool; //  = get();
+    // private static this_type _me; //  = get();
 
     // Function: get
     //
@@ -265,22 +292,23 @@ class uvm_object_registry (T = uvm_object, string Tname = "<unknown>"):
     // depends on there being a single proxy instance for each registered type.
 
     static this_type get() {
-      synchronized(typeid(this_type)) {
-	if(_me is null) {
-	  uvm_coreservice_t cs = uvm_coreservice_t.get();
-	  uvm_root top = cs.get_root();
-	  auto pme = top in _me_pool;
-	  if (pme is null) {
-	    _me = new this_type;
-	    _me_pool[top] = _me;
-	    cs.get_factory().register(_me);
-	  }
-	  else {
-	    _me = *pme;
-	  }
-	}
-	return _me;
-      }
+      // synchronized(typeid(this_type)) {
+      // 	if(_me is null) {
+      // 	  uvm_coreservice_t cs = uvm_coreservice_t.get();
+      // 	  uvm_root top = cs.get_root();
+      // 	  auto pme = top in _me_pool;
+      // 	  if (pme is null) {
+      // 	    _me = new this_type;
+      // 	    _me_pool[top] = _me;
+      // 	    cs.get_factory().register(_me);
+      // 	  }
+      // 	  else {
+      // 	    _me = *pme;
+      // 	  }
+      // 	}
+      // 	return _me;
+      // }
+      return me;
     }
 
 
