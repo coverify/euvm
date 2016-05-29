@@ -103,18 +103,10 @@ mixin template uvm_report_mixin()
 
   void uvm_info(string file=__FILE__,
 		size_t line=__LINE__)(string id, string message,
-				      int verbosity=UVM_MEDIUM) {
+				      int verbosity) {
     if (uvm_report_enabled(verbosity, UVM_INFO, id))
       uvm_report_info(id, message, verbosity, file, line);
   }
-
-  void uvm_info(string file=__FILE__,
-		size_t line=__LINE__,
-		T...)(string id, string message, T t)
-    if(T.length > 0 && is(T[0]: uvm_report_message_element_base)) {
-      if (uvm_report_enabled(UVM_MEDIUM, UVM_INFO, id))
-	uvm_report_info(id, message, UVM_MEDIUM, file, line, "", false, t);
-    }
 
   void uvm_info(string file=__FILE__,
 		size_t line=__LINE__,
@@ -142,6 +134,14 @@ mixin template uvm_report_mixin()
       uvm_report_warning(id, message, UVM_NONE, file, line);
   }
 
+  void uvm_warning(string file=__FILE__,
+		   size_t line=__LINE__,
+		   T...)(string id, string message, T t)
+    if(T.length > 0 && is(T[0]: uvm_report_message_element_base)) {
+      if (uvm_report_enabled(UVM_NONE, UVM_WARNING, id))
+	uvm_report_warning(id, message, UVM_NONE, file, line, "", false, t);
+    }
+
   // MACRO: `uvm_error
   //
   //| `uvm_error(ID,MSG)
@@ -157,6 +157,14 @@ mixin template uvm_report_mixin()
     if (uvm_report_enabled(UVM_NONE, UVM_ERROR, id))
       uvm_report_error(id, message, UVM_NONE, file, line);
   }
+
+  void uvm_error(string file=__FILE__,
+		 size_t line=__LINE__,
+		 T...)(string id, string message, T t)
+    if(T.length > 0 && is(T[0]: uvm_report_message_element_base)) {
+      if (uvm_report_enabled(UVM_NONE, UVM_ERROR, id))
+	uvm_report_error(id, message, UVM_NONE, file, line, "", false, t);
+    }
 
   // MACRO: `uvm_fatal
   //
@@ -174,6 +182,13 @@ mixin template uvm_report_mixin()
       uvm_report_fatal(id, message, UVM_NONE, file, line);
   }
 
+  void uvm_fatal(string file=__FILE__,
+		 size_t line=__LINE__,
+		 T...)(string id, string message, T t)
+    if(T.length > 0 && is(T[0]: uvm_report_message_element_base)) {
+      if (uvm_report_enabled(UVM_NONE, UVM_FATAL, id))
+	uvm_report_fatal(id, message, UVM_NONE, file, line, "", false, t);
+    }
   // MACRO: `uvm_info_context
   //
   //| `uvm_info_context(ID,MSG,VERBOSITY,CNTXT)
@@ -183,12 +198,25 @@ mixin template uvm_report_mixin()
   // explicitly supplied as a macro argument.
 
   static void uvm_info_context(string file=__FILE__,
-			       size_t line=__LINE__)(string id, string message,
+			       size_t line=__LINE__)(string id,
+						     string message,
 						     int verbosity,
 						     uvm_report_object context) {
     if (context.uvm_report_enabled(verbosity, UVM_INFO, id))
       context.uvm_report_info(id, message, verbosity, file, line);
   }
+
+  static void uvm_info_context(string file=__FILE__,
+			       size_t line=__LINE__,
+			       T...)(string id, string message,
+				     int verbosity,
+				     uvm_report_object context, T t)
+    if(T.length > 0 && is(T[0]: uvm_report_message_element_base)) {
+      if (context.uvm_report_enabled(verbosity, UVM_INFO, id))
+	context.uvm_report_info(id, message, verbosity, file, line,
+				"", false, t);
+    }
+
 
   // MACRO: `uvm_warning_context
   //
@@ -205,6 +233,16 @@ mixin template uvm_report_mixin()
       context.uvm_report_warning(id, message, UVM_NONE, file, line);
   }
 
+  static void uvm_warning_context(string file=__FILE__,
+				  size_t line=__LINE__,
+				  T...)(string id, string message,
+					uvm_report_object context, T t)
+    if(T.length > 0 && is(T[0]: uvm_report_message_element_base)) {
+      if (context.uvm_report_enabled(UVM_NONE, UVM_WARNING, id))
+	context.uvm_report_warning(id, message, UVM_NONE, file, line,
+				   "", false, t);
+    }
+
   // MACRO: `uvm_error_context
   //
   //| `uvm_error_context(ID,MSG,CNTXT)
@@ -220,6 +258,16 @@ mixin template uvm_report_mixin()
       context.uvm_report_error(id, message, UVM_NONE, file, line);
   }
 
+  static void uvm_error_context(string file=__FILE__,
+				size_t line=__LINE__,
+				T...)(string id, string message,
+				      uvm_report_object context, T t)
+    if(T.length > 0 && is(T[0]: uvm_report_message_element_base)) {
+      if (context.uvm_report_enabled(UVM_NONE, UVM_ERROR, id))
+	context.uvm_report_error(id, message, UVM_NONE, file, line,
+				 "", false, t);
+    }
+
   // MACRO: `uvm_fatal_context
   //
   //| `uvm_fatal_context(ID,MSG,CNTXT)
@@ -234,6 +282,16 @@ mixin template uvm_report_mixin()
     if (context.uvm_report_enabled(UVM_NONE, UVM_FATAL, id))
       context.uvm_report_fatal(id, message, UVM_NONE, file, line);
   }
+
+  static void uvm_fatal_context(string file=__FILE__,
+				size_t line=__LINE__,
+				T...)(string id, string message,
+				      uvm_report_object context, T t)
+    if(T.length > 0 && is(T[0]: uvm_report_message_element_base)) {
+      if (context.uvm_report_enabled(UVM_NONE, UVM_FATAL, id))
+	context.uvm_report_fatal(id, message, UVM_NONE, file, line,
+				 "", false, t);
+    }
 }
 
 // mixin uvm_report_mixin;  // have it in the uvm_globals

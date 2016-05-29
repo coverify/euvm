@@ -541,6 +541,7 @@ final class uvm_seed_map
     private uint _m_global_random_seed;
 
     // ** from uvm_misc -- global variable in SV
+    // assoc array -- make sure all accesses are under once guard
     private uvm_seed_map[string] _uvm_random_seed_table_lookup;
   }
 
