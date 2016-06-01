@@ -743,7 +743,7 @@ version(UVM_INCLUDE_DEPRECATED) {
 
 bool uvm_is_match (string expr, string str) {
   auto s = uvm_glob_to_re(expr);
-  return (uvm_re_match(s, str) == 0);
+  return uvm_re_match(s, str);
 }
 
 enum UVM_LINE_WIDTH = 120;
@@ -877,7 +877,7 @@ string[] uvm_split_string (string str, char sep) {
 
 enum char uvm_re_bracket_char = '/';
 
-int uvm_re_match(in string re, in string str) {
+bool uvm_re_match(in string re, in string str) {
   import std.regex;
   Regex!char rx;
   if (re.length > 1 && re[0] is uvm_re_bracket_char &&
@@ -888,10 +888,10 @@ int uvm_re_match(in string re, in string str) {
     rx = regex(re);
   }
   if(match(str, rx)) {
-    return 0;
+    return true;
   }
   else {
-    return -1;
+    return false;
   }
 }
 
@@ -901,7 +901,7 @@ int uvm_re_match(in string re, in string str) {
 // Convert a glob expression to a normal regular expression.
 //--------------------------------------------------------------------
 
-string uvm_glob_to_re(in string glob) {
+string uvm_glob_to_re(string glob) {
   string retval;
   // safety check.  Glob should never be null since this is called
   // from DPI.  But we'll check anyway.
@@ -927,8 +927,7 @@ string uvm_glob_to_re(in string glob) {
   // If bracketed with the /glob/, then it's already a regex
   if(glob[0] is uvm_re_bracket_char && glob[$-1] is uvm_re_bracket_char) {
     // take out the uvm_re_bracket_char and return
-    retval = cast(string) glob.dup;
-    return retval;
+    return glob;
   }
   else {
     // Convert the glob to a true regular expression (Posix syntax)
@@ -958,8 +957,9 @@ string uvm_glob_to_re(in string glob) {
   // the beginning and $ at the end.  If not, add those characters in
   // the appropriate position.
 
-  if (retval[$-1] !is '$')
+  if (retval[$-1] !is '$') {
     retval ~= '$';
+  }
 
   retval ~= uvm_re_bracket_char;
 

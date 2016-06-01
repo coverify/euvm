@@ -362,8 +362,8 @@ class uvm_report_object: /*extends*/ uvm_object
 			 size_t line,
 			 string context_name = "",
 			 bool report_enabled_checked = false) {
-    uvm_report (UVM_ERROR, id, message, verbosity,
-		filename, line, context_name, report_enabled_checked);
+    uvm_report(UVM_ERROR, id, message, verbosity,
+	       filename, line, context_name, report_enabled_checked);
   }
 
   void uvm_report_error(T...)(string id,

@@ -59,6 +59,7 @@ mixin template uvm_object_utils(T=void)
   mixin m_uvm_field_auto_utils!(U);
   version(UVM_NORANDOM) {}
   else {
+    import esdl.data.rand;
     mixin Randomization;
   }
   // `uvm_field_utils_begin(U)
@@ -132,6 +133,12 @@ mixin template uvm_component_utils(T=void)
   mixin uvm_component_auto_build_mixin;
   mixin uvm_component_auto_elab_mixin;
 
+  mixin m_uvm_field_auto_utils!(U);
+  version(UVM_NORANDOM) { }
+  else {
+    import esdl.data.rand;
+    mixin Randomization;
+  }
   // `uvm_field_utils_begin(U)
 
   // Add a defaultConstructor for Object.factory to work
@@ -442,7 +449,9 @@ mixin template m_uvm_field_auto_utils(T)
   
   override void uvm_field_auto_setint(string field_name,
 				      ushort value) {
-    uvm_error("uvm_field_auto_setint", "not yet implemented");
+    string prefix = "";
+    bool matched = false;
+    uvm_set_local(this, value, field_name, prefix, matched);
   }
   
   override void uvm_field_auto_setint(string field_name,
@@ -455,10 +464,14 @@ mixin template m_uvm_field_auto_utils(T)
     uvm_error("uvm_field_auto_setint", "not yet implemented");
   }
   
+  override void uvm_field_auto_setstring(string field_name,
+				      string value) {
+    uvm_error("uvm_field_auto_setstring", "not yet implemented");
+  }
+  
   // return true if a match occured
   void uvm_set_local(size_t I=0, T, U)(T t, U value, string regx,
-				       string prefix="",
-				       ref bool status = false) {
+				       ref string prefix, ref bool matched) {
     static if(I < t.tupleof.length) {
       enum int FLAGS = uvm_field_auto_get_flags!(t, I);
       alias E = typeof(t.tupleof[I]);
@@ -478,19 +491,22 @@ mixin template m_uvm_field_auto_utils(T)
 			  UVM_LOW);
 	  static if(is(U: E)) {
 	    t.tupleof[I] = value;
-	    status = true;
 	  }
 	  else static if(is(E: U) && is(U: Object)) {
 	    if(t.tupleof[i] == cast(E) value) {
-	      status = true;
 	    }
 	  }
-	  else {
-	    t.tupleof[I] = cast(E) value;
-	    status = true;
-	  }
+	}
+	else {
+	  uvm_report_info("NOMATCH", "set_object()" ~ ": Could not match string " ~
+			  regx ~ " to field " ~ name,
+			  UVM_LOW);
 	}
       }
+      uvm_set_local!(I+1)(t, value, regx, prefix, matched);
+    }
+    else {
+      return;
     }
   }
 
@@ -506,8 +522,8 @@ mixin template m_uvm_field_auto_utils(T)
   // copy the Ith field
   bool uvm_field_auto_copy_field(size_t I=0, T)(T lhs, T rhs) {
     enum int FLAGS = uvm_field_auto_get_flags!(lhs, I);
-    if(FLAGS & UVM_COPY &&
-       !(FLAGS & UVM_NOCOPY)) {
+    static if(FLAGS & UVM_COPY &&
+	      !(FLAGS & UVM_NOCOPY)) {
       debug(UVM_UTILS) {
 	pragma(msg, "Copying : " ~ lhs.tupleof[I].stringof);
       }
@@ -558,6 +574,60 @@ mixin template m_uvm_field_auto_utils(T)
     return false;
   }
 
+  // record
+  override void uvm_field_auto_record() {
+    uvm_field_auto_all_fields!uvm_field_auto_record_field(this);
+  }
+
+  // record the Ith field
+  void uvm_field_auto_record_field(size_t I=0, T)(T t) {
+    import std.traits: isIntegral, isFloatingPoint;
+    enum int FLAGS = uvm_field_auto_get_flags!(t, I);
+    static if(FLAGS & UVM_RECORD &&
+	      !(FLAGS & UVM_NORECORD)) {
+      debug(UVM_UTILS) {
+	pragma(msg, "Recording : " ~ t.tupleof[I].stringof);
+      }
+      enum string name = __traits(identifier, T.tupleof[I]);
+      auto value = t.tupleof[I];
+      auto recorder = m_uvm_status_container.recorder;
+      alias U=typeof(t.tupleof[I]);
+      // do not use isIntegral -- we keep that for enums
+      static if(is(U == SimTime)) {
+	recorder.record(name, value);
+      }
+      else static if(isBitVector!U  ||
+		is(U == byte)  || is(U == ubyte)  ||
+		is(U == short) || is(U == ushort) ||
+		is(U == int)   || is(U == uint) ||
+		is(U == long)  || is(U == ulong)) {
+	recorder.record(name, value,
+			cast(uvm_radix_enum) (FLAGS & UVM_RADIX));
+      }
+      else static if(isIntegral!U) { // to cover enums
+	recorder.record(name, value, UVM_ENUM);
+      }
+      else static if(is(U: uvm_object)) {
+	recorder.record(name, value);
+      }
+      else static if(is(U == string) || is(U == char[])) {
+	recorder.record(name, value);
+      }
+      // enum should be already handled as part of integral
+      else static if(isFloatingPoint!U) {
+	recorder.record(name, value);
+      }
+      else static if(is(U: EventObj)) {
+	recorder.record_generic(name, "event", "");
+      }
+      else // static if(isIntegral!U || isBoolean!U )
+	{
+	  import std.conv;
+	  recorder.record_generic(name, U.stringof, value.to!string);
+	}
+    }
+  }
+
   // print
   override void uvm_field_auto_sprint() {
     uvm_field_auto_all_fields!uvm_field_auto_sprint_field(this);
@@ -592,7 +662,7 @@ mixin template m_uvm_field_auto_utils(T)
 	printer.print(name, value, UVM_ENUM);
       }
       else static if(is(U: uvm_object)) {
-	if((FLAGS & UVM_REFERENCE) != 0) {
+	static if((FLAGS & UVM_REFERENCE) != 0) {
 	  printer.print_object_header(name, value);
 	}
 	else {

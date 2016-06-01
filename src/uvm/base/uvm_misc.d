@@ -303,52 +303,52 @@ final class uvm_status_container {
   // (uvm_status_container), it is Ok to not make the next two
   // elements static (as done in SV version)
   // __gshared
-  private bool[string] _field_array;
+  // private bool[string] _field_array;
 
-  bool field_exists(string field) {
-    synchronized(this) {
-      if(field in _field_array) {
-	return true;
-      }
-      else {
-	return false;
-      }
-    }
-  }
+  // bool field_exists(string field) {
+  //   synchronized(this) {
+  //     if(field in _field_array) {
+  // 	return true;
+  //     }
+  //     else {
+  // 	return false;
+  //     }
+  //   }
+  // }
 
-  void reset_fields() {
-    synchronized(this) {
-      _field_array = null;
-    }
-  }
+  // void reset_fields() {
+  //   synchronized(this) {
+  //     _field_array = null;
+  //   }
+  // }
 
-  bool no_fields() {
-    synchronized(this) {
-      if(_field_array.length is 0) {
-	return true;
-      }
-      else {
-	return false;
-      }
-    }
-  }
+  // bool no_fields() {
+  //   synchronized(this) {
+  //     if(_field_array.length is 0) {
+  // 	return true;
+  //     }
+  //     else {
+  // 	return false;
+  //     }
+  //   }
+  // }
 
   // __gshared
   // FIXME -- next element present in SV version but is not used
   // private bool             _print_matches;
 
-  void do_field_check(string field, uvm_object obj) {
-    synchronized(this) {
-      debug(UVM_ENABLE_FIELD_CHECKS) {
-	if (field in _field_array)
-	  uvm_report_error("MLTFLD",
-			   format("Field %s is defined multiple times" ~
-				  " in type '%s'", field,
-				  obj.get_type_name()), UVM_NONE);
-      }
-      _field_array[field] = true;
-    }
-  }
+  // void do_field_check(string field, uvm_object obj) {
+  //   synchronized(this) {
+  //     debug(UVM_ENABLE_FIELD_CHECKS) {
+  // 	if (field in _field_array)
+  // 	  uvm_report_error("MLTFLD",
+  // 			   format("Field %s is defined multiple times" ~
+  // 				  " in type '%s'", field,
+  // 				  obj.get_type_name()), UVM_NONE);
+  //     }
+  //     _field_array[field] = true;
+  //   }
+  // }
 
 
   static string get_function_type (int what) {

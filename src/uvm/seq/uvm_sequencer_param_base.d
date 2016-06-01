@@ -136,7 +136,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
 	  version(UVM_NORANDOM) {}
 	  else {
 	    try {
-	      param_t.randomize();
+	      randomize(param_t);
 	    }
 	    catch {
 	      uvm_report_warning("SQRSNDREQ", "Failed to rerandomize sequence"

@@ -697,6 +697,12 @@ class uvm_default_report_server: uvm_report_server
 	  }
 	  svr.execute_report_message(report_message, m);
 	}
+	// set the exit status of the simulation in case of error/fatal
+	switch(report_message.get_severity()) {
+	case uvm_severity.UVM_ERROR: getRootEntity.setExitStatus(1); break;
+	case uvm_severity.UVM_FATAL: getRootEntity.setExitStatus(1); break;
+	default: break;
+	}
       }
     }
   }

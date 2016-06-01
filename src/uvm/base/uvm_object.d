@@ -83,17 +83,8 @@ abstract class uvm_object: uvm_void
   {
     @uvm_private_sync
     private bool _use_uvm_seeding = true;
-    // ** from uvm_object -- static variable in SV
-    @uvm_immutable_sync
-    private uvm_status_container _m_uvm_status_container;
     @uvm_protected_sync
     private int _m_inst_count;
-
-    this() {
-      synchronized(this) {
-	_m_uvm_status_container = new uvm_status_container();
-      }
-    }
   }
 
   // Can not use "mixin uvm_once_sync" template due to forward reference error
@@ -101,6 +92,15 @@ abstract class uvm_object: uvm_void
   // mixin uvm_once_sync;
   mixin(uvm_once_sync_string);
   mixin(uvm_sync_string);
+
+
+  static uvm_status_container m_uvm_status_container() {
+    static uvm_status_container _m_uvm_status_container;
+    if (_m_uvm_status_container is null) {
+      _m_uvm_status_container = new uvm_status_container();
+    }
+    return _m_uvm_status_container;
+  }
 
   version(UVM_NORANDOM) {}
   else {
@@ -596,8 +596,8 @@ abstract class uvm_object: uvm_void
     m_uvm_status_container.recorder = recorder;
 
     recorder.inc_recording_depth();
-    m_uvm_field_automation(null, UVM_RECORD, "");
-    // uvm_field_auto_record();
+    // m_uvm_field_automation(null, UVM_RECORD, "");
+    uvm_field_auto_record();
     do_record(recorder);
 
     recorder.dec_recording_depth();
@@ -680,6 +680,11 @@ abstract class uvm_object: uvm_void
 		       "no uvm_object_utils", UVM_NONE);
   }
 
+  void uvm_field_auto_setstring(string field_name, string value) {
+    uvm_report_warning("NOUTILS", "default uvm_field_auto_setstring --"
+		       "no uvm_object_utils", UVM_NONE);
+  }
+
   void uvm_field_auto_copy(uvm_object rhs) {
     uvm_report_warning("NOUTILS", "default uvm_field_auto_copy --"
 		       "no uvm_object_utils", UVM_NONE);
@@ -690,6 +695,11 @@ abstract class uvm_object: uvm_void
 		       "no uvm_object_utils", UVM_NONE);
   }
 
+  void uvm_field_auto_record() {
+    uvm_report_warning("NOUTILS", "default uvm_field_auto_record --"
+		       "no uvm_object_utils", UVM_NONE);
+  }
+    
   void uvm_field_auto_pack() {
     uvm_report_warning("NOUTILS", "default uvm_field_auto_pack --"
 		       "no uvm_object_utils", UVM_NONE);
@@ -1289,7 +1299,8 @@ abstract class uvm_object: uvm_void
     m_uvm_status_container.status = false;
     m_uvm_status_container.stringv = value;
 
-    m_uvm_field_automation(null, UVM_SETSTR, field_name);
+    // m_uvm_field_automation(null, UVM_SETSTR, field_name);
+    uvm_field_auto_setstring(field_name, value);
 
     if(m_uvm_status_container.warning &&
        ! m_uvm_status_container.status) {

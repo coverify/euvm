@@ -136,7 +136,7 @@ abstract class uvm_component: uvm_report_object, ParContext
     // m_config_set is declared in SV version but is not used anywhere
     @uvm_private_sync bool _m_config_set = true;
 
-    @uvm_private_sync
+    @uvm_public_sync
     bool _print_config_matches;
 
     m_verbosity_setting[] _m_time_settings;
@@ -1796,10 +1796,11 @@ abstract class uvm_component: uvm_report_object, ParContext
     // that there aren't any duplicates along the way)
     m_uvm_field_automation (null, UVM_CHECK_FIELDS, "");
 
-    // if no declared fields, nothing to do.
-    if(m_uvm_status_container.no_fields) {
-      return;
-    }
+    // // if no declared fields, nothing to do.
+    // if(m_uvm_status_container.no_fields) {
+    //   writeln("RETURNED");
+    //   return;
+    // }
 
     if(verbose) {
       uvm_report_info("CFGAPL","applying configuration settings", UVM_NONE);
@@ -1817,8 +1818,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 
     // rq is in precedence order now, so we have to go through in reverse
     // order to do the settings.
-    for(size_t i = rq.length-1; i >= 0; --i) {
-
+    for(ptrdiff_t i = rq.length-1; i >= 0; --i) {
       uvm_resource_base r = rq.get(i);
       string name = r.get_name();
 
@@ -1839,10 +1839,10 @@ abstract class uvm_component: uvm_report_object, ParContext
 	search_name = name;
       }
 
-      if(!m_uvm_status_container.field_exists(search_name) &&
-	 search_name != "recording_detail") {
-	continue;
-      }
+      // if(!m_uvm_status_container.field_exists(search_name) &&
+      // 	 search_name != "recording_detail") {
+      // 	continue;
+      // }
 
       if(verbose) {
 	uvm_report_info("CFGAPL",
@@ -1939,7 +1939,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 	} // else: !if($cast(rbs, r))
       } // else: !if($cast(rit, r))
     }
-    m_uvm_status_container.reset_fields();
+    // m_uvm_status_container.reset_fields();
   }
 
 
@@ -3797,6 +3797,10 @@ abstract class uvm_component: uvm_report_object, ParContext
     string arg;
     string[] args;
     uint used;
+  }
+
+  void set_simulation_status(ubyte status) {
+    getRootEntity.setExitStatus(status);
   }
 }
 
