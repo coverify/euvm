@@ -6,7 +6,7 @@ VLANGDIR = ${HOME}/code/vlang-uvm
 ESDLSOURCES := $(shell find $(ESDLDIR)/src -name '*.d')
 VLANGSOURCES := $(shell find $(VLANGDIR)/src -name '*.d')
 
-DMDDIR = /home/puneet/local/dmd$(MODEL)
+DMDDIR = ${HOME}/local/dmd$(MODEL)
 DMD = $(DMDDIR)/bin/dmd
 
 DMDLIBDIR = $(DMDDIR)/lib
