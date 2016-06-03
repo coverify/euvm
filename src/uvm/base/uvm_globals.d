@@ -976,60 +976,60 @@ string uvm_glob_to_re(string glob) {
 
 // No synchronized blocks required since all data is thread local
 // all functions are static
-struct uvm_enum_wrapper(T=uvm_active_passive_enum)
-{
+struct uvm_enum_wrapper(T) if (is(T == enum))
+  {
 
-  alias this_type = uvm_enum_wrapper!T;
+    alias this_type = uvm_enum_wrapper!T;
 
-  private static T[string] _map;
+    private static T[string] _map;
 
-  // Function: from_name
-  // Attempts to convert a string ~name~ to an enumerated value.
-  //
-  // If the conversion is successful, the method will return
-  // 1, otherwise 0.
-  //
-  // Note that the ~name~ passed in to the method must exactly
-  // match the value which would be produced by ~enum::name~, and
-  // is case sensitive.
-  //
-  // For example:
-  //| typedef uvm_enum_wrapper#(uvm_radix_enum) radix_wrapper;
-  //| uvm_radix_enum r_v;
-  //|
-  //| // The following would return '0', as "foo" isn't a value
-  //| // in uvm_radix_enum:
-  //| radix_wrapper::from_name("foo", r_v);
-  //|
-  //| // The following would return '0', as "uvm_bin" isn't a value
-  //| // in uvm_radix_enum (although the upper case "UVM_BIN" is):
-  //| radix_wrapper::from_name("uvm_bin", r_v);
-  //|
-  //| // The following would return '1', and r_v would be set to
-  //| // the value of UVM_BIN
-  //| radix_wrapper::from_name("UVM_BIN", r_v);
-  //
-  static bool from_name(string name, ref T value) {
-    if(_map.length == 0) {
-      m_init_map();
+    // Function: from_name
+    // Attempts to convert a string ~name~ to an enumerated value.
+    //
+    // If the conversion is successful, the method will return
+    // 1, otherwise 0.
+    //
+    // Note that the ~name~ passed in to the method must exactly
+    // match the value which would be produced by ~enum::name~, and
+    // is case sensitive.
+    //
+    // For example:
+    //| typedef uvm_enum_wrapper#(uvm_radix_enum) radix_wrapper;
+    //| uvm_radix_enum r_v;
+    //|
+    //| // The following would return '0', as "foo" isn't a value
+    //| // in uvm_radix_enum:
+    //| radix_wrapper::from_name("foo", r_v);
+    //|
+    //| // The following would return '0', as "uvm_bin" isn't a value
+    //| // in uvm_radix_enum (although the upper case "UVM_BIN" is):
+    //| radix_wrapper::from_name("uvm_bin", r_v);
+    //|
+    //| // The following would return '1', and r_v would be set to
+    //| // the value of UVM_BIN
+    //| radix_wrapper::from_name("UVM_BIN", r_v);
+    //
+    static bool from_name(string name, ref T value) {
+      if(_map.length == 0) {
+	m_init_map();
+      }
+      if(name in _map) {
+	value = _map[name];
+	return true;
+      }
+
+      else {
+	return false;
+      }
     }
-    if(name in _map) {
-      value = _map[name];
-      return true;
-    }
 
-    else {
-      return false;
+    @disable this();
+
+    // Function- m_init_map
+    // Initializes the name map, only needs to be performed once
+    private static void m_init_map() {
+      foreach(e; EnumMembers!T) {
+	_map[e.to!string] = e;
+      }
     }
   }
-
-  @disable this();
-
-  // Function- m_init_map
-  // Initializes the name map, only needs to be performed once
-  private static void m_init_map() {
-    foreach(e; EnumMembers!T) {
-      _map[e.to!string] = e;
-    }
-  }
-}

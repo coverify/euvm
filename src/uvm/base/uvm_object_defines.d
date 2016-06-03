@@ -356,6 +356,13 @@ mixin template m_uvm_field_auto_utils(T)
   import uvm.seq.uvm_sequence_item;
   import uvm.seq.uvm_sequence_base;
   import uvm.base.uvm_object_globals;
+  import std.traits: isArray;
+  import std.string: format;
+
+  override bool uvm_field_utils_defined() {
+    return true;
+  }
+  
   void uvm_field_auto_all_fields(alias F, size_t I=0, T)(T lhs, T rhs) {
     version(UVM_NORANDOM) {}
     else {
@@ -427,88 +434,177 @@ mixin template m_uvm_field_auto_utils(T)
     }
   }
 
-  override void uvm_field_auto_setint(string field_name,
-				      uvm_bitstream_t value) {
-    uvm_error("uvm_field_auto_setint", "not yet implemented");
+  override void uvm_field_auto_set(string field_name, uvm_bitstream_t value,
+				   ref bool matched, string prefix,
+				   uvm_object[] hier) {
+    super.uvm_field_auto_set(field_name, value, matched, prefix, hier);
+    uvm_set_local(this, field_name, value, matched, prefix, hier);
   }
 
-  override void uvm_field_auto_setint(string field_name,
-				      uvm_integral_t value) {
-    uvm_error("uvm_field_auto_setint", "not yet implemented");
+  override void uvm_field_auto_set(string field_name, uvm_integral_t value,
+				   ref bool matched, string prefix,
+				   uvm_object[] hier) {
+    super.uvm_field_auto_set(field_name, value, matched, prefix, hier);
+    uvm_set_local(this, field_name, value, matched, prefix, hier);
   }
 
-  override void uvm_field_auto_setint(string field_name,
-				      ulong value) {
-    uvm_error("uvm_field_auto_setint", "not yet implemented");
+  override void uvm_field_auto_set(string field_name, ulong value,
+				   ref bool matched, string prefix,
+				   uvm_object[] hier) {
+    super.uvm_field_auto_set(field_name, value, matched, prefix, hier);
+    uvm_set_local(this, field_name, value, matched, prefix, hier);
   }
   
-  override void uvm_field_auto_setint(string field_name,
-				      uint value) {
-    uvm_error("uvm_field_auto_setint", "not yet implemented");
+  override void uvm_field_auto_set(string field_name, uint value,
+				   ref bool matched, string prefix,
+				   uvm_object[] hier) {
+    super.uvm_field_auto_set(field_name, value, matched, prefix, hier);
+    uvm_set_local(this, field_name, value, matched, prefix, hier);
   }
   
-  override void uvm_field_auto_setint(string field_name,
-				      ushort value) {
-    string prefix = "";
-    bool matched = false;
-    uvm_set_local(this, value, field_name, prefix, matched);
+  override void uvm_field_auto_set(string field_name, ushort value,
+				   ref bool matched, string prefix,
+				   uvm_object[] hier) {
+    super.uvm_field_auto_set(field_name, value, matched, prefix, hier);
+    uvm_set_local(this, field_name, value, matched, prefix, hier);
   }
   
-  override void uvm_field_auto_setint(string field_name,
-				      ubyte value) {
-    uvm_error("uvm_field_auto_setint", "not yet implemented");
+  override void uvm_field_auto_set(string field_name, ubyte value,
+				   ref bool matched, string prefix,
+				   uvm_object[] hier) {
+    super.uvm_field_auto_set(field_name, value, matched, prefix, hier);
+    uvm_set_local(this, field_name, value, matched, prefix, hier);
   }
   
-  override void uvm_field_auto_setint(string field_name,
-				      bool value) {
-    uvm_error("uvm_field_auto_setint", "not yet implemented");
+  override void uvm_field_auto_set(string field_name, bool value,
+				   ref bool matched, string prefix,
+				   uvm_object[] hier) {
+    super.uvm_field_auto_set(field_name, value, matched, prefix, hier);
+    uvm_set_local(this, field_name, value, matched, prefix, hier);
   }
   
-  override void uvm_field_auto_setstring(string field_name,
-				      string value) {
-    uvm_error("uvm_field_auto_setstring", "not yet implemented");
+  override void uvm_field_auto_set(string field_name, string value,
+				   ref bool matched, string prefix,
+				   uvm_object[] hier) {
+    super.uvm_field_auto_set(field_name, value, matched, prefix, hier);
+    uvm_set_local(this, field_name, value, matched, prefix, hier);
   }
   
-  // return true if a match occured
-  void uvm_set_local(size_t I=0, T, U)(T t, U value, string regx,
-				       ref string prefix, ref bool matched) {
+
+  void uvm_set_local(size_t I=0, T, U)(T t, string regx, U value,
+				       ref bool matched, string prefix = "",
+				       uvm_object[] hier = []) {
+    import std.traits: isArray;
     static if(I < t.tupleof.length) {
       enum int FLAGS = uvm_field_auto_get_flags!(t, I);
       alias E = typeof(t.tupleof[I]);
       string name = prefix ~ __traits(identifier, T.tupleof[I]);
-      static if(FLAGS & UVM_READONLY) {
-	if(uvm_is_match(regx, name)) {
-	  uvm_report_warning("RDONLY",
-			     format("Readonly argument match %s is ignored",
-				    name),
-			     UVM_NONE);
-	}
+      // handle arrays
+      static if (isArray!E && ! is(E: string)) {
+	// Array elements inherit FLAGS
+	uvm_set_local!FLAGS(t.tupleof[I], 0, // index
+			    regx, value, matched, name, hier);
       }
       else {
-	if(uvm_is_match(regx, name)) {
-	  uvm_report_info("STRMTC", "set_object()" ~ ": Matched string " ~
-			  regx ~ " to field " ~ name,
-			  UVM_LOW);
-	  static if(is(U: E)) {
-	    t.tupleof[I] = value;
-	  }
-	  else static if(is(E: U) && is(U: Object)) {
-	    if(t.tupleof[i] == cast(E) value) {
+	static if ((! (FLAGS & UVM_REFERENCE)) &&
+		   is(E: uvm_object)) {
+	  bool cyclic = false;
+	  // first check for any cycle
+	  foreach (obj; hier) {
+	    if (obj is t.tupleof[I]) {
+	      cyclic = true;
 	    }
+	  }
+	  if (! cyclic) {
+	    t.tupleof[I].uvm_field_auto_set(regx, value, matched,
+					    name ~ ".", hier ~ this);
+	  }
+	}
+	static if(FLAGS & UVM_READONLY) {
+	  if(uvm_is_match(regx, name)) {
+	    uvm_report_warning("RDONLY",
+			       format("Readonly argument match %s is ignored",
+				      name), UVM_NONE);
 	  }
 	}
 	else {
-	  uvm_report_info("NOMATCH", "set_object()" ~ ": Could not match string " ~
-			  regx ~ " to field " ~ name,
-			  UVM_LOW);
+	  if(uvm_is_match(regx, name)) {
+	    matched = true;
+	    if (! uvm_set_value!(E, U)(t.tupleof[I], value)) {
+	      uvm_report_error("SETLCL",
+			       format("Could not set value %s to variable %s",
+				      value, name));
+	    }
+	  }
+	  else {
+	    // uvm_report_info("NOMATCH", "set_object()" ~ ": Could not match string " ~
+	    // 		    regx ~ " to field " ~ name,
+	    // 		    UVM_LOW);
+	  }
 	}
       }
-      uvm_set_local!(I+1)(t, value, regx, prefix, matched);
-    }
-    else {
-      return;
+      uvm_set_local!(I+1)(t, regx, value, matched, prefix, hier);
     }
   }
+
+  // Handle array elements
+  void uvm_set_local(int FLAGS, T, U)(ref T t, size_t index, string regx, U value,
+				      ref bool matched, string prefix = "",
+				      uvm_object[] hier = [])
+    if (isArray!T && ! is(T: string)) {
+      import std.traits: isArray;
+      import std.string: format;
+      if (index < t.length) {
+	alias E = typeof(t[index]);
+	string name = prefix ~ format("[%0d]", index);
+	// handle arrays
+	static if (isArray!E && ! is(E: string)) {
+	  // Array elements inherit FLAGS
+	  uvm_set_local!FLAGS(t[index], 0, regx, value,
+			      matched, name, hier);
+	}
+	else {
+	  static if ((! (FLAGS & UVM_REFERENCE)) &&
+		     is(E: uvm_object)) {
+	    bool cyclic = false;
+	    // first check for any cycle
+	    foreach (obj; hier) {
+	      if (obj is t[index]) {
+		cyclic = true;
+	      }
+	    }
+	    if (! cyclic) {
+	      t[index].uvm_field_auto_set(regx, value, matched,
+					  name ~ ".", hier ~ this);
+	    }
+	  }
+	  static if(FLAGS & UVM_READONLY) {
+	    if(uvm_is_match(regx, name)) {
+	      uvm_report_warning("RDONLY",
+				 format("Readonly argument match %s is ignored",
+					name),
+				 UVM_NONE);
+	    }
+	  }
+	  else {
+	    if(uvm_is_match(regx, name)) {
+	      matched = true;
+	      if (! uvm_set_value!(E, U)(t[index], value)) {
+		uvm_report_error("SETLCL",
+				 format("Could not set value %s to variable %s",
+					value, name));
+	      }
+	    }
+	    else {
+	      // uvm_report_info("NOMATCH", "set_object()" ~ ": Could not match string " ~
+	      // 		      regx ~ " to field " ~ name, UVM_LOW);
+	    }
+	  }
+	}
+	uvm_set_local!(FLAGS)(t, index+1, regx, value, matched, prefix, hier);
+      }
+    }
+
 
   // Copy
   override void uvm_field_auto_copy(uvm_object rhs) {

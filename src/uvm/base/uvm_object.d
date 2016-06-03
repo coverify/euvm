@@ -353,7 +353,10 @@ abstract class uvm_object: uvm_void
     return "<unknown>";
   }
 
-
+  bool uvm_field_utils_defined() {
+    return false;
+  }
+  
   // Group: Creation
 
   // Function: create
@@ -434,6 +437,11 @@ abstract class uvm_object: uvm_void
   // must override the <do_print> method and use the provided printer policy
   // class to format the output. The printer policy will manage all string
   // concatenations and provide the string to ~sprint~ to return to the caller.
+
+  void uvm_field_auto_sprint() {
+    uvm_report_warning("NOUTILS", "default uvm_field_auto_sprint --"
+		       "no uvm_object_utils", UVM_NONE);
+  }
 
   final string sprint (uvm_printer printer=null) {
 
@@ -584,6 +592,11 @@ abstract class uvm_object: uvm_void
   // via a common interface, the uvm_recorder policy provides vendor-independent
   // access to a simulator's recording capabilities.
 
+  void uvm_field_auto_record() {
+    uvm_report_warning("NOUTILS", "default uvm_field_auto_record --"
+		       "no uvm_object_utils", UVM_NONE);
+  }
+    
   final void record(uvm_recorder recorder=null) {
 
     if(recorder is null) {
@@ -645,73 +658,8 @@ abstract class uvm_object: uvm_void
   // classes. To copy the fields of a derived class, that class should override
   // the <do_copy> method.
 
-  void uvm_field_auto_setint(string field_name, uvm_bitstream_t value) {
-    uvm_report_warning("NOUTILS", "default uvm_field_auto_setint --"
-		       "no uvm_object_utils", UVM_NONE);
-  }
-
-  void uvm_field_auto_setint(string field_name, uvm_integral_t value) {
-    uvm_report_warning("NOUTILS", "default uvm_field_auto_setint --"
-		       "no uvm_object_utils", UVM_NONE);
-  }
-
-  void uvm_field_auto_setint(string field_name, ulong value) {
-    uvm_report_warning("NOUTILS", "default uvm_field_auto_setint --"
-		       "no uvm_object_utils", UVM_NONE);
-  }
-
-  void uvm_field_auto_setint(string field_name, uint value) {
-    uvm_report_warning("NOUTILS", "default uvm_field_auto_setint --"
-		       "no uvm_object_utils", UVM_NONE);
-  }
-
-  void uvm_field_auto_setint(string field_name, ushort value) {
-    uvm_report_warning("NOUTILS", "default uvm_field_auto_setint --"
-		       "no uvm_object_utils", UVM_NONE);
-  }
-
-  void uvm_field_auto_setint(string field_name, ubyte value) {
-    uvm_report_warning("NOUTILS", "default uvm_field_auto_setint --"
-		       "no uvm_object_utils", UVM_NONE);
-  }
-
-  void uvm_field_auto_setint(string field_name, bool value) {
-    uvm_report_warning("NOUTILS", "default uvm_field_auto_setint --"
-		       "no uvm_object_utils", UVM_NONE);
-  }
-
-  void uvm_field_auto_setstring(string field_name, string value) {
-    uvm_report_warning("NOUTILS", "default uvm_field_auto_setstring --"
-		       "no uvm_object_utils", UVM_NONE);
-  }
-
   void uvm_field_auto_copy(uvm_object rhs) {
     uvm_report_warning("NOUTILS", "default uvm_field_auto_copy --"
-		       "no uvm_object_utils", UVM_NONE);
-  }
-
-  void uvm_field_auto_sprint() {
-    uvm_report_warning("NOUTILS", "default uvm_field_auto_sprint --"
-		       "no uvm_object_utils", UVM_NONE);
-  }
-
-  void uvm_field_auto_record() {
-    uvm_report_warning("NOUTILS", "default uvm_field_auto_record --"
-		       "no uvm_object_utils", UVM_NONE);
-  }
-    
-  void uvm_field_auto_pack() {
-    uvm_report_warning("NOUTILS", "default uvm_field_auto_pack --"
-		       "no uvm_object_utils", UVM_NONE);
-  }
-
-  void uvm_field_auto_unpack() {
-    uvm_report_warning("NOUTILS", "default uvm_field_auto_unpack --"
-		       "no uvm_object_utils", UVM_NONE);
-  }
-
-  void uvm_field_auto_compare(uvm_object rhs) {
-    uvm_report_warning("NOUTILS", "default uvm_field_auto_compare --"
 		       "no uvm_object_utils", UVM_NONE);
   }
 
@@ -792,6 +740,11 @@ abstract class uvm_object: uvm_void
   // and the total number of miscompares. If a compare policy is not provided,
   // then the global ~uvm_default_comparer~ policy is used. See <uvm_comparer>
   // for more information.
+
+  void uvm_field_auto_compare(uvm_object rhs) {
+    uvm_report_warning("NOUTILS", "default uvm_field_auto_compare --"
+		       "no uvm_object_utils", UVM_NONE);
+  }
 
   final bool compare (uvm_object rhs, uvm_comparer comparer = null) {
     if(comparer !is null) {
@@ -906,6 +859,11 @@ abstract class uvm_object: uvm_void
 
   // Function: pack
 
+  void uvm_field_auto_pack() {
+    uvm_report_warning("NOUTILS", "default uvm_field_auto_pack --"
+		       "no uvm_object_utils", UVM_NONE);
+  }
+
   final size_t pack (ref Bit!1[] bitstream, uvm_packer packer=null) {
     m_pack(packer);
     packer.get_bits(bitstream);
@@ -1010,6 +968,11 @@ abstract class uvm_object: uvm_void
   // Group: Unpacking
 
   // Function: unpack
+
+  void uvm_field_auto_unpack() {
+    uvm_report_warning("NOUTILS", "default uvm_field_auto_unpack --"
+		       "no uvm_object_utils", UVM_NONE);
+  }
 
   final size_t unpack (ref Bit!1[] bitstream,
 		       uvm_packer packer = null) {
@@ -1117,198 +1080,89 @@ abstract class uvm_object: uvm_void
 
 
   // Group: Configuration
+  bool uvm_set_value(E, U)(ref E var, U value) {
+    static if(is(U: E)) {
+      var = value;
+      return true;
+    }
+    else static if(is(E: U) && is(U: Object)) {
+      auto var_ = cast(E) value;
+      if (var_ !is null) {
+	var = var_;
+	return true;
+      }
+      else {
+	return false;
+      }
+    }
+    else static if(is(U: string) && is(E == enum)) {
+      if ((uvm_enum_wrapper!E).from_name(value, var)) {
+	return true;
+      }
+      else return false;
+    }
+    else {
+      return false;
+    }
+  }
+
+  void set_local(T)(string field_name, T value, bool recurse = true)
+    if (is(T == string) || is(T: uvm_object) ||
+	isIntegral!T || isBitVector!T || is(T == enum)) {
+      {
+	// m_uvm_field_automation(null, UVM_SETSTR, field_name);
+	bool matched;
+	uvm_field_auto_set(field_name, value, matched, "", []);
+	if (matched is false) {
+	  uvm_report_error("NOMTC",
+			   format("did not find a match for field %s (@%0d)",
+				  field_name, this.get_inst_id()), UVM_NONE);
+	}
+      }
+    }
 
   // Function: set_int_local
 
-  void set_int_local (string      field_name,
-		      uvm_bitstream_t value,
-		      bool         recurse = true) {
-    // presently D has only a funky way to clear up associative arrays
-    m_uvm_status_container.remove_all_cycles();
-    m_uvm_status_container.reset_cycle_scopes();
+  void uvm_field_auto_set(string field_name, uvm_bitstream_t value,
+			  ref bool match, string prefix,
+			  uvm_object[] hier) { }
+  void uvm_field_auto_set(string field_name, uvm_integral_t value,
+			  ref bool match, string prefix,
+			  uvm_object[] hier) { }
+  void uvm_field_auto_set(string field_name, ulong value,
+			  ref bool match, string prefix,
+			  uvm_object[] hier) { }
+  void uvm_field_auto_set(string field_name, uint value,
+			  ref bool match, string prefix,
+			  uvm_object[] hier) { }
+  void uvm_field_auto_set(string field_name, ushort value,
+			  ref bool match, string prefix,
+			  uvm_object[] hier) { }
+  void uvm_field_auto_set(string field_name, ubyte value,
+			  ref bool match, string prefix,
+			  uvm_object[] hier) { }
+  void uvm_field_auto_set(string field_name, bool value,
+			  ref bool match, string prefix,
+			  uvm_object[] hier) { }
 
-    m_uvm_status_container.status = false;
-    m_uvm_status_container.bitstream = value;
-
-    // Use Vlang auto instead
-    // m_uvm_field_automation(null, UVM_SETINT, field_name);
-
-    uvm_field_auto_setint(field_name, value);
-
-
-    if(m_uvm_status_container.warning &&
-       ! m_uvm_status_container.status) {
-      uvm_report_error("NOMTC", format("did not find a match for field %s",
-				       field_name), UVM_NONE);
-    }
-    m_uvm_status_container.remove_all_cycles();
+  void set_int_local(T)(string field_name,
+			T value,
+			bool   recurse = true)
+  if (isIntegral!T || isBitVector!T ||
+      is(T == enum)) {
+    set_local(field_name, value, recurse);
   }
-
-  void set_int_local (string      field_name,
-		      uvm_integral_t value,
-		      bool         recurse = true) {
-    // presently D has only a funky way to clear up associative arrays
-    m_uvm_status_container.remove_all_cycles();
-    m_uvm_status_container.reset_cycle_scopes();
-
-    m_uvm_status_container.status = false;
-    m_uvm_status_container.bitstream = cast(uvm_bitstream_t)value;
-
-    // Use Vlang auto instead
-    // m_uvm_field_automation(null, UVM_SETINT, field_name);
-
-    uvm_field_auto_setint(field_name, value);
-
-
-    if(m_uvm_status_container.warning &&
-       ! m_uvm_status_container.status) {
-      uvm_report_error("NOMTC", format("did not find a match for field %s",
-				       field_name), UVM_NONE);
-    }
-    m_uvm_status_container.remove_all_cycles();
-  }
-
-  void set_int_local (string      field_name,
-		      ulong       value,
-		      bool         recurse = true) {
-    // presently D has only a funky way to clear up associative arrays
-    m_uvm_status_container.remove_all_cycles();
-    m_uvm_status_container.reset_cycle_scopes();
-
-    m_uvm_status_container.status = false;
-    m_uvm_status_container.bitstream = cast(uvm_bitstream_t)value;
-
-    // Use Vlang auto instead
-    // m_uvm_field_automation(null, UVM_SETINT, field_name);
-
-    uvm_field_auto_setint(field_name, value);
-
-
-    if(m_uvm_status_container.warning &&
-       ! m_uvm_status_container.status) {
-      uvm_report_error("NOMTC", format("did not find a match for field %s",
-				       field_name), UVM_NONE);
-    }
-    m_uvm_status_container.remove_all_cycles();
-  }
-
-  void set_int_local (string      field_name,
-		      uint        value,
-		      bool         recurse = true) {
-    // presently D has only a funky way to clear up associative arrays
-    m_uvm_status_container.remove_all_cycles();
-    m_uvm_status_container.reset_cycle_scopes();
-
-    m_uvm_status_container.status = false;
-    m_uvm_status_container.bitstream = cast(uvm_bitstream_t)value;
-
-    // Use Vlang auto instead
-    // m_uvm_field_automation(null, UVM_SETINT, field_name);
-
-    uvm_field_auto_setint(field_name, value);
-
-
-    if(m_uvm_status_container.warning &&
-       ! m_uvm_status_container.status) {
-      uvm_report_error("NOMTC", format("did not find a match for field %s",
-				       field_name), UVM_NONE);
-    }
-    m_uvm_status_container.remove_all_cycles();
-  }
-
-  void set_int_local (string      field_name,
-		      ushort       value,
-		      bool         recurse = true) {
-    // presently D has only a funky way to clear up associative arrays
-    m_uvm_status_container.remove_all_cycles();
-    m_uvm_status_container.reset_cycle_scopes();
-
-    m_uvm_status_container.status = false;
-    m_uvm_status_container.bitstream = cast(uvm_bitstream_t)value;
-
-    // Use Vlang auto instead
-    // m_uvm_field_automation(null, UVM_SETINT, field_name);
-
-    uvm_field_auto_setint(field_name, value);
-
-
-    if(m_uvm_status_container.warning &&
-       ! m_uvm_status_container.status) {
-      uvm_report_error("NOMTC", format("did not find a match for field %s",
-				       field_name), UVM_NONE);
-    }
-    m_uvm_status_container.remove_all_cycles();
-  }
-
-  void set_int_local (string      field_name,
-		      ubyte       value,
-		      bool         recurse = true) {
-    // presently D has only a funky way to clear up associative arrays
-    m_uvm_status_container.remove_all_cycles();
-    m_uvm_status_container.reset_cycle_scopes();
-
-    m_uvm_status_container.status = false;
-    m_uvm_status_container.bitstream = cast(uvm_bitstream_t)value;
-
-    // Use Vlang auto instead
-    // m_uvm_field_automation(null, UVM_SETINT, field_name);
-
-    uvm_field_auto_setint(field_name, value);
-
-
-    if(m_uvm_status_container.warning &&
-       ! m_uvm_status_container.status) {
-      uvm_report_error("NOMTC", format("did not find a match for field %s",
-				       field_name), UVM_NONE);
-    }
-    m_uvm_status_container.remove_all_cycles();
-  }
-
-  void set_int_local (string      field_name,
-		      bool value,
-		      bool         recurse = true) {
-    // presently D has only a funky way to clear up associative arrays
-    m_uvm_status_container.remove_all_cycles();
-    m_uvm_status_container.reset_cycle_scopes();
-
-    m_uvm_status_container.status = false;
-    m_uvm_status_container.bitstream = cast(uvm_bitstream_t)value;
-
-    // Use Vlang auto instead
-    // m_uvm_field_automation(null, UVM_SETINT, field_name);
-
-    uvm_field_auto_setint(field_name, value);
-
-
-    if(m_uvm_status_container.warning &&
-       ! m_uvm_status_container.status) {
-      uvm_report_error("NOMTC", format("did not find a match for field %s",
-				       field_name), UVM_NONE);
-    }
-    m_uvm_status_container.remove_all_cycles();
-  }
-
+  
   // Function: set_string_local
 
+  void uvm_field_auto_set(string field_name, string value,
+			  ref bool matched, string prefix,
+			  uvm_object[] hier) { }
+  
   void set_string_local (string field_name,
 			 string value,
 			 bool   recurse = true) {
-    m_uvm_status_container.remove_all_cycles();
-    m_uvm_status_container.reset_cycle_scopes();
-
-    m_uvm_status_container.status = false;
-    m_uvm_status_container.stringv = value;
-
-    // m_uvm_field_automation(null, UVM_SETSTR, field_name);
-    uvm_field_auto_setstring(field_name, value);
-
-    if(m_uvm_status_container.warning &&
-       ! m_uvm_status_container.status) {
-      uvm_report_error("NOMTC",
-		       format("did not find a match for field %s (@%0d)",
-			      field_name, this.get_inst_id()), UVM_NONE);
-    }
-    m_uvm_status_container.remove_all_cycles();
+    set_local(field_name, value, recurse);
   }
 
   // Function: set_object_local
@@ -1374,35 +1228,14 @@ abstract class uvm_object: uvm_void
   // for command-line debugging and auto-configuration) and should not be called
   // directly by the user.
 
-  void set_object_local (string      field_name,
-			 uvm_object  value,
-			 bool        clone = true,
-			 bool        recurse = true) {
-    m_uvm_status_container.remove_all_cycles();
-    m_uvm_status_container.reset_cycle_scopes();
-
-    if(clone && (value !is null)) {
-      uvm_object cc = value.clone();
-      if(cc !is null) {
-	cc.set_name(field_name);
-      }
-      value = cc;
-    }
-
-    m_uvm_status_container.status = false;
-    m_uvm_status_container.object = value;
-    m_uvm_status_container.clone = clone;
-
-    m_uvm_field_automation(null, UVM_SETOBJ, field_name);
-
-    if(m_uvm_status_container.warning &&
-       ! m_uvm_status_container.status) {
-      uvm_report_error("NOMTC",
-		       format("did not find a match for field %s",
-			      field_name), UVM_NONE);
-    }
-    m_uvm_status_container.remove_all_cycles();
-
+  void uvm_field_auto_set(string field_name, uvm_object value,
+			  ref bool matched, string prefix,
+			  uvm_object[] hier) { }
+  
+  void set_object_local (string field_name,
+			 uvm_object value,
+			 bool   recurse = true) {
+    set_local(field_name, value, recurse);
   }
 
   //---------------------------------------------------------------------------

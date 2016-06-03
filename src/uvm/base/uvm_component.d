@@ -3001,104 +3001,15 @@ abstract class uvm_component: uvm_report_object, ParContext
     }
   }
 
-  override void set_int_local (string field_name,
-			       uvm_bitstream_t value,
-			       bool recurse = true) {
-    synchronized(this) {
-      //call the super function to get child recursion and any registered fields
-      super.set_int_local(field_name, value, recurse);
-
-      //set the local properties
-      if(uvm_is_match(field_name, "recording_detail"))
-	_recording_detail = cast(uint) value;
-
-    }
-  }
-
-  override void set_int_local (string field_name,
-			       uvm_integral_t value,
-			       bool recurse = true) {
-    synchronized(this) {
-      //call the super function to get child recursion and any registered fields
-      super.set_int_local(field_name, value, recurse);
-
-      //set the local properties
-      if(uvm_is_match(field_name, "recording_detail"))
-	_recording_detail = cast(uint) value;
-
-    }
-  }
-
-  override void set_int_local (string field_name,
-			       ulong value,
-			       bool recurse = true) {
-    synchronized(this) {
-      //call the super function to get child recursion and any registered fields
-      super.set_int_local(field_name, value, recurse);
-
-      //set the local properties
-      if(uvm_is_match(field_name, "recording_detail"))
-	_recording_detail = cast(uint) value;
-
-    }
-  }
-
-  override void set_int_local (string field_name,
-			       uint value,
-			       bool recurse = true) {
-    synchronized(this) {
-      //call the super function to get child recursion and any registered fields
-      super.set_int_local(field_name, value, recurse);
-
-      //set the local properties
-      if(uvm_is_match(field_name, "recording_detail"))
-	_recording_detail = cast(uint) value;
-
-    }
-  }
-
-  override void set_int_local (string field_name,
-			       ushort value,
-			       bool recurse = true) {
-    synchronized(this) {
-      //call the super function to get child recursion and any registered fields
-      super.set_int_local(field_name, value, recurse);
-
-      //set the local properties
-      if(uvm_is_match(field_name, "recording_detail"))
-	_recording_detail = cast(uint) value;
-
-    }
-  }
-
-  override void set_int_local (string field_name,
-			       ubyte value,
-			       bool recurse = true) {
-    synchronized(this) {
-      //call the super function to get child recursion and any registered fields
-      super.set_int_local(field_name, value, recurse);
-
-      //set the local properties
-      if(uvm_is_match(field_name, "recording_detail"))
-	_recording_detail = cast(uint) value;
-
-    }
-  }
-
-  override void set_int_local (string field_name,
-			       bool value,
-			       bool recurse = true) {
-    synchronized(this) {
-      //call the super function to get child recursion and any registered fields
-      super.set_int_local(field_name, value, recurse);
-
-      //set the local properties
-      if(uvm_is_match(field_name, "recording_detail"))
-	_recording_detail = cast(uint) value;
-
-    }
-  }
-
+  // override void uvm_field_auto_set(string field_name, uint value,
+  // 				   ref bool matched, string prefix,
+  // 				   uvm_object[] hier) {
+  //   super.uvm_field_auto_set(field_name, value, matched, prefix, hier);
+  //   if(uvm_is_match(field_name, "recording_detail")) {
+  //     _recording_detail = value;
+  //   }
+  // }
+  
   @uvm_protected_sync
   private uvm_component _m_parent;
 
