@@ -32,9 +32,11 @@ class TestBench: RootEntity
   uvm_entity!(test_root) tb;
 }
 
-@UVM_DEFAULT
 class test: uvm_test
 {
+  @UVM_DEFAULT:
+
+  // @UVM_NO_AUTO
   foo bar;
   
   mixin uvm_component_utils;
@@ -44,10 +46,19 @@ class test: uvm_test
     print_config_matches = true;
   }
 
+  override void build_phase(uvm_phase phase) {
+    bar = new foo("bar", this);
+  }
+  
   override void run_phase(uvm_phase phase) {
     set_local("ba?.x[2]", 2719);
     set_local("*z", "bla");
     bar.set_int_local("y", 1729);
+    auto f = new frop("boo");
+    f.y = 42;
+    f.print();
+    bar.print();
+    bar.set_local("boo", f);
     bar.print();
   }
   
@@ -63,11 +74,15 @@ class foo: uvm_component
   int y;
 
   string z;
+
+  @UVM_NO_AUTO
+  frop boo;
   
   mixin uvm_component_utils;
   
   this(string name, uvm_component parent){
     super(name, parent);
+    boo = new frop("boo");
     print_config_matches = true;
   }
 
@@ -78,7 +93,19 @@ class foo: uvm_component
   }
 
 }
+
+class frop: uvm_object
+{
+  mixin uvm_object_utils;
   
+  @UVM_DEFAULT:
+  int y;
+
+  this(string name=""){
+    super(name);
+  }
+}
+
 int main(string[] argv) {
   TestBench tb = new TestBench;
   tb.multiCore(0, 0);

@@ -1101,6 +1101,33 @@ abstract class uvm_object: uvm_void
       }
       else return false;
     }
+    else static if ((isIntegral!U || is(U == bool)) &&
+		   is(E == enum) && E.sizeof >= U.sizeof) {
+      var = cast(E) value;
+      return true;
+    }
+    else static if (((isIntegral!E || isBitVector!E) &&
+		     isBitVector!U) ||
+		    (isIntegral!E && isIntegral!U)) {
+      E v = cast(E) value;
+      if (v == value) {
+	var = v;
+	return true;
+      }
+      else {
+	return false;
+      }
+    }
+    else static if (isBitVector!E && isIntegral!U) {
+      E v = cast(E) value.toBitVec;
+      if (v == value) {
+	var = v;
+	return true;
+      }
+      else {
+	return false;
+      }
+    }
     else {
       return false;
     }
@@ -1112,7 +1139,19 @@ abstract class uvm_object: uvm_void
       {
 	// m_uvm_field_automation(null, UVM_SETSTR, field_name);
 	bool matched;
-	uvm_field_auto_set(field_name, value, matched, "", []);
+	static if (isBitVector!T) {
+	  static if (T.SIZE > 64) {
+	    uvm_bitstream_t v = value;
+	  }
+	  else {
+	    uvm_integral_t v = value;
+	  }
+	}
+	else {
+	  alias v = value;
+	}
+	
+	uvm_field_auto_set(field_name, v, matched, "", []);
 	if (matched is false) {
 	  uvm_report_error("NOMTC",
 			   format("did not find a match for field %s (@%0d)",

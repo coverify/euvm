@@ -490,6 +490,13 @@ mixin template m_uvm_field_auto_utils(T)
     uvm_set_local(this, field_name, value, matched, prefix, hier);
   }
   
+  override void uvm_field_auto_set(string field_name, uvm_object value,
+				   ref bool matched, string prefix,
+				   uvm_object[] hier) {
+    super.uvm_field_auto_set(field_name, value, matched, prefix, hier);
+    uvm_set_local(this, field_name, value, matched, prefix, hier);
+  }
+  
 
   void uvm_set_local(size_t I=0, T, U)(T t, string regx, U value,
 				       ref bool matched, string prefix = "",
@@ -515,7 +522,7 @@ mixin template m_uvm_field_auto_utils(T)
 	      cyclic = true;
 	    }
 	  }
-	  if (! cyclic) {
+	  if (! cyclic && t.tupleof[I] !is null) {
 	    t.tupleof[I].uvm_field_auto_set(regx, value, matched,
 					    name ~ ".", hier ~ this);
 	  }
@@ -573,7 +580,7 @@ mixin template m_uvm_field_auto_utils(T)
 		cyclic = true;
 	      }
 	    }
-	    if (! cyclic) {
+	    if (! cyclic && t[index] !is null) {
 	      t[index].uvm_field_auto_set(regx, value, matched,
 					  name ~ ".", hier ~ this);
 	    }
