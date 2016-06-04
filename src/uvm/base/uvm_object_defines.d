@@ -57,7 +57,7 @@ mixin template uvm_object_utils(T=void)
   mixin m_uvm_object_create_func!(U);
   mixin m_uvm_get_type_name_func!(U);
   mixin m_uvm_field_auto_utils!(U);
-  version(UVM_NORANDOM) {}
+  version(UVM_NO_RAND) {}
   else {
     import esdl.data.rand;
     mixin Randomization;
@@ -134,7 +134,7 @@ mixin template uvm_component_utils(T=void)
   mixin uvm_component_auto_elab_mixin;
 
   mixin m_uvm_field_auto_utils!(U);
-  version(UVM_NORANDOM) { }
+  version(UVM_NO_RAND) { }
   else {
     import esdl.data.rand;
     mixin Randomization;
@@ -364,13 +364,13 @@ mixin template m_uvm_field_auto_utils(T)
   }
   
   void uvm_field_auto_all_fields(alias F, size_t I=0, T)(T lhs, T rhs) {
-    version(UVM_NORANDOM) {}
+    version(UVM_NO_RAND) {}
     else {
       import esdl.data.rand;
     }
     static if(I < lhs.tupleof.length) {
       alias U=typeof(T.tupleof[I]);
-      version(UVM_NORANDOM) {
+      version(UVM_NO_RAND) {
 	if(F!(I)(lhs, rhs)) {
 	  // shortcircuit useful for compare etc
 	  return;
@@ -403,13 +403,13 @@ mixin template m_uvm_field_auto_utils(T)
   }
 
   void uvm_field_auto_all_fields(alias F, size_t I=0, T)(T t) {
-    version(UVM_NORANDOM) {}
+    version(UVM_NO_RAND) {}
     else {
       import esdl.data.rand;
     }
     static if(I < t.tupleof.length) {
       alias U=typeof(t.tupleof[I]);
-      version(UVM_NORANDOM) {
+      version(UVM_NO_RAND) {
 	F!(I)(t);
       }
       else {

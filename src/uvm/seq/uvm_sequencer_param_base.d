@@ -38,7 +38,7 @@ import uvm.meta.misc;
 
 import esdl.data.queue;
 
-version(UVM_NORANDOM) {}
+version(UVM_NO_RAND) {}
  else {
   import esdl.data.rand;
  }   
@@ -133,7 +133,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
       REQ param_t = cast(REQ) t;
       if (param_t !is null) {
 	if (rerandomize is true) {
-	  version(UVM_NORANDOM) {}
+	  version(UVM_NO_RAND) {}
 	  else {
 	    try {
 	      randomize(param_t);

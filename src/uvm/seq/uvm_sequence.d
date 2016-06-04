@@ -32,7 +32,7 @@ import uvm.seq.uvm_sequencer_param_base;
 
 import std.string: format;
 
-version(UVM_NORANDOM) {}
+version(UVM_NO_RAND) {}
  else {
    import esdl.data.rand;
  }
@@ -53,7 +53,7 @@ abstract class uvm_sequence (REQ = uvm_sequence_item, RSP = REQ):
 
   alias sequencer_t = uvm_sequencer_param_base!(REQ, RSP);
 
-  version(UVM_NORANDOM) {
+  version(UVM_NO_RAND) {
     @uvm_public_sync
       private sequencer_t        _param_sequencer;
   }
@@ -67,7 +67,7 @@ abstract class uvm_sequence (REQ = uvm_sequence_item, RSP = REQ):
   // The sequence contains a field of the request type called req.  The user
   // can use this field, if desired, or create another field to use.  The
   // default ~do_print~ will print this field.
-  version(UVM_NORANDOM) {
+  version(UVM_NO_RAND) {
     @uvm_public_sync
       private REQ                _req;
   }
@@ -82,7 +82,7 @@ abstract class uvm_sequence (REQ = uvm_sequence_item, RSP = REQ):
   // The sequence contains a field of the response type called rsp.  The user
   // can use this field, if desired, or create another field to use.   The
   // default ~do_print~ will print this field.
-  version(UVM_NORANDOM) {
+  version(UVM_NO_RAND) {
     @uvm_public_sync
       private RSP                _rsp;
   }

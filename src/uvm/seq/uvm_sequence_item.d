@@ -53,7 +53,7 @@ import uvm.meta.misc;
 import uvm.meta.meta;
 import esdl.data.queue;
 
-version(UVM_NORANDOM) {}
+version(UVM_NO_RAND) {}
  else {
    import esdl.data.rand;
  }
@@ -62,7 +62,7 @@ class uvm_sequence_item: uvm_transaction
 {
   mixin(uvm_sync_string);
 
-  version(UVM_NORANDOM) {}
+  version(UVM_NO_RAND) {}
   else {
     mixin Randomization;
   }
@@ -73,7 +73,7 @@ class uvm_sequence_item: uvm_transaction
   @uvm_protected_sync
   private int  _m_depth = -1;
 
-  version(UVM_NORANDOM) {
+  version(UVM_NO_RAND) {
     @uvm_protected_sync
       protected uvm_sequencer_base _m_sequencer;
     @uvm_protected_sync

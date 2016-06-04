@@ -149,7 +149,7 @@ import uvm.meta.misc;
 import esdl.base.core;
 import esdl.data.queue;
 
-version(UVM_NORANDOM) {}
+version(UVM_NO_RAND) {}
  else {
    import esdl.data.rand;
  }
@@ -1445,7 +1445,7 @@ class uvm_sequence_base: uvm_sequence_item
     //
     // Used as an identifier in constraints for a specific sequence type.
 
-    version(UVM_NORANDOM) {
+    version(UVM_NO_RAND) {
       @uvm_public_sync
 	private uint _seq_kind;
     }
@@ -1564,7 +1564,7 @@ class uvm_sequence_base: uvm_sequence_item
 
       m_seq.set_item_context(this, m_sequencer);
 
-      version(UVM_NORANDOM) {}
+      version(UVM_NO_RAND) {}
       else {
 	try {
 	  m_seq.randomize();
@@ -1860,7 +1860,7 @@ class uvm_sequence_base: uvm_sequence_item
       uvm_create_on(SEQ_OR_ITEM, SEQR);
       uvm_sequence_base seq_ =
 	cast(uvm_sequence_base) start_item(SEQ_OR_ITEM, PRIORITY);
-      version(UVM_NORANDOM) {}
+      version(UVM_NO_RAND) {}
       else {
 	if((seq_ is null || ! seq_.do_not_randomize)) {
 	  try {
@@ -1974,7 +1974,7 @@ class uvm_sequence_base: uvm_sequence_item
     uvm_sequence_base seq_ = cast(uvm_sequence_base) SEQ_OR_ITEM;
     if (seq_ is null) start_item(SEQ_OR_ITEM, PRIORITY);
     else seq_.set_item_context(this,SEQ_OR_ITEM.get_sequencer());
-    version(UVM_NORANDOM) {}
+    version(UVM_NO_RAND) {}
     else {
       if ((seq_ is null || !seq_.do_not_randomize)) {
 	try {

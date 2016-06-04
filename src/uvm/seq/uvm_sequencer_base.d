@@ -44,7 +44,7 @@ import uvm.meta.misc;
 import esdl.data.queue;
 import esdl.base.core;
 
-version(UVM_NORANDOM) {}
+version(UVM_NO_RAND) {}
  else {
    import esdl.data.rand;
  }
@@ -387,7 +387,7 @@ class uvm_sequencer_base: uvm_component
       seq.reseed();
       seq.set_starting_phase(phase);
   
-      version(UVM_NORANDOM) {}
+      version(UVM_NO_RAND) {}
       else {
 	if(!seq.do_not_randomize) {
 	  try {
@@ -1655,7 +1655,7 @@ class uvm_sequencer_base: uvm_component
     
     protected int[string] _sequence_ids;
 
-    version(UVM_NORANDOM) {
+    version(UVM_NO_RAND) {
       protected int _seq_kind;
     }
     else {
@@ -1788,7 +1788,7 @@ class uvm_sequencer_base: uvm_component
 	  m_seq.set_sequencer(this);
 	  m_seq.reseed();
 	}
-	version(UVM_NORANDOM) {}
+	version(UVM_NO_RAND) {}
 	else {
 	  try{
 	    m_seq.randomize();

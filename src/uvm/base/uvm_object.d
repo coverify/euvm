@@ -67,7 +67,7 @@ import uvm.meta.misc;
 import esdl.base.core;
 import esdl.data.bvec;
 
-version(UVM_NORANDOM) {}
+version(UVM_NO_RAND) {}
  else {
    import esdl.data.rand;
  }
@@ -102,7 +102,7 @@ abstract class uvm_object: uvm_void
     return _m_uvm_status_container;
   }
 
-  version(UVM_NORANDOM) {}
+  version(UVM_NO_RAND) {}
   else {
     mixin Randomization;
   }
@@ -160,7 +160,7 @@ abstract class uvm_object: uvm_void
   // not perform any function.
 
   final void reseed (int seed) {
-    version(UVM_NORANDOM) {}
+    version(UVM_NO_RAND) {}
     else {
       this.srandom(seed);
     }
@@ -169,7 +169,7 @@ abstract class uvm_object: uvm_void
   final void reseed () {
     synchronized(this) {
       if(use_uvm_seeding) {
-	version(UVM_NORANDOM) {}
+	version(UVM_NO_RAND) {}
 	else {
 	  this.srandom(uvm_create_random_seed(get_type_name(),
 					      get_full_name()));
