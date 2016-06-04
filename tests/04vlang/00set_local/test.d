@@ -34,10 +34,9 @@ class TestBench: RootEntity
 
 class test: uvm_test
 {
-  @UVM_DEFAULT:
-
-  // @UVM_NO_AUTO
-  foo bar;
+  @UVM_DEFAULT {
+    foo bar;
+  }
   
   mixin uvm_component_utils;
   
@@ -69,14 +68,15 @@ class test: uvm_test
 
 class foo: uvm_component
 {
-  @UVM_DEFAULT:
-  int[4] x;
-  int y;
+  @UVM_DEFAULT {
+    int[4] x;
+    int y;
 
-  string z;
+    string z;
 
-  @UVM_NO_AUTO
-  frop boo;
+    @UVM_NO_AUTO
+      frop boo;
+  }
   
   mixin uvm_component_utils;
   
@@ -98,9 +98,10 @@ class frop: uvm_object
 {
   mixin uvm_object_utils;
   
-  @UVM_DEFAULT:
-  int y;
-
+  @UVM_DEFAULT {
+    int y;
+  }
+  
   this(string name=""){
     super(name);
   }

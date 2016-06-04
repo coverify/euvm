@@ -356,6 +356,8 @@ mixin template m_uvm_field_auto_utils(T)
   import uvm.seq.uvm_sequence_item;
   import uvm.seq.uvm_sequence_base;
   import uvm.base.uvm_object_globals;
+  import uvm.base.uvm_printer;
+  import uvm.base.uvm_recorder;
   import std.traits: isArray;
   import std.string: format;
 
@@ -364,10 +366,6 @@ mixin template m_uvm_field_auto_utils(T)
   }
   
   void uvm_field_auto_all_fields(alias F, size_t I=0, T)(T lhs, T rhs) {
-    version(UVM_NO_RAND) {}
-    else {
-      import esdl.data.rand;
-    }
     static if(I < lhs.tupleof.length) {
       alias U=typeof(T.tupleof[I]);
       version(UVM_NO_RAND) {
@@ -377,6 +375,7 @@ mixin template m_uvm_field_auto_utils(T)
 	}
       }
       else {
+	import esdl.data.rand;
 	static if(! is(U: _esdl__ConstraintBase)) {
 	  if(F!(I)(lhs, rhs)) {
 	    // shortcircuit useful for compare etc
@@ -403,16 +402,13 @@ mixin template m_uvm_field_auto_utils(T)
   }
 
   void uvm_field_auto_all_fields(alias F, size_t I=0, T)(T t) {
-    version(UVM_NO_RAND) {}
-    else {
-      import esdl.data.rand;
-    }
     static if(I < t.tupleof.length) {
       alias U=typeof(t.tupleof[I]);
       version(UVM_NO_RAND) {
 	F!(I)(t);
       }
       else {
+	import esdl.data.rand;
 	static if(! is(U: _esdl__ConstraintBase)) {
 	  F!(I)(t);
 	}
@@ -498,148 +494,97 @@ mixin template m_uvm_field_auto_utils(T)
   }
   
 
-  void uvm_set_local(size_t I=0, T, U)(T t, string regx, U value,
-				       ref bool matched, string prefix = "",
-				       uvm_object[] hier = []) {
-    import std.traits: isArray;
-    static if(I < t.tupleof.length) {
-      enum int FLAGS = uvm_field_auto_get_flags!(t, I);
-      alias E = typeof(t.tupleof[I]);
-      string name = prefix ~ __traits(identifier, T.tupleof[I]);
-      // handle arrays
-      static if (isArray!E && ! is(E: string)) {
-	// Array elements inherit FLAGS
-	uvm_set_local!FLAGS(t.tupleof[I], 0, // index
-			    regx, value, matched, name, hier);
-      }
-      else {
-	static if ((! (FLAGS & UVM_REFERENCE)) &&
-		   is(E: uvm_object)) {
-	  bool cyclic = false;
-	  // first check for any cycle
-	  foreach (obj; hier) {
-	    if (obj is t.tupleof[I]) {
-	      cyclic = true;
-	    }
-	  }
-	  if (! cyclic && t.tupleof[I] !is null) {
-	    t.tupleof[I].uvm_field_auto_set(regx, value, matched,
-					    name ~ ".", hier ~ this);
-	  }
-	}
-	static if(FLAGS & UVM_READONLY) {
-	  if(uvm_is_match(regx, name)) {
-	    uvm_report_warning("RDONLY",
-			       format("Readonly argument match %s is ignored",
-				      name), UVM_NONE);
-	  }
-	}
-	else {
-	  if(uvm_is_match(regx, name)) {
-	    matched = true;
-	    if (! uvm_set_value!(E, U)(t.tupleof[I], value)) {
-	      uvm_report_error("SETLCL",
-			       format("Could not set value %s to variable %s",
-				      value, name));
-	    }
-	  }
-	  else {
-	    // uvm_report_info("NOMATCH", "set_object()" ~ ": Could not match string " ~
-	    // 		    regx ~ " to field " ~ name,
-	    // 		    UVM_LOW);
-	  }
-	}
-      }
-      uvm_set_local!(I+1)(t, regx, value, matched, prefix, hier);
-    }
-  }
-
-  // Handle array elements
-  void uvm_set_local(int FLAGS, T, U)(ref T t, size_t index, string regx, U value,
-				      ref bool matched, string prefix = "",
-				      uvm_object[] hier = [])
-    if (isArray!T && ! is(T: string)) {
-      import std.traits: isArray;
-      import std.string: format;
-      if (index < t.length) {
-	alias E = typeof(t[index]);
-	string name = prefix ~ format("[%0d]", index);
-	// handle arrays
-	static if (isArray!E && ! is(E: string)) {
-	  // Array elements inherit FLAGS
-	  uvm_set_local!FLAGS(t[index], 0, regx, value,
-			      matched, name, hier);
-	}
-	else {
-	  static if ((! (FLAGS & UVM_REFERENCE)) &&
-		     is(E: uvm_object)) {
-	    bool cyclic = false;
-	    // first check for any cycle
-	    foreach (obj; hier) {
-	      if (obj is t[index]) {
-		cyclic = true;
-	      }
-	    }
-	    if (! cyclic && t[index] !is null) {
-	      t[index].uvm_field_auto_set(regx, value, matched,
-					  name ~ ".", hier ~ this);
-	    }
-	  }
-	  static if(FLAGS & UVM_READONLY) {
-	    if(uvm_is_match(regx, name)) {
-	      uvm_report_warning("RDONLY",
-				 format("Readonly argument match %s is ignored",
-					name),
-				 UVM_NONE);
-	    }
-	  }
-	  else {
-	    if(uvm_is_match(regx, name)) {
-	      matched = true;
-	      if (! uvm_set_value!(E, U)(t[index], value)) {
-		uvm_report_error("SETLCL",
-				 format("Could not set value %s to variable %s",
-					value, name));
-	      }
-	    }
-	    else {
-	      // uvm_report_info("NOMATCH", "set_object()" ~ ": Could not match string " ~
-	      // 		      regx ~ " to field " ~ name, UVM_LOW);
-	    }
-	  }
-	}
-	uvm_set_local!(FLAGS)(t, index+1, regx, value, matched, prefix, hier);
-      }
-    }
-
 
   // Copy
   override void uvm_field_auto_copy(uvm_object rhs) {
     auto rhs_ = cast(T) rhs;
     if(rhs_ is null) {
-      uvm_error("uvm_field_auto_copy", "cast failed, check type compatability");
+      uvm_error("UVMUTLS", "cast failed, check type compatability");
     }
-    uvm_field_auto_all_fields!uvm_field_auto_copy_field(this, rhs_);
+    super.uvm_field_auto_copy(rhs);
+    uvm_field_auto_copy_field(this, rhs_);
   }
 
   // copy the Ith field
-  bool uvm_field_auto_copy_field(size_t I=0, T)(T lhs, T rhs) {
-    enum int FLAGS = uvm_field_auto_get_flags!(lhs, I);
-    static if(FLAGS & UVM_COPY &&
-	      !(FLAGS & UVM_NOCOPY)) {
-      debug(UVM_UTILS) {
-	pragma(msg, "Copying : " ~ lhs.tupleof[I].stringof);
+  void uvm_field_auto_copy_field(size_t I=0, T)(T lhs, T rhs) {
+    import std.traits;
+    static if (I < lhs.tupleof.length) {
+      // pragma(msg, T.tupleof[I].stringof);
+      alias U=typeof(lhs.tupleof[I]);
+      enum int FLAGS = uvm_field_auto_get_flags!(lhs, I);
+      static if(FLAGS & UVM_COPY &&
+		!(FLAGS & UVM_NOCOPY)) {
+	// version(UVM_NO_RAND) { }
+	// else {
+	//   import esdl.data.rand;
+	//   static if (is(U: _esdl__ConstraintBase)) {
+	//     uvm_field_auto_copy_field!(I+1)(lhs, rhs);
+	//   }
+	// }
+	// debug(UVM_UTILS) {
+	//   pragma(msg, "Copying : " ~ lhs.tupleof[I].stringof);
+	// }
+	static if (is(U: uvm_object)) {
+	  static if((FLAGS & UVM_REFERENCE) != 0) {
+	    lhs.tupleof[I] = rhs.tupleof[I];
+	  }
+	  else {
+	    lhs.tupleof[I] = cast(U) rhs.tupleof[I].clone;
+	  }
+	}
+	else static if (isIntegral!U || isBitVector!U || is(U == string)) {
+	  lhs.tupleof[I] = rhs.tupleof[I];
+	}
+	else static if (isArray!U) {
+	  static if (isDynamicArray!U) {
+	    lhs.tupleof[I].length = rhs.tupleof[I].length;
+	  }
+	  uvm_field_auto_copy_field!FLAGS(lhs.tupleof[I], rhs.tupleof[I], 0);
+	}
+	// else {
+	//   uvm_error("UVMUTLS", "Do not know how to copy :" ~ U.stringof);
+	// }
       }
-      lhs.tupleof[I] = rhs.tupleof[I];
     }
-    return false;
+    static if (I < lhs.tupleof.length) {
+      uvm_field_auto_copy_field!(I+1)(lhs, rhs);
+    }
+  }
+
+  // handle arrays
+  void uvm_field_auto_copy_field(int FLAGS, E)(ref E lhs, ref E rhs, int index) {
+    import std.traits;
+    if (index < rhs.length) {
+      alias U=typeof(lhs[index]);
+      static if (is(U: uvm_object)) {
+	static if((FLAGS & UVM_REFERENCE) != 0) {
+	  lhs[index] = rhs[index];
+	}
+	else {
+	  lhs[index] = cast(U) rhs[index].clone;
+	}
+      }
+      else static if (isIntegral!U || isBitVector!U || is(U == string)) {
+	lhs[index] = rhs[index];
+      }
+      else static if (isArray!U) {
+	static if (isDynamicArray!U) {
+	  lhs[index].length = rhs[index].length;
+	}
+	uvm_field_auto_copy_field!FLAGS(lhs[index], rhs[index], 0);
+      }
+      else {
+	uvm_error("UVMUTLS", "Do not know how to copy :" ~ U.stringof);
+      }
+      uvm_field_auto_copy_field!FLAGS(lhs, rhs, index+1);
+    }
   }
 
   // Comparison
   override void uvm_field_auto_compare(uvm_object rhs) {
     auto rhs_ = cast(T) rhs;
     if(rhs_ is null) {
-      uvm_error("uvm_field_auto_compare", "cast failed, check type compatability");
+      uvm_error("UVMUTLS", "cast failed, check type compatability");
     }
     uvm_field_auto_all_fields!uvm_field_auto_compare_field(this, rhs_);
   }
@@ -678,142 +623,17 @@ mixin template m_uvm_field_auto_utils(T)
   }
 
   // record
-  override void uvm_field_auto_record() {
-    uvm_field_auto_all_fields!uvm_field_auto_record_field(this);
-  }
-
-  // record the Ith field
-  void uvm_field_auto_record_field(size_t I=0, T)(T t) {
-    import std.traits: isIntegral, isFloatingPoint;
-    enum int FLAGS = uvm_field_auto_get_flags!(t, I);
-    static if(FLAGS & UVM_RECORD &&
-	      !(FLAGS & UVM_NORECORD)) {
-      debug(UVM_UTILS) {
-	pragma(msg, "Recording : " ~ t.tupleof[I].stringof);
-      }
-      enum string name = __traits(identifier, T.tupleof[I]);
-      auto value = t.tupleof[I];
-      auto recorder = m_uvm_status_container.recorder;
-      alias U=typeof(t.tupleof[I]);
-      // do not use isIntegral -- we keep that for enums
-      static if(is(U == SimTime)) {
-	recorder.record(name, value);
-      }
-      else static if(isBitVector!U  ||
-		is(U == byte)  || is(U == ubyte)  ||
-		is(U == short) || is(U == ushort) ||
-		is(U == int)   || is(U == uint) ||
-		is(U == long)  || is(U == ulong)) {
-	recorder.record(name, value,
-			cast(uvm_radix_enum) (FLAGS & UVM_RADIX));
-      }
-      else static if(isIntegral!U) { // to cover enums
-	recorder.record(name, value, UVM_ENUM);
-      }
-      else static if(is(U: uvm_object)) {
-	recorder.record(name, value);
-      }
-      else static if(is(U == string) || is(U == char[])) {
-	recorder.record(name, value);
-      }
-      // enum should be already handled as part of integral
-      else static if(isFloatingPoint!U) {
-	recorder.record(name, value);
-      }
-      else static if(is(U: EventObj)) {
-	recorder.record_generic(name, "event", "");
-      }
-      else // static if(isIntegral!U || isBoolean!U )
-	{
-	  import std.conv;
-	  recorder.record_generic(name, U.stringof, value.to!string);
-	}
-    }
+  override void uvm_field_auto_record(uvm_recorder recorder) {
+    super.uvm_field_auto_record(recorder);
+    uvm_field_auto_record_field(this, recorder);
   }
 
   // print
-  override void uvm_field_auto_sprint() {
-    uvm_field_auto_all_fields!uvm_field_auto_sprint_field(this);
+  override void uvm_field_auto_sprint(uvm_printer printer) {
+    super.uvm_field_auto_sprint(printer);
+    uvm_field_auto_sprint_field(this, printer);
+    do_print(printer);
   }
 
-  // print the Ith field
-  void uvm_field_auto_sprint_field(size_t I=0, T)(T t) {
-    import std.traits: isIntegral, isFloatingPoint;
-    enum int FLAGS = uvm_field_auto_get_flags!(t, I);
-    static if(FLAGS & UVM_PRINT &&
-	      !(FLAGS & UVM_NOPRINT)) {
-      debug(UVM_UTILS) {
-	pragma(msg, "Printing : " ~ t.tupleof[I].stringof);
-      }
-      enum string name = __traits(identifier, T.tupleof[I]);
-      auto value = t.tupleof[I];
-      auto printer = m_uvm_status_container.printer;
-      alias U=typeof(t.tupleof[I]);
-      // do not use isIntegral -- we keep that for enums
-      static if(is(U == SimTime)) {
-	printer.print(name, value);
-      }
-      else static if(isBitVector!U  ||
-		is(U == byte)  || is(U == ubyte)  ||
-		is(U == short) || is(U == ushort) ||
-		is(U == int)   || is(U == uint) ||
-		is(U == long)  || is(U == ulong)) {
-	printer.print(name, value,
-		      cast(uvm_radix_enum) (FLAGS & UVM_RADIX));
-      }
-      else static if(isIntegral!U) { // to cover enums
-	printer.print(name, value, UVM_ENUM);
-      }
-      else static if(is(U: uvm_object)) {
-	static if((FLAGS & UVM_REFERENCE) != 0) {
-	  printer.print_object_header(name, value);
-	}
-	else {
-	  printer.print(name, value);
-	}
-      }
-      else static if(is(U == string) || is(U == char[])) {
-	printer.print(name, value);
-      }
-      // enum should be already handled as part of integral
-      else static if(isFloatingPoint!U) {
-	printer.print(name, value);
-      }
-      else static if(is(U: EventObj)) {
-	printer.print_generic(name, "event", -2, "");
-      }
-      else // static if(isIntegral!U || isBoolean!U )
-	{
-	  import std.conv;
-	  printer.print_generic(name, U.stringof, -2, value.to!string);
-	}
-    }
-  }
 }
 
-
-template uvm_field_auto_get_flags(alias t, size_t I) {
-  alias typeof(t) T;
-  enum int class_flags =
-    uvm_field_auto_acc_flags!(__traits(getAttributes, T));
-  enum int FLAGS =
-    uvm_field_auto_acc_flags!(__traits(getAttributes, t.tupleof[I]));
-  enum int uvm_field_auto_get_flags = FLAGS | class_flags;
-}
-
-template uvm_field_auto_acc_flags(A...)
-{
-  import uvm.base.uvm_object_globals: uvm_recursion_policy_enum,
-                                      uvm_field_auto_enum;
-  static if(A.length is 0) {
-    enum int uvm_field_auto_acc_flags = 0;
-  }
-  else static if(is(typeof(A[0]) == uvm_recursion_policy_enum) ||
-		 is(typeof(A[0]) == uvm_field_auto_enum)) {
-      enum int uvm_field_auto_acc_flags = A[0] |
-	uvm_field_auto_acc_flags!(A[1..$]);
-    }
-    else {
-      enum int uvm_field_auto_acc_flags = uvm_field_auto_acc_flags!(A[1..$]);
-    }
-}

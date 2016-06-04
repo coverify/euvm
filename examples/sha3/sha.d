@@ -6,9 +6,9 @@ import std.string: format;
 
 extern(C) ubyte* sponge(ubyte*, uint);
 
-@UVM_DEFAULT
 class sha_st: uvm_sequence_item
 {
+  @UVM_DEFAULT:
   @rand ubyte data;
   bool start;
   bool end;
@@ -39,9 +39,9 @@ class sha_st: uvm_sequence_item
   // }
 }
 
-@UVM_DEFAULT
 class sha_phrase_seq: uvm_sequence!sha_st
 {
+  @UVM_DEFAULT:
   ubyte[] phrase;
 
   mixin uvm_object_utils;
@@ -116,9 +116,9 @@ class sha_phrase_seq: uvm_sequence!sha_st
 
 }
 
-@UVM_DEFAULT
 class sha_st_seq: uvm_sequence!sha_st
 {
+  @UVM_DEFAULT:
   sha_st reset;
   sha_st req;
   sha_st end;

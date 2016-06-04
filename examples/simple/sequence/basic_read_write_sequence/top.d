@@ -12,9 +12,9 @@ enum int NUM_LOOPS=10;
 //--------------------------------------------------------------------
 // bus_trans
 //--------------------------------------------------------------------
-@UVM_DEFAULT
 class bus_trans: uvm_sequence_item
 {
+  @UVM_DEFAULT:
 
   @rand Bit!12 addr;
   @rand Bit!8 data;
@@ -51,9 +51,9 @@ class bus_req: bus_trans
 //--------------------------------------------------------------------
 // bus_rsp
 //--------------------------------------------------------------------
-@UVM_DEFAULT
 class bus_rsp: bus_trans
 {
+  @UVM_DEFAULT:
 
   status_t status;
   
