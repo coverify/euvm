@@ -35,7 +35,7 @@ class TestBench: RootEntity
 class test: uvm_test
 {
   @UVM_DEFAULT {
-    foo bar;
+    foo[4] bar;
   }
   
   mixin uvm_component_utils;
@@ -46,19 +46,20 @@ class test: uvm_test
   }
 
   override void build_phase(uvm_phase phase) {
-    bar = new foo("bar", this);
+    // bar = new foo("bar", this);
   }
   
   override void run_phase(uvm_phase phase) {
-    set_local("ba?.x[2]", 2719);
+    set_local("ba*.x[2]", 2719);
     set_local("*z", "bla");
-    bar.set_int_local("y", 1729);
+    bar[0].set_int_local("y", 1729);
+    bar[2].set_int_local("y", 2);
     auto f = new frop("boo");
     f.y = 42;
-    f.print();
-    bar.print();
-    bar.set_local("boo", f);
-    bar.print();
+    // f.print();
+    // print();
+    bar[0].set_local("boo", f);
+    // print();
   }
   
   override void report() { // functions in d are by default virtual

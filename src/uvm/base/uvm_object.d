@@ -441,6 +441,33 @@ abstract class uvm_object: uvm_void
 
   void uvm_field_auto_sprint(uvm_printer printer) { }
 
+  static void uvm_field_auto_sprint_field(int FLAGS, T)
+    (T t, size_t index, string name, uvm_printer printer) {
+    if (index < t.length) {
+      alias E = ElementType!T;
+      static if (isArray!E) {
+	uvm_field_auto_sprint_field!FLAGS(t[index], 0,
+					  name ~ format("[%d]", index),
+					  printer);
+      }
+      else {
+	static if (is(E: uvm_object)) {
+	  auto iname = name ~ format("[%d]", index);
+	  static if((FLAGS & UVM_REFERENCE) != 0) {
+	    printer.print_object_header(iname, t[index]);
+	  }
+	  else {
+	    printer.print(iname, t[index]);
+	  }
+	}
+	else {
+	  static assert(false);
+	}
+      }
+      uvm_field_auto_sprint_field!FLAGS(t, index+1, name, printer);
+    }
+  }
+
   // print the Ith field
   static void uvm_field_auto_sprint_field(size_t I=0, T)
     (T t, uvm_printer printer) {
@@ -500,7 +527,7 @@ abstract class uvm_object: uvm_void
 	    printer.print_generic(name, U.stringof, -2, value.to!string);
 	  }
 	  else static if (is(E: uvm_object)) {
-	    static assert(false, "To be implemented");
+	    uvm_field_auto_sprint_field!FLAGS(value, 0, name, printer);
 	  }
 	  else {
 	    static assert(false);
