@@ -638,7 +638,7 @@ class uvm_text_tr_stream: uvm_tr_stream
   // Internal reference to the text-based backend
   private uvm_text_tr_database _m_text_db;
 
-  mixin uvm_object_utils_norand;
+  mixin uvm_object_essentials;
 
   // Function: new
   // Constructor

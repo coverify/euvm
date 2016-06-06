@@ -8,14 +8,19 @@ extern(C) ubyte* sponge(ubyte*, uint);
 
 class sha_st: uvm_sequence_item
 {
-  @UVM_DEFAULT:
-  @rand ubyte data;
-  bool start;
-  bool end;
-  bool reset;
+
+  @UVM_DEFAULT {
+    @rand ubyte data;
+    bool start;
+    bool end;
+    bool reset;
+  }
 
   mixin uvm_object_utils;
-   
+
+  void preRandomize() {
+  }
+  
   this(string name = "sha_st") {
     super(name);
   }
@@ -41,14 +46,15 @@ class sha_st: uvm_sequence_item
 
 class sha_phrase_seq: uvm_sequence!sha_st
 {
-  @UVM_DEFAULT:
-  ubyte[] phrase;
-
   mixin uvm_object_utils;
 
-  sha_st reset;
-  sha_st req;
-  sha_st end;
+  @UVM_DEFAULT {
+    ubyte[] phrase;
+    sha_st reset;
+    sha_st req;
+    sha_st end;
+  }
+  
 
   this(string name="") {
     super(name);
@@ -118,13 +124,14 @@ class sha_phrase_seq: uvm_sequence!sha_st
 
 class sha_st_seq: uvm_sequence!sha_st
 {
-  @UVM_DEFAULT:
-  sha_st reset;
-  sha_st req;
-  sha_st end;
   mixin uvm_object_utils;
 
-  @rand uint seq_size;
+  @UVM_DEFAULT {
+    sha_st reset;
+    sha_st req;
+    sha_st end;
+    @rand uint seq_size;
+  }
 
   this(string name="") {
     super(name);
@@ -240,11 +247,12 @@ class sha_st_driver: uvm_driver!sha_st
 
 class sha_scoreboard: uvm_scoreboard
 {
+  mixin uvm_component_utils;
+
   this(string name, uvm_component parent = null) {
     super(name, parent);
   }
 
-  mixin uvm_component_utils;
 
   uvm_phase phase_run;
 
@@ -294,6 +302,7 @@ class sha_scoreboard: uvm_scoreboard
       }
       else {
 	uvm_error("MISMATCHED", "Scoreboard received unmatched response");
+	uvm_info("MISMATCHED", format("%s: expected \n %s: actual  ", expected[0..64], seq.phrase), UVM_NONE);
       }
       
       assert(phase_run !is null);
@@ -351,6 +360,7 @@ class sha_st_sequencer: uvm_sequencer!sha_st
 
 class sha_st_agent: uvm_agent
 {
+  mixin uvm_component_utils;
 
   sha_st_sequencer sequencer;
   sha_st_driver    driver;
@@ -360,8 +370,6 @@ class sha_st_agent: uvm_agent
 
   sha_scoreboard   scoreboard;
   
-  mixin uvm_component_utils;
-   
   this(string name, uvm_component parent = null) {
     super(name, parent);
   }

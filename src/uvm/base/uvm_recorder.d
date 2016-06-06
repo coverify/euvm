@@ -878,7 +878,7 @@ abstract class uvm_recorder: uvm_object
 class uvm_text_recorder: uvm_recorder
 {
 
-  mixin uvm_object_utils_norand;
+  mixin uvm_object_essentials;
 
   // Variable- m_text_db
   //
@@ -1044,11 +1044,11 @@ class uvm_text_recorder: uvm_recorder
       if(_policy != UVM_REFERENCE) {
 	if(value !is null) {
 	  if(value.m_uvm_status_container.check_cycle(value)) return;
-	  value.m_uvm_status_container.add_cycle(value);
+	  value.m_uvm_status_container.add_cycle_check(value);
 	  _scope_stack.down(name);
 	  value.record(this);
 	  _scope_stack.up();
-	  value.m_uvm_status_container.remove_cycle(value);
+	  value.m_uvm_status_container.remove_cycle_check(value);
 	}
       }
     }

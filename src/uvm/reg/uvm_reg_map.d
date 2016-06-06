@@ -91,7 +91,7 @@ class uvm_reg_map_info
 
 class uvm_reg_map: uvm_object
 {
-  mixin uvm_object_utils_norand;
+  mixin uvm_object_essentials;
    
   // info that is valid only if top-level map
   @uvm_private_sync

@@ -148,6 +148,12 @@ class uvm_comparer
   @uvm_public_sync
   private uint _result = 0;
 
+  public void incr_result() {
+    synchronized(this) {
+      ++_result;
+    }
+  }
+
 
   // Function: compare -- templatized version
 

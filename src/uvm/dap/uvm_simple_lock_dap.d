@@ -30,7 +30,7 @@ import uvm.base.uvm_printer;
 import uvm.base.uvm_packer;
 import uvm.base.uvm_globals;	// uvm_info
 import std.string: format;
-import uvm.base.uvm_object_defines; // uvm_object_utils_norand
+import uvm.base.uvm_object_defines; // uvm_object_essentials
 
 // Class: uvm_simple_lock_dap
 // Provides a 'Simple Lock' Data Access Policy.
@@ -49,7 +49,7 @@ class uvm_simple_lock_dap(T=int): uvm_set_get_dap_base!T
   // Used for self-references
   alias this_type = uvm_simple_lock_dap!T;
 
-  mixin uvm_object_utils_norand;
+  mixin uvm_object_essentials;
   // Parameterized Utils
   // `uvm_object_param_utils(uvm_simple_lock_dap#(T))
 

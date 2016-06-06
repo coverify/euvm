@@ -56,7 +56,7 @@ import uvm.meta.mailbox;
 
 class uvm_tlm_fifo_common(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
 {
-  mixin uvm_component_utils;
+  mixin uvm_component_essentials;
 
   enum string type_name = "uvm_tlm_fifo!(T)";
 
@@ -242,7 +242,7 @@ class uvm_tlm_fifo_common(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
 
 class uvm_tlm_fifo(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
 {
-  mixin uvm_component_utils;
+  mixin uvm_component_essentials;
   public this(string name=null, uvm_component parent = null, int size = 1) {
     synchronized(this) {
       super(name, parent, size);
@@ -253,7 +253,7 @@ class uvm_tlm_fifo(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
 
 class uvm_tlm_fifo_ingress(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
 {
-  mixin uvm_component_utils;
+  mixin uvm_component_essentials;
   public this(string name=null, uvm_component parent = null, int size = 1) {
     synchronized(this) {
       super(name, parent, size);
@@ -264,7 +264,7 @@ class uvm_tlm_fifo_ingress(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
 
 class uvm_tlm_fifo_egress(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
 {
-  mixin uvm_component_utils;
+  mixin uvm_component_essentials;
   public this(string name=null, uvm_component parent = null, int size = 1) {
     synchronized(this) {
       super(name, parent, size);

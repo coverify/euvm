@@ -57,7 +57,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   @uvm_private_sync
     private bool _get_next_item_called;
 
-  mixin uvm_component_utils;
+  mixin uvm_component_essentials;
 
 
   // Function: new

@@ -124,7 +124,7 @@ class uvm_root: uvm_component
 {
   // adding the mixin here results in gotchas if the user does not add
   // the mixin in the derived classes
-  // mixin uvm_component_utils;
+  // mixin uvm_component_essentials;
   
   mixin(uvm_sync_string);
 

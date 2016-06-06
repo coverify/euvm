@@ -249,7 +249,7 @@ abstract class uvm_printer
 	  if((knobs.depth == -1 || (knobs.depth > m_scope.depth())) &&
 	     ! value.m_uvm_status_container.check_cycle(value)) {
 
-	    value.m_uvm_status_container.add_cycle(value);
+	    value.m_uvm_status_container.add_cycle_check(value);
 	    if(name == "" && value !is null) {
 	      m_scope.down(value.get_name());
 	    }
@@ -276,7 +276,7 @@ abstract class uvm_printer
 	    else {
 	      m_scope.up('.');
 	    }
-	    value.m_uvm_status_container.remove_cycle(value);
+	    value.m_uvm_status_container.remove_cycle_check(value);
 	  }
 	}
       }
@@ -1001,6 +1001,7 @@ class uvm_printer_knobs {
   // Defines the number of elements at the head of a list to print.
   // Use -1 for no max.
 
+  @uvm_public_sync
   private int _begin_elements = 5;
 
 
@@ -1009,6 +1010,7 @@ class uvm_printer_knobs {
   // This defines the number of elements at the end of a list that
   // should be printed.
 
+  @uvm_public_sync
   private int _end_elements = 5;
 
 
@@ -1064,6 +1066,7 @@ class uvm_printer_knobs {
   // Indicates whether the radix string ('h, and so on) should be prepended to
   // an integral value when one is printed.
 
+  @uvm_public_sync
   private bool
   _show_radix = true;
 

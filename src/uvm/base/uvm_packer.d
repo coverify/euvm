@@ -98,7 +98,7 @@ class uvm_packer
 			     UVM_NONE);
 	  return;
 	}
-	value.m_uvm_status_container.add_cycle(value);
+	value.m_uvm_status_container.add_cycle_check(value);
 
 	if((policy != UVM_REFERENCE) && (value !is null) ) {
 	  if(use_metadata is true) {
@@ -114,7 +114,7 @@ class uvm_packer
 	    _m_bits.pack(cast(UBitVec!4) 0);
 	  }
 	}
-	value.m_uvm_status_container.remove_cycle(value);
+	value.m_uvm_status_container.remove_cycle_check(value);
       }
     }
 
@@ -394,7 +394,7 @@ class uvm_packer
 			   UVM_NONE);
 	return;
       }
-      value.m_uvm_status_container.add_cycle(value);
+      value.m_uvm_status_container.add_cycle_check(value);
 
       if(_use_metadata is true) {
 	UBitVec!4 v;
@@ -421,7 +421,7 @@ class uvm_packer
 	uvm_report_error("UNPOBJ",
 			 "cannot unpack into null object", UVM_NONE);
       }
-      value.m_uvm_status_container.remove_cycle(value);
+      value.m_uvm_status_container.remove_cycle_check(value);
     }
   }
 

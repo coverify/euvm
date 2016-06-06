@@ -91,7 +91,7 @@ class uvm_sequencer_base: uvm_component
   mixin(uvm_once_sync_string);
   mixin(uvm_sync_string);
 
-  mixin uvm_component_utils;
+  mixin uvm_component_essentials;
 
   static int inc_g_request_id() {
     synchronized(once) {
