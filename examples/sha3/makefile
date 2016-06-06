@@ -75,11 +75,11 @@ sha.o: sha.d
 cvcsim: vpi.so libsha.so sha_top.v sha_mem.v
 	$(CVC) -q +loadvpi=./vpi.so:vpi_compat_bootstrap -sv -sv_lib ./libsha.so sha_top.v sha_mem.v
 
-libesdl.so: $(ESDLSOURCES)
-	$(DMD) -shared -fPIC -oflibesdl.so -L-l$(PHOBOS) -L-L$(LIBDIR) -L-R$(LIBDIR) -I$(ESDLDIR)/src $(ESDLSOURCES)
+libesdl.so: $(ESDLDIR)/src/*.d $(ESDLDIR)/src/esdl/*.d $(ESDLDIR)/src/esdl/base/*.d $(ESDLDIR)/src/esdl/posix/sys/net/*.d $(ESDLDIR)/src/esdl/sync/*.d $(ESDLDIR)/src/esdl/vcd/*.d $(ESDLDIR)/src/esdl/data/*.d $(ESDLDIR)/src/esdl/sys/*.d $(ESDLDIR)/src/esdl/intf/*.d $(ESDLDIR)/src/unstd/*.d
+	$(DMD) -shared -fPIC -oflibesdl.so -L-l$(PHOBOS) -L-L$(LIBDIR) -L-R$(LIBDIR) -I$(ESDLDIR)/src $^
 
-libvlang.so: $(VLANGSOURCES)
-	$(DMD) -shared -fPIC -oflibvlang.so -L-lesdl -L-l$(PHOBOS) -L-L$(LIBDIR) -L-R$(LIBDIR) -L-R. -L-L. -I$(VLANGDIR)/src -I$(ESDLDIR)/src $(VLANGSOURCES)
+libvlang.so: $(VLANGDIR)/src/uvm/*.d $(VLANGDIR)/src/uvm/meta/*.d $(VLANGDIR)/src/uvm/dpi/*.d $(VLANGDIR)/src/uvm/base/*.d $(VLANGDIR)/src/uvm/seq/*.d $(VLANGDIR)/src/uvm/comps/*.d $(VLANGDIR)/src/uvm/dap/*.d $(VLANGDIR)/src/uvm/tlm1/*.d $(VLANGDIR)/src/uvm/tlm2/*.d $(VLANGDIR)/src/uvm/reg/*.d
+	$(DMD) -shared -fPIC -oflibvlang.so -L-lesdl -L-l$(PHOBOS) -L-L$(LIBDIR) -L-R$(LIBDIR) -L-R. -L-L. -I$(VLANGDIR)/src -I$(ESDLDIR)/src $^
 
 libsha.so: sha.d $(ESDLDIR)/src/esdl/posix/sys/net/*.d $(ESDLDIR)/src/esdl/sync/*.d $(ESDLDIR)/src/esdl/sys/*.d $(ESDLDIR)/src/esdl/intf/*.d $(ESDLDIR)/src/esdl/base/*.d $(ESDLDIR)/src/esdl/data/*.d $(ESDLDIR)/src/esdl/*.d $(VLANGDIR)/src/uvm/*.d $(VLANGDIR)/src/uvm/meta/*.d $(VLANGDIR)/src/uvm/base/*.d $(VLANGDIR)/src/uvm/comps/*.d $(VLANGDIR)/src/uvm/tlm1/*.d $(VLANGDIR)/src/uvm/seq/*.d $(VLANGDIR)/src/uvm/dpi/uvm_svcmd_dpi.d $(VLANGDIR)/src/uvm/dap/*.d
 	$(DMD) -m$(MODEL) -I$(ESDLDIR)/src -I$(VLANGDIR)/src $(DFLAGS) -shared -of$@ -L-ldl -L-l$(PHOBOS) -L-R$(LIBDIR) $^

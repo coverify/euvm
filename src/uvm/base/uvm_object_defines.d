@@ -87,7 +87,7 @@ mixin template uvm_object_utils_norand(T=void)
   mixin uvm_object_registry_mixin!(U, qualifiedTypeName!U);
   mixin m_uvm_object_create_func!(U);
   mixin m_uvm_get_type_name_func!(U);
-  mixin m_uvm_field_auto_utils!(U);
+  // mixin m_uvm_field_auto_utils!(U);
   // `uvm_field_utils_begin(U)
 
   // Add a defaultConstructor for Object.factory to work
@@ -532,7 +532,8 @@ mixin template m_uvm_field_auto_utils(T)
 	    lhs.tupleof[I] = cast(U) rhs.tupleof[I].clone;
 	  }
 	}
-	else static if (isIntegral!U || isBitVector!U || is(U == string)) {
+	else static if (isIntegral!U || isBitVector!U ||
+			is(U == string) || is(U == bool)) {
 	  lhs.tupleof[I] = rhs.tupleof[I];
 	}
 	else static if (isArray!U) {
@@ -541,9 +542,9 @@ mixin template m_uvm_field_auto_utils(T)
 	  }
 	  uvm_field_auto_copy_field!FLAGS(lhs.tupleof[I], rhs.tupleof[I], 0);
 	}
-	// else {
-	//   uvm_error("UVMUTLS", "Do not know how to copy :" ~ U.stringof);
-	// }
+	else {
+	  static assert (false, "Do not know how to copy :" ~ U.stringof);
+	}
       }
     }
     static if (I < lhs.tupleof.length) {
@@ -564,7 +565,8 @@ mixin template m_uvm_field_auto_utils(T)
 	  lhs[index] = cast(U) rhs[index].clone;
 	}
       }
-      else static if (isIntegral!U || isBitVector!U || is(U == string)) {
+      else static if (isIntegral!U || isBitVector!U ||
+		      is(U == string) || is(U == bool)) {
 	lhs[index] = rhs[index];
       }
       else static if (isArray!U) {

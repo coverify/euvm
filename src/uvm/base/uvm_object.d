@@ -498,7 +498,7 @@ abstract class uvm_object: uvm_void
 	else static if(is(U == enum)) { // to cover enums
 	  printer.print(name, value, UVM_ENUM);
 	}
-	else static if(isBitVector!U  || isIntegral!U) {
+	else static if(isBitVector!U  || isIntegral!U || is(U == bool)) {
 	  printer.print(name, value,
 			cast(uvm_radix_enum) (FLAGS & UVM_RADIX));
 	}
@@ -534,7 +534,7 @@ abstract class uvm_object: uvm_void
 	  }
 	}
 	else {
-	  static assert(false);
+	  static assert(false, "Do not know how to handle type: " ~ U.stringof);
 	}
       }
       uvm_field_auto_sprint_field!(I+1)(t, printer);
@@ -807,10 +807,7 @@ abstract class uvm_object: uvm_void
   // classes. To copy the fields of a derived class, that class should override
   // the <do_copy> method.
 
-  void uvm_field_auto_copy(uvm_object rhs) {
-    uvm_report_warning("NOUTILS", "default uvm_field_auto_copy --"
-		       "no uvm_object_utils", UVM_NONE);
-  }
+  void uvm_field_auto_copy(uvm_object rhs) { }
 
   static uvm_object[uvm_object] _uvm_global_copy_map;
 
@@ -890,10 +887,7 @@ abstract class uvm_object: uvm_void
   // then the global ~uvm_default_comparer~ policy is used. See <uvm_comparer>
   // for more information.
 
-  void uvm_field_auto_compare(uvm_object rhs) {
-    uvm_report_warning("NOUTILS", "default uvm_field_auto_compare --"
-		       "no uvm_object_utils", UVM_NONE);
-  }
+  void uvm_field_auto_compare(uvm_object rhs) { }
 
   final bool compare (uvm_object rhs, uvm_comparer comparer = null) {
     if(comparer !is null) {
