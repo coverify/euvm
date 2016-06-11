@@ -345,7 +345,7 @@ class uvm_text_tr_database: uvm_tr_database
   @uvm_public_sync
   private UVM_FILE _m_file;
 
-  mixin uvm_object_utils_norand;
+  mixin uvm_object_essentials;
 
   // Function: new
   // Constructor

@@ -36,7 +36,7 @@ class uvm_sequencer_analysis_fifo (RSP = uvm_sequence_item)
 {
   mixin(uvm_sync_string);
 
-  mixin uvm_component_utils;
+  mixin uvm_component_essentials;
 
   @uvm_immutable_sync
     private uvm_analysis_imp!(RSP, uvm_sequencer_analysis_fifo!RSP)

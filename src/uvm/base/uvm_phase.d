@@ -2396,7 +2396,7 @@ class uvm_phase_state_change: uvm_object
 
   mixin(uvm_sync_string);
 
-  mixin uvm_object_utils_norand;
+  mixin uvm_object_essentials;
 
   // Implementation -- do not use directly
   @uvm_private_sync

@@ -533,7 +533,7 @@ class uvm_report_message_element_container: uvm_object
 
   private uvm_report_message_element_base[] _elements;
 
-  mixin uvm_object_utils_norand;
+  mixin uvm_object_essentials;
   // `uvm_object_utils(uvm_report_message_element_container)
 
   // Function: new
@@ -911,7 +911,7 @@ class uvm_report_message: uvm_object
     }
   }
 
-  mixin uvm_object_utils_norand;
+  mixin uvm_object_essentials;
 
 
 

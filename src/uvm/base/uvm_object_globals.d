@@ -208,8 +208,8 @@ enum UVM_AUTO = uvm_auto_enum.UVM_AUTO;
 
 enum uvm_field_auto_enum: int
   {   UVM_DEFAULT     = 0b000010101010101,
-      UVM_ALL_ON      = 0b000000101010101,
-      UVM_FLAGS_ON    = 0b000000101010101,
+      UVM_ALL_ON      = 0b000010101010101,
+      UVM_FLAGS_ON    = 0b000010101010101,
       UVM_FLAGS_OFF   = 0,
 
       //Values are OR'ed into a 32 bit value
@@ -224,6 +224,8 @@ enum uvm_field_auto_enum: int
       UVM_NORECORD     = (1 << 7),
       UVM_PACK         = (1 << 8),
       UVM_NOPACK       = (1 << 9),
+      UVM_BUILD        = (1 << 10),
+      UVM_NOBUILD      = (1 << 11),
       //UVM_DEEP         = (1 << 10),
       //UVM_SHALLOW      = (1 << 11),
       //UVM_REFERENCE    = (1 << 12),
@@ -253,7 +255,8 @@ enum uvm_field_xtra_enum: int
       UVM_SETINT        = UVM_SET,
       UVM_SETOBJ        = UVM_START_FUNCS + 2,
       UVM_SETSTR        = UVM_START_FUNCS + 3,
-      UVM_END_FUNCS     = UVM_SETSTR
+      UVM_ELABORATE     = UVM_START_FUNCS + 4,
+      UVM_END_FUNCS     = UVM_ELABORATE
       }
 mixin(declareEnums!uvm_field_xtra_enum());
 

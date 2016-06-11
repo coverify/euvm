@@ -117,7 +117,7 @@ class uvm_report_handler: uvm_object
   private UVM_FILE[uvm_severity] _severity_file_handles;
   private uvm_id_file_array[uvm_severity] _severity_id_file_handles;
 
-  mixin uvm_object_utils_norand;
+  mixin uvm_object_essentials;
 
   // Function: new
   //

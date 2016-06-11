@@ -82,7 +82,7 @@ class uvm_set_before_get_dap(T=int): uvm_set_get_dap_base!T
   // Used for self-references
   alias this_type = uvm_set_before_get_dap!T;
 
-  mixin uvm_object_utils_norand;
+  mixin uvm_object_essentials;
   // Parameterized Utils
   // `uvm_object_param_utils(uvm_set_before_get_dap#(T))
 

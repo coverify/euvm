@@ -156,7 +156,7 @@ class uvm_parent_child_link: uvm_link_base
   private uvm_object _m_rhs;
 
   // Object utils
-  mixin uvm_object_utils_norand;
+  mixin uvm_object_essentials;
 
   // Function: new
   // Constructor
@@ -242,7 +242,7 @@ class uvm_cause_effect_link: uvm_link_base
   private uvm_object _m_rhs;
 
   // Object utils
-  mixin uvm_object_utils_norand;
+  mixin uvm_object_essentials;
 
   // Function: new
   // Constructor
@@ -328,7 +328,7 @@ class uvm_related_link: uvm_link_base
   private uvm_object _m_rhs;
 
   // Object utils
-  mixin uvm_object_utils_norand;
+  mixin uvm_object_essentials;
 
   // Function: new
   // Constructor

@@ -257,6 +257,9 @@ final class uvm_scope_stack
 //
 //------------------------------------------------------------------------------
 
+// This class will have a per thread (static)
+// instance. Synchronization is therefor not required.
+  
 final class uvm_status_container {
 
   import uvm.base.uvm_packer: uvm_packer;
@@ -278,8 +281,16 @@ final class uvm_status_container {
   private bool             _warning;
   @uvm_public_sync
   private bool             _status;
-  @uvm_public_sync
+
   private uvm_bitstream_t  _bitstream;
+
+  void bitstream(T)(T val) {
+    _bitstream = val;
+  }
+
+  uvm_bitstream_t bitstream() {
+    return _bitstream;
+  }
 
   // FIXME -- next two elements present in SV version but are not used
   // private int              _intv;
@@ -333,9 +344,8 @@ final class uvm_status_container {
   //   }
   // }
 
-  // __gshared
-  // FIXME -- next element present in SV version but is not used
-  // private bool             _print_matches;
+  @uvm_public_sync
+  private bool             _print_matches;
 
   // void do_field_check(string field, uvm_object obj) {
   //   synchronized(this) {
@@ -401,7 +411,7 @@ final class uvm_status_container {
     }
   }
 
-  bool add_cycle(uvm_object obj) {
+  bool add_cycle_check(uvm_object obj) {
     synchronized(this) {
       if(obj in _cycle_check) {
 	return false;
@@ -413,7 +423,7 @@ final class uvm_status_container {
     }
   }
 
-  bool remove_cycle(uvm_object obj) {
+  bool remove_cycle_check(uvm_object obj) {
     synchronized(this) {
       if(obj !in _cycle_check) {
 	return false;
@@ -425,7 +435,7 @@ final class uvm_status_container {
     }
   }
 
-  void remove_all_cycles() {
+  void reset_cycle_checks() {
     synchronized(this) {
       _cycle_check = null;
     }
@@ -450,6 +460,14 @@ final class uvm_status_container {
   // object stack
   private uvm_object[] _m_uvm_cycle_scopes;
 
+  uvm_object[] m_uvm_cycle_scopes() {
+    return _m_uvm_cycle_scopes;
+  }
+
+  void m_uvm_cycle_scopes(uvm_object[] cycles) {
+    _m_uvm_cycle_scopes = cycles;
+  }
+  
   void reset_cycle_scopes() {
     synchronized(this) {
       _m_uvm_cycle_scopes.length = 0;
@@ -461,7 +479,8 @@ final class uvm_status_container {
       uvm_object l = (_m_uvm_cycle_scopes.length == 0) ?
 	null : _m_uvm_cycle_scopes[$-1];
 
-      // we have been in this scope before (but actually right before so assuming a super/derived context of the same object)
+      // we have been in this scope before (but actually right before
+      // so assuming a super/derived context of the same object)
       if(l is scope_stack) {
 	_m_uvm_cycle_scopes ~= scope_stack;
 	return false;

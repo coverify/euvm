@@ -56,10 +56,10 @@ class test: uvm_test
     bar[2].set_int_local("y", 2);
     auto f = new frop("boo");
     f.y = 42;
-    // f.print();
-    // print();
+    f.print();
+    print();
     bar[0].set_local("boo", f);
-    // print();
+    print();
   }
   
   override void report() { // functions in d are by default virtual
@@ -70,7 +70,7 @@ class test: uvm_test
 class foo: uvm_component
 {
   @UVM_DEFAULT {
-    int[4] x;
+    int[16] x;
     int y;
 
     string z;

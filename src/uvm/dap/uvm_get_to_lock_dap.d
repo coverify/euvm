@@ -50,7 +50,7 @@ class uvm_get_to_lock_dap(T=int): uvm_set_get_dap_base!T
   // Used for self-references
   alias this_type = uvm_get_to_lock_dap!T;
 
-  mixin uvm_object_utils_norand;
+  mixin uvm_object_essentials;
 
   // Parameterized Utils
   // `uvm_object_param_utils(uvm_get_to_lock_dap#(T))
