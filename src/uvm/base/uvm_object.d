@@ -61,6 +61,9 @@ import uvm.base.uvm_object_globals;
 import uvm.base.uvm_report_object;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_root;
+import uvm.base.uvm_component: uvm_component, uvm__config_parallelism;
+import uvm.base.uvm_port_base;
+import uvm.comps.uvm_agent;
 import uvm.meta.mcd;
 import uvm.meta.misc;
 
@@ -441,7 +444,7 @@ abstract class uvm_object: uvm_void
   // class to format the output. The printer policy will manage all string
   // concatenations and provide the string to ~sprint~ to return to the caller.
 
-  static void _m_uvm_field_automation(E)(ref E e,
+  static void _m_uvm_object_automation(E)(ref E e,
 					 E rhs,
 					 int what,
 					 string str,
@@ -460,7 +463,7 @@ abstract class uvm_object: uvm_void
 	      e.length = rhs.length;
 	    }
 	    for (size_t i=0; i!=e.length; ++i) {
-	      _m_uvm_field_automation(e[i], rhs[i], what, str,
+	      _m_uvm_object_automation(e[i], rhs[i], what, str,
 				      name ~ format("[%d]", i),
 				      flags);
 	    }
@@ -492,7 +495,7 @@ abstract class uvm_object: uvm_void
 	      if (m_uvm_status_container.comparer.show_max == 1) return;
 	    }
 	    for(int i=0; i != e.length && i < rhs.length; ++i) {
-	      _m_uvm_field_automation(e[i], rhs[i], what, str,
+	      _m_uvm_object_automation(e[i], rhs[i], what, str,
 				      name ~ format("[%d]", i),
 				      flags);
 	    }
@@ -515,7 +518,7 @@ abstract class uvm_object: uvm_void
 	  for (i=0; i!=e.length; ++i) {
 	    if (k__.begin_elements == -1 || k__.end_elements == -1 ||
 		i < k__.begin_elements ) {
-	      _m_uvm_field_automation(e[i], EE.init, what, str,
+	      _m_uvm_object_automation(e[i], EE.init, what, str,
 				      name ~ format("[%d]", i),
 				      flags);
 	    }
@@ -532,7 +535,7 @@ abstract class uvm_object: uvm_void
 	      p__.print_array_range(k__.begin_elements, cast(int) i-1);
 	    }
 	    for (; i!=e.length; ++i) {
-	      _m_uvm_field_automation(e[i], EE.init, what, str,
+	      _m_uvm_object_automation(e[i], EE.init, what, str,
 				      name ~ format("[%d]", i),
 				      flags);
 	    }
@@ -547,19 +550,19 @@ abstract class uvm_object: uvm_void
 	  }
 	  else if (e.length < 10) {
 	    for (size_t i=0; i!=e.length; ++i) {
-	      _m_uvm_field_automation(e[i], EE.init, what, str,
+	      _m_uvm_object_automation(e[i], EE.init, what, str,
 				      name ~ format("[%d]", i),
 				      flags);
 	    }
 	  }
 	  else {		// record only first and last 5 elements
 	    for (size_t i=0; i!=5; ++i) {
-	      _m_uvm_field_automation(e[i], EE.init, what, str,
+	      _m_uvm_object_automation(e[i], EE.init, what, str,
 				      name ~ format("[%d]", i),
 				      flags);
 	    }
 	    for (size_t i=e.length-5; i!=e.length; ++i) {
-	      _m_uvm_field_automation(e[i], EE.init, what, str,
+	      _m_uvm_object_automation(e[i], EE.init, what, str,
 				      name ~ format("[%d]", i),
 				      flags);
 	    }
@@ -572,7 +575,7 @@ abstract class uvm_object: uvm_void
 	    m_uvm_status_container.packer.pack(e.length);
 	  }
 	  for (size_t i=0; i!=e.length; ++i) {
-	    _m_uvm_field_automation(e[i], EE.init, what, str,
+	    _m_uvm_object_automation(e[i], EE.init, what, str,
 				    name ~ format("[%d]", i),
 				    flags);
 	  }
@@ -586,7 +589,7 @@ abstract class uvm_object: uvm_void
 	    e.length = size;
 	  }
 	  for (size_t i=0; i!=e.length; ++i) {
-	    _m_uvm_field_automation(e[i], EE.init, what, str,
+	    _m_uvm_object_automation(e[i], EE.init, what, str,
 				    name ~ format("[%d]", i),
 				    flags);
 	  }
@@ -614,7 +617,7 @@ abstract class uvm_object: uvm_void
 	m_uvm_status_container.scope_stack.unset_arg(name);
 	// else if(!((FLAG)&UVM_READONLY))
 	for (size_t i=0; i!=e.length; ++i) {
-	  _m_uvm_field_automation(e[i], EE.init, what, str,
+	  _m_uvm_object_automation(e[i], EE.init, what, str,
 				  name ~ format("[%d]", i),
 				  flags);
 	}
@@ -623,6 +626,20 @@ abstract class uvm_object: uvm_void
 	// uvm_warning("UVMUTLS",
 	// 	      "UVM UTILS CheckField functions is not yet implemented");
 	break;
+      case uvm_field_xtra_enum.UVM_PARALLELIZE:
+      	// for (size_t i=0; i!=e.length; ++i) {
+      	//   _m_uvm_object_automation(e[i], EE.init, what, str,
+      	// 			  name ~ format("[%d]", i),
+      	// 			  flags);
+      	// }
+      	break;
+      case uvm_field_auto_enum.UVM_BUILD:
+      	// for (size_t i=0; i!=e.length; ++i) {
+      	//   _m_uvm_object_automation(e[i], EE.init, what, str,
+      	// 			  name ~ format("[%d]", i),
+      	// 			  flags);
+      	// }
+      	break;
       default:
 	uvm_error("UVMUTLS",
 		  format("UVM UTILS uknown utils functionality: %s/%s", cast(uvm_field_auto_enum) what, cast(uvm_field_xtra_enum) what));
@@ -631,7 +648,7 @@ abstract class uvm_object: uvm_void
       }
     }
   
-  static void _m_uvm_field_automation(E)(ref E e,
+  static void _m_uvm_object_automation(E)(ref E e,
 					 E rhs,
 					 int what,
 					 string str,
@@ -744,6 +761,10 @@ abstract class uvm_object: uvm_void
 	// uvm_warning("UVMUTLS",
 	// 	      "UVM UTILS CheckField functions is not yet implemented");
 	break;
+      case uvm_field_xtra_enum.UVM_PARALLELIZE:
+	break;
+      case uvm_field_auto_enum.UVM_BUILD:
+	break;
       default:
 	uvm_error("UVMUTLS",
 		  format("UVM UTILS uknown utils functionality: %s/%s", cast(uvm_field_auto_enum) what, cast(uvm_field_xtra_enum) what));
@@ -752,7 +773,7 @@ abstract class uvm_object: uvm_void
       }
     }
   
-  static void _m_uvm_field_automation(E)(ref E e,
+  static void _m_uvm_object_automation(E)(ref E e,
 					 E rhs,
 					 int what,
 					 string str,
@@ -824,6 +845,10 @@ abstract class uvm_object: uvm_void
 	// uvm_warning("UVMUTLS",
 	// 	      "UVM UTILS CheckField functions is not yet implemented");
 	break;
+      case uvm_field_xtra_enum.UVM_PARALLELIZE:
+	break;
+      case uvm_field_auto_enum.UVM_BUILD:
+	break;
       default:
 	uvm_error("UVMUTLS",
 		  format("UVM UTILS uknown utils functionality: %s/%s", cast(uvm_field_auto_enum) what, cast(uvm_field_xtra_enum) what));
@@ -832,7 +857,7 @@ abstract class uvm_object: uvm_void
       }
     }
   
-  static void _m_uvm_field_automation(E)(ref E e,
+  static void _m_uvm_object_automation(E)(ref E e,
 					 E rhs,
 					 int what,
 					 string str,
@@ -903,7 +928,7 @@ abstract class uvm_object: uvm_void
 	if ((e !is null) && (flags & UVM_READONLY) == 0 &&
 	    (flags & UVM_REFERENCE) == 0) {
 	  m_uvm_status_container.scope_stack.down(name);
-	  e.m_uvm_field_automation(null, what, str);
+	  e.m_uvm_object_automation(null, what, str);
 	  m_uvm_status_container.scope_stack.up();
 	}
 	break;
@@ -938,7 +963,7 @@ abstract class uvm_object: uvm_void
             }
             if (cnt != str.length || str[0] is '/') {
               m_uvm_status_container.scope_stack.down(name);
-              e.m_uvm_field_automation(null, what, str);
+              e.m_uvm_object_automation(null, what, str);
               m_uvm_status_container.scope_stack.up();
             }
           }
@@ -955,42 +980,49 @@ abstract class uvm_object: uvm_void
       }
     }
 
-  static void _m_uvm_field_automation(E)(ref E e,
-					 E rhs,
-					 int what,
-					 string str,
-					 string name,
-					 int flags)
-    if (!(isIntegral!E || isBitVector!E || is(E == bool) || isArray!E ||
-	  is(E: uvm_object))) {
-      if (flags != 0) {
-	uvm_error("UVMUTLS", format("Do not know how to interpret flag" ~
-				    " %s/%s for field of type %s",
-				    cast(uvm_field_auto_enum) flags,
-				    cast(uvm_field_xtra_enum) flags,
-				    E.stringof));
-      }
-    }
+  // static void _m_uvm_object_automation(E)(ref E e,
+  // 					 E rhs,
+  // 					 int what,
+  // 					 string str,
+  // 					 string name,
+  // 					 int flags)
+  //   if (!(isIntegral!E || isBitVector!E || is(E == bool) || isArray!E ||
+  // 	  is(E: uvm_object))) {
+  //     if (flags != 0) {
+  // 	// uvm_error("UVMUTLS", format("Do not know how to interpret flag" ~
+  // 	// 			    " %s/%s for field of type %s element %s",
+  // 	// 			    cast(uvm_field_auto_enum) flags,
+  // 	// 			    cast(uvm_field_xtra_enum) flags,
+  // 	// 			    E.stringof, name));
+  //     }
+  //   }
   
 
-  static void _m_uvm_field_automation(int I, T)(T          t,
+  static void _m_uvm_object_automation(int I, T)(T          t,
 						T          rhs,
 						int        what, 
 						string     str)
     if (is(T: uvm_object)) {
       static if (I < t.tupleof.length) {
-	int flags = uvm_field_auto_get_flags!(t, I);
-	if (rhs !is null) {
-	  _m_uvm_field_automation(t.tupleof[I], rhs.tupleof[I], what, str,
-				  t.tupleof[I].stringof[2..$], flags);
+	enum FLAGS = uvm_field_auto_get_flags!(t, I);
+	alias EE = UVM_ELEMENT_TYPE!(typeof(t.tupleof[I]));
+	static if (FLAGS != 0 &&
+		   (isIntegral!EE || isBitVector!EE || is(EE == bool) ||
+		    is(EE: uvm_object) || is(EE == string))) {
+	  if (what == uvm_field_auto_enum.UVM_COMPARE ||
+	      what == uvm_field_auto_enum.UVM_COPY) {
+	    assert (rhs !is null);
+	    _m_uvm_object_automation(t.tupleof[I], rhs.tupleof[I], what, str,
+				     t.tupleof[I].stringof[2..$],
+				     FLAGS);
+	  }
+	  else {
+	    _m_uvm_object_automation(t.tupleof[I], typeof(t.tupleof[I]).init,
+				     what, str, t.tupleof[I].stringof[2..$],
+				     FLAGS);
+	  }
 	}
-	else {
-	  assert (what != uvm_field_auto_enum.UVM_COMPARE &&
-		  what != uvm_field_auto_enum.UVM_COPY);
-	  _m_uvm_field_automation(t.tupleof[I], typeof(t.tupleof[I]).init, what, str,
-				  t.tupleof[I].stringof[2..$], flags);
-	}
-	_m_uvm_field_automation!(I+1)(t, rhs, what, str);
+	_m_uvm_object_automation!(I+1)(t, rhs, what, str);
       }
     }
 
@@ -1049,7 +1081,7 @@ abstract class uvm_object: uvm_void
   // 	  printer.print_generic(name, "event", -2, "");
   // 	}
   // 	else static if (isArray!U) {
-  // 	  alias E = array_node_type!U;
+  // 	  alias E = UVM_ELEMENT_TYPE!U;
   // 	  static if (isIntegral!E || isBitVector!E || is(E == string)) {
   // 	    import std.conv;
   // 	    printer.print_generic(name, U.stringof, -2, value.to!string);
@@ -1106,7 +1138,7 @@ abstract class uvm_object: uvm_void
       // not at top-level, must be recursing into sub-object
       if(! printer.istop()) {
 	m_uvm_status_container.printer = printer;
-	m_uvm_field_automation(null, UVM_PRINT, "");
+	m_uvm_object_automation(null, UVM_PRINT, "");
 	// uvm_field_auto_sprint(printer);
 	do_print(printer);
 	return "";
@@ -1319,7 +1351,7 @@ abstract class uvm_object: uvm_void
     synchronized(recorder) {
       recorder.inc_recording_depth();
 
-      m_uvm_field_automation(null, UVM_RECORD, "");
+      m_uvm_object_automation(null, UVM_RECORD, "");
       // uvm_field_auto_record(recorder);
 
       do_record(recorder);
@@ -1390,7 +1422,7 @@ abstract class uvm_object: uvm_void
 
     ++depth;
 
-    m_uvm_field_automation(rhs, UVM_COPY, "");
+    m_uvm_object_automation(rhs, UVM_COPY, "");
 
     // overridden by mixin(uvm_object_utils);
     // uvm_field_auto_copy(rhs);
@@ -1509,7 +1541,7 @@ abstract class uvm_object: uvm_void
       if(! done) {
 	comparer.set_compare_map(rhs, this);
 
-	m_uvm_field_automation(rhs, UVM_COMPARE, "");
+	m_uvm_object_automation(rhs, UVM_COMPARE, "");
 
 	// overridden by mixin(uvm_object_utils);
 	// uvm_field_auto_compare(rhs);
@@ -1850,7 +1882,7 @@ abstract class uvm_object: uvm_void
       static if (isBitVector!T || isIntegral!T ||
 		 is(T == enum) || is(T == bool)) {
 	m_uvm_status_container.bitstream = value;
-	m_uvm_field_automation(null, UVM_SETINT, field_name);
+	m_uvm_object_automation(null, UVM_SETINT, field_name);
       }
       if (m_uvm_status_container.warning &&
 	  ! m_uvm_status_container.status) {
@@ -1880,7 +1912,7 @@ abstract class uvm_object: uvm_void
       }
 
       m_uvm_status_container.object = value_;
-      m_uvm_field_automation(null, UVM_SETOBJ, field_name);
+      m_uvm_object_automation(null, UVM_SETOBJ, field_name);
 
       if (m_uvm_status_container.warning &&
 	  ! m_uvm_status_container.status) {
@@ -1899,7 +1931,7 @@ abstract class uvm_object: uvm_void
       m_uvm_status_container.status = 0;
       static if (is(T == string)) {
 	m_uvm_status_container.stringv = value;
-	m_uvm_field_automation(null, UVM_SETSTR, field_name);
+	m_uvm_object_automation(null, UVM_SETSTR, field_name);
       }
       if (m_uvm_status_container.warning &&
 	  ! m_uvm_status_container.status) {
@@ -2157,7 +2189,7 @@ abstract class uvm_object: uvm_void
     packer.reset();
     packer.scope_stack.down(get_name());
 
-    m_uvm_field_automation(null, UVM_PACK, "");
+    m_uvm_object_automation(null, UVM_PACK, "");
     do_pack(packer);
 
     packer.set_packed_size();
@@ -2182,7 +2214,7 @@ abstract class uvm_object: uvm_void
     //Put this object into the hierarchy
     packer.scope_stack.down(get_name());
 
-    m_uvm_field_automation(null, UVM_UNPACK, "");
+    m_uvm_object_automation(null, UVM_UNPACK, "");
 
     do_unpack(packer);
 
@@ -2210,11 +2242,9 @@ abstract class uvm_object: uvm_void
   // static protected int m_inst_count;
   // static /*protected*/ uvm_status_container m_uvm_status_container = new;
 
-  void m_uvm_field_automation(uvm_object tmp_data__,
-			      int        what__,
-			      string     str__) {
-    return;
-  }
+  void m_uvm_object_automation(uvm_object tmp_data__,
+			       int        what__,
+			       string     str__) { }
 
   protected uvm_report_object m_get_report_object() {
     return null;
@@ -2246,13 +2276,3 @@ template uvm_field_auto_acc_flags(A...)
     }
 }
   
-template array_node_type(T) if (isArray!T)
-  {
-    alias E = ElementType!T;
-    static if (isArray!E && ! is(E == string)) {
-      alias array_node_type = array_node_type!E;
-    }
-    else {
-      alias array_node_type = E;
-    }
-  }

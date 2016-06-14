@@ -105,7 +105,7 @@ class uvm_packer
 	    _m_bits.pack(cast(UBitVec!4) 1);
 	  }
 	  scope_stack.down(value.get_name());
-	  value.m_uvm_field_automation(null, UVM_PACK, "");
+	  value.m_uvm_object_automation(null, UVM_PACK, "");
 	  value.do_pack(this);
 	  scope_stack.up();
 	}
@@ -407,7 +407,7 @@ class uvm_packer
       if (value !is null) {
 	if (is_non_null > 0) {
 	  _scope_stack.down(value.get_name());
-	  value.m_uvm_field_automation(null, UVM_UNPACK,"");
+	  value.m_uvm_object_automation(null, UVM_UNPACK,"");
 	  value.do_unpack(this);
 	  _scope_stack.up();
 	}

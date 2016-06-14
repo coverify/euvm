@@ -39,7 +39,7 @@ class uvm_tlm_event
   Event trigger;
   this() {
     synchronized(this) {
-      trigger.init("trigger");
+      trigger.initialize("trigger");
     }
   }
 }

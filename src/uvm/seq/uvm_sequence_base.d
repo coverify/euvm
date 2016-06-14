@@ -264,7 +264,7 @@ class uvm_sequence_base: uvm_sequence_item
       _m_sequence_state = new WithEvent!uvm_sequence_state;
       _m_sequence_state = UVM_CREATED;
       _m_wait_for_grant_semaphore = 0;
-      _response_queue_event.init("_response_queue_event");
+      _response_queue_event.initialize("_response_queue_event");
       m_init_phase_daps(true);
     }
   }

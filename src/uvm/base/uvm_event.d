@@ -91,8 +91,8 @@ abstract class uvm_event_base: uvm_object
   this (string name="") {
     synchronized(this) {
       super(name);
-      _m_event.init("_m_event");
-      _on_event.init("_on_event");
+      _m_event.initialize("_m_event");
+      _on_event.initialize("_on_event");
     }
   }
 

@@ -250,13 +250,13 @@ enum uvm_field_xtra_enum: int
 
       //Get and set methods (in uvm_object). Used by the set/get* functions
       //to tell the object what operation to perform on the fields.
-      UVM_START_FUNCS   = UVM_END_DATA_EXTRA + 1,
-      UVM_SET           = UVM_START_FUNCS + 1,
-      UVM_SETINT        = UVM_SET,
-      UVM_SETOBJ        = UVM_START_FUNCS + 2,
-      UVM_SETSTR        = UVM_START_FUNCS + 3,
-      UVM_ELABORATE     = UVM_START_FUNCS + 4,
-      UVM_END_FUNCS     = UVM_ELABORATE
+      UVM_START_FUNCS       = UVM_END_DATA_EXTRA + 1,
+      UVM_SET               = UVM_START_FUNCS + 1,
+      UVM_SETINT            = UVM_SET,
+      UVM_SETOBJ            = UVM_START_FUNCS + 2,
+      UVM_SETSTR            = UVM_START_FUNCS + 3,
+      UVM_PARALLELIZE         = UVM_START_FUNCS + 4,
+      UVM_END_FUNCS         = UVM_PARALLELIZE
       }
 mixin(declareEnums!uvm_field_xtra_enum());
 

@@ -652,11 +652,11 @@ class uvm_root: uvm_component
     m_do_dump_args();
   }
 
-  override void elaboration_phase(uvm_phase phase) {
-    foreach(child; get_children()) {
-      child.uvm__auto_elab();
-    }
-  }
+  // override void admin_phase(uvm_phase phase) {
+  //   foreach(child; get_children()) {
+  //     child.uvm__auto_elab();
+  //   }
+  // }
 
   override ParContext _esdl__parInheritFrom() {
     return Process.self().getParentEntity();
@@ -1294,7 +1294,21 @@ class uvm_root: uvm_component
       adapter.accept(this, v, p);
     }
   }
-  
+
+
+  override void uvm__auto_build() {
+    super.uvm__auto_build();
+    if(m_children.length is 0) {
+      uvm_fatal("NOCOMP",
+		"No components instantiated. You must either " ~
+		"instantiate at least one component before " ~
+		"calling run_test or use run_test to do so. " ~
+		"To run a test using run_test, use +UVM_TESTNAME " ~
+		"or supply the test name in the argument to " ~
+		"run_test(). Exiting simulation.");
+      return;
+    }
+  }
 }
 
 

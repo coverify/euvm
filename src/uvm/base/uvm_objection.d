@@ -80,9 +80,9 @@ class uvm_objection_events {
   private Event _all_dropped;
   this() {
     synchronized(this) {
-      _raised.init("_raised");
-      _dropped.init("_dropped");
-      _all_dropped.init("_all_dropped");
+      _raised.initialize("_raised");
+      _dropped.initialize("_dropped");
+      _all_dropped.initialize("_all_dropped");
     }
   }
 }
@@ -175,7 +175,7 @@ class uvm_objection: uvm_report_object
 
     this() {
       synchronized(this) {
-	_m_scheduled_list_event.init("_m_scheduled_list_event",
+	_m_scheduled_list_event.initialize("_m_scheduled_list_event",
 				     EntityIntf.getContextEntity());
       }
     }
@@ -1478,7 +1478,7 @@ class uvm_test_done_objection: uvm_objection
   this(string name = "uvm_test_done") {
     synchronized(this) {
       super(name);
-      _m_n_stop_threads_event.init("_m_n_stop_threads_event");
+      _m_n_stop_threads_event.initialize("_m_n_stop_threads_event");
       version(UVM_INCLUDE_DEPRECATED) {
       	_stop_timeout = new WithEvent!SimTime(SimTime(0));
       }

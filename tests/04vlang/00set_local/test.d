@@ -34,11 +34,10 @@ class TestBench: RootEntity
 
 class test: uvm_test
 {
-  @UVM_DEFAULT {
+  mixin uvm_component_utils;
+  @UVM_BUILD {
     foo[4] bar;
   }
-  
-  mixin uvm_component_utils;
   
   this(string name, uvm_component parent){
     super(name, parent);
@@ -75,10 +74,12 @@ class foo: uvm_component
 
     string z;
 
-    @UVM_NO_AUTO
-      frop boo;
   }
   
+  @UVM_BUILD {
+    frop boo;
+  }
+
   mixin uvm_component_utils;
   
   this(string name, uvm_component parent){

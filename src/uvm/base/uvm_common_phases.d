@@ -175,15 +175,15 @@ final class uvm_connect_phase: uvm_bottomup_phase
   }
 }
 
-final class uvm_elaboration_phase: uvm_topdown_phase
+final class uvm_admin_phase: uvm_topdown_phase
 {
   static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
-    uvm_elaboration_phase _m_inst;
+    uvm_admin_phase _m_inst;
     this() {
       synchronized(this) {
-	_m_inst = new uvm_elaboration_phase();
+	_m_inst = new uvm_admin_phase();
       }
     }
   };
@@ -191,19 +191,20 @@ final class uvm_elaboration_phase: uvm_topdown_phase
   mixin(uvm_once_sync_string);
   
   final override void exec_func(uvm_component comp, uvm_phase phase) {
-    comp.elaboration_phase(phase);
+    comp.admin_phase(phase);
     // Do the auto elab stuff here
     debug(UVM_AUTO) {
       uvm_info("UVM_AUTO", "Elaborating: " ~ comp.get_full_name() ~ ":" ~
 	       comp.get_type_name());
     }
+    comp.uvm__parallelize();
   }
 
   enum string type_name = qualifiedTypeName!(typeof(this));
 
   // Function: get
   // Returns the singleton phase handle
-  static uvm_elaboration_phase get() {
+  static uvm_admin_phase get() {
     return m_inst;
   }
 

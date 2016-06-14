@@ -541,7 +541,7 @@ class uvm_phase: uvm_object
 	       " before_phase=" ~ ((before_phase is null) ? "null" :
 				   before_phase.get_name()) ~
 	       " new_node=" ~     ((new_node is null)     ? "null" :
-				   (new_node.get_name() ~ " inst_id=",
+				   (new_node.get_name() ~ " inst_id=" ~
 				    format("%0d", new_node.get_inst_id()))) ~
 	       " begin_node=" ~   ((begin_node is null)   ? "null" :
 				   begin_node.get_name())  ~

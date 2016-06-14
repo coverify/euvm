@@ -72,7 +72,7 @@ final private class m_uvm_waiter
   private Event _trigger;
   this(string inst_name) { // , string field_name
     synchronized(this) {
-      _trigger.init("_trigger");
+      _trigger.initialize("_trigger");
       _inst_name = inst_name;
       // _field_name = field_name;
     }

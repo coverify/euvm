@@ -52,6 +52,7 @@ import esdl.base.core: Event;
 
 import std.algorithm: find, canFind;
 import std.conv: to;
+import std.range: ElementType;
 
 interface uvm_void_if { }
 abstract class uvm_void: uvm_void_if {
@@ -454,8 +455,8 @@ final class uvm_status_container {
 
   // utility function used to perform a cycle check when config setting are pushed
   // to uvm_objects. the function has to look at the current object stack representing
-  // the call stack of all m_uvm_field_automation() invocations.
-  // it is a only a cycle if the previous m_uvm_field_automation call scope
+  // the call stack of all m_uvm_object_automation() invocations.
+  // it is a only a cycle if the previous m_uvm_object_automation call scope
   // is not identical with the current scope AND the scope is already present in the
   // object stack
   private uvm_object[] _m_uvm_cycle_scopes;
@@ -1092,4 +1093,34 @@ string m_uvm_string_queue_join(string[] strs) {
 void uvm_wait_for_ever() {
   Event never;
   never.wait();
+}
+
+template UVM_ELEMENT_TYPE(T)
+{
+  static if (is(T == string)) {
+    alias UVM_ELEMENT_TYPE = T;
+  }
+  else {
+    alias E = ElementType!T;
+    static if (is (E == void)) {
+      alias UVM_ELEMENT_TYPE = T;
+    }
+    else {
+      alias UVM_ELEMENT_TYPE = UVM_ELEMENT_TYPE!E;
+    }
+  }
+}
+
+template UVM_IN_TUPLE(size_t I, alias S, A...) {
+  static if(I < A.length) {
+    static if(is(typeof(A[I]) == typeof(S)) && A[I] == S) {
+      enum bool UVM_IN_TUPLE = true;
+    }
+    else {
+      enum bool UVM_IN_TUPLE = UVM_IN_TUPLE!(I+1, S, A);
+    }
+  }
+  else {
+    enum bool UVM_IN_TUPLE = false;
+  }
 }

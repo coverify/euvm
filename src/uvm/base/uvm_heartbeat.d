@@ -123,7 +123,7 @@ class uvm_heartbeat: uvm_object
 
       _m_cb = new uvm_heartbeat_callback(name ~ "_cb", _m_cntxt);
 
-      _m_stop_event.init("_m_stop_event");
+      _m_stop_event.initialize("_m_stop_event");
     }
   }
 
