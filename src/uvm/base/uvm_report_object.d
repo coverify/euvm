@@ -119,7 +119,12 @@ class uvm_report_object: /*extends*/ uvm_object
     }
   }
 
-
+  override void set_name(string name) {
+    synchronized(this) {
+      super.set_name(name);
+      _m_rh.set_name(name);
+    }
+  }
   //----------------------------------------------------------------------------
   // Group: Reporting
   //----------------------------------------------------------------------------
@@ -173,14 +178,14 @@ class uvm_report_object: /*extends*/ uvm_object
 	       context_name, report_enabled_checked);
   }
 
-  void uvm_report( uvm_severity severity,
-		   string id,
-		   string message,
-		   int verbosity,
-		   string filename,
-		   size_t line,
-		   string context_name = "",
-		   bool report_enabled_checked = false) {
+  void uvm_report(uvm_severity severity,
+		  string id,
+		  string message,
+		  int verbosity,
+		  string filename,
+		  size_t line,
+		  string context_name = "",
+		  bool report_enabled_checked = false) {
     uvm_report_message l_report_message;
     if(report_enabled_checked is false) {
       if (!uvm_report_enabled(verbosity, severity, id)) {

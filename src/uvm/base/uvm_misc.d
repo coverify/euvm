@@ -1124,3 +1124,12 @@ template UVM_IN_TUPLE(size_t I, alias S, A...) {
     enum bool UVM_IN_TUPLE = false;
   }
 }
+
+// instead of macros as in SV version
+string uvm_file(string FILE=__FILE__)() {
+  return FILE;
+}
+
+size_t uvm_line(size_t LINE=__LINE__)() {
+  return LINE;
+}

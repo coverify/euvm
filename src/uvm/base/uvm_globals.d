@@ -293,14 +293,14 @@ int uvm_report_enabled (int verbosity,
 
 // Function: uvm_report
 
-void uvm_report( uvm_severity severity,
-		 string id,
-		 string message,
-		 int verbosity = int.min,
-		 string filename = "",
-		 size_t line = 0,
-		 string context_name = "",
-		 bool report_enabled_checked = false) {
+void uvm_report(uvm_severity severity,
+		string id,
+		string message,
+		int verbosity = int.min,
+		string filename = "",
+		size_t line = 0,
+		string context_name = "",
+		bool report_enabled_checked = false) {
   if(verbosity is int.min) {
     verbosity = (severity is UVM_ERROR) ? UVM_LOW :
       (severity is UVM_FATAL) ? UVM_NONE : UVM_MEDIUM;

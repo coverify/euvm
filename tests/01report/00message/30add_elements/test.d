@@ -27,11 +27,11 @@ class test_root: uvm_root
   mixin uvm_component_utils;
   override void initial()
   {
-     uvm_coreservice_t cs_ = uvm_coreservice_t.get();
+     static uvm_coreservice_t cs_ = uvm_coreservice_t.get();
 
-     uvm_factory fact = cs_.get_factory();
-     my_server server = new my_server;
-     my_catcher catcher = new my_catcher;
+     static uvm_factory fact = cs_.get_factory();
+     static my_server server = new my_server;
+     static my_catcher catcher = new my_catcher;
      uvm_report_cb.add(null, catcher);
      uvm_report_server.set_server(server);
      fact.set_type_override_by_type(uvm_report_handler.get_type(), my_handler.get_type());
@@ -59,7 +59,7 @@ class my_server: uvm_default_report_server
   {
     report_message.add_string("server_name", get_name());
     
-    return super.compose_report_message(report_message, report_object_name);
+    compose_report_message = super.compose_report_message(report_message, report_object_name);
   }
 }
 
@@ -107,9 +107,9 @@ class test: uvm_test
   }
 }
 
-int main(string[] argv) {
+void main(string[] argv) {
   TestBench tb = new TestBench;
   tb.multiCore(0, 0);
   tb.elaborate("tb", argv);
-  return tb.simulate();
+  tb.simulate();
 }
