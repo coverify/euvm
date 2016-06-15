@@ -355,9 +355,9 @@ class uvm_sequence_base: uvm_sequence_item
 
   // task
   void start(uvm_sequencer_base sequencer,
-		    uvm_sequence_base parent_sequence = null,
-		    int this_priority = -1,
-		    bool call_pre_post = true) {
+	     uvm_sequence_base parent_sequence = null,
+	     int this_priority = -1,
+	     bool call_pre_post = true) {
 
     synchronized(this) {
       set_item_context(parent_sequence, sequencer);
@@ -1720,7 +1720,8 @@ class uvm_sequence_base: uvm_sequence_item
   //|   sub_seq.post_start()        (task)
   //|
 
-  void uvm_do(T) (ref T SEQ_OR_ITEM) if(is(T: uvm_sequence_item)) {
+  void uvm_do(T) (ref T SEQ_OR_ITEM)
+    if(is(T: uvm_sequence_item)) {
     uvm_do_on_pri_with!q{}(SEQ_OR_ITEM, m_sequencer(), -1);
   }
 
@@ -1758,7 +1759,8 @@ class uvm_sequence_base: uvm_sequence_item
   // before execution.
 
   void uvm_do_with(string CONSTRAINTS, T, V...)
-    (ref T SEQ_OR_ITEM, V values) if(is(T: uvm_sequence_item)) {
+    (ref T SEQ_OR_ITEM, V values)
+    if(is(T: uvm_sequence_item)) {
     uvm_do_on_pri_with!CONSTRAINTS(SEQ_OR_ITEM, m_sequencer(), -1, values);
   }
 
@@ -1772,7 +1774,8 @@ class uvm_sequence_base: uvm_sequence_item
   // execution.
 
   void uvm_do_pri_with(string CONSTRAINTS, T, V...)
-    (ref T SEQ_OR_ITEM, int PRIORITY, values) if(is(T: uvm_sequence_item)) {
+    (ref T SEQ_OR_ITEM, int PRIORITY, values)
+    if(is(T: uvm_sequence_item)) {
     uvm_do_on_pri_with!CONSTRAINTS(SEQ_OR_ITEM, m_sequencer(),
 				   PRIORITY, values);
   }
@@ -1825,7 +1828,8 @@ class uvm_sequence_base: uvm_sequence_item
   // to the sequence in which the macro is invoked, and it sets the sequencer to
   // the specified ~SEQR~ argument.
 
-  void uvm_do_on_pri(T, U)(ref T SEQ_OR_ITEM, U SEQR, int PRIORITY)
+  void uvm_do_on_pri(T, U)(ref T SEQ_OR_ITEM,
+			   U SEQR, int PRIORITY)
     if(is(T: uvm_sequence_item) && is(U: uvm_sequencer_base)) {
       uvm_do_on_pri_with!q{}(SEQ_OR_ITEM, SEQR, PRIORITY);
     }
@@ -1858,8 +1862,10 @@ class uvm_sequence_base: uvm_sequence_item
     (ref T SEQ_OR_ITEM, U SEQR, int PRIORITY, V values)
     if(is(T: uvm_sequence_item) && is(U: uvm_sequencer_base)) {
       uvm_create_on(SEQ_OR_ITEM, SEQR);
-      uvm_sequence_base seq_ =
-	cast(uvm_sequence_base) start_item(SEQ_OR_ITEM, PRIORITY);
+      uvm_sequence_base seq_ = cast(uvm_sequence_base) SEQ_OR_ITEM;
+      if (seq_ is null) {
+	start_item(SEQ_OR_ITEM, PRIORITY);
+      }
       version(UVM_NO_RAND) {}
       else {
 	if((seq_ is null || ! seq_.do_not_randomize)) {
@@ -1899,7 +1905,8 @@ class uvm_sequence_base: uvm_sequence_item
   // `uvm_create.  The processing is done without randomization.  Essentially, an
   // `uvm_do without the create or randomization.
 
-  void uvm_send(T)(ref T SEQ_OR_ITEM) if(is(T: uvm_sequence_item)) {
+  void uvm_send(T)(ref T SEQ_OR_ITEM)
+    if(is(T: uvm_sequence_item)) {
     uvm_send_pri(SEQ_OR_ITEM, -1);
   }
 
@@ -1957,7 +1964,8 @@ class uvm_sequence_base: uvm_sequence_item
   // execution.
 
   void uvm_rand_send_with(string CONSTRAINTS, T, V...)
-    (ref T SEQ_OR_ITEM, V values) if(is(T: uvm_sequence_item)) {
+    (ref T SEQ_OR_ITEM, V values)
+    if(is(T: uvm_sequence_item)) {
     uvm_rand_send_pri_with!CONSTRAINTS(SEQ_OR_ITEM, -1, values);
   }
 
@@ -1970,7 +1978,8 @@ class uvm_sequence_base: uvm_sequence_item
   // execution.
 
   void uvm_rand_send_pri_with(string CONSTRAINTS, T, V...)
-    (ref T SEQ_OR_ITEM, int PRIORITY, V values) if(is(T: uvm_sequence_item)) {
+    (ref T SEQ_OR_ITEM, int PRIORITY, V values)
+    if(is(T: uvm_sequence_item)) {
     uvm_sequence_base seq_ = cast(uvm_sequence_base) SEQ_OR_ITEM;
     if (seq_ is null) start_item(SEQ_OR_ITEM, PRIORITY);
     else seq_.set_item_context(this,SEQ_OR_ITEM.get_sequencer());

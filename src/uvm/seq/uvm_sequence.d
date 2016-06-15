@@ -68,12 +68,11 @@ abstract class uvm_sequence (REQ = uvm_sequence_item, RSP = REQ):
   // can use this field, if desired, or create another field to use.  The
   // default ~do_print~ will print this field.
   version(UVM_NO_RAND) {
-    @uvm_public_sync
-      private REQ                _req;
+    protected REQ                req;
   }
   else {
-    @uvm_public_sync @rand!false
-      private REQ                _req;
+    @rand!false
+      protected REQ              req;
   }
 
 
@@ -83,12 +82,11 @@ abstract class uvm_sequence (REQ = uvm_sequence_item, RSP = REQ):
   // can use this field, if desired, or create another field to use.   The
   // default ~do_print~ will print this field.
   version(UVM_NO_RAND) {
-    @uvm_public_sync
-      private RSP                _rsp;
+    protected RSP                rsp;
   }
   else {
-    @uvm_public_sync @rand!false
-      private RSP                _rsp;
+    @rand!false
+      protected RSP              rsp;
   }    
 
   // Function: new

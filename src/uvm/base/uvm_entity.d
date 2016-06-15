@@ -122,8 +122,8 @@ class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
   }
 
   override void _esdl__postElab() {
-    uvm_root_instance.set_root_name(getFullName() ~ ".(" ~
-				    qualifiedTypeName!T ~ ")");
+    uvm_root_instance.set_name(getFullName() ~ ".(" ~
+			       qualifiedTypeName!T ~ ")");
   }
 
   override T _get_uvm_root() {

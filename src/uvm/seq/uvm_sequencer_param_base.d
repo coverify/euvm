@@ -117,8 +117,8 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // ------------
 
   override void send_request(uvm_sequence_base sequence_ptr,
-				      uvm_sequence_item t,
-				      bool rerandomize = false) {
+			     uvm_sequence_item t,
+			     bool rerandomize = false) {
     synchronized(this) {
       if (sequence_ptr is null) {
 	uvm_report_fatal("SNDREQ", "Send request sequence_ptr"

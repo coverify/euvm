@@ -338,7 +338,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   // uvm_root's constructor is called (in ESDL build phase), it's name
   // is not yet available. This function is called later as the name
   // of the instance becomes available.
-  void set_root_name(string name) {
+  package void set_root_name(string name) {
     synchronized(this) {
       assert(cast(uvm_root) this);
       if(get_name() == "__top__") {

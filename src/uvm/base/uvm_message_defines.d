@@ -149,7 +149,7 @@ mixin template uvm_report_mixin()
   void uvm_info(string file=__FILE__, size_t line=__LINE__, MF...)
     (string id, string message, uvm_verbosity verbosity,
      ref uvm_report_message rm, MF mf)
-    if (MF.length > 0 && is(MF[0]: uvm_report_message_element_base)) {
+    if (MF.length == 0 || is(MF[0]: uvm_report_message_element_base)) {
       uvm_message(UVM_INFO, id, message, verbosity, file, line, rm, mf);
     }
 
@@ -179,7 +179,7 @@ mixin template uvm_report_mixin()
 
   void uvm_warning(string file=__FILE__, size_t line=__LINE__, MF...)
     (string id, string message, ref uvm_report_message rm, MF mf)
-    if(MF.length > 0 && is(MF[0]: uvm_report_message_element_base)) {
+    if(MF.length == 0 || is(MF[0]: uvm_report_message_element_base)) {
       uvm_message(UVM_WARNING, id, message, UVM_NONE, file, line, rm, mf);
     }
 
@@ -208,7 +208,7 @@ mixin template uvm_report_mixin()
 
   void uvm_error(string file=__FILE__, size_t line=__LINE__, MF...)
     (string id, string message, ref uvm_report_message rm, MF mf)
-    if(MF.length > 0 && is(MF[0]: uvm_report_message_element_base)) {
+    if(MF.length == 0 || is(MF[0]: uvm_report_message_element_base)) {
       uvm_message(UVM_ERROR, id, message, UVM_NONE, file, line, rm, mf);
     }
 
@@ -237,7 +237,7 @@ mixin template uvm_report_mixin()
 
   void uvm_fatal(string file=__FILE__, size_t line=__LINE__, MF...)
     (string id, string message, ref uvm_report_message rm, MF mf)
-    if(MF.length > 0 && is(MF[0]: uvm_report_message_element_base)) {
+    if(MF.length == 0 || is(MF[0]: uvm_report_message_element_base)) {
       uvm_message(UVM_FATAL, id, message, UVM_NONE, file, line, rm, mf);
     }
 
@@ -268,7 +268,7 @@ mixin template uvm_report_mixin()
   static void uvm_info_context(string file=__FILE__, size_t line=__LINE__, MF...)
     (string id, string message, uvm_verbosity verbosity,
      uvm_report_object ro, ref uvm_report_message rm, MF mf)
-    if(MF.length > 0 && is(MF[0]: uvm_report_message_element_base)) {
+    if(MF.length == 0 || is(MF[0]: uvm_report_message_element_base)) {
       uvm_message_context(UVM_INFO, id, message, verbosity,
 			  file, line, ro, rm, mf);
     }
@@ -299,7 +299,7 @@ mixin template uvm_report_mixin()
   static void uvm_warning_context(string file=__FILE__, size_t line=__LINE__, MF...)
     (string id, string message, uvm_report_object ro,
      ref uvm_report_message rm, MF mf)
-    if(MF.length > 0 && is(MF[0]: uvm_report_message_element_base)) {
+    if(MF.length == 0 || is(MF[0]: uvm_report_message_element_base)) {
       uvm_message_context(UVM_WARNING, id, message, UVM_NONE,
 			  file, line, ro, rm, mf);
     }
@@ -330,7 +330,7 @@ mixin template uvm_report_mixin()
   static void uvm_error_context(string file=__FILE__, size_t line=__LINE__, MF...)
     (string id, string message, uvm_report_object ro,
      ref uvm_report_message rm, MF mf)
-    if(MF.length > 0 && is(MF[0]: uvm_report_message_element_base)) {
+    if(MF.length == 0 || is(MF[0]: uvm_report_message_element_base)) {
       uvm_message_context(UVM_ERROR, id, message, UVM_NONE,
 			  file, line, ro, rm, mf);
     }
@@ -361,7 +361,7 @@ mixin template uvm_report_mixin()
   static void uvm_fatal_context(string file=__FILE__, size_t line=__LINE__, MF...)
     (string id, string message, uvm_report_object ro,
      ref uvm_report_message rm, MF mf)
-    if(MF.length > 0 && is(MF[0]: uvm_report_message_element_base)) {
+    if(MF.length == 0 || is(MF[0]: uvm_report_message_element_base)) {
       uvm_message_context(UVM_FATAL, id, message, UVM_NONE,
 			  file, line, ro, rm, mf);
     }

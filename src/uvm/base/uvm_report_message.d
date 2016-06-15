@@ -63,12 +63,61 @@ uvm_message_add(alias VAR, string LABEL="",
     }
   }
 
+uvm_report_message_element_base
+uvm_message_add(alias VAR, uvm_action ACTION)()
+  if (is(typeof(VAR) == string) || is(typeof(VAR): uvm_object)) {
+    string LABEL = "";
+    static if (is (typeof(VAR): string)) {
+      alias V = string;
+    }
+    else {
+      alias V = uvm_object;
+    }
+    static if (VAR.stringof[0] == '"' &&
+	       VAR.stringof[$-1] == '"') { // add_tag
+      static assert(LABEL != "", "Must supply label for uvm_message_add!");
+      return new uvm_report_message_element!V(VAR.stringof[1..$-1], LABEL, ACTION);
+    }
+    else if (LABEL == "") {
+      return new uvm_report_message_element!V(VAR.stringof, VAR, ACTION);
+    }
+    else {
+      return new uvm_report_message_element!V(LABEL, VAR, ACTION);
+    }
+  }
+
 // add_int
 uvm_report_message_element_base
 uvm_message_add(alias VAR, uvm_radix_enum RADIX=UVM_HEX, string LABEL="",
 		uvm_action ACTION=(UVM_LOG|UVM_RM_RECORD))()
   if (isIntegral!(typeof(VAR)) || isBitVector!(typeof(VAR))) {
     static if (LABEL == "") {
+      return new uvm_report_message_element!(typeof(VAR))(VAR.stringof, VAR, ACTION, RADIX);
+    }
+    else {
+      return new uvm_report_message_element!(typeof(VAR))(LABEL, VAR, ACTION, RADIX);
+    }
+  }
+
+uvm_report_message_element_base
+uvm_message_add(alias VAR, string LABEL,
+		uvm_action ACTION=(UVM_LOG|UVM_RM_RECORD))()
+  if (isIntegral!(typeof(VAR)) || isBitVector!(typeof(VAR))) {
+    uvm_radix_enum RADIX=UVM_HEX;    
+    static if (LABEL == "") {
+      return new uvm_report_message_element!(typeof(VAR))(VAR.stringof, VAR, ACTION, RADIX);
+    }
+    else {
+      return new uvm_report_message_element!(typeof(VAR))(LABEL, VAR, ACTION, RADIX);
+    }
+  }
+
+uvm_report_message_element_base
+uvm_message_add(alias VAR, uvm_action ACTION)()
+  if (isIntegral!(typeof(VAR)) || isBitVector!(typeof(VAR))) {
+    uvm_radix_enum RADIX=UVM_HEX;
+    string LABEL="";
+    if (LABEL == "") {
       return new uvm_report_message_element!(typeof(VAR))(VAR.stringof, VAR, ACTION, RADIX);
     }
     else {
@@ -1226,9 +1275,11 @@ class uvm_report_message: uvm_object
 			  int verbosity,
 			  string filename,
 			  size_t line,
-			  string context_name) {
+			  string context_name = "") {
     synchronized(this) {
-      _context_name = context_name;
+      if (context_name != "") {
+	_context_name = context_name;
+      }
       _filename     = filename;
       _line         = line;
       _severity     = severity;

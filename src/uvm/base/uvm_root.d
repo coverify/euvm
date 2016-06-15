@@ -1309,6 +1309,10 @@ class uvm_root: uvm_component
       return;
     }
   }
+
+  override void set_name(string name) {
+    super.set_root_name(name);
+  }
 }
 
 
