@@ -59,8 +59,10 @@ import uvm.base.uvm_object_defines;
 import uvm.base.uvm_printer;
 import uvm.base.uvm_version;
 import uvm.base.uvm_globals: uvm_report_enabled;
+import uvm.base.uvm_entity;
+import uvm.base.uvm_once;
+
 import uvm.meta.misc;
-import uvm.base.uvm_root: uvm_top, uvm_root_entity_base;
 
 import esdl.base.core: Process;
 
@@ -80,14 +82,14 @@ alias uvm_sev_override_array = uvm_pool!(uvm_severity, uvm_severity);
 class uvm_report_handler: uvm_object
 {
 
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_private_sync
     private bool _m_relnotes_done;
   }
 
   mixin(uvm_once_sync_string);
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   // internal variables
 
@@ -115,7 +117,7 @@ class uvm_report_handler: uvm_object
   private UVM_FILE[uvm_severity] _severity_file_handles;
   private uvm_id_file_array[uvm_severity] _severity_id_file_handles;
 
-  mixin uvm_object_utils_norand;
+  mixin uvm_object_essentials;
 
   // Function: new
   //
@@ -381,6 +383,7 @@ class uvm_report_handler: uvm_object
       s = "";
       if(action & UVM_DISPLAY)   s ~= "DISPLAY ";
       if(action & UVM_LOG)       s ~= "LOG ";
+      if(action & UVM_RM_RECORD) s ~= "RM_RECORD ";
       if(action & UVM_COUNT)     s ~= "COUNT ";
       if(action & UVM_EXIT)      s ~= "EXIT ";
       if(action & UVM_CALL_HOOK) s ~= "CALL_HOOK ";
@@ -463,7 +466,7 @@ class uvm_report_handler: uvm_object
   // return that.  Else, if there is a verbosity associated with the ~id~, return
   // that.  Else, return the max verbosity setting.
 
-  final int get_verbosity_level(uvm_severity severity=UVM_INFO,
+  final int get_verbosity_level(uvm_severity severity=uvm_severity.UVM_INFO,
 				string id="" ) {
     synchronized(this) {
       uvm_id_verbosities_array array;
@@ -656,7 +659,7 @@ class uvm_report_handler: uvm_object
 	      string name,
 	      string id,
 	      string message,
-	      int verbosity_level = UVM_MEDIUM,
+	      int verbosity_level=uvm_verbosity.UVM_MEDIUM,
 	      string filename = "",
 	      size_t line = 0,
 	      uvm_report_object client = null
@@ -684,7 +687,7 @@ class uvm_report_handler: uvm_object
 
 
   version(UVM_INCLUDE_DEPRECATED) {
-    import uvm.base.uvm_globals: uvm_root_info;
+    import uvm.base.uvm_globals;
 
     // Function- run_hooks
     //
@@ -837,7 +840,7 @@ class uvm_report_handler: uvm_object
 
 	q ~= "---------------------------------" ~
 	  "-------------------------------------";
-	uvm_root_info("UVM/REPORT/HANDLER", q, UVM_LOW);
+	uvm_info("UVM/REPORT/HANDLER", q, UVM_LOW);
       
       }
     }

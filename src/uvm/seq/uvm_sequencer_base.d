@@ -26,7 +26,9 @@ import uvm.base.uvm_coreservice;
 import uvm.seq.uvm_sequence_item;
 import uvm.seq.uvm_sequence_base;
 import uvm.base.uvm_component;
+import uvm.base.uvm_once;
 import uvm.base.uvm_config_db;
+import uvm.base.uvm_entity;
 import uvm.base.uvm_factory;
 import uvm.base.uvm_message_defines;
 import uvm.base.uvm_object_globals;
@@ -42,7 +44,7 @@ import uvm.meta.misc;
 import esdl.data.queue;
 import esdl.base.core;
 
-version(UVM_NORANDOM) {}
+version(UVM_NO_RAND) {}
  else {
    import esdl.data.rand;
  }
@@ -58,7 +60,7 @@ alias uvm_config_seq = uvm_config_db!uvm_sequence_base;
 // Utility class for tracking default_sequences
 // TBD -- make this a struct
 class uvm_sequence_process_wrapper {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
   @uvm_private_sync
   Process _pid;
   @uvm_private_sync
@@ -76,7 +78,7 @@ class uvm_sequence_process_wrapper {
 
 class uvm_sequencer_base: uvm_component
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_private_sync
     private int _g_request_id;
@@ -84,12 +86,12 @@ class uvm_sequencer_base: uvm_component
     private int _g_sequence_id = 1;
     @uvm_private_sync
     private int _g_sequencer_id = 1;
-  }
+  };
 
-  mixin uvm_once_sync;
-  mixin uvm_sync;
+  mixin(uvm_once_sync_string);
+  mixin(uvm_sync_string);
 
-  mixin uvm_component_utils;
+  mixin uvm_component_essentials;
 
   static int inc_g_request_id() {
     synchronized(once) {
@@ -155,7 +157,7 @@ class uvm_sequencer_base: uvm_component
   @uvm_protected_sync
   protected SimTime                _m_last_wait_relevant_time = 0 ;
 
-  private uvm_sequencer_arb_mode       _m_arbitration = UVM_SEQ_ARB_FIFO;
+  private uvm_sequencer_arb_mode       _m_arbitration = uvm_sequencer_arb_mode.UVM_SEQ_ARB_FIFO;
 
 
   // Function: new
@@ -385,7 +387,7 @@ class uvm_sequencer_base: uvm_component
       seq.reseed();
       seq.set_starting_phase(phase);
   
-      version(UVM_NORANDOM) {}
+      version(UVM_NO_RAND) {}
       else {
 	if(!seq.do_not_randomize) {
 	  try {
@@ -1653,7 +1655,7 @@ class uvm_sequencer_base: uvm_component
     
     protected int[string] _sequence_ids;
 
-    version(UVM_NORANDOM) {
+    version(UVM_NO_RAND) {
       protected int _seq_kind;
     }
     else {
@@ -1786,7 +1788,7 @@ class uvm_sequencer_base: uvm_component
 	  m_seq.set_sequencer(this);
 	  m_seq.reseed();
 	}
-	version(UVM_NORANDOM) {}
+	version(UVM_NO_RAND) {}
 	else {
 	  try{
 	    m_seq.randomize();
@@ -1911,7 +1913,7 @@ mixin(declareEnums!seq_req_t());
 
 class uvm_sequence_request
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
   @uvm_public_sync
   private bool               _grant;
   @uvm_public_sync

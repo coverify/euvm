@@ -48,10 +48,13 @@ import uvm.base.uvm_resource_db;
 import uvm.base.uvm_resource;
 import uvm.base.uvm_array;
 import uvm.base.uvm_root;
+import uvm.base.uvm_entity;
+import uvm.base.uvm_once;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_factory;	// uvm_object_wrapper
 import uvm.meta.misc;
 import uvm.base.uvm_object;
+import uvm.base.uvm_entity;
 import uvm.base.uvm_object_globals;
 
 import esdl.base.core;
@@ -60,7 +63,7 @@ import std.random: Random;
 
 final private class m_uvm_waiter
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
   @uvm_immutable_sync
   private string _inst_name;
   // _field_name is present in the SV version but is not used
@@ -69,7 +72,7 @@ final private class m_uvm_waiter
   private Event _trigger;
   this(string inst_name) { // , string field_name
     synchronized(this) {
-      _trigger.init("_trigger");
+      _trigger.initialize("_trigger");
       _inst_name = inst_name;
       // _field_name = field_name;
     }
@@ -89,7 +92,7 @@ final private class m_uvm_waiter
 // separate _m_waiters instance. It is really not required since the
 // string KEY is going to be unique for every field_name irrespective
 // of the type of the field.
-class uvm_once_config_db
+  class uvm_once_config_db: uvm_once_base
 {
   // Internal waiter list for wait_modified
   private uvm_array!(m_uvm_waiter)[string] _m_waiters;
@@ -120,7 +123,21 @@ class uvm_config_db (T = int): uvm_resource_db!T
   // pointer/handle and therefor unique
   // Internal lookup of config settings so they can be reused
   // The context has a pool that is keyed by the inst/field name.
-  private __gshared uvm_pool!(string, uvm_resource!T)[uvm_component] _m_rsc;
+
+  // private __gshared uvm_pool!(string, uvm_resource!T)[uvm_component] _m_rsc;
+
+  static class uvm_once: uvm_once_base
+  {
+    @uvm_immutable_sync
+    private uvm_pool!(string, uvm_resource!T) _m_rsc;
+    this() {
+      synchronized(this) {
+	_m_rsc = new uvm_pool!(string, uvm_resource!T);
+      }
+    }
+  }
+
+  mixin(uvm_once_sync_string);
 
   alias this_type = uvm_config_db!T;
 
@@ -216,7 +233,7 @@ class uvm_config_db (T = int): uvm_resource_db!T
 
     uvm_resource!T r;
     bool exists = false;
-    uvm_pool!(string, uvm_resource!T) pool;
+    // uvm_pool!(string, uvm_resource!T) pool;
     Random rstate;
 
     uvm_coreservice_t cs = uvm_coreservice_t.get();
@@ -240,16 +257,16 @@ class uvm_config_db (T = int): uvm_resource_db!T
       inst_name = cntxt.get_full_name() ~ "." ~ inst_name;
     }
 
-    synchronized(typeid(this_type)) {
-      auto prsc = cntxt in _m_rsc;
-      if(prsc !is null) {
-	pool = *prsc;
-      }
-      else {
-	pool = new uvm_pool!(string, uvm_resource!T);
-	_m_rsc[cntxt] = pool;
-      }
-    }
+    // synchronized(typeid(this_type)) {
+    //   auto prsc = cntxt in _m_rsc;
+    //   if(prsc !is null) {
+    // 	pool = *prsc;
+    //   }
+    //   else {
+    // 	pool = new uvm_pool!(string, uvm_resource!T);
+    // 	_m_rsc[cntxt] = pool;
+    //   }
+    // }
 
     // Insert the token in the middle to prevent cache
     // oddities like i=foobar,f=xyz and i=foo,f=barxyz.
@@ -257,12 +274,12 @@ class uvm_config_db (T = int): uvm_resource_db!T
     // in field names
     string lookup = inst_name ~ "__M_UVM__" ~ field_name;
 
-    if(lookup !in pool) {
+    if(lookup !in m_rsc) {
       r = new uvm_resource!T(field_name, inst_name);
-      pool.add(lookup, r);
+      m_rsc.add(lookup, r);
     }
     else {
-      r = pool.get(lookup);
+      r = m_rsc.get(lookup);
       exists = true;
     }
 
@@ -445,7 +462,7 @@ package class uvm_config_db_options
 {
   import uvm.base.uvm_cmdline_processor;
 
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     private bool _ready;
     private bool _tracing;

@@ -47,13 +47,13 @@ import std.string: format;
 
 class uvm_comparer
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   // Variable: policy
   //
   // Determines whether comparison is UVM_DEEP, UVM_REFERENCE, or UVM_SHALLOW.
 
-  private uvm_recursion_policy_enum _policy = UVM_DEFAULT_POLICY;
+  private uvm_recursion_policy_enum _policy = uvm_recursion_policy_enum.UVM_DEFAULT_POLICY;
 
 
   // Variable: show_max
@@ -73,7 +73,7 @@ class uvm_comparer
   // whether messages should be suppressed or shown.
 
   @uvm_public_sync
-  private uint _verbosity = UVM_LOW;
+  private uint _verbosity = uvm_verbosity.UVM_LOW;
 
 
   // Variable: sev
@@ -84,7 +84,7 @@ class uvm_comparer
   // filtering messages.
 
   @uvm_public_sync
-  private uvm_severity _sev = UVM_INFO;
+  private uvm_severity _sev = uvm_severity.UVM_INFO;
 
 
   // Variable: miscompares
@@ -148,6 +148,12 @@ class uvm_comparer
   @uvm_public_sync
   private uint _result = 0;
 
+  public void incr_result() {
+    synchronized(this) {
+      ++_result;
+    }
+  }
+
 
   // Function: compare -- templatized version
 
@@ -208,7 +214,7 @@ class uvm_comparer
 	if(lhs != rhs) {
 	  import std.string: format;
 	  uvm_object.m_uvm_status_container.scope_stack.set_arg(name);
-	  msg = format("lhs = ", lhs, " : rhs = ", rhs);
+	  msg = format("lhs = %s,  : rhs = %s", lhs, rhs);
 	  print_msg(msg);
 	  return false;
 	}
@@ -225,6 +231,24 @@ class uvm_comparer
 	if(lhs != rhs) {
 	  uvm_object.m_uvm_status_container.scope_stack.set_arg(name);
 	  msg = "lhs = \"" ~ lhs ~ "\" : rhs = \"" ~ rhs ~ "\"";
+	  print_msg(msg);
+	  return false;
+	}
+	return true;
+      }
+    }
+
+  bool compare(T)(string name,
+		  T lhs,
+		  T rhs)
+    if(isArray!T && !is(T == string)) {
+      synchronized(this) {
+	string msg;
+
+	if(lhs != rhs) {
+	  import std.string: format;
+	  uvm_object.m_uvm_status_container.scope_stack.set_arg(name);
+	  msg = format("lhs = %s,  : rhs = %s", lhs, rhs);
 	  print_msg(msg);
 	  return false;
 	}
@@ -280,7 +304,7 @@ class uvm_comparer
 
   bool compare_field(T)(string name, T lhs, T rhs,
 			uvm_radix_enum radix=UVM_NORADIX)
-  // if(isBitVector!T || isIntegral!T || isBoolean!T)
+    if(isBitVector!T || isIntegral!T || isBoolean!T)
   {
     synchronized(this) {
       if(lhs != rhs) {
@@ -321,7 +345,7 @@ class uvm_comparer
 		     uvm_bitstream_t lhs,
 		     uvm_bitstream_t rhs,
 		     int size,
-		     uvm_radix_enum radix=UVM_NORADIX) {
+		     uvm_radix_enum radix=uvm_radix_enum.UVM_NORADIX) {
     synchronized(this) {
       uvm_bitstream_t mask;
       string msg;
@@ -383,7 +407,7 @@ class uvm_comparer
 			 uvm_integral_t lhs,
 			 uvm_integral_t rhs,
 			 int     size,
-			 uvm_radix_enum radix=UVM_NORADIX) {
+			 uvm_radix_enum radix=uvm_radix_enum.UVM_NORADIX) {
     synchronized(this) {
       LogicVec!64 mask;
       string msg;

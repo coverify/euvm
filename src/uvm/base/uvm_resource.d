@@ -114,6 +114,9 @@ import uvm.base.uvm_object_globals;
 import uvm.base.uvm_root;
 import uvm.base.uvm_printer;
 import uvm.base.uvm_spell_chkr;
+import uvm.base.uvm_entity;
+import uvm.base.uvm_once;
+
 import uvm.meta.meta;
 
 import esdl.base.core: SimTime, getRootEntity, Process;
@@ -200,13 +203,13 @@ class uvm_resource_types
 class uvm_resource_options
 {
   // static private bool auditing = true;
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_none_sync
     private bool _auditing = true;
-  }
+  };
 
-  mixin uvm_once_sync;
+  mixin(uvm_once_sync_string);
 
   // Function: turn_on_auditing
   //
@@ -253,7 +256,7 @@ class uvm_resource_options
 
 abstract class uvm_resource_base: uvm_object
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     // variable: default_precedence
     //
@@ -264,10 +267,10 @@ abstract class uvm_resource_base: uvm_object
 
     @uvm_public_sync
     private uint _default_precedence = 1000;
-  }
+  };
 
-  mixin uvm_once_sync;
-  mixin uvm_sync;
+  mixin(uvm_once_sync_string);
+  mixin(uvm_sync_string);
 
   protected string _rscope;
   @uvm_immutable_sync
@@ -661,7 +664,7 @@ abstract class uvm_resource_base: uvm_object
 		     access_record.write_count,
 		     access_record.write_time);
       }
-      uvm_root_info("UVM/RESOURCE/ACCESSOR", qs, UVM_NONE);
+      uvm_info("UVM/RESOURCE/ACCESSOR", qs, UVM_NONE);
     }
   }
 
@@ -762,7 +765,7 @@ class uvm_resource_pool {
   import esdl.data.queue;
   import std.string: format;
 
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
     private uvm_resource_pool _rp; //  = get();
@@ -779,9 +782,9 @@ class uvm_resource_pool {
 	_printer.knobs.reference  = 0;
       }
     }
-  }
+  };
 
-  mixin uvm_once_sync;
+  mixin(uvm_once_sync_string);
 
   private uvm_resource_types.rsrc_q_t[string]     _rtab;
   private uvm_resource_types.rsrc_q_t[TypeInfo]   _ttab;
@@ -972,7 +975,7 @@ class uvm_resource_pool {
 		     ((success)?"success":"fail"),
 		     record.t);
       }
-      uvm_root_info("UVM/RESOURCE/GETRECORD", qs, UVM_NONE);
+      uvm_info("UVM/RESOURCE/GETRECORD", qs, UVM_NONE);
     }
   }
 
@@ -1414,7 +1417,7 @@ class uvm_resource_pool {
 
       if(rq is null || rq.size() is 0) {
 	import uvm.meta.mcd;
-	uvm_root_info("UVM/RESOURCE/PRINT", "<none>", UVM_NONE);
+	uvm_info("UVM/RESOURCE/PRINT", "<none>", UVM_NONE);
 	return;
       }
 
@@ -1438,13 +1441,13 @@ class uvm_resource_pool {
   final void dump(bool audit = false) {
     synchronized(this) {
       import uvm.meta.mcd;
-      uvm_root_info("UVM/RESOURCE/DUMP", "\n=== resource pool ===", UVM_NONE);
+      uvm_info("UVM/RESOURCE/DUMP", "\n=== resource pool ===", UVM_NONE);
 
       foreach (name, rq; _rtab) {
 	print_resources(rq, audit);
       }
 
-      uvm_root_info("UVM/RESOURCE/DUMP", "=== end of resource pool ===", UVM_NONE);
+      uvm_info("UVM/RESOURCE/DUMP", "=== end of resource pool ===", UVM_NONE);
 
     }
   }
@@ -1514,9 +1517,9 @@ class uvm_resource (T=int): uvm_resource_base
       	  if(name[i] == '.' || name[i] == '/' ||
       	     name[i] == '[' || name[i] == '*' ||
       	     name[i] == '{') {
-      	    uvm_root_warning("UVM/RSRC/NOREGEX",
-      			     format("a resource with meta characters in the " ~
-      				    "field name has been created \"%s\"",name));
+      	    uvm_warning("UVM/RSRC/NOREGEX",
+			format("a resource with meta characters in the " ~
+			       "field name has been created \"%s\"",name));
       	    break;
       	  }
       	}
@@ -1638,7 +1641,7 @@ class uvm_resource (T=int): uvm_resource_base
       if(rpterr) {
 	string msg = format("Resource with name %s in scope %s has incorrect type",
 			    name, rscope);
-	uvm_root_warning("RSRCTYPE", msg);
+	uvm_warning("RSRCTYPE", msg);
       }
       return null;
     }
@@ -1667,7 +1670,7 @@ class uvm_resource (T=int): uvm_resource_base
     if(rsrc is null) {
       string msg = format("Resource with specified type handle in" ~
 			  " scope %s was not located", rscope);
-      uvm_root_warning("RSRCNF", msg);
+      uvm_warning("RSRCNF", msg);
       return null;
     }
 

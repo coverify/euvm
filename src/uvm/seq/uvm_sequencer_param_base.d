@@ -38,7 +38,7 @@ import uvm.meta.misc;
 
 import esdl.data.queue;
 
-version(UVM_NORANDOM) {}
+version(UVM_NO_RAND) {}
  else {
   import esdl.data.rand;
  }   
@@ -57,7 +57,7 @@ class uvm_sequencer_param_base (REQ = uvm_sequence_item,
 				RSP = REQ): uvm_sequencer_base
 if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   alias this_type = uvm_sequencer_param_base !(REQ , RSP);
   alias req_type = REQ;
@@ -117,8 +117,8 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // ------------
 
   override void send_request(uvm_sequence_base sequence_ptr,
-				      uvm_sequence_item t,
-				      bool rerandomize = false) {
+			     uvm_sequence_item t,
+			     bool rerandomize = false) {
     synchronized(this) {
       if (sequence_ptr is null) {
 	uvm_report_fatal("SNDREQ", "Send request sequence_ptr"
@@ -133,10 +133,10 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
       REQ param_t = cast(REQ) t;
       if (param_t !is null) {
 	if (rerandomize is true) {
-	  version(UVM_NORANDOM) {}
+	  version(UVM_NO_RAND) {}
 	  else {
 	    try {
-	      param_t.randomize();
+	      randomize(param_t);
 	    }
 	    catch {
 	      uvm_report_warning("SQRSNDREQ", "Failed to rerandomize sequence"

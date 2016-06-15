@@ -43,6 +43,8 @@ import uvm.base.uvm_coreservice;
 import uvm.base.uvm_factory;
 import uvm.base.uvm_config_db;
 import uvm.base.uvm_object_globals;
+import uvm.base.uvm_entity;
+import uvm.base.uvm_once;
 // import uvm.base.uvm_object_globals;
 
 import esdl.data.bvec;
@@ -50,6 +52,7 @@ import esdl.base.core: Event;
 
 import std.algorithm: find, canFind;
 import std.conv: to;
+import std.range: ElementType;
 
 interface uvm_void_if { }
 abstract class uvm_void: uvm_void_if {
@@ -255,6 +258,9 @@ final class uvm_scope_stack
 //
 //------------------------------------------------------------------------------
 
+// This class will have a per thread (static)
+// instance. Synchronization is therefor not required.
+  
 final class uvm_status_container {
 
   import uvm.base.uvm_packer: uvm_packer;
@@ -265,7 +271,7 @@ final class uvm_status_container {
   import uvm.base.uvm_object_globals: uvm_bitstream_t,
     uvm_field_auto_enum, uvm_field_xtra_enum;
 
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   //The clone setting is used by the set/get config to know if cloning is on.
   @uvm_public_sync
@@ -276,8 +282,16 @@ final class uvm_status_container {
   private bool             _warning;
   @uvm_public_sync
   private bool             _status;
-  @uvm_public_sync
+
   private uvm_bitstream_t  _bitstream;
+
+  void bitstream(T)(T val) {
+    _bitstream = val;
+  }
+
+  uvm_bitstream_t bitstream() {
+    return _bitstream;
+  }
 
   // FIXME -- next two elements present in SV version but are not used
   // private int              _intv;
@@ -301,52 +315,51 @@ final class uvm_status_container {
   // (uvm_status_container), it is Ok to not make the next two
   // elements static (as done in SV version)
   // __gshared
-  private bool[string] _field_array;
+  // private bool[string] _field_array;
 
-  bool field_exists(string field) {
-    synchronized(this) {
-      if(field in _field_array) {
-	return true;
-      }
-      else {
-	return false;
-      }
-    }
-  }
+  // bool field_exists(string field) {
+  //   synchronized(this) {
+  //     if(field in _field_array) {
+  // 	return true;
+  //     }
+  //     else {
+  // 	return false;
+  //     }
+  //   }
+  // }
 
-  void reset_fields() {
-    synchronized(this) {
-      _field_array = null;
-    }
-  }
+  // void reset_fields() {
+  //   synchronized(this) {
+  //     _field_array = null;
+  //   }
+  // }
 
-  bool no_fields() {
-    synchronized(this) {
-      if(_field_array.length is 0) {
-	return true;
-      }
-      else {
-	return false;
-      }
-    }
-  }
+  // bool no_fields() {
+  //   synchronized(this) {
+  //     if(_field_array.length is 0) {
+  // 	return true;
+  //     }
+  //     else {
+  // 	return false;
+  //     }
+  //   }
+  // }
 
-  // __gshared
-  // FIXME -- next element present in SV version but is not used
-  // private bool             _print_matches;
+  @uvm_public_sync
+  private bool             _print_matches;
 
-  void do_field_check(string field, uvm_object obj) {
-    synchronized(this) {
-      debug(UVM_ENABLE_FIELD_CHECKS) {
-	if (field in _field_array)
-	  uvm_report_error("MLTFLD",
-			   format("Field %s is defined multiple times" ~
-				  " in type '%s'", field,
-				  obj.get_type_name()), UVM_NONE);
-      }
-      _field_array[field] = true;
-    }
-  }
+  // void do_field_check(string field, uvm_object obj) {
+  //   synchronized(this) {
+  //     debug(UVM_ENABLE_FIELD_CHECKS) {
+  // 	if (field in _field_array)
+  // 	  uvm_report_error("MLTFLD",
+  // 			   format("Field %s is defined multiple times" ~
+  // 				  " in type '%s'", field,
+  // 				  obj.get_type_name()), UVM_NONE);
+  //     }
+  //     _field_array[field] = true;
+  //   }
+  // }
 
 
   static string get_function_type (int what) {
@@ -399,7 +412,7 @@ final class uvm_status_container {
     }
   }
 
-  bool add_cycle(uvm_object obj) {
+  bool add_cycle_check(uvm_object obj) {
     synchronized(this) {
       if(obj in _cycle_check) {
 	return false;
@@ -411,7 +424,7 @@ final class uvm_status_container {
     }
   }
 
-  bool remove_cycle(uvm_object obj) {
+  bool remove_cycle_check(uvm_object obj) {
     synchronized(this) {
       if(obj !in _cycle_check) {
 	return false;
@@ -423,7 +436,7 @@ final class uvm_status_container {
     }
   }
 
-  void remove_all_cycles() {
+  void reset_cycle_checks() {
     synchronized(this) {
       _cycle_check = null;
     }
@@ -442,12 +455,20 @@ final class uvm_status_container {
 
   // utility function used to perform a cycle check when config setting are pushed
   // to uvm_objects. the function has to look at the current object stack representing
-  // the call stack of all m_uvm_field_automation() invocations.
-  // it is a only a cycle if the previous m_uvm_field_automation call scope
+  // the call stack of all m_uvm_object_automation() invocations.
+  // it is a only a cycle if the previous m_uvm_object_automation call scope
   // is not identical with the current scope AND the scope is already present in the
   // object stack
   private uvm_object[] _m_uvm_cycle_scopes;
 
+  uvm_object[] m_uvm_cycle_scopes() {
+    return _m_uvm_cycle_scopes;
+  }
+
+  void m_uvm_cycle_scopes(uvm_object[] cycles) {
+    _m_uvm_cycle_scopes = cycles;
+  }
+  
   void reset_cycle_scopes() {
     synchronized(this) {
       _m_uvm_cycle_scopes.length = 0;
@@ -459,7 +480,8 @@ final class uvm_status_container {
       uvm_object l = (_m_uvm_cycle_scopes.length == 0) ?
 	null : _m_uvm_cycle_scopes[$-1];
 
-      // we have been in this scope before (but actually right before so assuming a super/derived context of the same object)
+      // we have been in this scope before (but actually right before
+      // so assuming a super/derived context of the same object)
       if(l is scope_stack) {
 	_m_uvm_cycle_scopes ~= scope_stack;
 	return false;
@@ -526,7 +548,7 @@ struct uvm_copy_map {
 //
 final class uvm_seed_map
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     // ** from uvm_misc
     // Variable- m_global_random_seed
@@ -539,27 +561,15 @@ final class uvm_seed_map
     private uint _m_global_random_seed;
 
     // ** from uvm_misc -- global variable in SV
+    // assoc array -- make sure all accesses are under once guard
     private uvm_seed_map[string] _uvm_random_seed_table_lookup;
-
-
-    this(uint seed) {
-      synchronized(this) {
-	_m_global_random_seed = seed;
-      }
-    }
-
-    // Call this function only from uvm_root_entity.set_seed
-    @uvm_none_sync
-    void set_seed(uint seed) {
-      import uvm.base.uvm_root: uvm_top;
-      import uvm.base.uvm_globals: uvm_report_fatal;
-      synchronized(this) {
-	_m_global_random_seed = seed;
-      }
-    }
   }
 
-  mixin(uvm_once_sync_string!(uvm_once, typeof(this)));
+  mixin(uvm_once_sync_string);
+
+  static void set_seed(uint seed) {
+    m_global_random_seed = seed;
+  }
 
   private uint[string] _seed_table;
   private uint[string] _count;
@@ -718,13 +728,13 @@ string uvm_leaf_scope (string full_name, char scope_separator = '.') {
   case '(': bracket_match = ')'; break;
   case '<': bracket_match = '>'; break;
   case '{': bracket_match = '}'; break;
-  default : bracket_match = '.'; break;
+  default : bracket_match = '\0'; break;
   }
 
   //Only use bracket matching if the input string has the end match
   size_t  pos;
-  if(bracket_match != '.' && bracket_match != full_name[$-1]) {
-    bracket_match = '.';
+  if(bracket_match != '\0' && bracket_match != full_name[$-1]) {
+    bracket_match = '\0';
   }
 
   int  bmatches = 0;
@@ -734,7 +744,7 @@ string uvm_leaf_scope (string full_name, char scope_separator = '.') {
     }
     else if(full_name[pos] == scope_separator) {
       --bmatches;
-      if(!bmatches || (bracket_match is '.')) {
+      if(!bmatches || (bracket_match == '\0')) {
 	break;
       }
     }
@@ -784,7 +794,7 @@ string uvm_to_string(T)(T value,
   }
 
 string uvm_bitvec_to_string(T)(T value, size_t size,
-			       uvm_radix_enum radix=UVM_NORADIX,
+			       uvm_radix_enum radix=uvm_radix_enum.UVM_NORADIX,
 			       string radix_str="") {
   // sign extend & don't show radix for negative values
   static if(isBitVector!T && T.ISSIGNED) {
@@ -1057,7 +1067,7 @@ version(UVM_USE_PROCESS_CONTAINER) {
   import esdl.base.core;
   final class process_container_c
   {
-    mixin uvm_sync;
+    mixin(uvm_sync_string);
 
     @uvm_immutable_sync
     private Process _p;
@@ -1083,4 +1093,43 @@ string m_uvm_string_queue_join(string[] strs) {
 void uvm_wait_for_ever() {
   Event never;
   never.wait();
+}
+
+template UVM_ELEMENT_TYPE(T)
+{
+  static if (is(T == string)) {
+    alias UVM_ELEMENT_TYPE = T;
+  }
+  else {
+    alias E = ElementType!T;
+    static if (is (E == void)) {
+      alias UVM_ELEMENT_TYPE = T;
+    }
+    else {
+      alias UVM_ELEMENT_TYPE = UVM_ELEMENT_TYPE!E;
+    }
+  }
+}
+
+template UVM_IN_TUPLE(size_t I, alias S, A...) {
+  static if(I < A.length) {
+    static if(is(typeof(A[I]) == typeof(S)) && A[I] == S) {
+      enum bool UVM_IN_TUPLE = true;
+    }
+    else {
+      enum bool UVM_IN_TUPLE = UVM_IN_TUPLE!(I+1, S, A);
+    }
+  }
+  else {
+    enum bool UVM_IN_TUPLE = false;
+  }
+}
+
+// instead of macros as in SV version
+string uvm_file(string FILE=__FILE__)() {
+  return FILE;
+}
+
+size_t uvm_line(size_t LINE=__LINE__)() {
+  return LINE;
 }

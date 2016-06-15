@@ -75,12 +75,12 @@ abstract class uvm_bottomup_phase: uvm_phase
     }
 
     if (m_phase_trace) {
-      uvm_root_info("PH_TRACE",
-		    format("bottomup-phase phase=%s state=%s" ~
-			   " comp=%s comp.domain=%s phase.domain=%s",
-			   phase.get_name(), state,
-			   comp.get_full_name(), comp_domain.get_name(),
-			   phase_domain.get_name()), UVM_DEBUG);
+      uvm_info("PH_TRACE",
+	       format("bottomup-phase phase=%s state=%s" ~
+		      " comp=%s comp.domain=%s phase.domain=%s",
+		      phase.get_name(), state,
+		      comp.get_full_name(), comp_domain.get_name(),
+		      phase_domain.get_name()), UVM_DEBUG);
     }
 
     if (phase_domain is uvm_domain.get_common_domain() ||
@@ -107,8 +107,8 @@ abstract class uvm_bottomup_phase: uvm_phase
 	comp.m_current_phase = null;
 	break;
       default:
-	uvm_root_fatal("PH_BADEXEC",
-		       "bottomup phase traverse internal error");
+	uvm_fatal("PH_BADEXEC",
+		  "bottomup phase traverse internal error");
       }
     }
   }

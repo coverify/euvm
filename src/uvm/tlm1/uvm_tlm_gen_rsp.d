@@ -61,7 +61,7 @@ import uvm.base.uvm_phase;
 
 class uvm_tlm_gen_rsp_channel(RSP): uvm_component
 {
-  mixin uvm_component_utils;
+  mixin uvm_component_essentials;
   
   alias this_type = uvm_tlm_gen_rsp_channel!(RSP);
 

@@ -39,6 +39,7 @@ import uvm.base.uvm_object;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_printer;
 import uvm.base.uvm_root;
+import uvm.base.uvm_once;
 import uvm.base.uvm_coreservice;
 import std.conv: to;
 import uvm.meta.meta;
@@ -50,21 +51,25 @@ class uvm_pool(KEY=int, VAL=uvm_void): /*extends*/ uvm_object
 
   alias uvm_pool!(KEY,VAL) this_type;
 
-  private __gshared this_type[uvm_object] _m_global_pool;
-
   protected VAL[KEY] _pool;
 
 
   // Allow no aliasing, since aliasing leaks out the original assoc
   // array thus putting concurrency in peril
   // For this aliasing
-  // @property ref auto get_pool() {
-  //   synchronized(this) {
-  //     return _pool;
-  //   }
-  // }
+  VAL[KEY] dup_pool() {
+    synchronized(this) {
+      static if(__traits(compiles, _pool.dup)) {
+	return _pool.dup;
+      }
+      else {
+	assert(false, "Cannot copy: " ~ typeof(_pool).stringof);
+	// return null;
+      }
+    }
+  }
 
-  // alias get_pool this;
+  // alias dup_pool this;
 
   // Function: new
   //
@@ -139,15 +144,30 @@ class uvm_pool(KEY=int, VAL=uvm_void): /*extends*/ uvm_object
   // This allows items to be shared amongst components throughout the
   // verification environment.
 
-  static this_type get_global_pool() {
-    synchronized(typeid(this_type)) {
-      uvm_coreservice_t cs = uvm_coreservice_t.get();
-      uvm_root top = cs.get_root();
-      if(top !in _m_global_pool || _m_global_pool[top] is null) {
-	_m_global_pool[top] = new this_type("pool");
+  static class uvm_once: uvm_once_base
+  {
+    @uvm_immutable_sync
+    this_type _m_global_pool;
+    this() {
+      synchronized(this) {
+	_m_global_pool = new this_type("pool");
       }
-      return _m_global_pool[top];
     }
+  }
+  mixin(uvm_once_sync_string);
+
+  // private __gshared this_type[uvm_object] _m_global_pool;
+
+  static this_type get_global_pool() {
+    // synchronized(typeid(this_type)) {
+    //   uvm_coreservice_t cs = uvm_coreservice_t.get();
+    //   uvm_root top = cs.get_root();
+    //   if(top !in _m_global_pool || _m_global_pool[top] is null) {
+    // 	_m_global_pool[top] = new this_type("pool");
+    //   }
+    //   return _m_global_pool[top];
+    // }
+    return m_global_pool;
   }
 
 
@@ -156,10 +176,7 @@ class uvm_pool(KEY=int, VAL=uvm_void): /*extends*/ uvm_object
   // Returns the specified item instance from the global item pool.
 
   static VAL get_global(KEY key) {
-    synchronized(typeid(this_type)) {
-      this_type gpool = get_global_pool();
-      return gpool.get(key);
-    }
+    return m_global_pool.get(key);
   }
 
 
@@ -378,14 +395,16 @@ class uvm_pool(KEY=int, VAL=uvm_void): /*extends*/ uvm_object
   }
 
   override void do_copy(uvm_object rhs) {
-    synchronized(this, rhs) {
-      super.do_copy(rhs);
-      auto p = cast(this_type) rhs;
-      // KEY key;
-      if(rhs is null || p is null) {
-	return;
-      }
-      _pool = p._pool;
+    if(rhs is null) {
+      return;
+    }
+    auto p = cast(this_type) rhs;
+    if(p is null) {
+      return;
+    }
+    super.do_copy(rhs);
+    synchronized(this) {
+      _pool = p.dup_pool;
     }
   }
 
@@ -419,8 +438,7 @@ class uvm_pool(KEY=int, VAL=uvm_void): /*extends*/ uvm_object
 class uvm_object_string_pool(VAL=uvm_object): /*extends*/ uvm_pool!(string,VAL) {
   import std.string: format;
 
-  alias uvm_object_string_pool!(VAL) this_type;
-  private __gshared this_type[uvm_object] _m_global_pool;
+  alias this_type = uvm_object_string_pool!(VAL);
 
 
   // Function: new
@@ -449,15 +467,29 @@ class uvm_object_string_pool(VAL=uvm_object): /*extends*/ uvm_pool!(string,VAL) 
   // This allows items to be shared amongst components throughout the
   // verification environment.
 
-  static this_type get_global_pool() {
-    synchronized(typeid(this_type)) {
-      uvm_coreservice_t cs = uvm_coreservice_t.get();
-      uvm_root top = cs.get_root();
-      if(top !in _m_global_pool || _m_global_pool[top] is null) {
-	_m_global_pool[top] = new this_type("global_pool");
+  // private __gshared this_type[uvm_object] _m_global_pool;
+  static class uvm_once: uvm_once_base
+  {
+    @uvm_immutable_sync
+    this_type _m_global_pool;
+    this() {
+      synchronized(this) {
+	_m_global_pool = new this_type("pool");
       }
-      return _m_global_pool[top];
     }
+  }
+  mixin(uvm_once_sync_string);
+
+  static this_type get_global_pool() {
+    // synchronized(typeid(this_type)) {
+    //   uvm_coreservice_t cs = uvm_coreservice_t.get();
+    //   uvm_root top = cs.get_root();
+    //   if(top !in _m_global_pool || _m_global_pool[top] is null) {
+    // 	_m_global_pool[top] = new this_type("global_pool");
+    //   }
+    //   return _m_global_pool[top];
+    // }
+    return m_global_pool;
   }
 
 
@@ -466,11 +498,7 @@ class uvm_object_string_pool(VAL=uvm_object): /*extends*/ uvm_pool!(string,VAL) 
   // Returns the specified item instance from the global item pool.
 
   static VAL get_global(string key) {
-    synchronized(typeid(this_type)) {
-      this_type gpool;
-      gpool = get_global_pool();
-      return gpool.get(key);
-    }
+    return m_global_pool.get(key);
   }
 
 

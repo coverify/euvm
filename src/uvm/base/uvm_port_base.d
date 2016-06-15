@@ -126,7 +126,7 @@ abstract class uvm_port_component_base: uvm_component
 
 class uvm_port_component(PORT=uvm_object): uvm_port_component_base
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   // These needs further investigation
   // The component becomes accessible via the port -- FIXME
@@ -232,7 +232,7 @@ class uvm_port_component(PORT=uvm_object): uvm_port_component_base
 abstract class uvm_port_base(IF = uvm_void): IF
 {
 
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   alias this_type = uvm_port_base!IF;
 

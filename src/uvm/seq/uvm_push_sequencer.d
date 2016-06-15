@@ -38,7 +38,7 @@ import uvm.tlm1.uvm_ports;
 class uvm_push_sequencer(REQ=uvm_sequence_item, RSP=REQ):
   uvm_sequencer_param_base!(REQ, RSP)
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   alias this_type = uvm_push_sequencer!(REQ , RSP);
 

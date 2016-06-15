@@ -31,6 +31,8 @@ import uvm.base.uvm_component;
 import uvm.base.uvm_coreservice;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_object_globals;
+import uvm.base.uvm_entity;
+import uvm.base.uvm_once;
 
 import uvm.meta.misc;
 import uvm.meta.mcd;
@@ -46,14 +48,21 @@ import std.string: format;
 //Instance overrides by requested type lookup
 final class uvm_factory_queue_class
 {
-  private Queue!(uvm_factory_override) _queue;
+  Queue!(uvm_factory_override) _queue;
+
+  private Queue!(uvm_factory_override) get_queue() {
+    synchronized(this) {
+      return _queue.dup;
+    }
+  }
 
   uvm_factory_queue_class clone() {
     auto clone_ = new uvm_factory_queue_class;
-    synchronized(this, clone_) {
-      clone_._queue = _queue;
-      return clone_;
+    auto q = get_queue();
+    synchronized(clone_) {
+      clone_._queue = q;
     }
+    return clone_;
   }
 
   final uvm_factory_override opIndex(size_t index) {
@@ -181,7 +190,7 @@ final class uvm_factory_queue_class
 
 abstract class uvm_factory
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_private_sync
     private bool _m_debug_pass;
@@ -483,7 +492,7 @@ abstract class uvm_factory
 class uvm_default_factory: uvm_factory
 {
 
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
   // Group: Registering Types
 
   // Function: register
@@ -1451,7 +1460,7 @@ class uvm_default_factory: uvm_factory
       qs ~= "(*) Types with no associated type name will be printed" ~
 	" as <unknown>\n\n####\n\n";
 
-      uvm_root_info("UVM/FACTORY/PRINT", qs, UVM_NONE);
+      uvm_info("UVM/FACTORY/PRINT", qs, UVM_NONE);
 
     }
   }
@@ -1599,7 +1608,7 @@ class uvm_default_factory: uvm_factory
 
       qs ~= "\n(*) Types with no associated type name will be printed as <unknown>\n\n####\n\n";
 
-      uvm_root_info("UVM/FACTORY/DUMP", qs, UVM_NONE);
+      uvm_info("UVM/FACTORY/DUMP", qs, UVM_NONE);
     }
   }
 
@@ -2017,7 +2026,7 @@ abstract class uvm_object_wrapper
 
 final class uvm_factory_override
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   @uvm_private_sync
   private string _full_inst_path;

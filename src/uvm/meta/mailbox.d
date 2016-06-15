@@ -219,8 +219,8 @@ class Mailbox(T): MailboxBase!T
   this(size_t bound = 0) {
     synchronized(this) {
       super(bound);
-      _readEvent.init("readEvent", EntityIntf.getContextEntity());
-      _writeEvent.init("writeEvent", EntityIntf.getContextEntity());
+      _readEvent.initialize("readEvent", EntityIntf.getContextEntity());
+      _writeEvent.initialize("writeEvent", EntityIntf.getContextEntity());
     }
   }
   
@@ -238,7 +238,7 @@ class MailOutbox(T): MailboxBase!T
   this(size_t bound = 0) {
     synchronized(this) {
       super(bound);
-      _readEvent.init("readEvent(async)", EntityIntf.getContextEntity());
+      _readEvent.initialize("readEvent(async)", EntityIntf.getContextEntity());
       _writeEvent = new Semaphore;
     }
   }
@@ -257,7 +257,7 @@ class MailInbox(T): MailboxBase!T
   this(size_t bound = 0) {
     synchronized(this) {
       super(bound);
-      _writeEvent.init("writeEvent(async)", EntityIntf.getContextEntity());
+      _writeEvent.initialize("writeEvent(async)", EntityIntf.getContextEntity());
       _readEvent = new Semaphore;
     }
   }

@@ -93,7 +93,7 @@ import std.traits: isIntegral, isBoolean;
 abstract class uvm_printer
 {
 
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   // Variable: knobs
   //
@@ -181,7 +181,17 @@ abstract class uvm_printer
 	  else if(radix is UVM_STRING) type_name = "string";
 	  else if(radix is UVM_ENUM)   type_name = qualifiedTypeName!T ~
 					 " (enum)";
-	  else                         type_name = qualifiedTypeName!T;
+	  else {
+	    static if(isBitVector!T) {
+	      static if(! T.ISSIGNED) type_name = "U";
+	      enum int SIZE = cast(int) T.SIZE;
+	      static if(T.IS4STATE) type_name ~= "Logic!" ~ SIZE.stringof;
+	      else type_name ~= "Bit!" ~ SIZE.stringof;
+	    }
+	    else {
+	      type_name = qualifiedTypeName!T;
+	    }
+	  }
 	}
 
 	auto sz_str = size.to!string;
@@ -239,7 +249,7 @@ abstract class uvm_printer
 	  if((knobs.depth == -1 || (knobs.depth > m_scope.depth())) &&
 	     ! value.m_uvm_status_container.check_cycle(value)) {
 
-	    value.m_uvm_status_container.add_cycle(value);
+	    value.m_uvm_status_container.add_cycle_check(value);
 	    if(name == "" && value !is null) {
 	      m_scope.down(value.get_name());
 	    }
@@ -266,7 +276,7 @@ abstract class uvm_printer
 	    else {
 	      m_scope.up('.');
 	    }
-	    value.m_uvm_status_container.remove_cycle(value);
+	    value.m_uvm_status_container.remove_cycle_check(value);
 	  }
 	}
       }
@@ -919,7 +929,7 @@ class uvm_printer_knobs {
   // Indicates whether the <print_header> function should be called when
   // printing an object.
 
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   @uvm_public_sync
   private bool _header = true;
@@ -991,6 +1001,7 @@ class uvm_printer_knobs {
   // Defines the number of elements at the head of a list to print.
   // Use -1 for no max.
 
+  @uvm_public_sync
   private int _begin_elements = 5;
 
 
@@ -999,6 +1010,7 @@ class uvm_printer_knobs {
   // This defines the number of elements at the end of a list that
   // should be printed.
 
+  @uvm_public_sync
   private int _end_elements = 5;
 
 
@@ -1054,6 +1066,7 @@ class uvm_printer_knobs {
   // Indicates whether the radix string ('h, and so on) should be prepended to
   // an integral value when one is printed.
 
+  @uvm_public_sync
   private bool
   _show_radix = true;
 
@@ -1064,7 +1077,7 @@ class uvm_printer_knobs {
   // enum is explicitly supplied to the print_int() method.
 
   @uvm_public_sync
-  private uvm_radix_enum _default_radix = UVM_HEX;
+  private uvm_radix_enum _default_radix = uvm_radix_enum.UVM_HEX;
 
 
   // Variable: dec_radix

@@ -28,17 +28,19 @@ import uvm.base.uvm_phase;
 import uvm.base.uvm_runtime_phases;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_globals;
+import uvm.base.uvm_entity;
+import uvm.base.uvm_once;
 import uvm.meta.misc;
 
 import esdl.data.queue;
 
 import std.algorithm;
 
-final class uvm_once_domain_globals
+final class uvm_once_domain_globals: uvm_once_base
 {
   @uvm_public_sync uvm_phase _build_ph;
   @uvm_public_sync uvm_phase _connect_ph;
-  @uvm_public_sync uvm_phase _elaboration_ph;
+  @uvm_public_sync uvm_phase _admin_ph;
   @uvm_public_sync uvm_phase _end_of_elaboration_ph;
   @uvm_public_sync uvm_phase _start_of_simulation_ph;
   @uvm_public_sync uvm_phase _run_ph;
@@ -63,7 +65,7 @@ class uvm_domain: uvm_phase
 {
   import std.string: format;
 
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_private_sync
     private uvm_domain         _m_common_domain;
@@ -72,9 +74,9 @@ class uvm_domain: uvm_phase
     private uvm_domain[string] _m_domains;
     @uvm_private_sync
     private uvm_phase          _m_uvm_schedule;
-  }
+  };
 
-  mixin uvm_once_sync;
+  mixin(uvm_once_sync_string);
 
   // Function: get_domains
   //
@@ -124,7 +126,7 @@ class uvm_domain: uvm_phase
       uvm_domain domain = new uvm_domain("common");
       domain.add(uvm_build_phase.get());
       domain.add(uvm_connect_phase.get());
-      domain.add(uvm_elaboration_phase.get());
+      domain.add(uvm_admin_phase.get());
       domain.add(uvm_end_of_elaboration_phase.get());
       domain.add(uvm_start_of_simulation_phase.get());
       domain.add(uvm_run_phase.get());
@@ -139,7 +141,7 @@ class uvm_domain: uvm_phase
       // same as uvm_<name>_phase.get().
       build_ph               = domain.find(uvm_build_phase.get());
       connect_ph             = domain.find(uvm_connect_phase.get());
-      elaboration_ph         = domain.find(uvm_elaboration_phase.get());
+      admin_ph               = domain.find(uvm_admin_phase.get());
       end_of_elaboration_ph  = domain.find(uvm_end_of_elaboration_phase.get());
       start_of_simulation_ph = domain.find(uvm_start_of_simulation_phase.get());
       run_ph                 = domain.find(uvm_run_phase.get());
@@ -200,8 +202,8 @@ class uvm_domain: uvm_phase
     super(name,UVM_PHASE_DOMAIN);
     synchronized(once) {
       if (name in once._m_domains) {
-	uvm_root_error("UNIQDOMNAM",
-		       format("Domain created with non-unique name '%s'", name));
+	uvm_error("UNIQDOMNAM",
+		  format("Domain created with non-unique name '%s'", name));
       }
       once._m_domains[name] = this;
     }

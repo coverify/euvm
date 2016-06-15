@@ -6,16 +6,21 @@ import std.string: format;
 
 extern(C) ubyte* sponge(ubyte*, uint);
 
-@UVM_DEFAULT
 class sha_st: uvm_sequence_item
 {
-  @rand ubyte data;
-  bool start;
-  bool end;
-  bool reset;
+
+  @UVM_DEFAULT {
+    @rand ubyte data;
+    bool start;
+    bool end;
+    bool reset;
+  }
 
   mixin uvm_object_utils;
-   
+
+  void preRandomize() {
+  }
+  
   this(string name = "sha_st") {
     super(name);
   }
@@ -39,16 +44,17 @@ class sha_st: uvm_sequence_item
   // }
 }
 
-@UVM_DEFAULT
 class sha_phrase_seq: uvm_sequence!sha_st
 {
-  ubyte[] phrase;
-
   mixin uvm_object_utils;
 
-  sha_st reset;
-  sha_st req;
-  sha_st end;
+  @UVM_DEFAULT {
+    ubyte[] phrase;
+    sha_st reset;
+    sha_st req;
+    sha_st end;
+  }
+  
 
   this(string name="") {
     super(name);
@@ -116,15 +122,16 @@ class sha_phrase_seq: uvm_sequence!sha_st
 
 }
 
-@UVM_DEFAULT
 class sha_st_seq: uvm_sequence!sha_st
 {
-  sha_st reset;
-  sha_st req;
-  sha_st end;
   mixin uvm_object_utils;
 
-  @rand uint seq_size;
+  @UVM_DEFAULT {
+    sha_st reset;
+    sha_st req;
+    sha_st end;
+    @rand uint seq_size;
+  }
 
   this(string name="") {
     super(name);
@@ -181,9 +188,11 @@ class sha_st_driver: uvm_driver!sha_st
 {
 
   mixin uvm_component_utils;
-  
-  uvm_put_port!sha_st req_egress;
-  uvm_analysis_port!sha_st req_analysis;
+
+  @UVM_BUILD {
+    uvm_put_port!sha_st req_egress;
+    uvm_analysis_port!sha_st req_analysis;
+  }
   
   /* override void build_phase(uvm_phase phase) { */
   /*   // req_egress = new uvm_put_port!sha_st("req_egress", this); */
@@ -240,11 +249,12 @@ class sha_st_driver: uvm_driver!sha_st
 
 class sha_scoreboard: uvm_scoreboard
 {
+  mixin uvm_component_utils;
+
   this(string name, uvm_component parent = null) {
     super(name, parent);
   }
 
-  mixin uvm_component_utils;
 
   uvm_phase phase_run;
 
@@ -253,8 +263,10 @@ class sha_scoreboard: uvm_scoreboard
   sha_phrase_seq[] req_queue;
   sha_phrase_seq[] rsp_queue;
 
-  uvm_analysis_imp!(sha_scoreboard, write_req) req_analysis;
-  uvm_analysis_imp!(sha_scoreboard, write_rsp) rsp_analysis;
+  @UVM_BUILD {
+    uvm_analysis_imp!(sha_scoreboard, write_req) req_analysis;
+    uvm_analysis_imp!(sha_scoreboard, write_rsp) rsp_analysis;
+  }
 
   override void run_phase(uvm_phase phase) {
     phase_run = phase;
@@ -294,6 +306,7 @@ class sha_scoreboard: uvm_scoreboard
       }
       else {
 	uvm_error("MISMATCHED", "Scoreboard received unmatched response");
+	uvm_info("MISMATCHED", format("%s: expected \n %s: actual  ", expected[0..64], seq.phrase), UVM_NONE);
       }
       
       assert(phase_run !is null);
@@ -307,10 +320,11 @@ class sha_st_monitor: uvm_monitor
 {
 
   mixin uvm_component_utils;
-  
-  uvm_analysis_imp!(sha_st, sha_st_monitor) ingress;
-  uvm_analysis_port!sha_phrase_seq egress;
 
+  @UVM_BUILD {
+    uvm_analysis_imp!(sha_st, sha_st_monitor) ingress;
+    uvm_analysis_port!sha_phrase_seq egress;
+  }
 
   this(string name, uvm_component parent = null) {
     super(name, parent);
@@ -351,17 +365,18 @@ class sha_st_sequencer: uvm_sequencer!sha_st
 
 class sha_st_agent: uvm_agent
 {
-
-  sha_st_sequencer sequencer;
-  sha_st_driver    driver;
-
-  sha_st_monitor   req_monitor;
-  sha_st_monitor   rsp_monitor;
-
-  sha_scoreboard   scoreboard;
-  
   mixin uvm_component_utils;
-   
+
+  @UVM_BUILD {
+    sha_st_sequencer sequencer;
+    sha_st_driver    driver;
+
+    sha_st_monitor   req_monitor;
+    sha_st_monitor   rsp_monitor;
+
+    sha_scoreboard   scoreboard;
+  }
+  
   this(string name, uvm_component parent = null) {
     super(name, parent);
   }
@@ -387,6 +402,7 @@ class RandomTest: uvm_test
     super(name, parent);
   }
 
+  @UVM_BUILD
   sha_st_env env;
   
   override void run_phase(uvm_phase phase) {
@@ -415,6 +431,7 @@ class QuickFoxTest: uvm_test
     super(name, parent);
   }
 
+  @UVM_BUILD
   sha_st_env env;
   
   override void run_phase(uvm_phase phase) {
@@ -433,7 +450,8 @@ class QuickFoxTest: uvm_test
 class sha_st_env: uvm_env
 {
   mixin uvm_component_utils;
-  private sha_st_agent agent;
+
+  @UVM_BUILD private sha_st_agent agent;
 
   this(string name, uvm_component parent) {
     super(name, parent);
@@ -572,18 +590,20 @@ class sha_st_root: uvm_root
 
   // sha_st_env env;
 
-  uvm_tlm_gen_rsp_channel!sha_st rsp_fifo;
-  uvm_tlm_fifo_egress!sha_st req_fifo;
+  @UVM_BUILD {
+    uvm_tlm_gen_rsp_channel!sha_st rsp_fifo;
+    uvm_tlm_fifo_egress!sha_st req_fifo;
 
 
-  uvm_put_port!sha_st rsp_egress;
-  uvm_get_port!sha_st req_ingress;
+    uvm_put_port!sha_st rsp_egress;
+    uvm_get_port!sha_st req_ingress;
 
-  uvm_get_port!sha_st rsp_ingress;
+    uvm_get_port!sha_st rsp_ingress;
 
-  uvm_get_port!sha_st rsp_generator;
+    uvm_get_port!sha_st rsp_generator;
 
-  uvm_analysis_port!sha_st rsp_anaylsis;
+    uvm_analysis_port!sha_st rsp_anaylsis;
+  }
 
   override void initial() {
     set_timeout(0.nsec, false);
@@ -801,7 +821,7 @@ class sha_st_root: uvm_root
 
 class TestBench: RootEntity
 {
-  uvm_root_entity!(sha_st_root) tb;
+  uvm_entity!(sha_st_root) tb;
 }
 
 
@@ -1056,4 +1076,3 @@ void main(string[] argv)
   test.simulate();
 
 }
-

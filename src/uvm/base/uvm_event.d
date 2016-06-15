@@ -51,7 +51,7 @@ import std.string: format;
 
 abstract class uvm_event_base: uvm_object
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   enum string type_name = "uvm_event_base";
 
@@ -78,6 +78,12 @@ abstract class uvm_event_base: uvm_object
   // private state variable, make sure that all read-writes are guarded
   private Queue!(uvm_event_callback!(uvm_object)) _callbacks;
 
+  Queue!(uvm_event_callback!(uvm_object)) get_callbacks() {
+    synchronized(this) {
+      return _callbacks.dup;
+    }
+  }
+
   // Function: new
   //
   // Creates a new event object.
@@ -85,8 +91,8 @@ abstract class uvm_event_base: uvm_object
   this (string name="") {
     synchronized(this) {
       super(name);
-      _m_event.init("_m_event");
-      _on_event.init("_on_event");
+      _m_event.initialize("_m_event");
+      _on_event.initialize("_on_event");
     }
   }
 
@@ -294,18 +300,19 @@ abstract class uvm_event_base: uvm_object
 
 
   override void do_copy (uvm_object rhs) {
-    synchronized(this, rhs) {
+    synchronized(this) {
       super.do_copy(rhs);
       auto e = cast(uvm_event_base) rhs;
       if (e is null) {
 	return;
       }
-
-      // m_event = e.m_event;	// crazy??
-      _num_waiters  = e._num_waiters;
-      _on           = e._on;
-      _trigger_time = e._trigger_time;
-      _callbacks    = e._callbacks.dup;
+      synchronized(e) {
+	// m_event = e.m_event;	// crazy??
+	_num_waiters  = e.get_num_waiters();
+	_on           = e.is_on();
+	_trigger_time = e.get_trigger_time();
+	_callbacks    = e.get_callbacks();
+      }
     }
   }
 } //endclass : uvm_event
@@ -323,7 +330,7 @@ abstract class uvm_event_base: uvm_object
 
 class uvm_event(T=uvm_object): uvm_event_base
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   enum string type_name = "uvm_event";
 
@@ -436,7 +443,7 @@ class uvm_event(T=uvm_object): uvm_event_base
     synchronized(this) {
       import std.algorithm;
       if(countUntil(_callbacks[], cb) != -1) {
-	uvm_report_warning("CBRGED","add_callback: Callback already registered. Ignoring.", UVM_NONE);
+	uvm_report_warning("CBRGED","add_callback: Callback already registered. Ignoring.", uvm_verbosity.UVM_NONE);
 	return;
       }
       if (append) {
@@ -460,7 +467,7 @@ class uvm_event(T=uvm_object): uvm_event_base
 	_callbacks.remove(r);
       }
       else {
-	uvm_report_warning("CBNTFD", "delete_callback: Callback not found. Ignoring delete request.", UVM_NONE);
+	uvm_report_warning("CBNTFD", "delete_callback: Callback not found. Ignoring delete request.", uvm_verbosity.UVM_NONE);
       }
     }
   }

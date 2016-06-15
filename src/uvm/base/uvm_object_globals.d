@@ -24,6 +24,9 @@
 
 module uvm.base.uvm_object_globals;
 
+import uvm.base.uvm_entity;
+import uvm.base.uvm_once;
+
 import esdl.data.bvec;
 import esdl.data.time;
 import uvm.meta.misc;
@@ -170,8 +173,8 @@ enum uvm_auto_enum: byte
   {   UVM_NO_AUTO=0,
       UVM_AUTO=1
       }
-
-mixin(declareEnums!uvm_auto_enum());
+enum UVM_NO_AUTO = uvm_auto_enum.UVM_NO_AUTO;
+enum UVM_AUTO = uvm_auto_enum.UVM_AUTO;
 
 // Parameter: `uvm_field_* macro flags
 //
@@ -205,8 +208,8 @@ mixin(declareEnums!uvm_auto_enum());
 
 enum uvm_field_auto_enum: int
   {   UVM_DEFAULT     = 0b000010101010101,
-      UVM_ALL_ON      = 0b000000101010101,
-      UVM_FLAGS_ON    = 0b000000101010101,
+      UVM_ALL_ON      = 0b000010101010101,
+      UVM_FLAGS_ON    = 0b000010101010101,
       UVM_FLAGS_OFF   = 0,
 
       //Values are OR'ed into a 32 bit value
@@ -221,6 +224,8 @@ enum uvm_field_auto_enum: int
       UVM_NORECORD     = (1 << 7),
       UVM_PACK         = (1 << 8),
       UVM_NOPACK       = (1 << 9),
+      UVM_BUILD        = (1 << 10),
+      UVM_NOBUILD      = (1 << 11),
       //UVM_DEEP         = (1 << 10),
       //UVM_SHALLOW      = (1 << 11),
       //UVM_REFERENCE    = (1 << 12),
@@ -245,12 +250,13 @@ enum uvm_field_xtra_enum: int
 
       //Get and set methods (in uvm_object). Used by the set/get* functions
       //to tell the object what operation to perform on the fields.
-      UVM_START_FUNCS   = UVM_END_DATA_EXTRA + 1,
-      UVM_SET           = UVM_START_FUNCS + 1,
-      UVM_SETINT        = UVM_SET,
-      UVM_SETOBJ        = UVM_START_FUNCS + 2,
-      UVM_SETSTR        = UVM_START_FUNCS + 3,
-      UVM_END_FUNCS     = UVM_SETSTR
+      UVM_START_FUNCS       = UVM_END_DATA_EXTRA + 1,
+      UVM_SET               = UVM_START_FUNCS + 1,
+      UVM_SETINT            = UVM_SET,
+      UVM_SETOBJ            = UVM_START_FUNCS + 2,
+      UVM_SETSTR            = UVM_START_FUNCS + 3,
+      UVM_PARALLELIZE         = UVM_START_FUNCS + 4,
+      UVM_END_FUNCS         = UVM_PARALLELIZE
       }
 mixin(declareEnums!uvm_field_xtra_enum());
 
@@ -652,11 +658,10 @@ mixin(declareEnums!uvm_objection_event());
 // typedef class uvm_packer;
 // typedef class uvm_recorder;
 
-
 mixin(uvm_once_sync_string!(uvm_once_object_globals,
 			    "uvm_object_globals"));
 
-final class uvm_once_object_globals
+final class uvm_once_object_globals: uvm_once_base
 {
   import uvm.base.uvm_printer: uvm_printer, uvm_table_printer,
     uvm_tree_printer, uvm_line_printer;

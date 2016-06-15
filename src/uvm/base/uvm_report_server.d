@@ -66,7 +66,7 @@ version(UVM_NO_DEPRECATED) { }
 
 class uvm_report_server: /*extends*/ uvm_object
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   // Needed for callbacks
   override string get_type_name() {
@@ -135,8 +135,8 @@ class uvm_report_server: /*extends*/ uvm_object
     synchronized(this) {
       super.do_copy(rhs);
       uvm_report_server rhs_ = cast(uvm_report_server) rhs;
-      if(rhs_ !is null) {
-	uvm_root_error("UVM/REPORT/SERVER/RPTCOPY", "cannot copy to report_server from the given datatype");
+      if(rhs_ is null) {
+	uvm_error("UVM/REPORT/SERVER/RPTCOPY", "cannot copy to report_server from the given datatype");
       }
 
       uvm_severity[] sev_set;
@@ -268,7 +268,7 @@ class uvm_report_server: /*extends*/ uvm_object
 
 class uvm_default_report_server: uvm_report_server
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   private int _m_max_quit_count;
   private int _m_quit_count;
@@ -697,6 +697,12 @@ class uvm_default_report_server: uvm_report_server
 	  }
 	  svr.execute_report_message(report_message, m);
 	}
+	// set the exit status of the simulation in case of error/fatal
+	switch(report_message.get_severity()) {
+	case uvm_severity.UVM_ERROR: getRootEntity.setExitStatus(1); break;
+	case uvm_severity.UVM_FATAL: getRootEntity.setExitStatus(1); break;
+	default: break;
+	}
       }
     }
   }
@@ -885,7 +891,7 @@ class uvm_default_report_server: uvm_report_server
 	report_object_name = l_report_handler.get_full_name();
       }
 
-      return sev_string ~ verbosity_str ~ " ", filename_line_string ~
+      return sev_string ~ verbosity_str ~ " " ~ filename_line_string ~
 	"@ " ~ time_str ~ ": " ~ report_object_name ~ context_str ~ " [" ~
 	report_message.get_id() ~ "] " ~ msg_body_str ~ terminator_str;
     }
@@ -926,7 +932,7 @@ class uvm_default_report_server: uvm_report_server
 	  q ~= format("[%s] %5d\n", l_id, l_count);
 	}
       }
-      uvm_root_info("UVM/REPORT/SERVER", q ,UVM_LOW);
+      uvm_info("UVM/REPORT/SERVER", q ,UVM_LOW);
     }
   }
 

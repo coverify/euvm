@@ -56,25 +56,26 @@ mixin template uvm_object_utils(T=void)
   mixin uvm_object_registry_mixin!(U, qualifiedTypeName!U);
   mixin m_uvm_object_create_func!(U);
   mixin m_uvm_get_type_name_func!(U);
-  mixin m_uvm_field_auto_utils!(U);
-  version(UVM_NORANDOM) {}
+  mixin m_uvm_object_auto_utils!(U);
+  version(UVM_NO_RAND) {}
   else {
+    import esdl.data.rand;
     mixin Randomization;
   }
   // `uvm_field_utils_begin(U)
 
   // Add a defaultConstructor for Object.factory to work
   static if(! HasDefaultConstructor!U) {
-    static if(__traits(compiles, this(""))) {
-      this() {this("");}
-    }
-    else {
-      this() {}
-    }
+    // static if(__traits(compiles, this(""))) {
+    this() {this("");}
+    // }
+    // else {
+    //   this() {}
+    // }
   }
 }
 
-mixin template uvm_object_utils_norand(T=void)
+mixin template uvm_object_essentials(T=void)
 {
   import uvm.meta.meta;
   static if(is(T == void)) {
@@ -86,7 +87,7 @@ mixin template uvm_object_utils_norand(T=void)
   mixin uvm_object_registry_mixin!(U, qualifiedTypeName!U);
   mixin m_uvm_object_create_func!(U);
   mixin m_uvm_get_type_name_func!(U);
-  mixin m_uvm_field_auto_utils!(U);
+  // mixin m_uvm_object_auto_utils!(U);
   // `uvm_field_utils_begin(U)
 
   // Add a defaultConstructor for Object.factory to work
@@ -115,6 +116,58 @@ string uvm_component_utils_string()() {
 
 import uvm.base.uvm_root: uvm_root;
 
+mixin template uvm_component_essentials(T=void)
+{
+  import uvm.base.uvm_root;
+  static if(is(T == void)) {
+    alias U = typeof(this);
+  }
+  else {
+    alias U = T;
+  }
+  static if(! is(U: uvm_root)) { // do not register uvm_roots with factory
+    import uvm.meta.meta;
+    mixin uvm_component_registry_mixin!(U, qualifiedTypeName!U);
+  }
+  mixin m_uvm_get_type_name_func!(U);
+  // mixin uvm_component_auto_build_mixin;
+  // mixin uvm_component_auto_elab_mixin;
+
+  // mixin m_uvm_object_auto_utils!(U);
+  // version(UVM_NO_RAND) { }
+  // else {
+  //   import esdl.data.rand;
+  //   mixin Randomization;
+  // }
+  // `uvm_field_utils_begin(U)
+
+  // Add a defaultConstructor for Object.factory to work
+  static if(! HasDefaultConstructor!U) {
+    this() {this("", null);}
+  }
+}
+
+// There is a class by name uvm_utils in uvm_misc module
+// mixin template uvm_utils(T=void)
+// {
+//   static if (is(T == void)) {
+//     alias U = typeof(this);
+//   }
+//   else {
+//     alias U = T;
+//   }
+//   static if (is(U: uvm_component)) {
+//     mixin uvm_component_utils!U;
+//   }
+//   else static if (is(U: uvm_object)) {
+//     mixin uvm_object_utils!U;
+//   }
+//   else {
+//     static assert (false, "uvm_utils can be mixed-in into only " ~
+// 		   "uvm_object or uvm_component derivatives");
+//   }
+// }
+
 mixin template uvm_component_utils(T=void)
 {
   import uvm.base.uvm_root;
@@ -129,40 +182,20 @@ mixin template uvm_component_utils(T=void)
     mixin uvm_component_registry_mixin!(U, qualifiedTypeName!U);
   }
   mixin m_uvm_get_type_name_func!(U);
-  mixin uvm_component_auto_build_mixin;
-  mixin uvm_component_auto_elab_mixin;
 
+  mixin m_uvm_object_auto_utils!(U);
+  mixin m_uvm_component_auto_utils!(U);
+
+  version(UVM_NO_RAND) { }
+  else {
+    import esdl.data.rand;
+    mixin Randomization;
+  }
   // `uvm_field_utils_begin(U)
 
   // Add a defaultConstructor for Object.factory to work
   static if(! HasDefaultConstructor!U) {
     this() {this("", null);}
-  }
-}
-
-mixin template uvm_component_auto_build_mixin()
-{
-  // overriding function that calls the generic function for automatic
-  // object construction
-  override void uvm__auto_build() {
-    debug(UVM_AUTO) {
-      import std.stdio;
-      writeln("Building .... : ", get_full_name);
-    }
-    .uvm__auto_build!(0, typeof(this))(this);
-  }
-}
-
-mixin template uvm_component_auto_elab_mixin()
-{
-  // overriding function that calls the generic function for automatic
-  // object construction
-  override void uvm__auto_elab() {
-    debug(UVM_AUTO) {
-      import std.stdio;
-      writeln("Elaborating .... : ", get_full_name);
-    }
-    .uvm__auto_elab!(0, typeof(this))(this);
   }
 }
 
@@ -340,7 +373,7 @@ mixin template m_uvm_component_registry_internal(T, string S)
 //   }
 // }
 
-mixin template m_uvm_field_auto_utils(T)
+mixin template m_uvm_object_auto_utils(T)
 {
   import uvm.base.uvm_object_globals: uvm_bitstream_t;
   import uvm.base.uvm_globals;
@@ -349,283 +382,330 @@ mixin template m_uvm_field_auto_utils(T)
   import uvm.seq.uvm_sequence_item;
   import uvm.seq.uvm_sequence_base;
   import uvm.base.uvm_object_globals;
-  void uvm_field_auto_all_fields(alias F, size_t I=0, T)(T lhs, T rhs) {
-    static if(I < lhs.tupleof.length) {
-      if(F!(I)(lhs, rhs)) {
-	// shortcircuit useful for compare etc
+  import uvm.base.uvm_printer;
+  import uvm.base.uvm_recorder;
+  import std.traits: isArray;
+  import std.string: format;
+
+  override void m_uvm_object_automation(uvm_object rhs,  
+					int        what, 
+					string     str) {
+    uvm_object[] current_scopes;
+    if (what == UVM_SETINT || what == UVM_SETSTR || what == UVM_SETOBJ) {
+      if (m_uvm_status_container.m_do_cycle_check(this)) {
 	return;
       }
-      uvm_field_auto_all_fields!(F, I+1)(lhs, rhs);
+      current_scopes = m_uvm_status_container.m_uvm_cycle_scopes;
     }
-    else static if(is(T B == super) // && B.length > 0
-		   ) {
-      import uvm.seq.uvm_sequence_item: uvm_sequence_item;
-      import uvm.seq.uvm_sequence_base: uvm_sequence_base;
-      alias BASE = B[0];
-      static if(! (is(BASE == uvm_component) ||
-		   is(BASE == uvm_object) ||
-		   is(BASE == uvm_sequence_item) ||
-		   is(BASE == uvm_sequence_base))) {
-	BASE lhs_ = lhs;
-	BASE rhs_ = rhs;
-	uvm_field_auto_all_fields!(F, 0)(lhs_, rhs_);
-      }
-    }
-  }
 
-  void uvm_field_auto_all_fields(alias F, size_t I=0, T)(T t) {
-    version(UVM_NORANDOM) {}
-    else {
-      import esdl.data.rand;
-    }
-    static if(I < t.tupleof.length) {
-      alias U=typeof(t.tupleof[I]);
-      version(UVM_NORANDOM) {
-	F!(I)(t);
+    super.m_uvm_object_automation(rhs, what, str);
+    /* Type is verified by uvm_object::compare() */
+    T rhs_;
+    if (what == uvm_field_auto_enum.UVM_COMPARE ||
+	what == uvm_field_auto_enum.UVM_COPY) { // rhs is required
+      if (rhs is null) {
       }
       else {
-	static if(! is(U: _esdl__ConstraintBase)) {
-	  F!(I)(t);
-	}
+	rhs_ = cast(T) rhs;
+	if (rhs_ is null) return;
       }
-      uvm_field_auto_all_fields!(F, I+1)(t);
     }
-    else static if(is(T B == super) // && B.length > 0
-		   ) {
-      import uvm.seq.uvm_sequence_item: uvm_sequence_item;
-      import uvm.seq.uvm_sequence_base: uvm_sequence_base;
-      alias BASE = B[0];
-      static if(! (is(BASE == uvm_component) ||
-		   is(BASE == uvm_object) ||
-		   is(BASE == uvm_sequence_item) ||
-		   is(BASE == uvm_sequence_base))) {
-	BASE t_ = t;
-	uvm_field_auto_all_fields!(F, 0)(t_);
-      }
+    // if (tmp_data__ != null)
+    /* Allow objects in same hierarchy to be copied/compared */
+    // if(!$cast(local_data__, tmp_data__)) return;
+
+    _m_uvm_object_automation!0(this, rhs_, what, str); // defined in uvm_object
+    if (what == UVM_SETINT || what == UVM_SETSTR || what == UVM_SETOBJ) {
+      // remove all scopes recorded (through super and other objects
+      // visited before)
+      m_uvm_status_container.m_uvm_cycle_scopes = current_scopes[0..$-1];
     }
   }
 
-  override void uvm_field_auto_setint(string field_name,
-				      uvm_bitstream_t value) {
-    uvm_root_error("uvm_field_auto_setint", "not yet implemented");
-  }
+  // override bool uvm_field_utils_defined() {
+  //   return true;
+  // }
+  
+  // void uvm_object_auto_all_fields(alias F, size_t I=0, T)(T lhs, T rhs) {
+  //   static if(I < lhs.tupleof.length) {
+  //     alias U=typeof(T.tupleof[I]);
+  //     version(UVM_NO_RAND) {
+  // 	if(F!(I)(lhs, rhs)) {
+  // 	  // shortcircuit useful for compare etc
+  // 	  return;
+  // 	}
+  //     }
+  //     else {
+  // 	import esdl.data.rand;
+  // 	static if(! is(U: _esdl__ConstraintBase)) {
+  // 	  if(F!(I)(lhs, rhs)) {
+  // 	    // shortcircuit useful for compare etc
+  // 	    return;
+  // 	  }
+  // 	}
+  //     }
+  //     uvm_object_auto_all_fields!(F, I+1)(lhs, rhs);
+  //   }
+  //   else static if(is(T B == super) // && B.length > 0
+  // 		   ) {
+  //     import uvm.seq.uvm_sequence_item: uvm_sequence_item;
+  //     import uvm.seq.uvm_sequence_base: uvm_sequence_base;
+  //     alias BASE = B[0];
+  //     static if(! (is(BASE == uvm_component) ||
+  // 		   is(BASE == uvm_object) ||
+  // 		   is(BASE == uvm_sequence_item) ||
+  // 		   is(BASE == uvm_sequence_base))) {
+  // 	BASE lhs_ = lhs;
+  // 	BASE rhs_ = rhs;
+  // 	uvm_object_auto_all_fields!(F, 0)(lhs_, rhs_);
+  //     }
+  //   }
+  // }
 
-  override void uvm_field_auto_setint(string field_name,
-				      uvm_integral_t value) {
-    uvm_root_error("uvm_field_auto_setint", "not yet implemented");
-  }
+  // void uvm_object_auto_all_fields(alias F, size_t I=0, T)(T t) {
+  //   static if(I < t.tupleof.length) {
+  //     alias U=typeof(t.tupleof[I]);
+  //     version(UVM_NO_RAND) {
+  // 	F!(I)(t);
+  //     }
+  //     else {
+  // 	import esdl.data.rand;
+  // 	static if(! is(U: _esdl__ConstraintBase)) {
+  // 	  F!(I)(t);
+  // 	}
+  //     }
+  //     uvm_object_auto_all_fields!(F, I+1)(t);
+  //   }
+  //   else static if(is(T B == super) // && B.length > 0
+  // 		   ) {
+  //     import uvm.seq.uvm_sequence_item: uvm_sequence_item;
+  //     import uvm.seq.uvm_sequence_base: uvm_sequence_base;
+  //     alias BASE = B[0];
+  //     static if(! (is(BASE == uvm_component) ||
+  // 		   is(BASE == uvm_object) ||
+  // 		   is(BASE == uvm_sequence_item) ||
+  // 		   is(BASE == uvm_sequence_base))) {
+  // 	BASE t_ = t;
+  // 	uvm_object_auto_all_fields!(F, 0)(t_);
+  //     }
+  //   }
+  // }
 
-  override void uvm_field_auto_setint(string field_name,
-				      ulong value) {
-    uvm_root_error("uvm_field_auto_setint", "not yet implemented");
-  }
+  // override void uvm_object_auto_set(string field_name, uvm_bitstream_t value,
+  // 				   ref bool matched, string prefix,
+  // 				   uvm_object[] hier) {
+  //   super.uvm_object_auto_set(field_name, value, matched, prefix, hier);
+  //   uvm_set_local(this, field_name, value, matched, prefix, hier);
+  // }
+
+  // override void uvm_object_auto_set(string field_name, uvm_integral_t value,
+  // 				   ref bool matched, string prefix,
+  // 				   uvm_object[] hier) {
+  //   super.uvm_object_auto_set(field_name, value, matched, prefix, hier);
+  //   uvm_set_local(this, field_name, value, matched, prefix, hier);
+  // }
+
+  // override void uvm_object_auto_set(string field_name, ulong value,
+  // 				   ref bool matched, string prefix,
+  // 				   uvm_object[] hier) {
+  //   super.uvm_object_auto_set(field_name, value, matched, prefix, hier);
+  //   uvm_set_local(this, field_name, value, matched, prefix, hier);
+  // }
   
-  override void uvm_field_auto_setint(string field_name,
-				      uint value) {
-    uvm_root_error("uvm_field_auto_setint", "not yet implemented");
-  }
+  // override void uvm_object_auto_set(string field_name, uint value,
+  // 				   ref bool matched, string prefix,
+  // 				   uvm_object[] hier) {
+  //   super.uvm_object_auto_set(field_name, value, matched, prefix, hier);
+  //   uvm_set_local(this, field_name, value, matched, prefix, hier);
+  // }
   
-  override void uvm_field_auto_setint(string field_name,
-				      ushort value) {
-    uvm_root_error("uvm_field_auto_setint", "not yet implemented");
-  }
+  // override void uvm_object_auto_set(string field_name, ushort value,
+  // 				   ref bool matched, string prefix,
+  // 				   uvm_object[] hier) {
+  //   super.uvm_object_auto_set(field_name, value, matched, prefix, hier);
+  //   uvm_set_local(this, field_name, value, matched, prefix, hier);
+  // }
   
-  override void uvm_field_auto_setint(string field_name,
-				      ubyte value) {
-    uvm_root_error("uvm_field_auto_setint", "not yet implemented");
-  }
+  // override void uvm_object_auto_set(string field_name, ubyte value,
+  // 				   ref bool matched, string prefix,
+  // 				   uvm_object[] hier) {
+  //   super.uvm_object_auto_set(field_name, value, matched, prefix, hier);
+  //   uvm_set_local(this, field_name, value, matched, prefix, hier);
+  // }
   
-  override void uvm_field_auto_setint(string field_name,
-				      bool value) {
-    uvm_root_error("uvm_field_auto_setint", "not yet implemented");
-  }
+  // override void uvm_object_auto_set(string field_name, bool value,
+  // 				   ref bool matched, string prefix,
+  // 				   uvm_object[] hier) {
+  //   super.uvm_object_auto_set(field_name, value, matched, prefix, hier);
+  //   uvm_set_local(this, field_name, value, matched, prefix, hier);
+  // }
   
-  // return true if a match occured
-  void uvm_set_local(size_t I=0, T, U)(T t, U value, string regx,
-				       string prefix="",
-				       ref bool status = false) {
-    static if(I < t.tupleof.length) {
-      enum int FLAGS = uvm_field_auto_get_flags!(t, I);
-      alias E = typeof(t.tupleof[I]);
-      string name = prefix ~ __traits(identifier, T.tupleof[I]);
-      static if(FLAGS & UVM_READONLY) {
-	if(uvm_is_match(regx, name)) {
-	  uvm_report_warning("RDONLY",
-			     format("Readonly argument match %s is ignored",
-				    name),
-			     UVM_NONE);
-	}
-      }
-      else {
-	if(uvm_is_match(regx, name)) {
-	  uvm_report_info("STRMTC", "set_object()" ~ ": Matched string " ~
-			  regx ~ " to field " ~ name,
-			  UVM_LOW);
-	  static if(is(U: E)) {
-	    t.tupleof[I] = value;
-	    status = true;
-	  }
-	  else static if(is(E: U) && is(U: Object)) {
-	    if(t.tupleof[i] == cast(E) value) {
-	      status = true;
-	    }
-	  }
-	  else {
-	    t.tupleof[I] = cast(E) value;
-	    status = true;
-	  }
-	}
-      }
-    }
-  }
+  // override void uvm_object_auto_set(string field_name, string value,
+  // 				   ref bool matched, string prefix,
+  // 				   uvm_object[] hier) {
+  //   super.uvm_object_auto_set(field_name, value, matched, prefix, hier);
+  //   uvm_set_local(this, field_name, value, matched, prefix, hier);
+  // }
+  
+  // override void uvm_object_auto_set(string field_name, uvm_object value,
+  // 				   ref bool matched, string prefix,
+  // 				   uvm_object[] hier) {
+  //   super.uvm_object_auto_set(field_name, value, matched, prefix, hier);
+  //   uvm_set_local(this, field_name, value, matched, prefix, hier);
+  // }
+  
+
 
   // Copy
-  override void uvm_field_auto_copy(uvm_object rhs) {
-    auto rhs_ = cast(T) rhs;
-    if(rhs_ is null) {
-      uvm_root_error("uvm_field_auto_copy", "cast failed, check type compatability");
-    }
-    uvm_field_auto_all_fields!uvm_field_auto_copy_field(this, rhs_);
-  }
+  // override void uvm_object_auto_copy(uvm_object rhs) {
+  //   auto rhs_ = cast(T) rhs;
+  //   if(rhs_ is null) {
+  //     uvm_error("UVMUTLS", "cast failed, check type compatability");
+  //   }
+  //   super.uvm_object_auto_copy(rhs);
+  //   uvm_object_auto_copy_field(this, rhs_);
+  // }
 
-  // copy the Ith field
-  bool uvm_field_auto_copy_field(size_t I=0, T)(T lhs, T rhs) {
-    enum int FLAGS = uvm_field_auto_get_flags!(lhs, I);
-    if(FLAGS & UVM_COPY &&
-       !(FLAGS & UVM_NOCOPY)) {
-      debug(UVM_UTILS) {
-	pragma(msg, "Copying : " ~ lhs.tupleof[I].stringof);
-      }
-      lhs.tupleof[I] = rhs.tupleof[I];
-    }
-    return false;
-  }
+  // // copy the Ith field
+  // void uvm_object_auto_copy_field(size_t I=0, T)(T lhs, T rhs) {
+  //   import std.traits;
+  //   static if (I < lhs.tupleof.length) {
+  //     // pragma(msg, T.tupleof[I].stringof);
+  //     alias U=typeof(lhs.tupleof[I]);
+  //     enum int FLAGS = uvm_object_auto_get_flags!(lhs, I);
+  //     static if(FLAGS & UVM_COPY &&
+  // 		!(FLAGS & UVM_NOCOPY)) {
+  // 	// version(UVM_NO_RAND) { }
+  // 	// else {
+  // 	//   import esdl.data.rand;
+  // 	//   static if (is(U: _esdl__ConstraintBase)) {
+  // 	//     uvm_object_auto_copy_field!(I+1)(lhs, rhs);
+  // 	//   }
+  // 	// }
+  // 	// debug(UVM_UTILS) {
+  // 	//   pragma(msg, "Copying : " ~ lhs.tupleof[I].stringof);
+  // 	// }
+  // 	static if (is(U: uvm_object)) {
+  // 	  static if((FLAGS & UVM_REFERENCE) != 0) {
+  // 	    lhs.tupleof[I] = rhs.tupleof[I];
+  // 	  }
+  // 	  else {
+  // 	    lhs.tupleof[I] = cast(U) rhs.tupleof[I].clone;
+  // 	  }
+  // 	}
+  // 	else static if (isIntegral!U || isBitVector!U ||
+  // 			is(U == string) || is(U == bool)) {
+  // 	  lhs.tupleof[I] = rhs.tupleof[I];
+  // 	}
+  // 	else static if (isArray!U) {
+  // 	  static if (isDynamicArray!U) {
+  // 	    lhs.tupleof[I].length = rhs.tupleof[I].length;
+  // 	  }
+  // 	  uvm_object_auto_copy_field!FLAGS(lhs.tupleof[I], rhs.tupleof[I], 0);
+  // 	}
+  // 	else {
+  // 	  static assert (false, "Do not know how to copy :" ~ U.stringof);
+  // 	}
+  //     }
+  //   }
+  //   static if (I < lhs.tupleof.length) {
+  //     uvm_object_auto_copy_field!(I+1)(lhs, rhs);
+  //   }
+  // }
+
+  // // handle arrays
+  // void uvm_object_auto_copy_field(int FLAGS, E)(ref E lhs, ref E rhs, int index) {
+  //   import std.traits;
+  //   if (index < rhs.length) {
+  //     alias U=typeof(lhs[index]);
+  //     static if (is(U: uvm_object)) {
+  // 	static if((FLAGS & UVM_REFERENCE) != 0) {
+  // 	  lhs[index] = rhs[index];
+  // 	}
+  // 	else {
+  // 	  lhs[index] = cast(U) rhs[index].clone;
+  // 	}
+  //     }
+  //     else static if (isIntegral!U || isBitVector!U ||
+  // 		      is(U == string) || is(U == bool)) {
+  // 	lhs[index] = rhs[index];
+  //     }
+  //     else static if (isArray!U) {
+  // 	static if (isDynamicArray!U) {
+  // 	  lhs[index].length = rhs[index].length;
+  // 	}
+  // 	uvm_object_auto_copy_field!FLAGS(lhs[index], rhs[index], 0);
+  //     }
+  //     else {
+  // 	uvm_error("UVMUTLS", "Do not know how to copy :" ~ U.stringof);
+  //     }
+  //     uvm_object_auto_copy_field!FLAGS(lhs, rhs, index+1);
+  //   }
+  // }
 
   // Comparison
-  override void uvm_field_auto_compare(uvm_object rhs) {
-    auto rhs_ = cast(T) rhs;
-    if(rhs_ is null) {
-      uvm_root_error("uvm_field_auto_compare", "cast failed, check type compatability");
-    }
-    uvm_field_auto_all_fields!uvm_field_auto_compare_field(this, rhs_);
-  }
+  // override void uvm_object_auto_compare(uvm_object rhs) {
+  //   auto rhs_ = cast(T) rhs;
+  //   if(rhs_ is null) {
+  //     uvm_error("UVMUTLS", "cast failed, check type compatability");
+  //   }
+  //   uvm_object_auto_all_fields!uvm_object_auto_compare_field(this, rhs_);
+  // }
 
-  // compare the Ith field
-  bool uvm_field_auto_compare_field(size_t I=0, T)(T lhs, T rhs) {
-    import std.traits: isIntegral;
-    enum int FLAGS = uvm_field_auto_get_flags!(lhs, I);
-    static if(FLAGS & UVM_COMPARE &&
-	      !(FLAGS & UVM_NOCOMPARE)) {
-      auto comparer = m_uvm_status_container.comparer;
-      alias typeof(lhs.tupleof[I]) U;
-      static if(isBitVector!U) {
-	if(! lhs.tupleof[I].isLogicEqual(rhs.tupleof[I])) {
-	  comparer.compare_field(__traits(identifier, T.tupleof[I]),
-				 lhs.tupleof[I], rhs.tupleof[I]);
-	}
-      }
-      else // static if(isIntegral!U || isBoolean!U )
-	{
-	  if(lhs.tupleof[I] != rhs.tupleof[I]) {
-	    comparer.compare_field(__traits(identifier, T.tupleof[I]),
-				   lhs.tupleof[I], rhs.tupleof[I]);
-	  }
-	}
-      // else {
-      // 	static assert(false, "compare not implemented yet for: " ~
-      // 		      qualifiedTypeName!U);
-      // }
-      if(comparer.result && (comparer.show_max <= comparer.result)) {
-	// shortcircuit
-	return true;
-      }
-    }
-    return false;
-  }
+  // // compare the Ith field
+  // bool uvm_object_auto_compare_field(size_t I=0, T)(T lhs, T rhs) {
+  //   import std.traits: isIntegral;
+  //   enum int FLAGS = uvm_object_auto_get_flags!(lhs, I);
+  //   static if(FLAGS & UVM_COMPARE &&
+  // 	      !(FLAGS & UVM_NOCOMPARE)) {
+  //     auto comparer = m_uvm_status_container.comparer;
+  //     alias typeof(lhs.tupleof[I]) U;
+  //     static if(isBitVector!U) {
+  // 	if(lhs.tupleof[I] !is rhs.tupleof[I]) {
+  // 	  comparer.compare(__traits(identifier, T.tupleof[I]),
+  // 			   lhs.tupleof[I], rhs.tupleof[I]);
+  // 	}
+  //     }
+  //     else // static if(isIntegral!U || isBoolean!U )
+  // 	{
+  // 	  if(lhs.tupleof[I] != rhs.tupleof[I]) {
+  // 	    comparer.compare(__traits(identifier, T.tupleof[I]),
+  // 			     lhs.tupleof[I], rhs.tupleof[I]);
+  // 	  }
+  // 	}
+  //     // else {
+  //     // 	static assert(false, "compare not implemented yet for: " ~
+  //     // 		      qualifiedTypeName!U);
+  //     // }
+  //     if(comparer.result && (comparer.show_max <= comparer.result)) {
+  // 	// shortcircuit
+  // 	return true;
+  //     }
+  //   }
+  //   return false;
+  // }
+
+  // record
+  // override void uvm_object_auto_record(uvm_recorder recorder) {
+  //   super.uvm_object_auto_record(recorder);
+  //   uvm_object_auto_record_field(this, recorder);
+  // }
 
   // print
-  override void uvm_field_auto_sprint() {
-    uvm_field_auto_all_fields!uvm_field_auto_sprint_field(this);
-  }
+  // override void uvm_object_auto_sprint(uvm_printer printer) {
+  //   super.uvm_object_auto_sprint(printer);
+  //   uvm_object_auto_sprint_field(this, printer);
+  //   do_print(printer);
+  // }
 
-  // print the Ith field
-  void uvm_field_auto_sprint_field(size_t I=0, T)(T t) {
-    import std.traits: isIntegral, isFloatingPoint;
-    enum int FLAGS = uvm_field_auto_get_flags!(t, I);
-    static if(FLAGS & UVM_PRINT &&
-	      !(FLAGS & UVM_NOPRINT)) {
-      debug(UVM_UTILS) {
-	pragma(msg, "Printing : " ~ t.tupleof[I].stringof);
-      }
-      enum string name = __traits(identifier, T.tupleof[I]);
-      auto value = t.tupleof[I];
-      auto printer = m_uvm_status_container.printer;
-      alias U=typeof(t.tupleof[I]);
-      // do not use isIntegral -- we keep that for enums
-      static if(is(U == SimTime)) {
-	printer.print(name, value);
-      }
-      else static if(isBitVector!U  ||
-		is(U == byte)  || is(U == ubyte)  ||
-		is(U == short) || is(U == ushort) ||
-		is(U == int)   || is(U == uint) ||
-		is(U == long)  || is(U == ulong)) {
-	printer.print(name, value,
-		      cast(uvm_radix_enum) (FLAGS & UVM_RADIX));
-      }
-      else static if(isIntegral!U) { // to cover enums
-	printer.print(name, value, UVM_ENUM);
-      }
-      else static if(is(U: uvm_object)) {
-	if((FLAGS & UVM_REFERENCE) != 0) {
-	  printer.print_object_header(name, value);
-	}
-	else {
-	  printer.print(name, value);
-	}
-      }
-      else static if(is(U == string) || is(U == char[])) {
-	printer.print(name, value);
-      }
-      // enum should be already handled as part of integral
-      else static if(isFloatingPoint!U) {
-	printer.print(name, value);
-      }
-      else static if(is(U: EventObj)) {
-	printer.print_generic(name, "event", -2, "");
-      }
-      else // static if(isIntegral!U || isBoolean!U )
-	{
-	  import std.conv;
-	  printer.print_generic(name, U.stringof, -2, value.to!string);
-	}
-    }
-  }
+
 }
 
-
-template uvm_field_auto_get_flags(alias t, size_t I) {
-  alias typeof(t) T;
-  enum int class_flags =
-    uvm_field_auto_acc_flags!(__traits(getAttributes, T));
-  enum int FLAGS =
-    uvm_field_auto_acc_flags!(__traits(getAttributes, t.tupleof[I]));
-  enum int uvm_field_auto_get_flags = FLAGS | class_flags;
-}
-
-template uvm_field_auto_acc_flags(A...)
+mixin template m_uvm_component_auto_utils(T)
 {
-  import uvm.base.uvm_object_globals: uvm_recursion_policy_enum,
-                                      uvm_field_auto_enum;
-  static if(A.length is 0) {
-    enum int uvm_field_auto_acc_flags = 0;
-  }
-  else static if(is(typeof(A[0]) == uvm_recursion_policy_enum) ||
-		 is(typeof(A[0]) == uvm_field_auto_enum)) {
-      enum int uvm_field_auto_acc_flags = A[0] |
-	uvm_field_auto_acc_flags!(A[1..$]);
-    }
-    else {
-      enum int uvm_field_auto_acc_flags = uvm_field_auto_acc_flags!(A[1..$]);
-    }
+  // for uvm_components -- parallelization and build
+  override void m_uvm_component_automation(int what) {
+    super.m_uvm_component_automation(what);
+    _m_uvm_component_automation!0(this, what); // defined in uvm_object
+  }  
 }

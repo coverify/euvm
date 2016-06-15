@@ -42,6 +42,7 @@ import uvm.base.uvm_component;
 import uvm.base.uvm_report_object;
 import uvm.base.uvm_report_message;
 import uvm.base.uvm_coreservice;
+import uvm.base.uvm_message_defines;
 
 import esdl.base.core: wait;
 
@@ -52,6 +53,8 @@ version(UVM_NO_DEPRECATED) { }
  else {
    version = UVM_INCLUDE_DEPRECATED;
  }
+
+mixin uvm_report_mixin;
 
 void run_test (string test_name = "") {
   uvm_coreservice_t cs = uvm_coreservice_t.get();
@@ -127,131 +130,132 @@ version (UVM_INCLUDE_DEPRECATED) {
 // import uvm.base.uvm_message_defines: uvm_report_mixin;
 // mixin uvm_report_mixin;
 
-// MACRO: `uvm_info
-//
-//| `uvm_info(ID,MSG,VERBOSITY)
-//
-// Calls uvm_report_info if ~VERBOSITY~ is lower than the configured verbosity of
-// the associated reporter. ~ID~ is given as the message tag and ~MSG~ is given as
-// the message text. The file and line are also sent to the uvm_report_info call.
-//
+// // MACRO: `uvm_info
+// //
+// //| `uvm_info(ID,MSG,VERBOSITY)
+// //
+// // Calls uvm_report_info if ~VERBOSITY~ is lower than the configured verbosity of
+// // the associated reporter. ~ID~ is given as the message tag and ~MSG~ is given as
+// // the message text. The file and line are also sent to the uvm_report_info call.
+// //
 
-void uvm_root_info(string file=__FILE__,
-		   size_t line=__LINE__)(string id, string message,
-					 int verbosity = UVM_MEDIUM) {
-  if (uvm_report_enabled(verbosity, UVM_INFO, id))
-    uvm_report_info(id, message, verbosity, file, line);
-}
+// void uvm_info(string file=__FILE__,
+// 	      size_t line=__LINE__)(string id, string message,
+// 				    int verbosity) {
+//   if (uvm_report_enabled(verbosity, UVM_INFO, id)) {
+//     uvm_report_info(id, message, verbosity, file, line);
+//   }
+// }
 
 
-// MACRO: `uvm_warning
-//
-//| `uvm_warning(ID,MSG)
-//
-// Calls uvm_report_warning with a verbosity of UVM_NONE. The message can not
-// be turned off using the reporter's verbosity setting, but can be turned off
-// by setting the action for the message.  ~ID~ is given as the message tag and
-// ~MSG~ is given as the message text. The file and line are also sent to the
-// uvm_report_warning call.
+// // MACRO: `uvm_warning
+// //
+// //| `uvm_warning(ID,MSG)
+// //
+// // Calls uvm_report_warning with a verbosity of UVM_NONE. The message can not
+// // be turned off using the reporter's verbosity setting, but can be turned off
+// // by setting the action for the message.  ~ID~ is given as the message tag and
+// // ~MSG~ is given as the message text. The file and line are also sent to the
+// // uvm_report_warning call.
 
-void uvm_root_warning(string file=__FILE__,
-		      size_t line=__LINE__)(string id, string message) {
-  if (uvm_report_enabled(UVM_NONE, UVM_WARNING, id))
-    uvm_report_warning(id, message, UVM_NONE, file, line);
-}
+// void uvm_warning(string file=__FILE__,
+// 		 size_t line=__LINE__)(string id, string message) {
+//   if (uvm_report_enabled(UVM_NONE, UVM_WARNING, id))
+//     uvm_report_warning(id, message, UVM_NONE, file, line);
+// }
 
-// MACRO: `uvm_error
-//
-//| `uvm_error(ID,MSG)
-//
-// Calls uvm_report_error with a verbosity of UVM_NONE. The message can not
-// be turned off using the reporter's verbosity setting, but can be turned off
-// by setting the action for the message.  ~ID~ is given as the message tag and
-// ~MSG~ is given as the message text. The file and line are also sent to the
-// uvm_report_error call.
+// // MACRO: `uvm_error
+// //
+// //| `uvm_error(ID,MSG)
+// //
+// // Calls uvm_report_error with a verbosity of UVM_NONE. The message can not
+// // be turned off using the reporter's verbosity setting, but can be turned off
+// // by setting the action for the message.  ~ID~ is given as the message tag and
+// // ~MSG~ is given as the message text. The file and line are also sent to the
+// // uvm_report_error call.
 
-void uvm_root_error(string file=__FILE__,
-		    size_t line=__LINE__)(string id, string message) {
-  if (uvm_report_enabled(UVM_NONE, UVM_ERROR, id))
-    uvm_report_error(id, message, UVM_NONE, file, line);
-}
+// void uvm_error(string file=__FILE__,
+// 	       size_t line=__LINE__)(string id, string message) {
+//   if (uvm_report_enabled(UVM_NONE, UVM_ERROR, id))
+//     uvm_report_error(id, message, UVM_NONE, file, line);
+// }
 
-// MACRO: `uvm_fatal
-//
-//| `uvm_fatal(ID,MSG)
-//
-// Calls uvm_report_fatal with a verbosity of UVM_NONE. The message can not
-// be turned off using the reporter's verbosity setting, but can be turned off
-// by setting the action for the message.  ~ID~ is given as the message tag and
-// ~MSG~ is given as the message text. The file and line are also sent to the
-// uvm_report_fatal call.
+// // MACRO: `uvm_fatal
+// //
+// //| `uvm_fatal(ID,MSG)
+// //
+// // Calls uvm_report_fatal with a verbosity of UVM_NONE. The message can not
+// // be turned off using the reporter's verbosity setting, but can be turned off
+// // by setting the action for the message.  ~ID~ is given as the message tag and
+// // ~MSG~ is given as the message text. The file and line are also sent to the
+// // uvm_report_fatal call.
 
-void uvm_root_fatal(string file=__FILE__,
-		    size_t line=__LINE__)(string id, string message) {
-  if (uvm_report_enabled(UVM_NONE, UVM_FATAL, id))
-    uvm_report_fatal(id, message, UVM_NONE, file, line);
-}
+// void uvm_fatal(string file=__FILE__,
+// 	       size_t line=__LINE__)(string id, string message) {
+//   if (uvm_report_enabled(UVM_NONE, UVM_FATAL, id))
+//     uvm_report_fatal(id, message, UVM_NONE, file, line);
+// }
 
-// MACRO: `uvm_info_context
-//
-//| `uvm_info_context(ID,MSG,VERBOSITY,CNTXT)
-//
-// Operates identically to `uvm_info but requires that the
-// context, or <uvm_report_object>, in which the message is printed be
-// explicitly supplied as a macro argument.
+// // MACRO: `uvm_info_context
+// //
+// //| `uvm_info_context(ID,MSG,VERBOSITY,CNTXT)
+// //
+// // Operates identically to `uvm_info but requires that the
+// // context, or <uvm_report_object>, in which the message is printed be
+// // explicitly supplied as a macro argument.
 
-void uvm_info_context(string file=__FILE__,
-		      size_t line=__LINE__)(string id, string message,
-					    int verbosity,
-					    uvm_report_object context) {
-  if (context.uvm_report_enabled(verbosity, UVM_INFO, id))
-    context.uvm_report_info(id, message, verbosity, file, line);
-}
+// void uvm_info_context(string file=__FILE__,
+// 		      size_t line=__LINE__)(string id, string message,
+// 					    int verbosity,
+// 					    uvm_report_object context) {
+//   if (context.uvm_report_enabled(verbosity, UVM_INFO, id))
+//     context.uvm_report_info(id, message, verbosity, file, line);
+// }
 
-// MACRO: `uvm_warning_context
-//
-//| `uvm_warning_context(ID,MSG,CNTXT)
-//
-// Operates identically to `uvm_warning but requires that the
-// context, or <uvm_report_object>, in which the message is printed be
-// explicitly supplied as a macro argument.
+// // MACRO: `uvm_warning_context
+// //
+// //| `uvm_warning_context(ID,MSG,CNTXT)
+// //
+// // Operates identically to `uvm_warning but requires that the
+// // context, or <uvm_report_object>, in which the message is printed be
+// // explicitly supplied as a macro argument.
 
-void uvm_warning_context(string file=__FILE__,
-			 size_t line=__LINE__)
-  (string id, string message, uvm_report_object context) {
-  if (context.uvm_report_enabled(UVM_NONE, UVM_WARNING, id))
-    context.uvm_report_warning(id, message, UVM_NONE, file, line);
-}
+// void uvm_warning_context(string file=__FILE__,
+// 			 size_t line=__LINE__)
+//   (string id, string message, uvm_report_object context) {
+//   if (context.uvm_report_enabled(UVM_NONE, UVM_WARNING, id))
+//     context.uvm_report_warning(id, message, UVM_NONE, file, line);
+// }
 
-// MACRO: `uvm_error_context
-//
-//| `uvm_error_context(ID,MSG,CNTXT)
-//
-// Operates identically to `uvm_error but requires that the
-// context, or <uvm_report_object> in which the message is printed be
-// explicitly supplied as a macro argument.
+// // MACRO: `uvm_error_context
+// //
+// //| `uvm_error_context(ID,MSG,CNTXT)
+// //
+// // Operates identically to `uvm_error but requires that the
+// // context, or <uvm_report_object> in which the message is printed be
+// // explicitly supplied as a macro argument.
 
-void uvm_error_context(string file=__FILE__,
-		       size_t line=__LINE__)
-  (string id, string message, uvm_report_object context) {
-  if (context.uvm_report_enabled(UVM_NONE, UVM_ERROR, id))
-    context.uvm_report_error(id, message, UVM_NONE, file, line);
-}
+// void uvm_error_context(string file=__FILE__,
+// 		       size_t line=__LINE__)
+//   (string id, string message, uvm_report_object context) {
+//   if (context.uvm_report_enabled(UVM_NONE, UVM_ERROR, id))
+//     context.uvm_report_error(id, message, UVM_NONE, file, line);
+// }
 
-// MACRO: `uvm_fatal_context
-//
-//| `uvm_fatal_context(ID,MSG,CNTXT)
-//
-// Operates identically to `uvm_fatal but requires that the
-// context, or <uvm_report_object>, in which the message is printed be
-// explicitly supplied as a macro argument.
+// // MACRO: `uvm_fatal_context
+// //
+// //| `uvm_fatal_context(ID,MSG,CNTXT)
+// //
+// // Operates identically to `uvm_fatal but requires that the
+// // context, or <uvm_report_object>, in which the message is printed be
+// // explicitly supplied as a macro argument.
 
-void uvm_fatal_context(string file=__FILE__,
-		       size_t line=__LINE__)
-  (string id, string message, uvm_report_object context) {
-  if (context.uvm_report_enabled(UVM_NONE, UVM_FATAL, id))
-    context.uvm_report_fatal(id, message, UVM_NONE, file, line);
-}
+// void uvm_fatal_context(string file=__FILE__,
+// 		       size_t line=__LINE__)
+//   (string id, string message, uvm_report_object context) {
+//   if (context.uvm_report_enabled(UVM_NONE, UVM_FATAL, id))
+//     context.uvm_report_fatal(id, message, UVM_NONE, file, line);
+// }
 
 import uvm.base.uvm_object_globals;
 
@@ -280,7 +284,7 @@ uvm_report_object uvm_get_report_object() {
 // the <uvm_report_object::uvm_report_enabled>, which is non-static.
 // Static methods cannot call non-static methods of the same class.
 int uvm_report_enabled (int verbosity,
-			uvm_severity severity = UVM_INFO,
+			uvm_severity severity = uvm_severity.UVM_INFO,
 			string id = "") {
   uvm_coreservice_t cs = uvm_coreservice_t.get();
   uvm_root top = cs.get_root();
@@ -289,14 +293,14 @@ int uvm_report_enabled (int verbosity,
 
 // Function: uvm_report
 
-void uvm_report( uvm_severity severity,
-		 string id,
-		 string message,
-		 int verbosity = int.min,
-		 string filename = "",
-		 size_t line = 0,
-		 string context_name = "",
-		 bool report_enabled_checked = false) {
+void uvm_report(uvm_severity severity,
+		string id,
+		string message,
+		int verbosity = int.min,
+		string filename = "",
+		size_t line = 0,
+		string context_name = "",
+		bool report_enabled_checked = false) {
   if(verbosity is int.min) {
     verbosity = (severity is UVM_ERROR) ? UVM_LOW :
       (severity is UVM_FATAL) ? UVM_NONE : UVM_MEDIUM;
@@ -310,9 +314,19 @@ void uvm_report( uvm_severity severity,
 
 // Function: uvm_report_info
 
+void uvm_report_info(string file=__FILE__,
+		     size_t line=__LINE__)(string id,
+					   string message,
+					   int verbosity=uvm_verbosity.UVM_MEDIUM,
+					   string context_name = "",
+					   bool report_enabled_checked = false) {
+  uvm_report_info(id, message, verbosity, file, line,
+		  context_name, report_enabled_checked);
+}
+
 void uvm_report_info(string id,
 		     string message,
-		     int verbosity = UVM_MEDIUM,
+		     int verbosity = uvm_verbosity.UVM_MEDIUM,
 		     string filename = "",
 		     size_t line = 0,
 		     string context_name = "",
@@ -325,9 +339,19 @@ void uvm_report_info(string id,
 
 // Function: uvm_report_warning
 
+void uvm_report_warning(string file=__FILE__,
+			size_t line=__LINE__)(string id,
+					      string message,
+					      int verbosity=uvm_verbosity.UVM_MEDIUM,
+					      string context_name = "",
+					      bool report_enabled_checked = false) {
+  uvm_report_warning(id, message, verbosity, file, line,
+		     context_name, report_enabled_checked);
+}
+
 void uvm_report_warning(string id,
 			string message,
-			int verbosity = UVM_MEDIUM,
+			int verbosity = uvm_verbosity.UVM_MEDIUM,
 			string filename = "",
 			size_t line = 0,
 			string context_name = "",
@@ -340,9 +364,19 @@ void uvm_report_warning(string id,
 
 // Function: uvm_report_error
 
+void uvm_report_error(string file=__FILE__,
+		      size_t line=__LINE__)(string id,
+					    string message,
+					    int verbosity=uvm_verbosity.UVM_LOW,
+					    string context_name = "",
+					    bool report_enabled_checked = false) {
+  uvm_report_error(id, message, verbosity, file, line,
+		   context_name, report_enabled_checked);
+}
+
 void uvm_report_error(string id,
 		      string message,
-		      int verbosity = UVM_LOW,
+		      int verbosity = uvm_verbosity.UVM_LOW,
 		      string filename = "",
 		      size_t line = 0,
 		      string context_name = "",
@@ -364,9 +398,19 @@ void uvm_report_error(string id,
 // do not inadvertently filter them out. It remains in the methods for backward
 // compatibility.
 
+void uvm_report_fatal(string file=__FILE__,
+		      size_t line=__LINE__)(string id,
+					    string message,
+					    int verbosity=uvm_verbosity.UVM_NONE,
+					    string context_name = "",
+					    bool report_enabled_checked = false) {
+  uvm_report_fatal(id, message, verbosity, file, line,
+		   context_name, report_enabled_checked);
+}
+
 void uvm_report_fatal(string id,
 		      string message,
-		      int verbosity = UVM_NONE,
+		      int verbosity = uvm_verbosity.UVM_NONE,
 		      string filename = "",
 		      size_t line = 0,
 		      string context_name = "",
@@ -466,7 +510,7 @@ version(UVM_INCLUDE_DEPRECATED) {
 			  uvm_object value,
 			  bool clone=true) {
     if (!uvm_component.m_config_deprecated_warned) {
-      uvm_root_warning("UVM/CFG/SET/DPR", "get/set_config_* API has been deprecated. Use uvm_config_db instead.");
+      uvm_warning("UVM/CFG/SET/DPR", "get/set_config_* API has been deprecated. Use uvm_config_db instead.");
       uvm_component.m_config_deprecated_warned = true;
     }
     uvm_coreservice_t cs = uvm_coreservice_t.get();
@@ -487,7 +531,7 @@ version(UVM_INCLUDE_DEPRECATED) {
 			  string field_name,
 			  string value) {
     if (!uvm_component.m_config_deprecated_warned) {
-      uvm_root_warning("UVM/CFG/SET/DPR", "get/set_config_* API has been deprecated. Use uvm_config_db instead.");
+      uvm_warning("UVM/CFG/SET/DPR", "get/set_config_* API has been deprecated. Use uvm_config_db instead.");
       uvm_component.m_config_deprecated_warned = true;
     }
     uvm_coreservice_t cs = uvm_coreservice_t.get();
@@ -516,7 +560,7 @@ version(UVM_INCLUDE_DEPRECATED) {
 
 bool uvm_is_match (string expr, string str) {
   auto s = uvm_glob_to_re(expr);
-  return (uvm_re_match(s, str) == 0);
+  return uvm_re_match(s, str);
 }
 
 enum UVM_LINE_WIDTH = 120;
@@ -650,7 +694,7 @@ string[] uvm_split_string (string str, char sep) {
 
 enum char uvm_re_bracket_char = '/';
 
-int uvm_re_match(in string re, in string str) {
+bool uvm_re_match(in string re, in string str) {
   import std.regex;
   Regex!char rx;
   if (re.length > 1 && re[0] is uvm_re_bracket_char &&
@@ -661,10 +705,10 @@ int uvm_re_match(in string re, in string str) {
     rx = regex(re);
   }
   if(match(str, rx)) {
-    return 0;
+    return true;
   }
   else {
-    return -1;
+    return false;
   }
 }
 
@@ -674,7 +718,7 @@ int uvm_re_match(in string re, in string str) {
 // Convert a glob expression to a normal regular expression.
 //--------------------------------------------------------------------
 
-string uvm_glob_to_re(in string glob) {
+string uvm_glob_to_re(string glob) {
   string retval;
   // safety check.  Glob should never be null since this is called
   // from DPI.  But we'll check anyway.
@@ -700,8 +744,7 @@ string uvm_glob_to_re(in string glob) {
   // If bracketed with the /glob/, then it's already a regex
   if(glob[0] is uvm_re_bracket_char && glob[$-1] is uvm_re_bracket_char) {
     // take out the uvm_re_bracket_char and return
-    retval = cast(string) glob.dup;
-    return retval;
+    return glob;
   }
   else {
     // Convert the glob to a true regular expression (Posix syntax)
@@ -731,8 +774,9 @@ string uvm_glob_to_re(in string glob) {
   // the beginning and $ at the end.  If not, add those characters in
   // the appropriate position.
 
-  if (retval[$-1] !is '$')
+  if (retval[$-1] !is '$') {
     retval ~= '$';
+  }
 
   retval ~= uvm_re_bracket_char;
 
@@ -749,60 +793,60 @@ string uvm_glob_to_re(in string glob) {
 
 // No synchronized blocks required since all data is thread local
 // all functions are static
-struct uvm_enum_wrapper(T=uvm_active_passive_enum)
-{
+struct uvm_enum_wrapper(T) if (is(T == enum))
+  {
 
-  alias this_type = uvm_enum_wrapper!T;
+    alias this_type = uvm_enum_wrapper!T;
 
-  private static T[string] _map;
+    private static T[string] _map;
 
-  // Function: from_name
-  // Attempts to convert a string ~name~ to an enumerated value.
-  //
-  // If the conversion is successful, the method will return
-  // 1, otherwise 0.
-  //
-  // Note that the ~name~ passed in to the method must exactly
-  // match the value which would be produced by ~enum::name~, and
-  // is case sensitive.
-  //
-  // For example:
-  //| typedef uvm_enum_wrapper#(uvm_radix_enum) radix_wrapper;
-  //| uvm_radix_enum r_v;
-  //|
-  //| // The following would return '0', as "foo" isn't a value
-  //| // in uvm_radix_enum:
-  //| radix_wrapper::from_name("foo", r_v);
-  //|
-  //| // The following would return '0', as "uvm_bin" isn't a value
-  //| // in uvm_radix_enum (although the upper case "UVM_BIN" is):
-  //| radix_wrapper::from_name("uvm_bin", r_v);
-  //|
-  //| // The following would return '1', and r_v would be set to
-  //| // the value of UVM_BIN
-  //| radix_wrapper::from_name("UVM_BIN", r_v);
-  //
-  static bool from_name(string name, ref T value) {
-    if(_map.length == 0) {
-      m_init_map();
+    // Function: from_name
+    // Attempts to convert a string ~name~ to an enumerated value.
+    //
+    // If the conversion is successful, the method will return
+    // 1, otherwise 0.
+    //
+    // Note that the ~name~ passed in to the method must exactly
+    // match the value which would be produced by ~enum::name~, and
+    // is case sensitive.
+    //
+    // For example:
+    //| typedef uvm_enum_wrapper#(uvm_radix_enum) radix_wrapper;
+    //| uvm_radix_enum r_v;
+    //|
+    //| // The following would return '0', as "foo" isn't a value
+    //| // in uvm_radix_enum:
+    //| radix_wrapper::from_name("foo", r_v);
+    //|
+    //| // The following would return '0', as "uvm_bin" isn't a value
+    //| // in uvm_radix_enum (although the upper case "UVM_BIN" is):
+    //| radix_wrapper::from_name("uvm_bin", r_v);
+    //|
+    //| // The following would return '1', and r_v would be set to
+    //| // the value of UVM_BIN
+    //| radix_wrapper::from_name("UVM_BIN", r_v);
+    //
+    static bool from_name(string name, ref T value) {
+      if(_map.length == 0) {
+	m_init_map();
+      }
+      if(name in _map) {
+	value = _map[name];
+	return true;
+      }
+
+      else {
+	return false;
+      }
     }
-    if(name in _map) {
-      value = _map[name];
-      return true;
-    }
 
-    else {
-      return false;
+    @disable this();
+
+    // Function- m_init_map
+    // Initializes the name map, only needs to be performed once
+    private static void m_init_map() {
+      foreach(e; EnumMembers!T) {
+	_map[e.to!string] = e;
+      }
     }
   }
-
-  @disable this();
-
-  // Function- m_init_map
-  // Initializes the name map, only needs to be performed once
-  private static void m_init_map() {
-    foreach(e; EnumMembers!T) {
-      _map[e.to!string] = e;
-    }
-  }
-}

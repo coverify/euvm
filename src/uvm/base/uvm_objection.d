@@ -34,6 +34,7 @@ import uvm.base.uvm_object_globals;
 import uvm.base.uvm_queue;
 import uvm.base.uvm_registry;
 import uvm.base.uvm_domain;
+import uvm.base.uvm_entity;
 
 import uvm.seq.uvm_sequence_base;
 
@@ -58,7 +59,7 @@ alias uvm_objection_cbs_t =
 // typedef class uvm_callbacks_objection;
 
 class uvm_objection_events {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
   @uvm_private_sync
   private int _waiters;
   private void inc_waiters() {
@@ -79,9 +80,9 @@ class uvm_objection_events {
   private Event _all_dropped;
   this() {
     synchronized(this) {
-      _raised.init("_raised");
-      _dropped.init("_dropped");
-      _all_dropped.init("_all_dropped");
+      _raised.initialize("_raised");
+      _dropped.initialize("_dropped");
+      _all_dropped.initialize("_all_dropped");
     }
   }
 }
@@ -112,6 +113,7 @@ import uvm.meta.meta;
 import uvm.base.uvm_report_object;
 import uvm.base.uvm_object;
 import uvm.base.uvm_root;
+import uvm.base.uvm_once;
 
 import esdl.data.time: sec;
 import esdl.base.core: EntityIntf;
@@ -121,9 +123,9 @@ class uvm_objection: uvm_report_object
 {
   mixin uvm_register_cb!(uvm_objection_callback);
 
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_none_sync
     private uvm_objection[] _m_objections;
@@ -173,7 +175,7 @@ class uvm_objection: uvm_report_object
 
     this() {
       synchronized(this) {
-	_m_scheduled_list_event.init("_m_scheduled_list_event",
+	_m_scheduled_list_event.initialize("_m_scheduled_list_event",
 				     EntityIntf.getContextEntity());
       }
     }
@@ -1411,12 +1413,14 @@ class uvm_objection: uvm_report_object
   }
 
   override void do_copy (uvm_object rhs) {
-    synchronized(this, rhs) {
-      uvm_objection rhs_ = cast(uvm_objection) rhs;
-      _m_source_count = rhs_._m_source_count.dup;
-      _m_total_count  = rhs_._m_total_count.dup;
-      _m_drain_time   = rhs_._m_drain_time.dup;
-      _m_prop_mode    = rhs_._m_prop_mode;
+    uvm_objection rhs_ = cast(uvm_objection) rhs;
+    synchronized(this) {
+      synchronized(rhs_) {
+	_m_source_count = rhs_._m_source_count.dup;
+	_m_total_count  = rhs_._m_total_count.dup;
+	_m_drain_time   = rhs_._m_drain_time.dup;
+	_m_prop_mode    = rhs_._m_prop_mode;
+      }
     }
   }
 
@@ -1442,7 +1446,7 @@ class uvm_objection: uvm_report_object
 
 class uvm_test_done_objection: uvm_objection
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_protected_sync
     private uvm_test_done_objection _m_inst;
@@ -1452,7 +1456,7 @@ class uvm_test_done_objection: uvm_objection
   }
 
   mixin(uvm_once_sync_string);
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   // Seems redundant -- not used anywhere -- declared in SV version
   // protected bool m_forced;
@@ -1474,7 +1478,7 @@ class uvm_test_done_objection: uvm_objection
   this(string name = "uvm_test_done") {
     synchronized(this) {
       super(name);
-      _m_n_stop_threads_event.init("_m_n_stop_threads_event");
+      _m_n_stop_threads_event.initialize("_m_n_stop_threads_event");
       version(UVM_INCLUDE_DEPRECATED) {
       	_stop_timeout = new WithEvent!SimTime(SimTime(0));
       }
@@ -1617,7 +1621,7 @@ class uvm_test_done_objection: uvm_objection
   	    }
   	    wait(stop_timeout.get());
   	    uvm_error("STOP_TIMEOUT",
-  		      format("Stop-task timeout of %0t expired. ",
+  		      format("Stop-task timeout of %s expired. ",
   			     stop_timeout) ~
   		      "'run' phase ready to proceed to extract phase");
   	  });
@@ -1736,7 +1740,7 @@ class uvm_test_done_objection: uvm_objection
 // Have a pool of context objects to use
 class uvm_objection_context_object
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   @uvm_private_sync
   private uvm_object _obj;

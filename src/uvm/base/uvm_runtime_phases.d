@@ -78,12 +78,14 @@ module uvm.base.uvm_runtime_phases;
 import uvm.base.uvm_task_phase;
 import uvm.base.uvm_phase;
 import uvm.base.uvm_component;
+import uvm.base.uvm_entity;
+import uvm.base.uvm_once;
 import uvm.meta.misc;
 import uvm.meta.meta;
 
 class uvm_pre_reset_phase: uvm_task_phase
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
     uvm_pre_reset_phase _m_inst;
@@ -92,9 +94,9 @@ class uvm_pre_reset_phase: uvm_task_phase
 	_m_inst = new uvm_pre_reset_phase();
       }
     }
-  }
+  };
 
-  mixin uvm_once_sync;
+  mixin(uvm_once_sync_string);
   // task
   final override void exec_task(uvm_component comp, uvm_phase phase) {
     comp.pre_reset_phase(phase);
@@ -145,7 +147,7 @@ class uvm_pre_reset_phase: uvm_task_phase
 
 class uvm_reset_phase: uvm_task_phase
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
     uvm_reset_phase _m_inst;
@@ -154,10 +156,9 @@ class uvm_reset_phase: uvm_task_phase
 	_m_inst = new uvm_reset_phase();
       }
     }
-  }
+  };
 
-  mixin uvm_once_sync;
-
+  mixin(uvm_once_sync_string);
   // task
   final override void exec_task(uvm_component comp, uvm_phase phase) {
     comp.reset_phase(phase);
@@ -200,7 +201,7 @@ class uvm_reset_phase: uvm_task_phase
 //
 class uvm_post_reset_phase: uvm_task_phase
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
     uvm_post_reset_phase _m_inst;
@@ -209,9 +210,9 @@ class uvm_post_reset_phase: uvm_task_phase
 	_m_inst = new uvm_post_reset_phase();
       }
     }
-  }
+  };
 
-  mixin uvm_once_sync;
+  mixin(uvm_once_sync_string);
   // task
   final override void exec_task(uvm_component comp, uvm_phase phase) {
     comp.post_reset_phase(phase);
@@ -256,7 +257,7 @@ class uvm_post_reset_phase: uvm_task_phase
 //
 class uvm_pre_configure_phase: uvm_task_phase
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
     uvm_pre_configure_phase _m_inst;
@@ -265,9 +266,9 @@ class uvm_pre_configure_phase: uvm_task_phase
 	_m_inst = new uvm_pre_configure_phase();
       }
     }
-  }
+  };
 
-  mixin uvm_once_sync;
+  mixin(uvm_once_sync_string);
   // task
   final override void exec_task(uvm_component comp, uvm_phase phase) {
     comp.pre_configure_phase(phase);
@@ -311,7 +312,7 @@ class uvm_pre_configure_phase: uvm_task_phase
 //
 class uvm_configure_phase: uvm_task_phase
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
     uvm_configure_phase _m_inst;
@@ -320,14 +321,13 @@ class uvm_configure_phase: uvm_task_phase
 	_m_inst = new uvm_configure_phase();
       }
     }
-  }
+  };
 
-  mixin uvm_once_sync;
+  mixin(uvm_once_sync_string);
   // task
   final override void exec_task(uvm_component comp, uvm_phase phase) {
     comp.configure_phase(phase);
   }
-
   enum string type_name = qualifiedTypeName!(typeof(this));
 
   // Function: get
@@ -367,7 +367,7 @@ class uvm_configure_phase: uvm_task_phase
 //
 class uvm_post_configure_phase: uvm_task_phase
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
     uvm_post_configure_phase _m_inst;
@@ -376,9 +376,9 @@ class uvm_post_configure_phase: uvm_task_phase
 	_m_inst = new uvm_post_configure_phase();
       }
     }
-  }
+  };
 
-  mixin uvm_once_sync;
+  mixin(uvm_once_sync_string);
   // task
   final override void exec_task(uvm_component comp, uvm_phase phase) {
     comp.post_configure_phase(phase);
@@ -419,7 +419,7 @@ class uvm_post_configure_phase: uvm_task_phase
 //
 class uvm_pre_main_phase: uvm_task_phase
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
     uvm_pre_main_phase _m_inst;
@@ -428,9 +428,9 @@ class uvm_pre_main_phase: uvm_task_phase
 	_m_inst = new uvm_pre_main_phase();
       }
     }
-  }
+  };
 
-  mixin uvm_once_sync;
+  mixin(uvm_once_sync_string);
   // task
   final override void exec_task(uvm_component comp, uvm_phase phase) {
     comp.pre_main_phase(phase);
@@ -475,7 +475,7 @@ class uvm_pre_main_phase: uvm_task_phase
 //
 class uvm_main_phase: uvm_task_phase
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
     uvm_main_phase _m_inst;
@@ -484,9 +484,9 @@ class uvm_main_phase: uvm_task_phase
 	_m_inst = new uvm_main_phase();
       }
     }
-  }
+  };
 
-  mixin uvm_once_sync;
+  mixin(uvm_once_sync_string);
   // task
   final override void exec_task(uvm_component comp, uvm_phase phase) {
     comp.main_phase(phase);
@@ -527,7 +527,7 @@ class uvm_main_phase: uvm_task_phase
 //
 class uvm_post_main_phase: uvm_task_phase
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
     uvm_post_main_phase _m_inst;
@@ -536,9 +536,9 @@ class uvm_post_main_phase: uvm_task_phase
 	_m_inst = new uvm_post_main_phase();
       }
     }
-  }
+  };
 
-  mixin uvm_once_sync;
+  mixin(uvm_once_sync_string);
   // task
   final override void exec_task(uvm_component comp, uvm_phase phase) {
     comp.post_main_phase(phase);
@@ -579,7 +579,7 @@ class uvm_post_main_phase: uvm_task_phase
 //
 class uvm_pre_shutdown_phase: uvm_task_phase
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
     uvm_pre_shutdown_phase _m_inst;
@@ -588,9 +588,9 @@ class uvm_pre_shutdown_phase: uvm_task_phase
 	_m_inst = new uvm_pre_shutdown_phase();
       }
     }
-  }
+  };
 
-  mixin uvm_once_sync;
+  mixin(uvm_once_sync_string);
   // task
   final override void exec_task(uvm_component comp, uvm_phase phase) {
     comp.pre_shutdown_phase(phase);
@@ -634,7 +634,7 @@ class uvm_pre_shutdown_phase: uvm_task_phase
 //
 class uvm_shutdown_phase: uvm_task_phase
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
     uvm_shutdown_phase _m_inst;
@@ -643,9 +643,9 @@ class uvm_shutdown_phase: uvm_task_phase
 	_m_inst = new uvm_shutdown_phase();
       }
     }
-  }
+  };
 
-  mixin uvm_once_sync;
+  mixin(uvm_once_sync_string);
   // task
   final override void exec_task(uvm_component comp, uvm_phase phase) {
     comp.shutdown_phase(phase);
@@ -690,7 +690,7 @@ class uvm_shutdown_phase: uvm_task_phase
 //
 class uvm_post_shutdown_phase: uvm_task_phase
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
     uvm_post_shutdown_phase _m_inst;
@@ -699,9 +699,9 @@ class uvm_post_shutdown_phase: uvm_task_phase
 	_m_inst = new uvm_post_shutdown_phase();
       }
     }
-  }
+  };
 
-  mixin uvm_once_sync;
+  mixin(uvm_once_sync_string);
   // task
   final override void exec_task(uvm_component comp, uvm_phase phase) {
     comp.post_shutdown_phase(phase);

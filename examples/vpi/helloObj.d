@@ -6,7 +6,7 @@ import uvm.base.uvm_object;
 import uvm.base.uvm_component;
 import uvm.base.uvm_queue;
 import uvm.base.uvm_comparer;
-import uvm.base.uvm_root: uvm_root_entity, uvm_top;
+import uvm.base.uvm_root: uvm_entity, uvm_top;
 import uvm.base.uvm_object_defines;
 import uvm.comps.uvm_test;
 
@@ -56,7 +56,7 @@ class Foo : uvm_object
   // } sum;
 }
 
-class EsdlRoot: uvm_root_entity
+class EsdlRoot: uvm_entity
 {
 
   this(string name, uint seed) {

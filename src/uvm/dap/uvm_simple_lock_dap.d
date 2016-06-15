@@ -30,8 +30,7 @@ import uvm.base.uvm_printer;
 import uvm.base.uvm_packer;
 import uvm.base.uvm_globals;	// uvm_info
 import std.string: format;
-import uvm.base.uvm_object_globals: UVM_NONE;
-import uvm.base.uvm_object_defines; // uvm_object_utils_norand
+import uvm.base.uvm_object_defines; // uvm_object_essentials
 
 // Class: uvm_simple_lock_dap
 // Provides a 'Simple Lock' Data Access Policy.
@@ -50,7 +49,7 @@ class uvm_simple_lock_dap(T=int): uvm_set_get_dap_base!T
   // Used for self-references
   alias this_type = uvm_simple_lock_dap!T;
 
-  mixin uvm_object_utils_norand;
+  mixin uvm_object_essentials;
   // Parameterized Utils
   // `uvm_object_param_utils(uvm_simple_lock_dap#(T))
 
@@ -79,10 +78,10 @@ class uvm_simple_lock_dap(T=int): uvm_set_get_dap_base!T
   override void set(T value) {
     synchronized(this) {
       if(_m_locked) {
-	uvm_root_error("UVM/SIMPLE_LOCK_DAP/SAG",
-		       format("Attempt to set new value on '%s', but the data " ~
-			      "access policy forbids setting while locked!",
-			      get_full_name()));
+	uvm_error("UVM/SIMPLE_LOCK_DAP/SAG",
+		  format("Attempt to set new value on '%s', but the data " ~
+			 "access policy forbids setting while locked!",
+			 get_full_name()));
       }
       else {
 	_m_value = value;
@@ -170,18 +169,18 @@ class uvm_simple_lock_dap(T=int): uvm_set_get_dap_base!T
   // A call to any of these methods will result in an error.
 
   override void do_copy(uvm_object rhs) {
-    uvm_root_error("UVM/SIMPLE_LOCK_DAP/CPY",
-		   "'copy()' is not supported for 'uvm_simple_lock_dap!T'");
+    uvm_error("UVM/SIMPLE_LOCK_DAP/CPY",
+	      "'copy()' is not supported for 'uvm_simple_lock_dap!T'");
   }
 
   override void do_pack(uvm_packer packer) {
-    uvm_root_error("UVM/SIMPLE_LOCK_DAP/PCK",
-		   "'pack()' is not supported for 'uvm_simple_lock_dap!T'");
+    uvm_error("UVM/SIMPLE_LOCK_DAP/PCK",
+	      "'pack()' is not supported for 'uvm_simple_lock_dap!T'");
   }
 
   override void do_unpack(uvm_packer packer) {
-    uvm_root_error("UVM/SIMPLE_LOCK_DAP/UPK",
-		   "'unpack()' is not supported for 'uvm_simple_lock_dap!T'");
+    uvm_error("UVM/SIMPLE_LOCK_DAP/UPK",
+	      "'unpack()' is not supported for 'uvm_simple_lock_dap!T'");
   }
 
   // Group- Reporting

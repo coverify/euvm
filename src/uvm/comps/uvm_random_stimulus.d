@@ -53,7 +53,7 @@ class uvm_random_stimulus(T=uvm_transaction): uvm_component
 
   alias uvm_random_stimulus!T this_type;
 
-  mixin uvm_component_utils;
+  mixin uvm_component_essentials;
 
   // Port: blocking_put_port
   //
@@ -104,7 +104,7 @@ class uvm_random_stimulus(T=uvm_transaction): uvm_component
     if (t is null) t = new T;
     for (size_t i=0; (max_count is 0 || i < max_count) && ! m_stop; ++i) {
 
-      version(UVM_NORANDOM) {}
+      version(UVM_NO_RAND) {}
       else {
 	try {
 	  t.randomize();

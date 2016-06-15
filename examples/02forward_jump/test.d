@@ -215,7 +215,7 @@ class phasing_test: uvm_test
 }
 
 
-class EsdlRoot: uvm_root_entity
+class EsdlRoot: uvm_entity
 {
   // UvmRoot uvmRoot;
 

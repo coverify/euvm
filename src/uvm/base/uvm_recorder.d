@@ -51,6 +51,7 @@ import uvm.meta.mcd;
 import uvm.meta.misc;
 import uvm.base.uvm_report_message;
 import uvm.base.uvm_tr_stream;
+import uvm.base.uvm_entity;
 import uvm.dap.uvm_set_before_get_dap;
 
 import esdl.data.time;
@@ -69,12 +70,13 @@ import std.traits: isNumeric, isFloatingPoint, isIntegral, isBoolean;
 import std.random;
 import uvm.base.uvm_object_defines;
 import uvm.base.uvm_tr_database;
+import uvm.base.uvm_once;
 
 
 abstract class uvm_recorder: uvm_object
 {
 
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     // Variable- m_ids_by_recorder
     // An associative array of integers, indexed by uvm_recorders.  This
@@ -96,11 +98,11 @@ abstract class uvm_recorder: uvm_object
     // Variable- m_id
     // Static int marking the last assigned id.
     // private int _m_id;  // declared in SV -- otherwise unused
-  }
+  };
 
-  mixin uvm_once_sync;
+  mixin(uvm_once_sync_string);
 
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
   // TBD
   // `uvm_object_utils(uvm_recorder)
 
@@ -154,7 +156,7 @@ abstract class uvm_recorder: uvm_object
   // a radix.
 
   @uvm_public_sync
-  private uvm_radix_enum _default_radix = UVM_HEX;
+  private uvm_radix_enum _default_radix = uvm_radix_enum.UVM_HEX;
 
 
   // Variable: physical
@@ -199,7 +201,8 @@ abstract class uvm_recorder: uvm_object
   // The default policy is deep (which means to recurse an object).
 
   @uvm_public_sync
-  private uvm_recursion_policy_enum _policy = UVM_DEFAULT_POLICY;
+  private uvm_recursion_policy_enum _policy =
+    uvm_recursion_policy_enum.UVM_DEFAULT_POLICY;
 
   // Variable- m_ids_by_recorder
   // An associative array of integers, indexed by uvm_recorders.  This
@@ -236,9 +239,9 @@ abstract class uvm_recorder: uvm_object
       uvm_tr_stream get_stream_;
       if (!_m_stream_dap.try_get(get_stream_)) {
 	if (_m_warn_null_stream == true) {
-	  uvm_root_warning("UVM/REC/NO_CFG",
-			   format("attempt to retrieve STREAM from" ~
-				  " '%s' before it was set!", get_name()));
+	  uvm_warning("UVM/REC/NO_CFG",
+		      format("attempt to retrieve STREAM from" ~
+			     " '%s' before it was set!", get_name()));
 	}
 	_m_warn_null_stream = false;
       }
@@ -395,16 +398,16 @@ abstract class uvm_recorder: uvm_object
     synchronized(this) {
       uvm_tr_stream m_stream;
       if(stream is null) {
-	uvm_root_error("UVM/REC/NULL_STREAM",
-		       format("Illegal attempt to set STREAM for '%s' to '<null>'",
-			      this.get_name()));
+	uvm_error("UVM/REC/NULL_STREAM",
+		  format("Illegal attempt to set STREAM for '%s' to '<null>'",
+			 this.get_name()));
 	return;
       }
 
       if(_m_stream_dap.try_get(m_stream)) {
-	uvm_root_error("UVM/REC/RE_INIT",
-		       format("Illegal attempt to re-initialize '%s'",
-			      this.get_name()));
+	uvm_error("UVM/REC/RE_INIT",
+		  format("Illegal attempt to re-initialize '%s'",
+			 this.get_name()));
 	return;
       }
 
@@ -453,17 +456,17 @@ abstract class uvm_recorder: uvm_object
   // and no longer has a valid ID.
   //
   int get_handle() {
-    synchronized(this, once) {
-      if (!is_open() && !is_closed()) {
-	return 0;
-      }
-      else {
-	int handle = get_inst_id();
-
+    if (!is_open() && !is_closed()) {
+      return 0;
+    }
+    else {
+      int handle = get_inst_id();
+      synchronized(once) {
 	// Check for the weird case where our handle changed.
 	auto pid = this in once._m_ids_by_recorder;
 	if(pid !is null && *pid !is handle) {
-	  once._m_recorders_by_id.remove(*pid);
+	  assert(false, "The weird case where our handle changed!");
+	  // once._m_recorders_by_id.remove(*pid);
 	}
 
 	once._m_recorders_by_id[handle] = this;
@@ -875,7 +878,7 @@ abstract class uvm_recorder: uvm_object
 class uvm_text_recorder: uvm_recorder
 {
 
-  mixin uvm_object_utils_norand;
+  mixin uvm_object_essentials;
 
   // Variable- m_text_db
   //
@@ -892,7 +895,10 @@ class uvm_text_recorder: uvm_recorder
   // Parameters:
   // name - Instance name
   this(string name="unnamed-uvm_text_recorder") {
-    super(name);
+    synchronized(this) {
+      super(name);
+      _scope_stack = new uvm_scope_stack();
+    }
   }
 
   // Group: Implementation Agnostic API
@@ -947,7 +953,7 @@ class uvm_text_recorder: uvm_recorder
     synchronized(this) {
       if(_m_text_db.open_db()) {
 	vfdisplay(_m_text_db.m_file,
-		  "    FREE_RECORDER @%0t {TXH:%0d}",
+		  "    FREE_RECORDER @%s {TXH:%0d}",
 		  getRootEntity.getSimTime,
 		  this.get_handle());
       }
@@ -1041,11 +1047,11 @@ class uvm_text_recorder: uvm_recorder
       if(_policy != UVM_REFERENCE) {
 	if(value !is null) {
 	  if(value.m_uvm_status_container.check_cycle(value)) return;
-	  value.m_uvm_status_container.add_cycle(value);
+	  value.m_uvm_status_container.add_cycle_check(value);
 	  _scope_stack.down(name);
 	  value.record(this);
 	  _scope_stack.up();
-	  value.m_uvm_status_container.remove_cycle(value);
+	  value.m_uvm_status_container.remove_cycle_check(value);
 	}
       }
     }
@@ -1126,7 +1132,7 @@ class uvm_text_recorder: uvm_recorder
 
       if(_m_text_db.open_db()) {
 	vfdisplay(_m_text_db.m_file,
-		  "      SET_ATTR @%0t {TXH:%s NAME:%s VALUE:%s" ~
+		  "      SET_ATTR @%s {TXH:%s NAME:%s VALUE:%s" ~
 		  "   RADIX:%s BITS=%s}",
 		  getRootEntity.getSimTime,
 		  this.get_handle(),
@@ -1225,7 +1231,7 @@ class uvm_text_recorder: uvm_recorder
       if (open_file()) {
 	UVM_FILE file = _m_text_db.m_file;
 	vfdisplay(file,
-		  "      SET_ATTR @%0t {TXH:%s NAME:%s VALUE:%s" ~
+		  "      SET_ATTR @%s {TXH:%s NAME:%s VALUE:%s" ~
 		  "   RADIX:%s BITS=%s}",
 		  getRootEntity.getSimTime,
 		  txh,

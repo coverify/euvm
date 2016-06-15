@@ -99,7 +99,7 @@ version(UVM_NO_DEPRECATED) { }
 
 class uvm_report_object: /*extends*/ uvm_object
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   // In SV this callback is part of the uvm_report_catcher.sv file
   mixin uvm_register_cb!(uvm_report_catcher);
@@ -119,7 +119,12 @@ class uvm_report_object: /*extends*/ uvm_object
     }
   }
 
-
+  override void set_name(string name) {
+    synchronized(this) {
+      super.set_name(name);
+      _m_rh.set_name(name);
+    }
+  }
   //----------------------------------------------------------------------------
   // Group: Reporting
   //----------------------------------------------------------------------------
@@ -147,7 +152,8 @@ class uvm_report_object: /*extends*/ uvm_object
   // <uvm_report_enabled>.
 
   final bool uvm_report_enabled(int verbosity,
-				uvm_severity severity=UVM_INFO,	string id="") {
+				uvm_severity severity=uvm_severity.UVM_INFO,
+				string id="") {
     if (get_report_verbosity_level(severity, id) < verbosity) {
       return false;
     }
@@ -172,14 +178,14 @@ class uvm_report_object: /*extends*/ uvm_object
 	       context_name, report_enabled_checked);
   }
 
-  void uvm_report( uvm_severity severity,
-		   string id,
-		   string message,
-		   int verbosity,
-		   string filename,
-		   size_t line,
-		   string context_name = "",
-		   bool report_enabled_checked = false) {
+  void uvm_report(uvm_severity severity,
+		  string id,
+		  string message,
+		  int verbosity,
+		  string filename,
+		  size_t line,
+		  string context_name = "",
+		  bool report_enabled_checked = false) {
     uvm_report_message l_report_message;
     if(report_enabled_checked is false) {
       if (!uvm_report_enabled(verbosity, severity, id)) {
@@ -192,7 +198,6 @@ class uvm_report_object: /*extends*/ uvm_object
     uvm_process_report_message(l_report_message);
   }
 
-
   // Function: uvm_report_info
 
   void uvm_report_info(string file=__FILE__,
@@ -204,16 +209,18 @@ class uvm_report_object: /*extends*/ uvm_object
     uvm_report_info(id, message, verbosity, file, line,
 		    context_name, report_enabled_checked);
   }
-  void uvm_report_info( string id,
-			string message,
-			int verbosity,
-			string filename,
-			size_t line,
-			string context_name = "",
-			bool report_enabled_checked = false) {
+
+
+  void uvm_report_info(string id,
+  		       string message,
+  		       int verbosity,
+  		       string filename,
+  		       size_t line,
+  		       string context_name = "",
+  		       bool report_enabled_checked = false) {
 
     uvm_report(UVM_INFO, id, message, verbosity,
-	       filename, line, context_name, report_enabled_checked);
+  	       filename, line, context_name, report_enabled_checked);
   }
 
   // Function: uvm_report_warning
@@ -251,6 +258,7 @@ class uvm_report_object: /*extends*/ uvm_object
     uvm_report_error(id, message, verbosity, file, line,
 		     context_name, report_enabled_checked);
   }
+
   void uvm_report_error( string id,
 			 string message,
 			 int verbosity,
@@ -258,8 +266,8 @@ class uvm_report_object: /*extends*/ uvm_object
 			 size_t line,
 			 string context_name = "",
 			 bool report_enabled_checked = false) {
-    uvm_report (UVM_ERROR, id, message, verbosity,
-		filename, line, context_name, report_enabled_checked);
+    uvm_report(UVM_ERROR, id, message, verbosity,
+	       filename, line, context_name, report_enabled_checked);
   }
 
   // Function: uvm_report_fatal
@@ -346,7 +354,7 @@ class uvm_report_object: /*extends*/ uvm_object
   // and tag arguments check if the verbosity level has been modified for
   // specific severity/tag combinations.
 
-  final int get_report_verbosity_level(uvm_severity severity=UVM_INFO,
+  final int get_report_verbosity_level(uvm_severity severity=uvm_severity.UVM_INFO,
 				       string id="") {
     return m_rh.get_verbosity_level(severity, id);
   }

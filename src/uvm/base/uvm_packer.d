@@ -98,14 +98,14 @@ class uvm_packer
 			     UVM_NONE);
 	  return;
 	}
-	value.m_uvm_status_container.add_cycle(value);
+	value.m_uvm_status_container.add_cycle_check(value);
 
 	if((policy != UVM_REFERENCE) && (value !is null) ) {
 	  if(use_metadata is true) {
 	    _m_bits.pack(cast(UBitVec!4) 1);
 	  }
 	  scope_stack.down(value.get_name());
-	  value.m_uvm_field_automation(null, UVM_PACK, "");
+	  value.m_uvm_object_automation(null, UVM_PACK, "");
 	  value.do_pack(this);
 	  scope_stack.up();
 	}
@@ -114,7 +114,7 @@ class uvm_packer
 	    _m_bits.pack(cast(UBitVec!4) 0);
 	  }
 	}
-	value.m_uvm_status_container.remove_cycle(value);
+	value.m_uvm_status_container.remove_cycle_check(value);
       }
     }
 
@@ -178,11 +178,11 @@ class uvm_packer
       }
 
       if (size > value.length) {
-	uvm_root_error("UVM/BASE/PACKER/BAD_SIZE",
-		       format("pack_bits called with size '%0d', which" ~
-			      " exceeds value.size() of '%0d'",
-			      size,
-			      value.length));
+	uvm_error("UVM/BASE/PACKER/BAD_SIZE",
+		  format("pack_bits called with size '%0d', which" ~
+			 " exceeds value.size() of '%0d'",
+			 size,
+			 value.length));
 	return;
       }
 
@@ -217,12 +217,12 @@ class uvm_packer
 	}
 
 	if (size > max_size) {
-	  uvm_root_error("UVM/BASE/PACKER/BAD_SIZE",
-			 format("pack_%ss called with size '%0d', which" ~
-				" exceeds value size of '%0d'",
-				T.stringof,
-				size,
-				max_size));
+	  uvm_error("UVM/BASE/PACKER/BAD_SIZE",
+		    format("pack_%ss called with size '%0d', which" ~
+			   " exceeds value size of '%0d'",
+			   T.stringof,
+			   size,
+			   max_size));
 	  return;
 	}
 	else {
@@ -394,7 +394,7 @@ class uvm_packer
 			   UVM_NONE);
 	return;
       }
-      value.m_uvm_status_container.add_cycle(value);
+      value.m_uvm_status_container.add_cycle_check(value);
 
       if(_use_metadata is true) {
 	UBitVec!4 v;
@@ -407,7 +407,7 @@ class uvm_packer
       if (value !is null) {
 	if (is_non_null > 0) {
 	  _scope_stack.down(value.get_name());
-	  value.m_uvm_field_automation(null, UVM_UNPACK,"");
+	  value.m_uvm_object_automation(null, UVM_UNPACK,"");
 	  value.do_unpack(this);
 	  _scope_stack.up();
 	}
@@ -421,7 +421,7 @@ class uvm_packer
 	uvm_report_error("UNPOBJ",
 			 "cannot unpack into null object", UVM_NONE);
       }
-      value.m_uvm_status_container.remove_cycle(value);
+      value.m_uvm_status_container.remove_cycle_check(value);
     }
   }
 
@@ -502,10 +502,10 @@ class uvm_packer
       }
 
       if(size > value.length) {
-	uvm_root_error("UVM/BASE/PACKER/BAD_SIZE",
-		       format("unpack_bits called with size '%0d', which exceeds value.size() of '%0d'",
-			      size,
-			      value.length));
+	uvm_error("UVM/BASE/PACKER/BAD_SIZE",
+		  format("unpack_bits called with size '%0d', which exceeds value.size() of '%0d'",
+			 size,
+			 value.length));
 	return;
       }
 
@@ -542,12 +542,12 @@ class uvm_packer
 
 
       if (size > max_size) {
-	uvm_root_error("UVM/BASE/PACKER/BAD_SIZE",
-		       format("unpack_%ss called with size '%0d'," ~
-			      " which exceeds value size of '%0d'",
-			      T.stringof,
-			      size,
-			      max_size));
+	uvm_error("UVM/BASE/PACKER/BAD_SIZE",
+		  format("unpack_%ss called with size '%0d'," ~
+			 " which exceeds value size of '%0d'",
+			 T.stringof,
+			 size,
+			 max_size));
 	return;
       }
       else {
@@ -671,7 +671,7 @@ class uvm_packer
     }
   }
 
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   //------------------//
   // Group: Variables //
@@ -772,7 +772,8 @@ class uvm_packer
   // int   word_size     = 16; //set up worksize for endianess
   // bool  nopack;             //only count packable bits
 
-  @uvm_public_sync private uvm_recursion_policy_enum _policy = UVM_DEFAULT_POLICY;
+  @uvm_public_sync private uvm_recursion_policy_enum _policy =
+    uvm_recursion_policy_enum.UVM_DEFAULT_POLICY;
 
   // uvm_pack_bitstream_t _m_bits;
   private packer _m_bits;			// esdl.data.packer

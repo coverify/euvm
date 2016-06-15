@@ -29,7 +29,6 @@ import uvm.dap.uvm_set_get_dap_base;
 import uvm.base.uvm_printer;
 import uvm.base.uvm_globals;	// uvm_info
 import std.string: format;
-import uvm.base.uvm_object_globals: UVM_NONE;
 import uvm.base.uvm_object_defines;
 import uvm.base.uvm_packer;
 
@@ -83,7 +82,7 @@ class uvm_set_before_get_dap(T=int): uvm_set_get_dap_base!T
   // Used for self-references
   alias this_type = uvm_set_before_get_dap!T;
 
-  mixin uvm_object_utils_norand;
+  mixin uvm_object_essentials;
   // Parameterized Utils
   // `uvm_object_param_utils(uvm_set_before_get_dap#(T))
 
@@ -133,10 +132,10 @@ class uvm_set_before_get_dap(T=int): uvm_set_get_dap_base!T
   override T get() {
     synchronized(this) {
       if (!_m_set) {
-	uvm_root_error("UVM/SET_BEFORE_GET_DAP/NO_SET",
-		       format("Attempt to get value on '%s', but the data" ~
-			      " access policy forbits calling 'get' prior" ~
-			      " to calling 'set' or 'try_set'!", get_full_name()));
+	uvm_error("UVM/SET_BEFORE_GET_DAP/NO_SET",
+		  format("Attempt to get value on '%s', but the data" ~
+			 " access policy forbits calling 'get' prior" ~
+			 " to calling 'set' or 'try_set'!", get_full_name()));
       }
       return _m_value;
     }
@@ -170,18 +169,18 @@ class uvm_set_before_get_dap(T=int): uvm_set_get_dap_base!T
   // A call to any of these methods will result in an error.
 
   override void do_copy(uvm_object rhs) {
-    uvm_root_error("UVM/SET_BEFORE_GET_DAP/CPY",
-		   "'copy()' is not supported for 'uvm_set_before_get_dap#(T)'");
+    uvm_error("UVM/SET_BEFORE_GET_DAP/CPY",
+	      "'copy()' is not supported for 'uvm_set_before_get_dap#(T)'");
   }
 
   override void do_pack(uvm_packer packer) {
-    uvm_root_error("UVM/SET_BEFORE_GET_DAP/PCK",
-		   "'pack()' is not supported for 'uvm_set_before_get_dap#(T)'");
+    uvm_error("UVM/SET_BEFORE_GET_DAP/PCK",
+	      "'pack()' is not supported for 'uvm_set_before_get_dap#(T)'");
   }
 
   override void do_unpack(uvm_packer packer) {
-    uvm_root_error("UVM/SET_BEFORE_GET_DAP/UPK",
-		   "'unpack()' is not supported for 'uvm_set_before_get_dap#(T)'");
+    uvm_error("UVM/SET_BEFORE_GET_DAP/UPK",
+	      "'unpack()' is not supported for 'uvm_set_before_get_dap#(T)'");
   }
 
   // Group- Reporting

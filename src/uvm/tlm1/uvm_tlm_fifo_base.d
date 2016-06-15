@@ -39,7 +39,7 @@ class uvm_tlm_event
   Event trigger;
   this() {
     synchronized(this) {
-      trigger.init("trigger");
+      trigger.initialize("trigger");
     }
   }
 }
@@ -71,7 +71,7 @@ abstract class uvm_tlm_fifo_base(T=int): uvm_component
 
   alias uvm_tlm_fifo_base!(T) this_type;
 
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   // Port: put_export
   //

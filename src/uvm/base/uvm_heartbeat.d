@@ -76,7 +76,7 @@ alias uvm_heartbeat_cbs_t =
 // typedef class uvm_objection_callback;
 class uvm_heartbeat: uvm_object
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   @uvm_protected_sync
   private uvm_objection _m_objection;
@@ -123,7 +123,7 @@ class uvm_heartbeat: uvm_object
 
       _m_cb = new uvm_heartbeat_callback(name ~ "_cb", _m_cntxt);
 
-      _m_stop_event.init("_m_stop_event");
+      _m_stop_event.initialize("_m_stop_event");
     }
   }
 
@@ -177,7 +177,7 @@ class uvm_heartbeat: uvm_object
     }
   }
 
-  final void set_heartbeat(uvm_event!(uvm_object) e,
+  final void set_heartbeat(uvm_event!uvm_object e,
 			   uvm_component[] comps) {
     synchronized(m_cb) {
       foreach(c; comps) {
@@ -317,37 +317,36 @@ class uvm_heartbeat: uvm_object
     // the monitor tests that the mode criteria was full-filled.
     while(true) {
       m_event.wait_trigger();
-      synchronized(this, m_cb) {
+      synchronized(this) {
 	if(triggered) {
 	  final switch (_m_mode) {
 	  case UVM_ALL_ACTIVE:
-	    foreach(obj, c; m_cb._cnt) {
+	    foreach(obj, c; m_cb.get_counts()) {
 	      if(! c) {
 		_m_cntxt.uvm_report_fatal("HBFAIL",
 					  format("Did not recieve an update of"
 						 " %s for component %s since"
 						 " last event trigger at time"
-						 " %0t : last update time was"
-						 " %0t",
-						 _m_objection.get_name(),
+						 " %s : last update time was"
+						 " %s", _m_objection.get_name(),
 						 obj.get_full_name(),
 						 last_trigger,
-						 m_cb._last_trigger[obj]),
+						 m_cb.get_last_trigger(obj)),
 					  UVM_NONE);
 	      }
 	    }
 	    break;
 	  case UVM_ANY_ACTIVE:
-	    if(m_cb._cnt.length && !m_cb.objects_triggered()) {
+	    if(m_cb.num_counts() && !m_cb.objects_triggered()) {
 	      string s;
-	      foreach(obj, c; m_cb._cnt) {
+	      foreach(obj, c; m_cb.get_counts()) {
 		s ~= "\n  " ~ obj.get_full_name();
 	      }
 	      _m_cntxt.uvm_report_fatal("HBFAIL",
 					format("Did not recieve an update of"
 					       " %s on any component since"
 					       " last event trigger at time"
-					       " %0t. The list of registered"
+					       " %s. The list of registered"
 					       " components is:%s",
 					       _m_objection.get_name(),
 					       last_trigger, s),
@@ -357,32 +356,32 @@ class uvm_heartbeat: uvm_object
 	  case UVM_ONE_ACTIVE:
 	    if(m_cb.objects_triggered() > 1) {
 	      string s;
-	      foreach(obj, c; m_cb._cnt)  {
+	      foreach(obj, c; m_cb.get_counts())  {
 		if(c) {
-		  s = format("%s\n  %s (updated: %0t)",
-			     s, obj.get_full_name(), m_cb._last_trigger[obj]);
+		  s ~= format("\n  %s (updated: %s)",
+			      obj.get_full_name(), m_cb.get_last_trigger(obj));
 		}
 	      }
 	      _m_cntxt.uvm_report_fatal("HBFAIL",
 					format("Recieved update of %s from "
 					       "more than one component since"
 					       " last event trigger at time"
-					       " %0t. The list of triggered"
+					       " %s. The list of triggered"
 					       " components is:%s",
 					       _m_objection.get_name(),
 					       last_trigger, s),
 					UVM_NONE);
 	    }
-	    if(m_cb._cnt.length && !m_cb.objects_triggered()) {
+	    if(m_cb.num_counts && !m_cb.objects_triggered()) {
 	      string s;
-	      foreach(obj, c; m_cb._cnt) {
+	      foreach(obj, c; m_cb.get_counts()) {
 		s ~= "\n  " ~ obj.get_full_name();
 	      }
 	      _m_cntxt.uvm_report_fatal("HBFAIL",
 					format("Did not recieve an update of"
 					       " %s on any component since "
 					       "last event trigger at time "
-					       "%0t. The list of registered "
+					       "%s. The list of registered "
 					       "components is:%s",
 					       _m_objection.get_name(),
 					       last_trigger, s),
@@ -458,6 +457,24 @@ class uvm_heartbeat_callback: uvm_objection_callback
 			 string description,
 			 int count) {
     raised(objection, obj, source_obj, description, count);
+  }
+
+  SimTime get_last_trigger(uvm_object obj) {
+    synchronized(this) {
+      return _last_trigger[obj];
+    }
+  }
+
+  size_t num_counts() {
+    synchronized(this) {
+      return _cnt.length;
+    }
+  }
+  
+  int[uvm_object] get_counts() {
+    synchronized(this) {
+      return _cnt.dup;
+    }
   }
 
   final void reset_counts() {

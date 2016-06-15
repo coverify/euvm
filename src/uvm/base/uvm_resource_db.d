@@ -45,6 +45,9 @@ import uvm.base.uvm_resource;
 import uvm.base.uvm_object;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_object_globals;
+import uvm.base.uvm_entity;
+import uvm.base.uvm_once;
+
 import uvm.meta.misc;
 
 import esdl.data.queue;
@@ -122,7 +125,7 @@ class uvm_resource_db (T=uvm_object) {
 			(accessor !is null) ? accessor.get_full_name() :
 			"<unknown>", rsrc is null ?
 			"null (failed lookup)" : rsrc.convert2string());
-    uvm_root_info(id, msg, UVM_LOW);
+    uvm_info(id, msg, UVM_LOW);
   }
 
   // function: set
@@ -358,7 +361,7 @@ class uvm_resource_db (T=uvm_object) {
 //----------------------------------------------------------------------
 class uvm_resource_db_options
 {
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_public_sync
     private bool _ready;
@@ -366,7 +369,7 @@ class uvm_resource_db_options
     private bool _tracing;
   }
 
-  mixin uvm_once_sync;
+  mixin(uvm_once_sync_string);
 
   // Function: turn_on_tracing
   //

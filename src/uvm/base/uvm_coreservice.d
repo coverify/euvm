@@ -26,6 +26,8 @@ import uvm.base.uvm_report_server;
 import uvm.base.uvm_traversal;
 import uvm.base.uvm_component;
 import uvm.base.uvm_tr_database;
+import uvm.base.uvm_entity;
+import uvm.base.uvm_once;
 
 import esdl.base.core: Process;
 import std.random: Random;
@@ -45,7 +47,7 @@ import std.random: Random;
 abstract class uvm_coreservice_t
 {
   import uvm.base.uvm_root;
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
     private uvm_coreservice_t _inst;

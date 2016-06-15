@@ -22,7 +22,11 @@ module uvm.meta.meta;
 import std.stdio: stderr;
 import std.conv: to;
 
+import std.traits: fullyQualifiedName;
+
 // import std.traits: fullyQualifiedName;
+
+// alias qualifiedTypeName = fullyQualifiedName;
 
 template qualifiedTypeName(T) {
   // typeid(T).stringof returns string of the form "&typeid(qualifiedTypeName)"

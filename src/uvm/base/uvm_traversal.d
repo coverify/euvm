@@ -310,9 +310,9 @@ class uvm_component_name_check_visitor: uvm_visitor!uvm_component
       // dont check the root component
       if(_root !is node)
 	if(matchFirst(node.get_name(), _compiled_regex).empty()) {
-	  uvm_root_warning("UVM/COMP/NAME",
-			   format("the name \"%s\" of the component \"%s\" violates the uvm component name constraints",
-				  node.get_name(), node.get_full_name()));
+	  uvm_warning("UVM/COMP/NAME",
+		      format("the name \"%s\" of the component \"%s\" violates the uvm component name constraints",
+			     node.get_name(), node.get_full_name()));
 	}
     }
   }

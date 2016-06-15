@@ -29,6 +29,8 @@ import uvm.base.uvm_object;
 import uvm.base.uvm_object_defines;
 import uvm.base.uvm_recorder;
 import uvm.base.uvm_globals;
+import uvm.base.uvm_entity;
+import uvm.base.uvm_once;
 import uvm.meta.misc;
 import uvm.dap.uvm_set_before_get_dap;
 import uvm.meta.mcd;
@@ -47,7 +49,7 @@ import std.string: format;
 // initialization values.
 class m_uvm_tr_stream_cfg
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   @uvm_private_sync
   uvm_tr_database _db;
@@ -106,7 +108,7 @@ class m_uvm_tr_stream_cfg
 abstract class uvm_tr_stream: uvm_object
 {
 
-  static class uvm_once
+  static class uvm_once: uvm_once_base
   {
     // Variable- m_ids_by_stream
     // An associative array of integers, indexed by uvm_tr_streams.  This
@@ -178,9 +180,9 @@ abstract class uvm_tr_stream: uvm_object
       m_uvm_tr_stream_cfg m_cfg;
       if(!_m_cfg_dap.try_get(m_cfg)) {
 	if(_m_warn_null_cfg is true) {
-	  uvm_root_warning("UVM/REC_STR/NO_CFG",
-			   format("attempt to retrieve DB from '%s' before it was set!",
-				  get_name()));
+	  uvm_warning("UVM/REC_STR/NO_CFG",
+		      format("attempt to retrieve DB from '%s' before it was set!",
+			     get_name()));
 	}
 	_m_warn_null_cfg = false;
 	return null;
@@ -200,9 +202,9 @@ abstract class uvm_tr_stream: uvm_object
       m_uvm_tr_stream_cfg m_cfg;
       if(!_m_cfg_dap.try_get(m_cfg)) {
 	if(_m_warn_null_cfg is true) {
-	  uvm_root_warning("UVM/REC_STR/NO_CFG",
-			   format("attempt to retrieve scope from '%s' before it was set!",
-				  get_name()));
+	  uvm_warning("UVM/REC_STR/NO_CFG",
+		      format("attempt to retrieve scope from '%s' before it was set!",
+			     get_name()));
 	}
 	_m_warn_null_cfg = false;
 	return "";
@@ -222,9 +224,9 @@ abstract class uvm_tr_stream: uvm_object
       m_uvm_tr_stream_cfg m_cfg;
       if(!_m_cfg_dap.try_get(m_cfg)) {
 	if(_m_warn_null_cfg is true) {
-	  uvm_root_warning("UVM/REC_STR/NO_CFG",
-			   format("attempt to retrieve STREAM_TYPE_NAME from '%s' before it was set!",
-				  get_name()));
+	  uvm_warning("UVM/REC_STR/NO_CFG",
+		      format("attempt to retrieve STREAM_TYPE_NAME from '%s' before it was set!",
+			     get_name()));
 	}
 	_m_warn_null_cfg = false;
 	return "";
@@ -348,16 +350,16 @@ abstract class uvm_tr_stream: uvm_object
       m_uvm_tr_stream_cfg m_cfg;
       uvm_tr_database m_db;
       if(db is null) {
-	uvm_root_error("UVM/REC_STR/NULL_DB",
-		       format("Illegal attempt to set DB for '%s' to '<null>'",
-			      this.get_full_name()));
+	uvm_error("UVM/REC_STR/NULL_DB",
+		  format("Illegal attempt to set DB for '%s' to '<null>'",
+			 this.get_full_name()));
 	return;
       }
 
       if(_m_cfg_dap.try_get(m_cfg)) {
-	uvm_root_error("UVM/REC_STR/RE_CFG",
-		       format("Illegal attempt to re-open '%s'",
-			      this.get_full_name()));
+	uvm_error("UVM/REC_STR/RE_CFG",
+		  format("Illegal attempt to re-open '%s'",
+			 this.get_full_name()));
       }
       else {
 	// Never set before
@@ -636,7 +638,7 @@ class uvm_text_tr_stream: uvm_tr_stream
   // Internal reference to the text-based backend
   private uvm_text_tr_database _m_text_db;
 
-  mixin uvm_object_utils_norand;
+  mixin uvm_object_essentials;
 
   // Function: new
   // Constructor
@@ -676,7 +678,7 @@ class uvm_text_tr_stream: uvm_tr_stream
     synchronized(this) {
       if (_m_text_db.open_db()) {
 	vfdisplay(_m_text_db.m_file,
-		  "  CLOSE_STREAM @%0t {NAME:%s T:%s SCOPE:%s STREAM:%s}",
+		  "  CLOSE_STREAM @%s {NAME:%s T:%s SCOPE:%s STREAM:%s}",
 		  getRootEntity.getSimTime,
 		  this.get_name(),
 		  this.get_stream_type_name(),
@@ -693,7 +695,7 @@ class uvm_text_tr_stream: uvm_tr_stream
     synchronized(this) {
       if (_m_text_db.open_db()) {
 	vfdisplay(_m_text_db.m_file,
-		  "  FREE_STREAM @%0t {NAME:%s T:%s SCOPE:%s STREAM:%s}",
+		  "  FREE_STREAM @%s {NAME:%s T:%s SCOPE:%s STREAM:%s}",
 		  getRootEntity.getSimTime,
 		  this.get_name(),
 		  this.get_stream_type_name(),

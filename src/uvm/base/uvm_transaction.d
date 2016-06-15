@@ -141,7 +141,7 @@ import std.string: format;
 
 abstract class uvm_transaction: uvm_object
 {
-  mixin uvm_sync;
+  mixin(uvm_sync_string);
 
   // Function: new
   //
@@ -698,17 +698,20 @@ abstract class uvm_transaction: uvm_object
     if(rhs is null) {
       return;
     }
-    synchronized(this, rhs) {
-      super.do_copy(rhs);
-      auto txn = cast(uvm_transaction) rhs;
-      if(txn is null) return;
-
-      _accept_time = txn.accept_time;
-      _begin_time = txn.begin_time;
-      _end_time = txn.end_time;
-      _initiator = txn.initiator;
-      _stream_handle = txn.stream_handle;
-      _tr_recorder = txn.tr_recorder;
+    super.do_copy(rhs);
+    auto txn = cast(uvm_transaction) rhs;
+    if(txn is null) {
+      return;
+    }
+    synchronized(this) {
+      synchronized(txn) {
+	_accept_time = txn.accept_time;
+	_begin_time = txn.begin_time;
+	_end_time = txn.end_time;
+	_initiator = txn.initiator;
+	_stream_handle = txn.stream_handle;
+	_tr_recorder = txn.tr_recorder;
+      }
     }
   }
 
