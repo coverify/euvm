@@ -678,7 +678,7 @@ class uvm_text_tr_stream: uvm_tr_stream
     synchronized(this) {
       if (_m_text_db.open_db()) {
 	vfdisplay(_m_text_db.m_file,
-		  "  CLOSE_STREAM @%0t {NAME:%s T:%s SCOPE:%s STREAM:%s}",
+		  "  CLOSE_STREAM @%s {NAME:%s T:%s SCOPE:%s STREAM:%s}",
 		  getRootEntity.getSimTime,
 		  this.get_name(),
 		  this.get_stream_type_name(),
@@ -695,7 +695,7 @@ class uvm_text_tr_stream: uvm_tr_stream
     synchronized(this) {
       if (_m_text_db.open_db()) {
 	vfdisplay(_m_text_db.m_file,
-		  "  FREE_STREAM @%0t {NAME:%s T:%s SCOPE:%s STREAM:%s}",
+		  "  FREE_STREAM @%s {NAME:%s T:%s SCOPE:%s STREAM:%s}",
 		  getRootEntity.getSimTime,
 		  this.get_name(),
 		  this.get_stream_type_name(),

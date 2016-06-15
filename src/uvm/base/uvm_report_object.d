@@ -173,24 +173,6 @@ class uvm_report_object: /*extends*/ uvm_object
 	       context_name, report_enabled_checked);
   }
 
-  void uvm_report(string file=__FILE__,
-		  size_t line=__LINE__,
-		  T...)(uvm_severity severity,
-			string id,
-			string message,
-			int verbosity,
-			string context_name,
-			bool report_enabled_checked,
-			T t)
-  if(T.length > 0 && is(T[0]: uvm_report_message_element_base)) {
-    if(verbosity == -1) {
-      verbosity = (severity == UVM_ERROR) ? UVM_LOG :
-	(severity == UVM_FATAL) ? UVM_NONE : UVM_MEDIUM;
-    }
-    uvm_report(severity, id, message, verbosity, file, line,
-	       context_name, report_enabled_checked, t);
-  }
-
   void uvm_report( uvm_severity severity,
 		   string id,
 		   string message,
@@ -211,28 +193,6 @@ class uvm_report_object: /*extends*/ uvm_object
     uvm_process_report_message(l_report_message);
   }
 
-  void uvm_report(T...)( uvm_severity severity,
-			 string id,
-			 string message,
-			 int verbosity,
-			 string filename,
-			 size_t line,
-			 string context_name,
-			 bool report_enabled_checked,
-			 T t)
-  if(T.length > 0 && is(T[0]: uvm_report_message_element_base)) {
-    if(report_enabled_checked is false) {
-      if (!uvm_report_enabled(verbosity, severity, id)) {
-	return;
-      }
-    }
-    uvm_report_message l_report_message =
-      uvm_report_message_create(severity, id, message, verbosity,
-				filename, line, context_name, t);
-    uvm_process_report_message(l_report_message);
-  }
-
-
   // Function: uvm_report_info
 
   void uvm_report_info(string file=__FILE__,
@@ -245,41 +205,17 @@ class uvm_report_object: /*extends*/ uvm_object
 		    context_name, report_enabled_checked);
   }
 
-  void uvm_report_info(string file=__FILE__,
-		       size_t line=__LINE__,
-		       T...)(string id,
-			     string message,
-			     int verbosity,
-			     string context_name,
-			     bool report_enabled_checked,
-			     T t) {
-    uvm_report_info(id, message, verbosity, file, line,
-		    context_name, report_enabled_checked, t);
-  }
 
   void uvm_report_info(string id,
-		       string message,
-		       int verbosity,
-		       string filename,
-		       size_t line,
-		       string context_name = "",
-		       bool report_enabled_checked = false) {
+  		       string message,
+  		       int verbosity,
+  		       string filename,
+  		       size_t line,
+  		       string context_name = "",
+  		       bool report_enabled_checked = false) {
 
     uvm_report(UVM_INFO, id, message, verbosity,
-	       filename, line, context_name, report_enabled_checked);
-  }
-
-  void uvm_report_info(T...)(string id,
-			     string message,
-			     int verbosity,
-			     string filename,
-			     size_t line,
-			     string context_name,
-			     bool report_enabled_checked,
-			     T t) {
-
-    uvm_report(UVM_INFO, id, message, verbosity,
-	       filename, line, context_name, report_enabled_checked, t);
+  	       filename, line, context_name, report_enabled_checked);
   }
 
   // Function: uvm_report_warning
@@ -294,18 +230,6 @@ class uvm_report_object: /*extends*/ uvm_object
 		       context_name, report_enabled_checked);
   }
 
-  void uvm_report_warning(string file=__FILE__,
-			  size_t line=__LINE__,
-			  T...)(string id,
-				string message,
-				int verbosity,
-				string context_name,
-				bool report_enabled_checked,
-				T t) {
-    uvm_report_warning(id, message, verbosity, file, line,
-		       context_name, report_enabled_checked, t);
-  }
-
   void uvm_report_warning( string id,
 			   string message,
 			   int verbosity,
@@ -316,19 +240,6 @@ class uvm_report_object: /*extends*/ uvm_object
 
     uvm_report (UVM_WARNING, id, message, verbosity,
 		filename, line, context_name, report_enabled_checked);
-  }
-
-  void uvm_report_warning(T...)(string id,
-				string message,
-				int verbosity,
-				string filename,
-				size_t line,
-				string context_name,
-				bool report_enabled_checked,
-				T t) {
-
-    uvm_report(UVM_WARNING, id, message, verbosity,
-	       filename, line, context_name, report_enabled_checked, t);
   }
 
   // Function: uvm_report_error
@@ -343,18 +254,6 @@ class uvm_report_object: /*extends*/ uvm_object
 		     context_name, report_enabled_checked);
   }
 
-  void uvm_report_error(string file=__FILE__,
-			size_t line=__LINE__,
-			T...)(string id,
-			      string message,
-			      int verbosity,
-			      string context_name,
-			      bool report_enabled_checked,
-			      T t) {
-    uvm_report_error(id, message, verbosity, file, line,
-		     context_name, report_enabled_checked, t);
-  }
-
   void uvm_report_error( string id,
 			 string message,
 			 int verbosity,
@@ -364,19 +263,6 @@ class uvm_report_object: /*extends*/ uvm_object
 			 bool report_enabled_checked = false) {
     uvm_report(UVM_ERROR, id, message, verbosity,
 	       filename, line, context_name, report_enabled_checked);
-  }
-
-  void uvm_report_error(T...)(string id,
-			      string message,
-			      int verbosity,
-			      string filename,
-			      size_t line,
-			      string context_name,
-			      bool report_enabled_checked,
-			      T t) {
-
-    uvm_report(UVM_ERROR, id, message, verbosity,
-	       filename, line, context_name, report_enabled_checked, t);
   }
 
   // Function: uvm_report_fatal
@@ -428,18 +314,6 @@ class uvm_report_object: /*extends*/ uvm_object
 		     context_name, report_enabled_checked);
   }
 
-  void uvm_report_fatal(string file=__FILE__,
-			size_t line=__LINE__,
-			T...)(string id,
-			      string message,
-			      int verbosity,
-			      string context_name,
-			      bool report_enabled_checked,
-			      T t) {
-    uvm_report_fatal(id, message, verbosity, file, line,
-		     context_name, report_enabled_checked, t);
-  }
-
   void uvm_report_fatal( string id,
 			 string message,
 			 int verbosity,
@@ -450,19 +324,6 @@ class uvm_report_object: /*extends*/ uvm_object
 
     uvm_report (UVM_FATAL, id, message, verbosity,
 		filename, line, context_name, report_enabled_checked);
-  }
-
-  void uvm_report_fatal(T...)(string id,
-			      string message,
-			      int verbosity,
-			      string filename,
-			      size_t line,
-			      string context_name,
-			      bool report_enabled_checked,
-			      T t) {
-
-    uvm_report(UVM_FATAL, id, message, verbosity,
-	       filename, line, context_name, report_enabled_checked, t);
   }
 
   // Function: uvm_process_report_message

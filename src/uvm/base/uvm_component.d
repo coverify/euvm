@@ -277,7 +277,8 @@ abstract class uvm_component: uvm_report_object, ParContext
       if(uvm_report_enabled(UVM_MEDIUM+1, UVM_INFO, "NEWCOMP")) {
 	uvm_info("NEWCOMP", "Creating " ~
 		 (parent is top ? "uvm_top" :
-		  parent.get_full_name()) ~ "." ~ name, UVM_MEDIUM+1);
+		  parent.get_full_name()) ~ "." ~ name,
+		 cast(uvm_verbosity) (UVM_MEDIUM+1));
       }
 
       if(parent.has_child(name) && this !is parent.get_child(name)) {
@@ -1930,7 +1931,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 			      else {
 				auto ro = cast(uvm_resource!uvm_object) r;
 				if(ro !is null) {
-				  set_object_local(name, ro.read(this), 0);
+				  set_object_local(name, ro.read(this), false);
 				}
 				else if(verbose) {
 				  uvm_report_info("CFGAPL",
@@ -2355,7 +2356,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 
   // Function- set_report_id_verbosity_hier
 
-  final void set_report_id_verbosity_hier( string id, int verbosity) {
+  final void set_report_id_verbosity_hier( string id, uvm_verbosity verbosity) {
     set_report_id_verbosity(id, verbosity);
     foreach(c; m_children) {
       (cast(uvm_component) c).set_report_id_verbosity_hier(id, verbosity);
@@ -2376,7 +2377,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 
   final void set_report_severity_id_verbosity_hier( uvm_severity severity,
 						    string id,
-						    int verbosity) {
+						    uvm_verbosity verbosity) {
     set_report_severity_id_verbosity(severity, id, verbosity);
     foreach(c; m_children) {
       (cast(uvm_component) c).set_report_severity_id_verbosity_hier(severity, id, verbosity);
@@ -2485,7 +2486,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   // See <uvm_report_handler> for a list of predefined message verbosity levels
   // and their meaning.
 
-  final void set_report_verbosity_level_hier(int verbosity) {
+  final void set_report_verbosity_level_hier(uvm_verbosity verbosity) {
     set_report_verbosity_level(verbosity);
     foreach(c; m_children) {
       (cast(uvm_component) c).set_report_verbosity_level_hier(verbosity);
@@ -3770,8 +3771,10 @@ abstract class uvm_component: uvm_report_object, ParContext
       switch(what) {
       case uvm_field_xtra_enum.UVM_PARALLELIZE:
 	static if (is(E: uvm_component)) {
-	  uvm__config_parallelism(e, pflags);
-	  e._set_id();
+	  if (e !is null) {
+	    uvm__config_parallelism(e, pflags);
+	    e._set_id();
+	  }
 	}
 	break;
       case uvm_field_auto_enum.UVM_BUILD:

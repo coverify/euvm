@@ -552,18 +552,6 @@ abstract class uvm_report_catcher: uvm_callback
 		    context_name, report_enabled_checked);
   }
 
-  protected void uvm_report_fatal(T...)(string id,
-				       string message,
-				       int verbosity,
-				       string fname,
-				       size_t line,
-				       string context_name,
-				       bool report_enabled_checked,
-				       T t) {
-    this.uvm_report(UVM_FATAL, id, message, verbosity, fname, line,
-		    context_name, report_enabled_checked, t);
-  }
-
 
   // Function: uvm_report_error
   //
@@ -583,19 +571,6 @@ abstract class uvm_report_catcher: uvm_callback
 		    context_name, report_enabled_checked);
   }
 
-  protected void uvm_report_error(T...)(string id,
-				       string message,
-				       int verbosity,
-				       string fname,
-				       size_t line,
-				       string context_name,
-				       bool report_enabled_checked,
-				       T t) {
-    this.uvm_report(UVM_ERROR, id, message, verbosity, fname, line,
-		    context_name, report_enabled_checked, t);
-  }
-
-
   // Function: uvm_report_warning
   //
   // Issues a warning message using the current message's report object.
@@ -612,19 +587,6 @@ abstract class uvm_report_catcher: uvm_callback
 		    context_name, report_enabled_checked);
   }
 
-  protected void uvm_report_warning(T...)(string id,
-				       string message,
-				       int verbosity,
-				       string fname,
-				       size_t line,
-				       string context_name,
-				       bool report_enabled_checked,
-				       T t) {
-    this.uvm_report(UVM_WARNING, id, message, verbosity, fname, line,
-		    context_name, report_enabled_checked, t);
-  }
-
-
   // Function: uvm_report_info
   //
   // Issues a info message using the current message's report object.
@@ -639,18 +601,6 @@ abstract class uvm_report_catcher: uvm_callback
 				 bool report_enabled_checked = false) {
     this.uvm_report(UVM_INFO, id, message, verbosity, fname, line,
 		    context_name, report_enabled_checked);
-  }
-
-  protected void uvm_report_info(T...)(string id,
-				       string message,
-				       int verbosity,
-				       string fname,
-				       size_t line,
-				       string context_name,
-				       bool report_enabled_checked,
-				       T t) {
-    this.uvm_report(UVM_INFO, id, message, verbosity, fname, line,
-		    context_name, report_enabled_checked, t);
   }
 
   // Function: uvm_report
@@ -675,26 +625,6 @@ abstract class uvm_report_catcher: uvm_callback
     l_report_message = uvm_report_message.new_report_message();
     l_report_message.set_report_message(severity, id, message,
 					verbosity, fname, line, context_name);
-    this.uvm_process_report_message(l_report_message);
-  }
-
-  protected void uvm_report(T...)(uvm_severity severity,
-				  string id,
-				  string message,
-				  int verbosity,
-				  string fname,
-				  size_t line,
-				  string context_name,
-				  bool report_enabled_checked,
-				  T t) {
-    if (report_enabled_checked is false) {
-      if (!uvm_report_enabled(verbosity, severity, id)) {
-	return;
-      }
-    }
-    uvm_report_message l_report_message =
-      uvm_report_create_message(severity, id, message, verbosity,
-				fname, line, context_name, t);
     this.uvm_process_report_message(l_report_message);
   }
   

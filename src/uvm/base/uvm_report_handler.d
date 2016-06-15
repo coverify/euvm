@@ -686,7 +686,7 @@ class uvm_report_handler: uvm_object
 
 
   version(UVM_INCLUDE_DEPRECATED) {
-    import uvm.base.uvm_globals: uvm_info;
+    import uvm.base.uvm_globals;
 
     // Function- run_hooks
     //

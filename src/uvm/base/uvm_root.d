@@ -1046,7 +1046,7 @@ class uvm_root: uvm_component
     string verb_string;
     string[] verb_settings;
     int plusarg;
-    int verbosity = UVM_MEDIUM;
+    uvm_verbosity verbosity = UVM_MEDIUM;
 
     // Retrieve the verbosities provided on the command line.
     size_t verb_count = clp.get_arg_values(`+UVM_VERBOSITY=`, verb_settings);
@@ -1095,7 +1095,7 @@ class uvm_root: uvm_component
       case "UVM_DEBUG"   : verbosity = UVM_DEBUG; break;
       case "DEBUG"       : verbosity = UVM_DEBUG; break;
       default       : {
-	verbosity = parse!int(verb_string); // .atoi();
+	verbosity = cast(uvm_verbosity) parse!int(verb_string); // .atoi();
 	if(verbosity > 0) {
 	  uvm_report_info("NSTVERB",
 			  format("Non-standard verbosity value, using "

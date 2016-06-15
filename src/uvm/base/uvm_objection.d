@@ -1621,7 +1621,7 @@ class uvm_test_done_objection: uvm_objection
   	    }
   	    wait(stop_timeout.get());
   	    uvm_error("STOP_TIMEOUT",
-  		      format("Stop-task timeout of %0t expired. ",
+  		      format("Stop-task timeout of %s expired. ",
   			     stop_timeout) ~
   		      "'run' phase ready to proceed to extract phase");
   	  });

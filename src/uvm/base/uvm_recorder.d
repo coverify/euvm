@@ -895,7 +895,10 @@ class uvm_text_recorder: uvm_recorder
   // Parameters:
   // name - Instance name
   this(string name="unnamed-uvm_text_recorder") {
-    super(name);
+    synchronized(this) {
+      super(name);
+      _scope_stack = new uvm_scope_stack();
+    }
   }
 
   // Group: Implementation Agnostic API
@@ -950,7 +953,7 @@ class uvm_text_recorder: uvm_recorder
     synchronized(this) {
       if(_m_text_db.open_db()) {
 	vfdisplay(_m_text_db.m_file,
-		  "    FREE_RECORDER @%0t {TXH:%0d}",
+		  "    FREE_RECORDER @%s {TXH:%0d}",
 		  getRootEntity.getSimTime,
 		  this.get_handle());
       }
@@ -1129,7 +1132,7 @@ class uvm_text_recorder: uvm_recorder
 
       if(_m_text_db.open_db()) {
 	vfdisplay(_m_text_db.m_file,
-		  "      SET_ATTR @%0t {TXH:%s NAME:%s VALUE:%s" ~
+		  "      SET_ATTR @%s {TXH:%s NAME:%s VALUE:%s" ~
 		  "   RADIX:%s BITS=%s}",
 		  getRootEntity.getSimTime,
 		  this.get_handle(),
@@ -1228,7 +1231,7 @@ class uvm_text_recorder: uvm_recorder
       if (open_file()) {
 	UVM_FILE file = _m_text_db.m_file;
 	vfdisplay(file,
-		  "      SET_ATTR @%0t {TXH:%s NAME:%s VALUE:%s" ~
+		  "      SET_ATTR @%s {TXH:%s NAME:%s VALUE:%s" ~
 		  "   RADIX:%s BITS=%s}",
 		  getRootEntity.getSimTime,
 		  txh,

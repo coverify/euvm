@@ -14,14 +14,17 @@ PHOBOS = phobos2
 
 LIBDIR = $(VLANGDIR)/lib
 
-.PHONY: run_test
+.PHONY: run_test all libs
 
 all: run_test
 
 clean:
 	rm -f test
 
-test: test.d $(ESDLSOURCES) $(VLANGSOURCES)
+libs:
+	(cd $(LIBDIR); make libs;)
+
+test: test.d libs
 	(cd $(LIBDIR); make libs)
 	$(DMD) -m$(MODEL) -g -I$(VLANGDIR)/src -I$(ESDLDIR)/src $(DFLAGS)  -of$@ -L-l$(PHOBOS) -L-R$(DMDLIBDIR) -L-lesdl -L-lvlang -L-L$(LIBDIR) -L-R$(LIBDIR) $<
 

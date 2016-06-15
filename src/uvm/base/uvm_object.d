@@ -933,40 +933,40 @@ abstract class uvm_object: uvm_void
 	}
 	break;
       case uvm_field_xtra_enum.UVM_SETOBJ:
-          m_uvm_status_container.scope_stack.set_arg(name);
-          if (uvm_is_match(str, m_uvm_status_container.scope_stack.get())) {
-            if (flags & UVM_READONLY) {
-              uvm_report_warning("RDONLY",
-				 format("Readonly argument match %s is ignored",
-					m_uvm_status_container.get_full_scope_arg()),
-				 UVM_NONE);
-            }
-            else {
-              if (m_uvm_status_container.print_matches) {
-		uvm_report_info("STRMTC", "set_object()" ~ ": Matched string " ~
-				str ~ " to field " ~
-				m_uvm_status_container.get_full_scope_arg(),
-				UVM_LOW);
-	      }
-	      E value = cast(E) m_uvm_status_container.object;
-	      if (value !is null) {
-		e = value;
-                m_uvm_status_container.status = 1;
-	      }
+	m_uvm_status_container.scope_stack.set_arg(name);
+	if (uvm_is_match(str, m_uvm_status_container.scope_stack.get())) {
+	  if (flags & UVM_READONLY) {
+	    uvm_report_warning("RDONLY",
+			       format("Readonly argument match %s is ignored",
+				      m_uvm_status_container.get_full_scope_arg()),
+			       UVM_NONE);
+	  }
+	  else {
+	    if (m_uvm_status_container.print_matches) {
+	      uvm_report_info("STRMTC", "set_object()" ~ ": Matched string " ~
+			      str ~ " to field " ~
+			      m_uvm_status_container.get_full_scope_arg(),
+			      UVM_LOW);
 	    }
-          }
-          else if ((e !is null) && ((flags & UVM_READONLY) == 0)) {
-            int cnt;
-            //Only traverse if there is a possible match.
-            for (cnt=0; cnt < str.length; ++cnt) {
-              if (str[cnt] == '.' || str[cnt] == '*') break;
-            }
-            if (cnt != str.length || str[0] is '/') {
-              m_uvm_status_container.scope_stack.down(name);
-              e.m_uvm_object_automation(null, what, str);
-              m_uvm_status_container.scope_stack.up();
-            }
-          }
+	    E value = cast(E) m_uvm_status_container.object;
+	    if (value !is null) {
+	      e = value;
+	      m_uvm_status_container.status = 1;
+	    }
+	  }
+	}
+	else if ((e !is null) && ((flags & UVM_READONLY) == 0)) {
+	  int cnt;
+	  //Only traverse if there is a possible match.
+	  for (cnt=0; cnt < str.length; ++cnt) {
+	    if (str[cnt] == '.' || str[cnt] == '*') break;
+	  }
+	  if (cnt != str.length || str[0] is '/') {
+	    m_uvm_status_container.scope_stack.down(name);
+	    e.m_uvm_object_automation(null, what, str);
+	    m_uvm_status_container.scope_stack.up();
+	  }
+	}
 	break;
       case uvm_field_xtra_enum.UVM_CHECK_FIELDS:
 	// uvm_warning("UVMUTLS",

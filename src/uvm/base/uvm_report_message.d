@@ -85,22 +85,12 @@ uvm_report_message_create(T...)(uvm_severity severity,
 				size_t line,
 				string context_name,
 				T fields) {
-  static if(T.length == 0) {
-    uvm_report_message l_report_message =
-      uvm_report_message.new_report_message();
-    l_report_message.set_report_message(severity, id, message, verbosity,
-					fname, line, context_name);
-    return l_report_message;
-  }
-  else {
-    // process the last field and add it to the message
-    uvm_report_message l_report_message =
-      uvm_report_message_create(severity, id, message, verbosity, fname,
-				line, context_name, fields[0..$-1]);
-    static assert(is(T[$-1]: uvm_report_message_element_base));
-    l_report_message.add(fields[$-1]);
-    return l_report_message;
-  }
+  uvm_report_message l_report_message =
+    uvm_report_message.new_report_message();
+  l_report_message.set_report_message(severity, id, message, verbosity,
+				      fname, line, context_name);
+  l_report_message.add(fields);
+  return l_report_message;
 }
 
 //------------------------------------------------------------------------------
@@ -717,12 +707,25 @@ class uvm_report_message_element_container: uvm_object
       }
     }
 
-  void add(uvm_report_message_element_base urme) {
-    synchronized(this) {
-      _elements ~= urme;
+  void add(E...)(E urme)
+    if (E.length == 0 || is(E[0]: uvm_report_message_element_base)) {
+    static if (E.length > 0) {
+      synchronized(this) {
+	_elements ~= urme[0];
+	this.add(urme[1..$]);
+      }
     }
   }
 
+  uvm_report_message_element_container
+  opOpAssign(string op)(uvm_report_message_element_base urme)
+    if (op == "~") {
+    synchronized(this) {
+      _elements ~= urme;
+    }
+    return this;
+  }
+  
   void add_object(string name, uvm_object obj,
 		  uvm_action action = (uvm_action_type.UVM_LOG |
 				       uvm_action_type.UVM_RM_RECORD)) {
@@ -1351,7 +1354,24 @@ class uvm_report_message: uvm_object
 
   alias add_object = add!uvm_object;
 
+  void add(E...)(E urme)
+    if (E.length == 0 || is(E[0]: uvm_report_message_element_base)) {
+    static if (E.length > 0) {
+      synchronized(this) {
+	_report_message_element_container ~= urme[0];
+	this.add(urme[1..$]);
+      }
+    }
+  }
+
   void add(uvm_report_message_element_base urme) {
     _report_message_element_container.add(urme);
   }
+
+  uvm_report_message
+  opOpAssign(string op)(uvm_report_message_element_base urme)
+    if (op == "~") {
+      _report_message_element_container ~= urme;
+      return this;
+    }
 }

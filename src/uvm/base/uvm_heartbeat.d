@@ -327,9 +327,8 @@ class uvm_heartbeat: uvm_object
 					  format("Did not recieve an update of"
 						 " %s for component %s since"
 						 " last event trigger at time"
-						 " %0t : last update time was"
-						 " %0t",
-						 _m_objection.get_name(),
+						 " %s : last update time was"
+						 " %s", _m_objection.get_name(),
 						 obj.get_full_name(),
 						 last_trigger,
 						 m_cb.get_last_trigger(obj)),
@@ -347,7 +346,7 @@ class uvm_heartbeat: uvm_object
 					format("Did not recieve an update of"
 					       " %s on any component since"
 					       " last event trigger at time"
-					       " %0t. The list of registered"
+					       " %s. The list of registered"
 					       " components is:%s",
 					       _m_objection.get_name(),
 					       last_trigger, s),
@@ -359,7 +358,7 @@ class uvm_heartbeat: uvm_object
 	      string s;
 	      foreach(obj, c; m_cb.get_counts())  {
 		if(c) {
-		  s ~= format("\n  %s (updated: %0t)",
+		  s ~= format("\n  %s (updated: %s)",
 			      obj.get_full_name(), m_cb.get_last_trigger(obj));
 		}
 	      }
@@ -367,7 +366,7 @@ class uvm_heartbeat: uvm_object
 					format("Recieved update of %s from "
 					       "more than one component since"
 					       " last event trigger at time"
-					       " %0t. The list of triggered"
+					       " %s. The list of triggered"
 					       " components is:%s",
 					       _m_objection.get_name(),
 					       last_trigger, s),
@@ -382,7 +381,7 @@ class uvm_heartbeat: uvm_object
 					format("Did not recieve an update of"
 					       " %s on any component since "
 					       "last event trigger at time "
-					       "%0t. The list of registered "
+					       "%s. The list of registered "
 					       "components is:%s",
 					       _m_objection.get_name(),
 					       last_trigger, s),
