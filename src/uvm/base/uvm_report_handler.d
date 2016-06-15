@@ -383,6 +383,7 @@ class uvm_report_handler: uvm_object
       s = "";
       if(action & UVM_DISPLAY)   s ~= "DISPLAY ";
       if(action & UVM_LOG)       s ~= "LOG ";
+      if(action & UVM_RM_RECORD) s ~= "RM_RECORD ";
       if(action & UVM_COUNT)     s ~= "COUNT ";
       if(action & UVM_EXIT)      s ~= "EXIT ";
       if(action & UVM_CALL_HOOK) s ~= "CALL_HOOK ";

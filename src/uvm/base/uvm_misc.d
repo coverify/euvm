@@ -728,13 +728,13 @@ string uvm_leaf_scope (string full_name, char scope_separator = '.') {
   case '(': bracket_match = ')'; break;
   case '<': bracket_match = '>'; break;
   case '{': bracket_match = '}'; break;
-  default : bracket_match = '.'; break;
+  default : bracket_match = '\0'; break;
   }
 
   //Only use bracket matching if the input string has the end match
   size_t  pos;
-  if(bracket_match != '.' && bracket_match != full_name[$-1]) {
-    bracket_match = '.';
+  if(bracket_match != '\0' && bracket_match != full_name[$-1]) {
+    bracket_match = '\0';
   }
 
   int  bmatches = 0;
@@ -744,7 +744,7 @@ string uvm_leaf_scope (string full_name, char scope_separator = '.') {
     }
     else if(full_name[pos] == scope_separator) {
       --bmatches;
-      if(!bmatches || (bracket_match is '.')) {
+      if(!bmatches || (bracket_match == '\0')) {
 	break;
       }
     }
