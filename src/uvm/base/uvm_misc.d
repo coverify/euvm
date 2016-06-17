@@ -728,16 +728,19 @@ string uvm_leaf_scope (string full_name, char scope_separator = '.') {
   case '(': bracket_match = ')'; break;
   case '<': bracket_match = '>'; break;
   case '{': bracket_match = '}'; break;
+  // SV uses "" where we use '\0' (null character)
+  // We use null character since the intention is to match nothing
+  // when compared against that character
   default : bracket_match = '\0'; break;
   }
 
   //Only use bracket matching if the input string has the end match
-  size_t  pos;
   if(bracket_match != '\0' && bracket_match != full_name[$-1]) {
     bracket_match = '\0';
   }
 
   int  bmatches = 0;
+  size_t  pos;
   for(pos=full_name.length-1; pos > 0; --pos) {
     if(full_name[pos] == bracket_match) {
       ++bmatches;

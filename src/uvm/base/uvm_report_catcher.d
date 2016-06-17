@@ -666,7 +666,7 @@ abstract class uvm_report_catcher: uvm_callback
 	// get_all_enabled already does that
 
 	prev_sev = _m_modified_report_message.get_severity();
-	_m_set_action_called = 0;
+	_m_set_action_called = false;
 	thrown = catcher.process_report_catcher();
 
 	// Set the action to the default action for the new severity
