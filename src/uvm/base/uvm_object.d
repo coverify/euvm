@@ -2267,7 +2267,8 @@ template uvm_field_auto_acc_flags(A...)
     enum int uvm_field_auto_acc_flags = 0;
   }
   else static if(is(typeof(A[0]) == uvm_recursion_policy_enum) ||
-		 is(typeof(A[0]) == uvm_field_auto_enum)) {
+		 is(typeof(A[0]) == uvm_field_auto_enum) ||
+		 is(typeof(A[0]) == uvm_radix_enum)) {
       enum int uvm_field_auto_acc_flags = A[0] |
 	uvm_field_auto_acc_flags!(A[1..$]);
     }

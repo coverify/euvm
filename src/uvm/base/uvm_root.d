@@ -129,7 +129,6 @@ class uvm_root: uvm_component
   mixin(uvm_sync_string);
 
   // SV implementation makes this a part of the run_test function
-  @UVM_NO_AUTO
   uvm_component uvm_test_top;
   @uvm_immutable_sync
   private uvm_entity_base _uvm_entity_instance;

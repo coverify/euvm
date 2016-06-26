@@ -31,7 +31,6 @@ import std.traits: fullyQualifiedName;
 template qualifiedTypeName(T) {
   // typeid(T).stringof returns string of the form "&typeid(qualifiedTypeName)"
   enum string qualifiedTypeName = typeid(T).stringof[7..$-1];
-  // enum string qualifiedTypeName = fullyQualifiedName!T;
 }
 
 version (X86_64) {

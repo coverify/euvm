@@ -169,13 +169,6 @@ enum uvm_active_passive_enum: bool
 
 mixin(declareEnums!uvm_active_passive_enum());
 
-enum uvm_auto_enum: byte
-  {   UVM_NO_AUTO=0,
-      UVM_AUTO=1
-      }
-enum UVM_NO_AUTO = uvm_auto_enum.UVM_NO_AUTO;
-enum UVM_AUTO = uvm_auto_enum.UVM_AUTO;
-
 // Parameter: `uvm_field_* macro flags
 //
 // Defines what operations a given field should be involved in.
@@ -224,8 +217,6 @@ enum uvm_field_auto_enum: int
       UVM_NORECORD     = (1 << 7),
       UVM_PACK         = (1 << 8),
       UVM_NOPACK       = (1 << 9),
-      UVM_BUILD        = (1 << 10),
-      UVM_NOBUILD      = (1 << 11),
       //UVM_DEEP         = (1 << 10),
       //UVM_SHALLOW      = (1 << 11),
       //UVM_REFERENCE    = (1 << 12),
@@ -233,11 +224,13 @@ enum uvm_field_auto_enum: int
       UVM_ABSTRACT     = (1 << 14),
       UVM_READONLY     = (1 << 15),
       UVM_NODEFPRINT   = (1 << 16),
+      UVM_BUILD        = (1 << 17),
+      UVM_NOBUILD      = (1 << 18),
       }
 
 mixin(declareEnums!uvm_field_auto_enum());
 
-enum int UVM_MACRO_NUMFLAGS    = 17;
+enum int UVM_MACRO_NUMFLAGS    = 19;
 //Extra values that are used for extra methods
 
 enum uvm_field_xtra_enum: int
@@ -250,13 +243,13 @@ enum uvm_field_xtra_enum: int
 
       //Get and set methods (in uvm_object). Used by the set/get* functions
       //to tell the object what operation to perform on the fields.
-      UVM_START_FUNCS       = UVM_END_DATA_EXTRA + 1,
-      UVM_SET               = UVM_START_FUNCS + 1,
-      UVM_SETINT            = UVM_SET,
-      UVM_SETOBJ            = UVM_START_FUNCS + 2,
-      UVM_SETSTR            = UVM_START_FUNCS + 3,
-      UVM_PARALLELIZE         = UVM_START_FUNCS + 4,
-      UVM_END_FUNCS         = UVM_PARALLELIZE
+      UVM_START_FUNCS    = UVM_END_DATA_EXTRA + 1,
+      UVM_SET            = UVM_START_FUNCS + 1,
+      UVM_SETINT         = UVM_SET,
+      UVM_SETOBJ         = UVM_START_FUNCS + 2,
+      UVM_SETSTR         = UVM_START_FUNCS + 3,
+      UVM_PARALLELIZE    = UVM_START_FUNCS + 4,
+      UVM_END_FUNCS      = UVM_PARALLELIZE
       }
 mixin(declareEnums!uvm_field_xtra_enum());
 
