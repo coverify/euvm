@@ -37,13 +37,21 @@
 
 module uvm.comps.uvm_pair;
 
+import uvm.base.uvm_object;
+import uvm.base.uvm_object_defines;
+import uvm.base.uvm_comparer;
+import uvm.base.uvm_globals;
+import uvm.meta.meta;
+
+import std.string: format;
+
 class uvm_class_pair(T1=uvm_object, T2=T1): uvm_object
 {
   alias uvm_class_pair!(T1, T2) this_type;
 
   mixin uvm_object_param_utils!this_type;
 
-  enum string type_name = "uvm_class_pair!(T1,T2)";
+  enum string type_name = qualifiedTypeName!(typeof(this));
 
   // Variable: T1 first
   //
@@ -117,11 +125,11 @@ class uvm_class_pair(T1=uvm_object, T2=T1): uvm_object
 
 class uvm_built_in_pair (T1=int, T2=T1): uvm_object
 {
-  alias uvm_built_in_pair!(T1,T2) this_type;
+  alias this_type = uvm_built_in_pair!(T1,T2);
 
-  mixin uvm_object_param_utils!this_type;
+  mixin uvm_object_essentials;
 
-  enum string type_name = "uvm_built_in_pair!(T1,T2)";
+  enum string type_name = qualifiedTypeName!(typeof(this));
 
   // Variable: T1 first
   //
@@ -144,11 +152,11 @@ class uvm_built_in_pair (T1=int, T2=T1): uvm_object
     super(name);
   }
 
-  string get_type_name() {
+  override string get_type_name() {
     return type_name;
   }
 
-  string convert2string() {
+  override string convert2string() {
     string s = format("built-in pair: %s, %s", first, second);
     // `ifdef UVM_USE_P_FORMAT
     //   $sformat(s, "built-in pair : %p, %p", first, second);
@@ -158,7 +166,7 @@ class uvm_built_in_pair (T1=int, T2=T1): uvm_object
     return s;
   }
 
-  bool do_compare(uvm_object rhs, uvm_comparer comparer) {
+  override bool do_compare(uvm_object rhs, uvm_comparer comparer) {
     this_type rhs_ = cast(this_type) rhs;
     if(rhs is null) {
       uvm_error("WRONG_TYPE",
@@ -169,7 +177,7 @@ class uvm_built_in_pair (T1=int, T2=T1): uvm_object
     return first == rhs_.first && second == rhs_.second;
   }
 
-  void do_copy (uvm_object rhs) {
+  override void do_copy (uvm_object rhs) {
     this_type rhs_ = cast(this_type) rhs;
     if(rhs is null) {
       uvm_fatal("WRONG_TYPE",

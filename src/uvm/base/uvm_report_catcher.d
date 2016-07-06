@@ -125,22 +125,36 @@ alias uvm_report_cb_iter = uvm_callback_iter!(uvm_report_object, uvm_report_catc
 
 abstract class uvm_report_catcher: uvm_callback
 {
+  // Keep the message specific variables static (thread local)
+  // as we know a message will not cross thread boudaries
   static private uvm_report_message _m_modified_report_message;
   static private uvm_report_message _m_orig_report_message;
   static private bool _m_set_action_called;
 
-  // Counts for the demoteds and caughts
-  static private int _m_demoted_fatal;
-  static private int _m_demoted_error;
-  static private int _m_demoted_warning;
-  static private int _m_caught_fatal;
-  static private int _m_caught_error;
-  static private int _m_caught_warning;
+  static class uvm_once: uvm_once_base
+  {
+    // Counts for the demoteds and caughts
+    @uvm_private_sync
+    private int _m_demoted_fatal;
+    @uvm_private_sync
+    private int _m_demoted_error;
+    @uvm_private_sync
+    private int _m_demoted_warning;
+    @uvm_private_sync
+    private int _m_caught_fatal;
+    @uvm_private_sync
+    private int _m_caught_error;
+    @uvm_private_sync
+    private int _m_caught_warning;
 
-  // Flag counts
-  static private int _m_debug_flags;
-  static private bool _do_report;
+    // Flag counts
+    @uvm_private_sync
+    private int _m_debug_flags;
+    @uvm_private_sync
+    private bool _do_report;
+  }
 
+  mixin(uvm_once_sync_string);
 
   // Flag counts
   enum int DO_NOT_CATCH = 1;
@@ -652,7 +666,7 @@ abstract class uvm_report_catcher: uvm_callback
 	// get_all_enabled already does that
 
 	prev_sev = _m_modified_report_message.get_severity();
-	_m_set_action_called = 0;
+	_m_set_action_called = false;
 	thrown = catcher.process_report_catcher();
 
 	// Set the action to the default action for the new severity

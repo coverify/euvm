@@ -46,12 +46,15 @@ version(UVM_NO_RAND) {}
 //
 //------------------------------------------------------------------------------
 
-abstract class uvm_sequence (REQ = uvm_sequence_item, RSP = REQ):
+abstract class uvm_sequence (REQ_T = uvm_sequence_item, RSP_T = REQ_T):
   uvm_sequence_base
 {
   mixin(uvm_sync_string);
 
-  alias sequencer_t = uvm_sequencer_param_base!(REQ, RSP);
+  alias sequencer_t = uvm_sequencer_param_base!(REQ_T, RSP_T);
+  alias REQ = REQ_T;
+  alias RSP = RSP_T;
+  
 
   version(UVM_NO_RAND) {
     @uvm_public_sync
@@ -68,11 +71,11 @@ abstract class uvm_sequence (REQ = uvm_sequence_item, RSP = REQ):
   // can use this field, if desired, or create another field to use.  The
   // default ~do_print~ will print this field.
   version(UVM_NO_RAND) {
-    protected REQ                req;
+    protected REQ_T                req;
   }
   else {
     @rand!false
-      protected REQ              req;
+      protected REQ_T              req;
   }
 
 
@@ -82,11 +85,11 @@ abstract class uvm_sequence (REQ = uvm_sequence_item, RSP = REQ):
   // can use this field, if desired, or create another field to use.   The
   // default ~do_print~ will print this field.
   version(UVM_NO_RAND) {
-    protected RSP                rsp;
+    protected RSP_T                rsp;
   }
   else {
     @rand!false
-      protected RSP              rsp;
+      protected RSP_T              rsp;
   }    
 
   // Function: new
@@ -111,7 +114,7 @@ abstract class uvm_sequence (REQ = uvm_sequence_item, RSP = REQ):
 	uvm_report_fatal("SSENDREQ", "Null m_sequencer reference", UVM_NONE);
       }
 
-      REQ m_request = cast(REQ) request;
+      REQ_T m_request = cast(REQ_T) request;
       if (request is null) {
 	uvm_report_fatal("SSENDREQ", "Failure to cast uvm_sequence_item to request", UVM_NONE);
       }
@@ -131,7 +134,7 @@ abstract class uvm_sequence (REQ = uvm_sequence_item, RSP = REQ):
   // Note that a driver that only calls get will never show a current item,
   // since the item is completed at the same time as it is requested.
 
-  final REQ get_current_item() {
+  final REQ_T get_current_item() {
     synchronized(this) {
       _param_sequencer = cast(sequencer_t) m_sequencer;
       if (_param_sequencer is null) {
@@ -161,10 +164,10 @@ abstract class uvm_sequence (REQ = uvm_sequence_item, RSP = REQ):
   // set_response_queue_error_report_disabled.
 
   // task
-  void get_response(out RSP response, int transaction_id=-1) {
+  void get_response(out RSP_T response, int transaction_id=-1) {
     uvm_sequence_item rsp;
     get_base_response(rsp, transaction_id);
-    response = cast(RSP) rsp;
+    response = cast(RSP_T) rsp;
   }
 
 
@@ -178,11 +181,11 @@ abstract class uvm_sequence (REQ = uvm_sequence_item, RSP = REQ):
       uvm_report_fatal("PUTRSP", "Received a null in response",
 		       UVM_NONE);
     }
-    RSP response = cast(RSP) response_item;
+    RSP_T response = cast(RSP_T) response_item;
     if (response is null) {
       uvm_report_fatal("PUTRSP",
 		       format("Failure to cast response to type %s in put_response",
-			      RSP.stringof), UVM_NONE);
+			      RSP_T.stringof), UVM_NONE);
     }
     put_base_response(response_item);
   }

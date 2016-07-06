@@ -1486,7 +1486,8 @@ class uvm_reg_map: uvm_object
 					    RB                   mem_offset,
 					    uint                 n_bytes,
 					    ref uvm_reg_addr_t[] addr)
-    if(uvm_reg_addr_t.isAssignable!RA && uvm_reg_addr_t.isAssignable!RB) {
+    if(uvm_reg_addr_t.isAssignableBitVec!RA &&
+       uvm_reg_addr_t.isAssignableBitVec!RB) {
       synchronized(this) {
 
 	if (n_bytes <= 0) {

@@ -166,7 +166,8 @@ class top_seq: uvm_sequence!my_item
     assert(seq !is null);
     uvm_send(seq);
     // seq.start(get_sequencer(), this);
-    uvm_info(get_type_name(), format("item done, sequence is finishing"), UVM_LOW);
+    uvm_info(get_type_name(),
+	     format("item done, sequence is finishing"), UVM_LOW);
   }
 }
 
@@ -194,7 +195,8 @@ class my_driver: uvm_driver!my_item
       while(true)
 	{
 	  seq_item_port.get_next_item(req);
-	  uvm_info(get_type_name(), format("Request is:\n%s", req.sprint()), UVM_LOW);
+	  uvm_info(get_type_name(),
+		   format("Request is:\n%s", req.sprint()), UVM_LOW);
 	  wait(100.nsec);
 	  seq_item_port.item_done();
 	}
@@ -251,7 +253,8 @@ class test: uvm_test
 
     override void end_of_elaboration()
   {
-    uvm_info(get_type_name(), format("The topology:\n%s", this.sprint()), UVM_LOW);
+    uvm_info(get_type_name(),
+	     format("The topology:\n%s", this.sprint()), UVM_LOW);
   }
 
   override void run_phase(uvm_phase phase)
