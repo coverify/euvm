@@ -32,7 +32,7 @@ libs:
 	(cd $(LIBDIR); make libs;)
 
 test: test.d libs
-	$(DMD) -m$(MODEL) -g -I$(VLANGDIR)/src -I$(ESDLDIR)/src $(DFLAGS)  -of$@ -L-l$(PHOBOS) -L-R$(DMDLIBDIR) -L-lesdl -L-lvlang -L-L$(LIBDIR) -L-R$(LIBDIR) $<
+	$(DMD) -m$(MODEL) -g -I$(VLANGDIR)/src -I$(ESDLDIR)/src $(DFLAGS)  -of$@ -L-l$(PHOBOS) -L-R$(DMDLIBDIR) -L-l$(ESDLLIB) -L-l$(UVMLIB) -L-L$(LIBDIR) -L-R$(LIBDIR) $<
 
 run_test: test
 	./test +UVM_TESTNAME=test.test
