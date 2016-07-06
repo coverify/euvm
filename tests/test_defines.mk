@@ -22,10 +22,10 @@ DFLAGS = -m$(MODEL) -g -fPIC -w -O # -version=UVM_NO_DEPRECATED
 ESDLDIR = ${HOME}/code/vlang
 VLANGDIR = ${HOME}/code/vlang-uvm
 
-DMDDIR = ${HOME}/local/dmd$(MODEL)
-DMD = $(DMDDIR)/bin/dmd
+DMDDIR = ${VLANG_ROOT_DIR}
+DMD = $(DMDDIR)/bin/ldmd2
 
 DMDLIBDIR = $(DMDDIR)/lib
-PHOBOS = phobos2
+PHOBOS = phobos2-ldc
 
 LIBDIR = $(VLANGDIR)/lib
