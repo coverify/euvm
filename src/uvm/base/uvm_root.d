@@ -651,7 +651,7 @@ class uvm_root: uvm_component
     m_do_dump_args();
   }
 
-  // override void admin_phase(uvm_phase phase) {
+  // override void setup_phase(uvm_phase phase) {
   //   foreach(child; get_children()) {
   //     child.uvm__auto_elab();
   //   }

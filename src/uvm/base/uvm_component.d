@@ -722,13 +722,13 @@ abstract class uvm_component: uvm_report_object, ParContext
     return;
   }
 
-  // Function- admin_phase
+  // Function- setup_phase
   //
-  // The <uvm_admin_phase> phase implementation method.
+  // The <uvm_setup_phase> phase implementation method.
   //
   // This method should never be called directly.
 
-  void admin_phase(uvm_phase phase) {}
+  void setup_phase(uvm_phase phase) {}
 
   // Function- end_of_elaboration_phase
   //
