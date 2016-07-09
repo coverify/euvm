@@ -16,7 +16,7 @@ all: libs
 libs: libesdl-ldc.so libuvm-ldc.so libesdl-ldc-debug.so libuvm-ldc-debug.so
 
 clean:
-	rm -f libesdl-ldc.so libuvm-ldc.so
+	rm -f lib*.o lib*.so
 
 libesdl-ldc.so: $(ESDLDIR)/src/*.d $(ESDLDIR)/src/esdl/*.d $(ESDLDIR)/src/esdl/base/*.d $(ESDLDIR)/src/esdl/posix/sys/net/*.d $(ESDLDIR)/src/esdl/sync/*.d $(ESDLDIR)/src/esdl/vcd/*.d $(ESDLDIR)/src/esdl/data/*.d $(ESDLDIR)/src/esdl/sys/*.d $(ESDLDIR)/src/esdl/intf/*.d
 	$(DMD) -shared $(DFLAGS) -oflibesdl-ldc.so -L-l$(PHOBOS) -L-L$(DMDLIBDIR) -L-R$(DMDLIBDIR) -I$(ESDLDIR)/src $^
