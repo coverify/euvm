@@ -66,6 +66,7 @@ import uvm.base.uvm_port_base;
 import uvm.comps.uvm_agent;
 import uvm.meta.mcd;
 import uvm.meta.misc;
+import uvm.vpi.uvm_vpi_intf;
 
 import esdl.base.core;
 import esdl.data.bvec;
@@ -1816,7 +1817,10 @@ abstract class uvm_object: uvm_void
     return;
   }
 
+  void do_vpi_put(uvm_vpi_iter iter) { }
 
+  void do_vpi_get(uvm_vpi_iter iter) { }
+  
   // Group: Configuration
   // static bool uvm_set_value(E, U)(ref E var, U value) {
   //   static if(is(U: E)) {

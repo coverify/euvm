@@ -207,6 +207,13 @@ if (is(IMP: uvm_component))
   }
 }
 
+template uvm_analysis_imp(alias F)
+{
+  import std.traits: parentOf;
+  alias uvm_analysis_imp = uvm_analysis_imp!(parentOf!F, F);
+}
+
+
 private auto recreateDelegate(alias F, T)(T _entity)
 {
   import std.functional: toDelegate;

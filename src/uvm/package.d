@@ -8,3 +8,4 @@ public import uvm.reg;
 public import uvm.seq;
 public import uvm.tlm1;
 public import uvm.tlm2;
+public import uvm.vpi;

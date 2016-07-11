@@ -38,7 +38,23 @@ import std.random;
 // singleton, we can have multiple instances of uvm_root, but each
 // ESDL RootEntity could have only one instance of uvm_root.
 
-class uvm_entity_base: Entity
+class uvm_testbench: RootEntity
+{
+  void start() {
+    super.simulate();
+  }
+  void start_bg() {
+    super.forkSim();
+    foreach (child; getChildComps()) {
+      auto entity = cast(uvm_entity_base) child;
+      if (entity !is null) {
+	entity.wait_for_end_of_elaboration();
+      }
+    }
+  }
+}
+
+abstract class uvm_entity_base: Entity
 {
   mixin(uvm_sync_string);
   this() {
@@ -73,6 +89,7 @@ class uvm_entity_base: Entity
     return null;
   }
 
+  abstract void wait_for_end_of_elaboration();
   abstract uvm_root _get_uvm_root();
   abstract uvm_root get_root();
   // The randomization seed passed from the top.
@@ -142,6 +159,10 @@ class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
     // elaboration is done
     uvm_root_instance.wait_for_end_of_elaboration();
     return uvm_root_instance;
+  }
+
+  override void wait_for_end_of_elaboration() {
+    uvm_root_instance.wait_for_end_of_elaboration();
   }
 
   void initial() {
