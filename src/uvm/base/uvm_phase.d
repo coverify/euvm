@@ -213,7 +213,10 @@ class uvm_phase: uvm_object
   }
   uvm_phase[] get_executing_phases() {
     synchronized(once) {
-      return once._m_executing_phases.keys;
+      import std.algorithm.sorting;
+      auto phases = once._m_executing_phases.keys;
+      sort(phases);
+      return phases;
     }
   }
     
@@ -1513,7 +1516,10 @@ class uvm_phase: uvm_object
   }
   uvm_phase[] get_predecessors() {
     synchronized(this) {
-      return _m_predecessors.keys;
+      import std.algorithm.sorting;
+      auto phases = _m_predecessors.keys;
+      sort(phases);
+      return phases;
     }
   }
   auto dup_predecessors() {
@@ -1555,7 +1561,10 @@ class uvm_phase: uvm_object
   }
   uvm_phase[] get_successors() {
     synchronized(this) {
-      return _m_successors.keys;
+      import std.algorithm.sorting;
+      auto phases = _m_successors.keys;
+      sort(phases);
+      return phases;
     }
   }
   auto dup_successors() {
@@ -1633,7 +1642,8 @@ class uvm_phase: uvm_object
     // we are only interested in "real" phase nodes
     do {
       done = true;
-      foreach(pred; pred_of_succ.keys) {
+      import std.algorithm.sorting;
+      foreach(pred; sort(pred_of_succ.keys)) {
 	if(pred.get_phase_type() !is UVM_PHASE_NODE) {
 	  pred_of_succ.remove(pred);
 	  foreach(next_pred; pred.get_predecessors()) {
@@ -2378,6 +2388,11 @@ class uvm_phase: uvm_object
     return phases;
   }
 
+  final int opCmp(uvm_phase other) {
+    if (get_name() > other.get_name()) return 1;
+    else if (get_name() < other.get_name()) return -1;
+    else return 0;
+  }
 }
 
 //------------------------------------------------------------------------------

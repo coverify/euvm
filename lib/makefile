@@ -163,7 +163,7 @@ libuvm-ldc:
 libs: libesdl.so libuvm.so
 
 clean:
-	rm -f lib*.o lib*.so $(ESDLOBJS) $(UVMOBJS)
+	rm -rf lib*.o lib*.so obj obj-ldc
 
 $(OBJDIR)/esdl/%.o: ../../vlang/src/esdl/%.d
 	$(DMD) -c $(DFLAGS) -of$@ -I$(ESDLDIR)/src $^
