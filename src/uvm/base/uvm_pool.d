@@ -36,8 +36,10 @@ module uvm.base.uvm_pool;
 //------------------------------------------------------------------------------
 
 import uvm.base.uvm_object;
+import uvm.base.uvm_resource;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_printer;
+import uvm.base.uvm_queue;
 import uvm.base.uvm_root;
 import uvm.base.uvm_once;
 import uvm.base.uvm_coreservice;
@@ -558,3 +560,7 @@ import uvm.base.uvm_event;
 
 alias uvm_object_string_pool!(uvm_barrier) uvm_barrier_pool;
 alias uvm_object_string_pool!(uvm_event!(uvm_object)) uvm_event_pool;
+alias uvm_queue_string_pool = uvm_object_string_pool!(uvm_queue!string);
+alias uvm_string_object_resource_pool =
+  uvm_pool!(string, uvm_resource!(uvm_object));;
+
