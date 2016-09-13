@@ -981,7 +981,7 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
   }
 
   static uvm_queue!(uvm_callback) m_get_q (T obj) {
-    uvm_queue!(uvm_callback) q = new uvm_queue!(uvm_callback)("uvm_callback/m_get_q/q");
+    uvm_queue!(uvm_callback) q;
     m_get_q(q, obj);
     return q;
   }
