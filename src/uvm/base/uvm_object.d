@@ -125,15 +125,21 @@ abstract class uvm_object: uvm_void
     synchronized(this) {
       _m_inst_id = inst_id;
       _m_leaf_name = name;
-      auto proc = Procedure.self;
-      if(proc !is null) {
-	auto seed = uniform!int(proc.getRandGen());
-	debug(SEED) {
-	  import std.stdio;
-	  writeln("Setting seed: ", seed, " for instance: ", get_full_name);
-	}
-	this.reseed(seed);
-      }
+      // auto proc = Procedure.self;
+      // if(proc !is null) {
+      // 	auto seed = uniform!int(proc.getRandGen());
+      // 	debug(SEED) {
+      // 	  import std.stdio;
+      // 	  auto thread = PoolThread.self;
+      // 	  auto func = Process.self;
+      // 	  if (func !is null) {
+      // 	    writeln("Process ", thread ? thread.getPoolIndex : -1, " : ",
+      // 		    func.getFullName);
+      // 	  }
+      // 	  writeln("Setting ", get_full_name, " seed: ", seed);
+      // 	}
+      // 	this.reseed(seed);
+      // }
     }
   }
 
@@ -183,6 +189,22 @@ abstract class uvm_object: uvm_void
     }
   }
 
+  void _esdl__setupSolver() {
+    if (! _esdl__isRandSeeded()) {
+      auto proc = Procedure.self;
+      if(proc !is null) {
+      	auto seed = uniform!int(proc.getRandGen());
+	debug(SEED) {
+      	  import std.stdio;
+      	  auto thread = PoolThread.self;
+	  writeln("Procedure ", thread ? thread.getPoolIndex : -1, " : ",
+      		    proc.getFullName);
+      	  writeln("Setting ", get_full_name, " seed: ", seed);
+	}
+	this.reseed(seed);
+      }
+    }
+  }
 
   // // Group: Identification
 
