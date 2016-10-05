@@ -1,12 +1,13 @@
 MODEL = 64
-DFLAGS = -m$(MODEL) -fPIC -g -w -O # -version=LOGPROCS # -version=UVM_NO_DEPRECATED
+DEBUG = dummy
+DFLAGS = -m$(MODEL) -fPIC -g -w -O -debug=$(DEBUG) # -debug=SEED # -version=LOGPROCS # -version=UVM_NO_DEPRECATED
 ESDLDIR = ../../vlang
 UVMDIR = ../../vlang-uvm
 
-DMD = dmd
-OBJDIR = obj
+DMD = ldmd2
+OBJDIR = obj-ldc
 
-PHOBOS = phobos2
+PHOBOS = phobos2-ldc
 
 LIBDIR = $(UVMDIR)/lib
 
@@ -19,13 +20,14 @@ ESDLOBJS = $(OBJDIR)/esdl/base/comm.o $(OBJDIR)/esdl/base/package.o	\
 	$(OBJDIR)/esdl/data/obdd.o $(OBJDIR)/esdl/data/bvec.o		\
 	$(OBJDIR)/esdl/data/rand.o $(OBJDIR)/esdl/data/time.o		\
 	$(OBJDIR)/esdl/data/queue.o $(OBJDIR)/esdl/data/cstx.o		\
-	$(OBJDIR)/esdl/data/packed.o $(OBJDIR)/esdl/sys/sched.o		\
-	$(OBJDIR)/esdl/sys/package.o $(OBJDIR)/esdl/intf/hal.o		\
-	$(OBJDIR)/esdl/intf/systemc.o $(OBJDIR)/esdl/intf/mraa.o	\
-	$(OBJDIR)/esdl/intf/vtap.o $(OBJDIR)/esdl/intf/vpi.o		\
-	$(OBJDIR)/esdl/intf/fli.o $(OBJDIR)/esdl/intf/package.o		\
-	$(OBJDIR)/esdl/intf/mhpi.o $(OBJDIR)/esdl/intf/vhpi.o		\
-	$(OBJDIR)/unstd/casts.o $(OBJDIR)/unstd/memory/weakref.o
+	$(OBJDIR)/esdl/data/packed.o $(OBJDIR)/esdl/data/cover.o	\
+	$(OBJDIR)/esdl/sys/sched.o $(OBJDIR)/esdl/sys/package.o		\
+	$(OBJDIR)/esdl/intf/hal.o $(OBJDIR)/esdl/intf/systemc.o		\
+	$(OBJDIR)/esdl/intf/mraa.o $(OBJDIR)/esdl/intf/vtap.o		\
+	$(OBJDIR)/esdl/intf/vpi.o $(OBJDIR)/esdl/intf/fli.o		\
+	$(OBJDIR)/esdl/intf/package.o $(OBJDIR)/esdl/intf/mhpi.o	\
+	$(OBJDIR)/esdl/intf/vhpi.o $(OBJDIR)/unstd/casts.o		\
+	$(OBJDIR)/unstd/memory/weakref.o
 
 UVMOBJS = $(OBJDIR)/uvm/seq/uvm_sequencer_analysis_fifo.o		\
 	$(OBJDIR)/uvm/seq/uvm_push_sequencer.o				\
@@ -51,6 +53,7 @@ UVMOBJS = $(OBJDIR)/uvm/seq/uvm_sequencer_analysis_fifo.o		\
 	$(OBJDIR)/uvm/comps/uvm_agent.o					\
 	$(OBJDIR)/uvm/comps/uvm_in_order_comparator.o			\
 	$(OBJDIR)/uvm/comps/uvm_vpi_driver.o				\
+	$(OBJDIR)/uvm/base/uvm_async_lock.o				\
 	$(OBJDIR)/uvm/base/uvm_object.o $(OBJDIR)/uvm/base/uvm_pool.o	\
 	$(OBJDIR)/uvm/base/uvm_task_phase.o				\
 	$(OBJDIR)/uvm/base/uvm_event_callback.o				\
@@ -152,15 +155,15 @@ UVMOBJS = $(OBJDIR)/uvm/seq/uvm_sequencer_analysis_fifo.o		\
 
 all: libs libs-ldc
 
-libs-ldc: libesdl-ldc libuvm-ldc
+libs-ldc: libesdl-ldc.so libuvm-ldc.so
 
-libesdl-ldc:
-	make DMD=ldmd2 OBJDIR=obj-ldc PHOBOS=phobos2-ldc libesdl-ldc.so
+libesdl:
+	$(MAKE) DMD=dmd OBJDIR=obj PHOBOS=phobos2 libesdl.so
 
-libuvm-ldc:
-	make DMD=ldmd2 OBJDIR=obj-ldc PHOBOS=phobos2-ldc libuvm-ldc.so
+libuvm:
+	$(MAKE) DMD=dmd OBJDIR=obj PHOBOS=phobos2 libuvm.so
 
-libs: libesdl.so libuvm.so
+libs: libesdl libuvm
 
 clean:
 	rm -rf lib*.o lib*.so obj obj-ldc

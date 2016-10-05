@@ -1,6 +1,7 @@
 module uvm.base;
 
 public import uvm.base.uvm_array;
+public import uvm.base.uvm_async_lock;
 public import uvm.base.uvm_barrier;
 public import uvm.base.uvm_bottomup_phase;
 public import uvm.base.uvm_callback;
