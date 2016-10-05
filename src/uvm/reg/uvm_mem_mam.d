@@ -366,7 +366,7 @@ class uvm_mem_mam
       try {
 	alloc.randomize();
       }
-      catch {
+      catch(Throwable) {
 	uvm_report_error("RegModel", "Unable to randomize policy");
 	return null;
       }
