@@ -68,6 +68,7 @@ module uvm.base.uvm_root;
 
 // typedef class uvm_test_done_objection;
 // typedef class uvm_cmdline_processor;
+import uvm.base.uvm_async_lock;
 import uvm.base.uvm_component; // uvm_component
 import uvm.base.uvm_cmdline_processor;
 import uvm.base.uvm_entity;
@@ -138,19 +139,32 @@ class uvm_root: uvm_component
       super();
       _elab_done_semaphore = new Semaphore(); // count 0
 
-      // from static variable
-      _uvm_entity_instance =
-	uvm_entity_base._uvm_entity_inst;
-      _phase_timeout = new WithEvent!Time(UVM_DEFAULT_TIMEOUT,
-					  _uvm_entity_instance);
-      _m_phase_all_done = new WithEvent!bool(_uvm_entity_instance);
-      _clp = uvm_cmdline_processor.get_inst();
       m_rh.set_name("reporter");
+
+      _clp = uvm_cmdline_processor.get_inst();
+
       report_header();
       // This sets up the global verbosity. Other command line args may
       // change individual component verbosity.
       m_check_verbosity();
     }
+  }
+
+  // initialize gets called by the uvm_entity_base constructor right
+  // after calling uvm_root constructor
+  void initialize(uvm_entity_base base) {
+    synchronized(this) {
+      // from static variable
+      _uvm_entity_instance = base;
+      // uvm_entity_base._uvm_entity_instance;
+      _phase_timeout = new WithEvent!Time("_phase_timeout",
+					  UVM_DEFAULT_TIMEOUT, base);
+      _m_phase_all_done = new WithEvent!bool("_m_phase_all_done", base);
+    }
+  }
+  
+  override uvm_entity_base get_entity() {
+    return _uvm_entity_instance;
   }
 
   override void set_thread_context() {
@@ -350,7 +364,11 @@ class uvm_root: uvm_component
     uvm_report_server l_rs = uvm_report_server.get_server();
     l_rs.report_summarize();
 
+    // disable all locks that have been register with this root
+    this.finalize();
+
     unlockStage();
+    
     if(finish_on_completion) {
       debug(FINISH) {
 	import std.stdio;
@@ -1311,6 +1329,33 @@ class uvm_root: uvm_component
 
   override void set_name(string name) {
     super.set_root_name(name);
+  }
+
+  private uvm_async_lock[] _async_locks;
+  
+  final void register_async_lock(uvm_async_lock lock) {
+    synchronized(this) {
+      _async_locks ~= lock;
+    }
+  }
+
+  private uvm_async_event[] _async_events;
+  
+  final void register_async_event(uvm_async_event event) {
+    synchronized(this) {
+      _async_events ~= event;
+    }
+  }
+
+  final void finalize() {
+    synchronized(this) {
+      foreach (lock; _async_locks) {
+	lock.disable();
+      }
+      foreach (event; _async_events) {
+	event.disableWait();
+      }
+    }
   }
 }
 
