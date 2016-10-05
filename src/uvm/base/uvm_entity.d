@@ -66,9 +66,6 @@ abstract class uvm_entity_base: Entity
     }
   }
 
-  // Only for use by the uvm_root constructor -- use nowhere else
-  static package uvm_entity_base _uvm_entity_inst;
-
   @uvm_immutable_sync
   private Semaphore _uvm_root_init_semaphore;
 
@@ -131,8 +128,8 @@ class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
       // the uvm_root constructor since the constructor has no
       // argument. If an argument is introduced, that will spoil
       // uvm_root user API.
-      uvm_entity_base._uvm_entity_inst = this;
       _uvm_root_instance = new T();
+      _uvm_root_instance.initialize(this);
       resetThreadContext();
       _seed = uniform!int;
     }
