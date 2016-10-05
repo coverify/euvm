@@ -299,7 +299,7 @@ abstract class uvm_resource_base: uvm_object
   this(string name = null, string s = "*") {
     synchronized(this) {
       super(name);
-      _modified = new WithEvent!bool();
+      _modified = new WithEvent!bool("_modified");
       set_scope(s);
       modified = false;
       _read_only = false;

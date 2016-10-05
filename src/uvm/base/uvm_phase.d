@@ -241,10 +241,10 @@ class uvm_phase: uvm_object
        uvm_phase parent=null) {
     synchronized(this) {
       super(name);
-      _m_state = new WithEvent!uvm_phase_state();
-      _m_jump_fwd = new WithEvent!bool();
-      _m_jump_bkwd = new WithEvent!bool();
-      _m_premature_end = new WithEvent!bool();
+      _m_state = new WithEvent!uvm_phase_state("_m_state");
+      _m_jump_fwd = new WithEvent!bool("_m_jump_fwd");
+      _m_jump_bkwd = new WithEvent!bool("_m_jump_bkwd");
+      _m_premature_end = new WithEvent!bool("_m_premature_end");
 
       _m_phase_type = phase_type;
 

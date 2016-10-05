@@ -169,10 +169,11 @@ class uvm_sequencer_base: uvm_component
   this(string name, uvm_component parent) {
     synchronized(this) {
       super(name, parent);
-      _m_lock_arb_size = new WithEvent!int;
-      _m_is_relevant_completed = new WithEvent!bool;
-      _m_wait_for_item_sequence_id = new WithEvent!int;
-      _m_wait_for_item_transaction_id = new WithEvent!int;
+      _m_lock_arb_size = new WithEvent!int("_m_lock_arb_size");
+      _m_is_relevant_completed = new WithEvent!bool("_m_is_relevant_completed");
+      _m_wait_for_item_sequence_id = new WithEvent!int("_m_wait_for_item_sequence_id");
+      _m_wait_for_item_transaction_id = new WithEvent!int("_m_wait_for_item_transaction_id");
+      _m_wait_for_item_ids.initialize("_m_wait_for_item_ids");
       _m_wait_for_item_ids = _m_wait_for_item_sequence_id.getEvent() |
 	_m_wait_for_item_transaction_id.getEvent();
       _m_sequencer_id = inc_g_sequencer_id();
