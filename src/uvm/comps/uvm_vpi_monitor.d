@@ -31,6 +31,7 @@ import uvm.tlm1.uvm_analysis_port;
 import uvm.tlm1.uvm_tlm_gen_rsp;
 import uvm.vpi.uvm_vpi_intf;
 import esdl.intf.vpi;
+import esdl.base.core: SimTerminatedException, AsyncLockDisabledException;
 
 class uvm_vpi_monitor(RSP, string VPI_TASK): uvm_monitor
 {
@@ -74,16 +75,40 @@ class uvm_vpi_monitor(RSP, string VPI_TASK): uvm_monitor
   }
   
   static int vpi_task_calltf(char* user_data) {
-    MONITOR mon = cast(MONITOR) user_data;
-    RSP rsp;
-    mon.gen_rsp_port.get(rsp);
-    vpiHandle systf_handle = vpi_handle(vpiSysTfCall, null);
-    assert(systf_handle !is null);
-    vpiHandle arg_iterator = vpi_iterate(vpiArgument, systf_handle);
-    assert(arg_iterator !is null);
-    rsp.do_vpi_get(uvm_vpi_iter(arg_iterator, mon.vpi_task_name));
-    mon.put_rsp_port.put(rsp);
-    return 0;
+    try {
+      MONITOR mon = cast(MONITOR) user_data;
+      RSP rsp;
+      auto root = mon.get_root_entity();
+      mon.gen_rsp_port.get(rsp);
+      vpiHandle systf_handle = vpi_handle(vpiSysTfCall, null);
+      assert(systf_handle !is null);
+      vpiHandle arg_iterator = vpi_iterate(vpiArgument, systf_handle);
+      assert(arg_iterator !is null);
+      rsp.do_vpi_get(uvm_vpi_iter(arg_iterator, mon.vpi_task_name));
+      mon.put_rsp_port.put(rsp);
+      vpiReturnVal(VpiStatus.SUCCESS);
+      return 0;
+    }
+    catch (SimTerminatedException) {
+      import std.stdio;
+      stderr.writeln(" > Sending vpiFinish signal to the Verilog Simulator");
+      vpi_control(vpiFinish, 1);
+      vpiReturnVal(VpiStatus.FINISHED);
+      return 0;
+    }
+    catch (AsyncLockDisabledException) {
+      // import std.stdio;
+      // stderr.writeln(" > Sending vpiFinish signal to the Verilog Simulator");
+      // vpi_control(vpiFinish, 1);
+      vpiReturnVal(VpiStatus.DISABLED);
+      return 0;
+    }
+    catch (Throwable e) {
+      import std.stdio: stderr;
+      stderr.writeln("VPI Task call threw exception: ", e);
+      vpiReturnVal(VpiStatus.UNKNOWN);
+      return 0;
+    }
   }
   
   override void setup_phase(uvm_phase phase) {
@@ -91,7 +116,7 @@ class uvm_vpi_monitor(RSP, string VPI_TASK): uvm_monitor
     super.setup_phase(phase);
     s_vpi_systf_data tf_data;
     uvm_info("VPIREG", "Registering vpi system task: " ~ vpi_task_name, UVM_NONE);
-    tf_data.type = vpiSysTask;
+    tf_data.type = vpiSysFunc;
     tf_data.tfname = cast(char*) vpi_task_name.toStringz;
     tf_data.calltf = &vpi_task_calltf;
     // tf_data.compiletf = &pull_avmm_compiletf;

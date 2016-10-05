@@ -30,6 +30,7 @@ import uvm.tlm1.uvm_tlm_fifos;
 import uvm.tlm1.uvm_ports;
 import uvm.vpi.uvm_vpi_intf;
 import esdl.intf.vpi;
+import esdl.base.core: SimTerminatedException, AsyncLockDisabledException;
 
 class uvm_vpi_driver(REQ, string VPI_TASK): uvm_driver!REQ
 {
@@ -69,24 +70,45 @@ class uvm_vpi_driver(REQ, string VPI_TASK): uvm_driver!REQ
   }
 
   static int vpi_task_calltf(char* user_data) {
-    DRIVER drv = cast(DRIVER) user_data;
-    REQ req;
-    drv.get_req_port.get(req);
-    if(req is null) {
-      // Can not use drv.uvm_info here since the vlang simulation is already
-      // completed
+    try {
+      vpiHandle systf_handle =
+	vpi_handle(vpiSysTfCall, null);
+      assert(systf_handle !is null);
+      DRIVER drv = cast(DRIVER) user_data;
+      REQ req;
+      auto retval = drv.get_req_port.try_get(req);
+      if (retval && req !is null) {
+	vpiHandle arg_iterator =
+	  vpi_iterate(vpiArgument, systf_handle);
+	assert(arg_iterator !is null);
+	req.do_vpi_put(uvm_vpi_iter(arg_iterator,
+				    drv.vpi_task_name));
+	vpiReturnVal(VpiStatus.SUCCESS);
+	return 0;
+      }
+      vpiReturnVal(VpiStatus.FAILURE);
+      return 0;
+    }
+    catch (SimTerminatedException) {
       import std.stdio;
       writeln(" > Sending vpiFinish signal to the Verilog Simulator");
       vpi_control(vpiFinish, 1);
+      vpiReturnVal(VpiStatus.FINISHED);
+      return 0;
     }
-    else {
-      vpiHandle systf_handle = vpi_handle(vpiSysTfCall, null);
-      assert(systf_handle !is null);
-      vpiHandle arg_iterator = vpi_iterate(vpiArgument, systf_handle);
-      assert(arg_iterator !is null);
-      req.do_vpi_put(uvm_vpi_iter(arg_iterator, drv.vpi_task_name));
+    catch (AsyncLockDisabledException) {
+      // import std.stdio;
+      // stderr.writeln(" > Sending vpiFinish signal to the Verilog Simulator");
+      // vpi_control(vpiFinish, 1);
+      vpiReturnVal(VpiStatus.DISABLED);
+      return 0;
     }
-    return 0;
+    catch (Throwable e) {
+      import std.stdio: stderr;
+      stderr.writeln("VPI Task call threw exception: ", e);
+      vpiReturnVal(VpiStatus.UNKNOWN);
+      return 0;
+    }
   }
   
   override void setup_phase(uvm_phase phase) {
@@ -94,7 +116,7 @@ class uvm_vpi_driver(REQ, string VPI_TASK): uvm_driver!REQ
     super.setup_phase(phase);
     s_vpi_systf_data tf_data;
     uvm_info("VPIREG", "Registering vpi system task: " ~ vpi_task_name, UVM_NONE);
-    tf_data.type = vpiSysTask;
+    tf_data.type = vpiSysFunc;
     tf_data.tfname = cast(char*) vpi_task_name.toStringz;
     tf_data.calltf = &vpi_task_calltf;
     // tf_data.compiletf = &pull_avmm_compiletf;
