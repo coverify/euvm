@@ -110,15 +110,19 @@ class uvm_callbacks_base: uvm_object
     private uvm_pool!(ClassInfo, uvm_callbacks_base) _typeid_map;
     this() {
       synchronized(this) {
-	_m_b_inst = new uvm_callbacks_base;
-	_m_pool = new uvm_pool!(uvm_object, uvm_queue!(uvm_callback));
-	_typeid_map = new uvm_pool!(ClassInfo, uvm_callbacks_base);
+	_m_b_inst = new uvm_callbacks_base("m_b_inst(uvm_callbacks_base)");
+	_m_pool = new uvm_pool!(uvm_object, uvm_queue!(uvm_callback))("uvm_callbacks_base/m_pool");
+	_typeid_map = new uvm_pool!(ClassInfo, uvm_callbacks_base)("uvm_callbacks_base/typeid_map");
       }
     }
   };
 
   mixin(uvm_once_sync_string);
   mixin(uvm_sync_string);
+
+  this(string name) {
+    super(name);
+  }
 
   alias this_type = uvm_callbacks_base;
 
@@ -224,13 +228,20 @@ class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
   {
     @uvm_private_sync
     private this_type _m_t_inst;
+    @uvm_private_sync
+    uvm_queue!uvm_callback _m_tw_cb_q;
+    // this() {
+    //   synchronized(this) {
+    // 	_m_tw_cb_q =
+    // 	  new uvm_queue!uvm_callback("uvm_callback/typewide_queue(" ~
+    // 				     T.stringof ~ ")");
+    //   }
+    // }
   }
   
   mixin(uvm_once_sync_string);
   mixin(uvm_sync_string);
 
-  @uvm_immutable_sync
-  uvm_queue!uvm_callback _m_tw_cb_q;
   enum string m_typename = qualifiedTypeName!T;
 
   alias this_type  = uvm_typed_callbacks!(T);
@@ -259,10 +270,8 @@ class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
   //   }
   // }
 
-  this() {
-    synchronized(this) {
-      _m_tw_cb_q = new uvm_queue!uvm_callback("uvm_callback/typewide_queue");
-    }
+  this(string name) {
+    super(name);
   }
 
   static this_type m_initialize() {
@@ -270,13 +279,12 @@ class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
       if(m_t_inst is null) {
 	// super_type.m_initialize taken care of by once constructor
 	// super_type.m_initialize();
-	m_t_inst = new this_type();
+	m_t_inst = new this_type("m_t_inst(uvm_typed_callbacks#(" ~
+				 T.stringof ~ ")");
 
-	// This is taken care of in the "this" method of m_t_inst. That way it
-	// becomes effectively immutable
-	// synchronized(m_t_inst) {
-	//	m_t_inst.m_tw_cb_q = new uvm_queue!uvm_callback("uvm_callback/typewide_queue");
-	// }
+	m_tw_cb_q =
+	  new uvm_queue!uvm_callback("uvm_callback/typewide_queue(" ~
+				     T.stringof ~ ")");
       }
       return m_t_inst;
     }
@@ -585,6 +593,11 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
 
   mixin(uvm_once_sync_string);
   mixin(uvm_sync_string);
+
+  this(string name) {
+    super(name);
+  }
+
   // Parameter: T
   //
   // This type parameter specifies the base object type with which the
@@ -640,7 +653,8 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
     if (m_inst is null) {
       super_type.m_initialize();
 
-      m_inst = new this_type();
+      m_inst = new this_type("m_inst(uvm_callbacks#(" ~ T.stringof ~
+			     ", " ~ CB.stringof ~ ")");
 
       static if(is(CB == uvm_callback)) {
 	// The base inst in the super class gets set to this base inst
