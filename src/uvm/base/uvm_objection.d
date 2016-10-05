@@ -42,8 +42,9 @@ import uvm.meta.misc;
 import uvm.meta.meta;
 
 import esdl.base.core: Event, SimTime, Process,
-  waitForks, wait, Fork, fork;
+  waitForks, wait, Fork, fork, getRootEntity;
 import esdl.data.sync;
+import esdl.data.time;
 
 import std.string: format;
 
@@ -1056,6 +1057,10 @@ class uvm_objection: uvm_report_object
   // the drain_time/all_dropped execution is terminated.
 
   // AE: set_drain_time(drain,obj=null)?
+  final void set_drain_time (uvm_object obj, Time drain) {
+    set_drain_time(obj, SimTime(getRootEntity(), drain));
+  }
+
   final void set_drain_time (uvm_object obj, SimTime drain) {
     if(obj is null) {
       obj = m_top;
@@ -1480,7 +1485,7 @@ class uvm_test_done_objection: uvm_objection
       super(name);
       _m_n_stop_threads_event.initialize("_m_n_stop_threads_event");
       version(UVM_INCLUDE_DEPRECATED) {
-      	_stop_timeout = new WithEvent!SimTime(SimTime(0));
+      	_stop_timeout = new WithEvent!SimTime("_stop_timeout", SimTime(0));
       }
     }
   }
