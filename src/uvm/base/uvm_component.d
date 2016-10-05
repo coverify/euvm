@@ -389,6 +389,14 @@ abstract class uvm_component: uvm_report_object, ParContext
     return get_parent().get_root();
   }
   
+  uvm_entity_base get_entity() {
+    return this.get_root.get_entity();
+  }
+  
+  RootEntity get_root_entity() {
+    return this.get_entity.getRoot();
+  }
+
   //   extern virtual function uvm_component get_parent ();
 
 
@@ -2732,7 +2740,7 @@ abstract class uvm_component: uvm_report_object, ParContext
       if(keep_active) etype = "Error, Link";
       else etype = "Error";
 
-      if(error_time == 0) error_time = getRootEntity.getSimTime;
+      if(error_time == 0) error_time = get_root_entity.getSimTime;
 
       if((stream_name == "") || (stream_name == "main")) {
 	if(_m_main_stream is null) {
@@ -2805,7 +2813,7 @@ abstract class uvm_component: uvm_report_object, ParContext
       else etype = "Event";
 
       if(event_time == 0) {
-	event_time = getRootEntity.getSimTime();
+	event_time = get_root_entity.getSimTime();
       }
 
       if((stream_name == "") || (stream_name == "main")) {
@@ -3724,7 +3732,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   }
 
   void set_simulation_status(ubyte status) {
-    getRootEntity.setExitStatus(status);
+    get_root_entity.setExitStatus(status);
   }
 
   void m_uvm_component_automation(int what) { }
@@ -4151,7 +4159,7 @@ void uvm__config_parallelism(T)(T t, ref parallelize linfo)
       }
       else {
 	// UDP @parallelize without argument
-	auto nthreads = getRootEntity.getNumPoolThreads();
+	auto nthreads = t.get_root_entity.getNumPoolThreads();
 	if(par__info._poolIndex != uint.max) {
 	  assert(par__info._poolIndex < nthreads);
 	  par__conf = new ParConfig(par__info._poolIndex);
