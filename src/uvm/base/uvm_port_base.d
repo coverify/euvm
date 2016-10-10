@@ -530,7 +530,7 @@ abstract class uvm_port_base(IF = uvm_void): IF
 	m_comp.uvm_report_error(s_connection_error_id,
 				provider.get_full_name() ~ " (of type " ~
 				provider.get_type_name() ~
-				") does not provide the complete interface"
+				") does not provide the complete interface" ~
 				" required of this port (type " ~
 				get_type_name() ~ ")", UVM_NONE);
 	return;
@@ -539,10 +539,10 @@ abstract class uvm_port_base(IF = uvm_void): IF
       // IMP.connect(anything) is illegal
       if (is_imp()) {
 	m_comp.uvm_report_error(s_connection_error_id,
-				format("Cannot call an imp port's connect"
-				       " method. An imp is connected only"
-				       " to the component passed in its"
-				       " constructor. (You attempted to bind"
+				format("Cannot call an imp port's connect" ~
+				       " method. An imp is connected only" ~
+				       " to the component passed in its" ~
+				       " constructor. (You attempted to bind" ~
 				       " this imp to %s)",
 				       provider.get_full_name()), UVM_NONE);
 	return;
@@ -551,9 +551,9 @@ abstract class uvm_port_base(IF = uvm_void): IF
       // EXPORT.connect(PORT) are illegal
       if (is_export() && provider.is_port()) {
 	m_comp.uvm_report_error(s_connection_error_id,
-				format("Cannot connect exports to ports"
-				       " Try calling port.connect(export)"
-				       " instead. (You attempted to bind"
+				format("Cannot connect exports to ports" ~
+				       " Try calling port.connect(export)" ~
+				       " instead. (You attempted to bind" ~
 				       " this export to %s).",
 				       provider.get_full_name()), UVM_NONE);
 	return;
@@ -885,14 +885,14 @@ abstract class uvm_port_base(IF = uvm_void): IF
 
       if (size() < min_size() ) {
 	m_comp.uvm_report_error(s_connection_error_id,
-				format("connection count of %0d does not"
+				format("connection count of %0d does not" ~
 				       " meet required minimum of %0d",
 				       size(), min_size()), UVM_NONE);
       }
 
       if (max_size() !is UVM_UNBOUNDED_CONNECTIONS && size() > max_size() ) {
 	m_comp.uvm_report_error(s_connection_error_id,
-				format("connection count of %0d exceeds"
+				format("connection count of %0d exceeds" ~
 				       " maximum of %0d",
 				       size(), max_size()), UVM_NONE);
       }
@@ -915,7 +915,7 @@ abstract class uvm_port_base(IF = uvm_void): IF
     synchronized(this) {
       if (size() == 0) {
 	m_comp.uvm_report_warning("get_if",
-				  "Port size is zero; cannot get interface"
+				  "Port size is zero; cannot get interface" ~
 				  " at any index", UVM_NONE);
 	return null;
       }

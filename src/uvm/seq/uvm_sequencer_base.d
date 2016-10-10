@@ -1113,7 +1113,7 @@ class uvm_sequencer_base: uvm_component
 	highest_sequences = filter!(a => a == i)(avail_sequences[]);
 	if (highest_sequences.length == 0) {
 	  uvm_report_fatal("Sequencer",
-			   format("Error in User arbitration, sequence %0d"
+			   format("Error in User arbitration, sequence %0d" ~
 				  " not available\n%s", i, convert2string()),
 			   UVM_NONE);
 	}
@@ -1251,9 +1251,9 @@ class uvm_sequencer_base: uvm_component
 	      (is_child(sequence_ptr, _arb_sequence_q[i].sequence_ptr))) {
 	    if (sequence_ptr.get_sequence_state() == UVM_FINISHED)
 	      uvm_error("SEQFINERR",
-			format("Parent sequence '%s' should not finish before"
-			       " all items from itself and items from descendent"
-			       " sequences are processed.  The item request from"
+			format("Parent sequence '%s' should not finish before" ~
+			       " all items from itself and items from descendent" ~
+			       " sequences are processed.  The item request from" ~
 			       " the sequence '%s' is being removed.",
 			       sequence_ptr.get_full_name(),
 			       _arb_sequence_q[i].sequence_ptr.get_full_name()));
@@ -1274,9 +1274,9 @@ class uvm_sequencer_base: uvm_component
 	      (is_child(sequence_ptr, _lock_list[i]))) {
 	    if (sequence_ptr.get_sequence_state() == UVM_FINISHED)
 	      uvm_error("SEQFINERR",
-			format("Parent sequence '%s' should not finish before"
-			       " locks from itself and descedent sequences are"
-			       " removed.  The lock held by the child sequence"
+			format("Parent sequence '%s' should not finish before" ~
+			       " locks from itself and descedent sequences are" ~
+			       " removed.  The lock held by the child sequence" ~
 			       " '%s' is being removed.",
 			       sequence_ptr.get_full_name(),
 			       _lock_list[i].get_full_name()));
@@ -1329,31 +1329,31 @@ class uvm_sequencer_base: uvm_component
 	// for sequence library functionality.
 	if (uvm_config_db!(string).get(this, "", "default_sequence",
 				       _default_sequence)) {
-	  uvm_warning("UVM_DEPRECATED", "default_sequence config parameter is"
-		      " deprecated and not part of the UVM standard. See"
-		      " documentation for uvm_sequencer_base::"
+	  uvm_warning("UVM_DEPRECATED", "default_sequence config parameter is" ~
+		      " deprecated and not part of the UVM standard. See" ~
+		      " documentation for uvm_sequencer_base::" ~
 		      "start_phase_sequence().");
 	  _m_default_seq_set = true;
 	}
 	if (uvm_config_db!(int).get(this, "", "count", _count)) {
-	  uvm_warning("UVM_DEPRECATED", "count config parameter is deprecated"
+	  uvm_warning("UVM_DEPRECATED", "count config parameter is deprecated" ~
 		      " and not part of the UVM standard");
 	}
 	if (uvm_config_db!(uint).get(this, "", "max_random_count",
 				     _max_random_count)) {
-	  uvm_warning("UVM_DEPRECATED", "count config parameter is deprecated"
+	  uvm_warning("UVM_DEPRECATED", "count config parameter is deprecated" ~
 		      " and not part of the UVM standard");
 	}
 	if (uvm_config_db!(uint).get(this, "", "max_random_depth",
 				     _max_random_depth)) {
-	  uvm_warning("UVM_DEPRECATED", "max_random_depth config parameter is"
-		      " deprecated and not part of the UVM standard. Use "
-		      "'uvm_sequence_library' class for sequence library "
+	  uvm_warning("UVM_DEPRECATED", "max_random_depth config parameter is" ~
+		      " deprecated and not part of the UVM standard. Use " ~
+		      "'uvm_sequence_library' class for sequence library " ~
 		      "functionality");
 	}
 	if (uvm_config_db!(int).get(this, "", "pound_zero_count", dummy)) {
-	  uvm_warning("UVM_DEPRECATED", "pound_zero_count was set but ignored. "
-		      "Sequencer/driver synchronization now uses "
+	  uvm_warning("UVM_DEPRECATED", "pound_zero_count was set but ignored. " ~
+		      "Sequencer/driver synchronization now uses " ~
 		      "'uvm_wait_for_nba_region'");
 	}
       }
@@ -1731,8 +1731,8 @@ class uvm_sequencer_base: uvm_component
 	// Have run-time phases and no user setting of default sequence
 	if(_m_default_seq_set == false && m_domain !is null) {
 	  _default_sequence = "";
-	  uvm_info("NODEFSEQ", "The \"default_sequence\" has not been set. "
-		   "Since this sequencer has a runtime phase schedule, the "
+	  uvm_info("NODEFSEQ", "The \"default_sequence\" has not been set. " ~
+		   "Since this sequencer has a runtime phase schedule, the " ~
 		   "uvm_random_sequence is not being started for the run phase.",
 		   UVM_HIGH);
 	  return;
@@ -1745,9 +1745,9 @@ class uvm_sequencer_base: uvm_component
 	     uvm_config_db!(uvm_object_wrapper).exists(this, "run_phase",
 						       "default_sequence", 0))) {
 
-	  uvm_warning("MULDEFSEQ", "A default phase sequence has been set via the "
-		      "\"<phase_name>.default_sequence\" configuration option."
-		      "The deprecated \"default_sequence\" configuration option"
+	  uvm_warning("MULDEFSEQ", "A default phase sequence has been set via the " ~
+		      "\"<phase_name>.default_sequence\" configuration option." ~
+		      "The deprecated \"default_sequence\" configuration option" ~
 		      " is ignored.");
 	  return;
 	}
@@ -1756,7 +1756,7 @@ class uvm_sequencer_base: uvm_component
 	if(_sequences.length == 2 &&
 	   _sequences[0] == "uvm_random_sequence" &&
 	   _sequences[1] == "uvm_exhaustive_sequence") {
-	  uvm_report_warning("NOUSERSEQ", "No user sequence available. "
+	  uvm_report_warning("NOUSERSEQ", "No user sequence available. " ~
 			     "Not starting the (deprecated) default sequence.",
 			     UVM_HIGH);
 	  return;
@@ -1764,7 +1764,7 @@ class uvm_sequencer_base: uvm_component
 
 	uvm_warning("UVM_DEPRECATED", "Starting (deprecated) default sequence '" ~
 		    _default_sequence ~ "' on sequencer '" ~ get_full_name() ~
-		    "'. See documentation for uvm_sequencer_base::"
+		    "'. See documentation for uvm_sequencer_base::" ~
 		    "start_phase_sequence() for information on " ~
 		    "starting default sequences in UVM.");
 

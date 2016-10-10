@@ -283,9 +283,9 @@ abstract class uvm_component: uvm_report_object, ParContext
 
       if(parent.has_child(name) && this !is parent.get_child(name)) {
 	if(parent is top) {
-	  string error_str = "Name '" ~ name ~ "' is not unique to other"
-	    " top-level instances. If parent is a module, build a unique"
-	    " name by combining the the module name and component name: "
+	  string error_str = "Name '" ~ name ~ "' is not unique to other" ~
+	    " top-level instances. If parent is a module, build a unique" ~
+	    " name by combining the the module name and component name: " ~
 	    "$sformatf(\"%m.%s\" ~ \"" ~ name ~ "\").";
 	  uvm_fatal("CLDEXT", error_str);
 	}
@@ -474,7 +474,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   final int get_next_child(ref string name) {
     synchronized(this) {
       auto found = find(_children_names, name);
-      enforce(found.length != 0, "get_next_child could not match a child"
+      enforce(found.length != 0, "get_next_child could not match a child" ~
 	      "with name: " ~ name);
       if(found.length is 1) {
 	return 0;
@@ -548,7 +548,7 @@ abstract class uvm_component: uvm_report_object, ParContext
     synchronized(this) {
       if(_m_name != "") {
 	uvm_error("INVSTNM",
-		  format("It is illegal to change the name of a component. "
+		  format("It is illegal to change the name of a component. " ~
 			 "The component name will not be changed to \"%s\"",
 			 name));
 	return;
@@ -1623,7 +1623,7 @@ abstract class uvm_component: uvm_report_object, ParContext
       }
       if(value is null) {
   	uvm_warning("NULLCFG", "A null object was provided as a " ~
-  		    format("configuration object for set_config_object"
+  		    format("configuration object for set_config_object" ~
   			   "(\"%s\",\"%s\")", inst_name, field_name) ~
   		    ". Verify that this is intended.");
       }
@@ -1633,15 +1633,15 @@ abstract class uvm_component: uvm_report_object, ParContext
   	if(tmp is null) {
   	  auto comp = cast(uvm_component) value;
   	  if(comp !is null) {
-  	    uvm_error("INVCLNC", "Clone failed during set_config_object "
-  		      "with an object that is a uvm_component. Components"
+  	    uvm_error("INVCLNC", "Clone failed during set_config_object " ~
+  		      "with an object that is a uvm_component. Components" ~
   		      " cannot be cloned.");
   	    return;
   	  }
   	  else {
-  	    uvm_warning("INVCLN", "Clone failed during set_config_object, "
-  			"the original reference will be used for configuration"
-  			". Check that the create method for the object type"
+  	    uvm_warning("INVCLN", "Clone failed during set_config_object, " ~
+  			"the original reference will be used for configuration" ~
+  			". Check that the create method for the object type" ~
   			" is defined properly.");
   	  }
   	}
@@ -1775,7 +1775,7 @@ abstract class uvm_component: uvm_report_object, ParContext
       return;
     }
 
-    uvm_report_info("CFGNRD"," ::: The following resources have"
+    uvm_report_info("CFGNRD"," ::: The following resources have" ~
 		    " at least one write and no reads :::", UVM_INFO);
     rp.print_resources(rq, 1);
   }
@@ -1992,7 +1992,7 @@ abstract class uvm_component: uvm_report_object, ParContext
     synchronized(once) {
       if(! print_config_warned) {
 	uvm_report_warning("deprecated",
-			   "uvm_component.print_config_settings"
+			   "uvm_component.print_config_settings" ~
 			   " has been deprecated.  Use print_config() instead");
 	print_config_warned = true;
       }
@@ -3058,7 +3058,7 @@ abstract class uvm_component: uvm_report_object, ParContext
       string name = child.get_name();
       if(name in _m_children && _m_children[name] !is child) {
 	uvm_warning("BDCLD",
-		    format ("A child with the name '%0s' (type=%0s)"
+		    format ("A child with the name '%0s' (type=%0s)" ~
 			    " already exists.",
 			    name, (cast(uvm_component) _m_children[name]).get_type_name()));
 	return false;
@@ -3167,7 +3167,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   // FIXME -- use @disable feature from D -- make it compile time error
   override uvm_object create (string name = "") {
     uvm_error("ILLCRT",
-	      "create cannot be called on a uvm_component."
+	      "create cannot be called on a uvm_component." ~
 	      " Use create_component instead.");
     return null;
   }
@@ -3178,8 +3178,8 @@ abstract class uvm_component: uvm_report_object, ParContext
 
   override uvm_object clone() {
     uvm_error("ILLCLN",
-	      format("Attempting to clone '%s'."
-		     "  Clone cannot be called on a uvm_component."
+	      format("Attempting to clone '%s'." ~
+		     "  Clone cannot be called on a uvm_component." ~
 		     "  The clone target variable will be set to null.",
 		     get_full_name()));
     return null;

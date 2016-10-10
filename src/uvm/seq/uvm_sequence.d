@@ -138,7 +138,7 @@ abstract class uvm_sequence (REQ_T = uvm_sequence_item, RSP_T = REQ_T):
     synchronized(this) {
       _param_sequencer = cast(sequencer_t) m_sequencer;
       if (_param_sequencer is null) {
-	uvm_report_fatal("SGTCURR", "Failure to cast m_sequencer to the"
+	uvm_report_fatal("SGTCURR", "Failure to cast m_sequencer to the" ~
 			 " parameterized sequencer", UVM_NONE);
       }
       return (_param_sequencer.get_current_item());

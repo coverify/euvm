@@ -416,7 +416,7 @@ abstract class uvm_object: uvm_void
     uvm_object tmp = this.create(get_name());
     if(tmp is null) {
       uvm_report_warning("CRFLD",
-			 format("The create method failed for %s,  "
+			 format("The create method failed for %s,  " ~
 				"object cannot be cloned", get_name()),
 			 UVM_NONE);
     }
@@ -1436,7 +1436,7 @@ abstract class uvm_object: uvm_void
     }
 
     if(rhs is null) {
-      uvm_report_warning("NULLCP", "A null object was supplied to copy;"
+      uvm_report_warning("NULLCP", "A null object was supplied to copy;" ~
 			 " copy is ignored", UVM_NONE);
       return;
     }
@@ -2249,7 +2249,7 @@ abstract class uvm_object: uvm_void
 
     if(packer.get_packed_size() !is provided_size) {
       uvm_report_warning("BDUNPK",
-			 format("Unpack operation unsuccessful: unpacked "
+			 format("Unpack operation unsuccessful: unpacked " ~
 				"%0d bits from a total of %0d bits",
 				packer.get_packed_size(), provided_size),
 			 UVM_NONE);

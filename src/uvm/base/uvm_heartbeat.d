@@ -324,10 +324,10 @@ class uvm_heartbeat: uvm_object
 	    foreach(obj, c; m_cb.get_counts()) {
 	      if(! c) {
 		_m_cntxt.uvm_report_fatal("HBFAIL",
-					  format("Did not recieve an update of"
-						 " %s for component %s since"
-						 " last event trigger at time"
-						 " %s : last update time was"
+					  format("Did not recieve an update of" ~
+						 " %s for component %s since" ~
+						 " last event trigger at time" ~
+						 " %s : last update time was" ~
 						 " %s", _m_objection.get_name(),
 						 obj.get_full_name(),
 						 last_trigger,
@@ -343,10 +343,10 @@ class uvm_heartbeat: uvm_object
 		s ~= "\n  " ~ obj.get_full_name();
 	      }
 	      _m_cntxt.uvm_report_fatal("HBFAIL",
-					format("Did not recieve an update of"
-					       " %s on any component since"
-					       " last event trigger at time"
-					       " %s. The list of registered"
+					format("Did not recieve an update of" ~
+					       " %s on any component since" ~
+					       " last event trigger at time" ~
+					       " %s. The list of registered" ~
 					       " components is:%s",
 					       _m_objection.get_name(),
 					       last_trigger, s),
@@ -363,10 +363,10 @@ class uvm_heartbeat: uvm_object
 		}
 	      }
 	      _m_cntxt.uvm_report_fatal("HBFAIL",
-					format("Recieved update of %s from "
-					       "more than one component since"
-					       " last event trigger at time"
-					       " %s. The list of triggered"
+					format("Recieved update of %s from " ~
+					       "more than one component since" ~
+					       " last event trigger at time" ~
+					       " %s. The list of triggered" ~
 					       " components is:%s",
 					       _m_objection.get_name(),
 					       last_trigger, s),
@@ -378,10 +378,10 @@ class uvm_heartbeat: uvm_object
 		s ~= "\n  " ~ obj.get_full_name();
 	      }
 	      _m_cntxt.uvm_report_fatal("HBFAIL",
-					format("Did not recieve an update of"
-					       " %s on any component since "
-					       "last event trigger at time "
-					       "%s. The list of registered "
+					format("Did not recieve an update of" ~
+					       " %s on any component since " ~
+					       "last event trigger at time " ~
+					       "%s. The list of registered " ~
 					       "components is:%s",
 					       _m_objection.get_name(),
 					       last_trigger, s),

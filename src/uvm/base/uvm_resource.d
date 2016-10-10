@@ -1302,14 +1302,14 @@ class uvm_resource_pool {
     synchronized(this) {
 
       if(rsrc is null) {
-	uvm_report_warning("NULLRASRC", "attempting to change"
+	uvm_report_warning("NULLRASRC", "attempting to change" ~
 			   " the serach priority of a null resource");
 	return;
       }
 
       TypeInfo type_handle = rsrc.get_type_handle();
       if(type_handle !in _ttab) {
-	string msg = format("Type handle for resrouce named %s not found in"
+	string msg = format("Type handle for resrouce named %s not found in" ~
 			    " type map; cannot change its search priority",
 			    rsrc.get_name());
 	uvm_report_error("RNFTYPE", msg);
@@ -1332,13 +1332,13 @@ class uvm_resource_pool {
 			       uvm_resource_types.priority_e pri) {
     synchronized(this) {
       if(rsrc is null) {
-	uvm_report_warning("NULLRASRC", "attempting to change the serach"
+	uvm_report_warning("NULLRASRC", "attempting to change the serach" ~
 			   " priority of a null resource");
 	return;
       }
       string name = rsrc.get_name();
       if(name !in _rtab) {
-	string msg = format("Resrouce named %s not found in name map;"
+	string msg = format("Resrouce named %s not found in name map;" ~
 			    " cannot change its search priority", name);
 	uvm_report_error("RNFNAME", msg);
 	return;

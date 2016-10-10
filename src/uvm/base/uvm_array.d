@@ -105,7 +105,7 @@ class uvm_array (T=int): uvm_object
       T default_value;
       if (index >= size() || index < 0) {
 	uvm_report_warning("ARRAYGET",
-			   format("get: given index out of range for array of"
+			   format("get: given index out of range for array of" ~
 				  " size %0d. Ignoring get request", size()));
 	return default_value;
       }
@@ -134,7 +134,7 @@ class uvm_array (T=int): uvm_object
       if (index >= size() || index < 0) {
 	import uvm.base.uvm_globals;
 	uvm_report_warning("ARRAYINS",
-			   format("insert: given index out of range for array of"
+			   format("insert: given index out of range for array of" ~
 				  " size %0d. Ignoring insert request", size()));
 	return;
       }
@@ -156,7 +156,7 @@ class uvm_array (T=int): uvm_object
     synchronized(this) {
       if (index >= size() || index < -1) {
 	uvm_report_warning("ARRAYDEL",
-			   format("remove: given index out of range for array of"
+			   format("remove: given index out of range for array of" ~
 				  " size %0d. Ignoring delete request", size()));
 	return;
       }

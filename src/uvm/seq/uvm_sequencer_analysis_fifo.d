@@ -56,7 +56,7 @@ class uvm_sequencer_analysis_fifo (RSP = uvm_sequence_item)
 
   void write(RSP t) {
     if (sequencer_ptr is null) {
-      uvm_report_fatal ("SEQRNULL", "The sequencer pointer is null when"
+      uvm_report_fatal ("SEQRNULL", "The sequencer pointer is null when" ~
 			" attempting a write", UVM_NONE);
       sequencer_ptr.analysis_write(t);
     }

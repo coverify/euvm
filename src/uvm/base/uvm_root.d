@@ -288,8 +288,8 @@ class uvm_root: uvm_component
 	test_list ~= sep ~ test_names[i];
       }
       uvm_report_warning("MULTTST",
-			 format("Multiple (%0d) +UVM_TESTNAME arguments "
-				"provided on the command line.  '%s' will "
+			 format("Multiple (%0d) +UVM_TESTNAME arguments " ~
+				"provided on the command line.  '%s' will " ~
 				"be used.  Provided list: %s.",
 				test_name_count, test_name, test_list),
 			 UVM_NONE);
@@ -299,7 +299,7 @@ class uvm_root: uvm_component
     if(test_name != "") {
       if("uvm_test_top" in m_children) {
 	uvm_report_fatal("TTINST",
-			 "An uvm_test_top already exists via a "
+			 "An uvm_test_top already exists via a " ~
 			 "previous call to run_test", UVM_NONE);
 	wait(0); // #0 // forces shutdown because $finish is forked
       }
@@ -428,7 +428,7 @@ class uvm_root: uvm_component
       import std.string;
       if(_m_uvm_timeout_overridable is false) {
 	uvm_report_info("NOTIMOUTOVR",
-			format("The global timeout setting of %0d is not "
+			format("The global timeout setting of %0d is not " ~
 			       "overridable to %0d due to a previous setting.",
 			       phase_timeout, timeout), UVM_NONE);
 	return;
@@ -478,7 +478,7 @@ class uvm_root: uvm_component
 
       if(comp_list.length > 1) {
 	uvm_report_warning("MMATCH",
-			   format("Found %0d components matching '%s'."
+			   format("Found %0d components matching '%s'." ~
 				  " Returning first match, %0s.",
 				  comp_list.length, comp_match,
 				  comp_list[0].get_full_name()), UVM_NONE);
@@ -547,7 +547,7 @@ class uvm_root: uvm_component
       // string s; // defined in SV version but never used
 
       if(m_children.length is 0) {
-	uvm_report_warning("EMTCOMP", "print_topology - No UVM "
+	uvm_report_warning("EMTCOMP", "print_topology - No UVM " ~
 			   "components to print.", UVM_NONE);
 	return;
       }
@@ -695,8 +695,8 @@ class uvm_root: uvm_component
       uvm_split_string(setting, ',', split_vals);
       if(split_vals.length < 4 || split_vals.length > 5) {
 	uvm_report_warning("INVLCMDARGS",
-			   format("Invalid number of arguments found on "
-				  "the command line for setting "
+			   format("Invalid number of arguments found on " ~
+				  "the command line for setting " ~
 				  "'+uvm_set_verbosity=%s'.  Setting ignored.",
 				  setting), UVM_NONE); // , "", "");
       }
@@ -704,7 +704,7 @@ class uvm_root: uvm_component
       // Invalid verbosity
       if(!clp.m_convert_verb(split_vals[2], tmp_verb)) {
 	uvm_report_warning("INVLCMDVERB",
-			   format("Invalid verbosity found on the command "
+			   format("Invalid verbosity found on the command " ~
 				  "line for setting '%s'.",
 				  setting), UVM_NONE); // , "", "");
       }
@@ -738,14 +738,14 @@ class uvm_root: uvm_component
 	  timeout_list ~= sep ~ timeout_settings[i];
 	}
 	uvm_report_warning("MULTTIMOUT",
-			   format("Multiple (%0d) +UVM_TIMEOUT arguments "
-				  "provided on the command line.  '%s' will "
+			   format("Multiple (%0d) +UVM_TIMEOUT arguments " ~
+				  "provided on the command line.  '%s' will " ~
 				  "be used.  Provided list: %s.",
 				  timeout_count, timeout, timeout_list),
 			   UVM_NONE);
       }
       uvm_report_info("TIMOUTSET",
-		      format("'+UVM_TIMEOUT=%s' provided on the command "
+		      format("'+UVM_TIMEOUT=%s' provided on the command " ~
 			     "line is being applied.", timeout), UVM_NONE);
 
       uint timeout_int;
@@ -796,11 +796,11 @@ class uvm_root: uvm_component
     if(split_val.length !is 3 ) {
       uvm_report_error("UVM_CMDLINE_PROC",
 		       "Invalid setting for +uvm_set_inst_override=" ~ ovr ~
-		       ", setting must specify <requested_type>,"
+		       ", setting must specify <requested_type>," ~
 		       "<override_type>,<instance_path>", UVM_NONE);
     }
     uvm_report_info("INSTOVR",
-		    "Applying instance override from the command line: "
+		    "Applying instance override from the command line: " ~
 		    "+uvm_set_inst_override=" ~ ovr, UVM_NONE);
     factory.set_inst_override_by_name(split_val[0], split_val[1], split_val[2]);
   }
@@ -819,7 +819,7 @@ class uvm_root: uvm_component
     if(split_val.length > 3 || split_val.length < 2) {
       uvm_report_error("UVM_CMDLINE_PROC",
 		       "Invalid setting for +uvm_set_type_override=" ~ ovr ~
-		       ", setting must specify <requested_type>,"
+		       ", setting must specify <requested_type>," ~
 		       "<override_type>[,<replace>]", UVM_NONE);
       return;
     }
@@ -830,14 +830,14 @@ class uvm_root: uvm_component
       if(split_val[2] == "0") replace =  false;
       else if(split_val[2] == "1") replace = true;
       else {
-	uvm_report_error("UVM_CMDLINE_PROC", "Invalid replace arg for "
+	uvm_report_error("UVM_CMDLINE_PROC", "Invalid replace arg for " ~
 			 "+uvm_set_type_override=" ~ ovr ~
 			 " value must be 0 or 1", UVM_NONE);
 	return;
       }
     }
 
-    uvm_report_info("UVM_CMDLINE_PROC", "Applying type override from "
+    uvm_report_info("UVM_CMDLINE_PROC", "Applying type override from " ~
 		    "the command line: +uvm_set_type_override=" ~ ovr,
 		    UVM_NONE);
     factory.set_type_override_by_name(split_val[0], split_val[1], replace);
@@ -887,14 +887,14 @@ class uvm_root: uvm_component
 	  max_quit_list ~= sep ~ max_quit_settings[i];
 	}
 	uvm_report_warning("MULTMAXQUIT",
-			   format("Multiple (%0d) +UVM_MAX_QUIT_COUNT "
-				  "arguments provided on the command line."
+			   format("Multiple (%0d) +UVM_MAX_QUIT_COUNT " ~
+				  "arguments provided on the command line." ~
 				  "  '%s' will be used.  Provided list: %s.",
 				  max_quit_count, max_quit, max_quit_list),
 			   UVM_NONE);
       }
       uvm_report_info("MAXQUITSET",
-		      format("'+UVM_MAX_QUIT_COUNT=%s' provided on the "
+		      format("'+UVM_MAX_QUIT_COUNT=%s' provided on the " ~
 			     "command line is being applied.", max_quit),
 		      UVM_NONE);
       string[] split_max_quit;
@@ -954,8 +954,8 @@ class uvm_root: uvm_component
 
     if(split_val.length > 3) {
       uvm_report_error("UVM_CMDLINE_PROC",
-		       format("Invalid +uvm_set_config command\"%s\" : "
-			      "expected only 3 fields (component, field "
+		       format("Invalid +uvm_set_config command\"%s\" : " ~
+			      "expected only 3 fields (component, field " ~
 			      "and value).", cfg), UVM_NONE);
       return;
     }
@@ -986,13 +986,13 @@ class uvm_root: uvm_component
       }
 
       uvm_report_info("UVM_CMDLINE_PROC",
-		      "Applying config setting from the command line: "
+		      "Applying config setting from the command line: " ~
 		      "+uvm_set_config_int=" ~ cfg, UVM_NONE);
       uvm_config_db!int.set(m_uvm_top, split_val[0], split_val[1], v);
     }
     else {
       uvm_report_info("UVM_CMDLINE_PROC",
-		      "Applying config setting from the command line: "
+		      "Applying config setting from the command line: " ~
 		      "+uvm_set_config_string=" ~ cfg, UVM_NONE);
       uvm_config_db!string.set(m_uvm_top, split_val[0], split_val[1], split_val[2]);
     }
@@ -1090,8 +1090,8 @@ class uvm_root: uvm_component
       }
 
       uvm_report_warning("MULTVERB",
-			 format("Multiple (%0d) +UVM_VERBOSITY arguments "
-				"provided on the command line.  '%s' "
+			 format("Multiple (%0d) +UVM_VERBOSITY arguments " ~
+				"provided on the command line.  '%s' " ~
 				"will be used.  Provided list: %s.",
 				verb_count, verb_string, verb_list),
 			 UVM_NONE);
@@ -1115,13 +1115,13 @@ class uvm_root: uvm_component
 	verbosity = cast(uvm_verbosity) parse!int(verb_string); // .atoi();
 	if(verbosity > 0) {
 	  uvm_report_info("NSTVERB",
-			  format("Non-standard verbosity value, using "
+			  format("Non-standard verbosity value, using " ~
 				 "provided '%0d'.", verbosity), UVM_NONE);
 	}
 	if(verbosity is 0) {
 	  verbosity = UVM_MEDIUM;
 	  uvm_report_warning("ILLVERB",
-			     "Illegal verbosity value, using default "
+			     "Illegal verbosity value, using default " ~
 			     "of UVM_MEDIUM.", UVM_NONE);
 	}
       }
@@ -1227,8 +1227,8 @@ class uvm_root: uvm_component
       uvm_fatal("RUNPHSTIME",
 		"The run phase must start at time 0, current time is " ~
 		format("%s", getRootEntity().getSimTime()) ~
-		". No non-zero delays are allowed before run_test(), and"
-		" pre-run user defined phases may not consume simulation"
+		". No non-zero delays are allowed before run_test(), and" ~
+		" pre-run user defined phases may not consume simulation" ~
 		" time before the start of the run phase.");
     }
   }

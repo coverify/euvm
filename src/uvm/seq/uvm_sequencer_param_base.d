@@ -121,11 +121,11 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
 			     bool rerandomize = false) {
     synchronized(this) {
       if (sequence_ptr is null) {
-	uvm_report_fatal("SNDREQ", "Send request sequence_ptr"
+	uvm_report_fatal("SNDREQ", "Send request sequence_ptr" ~
 			 " is null", UVM_NONE);
       }
       if (sequence_ptr.m_wait_for_grant_semaphore < 1) {
-	uvm_report_fatal("SNDREQ", "Send request called without"
+	uvm_report_fatal("SNDREQ", "Send request called without" ~
 			 " wait_for_grant", UVM_NONE);
       }
       sequence_ptr.dec_wait_for_grant_semaphore();
@@ -139,7 +139,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
 	      randomize(param_t);
 	    }
 	    catch {
-	      uvm_report_warning("SQRSNDREQ", "Failed to rerandomize sequence"
+	      uvm_report_warning("SQRSNDREQ", "Failed to rerandomize sequence" ~
 				 " item in send_request");
 	    }
 	  }
@@ -150,7 +150,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
 	m_last_req_push_front(param_t);
       }
       else {
-	uvm_report_fatal(get_name(), format("send_request failed to cast"
+	uvm_report_fatal(get_name(), format("send_request failed to cast" ~
 					    " sequence item"), UVM_NONE);
       }
       param_t.set_sequence_id(sequence_ptr.m_get_sqr_sequence_id(m_sequencer_id,
@@ -158,8 +158,8 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
       t.set_sequencer(this);
       if (_m_req_fifo.try_put(param_t) is false) {
 	uvm_report_fatal(get_full_name(),
-			 format("Concurrent calls to send_request() not"
-				" supported. Check your driver for concurrent"
+			 format("Concurrent calls to send_request() not" ~
+				" supported. Check your driver for concurrent" ~
 				" calls to get_next_item()"), UVM_NONE);
       }
       _m_num_reqs_sent++;
@@ -224,7 +224,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
     synchronized(this) {
       if(max > 1024) {
 	uvm_report_warning("HSTOB",
-			   format("Invalid last size; 1024 is the maximum"
+			   format("Invalid last size; 1024 is the maximum" ~
 				  " and will be used"));
 	max = 1024;
       }
@@ -265,7 +265,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
     synchronized(this) {
       if(n > _m_num_last_reqs) {
 	uvm_report_warning("HSTOB",
-			   format("Invalid last access (%0d), the max"
+			   format("Invalid last access (%0d), the max" ~
 				  " history is %0d", n, _m_num_last_reqs));
 	return null;
       }
@@ -330,7 +330,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
     synchronized(this) {
       if(max > 1024) {
 	uvm_report_warning("HSTOB",
-			   format("Invalid last size; 1024 is the maximum"
+			   format("Invalid last size; 1024 is the maximum" ~
 				  " and will be used"));
 	max = 1024;
       }
@@ -371,7 +371,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
     synchronized(this) {
       if(n > _m_num_last_rsps) {
 	uvm_report_warning("HSTOB",
-			   format("Invalid last access (%0d), the max"
+			   format("Invalid last access (%0d), the max" ~
 				  " history is %0d", n, _m_num_last_rsps));
 	return null;
       }
@@ -442,8 +442,8 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
       }
       else {
 	uvm_report_info("Sequencer",
-			format("Dropping response for sequence %0d, sequence"
-			       " not found.  Probable cause: sequence exited"
+			format("Dropping response for sequence %0d, sequence" ~
+			       " not found.  Probable cause: sequence exited" ~
 			       " or has been killed", t.get_sequence_id()));
       }
     }

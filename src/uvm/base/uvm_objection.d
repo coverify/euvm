@@ -303,7 +303,7 @@ class uvm_objection: uvm_report_object
       //desc = description == "" ? "" : {" ", description, "" };
       if(source_obj is obj) {
 	uvm_report_info("OBJTN_TRC",
-			format("Object %0s %0s %0d objection(s)%s: "
+			format("Object %0s %0s %0d objection(s)%s: " ~
 			       "count=%0d  total=%0d",
 			       (obj.get_full_name() == "") ?
 			       "uvm_top" : obj.get_full_name(),
@@ -336,8 +336,8 @@ class uvm_objection: uvm_report_object
 	  sname = sname[last_dot+1..$];
 	}
 	uvm_report_info("OBJTN_TRC",
-			format("Object %0s %0s %0d objection(s) %0s its "
-			       "total (%s from source object %s%s): "
+			format("Object %0s %0s %0d objection(s) %0s its " ~
+			       "total (%s from source object %s%s): " ~
 			       "count=%0d  total=%0d",
 			       obj.get_full_name() == "" ?
 			       "uvm_top" : obj.get_full_name(),
@@ -1633,7 +1633,7 @@ class uvm_test_done_objection: uvm_objection
   	guard.joinAny();
   	guard.abortTree();
 
-  	uvm_info_context("TEST_DONE", "'run' phase is ready "
+  	uvm_info_context("TEST_DONE", "'run' phase is ready " ~
   			 "to proceed to the 'extract' phase", UVM_LOW,m_top);
       }
 
@@ -1664,9 +1664,9 @@ class uvm_test_done_objection: uvm_objection
 
       if (m_executing_stop_processes) {
   	string desc = description == "" ? "" : "(\"" ~ description ~ "\") ";
-  	uvm_warning("ILLRAISE", "The uvm_test_done objection was "
-  		    "raised " ~ desc ~ "during processing of a stop_request,"
-  		    " i.e. stop task execution. The objection is ignored by "
+  	uvm_warning("ILLRAISE", "The uvm_test_done objection was " ~
+  		    "raised " ~ desc ~ "during processing of a stop_request," ~
+  		    " i.e. stop task execution. The objection is ignored by " ~
   		    "the stop process");
   	return;
       }

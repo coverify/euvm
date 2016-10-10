@@ -479,14 +479,14 @@ class uvm_phase: uvm_object
     if(with_phase !is null && (after_phase !is null ||
 			       before_phase !is null)) {
       uvm_fatal("PH_BAD_ADD",
-		"cannot specify both 'with' and 'before/after' "
+		"cannot specify both 'with' and 'before/after' " ~
 		"phase relationships");
     }
 
     if(before_phase is this || after_phase is m_end_node ||
        with_phase is m_end_node) {
       uvm_fatal("PH_BAD_ADD",
-		"cannot add before { node, after end node, or "
+		"cannot add before { node, after end node, or " ~
 		"with end nodes");
     }
 
@@ -729,7 +729,7 @@ class uvm_phase: uvm_object
     }
     auto get_domain_ = cast(uvm_domain) phase;
     if(get_domain_ is null) {
-      uvm_fatal("PH/INTERNAL", "get_domain: m_phase_type is DOMAIN but "
+      uvm_fatal("PH/INTERNAL", "get_domain: m_phase_type is DOMAIN but " ~
 		"$cast to uvm_domain fails");
     }
     return get_domain_;
@@ -996,18 +996,18 @@ class uvm_phase: uvm_object
 		  uvm_phase phase = null,
 		  uvm_phase with_phase = null) {
     if(!this.is_domain()) {
-      uvm_fatal("PH_BADSYNC","sync() called from a non-domain phase "
+      uvm_fatal("PH_BADSYNC","sync() called from a non-domain phase " ~
 		"schedule node");
     }
     else if(target is null) {
       uvm_fatal("PH_BADSYNC","sync() called with a null target domain");
     }
     else if(!target.is_domain()) {
-      uvm_fatal("PH_BADSYNC","sync() called with a non-domain phase "
+      uvm_fatal("PH_BADSYNC","sync() called with a non-domain phase " ~
 		"schedule node as target");
     }
     else if(phase is null && with_phase !is null) {
-      uvm_fatal("PH_BADSYNC","sync() called with null phase and non-null "
+      uvm_fatal("PH_BADSYNC","sync() called with null phase and non-null " ~
 		"with phase");
     }
     else if(phase is null) {
@@ -1059,18 +1059,18 @@ class uvm_phase: uvm_object
 		    uvm_phase phase = null,
 		    uvm_phase with_phase = null) {
     if(!this.is_domain()) {
-      uvm_fatal("PH_BADSYNC","unsync() called from a non-domain phase "
+      uvm_fatal("PH_BADSYNC","unsync() called from a non-domain phase " ~
 		"schedule node");
     }
     else if(target is null) {
       uvm_fatal("PH_BADSYNC","unsync() called with a null target domain");
     }
     else if(!target.is_domain()) {
-      uvm_fatal("PH_BADSYNC","unsync() called with a non-domain phase "
+      uvm_fatal("PH_BADSYNC","unsync() called with a non-domain phase " ~
 		"schedule node as target");
     }
     else if(phase is null && with_phase !is null) {
-      uvm_fatal("PH_BADSYNC","unsync() called with null phase and non-null "
+      uvm_fatal("PH_BADSYNC","unsync() called with null phase and non-null " ~
 		"with phase");
     }
     else if(phase is null) {
@@ -1219,8 +1219,8 @@ class uvm_phase: uvm_object
        (m_state.get >  UVM_PHASE_ENDED) )
       {
 	uvm_error("JMPPHIDL", "Attempting to jump from phase \"" ~
-		  get_name() ~  "\" which is not currently active "
-		  "(current state is " ~ m_state.get.to!string ~  "). The "
+		  get_name() ~  "\" which is not currently active " ~
+		  "(current state is " ~ m_state.get.to!string ~  "). The " ~
 		  "jump will not happen until the phase becomes active.");
       }
 
@@ -1241,10 +1241,10 @@ class uvm_phase: uvm_object
       d = m_find_successor(phase, false);
       if(d is null) {
 	uvm_fatal("PH_BADJUMP",
-		  format("phase %s is neither a predecessor or "
-			 "successor of phase %s or is non-existant, "
-			 "so we cannot jump to it. Phase control "
-			 "flow is now undefined so the simulation "
+		  format("phase %s is neither a predecessor or " ~
+			 "successor of phase %s or is non-existant, " ~
+			 "so we cannot jump to it. Phase control " ~
+			 "flow is now undefined so the simulation " ~
 			 "must terminate", phase.get_name(), get_name()));
       }
       else {
@@ -1286,7 +1286,7 @@ class uvm_phase: uvm_object
   // i.e. a global jump.
   //
   final void jump_all(uvm_phase phase) {
-    uvm_warning("NOTIMPL","uvm_phase.jump_all is not implemented and "
+    uvm_warning("NOTIMPL","uvm_phase.jump_all is not implemented and " ~
 		"has been replaced by uvm_domain.jump_all");
   }
 
@@ -1673,7 +1673,7 @@ class uvm_phase: uvm_object
     // mostly debug msgs
     foreach (sibling, unused; pred_of_succ) {
       if (m_phase_trace) {
-	string s = format("Waiting for phase '%s' (%0d) to be "
+	string s = format("Waiting for phase '%s' (%0d) to be " ~
 			  "READY_TO_END. Current state is %s",
 			  sibling.get_name(), sibling.get_inst_id(),
 			  sibling.m_state.get());
@@ -1683,7 +1683,7 @@ class uvm_phase: uvm_object
       sibling.wait_for_state(UVM_PHASE_READY_TO_END, UVM_GTE);
 
       if (m_phase_trace) {
-	string s = format("Phase '%s' (%0d) is now READY_TO_END. "
+	string s = format("Phase '%s' (%0d) is now READY_TO_END. " ~
 			  "Releasing phase",
 			  sibling.get_name(),sibling.get_inst_id());
 	UVM_PH_TRACE("PH/TRC/WAIT_PRED_OF_SUCC",s,this,UVM_HIGH);
@@ -1704,7 +1704,7 @@ class uvm_phase: uvm_object
       }
       else {
 	UVM_PH_TRACE("PH/TRC/WAIT_PRED_OF_SUCC",
-		     "*** No pred to succ other than myself, "
+		     "*** No pred to succ other than myself, " ~
 		     "so ending phase ***", this, UVM_HIGH);
       }
     }
@@ -1940,7 +1940,7 @@ class uvm_phase: uvm_object
 	    }
 	    else {
 	      if (m_phase_trace) {
-		UVM_PH_TRACE("PH/TRC/SKIP","No objections raised, "
+		UVM_PH_TRACE("PH/TRC/SKIP","No objections raised, " ~
 			     "skipping phase", this, UVM_LOW);
 	      }
 	    }
@@ -1988,7 +1988,7 @@ class uvm_phase: uvm_object
 
 	      if(m_phase_trace) {
 		UVM_PH_TRACE("PH/TRC/TO_WAIT",
-			     format("STARTING PHASE TIMEOUT WATCHDOG"
+			     format("STARTING PHASE TIMEOUT WATCHDOG" ~
 				    " (timeout == %s)", top.phase_timeout),
 			     this, UVM_HIGH);
 	      }
@@ -2002,7 +2002,7 @@ class uvm_phase: uvm_object
 	      // if ($time == `UVM_DEFAULT_TIMEOUT) begin
 	      if(getRootEntity().getSimTime() == root.phase_sim_timeout) {
 		if(m_phase_trace) {
-		  UVM_PH_TRACE("PH/TRC/TIMEOUT", "PHASE TIMEOUT WATCHDOG "
+		  UVM_PH_TRACE("PH/TRC/TIMEOUT", "PHASE TIMEOUT WATCHDOG " ~
 			       "EXPIRED", this, UVM_LOW);
 		}
 		foreach(p; get_executing_phases()) {
@@ -2010,7 +2010,7 @@ class uvm_phase: uvm_object
 		     (p.phase_done.get_objection_total() > 0)) {
 		    if(m_phase_trace)
 		      UVM_PH_TRACE("PH/TRC/TIMEOUT/OBJCTN",
-				   format("Phase '%s' has outstanding "
+				   format("Phase '%s' has outstanding " ~
 					  "objections:\n%s",
 					  p.get_full_name(),
 					  p.phase_done.convert2string()),
@@ -2019,13 +2019,13 @@ class uvm_phase: uvm_object
 		}
 
 		uvm_fatal("PH_TIMEOUT",
-			  format("Default timeout of %s hit, indicating "
+			  format("Default timeout of %s hit, indicating " ~
 				 "a probable testbench issue",
 				 root.phase_sim_timeout));
 	      }
 	      else {
 		if(m_phase_trace) {
-		  UVM_PH_TRACE("PH/TRC/TIMEOUT", "PHASE TIMEOUT WATCHDOG "
+		  UVM_PH_TRACE("PH/TRC/TIMEOUT", "PHASE TIMEOUT WATCHDOG " ~
 			       "EXPIRED", this, UVM_LOW);
 		}
 		foreach(p; get_executing_phases()) {
@@ -2033,7 +2033,7 @@ class uvm_phase: uvm_object
 		     (p.phase_done.get_objection_total() > 0)) {
 		    if(m_phase_trace)
 		      UVM_PH_TRACE("PH/TRC/TIMEOUT/OBJCTN",
-				   format("Phase '%s' has outstanding "
+				   format("Phase '%s' has outstanding " ~
 					  "objections:\n%s",
 					  p.get_full_name(),
 					  p.phase_done.convert2string()),
@@ -2042,7 +2042,7 @@ class uvm_phase: uvm_object
 		}
 
 		uvm_fatal("PH_TIMEOUT",
-			  format("Explicit timeout of %0s hit, indicating "
+			  format("Explicit timeout of %0s hit, indicating " ~
 				 "a probable testbench issue",
 				 top.phase_timeout));
 	      }
@@ -2084,7 +2084,7 @@ class uvm_phase: uvm_object
 	  state_chg.m_jump_to = m_jump_phase;
 
 	  uvm_info("PH_JUMP",
-		   format("phase %s (schedule %s, domain %s) is "
+		   format("phase %s (schedule %s, domain %s) is " ~
 			  "jumping to phase %s", get_name(),
 			  get_schedule_name(), get_domain_name(),
 			  m_jump_phase.get_name()),

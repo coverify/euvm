@@ -235,7 +235,7 @@ class uvm_queue (T=int): uvm_object
       T default_value;
       if (index >= size() || index < 0) {
 	uvm_report_warning("QUEUEGET",
-			   format("%s:get: given index out of range for queue of"
+			   format("%s:get: given index out of range for queue of" ~
 				  " size %0d. Ignoring get request",
 				  this.get_name(), size()));
 	return default_value;
@@ -265,7 +265,7 @@ class uvm_queue (T=int): uvm_object
       if (index >= size() || index < 0) {
 	import uvm.base.uvm_globals;
 	uvm_report_warning("QUEUEINS",
-			   format("%s:insert: given index out of range for queue of"
+			   format("%s:insert: given index out of range for queue of" ~
 				  " size %0d. Ignoring insert request",
 				  this.get_name(), size()));
 	return;
@@ -287,7 +287,7 @@ class uvm_queue (T=int): uvm_object
       if (index != -1 &&
 	  (index >= size() || index < -1)) {
 	uvm_report_warning("QUEUEDEL",
-			   format("%s:remove: given index out of range for queue of"
+			   format("%s:remove: given index out of range for queue of" ~
 				  " size %0d. Ignoring delete request",
 				  this.get_name(), size()));
 	return;

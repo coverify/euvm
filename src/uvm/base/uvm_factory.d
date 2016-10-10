@@ -505,13 +505,13 @@ class uvm_default_factory: uvm_factory
   final override void register(uvm_object_wrapper obj) {
     synchronized(this) {
       if(obj is null) {
-	uvm_report_fatal("NULLWR", "Attempting to register a null object"
+	uvm_report_fatal("NULLWR", "Attempting to register a null object" ~
 			 " with the factory", UVM_NONE);
       }
       if(obj.get_type_name() != "" && obj.get_type_name() != "<unknown>") {
 	if(obj.get_type_name() in _m_type_names) {
 	  uvm_report_warning("TPRGED", "Type name '" ~ obj.get_type_name() ~
-			     "' already registered with factory. No "
+			     "' already registered with factory. No " ~
 			     "string-based lookup support for multiple" ~
 			     " types with the same type name.", UVM_NONE);
 	}
@@ -618,7 +618,7 @@ class uvm_default_factory: uvm_factory
 
       // check that type is registered with the factory
       if(override_type is null) {
-	uvm_report_error("TYPNTF", "Cannot register instance override with"
+	uvm_report_error("TYPNTF", "Cannot register instance override with" ~
 			 " type name '" ~ original_type_name ~
 			 "' and instance path '" ~ full_inst_path ~
 			 "' because the type it's supposed " ~
@@ -797,7 +797,7 @@ class uvm_default_factory: uvm_factory
 	    uvm_report_info("TPREGD", "Original type '" ~ original_type_name ~
 			    "' already registered to produce '" ~
 			    type_override.ovrd_type_name ~
-			    "'.  Set 'replace' argument to replace the "
+			    "'.  Set 'replace' argument to replace the " ~
 			    "existing entry.", UVM_MEDIUM);
 	    return;
 	  }
@@ -1534,9 +1534,9 @@ class uvm_default_factory: uvm_factory
     synchronized(this) {
 
       size_t    max1,max2,max3;
-      string dash  = "---------------------------------------------------------"
+      string dash  = "---------------------------------------------------------" ~
 	"------------------------------------------";
-      string space = "                                                         "
+      string space = "                                                         " ~
 	"                                          ";
 
       string qs;
@@ -2050,7 +2050,7 @@ final class uvm_factory_override
     synchronized(this) {
       if(ovrd_type is null) {
 	uvm_report_fatal("NULLWR",
-			 "Attempting to register a null override object"
+			 "Attempting to register a null override object" ~
 			 " with the factory", UVM_NONE);
       }
       _full_inst_path = full_inst_path;

@@ -397,33 +397,33 @@ class uvm_get_peek_port(T=int):
     }
   }
 
-  public string get_type_name() {
+  override string get_type_name() {
     return "uvm_get_peek_port";
   }
 
   // task
-  public void get (out T t) {
+  override void get (out T t) {
     m_if.get(t);
   }
 
   // task
-  public void peek (out T t) {
+  override void peek (out T t) {
     m_if.peek(t);
   }
 
-  public bool try_get (out T t) {
+  override bool try_get (out T t) {
     return m_if.try_get(t);
   }
 
-  public bool can_get() {
+  override bool can_get() {
     return m_if.can_get();
   }
 
-  public bool try_peek (out T t) {
+  override bool try_peek (out T t) {
     return m_if.try_peek(t);
   }
 
-  public bool can_peek() {
+  override bool can_peek() {
     return m_if.can_peek();
   }
 

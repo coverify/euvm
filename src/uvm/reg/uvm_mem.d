@@ -2159,9 +2159,9 @@ class uvm_mem: uvm_object
 	    v = val;
 
 	  if (val != v) {
-	    uvm_error("RegModel", format("Backdoor read of register %s with"
-					 " multiple HDL copies: values are not"
-					 " the same: %0h at path '%s', and %0h"
+	    uvm_error("RegModel", format("Backdoor read of register %s with" ~
+					 " multiple HDL copies: values are not" ~
+					 " the same: %0h at path '%s', and %0h" ~
 					 " at path '%s'. Returning first value.",
 					 // get_full_name(), rw.value[mem_idx],
 					 get_full_name(), rw.get_value(mem_idx),
@@ -2464,7 +2464,7 @@ class uvm_mem: uvm_object
 	  auto offset = parent_map is null ? this_map.get_base_addr(UVM_NO_HIER) :
 	    parent_map.get_submap_offset(this_map);
 	  prefix ~= "  ";
-	  convert2string_ = format("%sMapped in '%s' -- buswidth %0d bytes, %s, "
+	  convert2string_ = format("%sMapped in '%s' -- buswidth %0d bytes, %s, " ~
 			  "offset 'h%0h, size 'h%0h, %s\n", prefix,
 			  this_map.get_full_name(), this_map.get_n_bytes(),
 			  endian_name, offset, get_size(),

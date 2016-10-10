@@ -93,7 +93,7 @@ class uvm_packer
       synchronized(this) {
 	if(value.m_uvm_status_container.check_cycle(value)) {
 	  uvm_report_warning("CYCFND",
-			     format("Cycle detected for object @%0d"
+			     format("Cycle detected for object @%0d" ~
 				    " during pack", value.get_inst_id()),
 			     UVM_NONE);
 	  return;
@@ -389,7 +389,7 @@ class uvm_packer
       byte is_non_null = 1;
       if(value.m_uvm_status_container.check_cycle(value)) {
 	uvm_report_warning("CYCFND",
-			   format("Cycle detected for object @%0d"
+			   format("Cycle detected for object @%0d" ~
 				  " during unpack", value.get_inst_id()),
 			   UVM_NONE);
 	return;

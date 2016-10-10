@@ -895,7 +895,7 @@ class uvm_sequence_base: uvm_sequence_item
       _wait_rel_default = true;
       if (_is_rel_default !is _wait_rel_default) {
 	uvm_report_fatal("RELMSM",
-			 "is_relevant() was implemented without defining"
+			 "is_relevant() was implemented without defining" ~
 			 " wait_for_relevant()", UVM_NONE);
       }
     }
@@ -1127,7 +1127,7 @@ class uvm_sequence_base: uvm_sequence_item
       auto seq = cast(uvm_sequence_base) item;
       if(seq !is null) {
 	uvm_report_fatal("SEQNOTITM",
-			 "attempting to start a sequence using start_item()"
+			 "attempting to start a sequence using start_item()" ~
 			 " from sequence '" ~ get_full_name() ~
 			 "'. Use seq.start() instead.", UVM_NONE);
 	return;
@@ -1141,7 +1141,7 @@ class uvm_sequence_base: uvm_sequence_item
 	sequencer = get_sequencer();
 
       if(sequencer is null) {
-	uvm_report_fatal("SEQ", "neither the item's sequencer nor dedicated "
+	uvm_report_fatal("SEQ", "neither the item's sequencer nor dedicated " ~
 			 "sequencer has been supplied to start item in " ~
 			 get_full_name(), UVM_NONE);
 	return;
@@ -1375,7 +1375,7 @@ class uvm_sequence_base: uvm_sequence_item
 	return;
       }
       if (_response_queue_error_report_disabled == 0) {
-	uvm_report_error(get_full_name(), "Response queue overflow, "
+	uvm_report_error(get_full_name(), "Response queue overflow, " ~
 			 "response was dropped", UVM_NONE);
       }
     }
@@ -1533,7 +1533,7 @@ class uvm_sequence_base: uvm_sequence_item
   	  factory.create_object_by_name(m_seq_type, get_full_name(), m_seq_type);
   	if(m_seq is null) {
   	  uvm_report_fatal("FCTSEQ",
-  			   format("Factory cannot produce a sequence of type"
+  			   format("Factory cannot produce a sequence of type" ~
   				  " %0s.", m_seq_type), UVM_NONE);
   	}
   	m_seq.set_use_sequence_info(true);
@@ -1558,7 +1558,7 @@ class uvm_sequence_base: uvm_sequence_item
   	factory.create_object_by_name(m_seq_type, get_full_name(), m_seq_type);
       if (m_seq is null) {
   	uvm_report_fatal("FCTSEQ",
-  			 format("Factory cannot produce a sequence of type"
+  			 format("Factory cannot produce a sequence of type" ~
   				" %0s.", m_seq_type), UVM_NONE);
       }
 
@@ -1570,7 +1570,7 @@ class uvm_sequence_base: uvm_sequence_item
 	  m_seq.randomize();
 	}
 	catch {
-	  uvm_report_warning("RNDFLD", "Randomization failed in"
+	  uvm_report_warning("RNDFLD", "Randomization failed in" ~
 			     " do_sequence_kind()");
 	}
       }
@@ -1591,7 +1591,7 @@ class uvm_sequence_base: uvm_sequence_item
 	factory.create_object_by_name(seq_name, get_full_name(), seq_name);
       if (m_seq is null) {
 	uvm_report_fatal("FCTSEQ",
-			 format("Factory cannot produce a sequence of type"
+			 format("Factory cannot produce a sequence of type" ~
 				" %0s.", seq_name), UVM_NONE);
       }
       m_seq.set_use_sequence_info(true);
@@ -1606,7 +1606,7 @@ class uvm_sequence_base: uvm_sequence_item
     // task
     void create_and_start_sequence_by_name(string seq_name) {
       uvm_warning("UVM_DEPRECATED",
-  		  format("uvm_sequence_base.create_and_start_sequence_by_name"
+  		  format("uvm_sequence_base.create_and_start_sequence_by_name" ~
   			 " deprecated."));
       uvm_sequence_base m_seq = get_sequence_by_name(seq_name);
       m_seq.start(m_sequencer, this, this.get_priority(), 0);
@@ -2057,8 +2057,8 @@ class uvm_sequence_base: uvm_sequence_item
       if(p_sequencer is null) {
 	import std.string: format;
 	uvm_fatal("DCLPSQ",
-		  format("%m %s Error casting p_sequencer, please verify"
-			 " that this sequence/sequence item is intended "
+		  format("%m %s Error casting p_sequencer, please verify" ~
+			 " that this sequence/sequence item is intended " ~
 			 "to execute on this type of sequencer",
 			 get_full_name()));
       }

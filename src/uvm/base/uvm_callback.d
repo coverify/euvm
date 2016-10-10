@@ -878,15 +878,15 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
     uvm_root top = cs.get_root();
 
     if(cb is null) {
-      uvm_report_error("CBUNREG", "Null callback object cannot be registered"
+      uvm_report_error("CBUNREG", "Null callback object cannot be registered" ~
 		       " with object(s) " ~ name, UVM_NONE);
       return;
     }
-    uvm_cb_trace_noobj(cb, format("Add (%s) callback %0s by name to object(s)"
+    uvm_cb_trace_noobj(cb, format("Add (%s) callback %0s by name to object(s)" ~
 				  " %0s ", ordering, cb.get_name(), name));
     top.find_all(name, cq, root);
     if(cq.length == 0) {
-      uvm_report_warning("CBNOMTC", "add_by_name failed to find any components"
+      uvm_report_warning("CBNOMTC", "add_by_name failed to find any components" ~
 			 " matching the name " ~ name ~ " ~ callback " ~
 			 cb.get_name() ~ " will not be registered.", UVM_NONE);
     }
