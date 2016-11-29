@@ -305,7 +305,7 @@ class uvm_root: uvm_component
       }
 
       uvm_test_top = cast(uvm_component)
-	factory.create_component_by_name(test_name, "", "uvm_test_top", null);
+	factory.create_component_by_name(test_name, "", "uvm_test_top", this);
       // Special case for VLang
       // uvm_test_top.set_name("uvm_test_top");
 
@@ -316,6 +316,8 @@ class uvm_root: uvm_component
 	uvm_report_fatal("INVTST", "Requested test from " ~ msg ~ " not found.",
 			 UVM_NONE);
       }
+      // inherit multicore config from root
+      uvm_test_top._esdl__multicoreConfig = _esdl__multicoreConfig;
     }
 
     // if(m_children.length is 0) {

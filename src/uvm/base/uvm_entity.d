@@ -165,6 +165,8 @@ class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
   void initial() {
     lockStage();
     fileCaveat();
+    // initialize parallelism for the uvm_root_instance
+    configure_parallelism();
     // init_domains can not be moved to the constructor since it
     // results in notification of some events, which can only
     // happen once the simulation starts
@@ -191,4 +193,16 @@ class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
       _seed = seed;
     }
   }
+
+  // Configure parallelism for the uvm_root instance
+  private void configure_parallelism() {
+    // at instance level, we do not have a way for the user to add
+    // attributes to uvm_root
+    auto linfo = _esdl__uda!(_esdl__Multicore, T);
+    auto pconf = this._esdl__getMulticoreConfig();
+    assert(pconf !is null);
+    auto config = linfo.makeCfg(pconf);
+    uvm_root_instance._uvm__configure_parallelism(config);
+  }
+  
 }

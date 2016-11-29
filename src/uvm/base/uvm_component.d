@@ -61,6 +61,11 @@ import uvm.base.uvm_once;
 import uvm.seq.uvm_sequence_item;
 import uvm.seq.uvm_sequence_base;
 import uvm.meta.meta;		// qualifiedTypeName
+import uvm.base.uvm_globals: uvm_is_match;
+import uvm.base.uvm_report_object;
+
+import esdl.base.core;
+import esdl.data.queue;
 
 import std.traits: isIntegral, isAbstractClass, isArray;
 
@@ -69,9 +74,8 @@ import std.conv: to;
 
 import std.algorithm;
 import std.exception: enforce;
-import esdl.data.queue;
 
-import uvm.base.uvm_globals: uvm_is_match;
+
 
 //------------------------------------------------------------------------------
 //
@@ -104,9 +108,6 @@ import uvm.base.uvm_globals: uvm_is_match;
 // appropriate. See <uvm_object::reseed> for more information.
 //
 //------------------------------------------------------------------------------
-
-import uvm.base.uvm_report_object;
-import esdl.base.core;
 
 version(UVM_NO_DEPRECATED) { }
  else {
@@ -193,7 +194,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 
   mixin ParContextMixin;
 
-  parallelize _par__info = parallelize(ParallelPolicy._UNDEFINED_, uint.max);
+  _esdl__Multicore _par__info = _esdl__Multicore(MulticorePolicy._UNDEFINED_, uint.max);
 
   ParContext _esdl__parInheritFrom() {
     auto c = get_parent();
@@ -206,6 +207,10 @@ abstract class uvm_component: uvm_report_object, ParContext
 
   uint _esdl__parComponentId() {
     return get_id();
+  }
+
+  string _esdl__getName() {
+    return get_full_name();
   }
 
   // Function- new
@@ -3329,6 +3334,21 @@ abstract class uvm_component: uvm_report_object, ParContext
     }
   }
 
+  void _uvm__configure_parallelism(MulticoreConfig config) { // to be called only by a uvm_root
+    import std.stdio;
+    writeln("Calling _uvm__configure_parallelism on: ", get_full_name());
+    assert(cast(uvm_root) this);
+    _set_id();
+    assert(config !is null);
+    if(config._threadIndex == uint.max) {
+      config._threadIndex =
+	_esdl__parComponentId() % config._threadPool.length;
+    }
+    assert(_esdl__multicoreConfig is null);
+    _esdl__multicoreConfig = config;
+    _uvm__parallelize_done = true;
+  }
+
   @uvm_immutable_sync
   protected uvm_event_pool _event_pool;
 
@@ -3741,7 +3761,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 						int what,
 						string name,
 						int flags,
-						parallelize pflags,
+						_esdl__Multicore pflags,
 						P parent)
     if (isArray!E && !is(E == string)) {
       switch(what) {
@@ -3773,15 +3793,15 @@ abstract class uvm_component: uvm_report_object, ParContext
 					     int what,
 					     string name,
 					     int flags,
-					     parallelize pflags,
+					     _esdl__Multicore pflags,
 					     uvm_component parent)
     if (is(E: uvm_component)) {
       switch(what) {
       case uvm_field_xtra_enum.UVM_PARALLELIZE:
 	static if (is(E: uvm_component)) {
 	  if (e !is null) {
-	    uvm__config_parallelism(e, pflags);
 	    e._set_id();
+	    uvm__config_parallelism(e, pflags);
 	  }
 	}
 	break;
@@ -3807,7 +3827,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 						int what,
 						string name,
 						int flags,
-						parallelize pflags,
+						_esdl__Multicore pflags,
 						P parent)
     if (is(E: uvm_port_base!IF, IF)) {
       switch(what) {
@@ -3832,7 +3852,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 	static if ((is(EE: uvm_component) ||
 		    is(EE: uvm_port_base!IF, IF)) &&
 		   FLAGS != 0) {
-	  parallelize pflags;
+	  _esdl__Multicore pflags;
 	  if (what == UVM_BUILD) {
 	    bool is_active = true; // if not uvm_agent, everything is active
 	    static if (is(T: uvm_agent)) {
@@ -3847,7 +3867,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 	    }
 	  }
 	  else if (what == UVM_PARALLELIZE) {
-	    pflags = _esdl__get_parallelism!(I, T)(t);
+	    pflags = _esdl__uda!(_esdl__Multicore, T, I);
 	    _m_uvm_component_automation(t.tupleof[I], what,
 					t.tupleof[I].stringof[2..$],
 					FLAGS, pflags, null);
@@ -4115,79 +4135,57 @@ template UVM__IS_MEMBER_COMPONENT(L)
 //   }
 // }
 
-void uvm__config_parallelism(T)(T t, ref parallelize linfo)
+void uvm__config_parallelism(T)(T t, ref _esdl__Multicore linfo)
   if(is(T : uvm_component) && is(T == class)) {
+    assert(t !is null);
     if (! t._uvm__parallelize_done) {
+      // if not defined for instance try getting information for class
+      // attributes
       if(linfo.isUndefined) {
-	linfo = _esdl__get_parallelism(t);
+	linfo = _esdl__uda!(_esdl__Multicore, T);
       }
 
-      ParConfig pconf;
-      parallelize pinfo;
-      assert(t !is null);
-      if(t.get_parent !is null) {
-	pconf = t.get_parent.getParConfig;
-	pinfo = t.get_parent._par__info;
-      }
-
-      if(t.get_parent is null ||
-	 pinfo._parallel == ParallelPolicy._UNDEFINED_) {
-	// the parent had no parallel info
-	// get it from RootEntity
-	pinfo = Process.self().getParentEntity()._esdl__getParInfo();
-	pconf = Process.self().getParentEntity().getParConfig();
-      }
-
-      parallelize par__info;
-      ParConfig   par__conf;
-
-      if(linfo._parallel == ParallelPolicy._UNDEFINED_) {
-	// no parallelize attribute. take hier information
-	if(pinfo._parallel == ParallelPolicy.SINGLE) {
-	  par__info._parallel = ParallelPolicy.INHERIT;
-	}
-	else {
-	  par__info = pinfo;
-	}
+      auto parent = t.get_parent();
+      MulticoreConfig pconf;
+      
+      if (parent is null || parent is t) { // this is uvm_root
+	pconf = Process.self().getParentEntity()._esdl__getMulticoreConfig();
+	assert(pconf !is null);
       }
       else {
-	par__info = linfo;
+	pconf = t.get_parent._esdl__getMulticoreConfig;
+	assert(pconf !is null);
       }
-
-      if(par__info._parallel == ParallelPolicy.INHERIT) {
-	par__conf = pconf;
+	
+      assert(t._esdl__getMulticoreConfig is null);
+      
+      auto config = linfo.makeCfg(pconf);
+      
+      if(config._threadIndex == uint.max) {
+	config._threadIndex =
+	  t._esdl__parComponentId() % config._threadPool.length;
       }
-      else {
-	// UDP @parallelize without argument
-	auto nthreads = t.get_root_entity.getNumPoolThreads();
-	if(par__info._poolIndex != uint.max) {
-	  assert(par__info._poolIndex < nthreads);
-	  par__conf = new ParConfig(par__info._poolIndex);
-	}
-	else {
-	  par__conf = new ParConfig(t._esdl__parComponentId() % nthreads);
-	}
-      }
-      t._esdl__parConfig = par__conf;
-      t._par__info = par__info;
+      // import std.stdio;
+      // writeln("setting multicore  for ", t.get_full_name());
+      t._esdl__multicoreConfig = config;
     }
     t._uvm__parallelize_done = true;
   }
 
 
 
-private template findUvmAttr(size_t I, alias S, A...) {
-  static if(I < A.length) {
-    static if(is(typeof(A[I]) == typeof(S)) && A[I] == S) {
-      enum bool findUvmAttr = true;
-    }
-    else {
-      enum bool findUvmAttr = findUvmAttr!(I+1, S, A);
-    }
-  }
-  else {
-    enum bool findUvmAttr = false;
-  }
-}
+// private template findUvmAttr(size_t I, alias S, A...) {
+//   static if(I < A.length) {
+//     static if(is(typeof(A[I]) == typeof(S)) && A[I] == S) {
+//       enum bool findUvmAttr = true;
+//     }
+//     else {
+//       enum bool findUvmAttr = findUvmAttr!(I+1, S, A);
+//     }
+//   }
+//   else {
+//     enum bool findUvmAttr = false;
+//   }
+// }
 
-alias UVM_PARALLEL = parallelize;
+alias UVM_PARALLEL = _esdl__Multicore;
