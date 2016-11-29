@@ -33,10 +33,10 @@ import uvm.vpi.uvm_vpi_intf;
 import esdl.intf.vpi;
 import esdl.base.core: SimTerminatedException, AsyncLockDisabledException;
 
-class uvm_vpi_monitor(RSP, string VPI_TASK): uvm_monitor
+class uvm_vpi_monitor(RSP, string VPI_PREFIX): uvm_monitor
 {
   alias MONITOR = typeof(this);
-  uvm_tlm_gen_rsp_channel!(RSP) rsp_fifo;
+  uvm_tlm_gen_rsp_vpi_channel!(RSP) rsp_fifo;
 
   uvm_put_port!(RSP) put_rsp_port;
   uvm_get_port!(RSP) get_rsp_port;
@@ -46,11 +46,15 @@ class uvm_vpi_monitor(RSP, string VPI_TASK): uvm_monitor
   
   enum string type_name = "uvm_vpi_monitor!(RSP)";
 
-  string vpi_task_name;		// can be configured vio uvm_config_db
+  string vpi_task_prefix;		// can be configured vio uvm_config_db
+
+  string vpi_monitor_task() {
+    return "$" ~ vpi_task_prefix ~ "_put_rsp";
+  }
 
   override void build_phase(uvm_phase phase) {
     super.build_phase(phase);
-    rsp_fifo = new uvm_tlm_gen_rsp_channel!(RSP)("rsp_fifo", this);
+    rsp_fifo = new uvm_tlm_gen_rsp_vpi_channel!(RSP)("rsp_fifo", this);
     put_rsp_port = new uvm_put_port!RSP("put_rsp_port", this);
     get_rsp_port = new uvm_get_port!RSP("get_rsp_port", this);
     gen_rsp_port = new uvm_get_port!RSP("gen_rsp_port", this);
@@ -84,7 +88,7 @@ class uvm_vpi_monitor(RSP, string VPI_TASK): uvm_monitor
       assert(systf_handle !is null);
       vpiHandle arg_iterator = vpi_iterate(vpiArgument, systf_handle);
       assert(arg_iterator !is null);
-      rsp.do_vpi_get(uvm_vpi_iter(arg_iterator, mon.vpi_task_name));
+      rsp.do_vpi_get(uvm_vpi_iter(arg_iterator, mon.vpi_monitor_task));
       mon.put_rsp_port.put(rsp);
       vpiReturnVal(VpiStatus.SUCCESS);
       return 0;
@@ -115,9 +119,10 @@ class uvm_vpi_monitor(RSP, string VPI_TASK): uvm_monitor
     import std.string: toStringz;
     super.setup_phase(phase);
     s_vpi_systf_data tf_data;
-    uvm_info("VPIREG", "Registering vpi system task: " ~ vpi_task_name, UVM_NONE);
+    uvm_info("VPIREG", "Registering vpi system task: " ~
+	     vpi_monitor_task, UVM_NONE);
     tf_data.type = vpiSysFunc;
-    tf_data.tfname = cast(char*) vpi_task_name.toStringz;
+    tf_data.tfname = cast(char*) vpi_monitor_task.toStringz;
     tf_data.calltf = &vpi_task_calltf;
     // tf_data.compiletf = &pull_avmm_compiletf;
     tf_data.user_data = cast(char*) this;
@@ -131,12 +136,12 @@ class uvm_vpi_monitor(RSP, string VPI_TASK): uvm_monitor
 
   this(string name, uvm_component parent) {
     super(name, parent);
-    if (vpi_task_name == "") {
-      if (VPI_TASK == "") {
-	vpi_task_name = "$put_" ~ RSP.stringof;
+    if (vpi_task_prefix == "") {
+      if (VPI_PREFIX == "") {
+	vpi_task_prefix = RSP.stringof;
       }
       else {
-	vpi_task_name = VPI_TASK;
+	vpi_task_prefix = VPI_PREFIX;
       }
     }
   }

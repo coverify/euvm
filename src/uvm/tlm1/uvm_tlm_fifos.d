@@ -267,6 +267,28 @@ class uvm_tlm_fifo_egress(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
   }
 }
 
+class uvm_tlm_fifo_vpi_ingress(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
+{
+  mixin uvm_component_essentials;
+  public this(string name=null, uvm_component parent = null, int size = 1) {
+    synchronized(this) {
+      super(name, parent, size);
+      _m = new MailVpiInbox!T(parent, size);
+    }
+  }
+}
+
+class uvm_tlm_fifo_vpi_egress(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
+{
+  mixin uvm_component_essentials;
+  public this(string name=null, uvm_component parent = null, int size = 1) {
+    synchronized(this) {
+      super(name, parent, size);
+      _m = new MailVpiOutbox!T(parent, size);
+    }
+  }
+}
+
 //------------------------------------------------------------------------------
 //
 // Class: uvm_tlm_analysis_fifo

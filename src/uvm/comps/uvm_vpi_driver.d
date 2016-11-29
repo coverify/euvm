@@ -36,7 +36,7 @@ import esdl.base.core: SimTerminatedException, AsyncLockDisabledException;
 class uvm_vpi_driver(REQ, string VPI_PREFIX): uvm_driver!REQ
 {
   alias DRIVER = typeof(this);
-  uvm_tlm_fifo_egress!(REQ) req_fifo;
+  uvm_tlm_fifo_vpi_egress!(REQ) req_fifo;
 
   protected uvm_put_port!(REQ) drive_vpi_port;
   uvm_get_peek_port!(REQ) get_req_port;
@@ -59,8 +59,8 @@ class uvm_vpi_driver(REQ, string VPI_PREFIX): uvm_driver!REQ
 
   override void build_phase(uvm_phase phase) {
     super.build_phase(phase);
-    req_fifo = new uvm_tlm_fifo_egress!(REQ)("req_fifo", this,
-					     vpi_fifo_depth);
+    req_fifo = new uvm_tlm_fifo_vpi_egress!(REQ)("req_fifo", this,
+						 vpi_fifo_depth);
     drive_vpi_port = new uvm_put_port!REQ("drive_vpi_port", this);
     get_req_port = new uvm_get_peek_port!REQ("get_req_port", this);
     

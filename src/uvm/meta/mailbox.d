@@ -244,6 +244,71 @@ class Mailbox(T): MailboxBase!T
 class MailOutbox(T): MailboxBase!T
 {
   private uvm_async_event _readEvent;
+  private uvm_async_lock  _writeEvent;
+
+  this(uvm_component parent, size_t bound = 0) {
+    synchronized(this) {
+      super(bound);
+      _readEvent = new uvm_async_event("readEvent(async)", parent);
+      _writeEvent = new uvm_async_lock(parent);
+    }
+  }
+  
+  override void readWait() {_readEvent.wait();}
+  override void writeWait() {_writeEvent.wait();}
+  override void readNotify() {_readEvent.schedule();}
+  override void writeNotify() {_writeEvent.notify();}
+
+  override void peek(ref T val) {
+    while(true) {
+      if(numFilled is 0) {
+	writeWait();
+      }
+      synchronized(this) {
+	if(numFilled !is 0) {
+	  peekBuffer(val);
+	  break;
+	}
+      }
+    }
+  }
+
+  override void get(ref T val) {
+    while(true) {
+      if(numFilled is 0) {
+	writeWait();
+      }
+      synchronized(this) {
+	if(numFilled !is 0) {
+	  readBuffer(val);
+	  readNotify();
+	  break;
+	}
+      }
+    }
+  }
+
+  override bool try_get(ref T val) {
+    synchronized(this) {
+      if(numFilled is 0) return false;
+      readBuffer(val);
+      readNotify();
+      return true;
+    }
+  }
+
+  override bool try_peek(ref T val) {
+    synchronized(this) {
+      if(numFilled is 0) return false;
+      peekBuffer(val);
+      return true;
+    }
+  }
+}
+
+class MailVpiOutbox(T): MailboxBase!T
+{
+  private uvm_async_event _readEvent;
   private uvm_async_event _asyncEvent;
   private uvm_async_lock  _writeEvent;
 
@@ -260,7 +325,7 @@ class MailOutbox(T): MailboxBase!T
   override void writeWait() {_writeEvent.wait();}
   override void readNotify() {
     switch (_readEvent.getRoot().getMode()) {
-    case SchedMode.MASTER: _readEvent.notify(); break;
+    case SchedMode.MASTER: _readEvent.schedule(); break;
     case SchedMode.VPI: {
       _readEvent.schedule(false);
       break;      
@@ -358,6 +423,67 @@ class MailOutbox(T): MailboxBase!T
 class MailInbox(T): MailboxBase!T
 {
   private uvm_async_lock  _readEvent;
+  private uvm_async_event _writeEvent;
+
+  this(uvm_component parent, size_t bound = 0) {
+    synchronized(this) {
+      super(bound);
+      _writeEvent = new uvm_async_event("writeEvent(async)", parent);
+      _readEvent = new uvm_async_lock(parent);
+    }
+  }
+  
+  override void readWait() {_readEvent.wait();}
+  override void writeWait() {_writeEvent.wait();}
+  override void readNotify() {_readEvent.notify();}
+  override void writeNotify() {_writeEvent.schedule();}
+
+  override void put(T val) {
+    while(true) {
+      if(bound is 0) {
+	synchronized(this) {
+	  if(numFree is 0) {
+	    GrowBuffer();
+	  }
+	}
+      }
+      else {
+	if(numFree is 0) {
+	  readWait();
+	}
+      }
+      synchronized(this) {
+	if(numFree !is 0) {
+	  writeBuffer(val);
+	  writeNotify();
+	  break;
+	}
+      }
+    }
+  }
+
+  override bool try_put(T val) {
+    synchronized(this) {
+      if(bound is 0) {
+	if(numFree is 0) {
+	  GrowBuffer();
+	}
+      }
+      else {
+	if(numFree is 0) {
+	  return false;
+	}
+      }
+      writeBuffer(val);
+      writeNotify();
+      return true;
+    }
+  }
+}
+
+class MailVpiInbox(T): MailboxBase!T
+{
+  private uvm_async_lock  _readEvent;
   private uvm_async_event _asyncEvent;
   private uvm_async_event _writeEvent;
 
@@ -370,9 +496,7 @@ class MailInbox(T): MailboxBase!T
     }
   }
   
-  override void readWait() {import std.stdio;
-    _readEvent.wait();
-  }
+  override void readWait() {_readEvent.wait();}
   override void writeWait() {_writeEvent.wait();}
   override void readNotify() {_readEvent.notify();}
   void asyncNotify() {
@@ -397,7 +521,7 @@ class MailInbox(T): MailboxBase!T
   }
   override void writeNotify() {
     switch (_writeEvent.getRoot().getMode()) {
-    case SchedMode.MASTER: _writeEvent.notify(); break;
+    case SchedMode.MASTER: _writeEvent.schedule(); break;
     case SchedMode.VPI: {
       _writeEvent.schedule(false);
       break;
@@ -407,7 +531,7 @@ class MailInbox(T): MailboxBase!T
   }
   override void writeNotify(Time t) {
     switch (_writeEvent.getRoot().getMode()) {
-    case SchedMode.MASTER: _writeEvent.notify(); break;
+    case SchedMode.MASTER: _writeEvent.schedule(); break;
     case SchedMode.VPI: {
       _writeEvent.schedule(t, false);
       break;
@@ -461,5 +585,4 @@ class MailInbox(T): MailboxBase!T
       return true;
     }
   }
-
 }
