@@ -1,6 +1,8 @@
 MODEL = 64
 DEBUG = dummy
-DFLAGS = -m$(MODEL) -fPIC -g -w -O -debug=$(DEBUG) # -debug=SEED # -version=LOGPROCS # -version=UVM_NO_DEPRECATED
+VERSION = dummy
+DFLAGS = -m$(MODEL) -shared -fPIC -w -O -release -boundscheck=off \
+	-version=$(VERSION) -debug=$(DEBUG) # -g
 ESDLDIR = ../../vlang
 UVMDIR = ../../vlang-uvm
 
