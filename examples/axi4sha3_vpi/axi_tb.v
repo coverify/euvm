@@ -113,7 +113,7 @@ module axi_tb #	(parameter integer DW	= 32,
 	      end
 	      rdata = s00_axi_rdata;
 	      if ($axiread_item_done(0) != 0) $finish;
-	      if ($put_axiread_rsp(raddr, rstrb, rdata, rresp) != 0) begin
+	      if ($axiread_put_rsp(raddr, rstrb, rdata, rresp) != 0) begin
 		 $finish;
 	      end
 	   end // block: valid_transaction
@@ -168,7 +168,7 @@ module axi_tb #	(parameter integer DW	= 32,
 		    end
 		    wresp = s00_axi_bresp;
 		    if ($axiwrite_item_done(0) != 0) $finish;
-		    if ($put_axiwrite_rsp(waddr, wstrb, wdata, wresp) != 0) begin
+		    if ($axiwrite_put_rsp(waddr, wstrb, wdata, wresp) != 0) begin
 		       $finish;
 		    end
 		 end
