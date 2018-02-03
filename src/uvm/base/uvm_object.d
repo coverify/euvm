@@ -190,18 +190,21 @@ abstract class uvm_object: uvm_void
   }
 
   void _esdl__setupSolver() {
-    if (! _esdl__isRandSeeded()) {
-      auto proc = Procedure.self;
-      if(proc !is null) {
-      	auto seed = uniform!int(proc.getRandGen());
-	debug(SEED) {
-      	  import std.stdio;
-      	  auto thread = PoolThread.self;
-	  writeln("Procedure ", thread ? thread.getPoolIndex : -1, " : ",
+    version(UVM_NO_RAND) {}
+    else {
+      if (! _esdl__isRandSeeded()) {
+	auto proc = Procedure.self;
+	if(proc !is null) {
+	  auto seed = uniform!int(proc.getRandGen());
+	  debug(SEED) {
+	    import std.stdio;
+	    auto thread = PoolThread.self;
+	    writeln("Procedure ", thread ? thread.getPoolIndex : -1, " : ",
       		    proc.getFullName);
-      	  writeln("Setting ", get_full_name, " seed: ", seed);
+	    writeln("Setting ", get_full_name, " seed: ", seed);
+	  }
+	  this.reseed(seed);
 	}
-	this.reseed(seed);
       }
     }
   }
@@ -494,7 +497,7 @@ abstract class uvm_object: uvm_void
 	}
 	break;
       case uvm_field_auto_enum.UVM_COMPARE:
-	if (! flags & UVM_NOCOMPARE) {
+	if (!(flags & UVM_NOCOMPARE)) {
 	  if (flags & UVM_REFERENCE  && m_uvm_status_container.comparer.show_max <= 1 && e !is rhs) {
 	    if (m_uvm_status_container.comparer.show_max == 1) {
 	      m_uvm_status_container.scope_stack.set_arg(name);
@@ -630,20 +633,81 @@ abstract class uvm_object: uvm_void
 			       UVM_NONE);
 	  }
 	  else {
-	    uvm_report_warning("MSMTCH",
-			       format("%s: static arrays cannot be resized" ~
-				      " via configuraton.",
-				      m_uvm_status_container.get_full_scope_arg()),
-			       UVM_NONE);
+	    static if (isStaticArray!E) {
+	      uvm_report_warning("MSMTCH",
+				 format("%s: static arrays cannot be resized" ~
+					" via configuraton.",
+					m_uvm_status_container.get_full_scope_arg()),
+				 UVM_NONE);
+	    }
+	    else static if (isDynamicArray!E) {
+	      e.length = cast(ulong) m_uvm_status_container.bitstream();
+	      m_uvm_status_container.status = true;
+	    }
 	  }
 	}
-	m_uvm_status_container.scope_stack.unset_arg(name);
-	// else if(!((FLAG)&UVM_READONLY))
-	for (size_t i=0; i!=e.length; ++i) {
-	  _m_uvm_object_automation(e[i], EE.init, what, str,
-				  name ~ format("[%d]", i),
-				  flags);
+	else if (!(flags & UVM_READONLY)) {
+	  bool index_is_wildcard;
+	  int index = uvm_get_array_index_int(str, index_is_wildcard);
+	  if (uvm_is_array(str) && (index != -1)) {
+	    if (index_is_wildcard) {
+	      for (int i=0; i!=e.length; ++i) {
+		if (uvm_is_match(str,
+				 m_uvm_status_container.scope_stack.get_arg() ~
+				 format("[%d]", i))) {
+		  if (m_uvm_status_container.print_matches) {
+		    uvm_report_info("STRMTC", "set_int()" ~
+				    ": Matched string " ~ str ~ " to field " ~
+				    m_uvm_status_container.get_full_scope_arg() ~
+				    format("[%d]", i), UVM_LOW);
+		  }
+		  EE value = cast(EE) m_uvm_status_container.bitstream;
+		  uvm_bitstream_t check = value;
+		  if (m_uvm_status_container.bitstream == check) {
+		    e[i] = value;
+		    m_uvm_status_container.status = true;
+		  }
+		  else {
+		    uvm_report_warning("OVRFLW", "set_int()" ~
+				       ": Matched string " ~ str ~
+				       " to field " ~
+				       m_uvm_status_container.get_full_scope_arg() ~
+				       ", but variable is not set because of " ~
+				       "overflow error");
+		  }
+		}
+	      }
+	    }
+	    else if (uvm_is_match(str, m_uvm_status_container.scope_stack.get_arg()
+				  ~ format("[%d]", index))) {
+	      if (index+1 > e.length) {
+		e.length = index + 1;
+	      }
+	      if (m_uvm_status_container.print_matches) {
+		uvm_report_info("STRMTC", "set_int()" ~ ": Matched string " ~
+				str ~ " to field " ~
+				m_uvm_status_container.get_full_scope_arg(),
+				UVM_LOW);
+	      }
+	      EE value = cast(EE) m_uvm_status_container.bitstream;
+	      uvm_bitstream_t check = value;
+	      if (m_uvm_status_container.bitstream == check) {
+		e[index] = value;
+		m_uvm_status_container.status = true;
+	      }
+	      else {
+		uvm_report_warning("OVRFLW", "set_int()" ~
+				   ": Matched string " ~ str ~
+				   " to field " ~
+				   m_uvm_status_container.get_full_scope_arg() ~
+				   ", but variable is not set because of " ~
+				   "overflow error");
+	      }
+	    }
+	  }
 	}
+	// else if(!((FLAG)&UVM_READONLY))
+	// m_uvm_status_container.scope_stack.unset_arg(name);
 	break;
       case uvm_field_xtra_enum.UVM_CHECK_FIELDS:
 	// uvm_warning("UVMUTLS",
@@ -1505,7 +1569,7 @@ abstract class uvm_object: uvm_void
 
   // void uvm_field_auto_compare(uvm_object rhs) { }
 
-  final bool compare (uvm_object rhs, uvm_comparer comparer = null) {
+  final bool compare(uvm_object rhs, uvm_comparer comparer = null) {
     if(comparer !is null) {
       m_uvm_status_container.comparer = comparer;
     }
@@ -1566,8 +1630,6 @@ abstract class uvm_object: uvm_void
 
 	m_uvm_object_automation(rhs, UVM_COMPARE, "");
 
-	// overridden by mixin(uvm_object_utils);
-	// uvm_field_auto_compare(rhs);
 	dc = do_compare(rhs, comparer);
       }
 
@@ -2259,18 +2321,30 @@ abstract class uvm_object: uvm_void
   // The print_matches bit causes an informative message to be printed
   // when a field is set using one of the set methods.
 
-  @uvm_private_sync
-  private string _m_leaf_name;
+  version(UVM_NO_RAND) {
+    @uvm_private_sync
+      private string _m_leaf_name;
 
-  @uvm_private_sync
-  private int _m_inst_id;
+    @uvm_private_sync
+      private int _m_inst_id;
+  }
+  else {
+    @rand!false @uvm_private_sync
+      private string _m_leaf_name;
+
+    @rand!false @uvm_private_sync
+      private int _m_inst_id;
+  }
 
   // static protected int m_inst_count;
   // static /*protected*/ uvm_status_container m_uvm_status_container = new;
 
   void m_uvm_object_automation(uvm_object tmp_data__,
 			       int        what__,
-			       string     str__) { }
+			       string     str__) {
+    // import std.stdio;
+    // writeln("Not yet implemented: ", what__);
+  }
 
   protected uvm_report_object m_get_report_object() {
     return null;
