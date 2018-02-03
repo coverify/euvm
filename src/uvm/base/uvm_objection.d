@@ -47,6 +47,8 @@ import esdl.data.sync;
 import esdl.data.time;
 
 import std.string: format;
+import std.algorithm.searching;
+import std.string : lastIndexOf;
 
 version(UVM_NO_DEPRECATED) { }
  else {
@@ -1344,8 +1346,7 @@ class uvm_objection: uvm_report_object
 	if(count > 0 && (name == curr_obj_name ||
 			 (name.length > curr_obj_name.length &&
 			  name[0..curr_obj_name.length+1] == (curr_obj_name ~ ".")))) {
-	  import std.string;
-	  size_t depth = countchars(name, ".");
+	  size_t depth = std.algorithm.searching.count(name, '.');
 
 	  string leafName = curr_obj_name[lastIndexOf(curr_obj_name, '.')+1..$];
 
