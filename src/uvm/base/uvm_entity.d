@@ -38,7 +38,7 @@ import std.random;
 // singleton, we can have multiple instances of uvm_root, but each
 // ESDL RootEntity could have only one instance of uvm_root.
 
-class uvm_testbench: RootEntity
+class uvm_harness: RootEntity
 {
   void start() {
     super.simulate();
@@ -52,6 +52,19 @@ class uvm_testbench: RootEntity
       }
     }
   }
+}
+
+class uvm_tb_root: uvm_root
+{
+  override void initial() {
+    super.initial();
+    run_test();
+  }
+}
+
+class uvm_testbench(ROOT) if (is (ROOT: uvm_root)) : uvm_harness
+{
+  uvm_entity!(ROOT) root_entity;
 }
 
 abstract class uvm_entity_base: Entity

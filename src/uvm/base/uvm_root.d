@@ -214,10 +214,10 @@ class uvm_root: uvm_component
   @uvm_immutable_sync
   uvm_cmdline_processor _clp;
 
-
   // this function can be overridden by the user
   void initial() {
-    run_test();
+    // run_test would be called in an override of initial function
+    // run_test();
   }
 
   override string get_type_name() {
@@ -320,16 +320,16 @@ class uvm_root: uvm_component
       uvm_test_top._esdl__multicoreConfig = _esdl__multicoreConfig;
     }
 
-    // if(m_children.length is 0) {
-    //   uvm_report_fatal("NOCOMP",
-    //		       "No components instantiated. You must either "
-    //		       "instantiate at least one component before "
-    //		       "calling run_test or use run_test to do so. "
-    //		       "To run a test using run_test, use +UVM_TESTNAME "
-    //		       "or supply the test name in the argument to "
-    //		       "run_test(). Exiting simulation.", UVM_NONE);
-    //   return;
-    // }
+    if(m_children.length is 0) {
+      uvm_report_fatal("NOCOMP",
+    		       "No components instantiated. You must either " ~
+    		       "instantiate at least one component before " ~
+    		       "calling run_test or use run_test to do so. " ~
+    		       "To run a test using run_test, use +UVM_TESTNAME " ~
+    		       "or supply the test name in the argument to " ~
+    		       "run_test(). Exiting simulation.", UVM_NONE);
+      return;
+    }
 
     if(test_name == "") {
       uvm_report_info("RNTST", "Running test ...", UVM_LOW);
@@ -1317,16 +1317,16 @@ class uvm_root: uvm_component
 
   override void uvm__auto_build() {
     super.uvm__auto_build();
-    if(m_children.length is 0) {
-      uvm_fatal("NOCOMP",
-		"No components instantiated. You must either " ~
-		"instantiate at least one component before " ~
-		"calling run_test or use run_test to do so. " ~
-		"To run a test using run_test, use +UVM_TESTNAME " ~
-		"or supply the test name in the argument to " ~
-		"run_test(). Exiting simulation.");
-      return;
-    }
+    // if(m_children.length is 0) {
+    //   uvm_fatal("NOCOMP",
+    // 		"No components instantiated. You must either " ~
+    // 		"instantiate at least one component before " ~
+    // 		"calling run_test or use run_test to do so. " ~
+    // 		"To run a test using run_test, use +UVM_TESTNAME " ~
+    // 		"or supply the test name in the argument to " ~
+    // 		"run_test(). Exiting simulation.");
+    //   return;
+    // }
   }
 
   override void set_name(string name) {
