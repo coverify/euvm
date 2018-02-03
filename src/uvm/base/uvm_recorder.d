@@ -322,7 +322,7 @@ abstract class uvm_recorder: uvm_object
 
       _m_is_closed = false;
       if(p !is null) {
-	s = p.getRandState();
+	p.getRandState(s);
       }
       _m_stream_dap = new uvm_set_before_get_dap!uvm_tr_stream("stream_dap");
       if(p !is null) {

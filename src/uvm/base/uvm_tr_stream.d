@@ -306,7 +306,7 @@ abstract class uvm_tr_stream: uvm_object
       Process p = Process.self();
       Random s;
       if(p !is null) {
-	s = p.getRandState();
+	p.getRandState(s);
       }
       _m_cfg_dap =  new uvm_set_before_get_dap!m_uvm_tr_stream_cfg("cfg_dap");
 
@@ -437,7 +437,7 @@ abstract class uvm_tr_stream: uvm_object
 	Random s;
 
 	if (p !is null) {
-	  s = p.getRandState();
+	  p.getRandState(s);
 	}
 
 	result = do_open_recorder(name, m_time, type_name);

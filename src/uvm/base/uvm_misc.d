@@ -92,6 +92,14 @@ final class uvm_scope_stack
   // enough since we do not need push_front for this collection
   private string[] _m_stack;
 
+  // print
+  // -----
+  
+  void print() {
+    import std.stdio;
+    writeln("Scope Stack is: ", _m_stack);
+  }
+
   // depth
   // -----
 

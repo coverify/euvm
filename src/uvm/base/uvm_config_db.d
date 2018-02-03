@@ -241,7 +241,7 @@ class uvm_config_db (T = int): uvm_resource_db!T
     Process p = Process.self();
 
     if(p !is null) {
-      rstate = p.getRandState();
+      p.getRandState(rstate);
     }
     uvm_root top = cs.get_root();
     uvm_phase curr_phase = top.m_current_phase;
@@ -363,7 +363,8 @@ class uvm_config_db (T = int): uvm_resource_db!T
 			    string field_name) {
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     Process p = Process.self();
-    auto rstate = p.getRandState();
+    Random rstate;
+    p.getRandState(rstate);
 
     if(cntxt is null) {
       cntxt = cs.get_root();

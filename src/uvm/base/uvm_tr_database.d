@@ -173,7 +173,7 @@ abstract class uvm_tr_database: uvm_object
 	Random s;
 
 	if (p !is null) {
-	  s = p.getRandState();
+	  p.getRandState(s);
 	}
 
 	open_stream_ = do_open_stream(name, hscope, type_name);

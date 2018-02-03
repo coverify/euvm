@@ -71,6 +71,7 @@ import std.traits: isIntegral, isAbstractClass, isArray;
 
 import std.string: format;
 import std.conv: to;
+import std.random: Random;
 
 import std.algorithm;
 import std.exception: enforce;
@@ -3702,8 +3703,8 @@ abstract class uvm_component: uvm_report_object, ParContext
 	  }
 	  else {
 	    Process p = Process.self;
-	    auto p_rand = p.getRandState();
-
+	    Random p_rand;
+	    p.getRandState(p_rand);
 	    fork!("uvm_component/apply_verbosity_settings")({
 		wait(setting.offset);
 		// synchronized(this) {
@@ -3713,7 +3714,6 @@ abstract class uvm_component: uvm_report_object, ParContext
 		  set_report_id_verbosity(setting.id, setting.verbosity);
 		// }
 	      });
-
 	    p.setRandState(p_rand);
 	  }
 	  // Remove after use

@@ -338,7 +338,6 @@ class uvm_report_handler: uvm_object
 
   void process_report_message(uvm_report_message report_message) {
     synchronized(this) {
-      Process p = Process.self();
       uvm_report_server srvr = uvm_report_server.get_server();
       string id = report_message.get_id();
       uvm_severity severity = report_message.get_severity();

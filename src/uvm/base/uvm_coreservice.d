@@ -176,7 +176,7 @@ class uvm_default_coreservice_t: uvm_coreservice_t
 	Process p = Process.self();
 	Random s;
 	if(p !is null) {
-	  s = p.getRandState();
+	  p.getRandState(s);
 	}
 	_tr_database = new uvm_text_tr_database("default_tr_database");
 	if(p !is null) {

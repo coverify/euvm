@@ -653,7 +653,7 @@ class uvm_report_message_element_container: uvm_object
 	Process p = Process.self();
 	Random rand_state;
 	if (p !is null) {
-	  rand_state = p.getRandState();
+	  p.getRandState(rand_state);
 	}
 	urme = new uvm_report_message_int_element!T();
 	if (p !is null) {
@@ -677,7 +677,7 @@ class uvm_report_message_element_container: uvm_object
 	Process p = Process.self();
 	Random rand_state;
 	if (p !is null) {
-	  rand_state = p.getRandState();
+	  p.getRandState(rand_state);
 	}
 	urme = new uvm_report_message_element!T();
 	if (p !is null) {
@@ -709,7 +709,7 @@ class uvm_report_message_element_container: uvm_object
 
 	Process p = Process.self();
 	if (p !is null) {
-	  rand_state = p.getRandState();
+	  p.getRandState(rand_state);
 	}
 
 	urme = new uvm_report_message_element!T();
@@ -742,7 +742,7 @@ class uvm_report_message_element_container: uvm_object
 
 	Process p = Process.self();
 	if (p !is null) {
-	  rand_state = p.getRandState();
+	  p.getRandState(rand_state);
 	}
 	urme = new uvm_report_message_element!T();
 	if (p !is null) {
@@ -784,7 +784,7 @@ class uvm_report_message_element_container: uvm_object
 
       Process p = Process.self();
       if (p !is null) {
-	rand_state = p.getRandState();
+	p.getRandState(rand_state);
       }
       urme = new uvm_report_message_object_element();
       if (p !is null) {
@@ -898,7 +898,7 @@ class uvm_report_message: uvm_object
     Process p = Process.self();
 
     if (p !is null) {
-      rand_state = p.getRandState();
+      p.getRandState(rand_state);
     }
 
     result = new uvm_report_message(name);

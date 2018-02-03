@@ -650,7 +650,7 @@ abstract class uvm_report_catcher: uvm_callback
 	Process p = Process.self(); // Keep random stability
 	Random randstate;
 	if (p !is null) {
-	  randstate = p.getRandState();
+	  p.getRandState(randstate);
 	}
 	_m_orig_report_message = cast(uvm_report_message) rm.clone();
 	assert(_m_orig_report_message !is null);

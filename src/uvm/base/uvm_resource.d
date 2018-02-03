@@ -1018,7 +1018,7 @@ class uvm_resource_pool {
       // ensure rand stability during lookup
       Process p = Process.self();
       Random s;
-      if(p !is null) s=p.getRandState();
+      if(p !is null) p.getRandState(s);
       q = new  uvm_resource_types.rsrc_q_t("uvm_resource/lookup_name/q");
       if(p !is null) p.setRandState(s);
 
