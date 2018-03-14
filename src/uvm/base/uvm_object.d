@@ -1132,7 +1132,7 @@ abstract class uvm_object: uvm_void
   // 	// do not use isIntegral -- we keep that for enums
   // 	// version(UVM_NO_RAND) { }
   // 	// else {
-  // 	//   import esdl.data.rand;
+  // 	//   import esdl.rand;
   // 	//   static if(is(U: _esdl__ConstraintBase)) {
   // 	//     // shortcircuit useful for compare etc
   // 	//     uvm_field_auto_sprint_field!(I+1)(t, printer);
@@ -1384,7 +1384,7 @@ abstract class uvm_object: uvm_void
   // 	// do not use isIntegral -- we keep that for enums
   // 	version(UVM_NO_RAND) { }
   // 	else {
-  // 	  import esdl.data.rand;
+  // 	  import esdl.rand;
   // 	  static if(is(U: _esdl__ConstraintBase)) {
   // 	    // shortcircuit useful for compare etc
   // 	    uvm_field_auto_record_field!(I+1)(t, recorder);

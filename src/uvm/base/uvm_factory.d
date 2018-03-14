@@ -50,7 +50,7 @@ final class uvm_factory_queue_class
 {
   Queue!(uvm_factory_override) _queue;
 
-  private Queue!(uvm_factory_override) get_queue() {
+  public Queue!(uvm_factory_override) get_queue() {
     synchronized(this) {
       return _queue.dup;
     }
@@ -502,7 +502,7 @@ class uvm_default_factory: uvm_factory
   // extern virtual function void register (uvm_object_wrapper obj);
 
 
-  final override void register(uvm_object_wrapper obj) {
+  override void register(uvm_object_wrapper obj) {
     synchronized(this) {
       if(obj is null) {
 	uvm_report_fatal("NULLWR", "Attempting to register a null object" ~
@@ -561,7 +561,7 @@ class uvm_default_factory: uvm_factory
   //				  uvm_object_wrapper override_type,
   //				  string full_inst_path);
 
-  final override void set_inst_override_by_type(uvm_object_wrapper original_type,
+  override void set_inst_override_by_type(uvm_object_wrapper original_type,
 						uvm_object_wrapper override_type,
 						string full_inst_path) {
     synchronized(this) {
@@ -601,7 +601,7 @@ class uvm_default_factory: uvm_factory
   //				  string override_type_name,
   //				  string full_inst_path);
 
-  final override void set_inst_override_by_name(string original_type_name,
+  override void set_inst_override_by_name(string original_type_name,
 						string override_type_name,
 						string full_inst_path) {
     synchronized(this) {
@@ -676,7 +676,7 @@ class uvm_default_factory: uvm_factory
   //				  uvm_object_wrapper override_type,
   //				  bit replace=1);
 
-  final override void set_type_override_by_type(uvm_object_wrapper original_type,
+  override void set_type_override_by_type(uvm_object_wrapper original_type,
 						uvm_object_wrapper override_type,
 						bool replace = true) {
     synchronized(this) {
@@ -756,7 +756,7 @@ class uvm_default_factory: uvm_factory
   //				  string override_type_name,
   //				  bit replace=1);
 
-  final override void set_type_override_by_name(string original_type_name,
+  override void set_type_override_by_name(string original_type_name,
 						string override_type_name,
 						bool replace = true) {
     synchronized(this) {
@@ -838,7 +838,7 @@ class uvm_default_factory: uvm_factory
   //					  string parent_inst_path="",
   //					  string name="");
 
-  final override uvm_object create_object_by_type(uvm_object_wrapper requested_type,
+  override uvm_object create_object_by_type(uvm_object_wrapper requested_type,
 						  string parent_inst_path="",
 						  string name="") {
     synchronized(this) {
@@ -872,7 +872,7 @@ class uvm_default_factory: uvm_factory
   //					  string name,
   //					  uvm_component parent);
 
-  final override uvm_component create_component_by_type(uvm_object_wrapper requested_type,
+  override uvm_component create_component_by_type(uvm_object_wrapper requested_type,
 							string parent_inst_path,
 							string name,
 							uvm_component parent) {
@@ -905,7 +905,7 @@ class uvm_default_factory: uvm_factory
   //					  string parent_inst_path="",
   //					  string name="");
 
-  final override uvm_object create_object_by_name(string requested_type_name,
+  override uvm_object create_object_by_name(string requested_type_name,
 						  string parent_inst_path="",
 						  string name="") {
     synchronized(this) {
@@ -978,7 +978,7 @@ class uvm_default_factory: uvm_factory
   //					  string name,
   //					  uvm_component parent);
 
-  final override uvm_component create_component_by_name(string requested_type_name,
+  override uvm_component create_component_by_name(string requested_type_name,
 							string parent_inst_path,
 							string name,
 							uvm_component parent) {
@@ -1050,7 +1050,7 @@ class uvm_default_factory: uvm_factory
   //			     string parent_inst_path="",
   //			     string name="");
 
-  final override void debug_create_by_type(uvm_object_wrapper requested_type,
+  override void debug_create_by_type(uvm_object_wrapper requested_type,
 					   string parent_inst_path="",
 					   string name="") {
     m_debug_create("", requested_type, parent_inst_path, name);
@@ -1065,7 +1065,7 @@ class uvm_default_factory: uvm_factory
   //			     string parent_inst_path="",
   //			     string name="");
 
-  final override void  debug_create_by_name(string requested_type_name,
+  override void  debug_create_by_name(string requested_type_name,
 					    string parent_inst_path="",
 					    string name="") {
     m_debug_create(requested_type_name, null, parent_inst_path, name);
@@ -1078,7 +1078,7 @@ class uvm_default_factory: uvm_factory
   // uvm_object_wrapper find_override_by_type (uvm_object_wrapper requested_type,
   //					    string full_inst_path);
 
-  final override uvm_object_wrapper find_override_by_type(uvm_object_wrapper requested_type,
+  override uvm_object_wrapper find_override_by_type(uvm_object_wrapper requested_type,
 							  string full_inst_path) {
     synchronized(this) {
       uvm_object_wrapper ovrrd;
@@ -1190,7 +1190,7 @@ class uvm_default_factory: uvm_factory
   // uvm_object_wrapper find_override_by_name (string requested_type_name,
   //					    string full_inst_path);
 
-  final override uvm_object_wrapper find_override_by_name(string requested_type_name,
+  override uvm_object_wrapper find_override_by_name(string requested_type_name,
 							  string full_inst_path) {
     synchronized(this) {
       uvm_object_wrapper rtype;
@@ -1297,7 +1297,7 @@ class uvm_default_factory: uvm_factory
   // extern virtual
   // function uvm_object_wrapper find_wrapper_by_name            (string type_name);
 
-  final override uvm_object_wrapper find_wrapper_by_name(string type_name) {
+  override uvm_object_wrapper find_wrapper_by_name(string type_name) {
     synchronized(this) {
       if(type_name in _m_type_names) {
 	return _m_type_names[type_name];
@@ -1317,7 +1317,7 @@ class uvm_default_factory: uvm_factory
   //
   // extern  virtual function void print (int all_types=1);
 
-  final override void print(int all_types=1) {
+  override void print(int all_types=1) {
     synchronized(this) {
       uvm_factory_queue_class[string] sorted_override_queues;
 
@@ -1619,8 +1619,28 @@ class uvm_default_factory: uvm_factory
 
   private Queue!(uvm_factory_override)  _m_type_overrides;
 
+  Queue!(uvm_factory_override) m_type_overrides() {
+    synchronized(this) {
+      return _m_type_overrides.dup();
+    }
+  }
+
   private uvm_factory_queue_class[uvm_object_wrapper] _m_inst_override_queues;
+
+  uvm_factory_queue_class[uvm_object_wrapper] m_inst_override_queues() {
+    synchronized(this) {
+      return _m_inst_override_queues.dup();
+    }
+  }
+  
   private uvm_factory_queue_class[string]             _m_inst_override_name_queues;
+
+  uvm_factory_queue_class[string] m_inst_override_name_queues() {
+    synchronized(this) {
+      return _m_inst_override_name_queues.dup();
+    }
+  }
+  
   private Queue!(uvm_factory_override)                _m_wildcard_inst_overrides;
   private Queue!(uvm_factory_override)                _m_override_info;
 
@@ -1634,7 +1654,7 @@ class uvm_default_factory: uvm_factory
 
   // check_inst_override_exists
   // --------------------------
-  final bool check_inst_override_exists(uvm_object_wrapper original_type,
+  bool check_inst_override_exists(uvm_object_wrapper original_type,
 					uvm_object_wrapper override_type,
 					string full_inst_path) {
     synchronized(this) {
@@ -2028,19 +2048,19 @@ final class uvm_factory_override
 {
   mixin(uvm_sync_string);
 
-  @uvm_private_sync
+  @uvm_public_sync
   private string _full_inst_path;
-  @uvm_private_sync
+  @uvm_public_sync
   private string _orig_type_name;
-  @uvm_private_sync
+  @uvm_public_sync
   private string _ovrd_type_name;
-  @uvm_private_sync
+  @uvm_public_sync
   private bool _selected;
-  @uvm_private_sync
+  @uvm_public_sync
   private uint _used;
-  @uvm_private_sync
+  @uvm_public_sync
   private uvm_object_wrapper _orig_type;
-  @uvm_private_sync
+  @uvm_public_sync
   private uvm_object_wrapper _ovrd_type;
 
   this(string full_inst_path,

@@ -168,29 +168,23 @@ class uvm_comparer
 	  uvm_object.m_uvm_status_container.scope_stack.set_arg(name);
 	  switch(radix) {
 	  case UVM_BIN:
-	    msg = format("lhs = 'b%0b : rhs = 'b%0b",
-			 lhs, rhs);
+	    msg = format("lhs = 'b%0b : rhs = 'b%0b", lhs, rhs);
 	    break;
 	  case UVM_OCT:
-	    msg = format("lhs = 'o%0o : rhs = 'o%0o",
-			 lhs, rhs);
+	    msg = format("lhs = 'o%0o : rhs = 'o%0o", lhs, rhs);
 	    break;
 	  case UVM_DEC:
-	    msg = format("lhs = %0d : rhs = %0d",
-			 lhs, rhs);
+	    msg = format("lhs = %0d : rhs = %0d", lhs, rhs);
 	    break;
 	  case UVM_TIME:
-	    msg = format("lhs = %0d : rhs = %0d",
-			 lhs, rhs);
+	    msg = format("lhs = %0d : rhs = %0d", lhs, rhs);
 	    break;
 	  case UVM_STRING:
-	    msg = format("lhs = %0s : rhs = %0s",
-			 lhs, rhs);
+	    msg = format("lhs = %0s : rhs = %0s", lhs, rhs);
 	    break;
 	  case UVM_ENUM:
 	    //Printed as decimal, user should cuse compare string for enum val
-	    msg = format("lhs = %0d : rhs = %0d",
-			 lhs, rhs);
+	    msg = format("lhs = %0d : rhs = %0d", lhs, rhs);
 	    break;
 	  default:
 	    msg = format("lhs = 'h%0x : rhs = 'h%0x",

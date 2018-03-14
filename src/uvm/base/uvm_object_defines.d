@@ -136,7 +136,7 @@ mixin template uvm_component_essentials(T=void)
   // mixin m_uvm_object_auto_utils!(U);
   // version(UVM_NO_RAND) { }
   // else {
-  //   import esdl.data.rand;
+  //   import esdl.rand;
   //   mixin Randomization;
   // }
   // `uvm_field_utils_begin(U)
@@ -436,7 +436,7 @@ mixin template m_uvm_object_auto_utils(T)
   // 	}
   //     }
   //     else {
-  // 	import esdl.data.rand;
+  // 	import esdl.rand;
   // 	static if(! is(U: _esdl__ConstraintBase)) {
   // 	  if(F!(I)(lhs, rhs)) {
   // 	    // shortcircuit useful for compare etc
@@ -469,7 +469,7 @@ mixin template m_uvm_object_auto_utils(T)
   // 	F!(I)(t);
   //     }
   //     else {
-  // 	import esdl.data.rand;
+  // 	import esdl.rand;
   // 	static if(! is(U: _esdl__ConstraintBase)) {
   // 	  F!(I)(t);
   // 	}
@@ -577,7 +577,7 @@ mixin template m_uvm_object_auto_utils(T)
   // 		!(FLAGS & UVM_NOCOPY)) {
   // 	// version(UVM_NO_RAND) { }
   // 	// else {
-  // 	//   import esdl.data.rand;
+  // 	//   import esdl.rand;
   // 	//   static if (is(U: _esdl__ConstraintBase)) {
   // 	//     uvm_object_auto_copy_field!(I+1)(lhs, rhs);
   // 	//   }

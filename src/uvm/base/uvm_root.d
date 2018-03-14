@@ -138,15 +138,6 @@ class uvm_root: uvm_component
     synchronized(this) {
       super();
       _elab_done_semaphore = new Semaphore(); // count 0
-
-      m_rh.set_name("reporter");
-
-      _clp = uvm_cmdline_processor.get_inst();
-
-      report_header();
-      // This sets up the global verbosity. Other command line args may
-      // change individual component verbosity.
-      m_check_verbosity();
     }
   }
 
@@ -154,12 +145,27 @@ class uvm_root: uvm_component
   // after calling uvm_root constructor
   void initialize(uvm_entity_base base) {
     synchronized(this) {
+      m_rh.set_name("reporter");
+      _clp = uvm_cmdline_processor.get_inst();
+
+      // Moved to uvm_entity module
+      report_header();
+      // This sets up the global verbosity. Other command line args may
+      // change individual component verbosity.
+      m_check_verbosity();
+
       // from static variable
       _uvm_entity_instance = base;
       // uvm_entity_base._uvm_entity_instance;
       _phase_timeout = new WithEvent!Time("_phase_timeout",
 					  UVM_DEFAULT_TIMEOUT, base);
       _m_phase_all_done = new WithEvent!bool("_m_phase_all_done", base);
+
+      // in the SV version these two lines are handled in
+      // the uvm_root.get function
+      uvm_domain.get_common_domain(); // FIXME -- comment this line??
+      m_domain = uvm_domain.get_uvm_domain();
+      
     }
   }
   
@@ -171,15 +177,6 @@ class uvm_root: uvm_component
     uvm_entity_instance.set_thread_context();
   }
 
-
-  // in the SV version these two lines are handled in
-  // the uvm_root.get function
-  void init_domains() {
-    synchronized(this) {
-      uvm_domain.get_common_domain(); // FIXME -- comment this line??
-      m_domain = uvm_domain.get_uvm_domain();
-    }
-  }
 
   // uvm_root
 
@@ -214,6 +211,13 @@ class uvm_root: uvm_component
   @uvm_immutable_sync
   uvm_cmdline_processor _clp;
 
+  void print_header() {
+    report_header();
+    // This sets up the global verbosity. Other command line args may
+    // change individual component verbosity.
+    m_check_verbosity();
+  }
+  
   // this function can be overridden by the user
   void initial() {
     // run_test would be called in an override of initial function

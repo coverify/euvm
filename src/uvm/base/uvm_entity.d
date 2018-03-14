@@ -40,6 +40,14 @@ import std.random;
 
 class uvm_harness: RootEntity
 {
+  override size_t _esdl__defProcStackSize() {
+    return 1024 * 1024;		// Todo use lower values if limited available memory
+  }
+
+  void config_stack(size_t size) {
+    _esdl__configStack(size);
+  }
+  
   void start() {
     super.simulate();
   }
@@ -57,9 +65,13 @@ class uvm_harness: RootEntity
 class uvm_tb_root: uvm_root
 {
   override void initial() {
-    super.initial();
     run_test();
   }
+}
+
+class uvm_tb: uvm_harness
+{
+  uvm_entity!(uvm_tb_root) root_entity;
 }
 
 class uvm_testbench(ROOT) if (is (ROOT: uvm_root)) : uvm_harness
@@ -141,17 +153,17 @@ class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
       // the uvm_root constructor since the constructor has no
       // argument. If an argument is introduced, that will spoil
       // uvm_root user API.
-      _uvm_root_instance = new T();
-      _uvm_root_instance.initialize(this);
+      // _uvm_root_instance = new T();
+      
       resetThreadContext();
       _seed = uniform!int;
     }
   }
 
-  override void _esdl__postElab() {
-    uvm_root_instance.set_name(getFullName() ~ ".(" ~
-			       qualifiedTypeName!T ~ ")");
-  }
+  // override void _esdl__postElab() {
+  //   uvm_root_instance.set_name(getFullName() ~ ".(" ~
+  // 			       qualifiedTypeName!T ~ ")");
+  // }
 
   override T _get_uvm_root() {
     return uvm_root_instance;
@@ -178,12 +190,14 @@ class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
   void initial() {
     lockStage();
     fileCaveat();
+    _uvm_root_instance = new T();
+    _uvm_root_instance.set_name(getFullName() ~ ".(" ~
+				qualifiedTypeName!T ~ ")");
+    uvm_root_instance.initialize(this);
+
     // initialize parallelism for the uvm_root_instance
     configure_parallelism();
-    // init_domains can not be moved to the constructor since it
-    // results in notification of some events, which can only
-    // happen once the simulation starts
-    uvm_root_instance.init_domains();
+
     wait(0);
     uvm_root_initialized = true;
     uvm_root_init_semaphore.notify();
