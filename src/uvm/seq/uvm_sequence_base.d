@@ -151,7 +151,7 @@ import esdl.data.queue;
 
 version(UVM_NO_RAND) {}
  else {
-   import esdl.data.rand;
+   import esdl.rand;
  }
 
 import std.string;

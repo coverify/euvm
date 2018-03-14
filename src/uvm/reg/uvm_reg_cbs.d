@@ -41,7 +41,7 @@ import uvm.base.uvm_globals;
 import uvm.base.uvm_entity;
 import uvm.base.uvm_once;
 
-import esdl.data.rand;
+import esdl.rand;
 
 // typedef class uvm_reg;
 // typedef class uvm_mem;

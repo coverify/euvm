@@ -67,7 +67,7 @@ import std.string: format;
 
 class uvm_reg_item: uvm_sequence_item
 {
-  import esdl.data.rand;
+  import esdl.rand;
   mixin uvm_object_utils;
 
   mixin(uvm_sync_string);

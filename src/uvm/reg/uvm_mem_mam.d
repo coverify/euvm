@@ -37,7 +37,7 @@ import uvm.base.uvm_root;
 import uvm.meta.misc;
 
 import esdl.data.bvec;
-import esdl.data.rand;
+import esdl.rand;
 
 import std.string: format;
 

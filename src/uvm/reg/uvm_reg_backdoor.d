@@ -38,7 +38,7 @@ import uvm.base.uvm_object_defines;
 import uvm.meta.misc;
 
 import esdl.base.core: Process, fork;
-import esdl.data.rand;
+import esdl.rand;
 
 
 

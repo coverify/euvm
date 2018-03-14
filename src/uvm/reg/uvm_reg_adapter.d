@@ -42,7 +42,7 @@ import uvm.seq.uvm_sequence_item;
 
 import uvm.tlm2.uvm_tlm2_generic_payload;
 
-import esdl.data.rand;
+import esdl.rand;
 
 //------------------------------------------------------------------------------
 // Title: Classes for Adapting Between Register and Bus Operations

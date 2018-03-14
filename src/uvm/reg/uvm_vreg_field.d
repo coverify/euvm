@@ -40,7 +40,7 @@ import uvm.base.uvm_callback;
 
 import uvm.seq.uvm_sequence_base;
 
-import esdl.data.rand;
+import esdl.rand;
 
 import std.string: format;
 

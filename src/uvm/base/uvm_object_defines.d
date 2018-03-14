@@ -59,7 +59,7 @@ mixin template uvm_object_utils(T=void)
   mixin m_uvm_object_auto_utils!(U);
   version(UVM_NO_RAND) {}
   else {
-    import esdl.data.rand;
+    import esdl.rand;
     mixin Randomization;
   }
   // `uvm_field_utils_begin(U)
@@ -188,7 +188,7 @@ mixin template uvm_component_utils(T=void)
 
   version(UVM_NO_RAND) { }
   else {
-    import esdl.data.rand;
+    import esdl.rand;
     mixin Randomization;
   }
   // `uvm_field_utils_begin(U)

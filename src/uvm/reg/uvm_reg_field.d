@@ -43,7 +43,7 @@ import uvm.reg.uvm_reg_map;
 import uvm.reg.uvm_reg_model;
 import uvm.seq.uvm_sequence_base;
 
-import esdl.data.rand;
+import esdl.rand;
 import std.uni: toUpper;
 import std.conv: to;
 

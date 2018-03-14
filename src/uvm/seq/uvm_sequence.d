@@ -34,7 +34,7 @@ import std.string: format;
 
 version(UVM_NO_RAND) {}
  else {
-   import esdl.data.rand;
+   import esdl.rand;
  }
 
 //------------------------------------------------------------------------------

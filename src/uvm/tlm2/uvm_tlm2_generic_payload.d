@@ -33,7 +33,7 @@ import uvm.base.uvm_comparer;
 import uvm.base.uvm_packer;
 import uvm.base.uvm_recorder;
 
-import esdl.data.rand;
+import esdl.rand;
 import std.string: format;
 //----------------------------------------------------------------------
 // Title: TLM Generic Payload & Extensions

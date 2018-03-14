@@ -77,7 +77,7 @@ import uvm.meta.misc;
 
 class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
 {
-  import esdl.data.rand;
+  import esdl.rand;
   
   mixin uvm_object_utils;
 

@@ -55,7 +55,7 @@ import esdl.data.queue;
 
 version(UVM_NO_RAND) {}
  else {
-   import esdl.data.rand;
+   import esdl.rand;
  }
 
 class uvm_sequence_item: uvm_transaction
