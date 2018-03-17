@@ -51,6 +51,7 @@ class uvm_harness: RootEntity
   void start() {
     super.simulate();
   }
+
   void start_bg() {
     super.forkSim();
     foreach (child; getChildComps()) {
@@ -72,11 +73,17 @@ class uvm_tb_root: uvm_root
 class uvm_tb: uvm_harness
 {
   uvm_entity!(uvm_tb_root) root_entity;
+  void set_seed(uint seed) {
+    root_entity.set_seed(seed);
+  }
 }
 
 class uvm_testbench(ROOT) if (is (ROOT: uvm_root)) : uvm_harness
 {
   uvm_entity!(ROOT) root_entity;
+  void set_seed(uint seed) {
+    root_entity.set_seed(seed);
+  }
 }
 
 abstract class uvm_entity_base: Entity
@@ -148,13 +155,15 @@ class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
   this() {
     synchronized(this) {
       super();
+      /* Now handled in initial block
       // set static variable that would later be used by uvm_root
       // constructor. Can not pass this instance as an argument to
       // the uvm_root constructor since the constructor has no
       // argument. If an argument is introduced, that will spoil
       // uvm_root user API.
       // _uvm_root_instance = new T();
-      
+      // _uvm_root_instance.initialize(this);
+      */
       resetThreadContext();
       _seed = uniform!int;
     }
@@ -173,7 +182,7 @@ class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
   // Make the uvm_root available only after the simulaion has
   // started and the uvm_root is ready to use
   override T get_root() {
-    while(uvm_root_initialized is false) {
+    while (uvm_root_initialized is false) {
       uvm_root_init_semaphore.wait();
       uvm_root_init_semaphore.notify();
     }
@@ -184,6 +193,10 @@ class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
   }
 
   override void wait_for_end_of_elaboration() {
+    while (uvm_root_initialized is false) {
+      uvm_root_init_semaphore.wait();
+      uvm_root_init_semaphore.notify();
+    }
     uvm_root_instance.wait_for_end_of_elaboration();
   }
 
@@ -193,7 +206,7 @@ class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
     _uvm_root_instance = new T();
     _uvm_root_instance.set_name(getFullName() ~ ".(" ~
 				qualifiedTypeName!T ~ ")");
-    uvm_root_instance.initialize(this);
+    _uvm_root_instance.initialize(this);
 
     // initialize parallelism for the uvm_root_instance
     configure_parallelism();
@@ -202,7 +215,7 @@ class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
     uvm_root_initialized = true;
     uvm_root_init_semaphore.notify();
     uvm_seed_map.set_seed(_seed);
-    uvm_root_instance.initial();
+    _uvm_root_instance.initial();
   }
 
   Task!(initial) _init;
