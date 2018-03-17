@@ -139,10 +139,8 @@ import uvm.base.uvm_globals;
 import uvm.base.uvm_component;
 import uvm.base.uvm_callback;
 import uvm.base.uvm_domain;
-import uvm.base.uvm_root;
 import uvm.base.uvm_entity;
 import uvm.base.uvm_once;
-import uvm.base.uvm_coreservice;
 import uvm.base.uvm_task_phase;
 import uvm.meta.misc;
 import uvm.meta.mailbox;
@@ -1770,6 +1768,8 @@ class uvm_phase: uvm_object
 
   // task
   static void m_run_phases() {
+    import uvm.base.uvm_root;
+    import uvm.base.uvm_coreservice;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     uvm_root top = cs.get_root();
 
@@ -1796,6 +1796,8 @@ class uvm_phase: uvm_object
 
   // task
   void execute_phase() {
+    import uvm.base.uvm_root;
+    import uvm.base.uvm_coreservice;
 
     uvm_task_phase task_phase;
 
@@ -2243,6 +2245,8 @@ class uvm_phase: uvm_object
   // -----------------------
 
   private void m_print_termination_state() {
+    import uvm.base.uvm_root;
+    import uvm.base.uvm_coreservice;
     synchronized(this) {
       uvm_coreservice_t cs = uvm_coreservice_t.get();
       uvm_root top = cs.get_root();
@@ -2265,6 +2269,8 @@ class uvm_phase: uvm_object
 
   // task
   final void wait_for_self_and_siblings_to_drop() {
+    import uvm.base.uvm_root;
+    import uvm.base.uvm_coreservice;
     bool need_to_check_all = true;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     uvm_root top = cs.get_root();

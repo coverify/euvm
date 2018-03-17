@@ -36,10 +36,11 @@ module uvm.base.uvm_report_server;
 //
 //------------------------------------------------------------------------------
 
-import uvm.base.uvm_coreservice;
-import uvm.base.uvm_object;
 import uvm.meta.mcd;
 import uvm.meta.meta;
+import uvm.meta.misc;
+
+import uvm.base.uvm_object;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_recorder;
 import uvm.base.uvm_object_globals;
@@ -47,7 +48,6 @@ import uvm.base.uvm_report_handler;
 import uvm.base.uvm_report_object;
 import uvm.base.uvm_report_catcher;
 import uvm.base.uvm_report_message;
-import uvm.base.uvm_root;
 import uvm.base.uvm_tr_database;
 import uvm.base.uvm_tr_stream;
 import uvm.base.uvm_printer;
@@ -228,6 +228,7 @@ class uvm_report_server: /*extends*/ uvm_object
   // | uvm_report_server::set_server(your_server);
 
   static void set_server(uvm_report_server server) {
+    import uvm.base.uvm_coreservice;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     server.copy(cs.get_report_server());
     cs.set_report_server(server);
@@ -254,6 +255,7 @@ class uvm_report_server: /*extends*/ uvm_object
   //
 
   static uvm_report_server get_server() {
+    import uvm.base.uvm_coreservice;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     return cs.get_report_server();
   }
@@ -625,6 +627,7 @@ class uvm_default_report_server: uvm_report_server
   //
 
   override void process_report_message(uvm_report_message report_message) {
+    import uvm.base.uvm_coreservice;
     synchronized(this) {
       uvm_report_handler l_report_handler = report_message.get_report_handler();
       Process p = Process.self();
@@ -722,6 +725,8 @@ class uvm_default_report_server: uvm_report_server
   override void execute_report_message(uvm_report_message report_message,
 				       string composed_message) {
     synchronized(this) {
+      import uvm.base.uvm_root;
+      import uvm.base.uvm_coreservice;
       Process p = Process.self();
 
       // Update counts
@@ -806,10 +811,8 @@ class uvm_default_report_server: uvm_report_server
 
       // Process the UVM_EXIT action
       if(report_message.get_action() & UVM_EXIT) {
-	uvm_root l_root;
-	uvm_coreservice_t cs;
-	cs = uvm_coreservice_t.get();
-	l_root = cs.get_root();
+	uvm_coreservice_t cs = uvm_coreservice_t.get();
+	uvm_root l_root = cs.get_root();
 	l_root.die();
       }
 

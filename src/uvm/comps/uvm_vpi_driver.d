@@ -24,7 +24,6 @@ import uvm.base.uvm_phase;
 import uvm.base.uvm_component;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_object_globals;
-import uvm.base.uvm_root;
 import uvm.base.uvm_async_lock;
 import uvm.comps.uvm_driver;
 import uvm.tlm1.uvm_tlm_fifos;

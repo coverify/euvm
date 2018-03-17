@@ -81,7 +81,8 @@ module uvm.base.uvm_report_object;
 //
 //------------------------------------------------------------------------------
 
-import uvm.base.uvm_coreservice;
+import uvm.meta.misc;
+
 import uvm.base.uvm_object;
 import uvm.base.uvm_report_handler;
 import uvm.base.uvm_report_server;
@@ -89,7 +90,6 @@ import uvm.base.uvm_report_catcher;
 import uvm.base.uvm_report_message;
 import uvm.base.uvm_callback;
 import uvm.base.uvm_object_globals;
-import uvm.base.uvm_root;
 import esdl.base.core: finish;
 
 version(UVM_NO_DEPRECATED) { }
@@ -639,6 +639,8 @@ class uvm_report_object: /*extends*/ uvm_object
     // Use <uvm_root::report_header()>
 
     void report_header(UVM_FILE file = UVM_FILE.init) {
+      import uvm.base.uvm_root;
+      import uvm.base.uvm_coreservice;
       uvm_coreservice_t cs = uvm_coreservice_t.get();
       uvm_root l_root = cs.get_root();
       l_root.report_header(file);
@@ -679,6 +681,8 @@ class uvm_report_object: /*extends*/ uvm_object
     // rs.die()
 
     void die() {
+      import uvm.base.uvm_root;
+      import uvm.base.uvm_coreservice;
       uvm_coreservice_t cs = uvm_coreservice_t.get();
       uvm_root l_root = cs.get_root();
       l_root.die();

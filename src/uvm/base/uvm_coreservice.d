@@ -20,7 +20,6 @@
 
 module uvm.base.uvm_coreservice;
 
-import uvm.base.uvm_root;
 import uvm.base.uvm_factory;
 import uvm.base.uvm_report_server;
 import uvm.base.uvm_traversal;
@@ -133,6 +132,7 @@ abstract class uvm_coreservice_t
 //----------------------------------------------------------------------
 class uvm_default_coreservice_t: uvm_coreservice_t
 {
+  import uvm.base.uvm_root;
   // this() {
   //   synchronized(this) {
   //     _factory = new uvm_default_factory();

@@ -26,7 +26,6 @@
 
 module uvm.base.uvm_heartbeat;
 
-import uvm.base.uvm_root;
 import uvm.base.uvm_coreservice;
 import uvm.base.uvm_object;
 import uvm.base.uvm_object_globals;

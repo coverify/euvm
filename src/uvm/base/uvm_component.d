@@ -34,7 +34,6 @@ import uvm.base.uvm_objection;
 import uvm.base.uvm_phase;
 import uvm.base.uvm_domain;
 import uvm.base.uvm_pool;
-import uvm.base.uvm_root;
 import uvm.base.uvm_common_phases;
 import uvm.base.uvm_config_db;
 import uvm.base.uvm_spell_chkr;
@@ -61,6 +60,7 @@ import uvm.base.uvm_once;
 import uvm.seq.uvm_sequence_item;
 import uvm.seq.uvm_sequence_base;
 import uvm.meta.meta;		// qualifiedTypeName
+import uvm.meta.misc;		// qualifiedTypeName
 import uvm.base.uvm_globals: uvm_is_match;
 import uvm.base.uvm_report_object;
 
@@ -231,6 +231,8 @@ abstract class uvm_component: uvm_report_object, ParContext
   // This constructor is called by all the uvm_component derivatives
   // except for uvm_root instances
   this(string name, uvm_component parent) {
+    import uvm.base.uvm_root;
+    import uvm.base.uvm_entity;
     synchronized(this) {
 
       super(name);
@@ -345,6 +347,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   // is not yet available. This function is called later as the name
   // of the instance becomes available.
   package void set_root_name(string name) {
+    import uvm.base.uvm_root;
     synchronized(this) {
       assert(cast(uvm_root) this);
       if(get_name() == "__top__") {
@@ -390,8 +393,11 @@ abstract class uvm_component: uvm_report_object, ParContext
     }
   }
 
+  // No need to add unnecessary dependency on uvm_root -- use
+  // uvm_root_intf instead to break dependency
   // Traverse the component hierarchy and return the uvm_root
-  uvm_root get_root() {
+  import uvm.base.uvm_root: uvm_root_intf;
+  uvm_root_intf get_root() {
     return get_parent().get_root();
   }
   
@@ -581,6 +587,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   // wildcards.
 
   final uvm_component lookup(string name) {
+    import uvm.base.uvm_root;
     synchronized(this) {
       uvm_coreservice_t cs = uvm_coreservice_t.get();
       uvm_root top = cs.get_root(); // uvm_root.get();
@@ -2746,7 +2753,7 @@ abstract class uvm_component: uvm_report_object, ParContext
       if(keep_active) etype = "Error, Link";
       else etype = "Error";
 
-      if(error_time == 0) error_time = get_root_entity.getSimTime;
+      if(error_time == 0) error_time = get_root_entity.getSimTime();
 
       if((stream_name == "") || (stream_name == "main")) {
 	if(_m_main_stream is null) {
@@ -3337,6 +3344,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 
   void _uvm__configure_parallelism(MulticoreConfig config) { // to be called only by a uvm_root
     import std.stdio;
+    import uvm.base.uvm_root;
     writeln("Calling _uvm__configure_parallelism on: ", get_full_name());
     assert(cast(uvm_root) this);
     _set_id();
@@ -3433,6 +3441,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   // m_set_cl_verb
   // -------------
   final void m_set_cl_verb() {
+    import uvm.base.uvm_root;
     synchronized(this) {
       // _ALL_ can be used for ids
       // +uvm_set_verbosity=<comp>,<id>,<verbosity>,<phase|time>,<offset>

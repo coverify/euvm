@@ -29,7 +29,6 @@ import uvm.base.uvm_report_server;
 import uvm.base.uvm_report_message;
 import uvm.base.uvm_callback;
 import uvm.base.uvm_object_globals;
-import uvm.base.uvm_root;
 import uvm.base.uvm_entity;
 import uvm.base.uvm_once;
 import uvm.base.uvm_object;
@@ -439,6 +438,7 @@ abstract class uvm_report_catcher: uvm_callback
   // method can be used by calling uvm_report_cb::display(<uvm_report_object>).
 
   static void print_catcher(UVM_FILE file=0) {
+    import uvm.base.uvm_root: uvm_top;
     string enabled;
     // static uvm_report_cb_iter iter = new(null);
     string q;
@@ -757,6 +757,7 @@ abstract class uvm_report_catcher: uvm_callback
   // It prints the statistics for the active catchers.
 
   static void summarize() {
+    import uvm.base.uvm_root: uvm_top;
     string s;
     string q;
     if(_do_report) {

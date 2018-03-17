@@ -24,10 +24,8 @@ module uvm.base.uvm_port_base;
 import uvm.base.uvm_component;
 import uvm.base.uvm_phase;
 import uvm.base.uvm_object_globals;
-import uvm.base.uvm_root;
 import uvm.base.uvm_domain;
 import uvm.base.uvm_config_db;
-import uvm.base.uvm_coreservice;
 
 import uvm.meta.misc;
 import std.string: format;
@@ -502,8 +500,9 @@ abstract class uvm_port_base(IF = uvm_void): IF
 
   void connect (this_type provider) {
     synchronized(this) {
-      uvm_coreservice_t cs = uvm_coreservice_t.get();
-      uvm_root top = cs.get_root();
+      // next two lines add dependency on uvm_root -- otherwise redundant code from SV UVM
+      // uvm_coreservice_t cs = uvm_coreservice_t.get();
+      // uvm_root top = cs.get_root();
       if (end_of_elaboration_ph.get_state() == UVM_PHASE_EXECUTING || // TBD tidy
 	  end_of_elaboration_ph.get_state() == UVM_PHASE_DONE ) {
 	m_comp.uvm_report_warning("Late Connection", "Attempt to connect " ~
@@ -592,8 +591,9 @@ abstract class uvm_port_base(IF = uvm_void): IF
 	  save = "This port's fanout network:\n\n  " ~
 	    get_full_name() ~ " (" ~ get_type_name() ~ ")\n" ~ save ~ "\n";
 	if (_m_imp_list.length == 0) {
-	  uvm_coreservice_t cs = uvm_coreservice_t.get();
-	  uvm_root top = cs.get_root();
+	  // next two lines add dependency on uvm_root -- otherwise redundant code from SV UVM
+	  // uvm_coreservice_t cs = uvm_coreservice_t.get();
+	  // uvm_root top = cs.get_root();
 	  if (end_of_elaboration_ph.get_state() == UVM_PHASE_EXECUTING ||
 	      end_of_elaboration_ph.get_state() == UVM_PHASE_DONE ) { // TBD tidy
 	    save ~= "  Connected implementations: none\n";

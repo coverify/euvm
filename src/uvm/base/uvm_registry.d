@@ -22,9 +22,9 @@
 //------------------------------------------------------------------------------
 
 module uvm.base.uvm_registry;
-import uvm.base.uvm_root;
 import uvm.base.uvm_once;
 import uvm.base.uvm_coreservice;
+import uvm.meta.misc;
 
 // `ifndef UVM_REGISTRY_SVH
 // `define UVM_REGISTRY_SVH

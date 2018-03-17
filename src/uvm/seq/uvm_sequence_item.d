@@ -36,7 +36,6 @@
 //------------------------------------------------------------------------------
 
 module uvm.seq.uvm_sequence_item;
-import uvm.base.uvm_coreservice;
 import uvm.base.uvm_factory;
 import uvm.base.uvm_printer;
 import uvm.base.uvm_object_globals;
@@ -45,7 +44,6 @@ import uvm.base.uvm_registry;
 import uvm.base.uvm_report_object;
 import uvm.base.uvm_report_handler;
 import uvm.base.uvm_report_message;
-import uvm.base.uvm_root;
 
 import uvm.seq.uvm_sequence_base;
 import uvm.seq.uvm_sequencer_base;
@@ -442,6 +440,7 @@ class uvm_sequence_item: uvm_transaction
 
   uvm_report_object uvm_get_report_object() {
     synchronized(this) {
+      import uvm.base.uvm_coreservice;
       if(_m_sequencer is null) {
 	uvm_coreservice_t cs = uvm_coreservice_t.get();
 	return cs.get_root();

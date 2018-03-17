@@ -60,7 +60,6 @@ import uvm.base.uvm_packer;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_report_object;
 import uvm.base.uvm_globals;
-import uvm.base.uvm_root;
 import uvm.base.uvm_component: uvm_component, uvm__config_parallelism;
 import uvm.base.uvm_port_base;
 import uvm.comps.uvm_agent;
@@ -641,7 +640,7 @@ abstract class uvm_object: uvm_void
 				 UVM_NONE);
 	    }
 	    else static if (isDynamicArray!E) {
-	      e.length = cast(ulong) m_uvm_status_container.bitstream();
+	      e.length = cast(size_t) m_uvm_status_container.bitstream();
 	      m_uvm_status_container.status = true;
 	    }
 	  }

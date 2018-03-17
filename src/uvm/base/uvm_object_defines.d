@@ -114,8 +114,6 @@ string uvm_component_utils_string()() {
   return "mixin uvm_component_utils!(typeof(this));";
 }
 
-import uvm.base.uvm_root: uvm_root;
-
 mixin template uvm_component_essentials(T=void)
 {
   import uvm.base.uvm_root;

@@ -661,7 +661,6 @@ final class uvm_once_object_globals: uvm_once_base
   import uvm.base.uvm_packer: uvm_packer;
   import uvm.base.uvm_comparer: uvm_comparer;
   import uvm.base.uvm_recorder: uvm_recorder;
-  import uvm.base.uvm_root: uvm_root;
 
   ////// shared variables from uvm_object_globals
   @uvm_immutable_sync

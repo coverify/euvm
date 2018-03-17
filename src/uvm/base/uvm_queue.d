@@ -34,8 +34,6 @@ module uvm.base.uvm_queue;
 //------------------------------------------------------------------------------
 
 import uvm.base.uvm_object;
-import uvm.base.uvm_coreservice;
-import uvm.base.uvm_root;
 import uvm.base.uvm_once;
 import uvm.base.uvm_globals: uvm_report_warning;
 import std.string: format;

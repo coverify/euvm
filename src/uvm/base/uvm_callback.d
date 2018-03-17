@@ -64,11 +64,9 @@ import uvm.base.uvm_globals;
 import uvm.base.uvm_object;
 import uvm.base.uvm_pool;
 import uvm.base.uvm_queue;
-import uvm.base.uvm_root;
 import uvm.base.uvm_once;
 import uvm.base.uvm_entity;
 import uvm.base.uvm_component;
-import uvm.base.uvm_coreservice;
 import uvm.meta.mcd;
 import uvm.meta.meta;
 
@@ -870,6 +868,8 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
 			  uvm_callback cb,
 			  uvm_component root,
 			  uvm_apprepend ordering=uvm_apprepend.UVM_APPEND) {
+    import uvm.base.uvm_coreservice;
+    import uvm.base.uvm_root;
 
     get();
 
@@ -950,6 +950,9 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
 
   static void delete_by_name(string name, uvm_callback cb,
 			     uvm_component root) {
+    import uvm.base.uvm_coreservice;
+    import uvm.base.uvm_root;
+
     get();
 
     uvm_coreservice_t cs = uvm_coreservice_t.get();

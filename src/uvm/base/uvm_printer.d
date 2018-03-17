@@ -610,8 +610,6 @@ class uvm_table_printer: uvm_printer {
   //
   override final string emit() {
     synchronized(this) {
-      import uvm.base.uvm_root;
-
       char[] s;
       string user_format;
       static char[] dash; // = "---------------------------------------------------------------------------------------------------";

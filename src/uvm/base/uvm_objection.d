@@ -115,7 +115,6 @@ import uvm.meta.misc;
 import uvm.meta.meta;
 import uvm.base.uvm_report_object;
 import uvm.base.uvm_object;
-import uvm.base.uvm_root;
 import uvm.base.uvm_once;
 
 import esdl.data.time: sec;
@@ -196,10 +195,13 @@ class uvm_objection: uvm_report_object
   @uvm_public_sync
   private bool _m_top_all_dropped;
 
-  static protected uvm_root m_top() {
-    uvm_coreservice_t cs = uvm_coreservice_t.get();
-    return cs.get_root();
-  }
+  // import uvm.base.uvm_root: uvm_top, uvm_root;
+  // uvm_root m_top = uvm_top();
+  
+  // static protected uvm_root m_top() {
+  //   uvm_coreservice_t cs = uvm_coreservice_t.get();
+  //   return cs.get_root();
+  // }
 
 
   // These are the active drain processes, which have been
@@ -244,6 +246,8 @@ class uvm_objection: uvm_report_object
   this(string name="") {
     synchronized(this) {
       import uvm.base.uvm_cmdline_processor;
+      import uvm.base.uvm_root: uvm_top, uvm_root;
+      uvm_root m_top = uvm_top();
 
       string[] trace_args;
       super(name);
@@ -359,6 +363,8 @@ class uvm_objection: uvm_report_object
   // The ultimate parent is uvm_top, UVM's implicit top-level component.
 
   final uvm_object m_get_parent(uvm_object obj) {
+    import uvm.base.uvm_root: uvm_top, uvm_root;
+    uvm_root m_top = uvm_top();
     uvm_component comp = cast(uvm_component) obj;
     uvm_sequence_base seq = cast(uvm_sequence_base) obj;
     if(comp !is null) {
@@ -397,6 +403,9 @@ class uvm_objection: uvm_report_object
 			  int count,
 			  bool raise,
 			  int in_top_thread) {
+    import uvm.base.uvm_root: uvm_top, uvm_root;
+    uvm_root m_top = uvm_top();
+
     if(obj !is null && obj !is m_top) {
       obj = m_get_parent(obj);
       if(raise) {
@@ -494,6 +503,9 @@ class uvm_objection: uvm_report_object
   void raise_objection (uvm_object obj = null,
 			string description = "",
 			int count = 1) {
+    import uvm.base.uvm_root: uvm_top, uvm_root;
+    uvm_root m_top = uvm_top();
+
     if(obj is null) {
       obj = m_top;
     }
@@ -511,6 +523,8 @@ class uvm_objection: uvm_report_object
 		      uvm_object source_obj,
 		      string description = "",
 		      int count = 1) {
+    import uvm.base.uvm_root: uvm_top, uvm_root;
+    uvm_root m_top = uvm_top();
 
     // Ignore raise if count is 0
     if(count == 0) {
@@ -713,6 +727,9 @@ class uvm_objection: uvm_report_object
   void drop_objection (uvm_object obj=null,
 		       string description="",
 		       int count=1) {
+    import uvm.base.uvm_root: uvm_top, uvm_root;
+    uvm_root m_top = uvm_top();
+
     if(obj is null) {
       obj = m_top;
     }
@@ -727,6 +744,9 @@ class uvm_objection: uvm_report_object
 		     string description = "",
 		     int count = 1,
 		     int in_top_thread = 0) {
+    import uvm.base.uvm_root: uvm_top, uvm_root;
+    uvm_root m_top = uvm_top();
+
     // Ignore drops if the count is 0
     if(count == 0) {
       return;
@@ -822,6 +842,9 @@ class uvm_objection: uvm_report_object
   // Any drain_times set by the user are not affected.
   //
   void clear(uvm_object obj=null) {
+
+    import uvm.base.uvm_root: uvm_top, uvm_root;
+    uvm_root m_top = uvm_top();
 
     // redundant -- unused variable -- defined in SV version
     // uvm_objection_context_object ctxt;
@@ -987,6 +1010,8 @@ class uvm_objection: uvm_report_object
 			     string description = "",
 			     int count = 1,
 			     int in_top_thread = 0) {
+    import uvm.base.uvm_root: uvm_top, uvm_root;
+    uvm_root m_top = uvm_top();
 
     int diff_count;
 
@@ -1064,6 +1089,9 @@ class uvm_objection: uvm_report_object
   }
 
   final void set_drain_time (uvm_object obj, SimTime drain) {
+    import uvm.base.uvm_root: uvm_top, uvm_root;
+    uvm_root m_top = uvm_top();
+
     if(obj is null) {
       obj = m_top;
     }
@@ -1131,6 +1159,9 @@ class uvm_objection: uvm_report_object
 		    uvm_object source_obj,
 		    string description,
 		    int count) {
+    import uvm.base.uvm_root: uvm_top, uvm_root;
+    uvm_root m_top = uvm_top();
+
     uvm_component comp = cast(uvm_component) obj;
     if(comp !is null) {
       comp.all_dropped(this, source_obj, description, count);
@@ -1189,6 +1220,9 @@ class uvm_objection: uvm_report_object
   //
   // task
   final void wait_for(uvm_objection_event objt_event, uvm_object obj=null) {
+
+    import uvm.base.uvm_root: uvm_top, uvm_root;
+    uvm_root m_top = uvm_top();
 
     if(obj is null) {
       obj = m_top;
@@ -1251,6 +1285,9 @@ class uvm_objection: uvm_report_object
   // Returns the current number of objections raised by the given ~object~.
 
   final int get_objection_count (uvm_object obj=null) {
+    import uvm.base.uvm_root: uvm_top, uvm_root;
+    uvm_root m_top = uvm_top();
+
     if(obj is null) {
       obj = m_top;
     }
@@ -1270,6 +1307,9 @@ class uvm_objection: uvm_report_object
   // and all descendants.
 
   final int get_objection_total(uvm_object obj = null) {
+    import uvm.base.uvm_root: uvm_top, uvm_root;
+    uvm_root m_top = uvm_top();
+
     if(obj is null) {
       obj = m_top;
     }
@@ -1290,6 +1330,9 @@ class uvm_objection: uvm_report_object
   // Returns the current drain time set for the given ~object~ (default: 0 ns).
 
   final SimTime get_drain_time (uvm_object obj = null) {
+    import uvm.base.uvm_root: uvm_top, uvm_root;
+    uvm_root m_top = uvm_top();
+
     if(obj is null) {
       obj = m_top;
     }
@@ -1309,6 +1352,9 @@ class uvm_objection: uvm_report_object
   final protected string m_display_objections(uvm_object obj = null,
 					      bool show_header = true) {
     synchronized(this) {
+      import uvm.base.uvm_root: uvm_top, uvm_root;
+      uvm_root m_top = uvm_top();
+
       enum string blank = "                                       " ~
 	"                                            ";
       uvm_object[string] list;
@@ -1377,10 +1423,16 @@ class uvm_objection: uvm_report_object
   }
 
   string to(S)() if(is(S == string)) {
+    import uvm.base.uvm_root: uvm_top, uvm_root;
+    uvm_root m_top = uvm_top();
+
     return m_display_objections(m_top, true);
   }
 
   override string convert2string() {
+    import uvm.base.uvm_root: uvm_top, uvm_root;
+    uvm_root m_top = uvm_top();
+
     return m_display_objections(m_top, true);
   }
 
@@ -1557,6 +1609,9 @@ class uvm_test_done_objection: uvm_objection
 
     final void stop_request() {
       synchronized(this) {
+	import uvm.base.uvm_root: uvm_top, uvm_root;
+	uvm_root m_top = uvm_top();
+
   	uvm_info_context("STOP_REQ",
   			 "Stop-request called. Waiting for all-dropped on uvm_test_done",
   			 UVM_FULL, m_top);
@@ -1566,6 +1621,9 @@ class uvm_test_done_objection: uvm_objection
 
     // task
     final void m_stop_request() {
+      import uvm.base.uvm_root: uvm_top, uvm_root;
+      uvm_root m_top = uvm_top();
+
       raise_objection(m_top,
   		      "stop_request called; raising test_done objection");
       uvm_wait_for_nba_region();
@@ -1597,6 +1655,9 @@ class uvm_test_done_objection: uvm_objection
   			       uvm_object source_obj,
   			       string description,
   			       int count) {
+      import uvm.base.uvm_root: uvm_top, uvm_root;
+      uvm_root m_top = uvm_top();
+
       if (obj !is m_top) {
   	super.all_dropped(obj,source_obj,description,count);
   	return;
@@ -1656,6 +1717,9 @@ class uvm_test_done_objection: uvm_objection
     override void raise_objection (uvm_object obj = null,
   				   string description = "",
   				   int count = 1) {
+      import uvm.base.uvm_root: uvm_top, uvm_root;
+      uvm_root m_top = uvm_top();
+
       if(obj is null) {
   	obj = m_top;
       }
@@ -1684,6 +1748,9 @@ class uvm_test_done_objection: uvm_objection
     override void drop_objection (uvm_object obj = null,
   				  string description = "",
   				  int count = 1) {
+      import uvm.base.uvm_root: uvm_top, uvm_root;
+      uvm_root m_top = uvm_top();
+
       if(obj is null) {
   	obj = m_top;
       }
@@ -1701,6 +1768,9 @@ class uvm_test_done_objection: uvm_objection
     // the current phase.
 
     void force_stop(uvm_object obj = null) {
+      import uvm.base.uvm_root: uvm_top, uvm_root;
+      uvm_root m_top = uvm_top();
+
       uvm_report_warning("FORCE_STOP", "Object '" ~
   			 (obj !is null ? obj.get_name() : "<unknown>") ~
   			 "' called force_stop");

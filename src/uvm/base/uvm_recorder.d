@@ -42,7 +42,6 @@ module uvm.base.uvm_recorder;
 //
 //------------------------------------------------------------------------------
 
-import uvm.base.uvm_root;
 import uvm.base.uvm_object;
 import uvm.base.uvm_misc;
 import uvm.base.uvm_globals;

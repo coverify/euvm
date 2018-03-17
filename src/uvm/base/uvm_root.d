@@ -121,7 +121,28 @@ uvm_root uvm_top() {
   return uvm_entity_inst._get_uvm_root();
 }
 
-class uvm_root: uvm_component
+interface uvm_root_intf
+{
+  uvm_entity_base get_entity();
+  RootEntity get_root_entity();
+  void set_thread_context();
+  void print_header();
+  void initial();
+  void run_test(string test_name="");
+  void set_timeout(Time timeout, bool overridable=true);  uvm_component find(string comp_match);
+  void find_all(string comp_match, ref Queue!uvm_component comps,
+		uvm_component comp=null);
+  void find_all(string comp_match, ref uvm_component[] comps,
+		uvm_component comp=null);
+  uvm_component[] find_all(string comp_match, uvm_component comp=null);
+  void print_topology(uvm_printer printer=null);
+  SimTime phase_sim_timeout();
+  void register_async_lock(uvm_async_lock lock);
+  void register_async_event(uvm_async_event event);
+  void finalize();
+}
+
+class uvm_root: uvm_component, uvm_root_intf
 {
   // adding the mixin here results in gotchas if the user does not add
   // the mixin in the derived classes
@@ -173,6 +194,10 @@ class uvm_root: uvm_component
     return _uvm_entity_instance;
   }
 
+  override RootEntity get_root_entity() {
+    return this.get_entity.getRoot();
+  }
+
   override void set_thread_context() {
     uvm_entity_instance.set_thread_context();
   }
@@ -204,7 +229,7 @@ class uvm_root: uvm_component
 
   // This function is retuired to get the uvm_root of any
   // uvm_component by way of traversing component hierarchy
-  override uvm_root get_root() {
+  override uvm_root_intf get_root() {
     return this;
   }
 

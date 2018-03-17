@@ -37,8 +37,6 @@ import uvm.base.uvm_misc;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_object;
 import uvm.base.uvm_globals;
-import uvm.base.uvm_coreservice;
-import uvm.base.uvm_root;
 import uvm.meta.misc;
 import esdl.data.bvec;
 
@@ -549,6 +547,8 @@ class uvm_comparer
 
   final void print_msg(string msg) {
     synchronized(this) {
+      import uvm.base.uvm_coreservice;
+      import uvm.base.uvm_root;
       uvm_coreservice_t cs = uvm_coreservice_t.get();
       uvm_root root = cs.get_root();
 
@@ -573,6 +573,8 @@ class uvm_comparer
   //Need this function because sformat doesn't support objects
   final void print_rollup(uvm_object rhs, uvm_object lhs) {
     synchronized(this) {
+      import uvm.base.uvm_coreservice;
+      import uvm.base.uvm_root;
       uvm_coreservice_t cs = uvm_coreservice_t.get();
       uvm_root root = cs.get_root();
       string msg;
@@ -602,6 +604,8 @@ class uvm_comparer
   final void print_msg_object(uvm_object lhs, uvm_object rhs) {
     synchronized(this) {
       import std.string: format;
+      import uvm.base.uvm_coreservice;
+      import uvm.base.uvm_root;
       uvm_coreservice_t cs = uvm_coreservice_t.get();
       uvm_root root = cs.get_root();
       _result++;

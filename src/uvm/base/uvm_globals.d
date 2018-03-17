@@ -37,11 +37,9 @@
 // information.
 
 module uvm.base.uvm_globals;
-import uvm.base.uvm_root;
 import uvm.base.uvm_component;
 import uvm.base.uvm_report_object;
 import uvm.base.uvm_report_message;
-import uvm.base.uvm_coreservice;
 import uvm.base.uvm_message_defines;
 
 import esdl.base.core: wait;
@@ -57,8 +55,10 @@ version(UVM_NO_DEPRECATED) { }
 mixin uvm_report_mixin;
 
 void run_test (string test_name = "") {
+  import uvm.base.uvm_coreservice;
+  import uvm.base.uvm_root;
   uvm_coreservice_t cs = uvm_coreservice_t.get();
-  auto top = cs.get_root();
+  uvm_root top = cs.get_root();
   top.run_test(test_name);
 }
 
@@ -98,8 +98,10 @@ version (UVM_INCLUDE_DEPRECATED) {
 
 
   void set_global_timeout(Time timeout, bool overridable = true) {
+    import uvm.base.uvm_coreservice;
+    import uvm.base.uvm_root;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
-    auto top = cs.get_root();
+    uvm_root top = cs.get_root();
     top.set_timeout(timeout, overridable);
   }
 
@@ -266,6 +268,8 @@ import uvm.base.uvm_object_globals;
 // For the global version, it returns uvm_root.
 //
 uvm_report_object uvm_get_report_object() {
+  import uvm.base.uvm_coreservice;
+  import uvm.base.uvm_root;
   uvm_coreservice_t cs = uvm_coreservice_t.get();
   uvm_root top = cs.get_root();
   return top;
@@ -286,6 +290,8 @@ uvm_report_object uvm_get_report_object() {
 int uvm_report_enabled (int verbosity,
 			uvm_severity severity = uvm_severity.UVM_INFO,
 			string id = "") {
+  import uvm.base.uvm_coreservice;
+  import uvm.base.uvm_root;
   uvm_coreservice_t cs = uvm_coreservice_t.get();
   uvm_root top = cs.get_root();
   return top.uvm_report_enabled(verbosity, severity, id);
@@ -301,6 +307,9 @@ void uvm_report(uvm_severity severity,
 		size_t line = 0,
 		string context_name = "",
 		bool report_enabled_checked = false) {
+  import uvm.base.uvm_coreservice;
+  import uvm.base.uvm_root;
+
   if(verbosity is int.min) {
     verbosity = (severity is UVM_ERROR) ? UVM_LOW :
       (severity is UVM_FATAL) ? UVM_NONE : UVM_MEDIUM;
@@ -331,6 +340,8 @@ void uvm_report_info(string id,
 		     size_t line = 0,
 		     string context_name = "",
 		     bool report_enabled_checked = false) {
+  import uvm.base.uvm_coreservice;
+  import uvm.base.uvm_root;
   uvm_coreservice_t cs = uvm_coreservice_t.get();
   uvm_root top = cs.get_root();
   top.uvm_report_info(id, message, verbosity, filename, line,
@@ -356,6 +367,8 @@ void uvm_report_warning(string id,
 			size_t line = 0,
 			string context_name = "",
 			bool report_enabled_checked = false) {
+  import uvm.base.uvm_coreservice;
+  import uvm.base.uvm_root;
   uvm_coreservice_t cs = uvm_coreservice_t.get();
   uvm_root top = cs.get_root();
   top.uvm_report_warning(id, message, verbosity, filename, line,
@@ -381,6 +394,8 @@ void uvm_report_error(string id,
 		      size_t line = 0,
 		      string context_name = "",
 		      bool report_enabled_checked = false) {
+  import uvm.base.uvm_coreservice;
+  import uvm.base.uvm_root;
   uvm_coreservice_t cs = uvm_coreservice_t.get();
   uvm_root top = cs.get_root();
   top.uvm_report_error(id, message, verbosity, filename, line,
@@ -415,6 +430,8 @@ void uvm_report_fatal(string id,
 		      size_t line = 0,
 		      string context_name = "",
 		      bool report_enabled_checked = false) {
+  import uvm.base.uvm_coreservice;
+  import uvm.base.uvm_root;
   uvm_coreservice_t cs = uvm_coreservice_t.get();
   uvm_root top = cs.get_root();
   top.uvm_report_fatal(id, message, verbosity, filename, line,
@@ -429,6 +446,8 @@ void uvm_report_fatal(string id,
 // components. See <uvm_report_object> for details on the reporting mechanism.
 
 void uvm_process_report_message(uvm_report_message report_message) {
+  import uvm.base.uvm_coreservice;
+  import uvm.base.uvm_root;
   uvm_coreservice_t cs = uvm_coreservice_t.get();
   uvm_root top = cs.get_root();
   // Process p = Process.self();
@@ -487,12 +506,14 @@ version(UVM_INCLUDE_DEPRECATED) {
   void  set_config_int(T)(string inst_name,
 			  string field_name,
 			  T value) {
+    import uvm.base.uvm_coreservice;
+    import uvm.base.uvm_root;
     if (!uvm_component.m_config_deprecated_warned) {
       uvm_warning("UVM/CFG/SET/DPR", "get/set_config_* API has been deprecated. Use uvm_config_db instead.");
       uvm_component.m_config_deprecated_warned = true;
     }
     uvm_coreservice_t cs = uvm_coreservice_t.get();
-    auto top = cs.get_root();
+    uvm_root top = cs.get_root();
     top.set_config_int(inst_name, field_name, value);
   }
 
@@ -509,12 +530,14 @@ version(UVM_INCLUDE_DEPRECATED) {
 			  string field_name,
 			  uvm_object value,
 			  bool clone=true) {
+    import uvm.base.uvm_coreservice;
+    import uvm.base.uvm_root;
     if (!uvm_component.m_config_deprecated_warned) {
       uvm_warning("UVM/CFG/SET/DPR", "get/set_config_* API has been deprecated. Use uvm_config_db instead.");
       uvm_component.m_config_deprecated_warned = true;
     }
     uvm_coreservice_t cs = uvm_coreservice_t.get();
-    auto top = cs.get_root();
+    uvm_root top = cs.get_root();
     top.set_config_object(inst_name, field_name, value, clone);
   }
 
@@ -530,12 +553,14 @@ version(UVM_INCLUDE_DEPRECATED) {
   void set_config_string (string inst_name,
 			  string field_name,
 			  string value) {
+    import uvm.base.uvm_coreservice;
+    import uvm.base.uvm_root;
     if (!uvm_component.m_config_deprecated_warned) {
       uvm_warning("UVM/CFG/SET/DPR", "get/set_config_* API has been deprecated. Use uvm_config_db instead.");
       uvm_component.m_config_deprecated_warned = true;
     }
     uvm_coreservice_t cs = uvm_coreservice_t.get();
-    auto top = cs.get_root();
+    uvm_root top = cs.get_root();
     top.set_config_string(inst_name, field_name, value);
   }
 }

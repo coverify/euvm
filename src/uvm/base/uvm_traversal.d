@@ -32,9 +32,7 @@ module uvm.base.uvm_traversal;
 
 import uvm.base.uvm_object;
 import uvm.base.uvm_component;
-import uvm.base.uvm_root;
 import uvm.base.uvm_globals;
-import uvm.base.uvm_coreservice;
 
 import std.regex;
 import std.string: format;
@@ -285,6 +283,8 @@ class uvm_component_proxy: uvm_structure_proxy!uvm_component
   
 class uvm_component_name_check_visitor: uvm_visitor!uvm_component
 {
+  import uvm.base.uvm_root;
+
   private uvm_root _root;
 
   static Regex!char _compiled_regex;
@@ -322,6 +322,7 @@ class uvm_component_name_check_visitor: uvm_visitor!uvm_component
   }
 
   override void begin_v() {
+    import uvm.base.uvm_coreservice;
     synchronized(this) {
       uvm_coreservice_t cs = uvm_coreservice_t.get();
       _root =  cs.get_root();

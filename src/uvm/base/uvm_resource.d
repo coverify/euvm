@@ -111,13 +111,13 @@ module uvm.base.uvm_resource;
 import uvm.base.uvm_object;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_object_globals;
-import uvm.base.uvm_root;
 import uvm.base.uvm_printer;
 import uvm.base.uvm_spell_chkr;
 import uvm.base.uvm_entity;
 import uvm.base.uvm_once;
 
 import uvm.meta.meta;
+import uvm.meta.misc;
 
 import esdl.base.core: SimTime, getRootEntity, Process;
 

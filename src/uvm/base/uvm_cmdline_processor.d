@@ -50,9 +50,6 @@ module uvm.base.uvm_cmdline_processor;
 
 import uvm.base.uvm_report_object;
 import uvm.base.uvm_object_globals;
-import uvm.base.uvm_root: uvm_top;
-import uvm.base.uvm_root;
-import uvm.base.uvm_entity;
 import uvm.base.uvm_once;
 import uvm.meta.misc;
 
