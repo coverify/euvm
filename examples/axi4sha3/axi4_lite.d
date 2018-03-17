@@ -514,7 +514,7 @@ void initializeESDL() {
   auto test = new uvm_testbench!test_root;
   test.multicore(0, 4);
   test.elaborate("test");
-  // test.tb.set_seed(100);
+  test.set_seed(100);
   test.setVpiMode();
 
   test.start_bg();
