@@ -192,8 +192,64 @@ abstract class uvm_component: uvm_report_object, ParContext
 
   mixin(uvm_sync_string);
 
-  mixin ParContextMixin;
+  // mixin(ParContextMixinString());
 
+  //////////////////////////////////////////////////////
+  // Implementation of the parallelize UDP functionality
+  //////////////////////////////////////////////////////
+
+  // Lock to inhibit parallel threads in the same Entity
+  // This valriable is set in elaboration phase and in the later
+  // phases it is only accessed. Therefor this variable can be
+  // treated as effectively immutable.
+
+  // In practice, the end-user does not need to bother about
+  // this Lock. It is automatically picked up by the simulator
+  // when a process wakes up and subsequently, when the process
+  // deactivates (starts waiting for an event), the simulator
+  // gives away the Lock
+  MulticoreConfig _esdl__multicoreConfig;
+  MulticoreConfig _esdl__getHierMulticoreConfig() {
+    // of the ParContext does not have a MulticoreConfig Object, get it
+    // from the enclosing ParContext
+    if (_esdl__multicoreConfig is null) {
+      _esdl__multicoreConfig =
+	_esdl__parInheritFrom()._esdl__getHierMulticoreConfig();
+    }
+    return _esdl__multicoreConfig;
+  }
+  MulticoreConfig _esdl__getMulticoreConfig() {
+    // of the ParContext does not have a MulticoreConfig Object, get it
+    // from the enclosing ParContext
+    return _esdl__multicoreConfig;
+  }
+  static if(!__traits(compiles, _esdl__parLock)) {
+    import core.sync.semaphore: CoreSemaphore = Semaphore;
+    CoreSemaphore _esdl__parLock;
+  }
+
+  // This variable keeps the information provided by the user as
+  // an argument to the parallelize UDP -- For the hierarchy
+  // levels where the parallelize UDP is not specified, the value
+  // for this variable is copied from the uppper hierarchy
+  // This variable is set and used only during the elaboration
+  // phase
+  static if(!__traits(compiles, _esdl__parInfo)) {
+    _esdl__Multicore _esdl__parInfo = _esdl__Multicore(MulticorePolicy._UNDEFINED_,
+						       uint.max); // default value
+    final _esdl__Multicore _esdl__getParInfo() {
+      return _esdl__parInfo;
+    }
+  }
+
+  // Effectively immutable in the run phase since the variable is
+  // set durin gthe elaboration
+  final CoreSemaphore _esdl__getParLock() {
+    return _esdl__parLock;
+  }
+
+  //////////////////////////////////////////////////////////////
+  
   _esdl__Multicore _par__info = _esdl__Multicore(MulticorePolicy._UNDEFINED_, uint.max);
 
   ParContext _esdl__parInheritFrom() {

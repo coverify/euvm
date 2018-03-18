@@ -23,7 +23,6 @@ module uvm.base.uvm_coreservice;
 import uvm.base.uvm_factory;
 import uvm.base.uvm_report_server;
 import uvm.base.uvm_traversal;
-import uvm.base.uvm_component;
 import uvm.base.uvm_tr_database;
 import uvm.base.uvm_entity;
 import uvm.base.uvm_once;
@@ -48,6 +47,7 @@ import std.random: Random;
 abstract class uvm_coreservice_t
 {
   import uvm.base.uvm_root: uvm_root;
+  import uvm.base.uvm_component;
   static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
@@ -135,6 +135,7 @@ abstract class uvm_coreservice_t
 class uvm_default_coreservice_t: uvm_coreservice_t
 {
   import uvm.base.uvm_root: uvm_root;
+  import uvm.base.uvm_component;
   // this() {
   //   synchronized(this) {
   //     _factory = new uvm_default_factory();

@@ -27,7 +27,7 @@
 module uvm.base.uvm_factory;
 
 import uvm.base.uvm_object;
-import uvm.base.uvm_component;
+import uvm.base.uvm_component: uvm_component;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_entity;

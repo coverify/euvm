@@ -122,7 +122,7 @@ alias uvm_report_cb_iter = uvm_callback_iter!(uvm_report_object, uvm_report_catc
 //
 //------------------------------------------------------------------------------
 
-abstract class uvm_report_catcher: uvm_callback
+abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
 {
   // Keep the message specific variables static (thread local)
   // as we know a message will not cross thread boudaries
@@ -486,8 +486,10 @@ abstract class uvm_report_catcher: uvm_callback
 
   // Group: Reporting
 
-  import uvm.base.uvm_message_defines: uvm_report_mixin;
-  mixin uvm_report_mixin;
+  // import uvm.base.uvm_message_defines: uvm_report_mixin_string;
+
+  // mixin uvm_report_mixin;
+  // mixin(uvm_report_mixin_string());
 
   // Function: uvm_report_fatal
   //
@@ -582,7 +584,7 @@ abstract class uvm_report_catcher: uvm_callback
   }
   
   // protected
-  static void uvm_process_report_message(uvm_report_message msg) {
+  void uvm_process_report_message(uvm_report_message msg) {
     uvm_report_object ro = _m_modified_report_message.get_report_object();
     uvm_action a = ro.get_report_action(msg.get_severity(), msg.get_id());
     if(a) {

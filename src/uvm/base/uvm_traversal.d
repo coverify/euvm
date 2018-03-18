@@ -31,7 +31,7 @@
 module uvm.base.uvm_traversal;
 
 import uvm.base.uvm_object;
-import uvm.base.uvm_component;
+import uvm.base.uvm_component: uvm_component;
 import uvm.base.uvm_globals;
 
 import std.regex;

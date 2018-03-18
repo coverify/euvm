@@ -90,6 +90,7 @@ import uvm.base.uvm_report_catcher;
 import uvm.base.uvm_report_message;
 import uvm.base.uvm_callback;
 import uvm.base.uvm_object_globals;
+import uvm.base.uvm_globals: uvm_report_intf;
 import esdl.base.core: finish;
 
 version(UVM_NO_DEPRECATED) { }
@@ -97,7 +98,7 @@ version(UVM_NO_DEPRECATED) { }
    version = UVM_INCLUDE_DEPRECATED;
  }
 
-class uvm_report_object: /*extends*/ uvm_object
+class uvm_report_object: /*extends*/ uvm_object, uvm_report_intf
 {
   mixin(uvm_sync_string);
 
@@ -129,8 +130,10 @@ class uvm_report_object: /*extends*/ uvm_object
   // Group: Reporting
   //----------------------------------------------------------------------------
 
-  import uvm.base.uvm_message_defines: uvm_report_mixin;
-  mixin uvm_report_mixin;
+  // import uvm.base.uvm_message_defines: uvm_report_mixin_string;
+  // // mixin uvm_report_mixin;
+  // mixin(uvm_report_mixin_string());
+  
 
   // Function: uvm_get_report_object
   //

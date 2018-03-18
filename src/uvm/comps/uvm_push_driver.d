@@ -23,7 +23,7 @@
 module uvm.comps.uvm_push_driver;
 import uvm.base.uvm_component;
 import uvm.seq.uvm_sequence_item;
-import uvm.base.uvm_globals; // uvm_report_fatal
+// import uvm.base.uvm_globals; // uvm_report_fatal
 import uvm.tlm1.uvm_imps;
 import uvm.tlm1.uvm_analysis_port;
 

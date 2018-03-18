@@ -39,6 +39,7 @@ module uvm.seq.uvm_sequence_item;
 import uvm.base.uvm_factory;
 import uvm.base.uvm_printer;
 import uvm.base.uvm_object_globals;
+import uvm.base.uvm_globals: uvm_report_intf;
 import uvm.base.uvm_transaction;
 import uvm.base.uvm_registry;
 import uvm.base.uvm_report_object;
@@ -56,7 +57,7 @@ version(UVM_NO_RAND) {}
    import esdl.rand;
  }
 
-class uvm_sequence_item: uvm_transaction
+class uvm_sequence_item: uvm_transaction, uvm_report_intf
 {
   mixin(uvm_sync_string);
 
@@ -420,8 +421,8 @@ class uvm_sequence_item: uvm_transaction
   // Group: Reporting
   //----------------------------------------------------------------------------
 
-  import uvm.base.uvm_message_defines: uvm_report_mixin;
-  mixin uvm_report_mixin;
+  // import uvm.base.uvm_message_defines: uvm_report_mixin;
+  // mixin uvm_report_mixin;
 
   //---------------------------
   // Group: Reporting Interface

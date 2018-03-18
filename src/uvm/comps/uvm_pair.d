@@ -40,7 +40,7 @@ module uvm.comps.uvm_pair;
 import uvm.base.uvm_object;
 import uvm.base.uvm_object_defines;
 import uvm.base.uvm_comparer;
-import uvm.base.uvm_globals;
+// import uvm.base.uvm_globals;
 import uvm.meta.meta;
 
 import std.string: format;

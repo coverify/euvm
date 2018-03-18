@@ -28,7 +28,6 @@ module uvm.base.uvm_objection;
 import uvm.base.uvm_callback;
 // import uvm.base.uvm_misc;
 import uvm.base.uvm_globals;
-import uvm.base.uvm_component;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_queue;
 import uvm.base.uvm_registry;
@@ -364,6 +363,7 @@ class uvm_objection: uvm_report_object
 
   final uvm_object m_get_parent(uvm_object obj) {
     import uvm.base.uvm_root: uvm_top, uvm_root;
+    import uvm.base.uvm_component;
     uvm_root m_top = uvm_top();
     uvm_component comp = cast(uvm_component) obj;
     uvm_sequence_base seq = cast(uvm_sequence_base) obj;
@@ -1113,6 +1113,7 @@ class uvm_objection: uvm_report_object
 	      uvm_object source_obj,
 	      string description,
 	      int count) {
+    import uvm.base.uvm_component;
     uvm_component comp = cast(uvm_component) obj;
     if(comp !is null) {
       comp.raised(this, source_obj, description, count);
@@ -1135,6 +1136,7 @@ class uvm_objection: uvm_report_object
 		uvm_object source_obj,
 		string description,
 		int count) {
+    import uvm.base.uvm_component;
     uvm_component comp = cast(uvm_component) obj;
     if(comp !is null) {
       comp.dropped(this, source_obj, description, count);
@@ -1160,6 +1162,7 @@ class uvm_objection: uvm_report_object
 		    string description,
 		    int count) {
     import uvm.base.uvm_root: uvm_top, uvm_root;
+    import uvm.base.uvm_component;
     uvm_root m_top = uvm_top();
 
     uvm_component comp = cast(uvm_component) obj;
@@ -1552,6 +1555,7 @@ class uvm_test_done_objection: uvm_objection
   void qualify(uvm_object obj,
 	       bool is_raise,
 	       string description) {
+    import uvm.base.uvm_component;
     uvm_component c = cast(uvm_component) obj;
     uvm_sequence_base s = cast(uvm_sequence_base) obj;
     string nm = is_raise ? "raise_objection" : "drop_objection";
@@ -1569,6 +1573,7 @@ class uvm_test_done_objection: uvm_objection
 
 
   version(UVM_INCLUDE_DEPRECATED) {
+    import uvm.base.uvm_component: uvm_component;
     // m_do_stop_all
     // -------------
 

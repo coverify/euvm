@@ -22,7 +22,7 @@ module uvm.comps.uvm_vpi_monitor;
 
 import uvm.base.uvm_phase;
 import uvm.base.uvm_component;
-import uvm.base.uvm_globals;
+// import uvm.base.uvm_globals;
 import uvm.base.uvm_object_globals;
 import uvm.comps.uvm_monitor;
 import uvm.tlm1.uvm_tlm_fifos;
