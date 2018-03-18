@@ -14,4 +14,4 @@ axi.vvp: axi_tb.v axi4_sha3_1.0/hdl/* axi4_sha3_1.0/src/*
 	iverilog -o $@ $^
 
 axi.vpi: axi4_lite.d c-model/libsha3.a
-	ldmd2 $(DFLAGS) -shared -of$@ -L-ldl -L-lesdl-ldc -L-luvm-ldc $^
+	ldmd2 $(DFLAGS) -shared -of$@ -L-ldl -L-lesdl-ldc-shared -L-luvm-ldc-shared $^
