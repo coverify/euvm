@@ -82,10 +82,12 @@ struct uvm_printer_row_info
 //------------------------------------------------------------------------------
 
 import esdl.data.bvec;
-import uvm.base.uvm_misc;
+
+import uvm.base.uvm_misc: uvm_scope_stack, uvm_object_value_str,
+  uvm_leaf_scope, uvm_bitvec_to_string;
 import uvm.base.uvm_object;
 import uvm.base.uvm_object_globals;
-import uvm.base.uvm_component;
+
 import uvm.meta.misc;
 import uvm.meta.meta;
 import std.traits: isIntegral, isBoolean;
@@ -242,6 +244,7 @@ abstract class uvm_printer
 		T          value,
 		char       scope_separator='.')
     if(is(T: uvm_object)) {
+      import uvm.base.uvm_component;
       synchronized(this) {
 	print_object_header(name, value, scope_separator);
 
@@ -288,6 +291,7 @@ abstract class uvm_printer
   void print_object_header (string name,
 			    uvm_object value,
 			    char scope_separator='.') {
+    import uvm.base.uvm_component;
     synchronized(this) {
       uvm_printer_row_info row_info;
 

@@ -21,7 +21,7 @@
 //------------------------------------------------------------------------------
 
 module uvm.base.uvm_port_base;
-import uvm.base.uvm_component;
+import uvm.base.uvm_component: uvm_component;
 import uvm.base.uvm_phase;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_domain;

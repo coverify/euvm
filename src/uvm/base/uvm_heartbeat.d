@@ -26,10 +26,8 @@
 
 module uvm.base.uvm_heartbeat;
 
-import uvm.base.uvm_coreservice;
 import uvm.base.uvm_object;
 import uvm.base.uvm_object_globals;
-import uvm.base.uvm_component;
 import uvm.base.uvm_callback;
 import uvm.base.uvm_event;
 import uvm.base.uvm_objection;
@@ -75,6 +73,7 @@ alias uvm_heartbeat_cbs_t =
 // typedef class uvm_objection_callback;
 class uvm_heartbeat: uvm_object
 {
+  import uvm.base.uvm_component;
   mixin(uvm_sync_string);
 
   @uvm_protected_sync
@@ -111,6 +110,7 @@ class uvm_heartbeat: uvm_object
   //| endclass
 
   this(string name, uvm_component cntxt, uvm_objection objection = null) {
+    import uvm.base.uvm_coreservice;
     synchronized(this) {
       super(name);
       _m_objection = objection;
@@ -422,6 +422,7 @@ class uvm_heartbeat_callback: uvm_objection_callback
   private uvm_object _target;
 
   this(string name, uvm_object target) {
+    import uvm.base.uvm_coreservice;
     synchronized(this) {
       super(name);
       if (target !is null) {

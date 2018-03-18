@@ -39,13 +39,16 @@ module uvm.base.uvm_misc;
 //
 //------------------------------------------------------------------------------
 import std.string: format;
-import uvm.base.uvm_coreservice;
+
+import uvm.base.uvm_root: uvm_root;
 import uvm.base.uvm_factory;
 import uvm.base.uvm_config_db;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_entity;
 import uvm.base.uvm_once;
 // import uvm.base.uvm_object_globals;
+
+import uvm.meta.misc;
 
 import esdl.data.bvec;
 import esdl.base.core: Event;
@@ -61,8 +64,6 @@ abstract class uvm_void: uvm_void_if {
 }
 
 
-
-import uvm.meta.misc;
 
 alias m_uvm_config_obj_misc = uvm_config_db!(uvm_object);
 
@@ -971,6 +972,8 @@ final class uvm_utils (TYPE=uvm_void, string FIELD="config") {
   // starting with the component given by ~start~. Uses <uvm_root::find_all>.
 
   static types_t find_all(uvm_component start) {
+    import uvm.base.uvm_coreservice;
+
     uvm_component[] list;
 
     types_t types;
@@ -1009,6 +1012,7 @@ final class uvm_utils (TYPE=uvm_void, string FIELD="config") {
   }
 
   static TYPE create_type_by_name(string type_name, string contxt) {
+    import uvm.base.uvm_coreservice;
     uvm_object obj;
 
     uvm_coreservice_t cs = uvm_coreservice_t.get();

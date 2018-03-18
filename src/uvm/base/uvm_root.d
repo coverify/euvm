@@ -69,7 +69,7 @@ module uvm.base.uvm_root;
 // typedef class uvm_test_done_objection;
 // typedef class uvm_cmdline_processor;
 import uvm.base.uvm_async_lock;
-import uvm.base.uvm_component; // uvm_component
+import uvm.base.uvm_component:  uvm_component;
 import uvm.base.uvm_cmdline_processor;
 import uvm.base.uvm_entity;
 import uvm.base.uvm_object_globals;
@@ -85,11 +85,10 @@ import uvm.base.uvm_report_server;
 import uvm.base.uvm_domain;
 import uvm.base.uvm_object_defines;
 import uvm.base.uvm_traversal;
-import uvm.base.uvm_coreservice;
 import uvm.base.uvm_config_db;
 import uvm.base.uvm_version;
 
-public import uvm.meta.misc;
+import uvm.meta.misc;
 import uvm.meta.meta;
 
 import esdl.base.core;
@@ -222,6 +221,7 @@ class uvm_root: uvm_component, uvm_root_intf
   // | uvm_root r;
   // | r = uvm_root::get();
   static uvm_root get() {
+    import uvm.base.uvm_coreservice;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     uvm_root root = cs.get_root();
     return root;
@@ -275,6 +275,7 @@ class uvm_root: uvm_component, uvm_root_intf
 
   // task
   void run_test(string test_name="") {
+    import uvm.base.uvm_coreservice;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     uvm_factory factory = cs.get_factory();
 
@@ -817,6 +818,7 @@ class uvm_root: uvm_component, uvm_root_intf
   // -----------------------
 
   void m_process_inst_override(string ovr) {
+    import uvm.base.uvm_coreservice;
     string[] split_val;
 
     uvm_coreservice_t cs = uvm_coreservice_t.get();
@@ -841,6 +843,7 @@ class uvm_root: uvm_component, uvm_root_intf
   // -----------------------
 
   void m_process_type_override(string ovr) {
+    import uvm.base.uvm_coreservice;
     string[] split_val;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     uvm_factory factory = cs.get_factory();
@@ -963,6 +966,7 @@ class uvm_root: uvm_component, uvm_root_intf
   // ----------------
 
   void m_process_config(string cfg, bool is_int) {
+    import uvm.base.uvm_coreservice;
     int v;
     string[] split_val;
 
@@ -1034,6 +1038,7 @@ class uvm_root: uvm_component, uvm_root_intf
   // ----------------
 
   void m_process_default_sequence(string cfg) {
+    import uvm.base.uvm_coreservice;
     synchronized(this) {
       string[] split_val;
       uvm_coreservice_t cs = uvm_coreservice_t.get();
@@ -1334,6 +1339,7 @@ class uvm_root: uvm_component, uvm_root_intf
   private bool _m_relnotes_done = false;
 
   override void end_of_elaboration_phase(uvm_phase phase) {
+    import uvm.base.uvm_coreservice;
     synchronized(this) {
       auto p = new uvm_component_proxy("proxy");
       auto adapter = new uvm_top_down_visitor_adapter!uvm_component("adapter");

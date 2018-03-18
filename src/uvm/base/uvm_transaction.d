@@ -24,7 +24,6 @@
 module uvm.base.uvm_transaction;
 
 import uvm.base.uvm_object;
-import uvm.base.uvm_component;
 import uvm.base.uvm_event;
 import uvm.base.uvm_recorder;
 import uvm.base.uvm_printer;
@@ -141,6 +140,7 @@ import std.string: format;
 
 abstract class uvm_transaction: uvm_object
 {
+  import uvm.base.uvm_component;
   mixin(uvm_sync_string);
 
   // Function: new

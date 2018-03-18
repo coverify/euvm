@@ -33,7 +33,7 @@ module uvm.base.uvm_comparer;
 //
 //------------------------------------------------------------------------------
 
-import uvm.base.uvm_misc;
+import uvm.base.uvm_misc: uvm_scope_stack;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_object;
 import uvm.base.uvm_globals;

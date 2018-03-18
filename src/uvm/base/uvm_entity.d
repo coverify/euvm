@@ -24,7 +24,7 @@ import uvm.base.uvm_root: uvm_root;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_once;
-import uvm.base.uvm_misc;
+import uvm.base.uvm_misc: uvm_seed_map;
 
 import uvm.meta.misc;
 import uvm.meta.meta;

@@ -25,9 +25,8 @@
 module uvm.base.uvm_objection;
 
 
-import uvm.base.uvm_coreservice;
 import uvm.base.uvm_callback;
-import uvm.base.uvm_misc;
+// import uvm.base.uvm_misc;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_component;
 import uvm.base.uvm_object_globals;
@@ -199,6 +198,7 @@ class uvm_objection: uvm_report_object
   // uvm_root m_top = uvm_top();
   
   // static protected uvm_root m_top() {
+  //   import uvm.base.uvm_coreservice;
   //   uvm_coreservice_t cs = uvm_coreservice_t.get();
   //   return cs.get_root();
   // }

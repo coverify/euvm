@@ -262,6 +262,7 @@ mixin template uvm_component_registry_mixin(T, string S)
 
 mixin template uvm_new_func()
 {
+  import uvm.base.uvm_component: uvm_component;
   this (string name, uvm_component parent) {
     super(name, parent);
   }
@@ -376,7 +377,6 @@ mixin template m_uvm_object_auto_utils(T)
   import uvm.base.uvm_object_globals: uvm_bitstream_t;
   import uvm.base.uvm_globals;
   import uvm.base.uvm_object;
-  import uvm.base.uvm_component;
   import uvm.seq.uvm_sequence_item;
   import uvm.seq.uvm_sequence_base;
   import uvm.base.uvm_object_globals;

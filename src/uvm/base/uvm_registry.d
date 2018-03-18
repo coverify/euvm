@@ -23,7 +23,6 @@
 
 module uvm.base.uvm_registry;
 import uvm.base.uvm_once;
-import uvm.base.uvm_coreservice;
 import uvm.meta.misc;
 
 // `ifndef UVM_REGISTRY_SVH
@@ -107,6 +106,7 @@ class uvm_component_registry(T=uvm_component, string Tname="<unknown>"):
     // depends on there being a single proxy instance for each registered type.
 
     static this_type get() {
+      // import uvm.base.uvm_coreservice;
       // synchronized(typeid(this_type)) {
       // 	if(_me is null) {
       // 	  uvm_coreservice_t cs = uvm_coreservice_t.get();
@@ -137,6 +137,7 @@ class uvm_component_registry(T=uvm_component, string Tname="<unknown>"):
 
     static T create(string name = "", uvm_component parent = null,
 		    string contxt = "") {
+      import uvm.base.uvm_coreservice;
       uvm_coreservice_t cs = uvm_coreservice_t.get();
       uvm_factory factory = cs.get_factory();
       if (contxt == "" && parent !is null) {
@@ -167,6 +168,7 @@ class uvm_component_registry(T=uvm_component, string Tname="<unknown>"):
 
     static void set_type_override (uvm_object_wrapper override_type,
 				   bool replace=true) {
+      import uvm.base.uvm_coreservice;
       uvm_coreservice_t cs = uvm_coreservice_t.get();
       uvm_factory factory = cs.get_factory();
       factory.set_type_override_by_type(get(), override_type, replace);
@@ -191,6 +193,7 @@ class uvm_component_registry(T=uvm_component, string Tname="<unknown>"):
     static void set_inst_override(uvm_object_wrapper override_type,
 				  string inst_path,
 				  uvm_component parent=null) {
+      import uvm.base.uvm_coreservice;
       string full_inst_path;
       if (parent !is null) {
 	if (inst_path == "") {
@@ -223,7 +226,7 @@ class uvm_component_registry(T=uvm_component, string Tname="<unknown>"):
 
 import uvm.base.uvm_factory;
 import uvm.base.uvm_object;
-import uvm.base.uvm_component;
+import uvm.base.uvm_component: uvm_component;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_object_globals;
 
@@ -322,6 +325,7 @@ class uvm_object_registry (T = uvm_object, string Tname = "<unknown>"):
 
     static T create(string name="", uvm_component parent=null,
 		    string contxt="") {
+      import uvm.base.uvm_coreservice;
       uvm_object obj;
       if (contxt == "" && parent !is null) {
 	contxt = parent.get_full_name();
@@ -350,6 +354,7 @@ class uvm_object_registry (T = uvm_object, string Tname = "<unknown>"):
 
     static void set_type_override (uvm_object_wrapper override_type,
 				   bool replace=1) {
+      import uvm.base.uvm_coreservice;
       uvm_coreservice_t cs = uvm_coreservice_t.get();
       uvm_factory factory = cs.get_factory();
       factory.set_type_override_by_type(get(), override_type, replace);
@@ -374,6 +379,7 @@ class uvm_object_registry (T = uvm_object, string Tname = "<unknown>"):
     static void set_inst_override(uvm_object_wrapper override_type,
 				  string inst_path,
 				  uvm_component parent=null) {
+      import uvm.base.uvm_coreservice;
       string full_inst_path;
       if (parent !is null) {
 	if (inst_path == "") {

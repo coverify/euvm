@@ -40,11 +40,12 @@ import uvm.base.uvm_resource;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_printer;
 import uvm.base.uvm_queue;
-import uvm.base.uvm_root;
 import uvm.base.uvm_once;
-import uvm.base.uvm_coreservice;
-import std.conv: to;
+
 import uvm.meta.meta;
+import uvm.meta.misc;
+
+import std.conv: to;
 import std.string: format;
 
 
@@ -161,6 +162,7 @@ class uvm_pool(KEY=int, VAL=uvm_void): /*extends*/ uvm_object
   // private __gshared this_type[uvm_object] _m_global_pool;
 
   static this_type get_global_pool() {
+    // import uvm.base.uvm_coreservice;
     // synchronized(typeid(this_type)) {
     //   uvm_coreservice_t cs = uvm_coreservice_t.get();
     //   uvm_root top = cs.get_root();
@@ -483,6 +485,7 @@ class uvm_object_string_pool(VAL=uvm_object): /*extends*/ uvm_pool!(string,VAL) 
   mixin(uvm_once_sync_string);
 
   static this_type get_global_pool() {
+    // import uvm.base.uvm_coreservice;
     // synchronized(typeid(this_type)) {
     //   uvm_coreservice_t cs = uvm_coreservice_t.get();
     //   uvm_root top = cs.get_root();

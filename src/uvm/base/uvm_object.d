@@ -45,8 +45,11 @@ module uvm.base.uvm_object;
 // <create> and <get_type_name>.
 //
 //------------------------------------------------------------------------------
-import uvm.base.uvm_coreservice;
-import uvm.base.uvm_misc;
+
+import uvm.base.uvm_misc: uvm_void, uvm_status_container;
+import uvm.base.uvm_misc: uvm_create_random_seed;
+import uvm.base.uvm_misc: UVM_ELEMENT_TYPE;
+import uvm.base.uvm_misc: uvm_get_array_index_int, uvm_is_array;
 
 import uvm.base.uvm_recorder;
 
@@ -60,7 +63,6 @@ import uvm.base.uvm_packer;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_report_object;
 import uvm.base.uvm_globals;
-import uvm.base.uvm_component: uvm_component, uvm__config_parallelism;
 import uvm.base.uvm_port_base;
 import uvm.comps.uvm_agent;
 import uvm.meta.mcd;
@@ -341,6 +343,7 @@ abstract class uvm_object: uvm_void
   // This function is implemented by the `uvm_*_utils macros, if employed.
 
   uvm_object_wrapper get_object_type () {
+    import uvm.base.uvm_coreservice;
     if(get_type_name() == "<unknown>") return null;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     uvm_factory factory = cs.get_factory();

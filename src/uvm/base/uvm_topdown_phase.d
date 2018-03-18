@@ -36,17 +36,17 @@
 module uvm.base.uvm_topdown_phase;
 
 import uvm.base.uvm_phase;
-import uvm.base.uvm_component;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_domain;
-import uvm.base.uvm_misc;
+import uvm.base.uvm_misc: uvm_create_random_seed;
 
 import esdl.base.core: Process;
 import std.string: format;
 
 abstract class uvm_topdown_phase: uvm_phase
 {
+  import uvm.base.uvm_component;
   // Function: new
   //
   // Create a new instance of a top-down phase
@@ -62,8 +62,8 @@ abstract class uvm_topdown_phase: uvm_phase
   // each component.
   //
   override void traverse(uvm_component comp,
-				uvm_phase phase,
-				uvm_phase_state state) {
+			 uvm_phase phase,
+			 uvm_phase_state state) {
     uvm_domain phase_domain = phase.get_domain();
     uvm_domain comp_domain = comp.get_domain();
 
@@ -121,7 +121,7 @@ abstract class uvm_topdown_phase: uvm_phase
   // Executes the top-down phase ~phase~ for the component ~comp~.
   //
   override void execute(uvm_component comp,
-			       uvm_phase phase) {
+			uvm_phase phase) {
     // reseed this process for random stability
     auto proc = Process.self;
     proc.srandom(uvm_create_random_seed(phase.get_type_name(),

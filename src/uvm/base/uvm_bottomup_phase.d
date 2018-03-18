@@ -38,10 +38,10 @@ module uvm.base.uvm_bottomup_phase;
 
 import uvm.base.uvm_phase;
 import uvm.base.uvm_domain;
-import uvm.base.uvm_component;
+import uvm.base.uvm_component: uvm_component;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_globals;
-import uvm.base.uvm_misc;
+import uvm.base.uvm_misc: uvm_create_random_seed;
 
 import esdl.base.core: Process;
 import std.conv: to;

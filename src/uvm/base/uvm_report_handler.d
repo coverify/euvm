@@ -46,7 +46,6 @@ module uvm.base.uvm_report_handler;
 //
 //------------------------------------------------------------------------------
 
-import uvm.base.uvm_coreservice;
 import uvm.base.uvm_pool;
 import uvm.base.uvm_object_globals;
 
@@ -663,6 +662,7 @@ class uvm_report_handler: uvm_object
 	      size_t line = 0,
 	      uvm_report_object client = null
 	      ) {
+    import uvm.base.uvm_coreservice;
     synchronized(this) {
       bool l_report_enabled = false;
       uvm_report_message l_report_message;

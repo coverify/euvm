@@ -41,7 +41,6 @@
 module uvm.base.uvm_config_db;
 
 import uvm.base.uvm_component;
-import uvm.base.uvm_coreservice;
 import uvm.base.uvm_phase;
 import uvm.base.uvm_pool;
 import uvm.base.uvm_resource_db;
@@ -160,6 +159,7 @@ class uvm_config_db (T = int): uvm_resource_db!T
 		  string inst_name,
 		  string field_name,
 		  ref T value) {
+    import uvm.base.uvm_coreservice;
     //TBD: add file/line
     uvm_resource_pool rp = uvm_resource_pool.get();
 
@@ -229,6 +229,7 @@ class uvm_config_db (T = int): uvm_resource_db!T
 		  string inst_name,
 		  string field_name,
 		  T value) {
+    import uvm.base.uvm_coreservice;
     import esdl.base.core: Process;
 
     uvm_resource!T r;
@@ -338,6 +339,7 @@ class uvm_config_db (T = int): uvm_resource_db!T
 
   static bool exists(uvm_component cntxt, string inst_name,
 		     string field_name, bool spell_chk = false) {
+    import uvm.base.uvm_coreservice;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     if(cntxt is null) {
       cntxt = cs.get_root();
@@ -361,6 +363,7 @@ class uvm_config_db (T = int): uvm_resource_db!T
   // task
   static void wait_modified(uvm_component cntxt, string inst_name,
 			    string field_name) {
+    import uvm.base.uvm_coreservice;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     Process p = Process.self();
     Random rstate;

@@ -47,13 +47,12 @@ import uvm.base.uvm_transaction;
 import uvm.base.uvm_resource;
 import uvm.base.uvm_queue;
 import uvm.base.uvm_event;
-import uvm.base.uvm_misc;
+import uvm.base.uvm_misc: UVM_ELEMENT_TYPE, UVM_IN_TUPLE;
 import uvm.base.uvm_links;
 import uvm.base.uvm_port_base;
 import uvm.base.uvm_tr_stream;
 import uvm.base.uvm_tr_database;
 import uvm.comps.uvm_agent;
-import uvm.base.uvm_coreservice;
 import uvm.base.uvm_entity;
 import uvm.base.uvm_once;
 
@@ -198,6 +197,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   _esdl__Multicore _par__info = _esdl__Multicore(MulticorePolicy._UNDEFINED_, uint.max);
 
   ParContext _esdl__parInheritFrom() {
+    import uvm.base.uvm_coreservice;
     auto c = get_parent();
     if(c is null) {
       uvm_coreservice_t cs = uvm_coreservice_t.get();
@@ -233,6 +233,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   this(string name, uvm_component parent) {
     import uvm.base.uvm_root;
     import uvm.base.uvm_entity;
+    import uvm.base.uvm_coreservice;
     synchronized(this) {
 
       super(name);
@@ -588,6 +589,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 
   final uvm_component lookup(string name) {
     import uvm.base.uvm_root;
+    import uvm.base.uvm_coreservice;
     synchronized(this) {
       uvm_coreservice_t cs = uvm_coreservice_t.get();
       uvm_root top = cs.get_root(); // uvm_root.get();
@@ -2150,6 +2152,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 
   final uvm_component create_component (string requested_type_name,
 					string name) {
+    import uvm.base.uvm_coreservice;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     uvm_factory factory = cs.get_factory();
     return factory.create_component_by_name(requested_type_name,
@@ -2174,6 +2177,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 
   final uvm_object create_object (string requested_type_name,
 				  string name = "") {
+    import uvm.base.uvm_coreservice;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     uvm_factory factory = cs.get_factory();
     return factory.create_object_by_name(requested_type_name,
@@ -2204,6 +2208,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   static void set_type_override_by_type(uvm_object_wrapper original_type,
 					uvm_object_wrapper override_type,
 					bool replace = true) {
+    import uvm.base.uvm_coreservice;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     uvm_factory factory = cs.get_factory();
     factory.set_type_override_by_type(original_type, override_type,
@@ -2265,6 +2270,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   final void set_inst_override_by_type(string relative_inst_path,
 				       uvm_object_wrapper original_type,
 				       uvm_object_wrapper override_type) {
+    import uvm.base.uvm_coreservice;
     string full_inst_path;
 
     if(relative_inst_path == "") {
@@ -2299,6 +2305,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   static void set_type_override(string original_type_name,
 				string override_type_name,
 				bool replace = true) {
+    import uvm.base.uvm_coreservice;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     uvm_factory factory = cs.get_factory();
     factory.set_type_override_by_name(original_type_name,
@@ -2329,6 +2336,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   final void  set_inst_override(string relative_inst_path,
 				string original_type_name,
 				string override_type_name) {
+    import uvm.base.uvm_coreservice;
     string full_inst_path;
 
     if(relative_inst_path == "") {
@@ -2355,6 +2363,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 
   final void  print_override_info (string requested_type_name,
 				   string name = "") {
+    import uvm.base.uvm_coreservice;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     uvm_factory factory = cs.get_factory();
     factory.debug_create_by_name(requested_type_name,
@@ -2977,6 +2986,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   // m_get_tr_database
   // ---------------------
   uvm_tr_database m_get_tr_database() {
+    import uvm.base.uvm_coreservice;
     synchronized(this) {
       if(_tr_database is null) {
 	uvm_coreservice_t cs = uvm_coreservice_t.get();
@@ -3101,6 +3111,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   // ---------------
 
   private void m_set_full_name() {
+    import uvm.base.uvm_coreservice;
     synchronized(this) {
       auto cs = uvm_coreservice_t.get();
       auto top = cs.get_root();
@@ -3441,6 +3452,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   // m_set_cl_verb
   // -------------
   final void m_set_cl_verb() {
+    import uvm.base.uvm_coreservice;
     import uvm.base.uvm_root;
     synchronized(this) {
       // _ALL_ can be used for ids

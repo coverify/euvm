@@ -43,7 +43,7 @@ module uvm.base.uvm_recorder;
 //------------------------------------------------------------------------------
 
 import uvm.base.uvm_object;
-import uvm.base.uvm_misc;
+import uvm.base.uvm_misc: uvm_scope_stack, uvm_bitvec_to_string;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_object_globals;
 import uvm.meta.mcd;

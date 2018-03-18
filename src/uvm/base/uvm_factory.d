@@ -28,7 +28,6 @@ module uvm.base.uvm_factory;
 
 import uvm.base.uvm_object;
 import uvm.base.uvm_component;
-import uvm.base.uvm_coreservice;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_entity;
@@ -220,6 +219,7 @@ abstract class uvm_factory
   // | f = uvm_factory::get();
   //
   static  uvm_factory get() {
+    import uvm.base.uvm_coreservice;
     uvm_coreservice_t s = uvm_coreservice_t.get();
     return s.get_factory();
   }

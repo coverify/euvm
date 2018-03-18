@@ -136,7 +136,6 @@ import uvm.base.uvm_objection;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_object_defines;
 import uvm.base.uvm_globals;
-import uvm.base.uvm_component;
 import uvm.base.uvm_callback;
 import uvm.base.uvm_domain;
 import uvm.base.uvm_entity;
@@ -160,6 +159,8 @@ import esdl.data.queue;
 
 class uvm_phase: uvm_object
 {
+  import uvm.base.uvm_component;
+
   mixin(uvm_sync_string);
   mixin(uvm_once_sync_string);
 

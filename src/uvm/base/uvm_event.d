@@ -38,7 +38,7 @@ import uvm.base.uvm_object;
 import uvm.base.uvm_event_callback;
 import uvm.base.uvm_printer;
 import uvm.base.uvm_globals;
-import uvm.base.uvm_misc;
+// import uvm.base.uvm_misc;
 import uvm.base.uvm_object_globals;
 import uvm.meta.misc;
 import uvm.meta.meta;

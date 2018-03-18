@@ -20,11 +20,11 @@
 
 module uvm.base.uvm_async_lock;
 
-import uvm.base.uvm_component: uvm_component;
 import esdl.base.core: AsyncLock, AsyncEvent;
 
 class uvm_async_lock: AsyncLock
 {
+  import uvm.base.uvm_component: uvm_component;
   this(uvm_component parent, int tokens=0) {
     synchronized(this) {
       super(parent.get_root_entity(), tokens);
@@ -35,6 +35,7 @@ class uvm_async_lock: AsyncLock
 
 class uvm_async_event
 {
+  import uvm.base.uvm_component: uvm_component;
   private AsyncEvent _event;
   AsyncEvent event() {
     return _event;

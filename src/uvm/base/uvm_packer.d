@@ -38,7 +38,7 @@ module uvm.base.uvm_packer;
 //
 //-------------------------------------------------------------------------------
 
-import uvm.base.uvm_misc;
+import uvm.base.uvm_misc: uvm_status_container, uvm_scope_stack;
 import uvm.base.uvm_object;
 import uvm.base.uvm_printer;
 import uvm.base.uvm_object_globals;
