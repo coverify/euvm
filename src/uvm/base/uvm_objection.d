@@ -34,8 +34,6 @@ import uvm.base.uvm_registry;
 import uvm.base.uvm_domain;
 import uvm.base.uvm_entity;
 
-import uvm.seq.uvm_sequence_base;
-
 import uvm.meta.misc;
 import uvm.meta.meta;
 
@@ -362,8 +360,10 @@ class uvm_objection: uvm_report_object
   // The ultimate parent is uvm_top, UVM's implicit top-level component.
 
   final uvm_object m_get_parent(uvm_object obj) {
+    import uvm.seq.uvm_sequence_base;
     import uvm.base.uvm_root: uvm_top, uvm_root;
     import uvm.base.uvm_component;
+
     uvm_root m_top = uvm_top();
     uvm_component comp = cast(uvm_component) obj;
     uvm_sequence_base seq = cast(uvm_sequence_base) obj;
@@ -1556,6 +1556,8 @@ class uvm_test_done_objection: uvm_objection
 	       bool is_raise,
 	       string description) {
     import uvm.base.uvm_component;
+    import uvm.seq.uvm_sequence_base;
+
     uvm_component c = cast(uvm_component) obj;
     uvm_sequence_base s = cast(uvm_sequence_base) obj;
     string nm = is_raise ? "raise_objection" : "drop_objection";

@@ -37,7 +37,6 @@ import uvm.base.uvm_pool;
 import uvm.base.uvm_common_phases;
 import uvm.base.uvm_config_db;
 import uvm.base.uvm_spell_chkr;
-import uvm.base.uvm_cmdline_processor;
 // import uvm.base.uvm_globals;
 import uvm.base.uvm_config_db;
 import uvm.base.uvm_factory;
@@ -52,12 +51,9 @@ import uvm.base.uvm_links;
 import uvm.base.uvm_port_base;
 import uvm.base.uvm_tr_stream;
 import uvm.base.uvm_tr_database;
-import uvm.comps.uvm_agent;
 import uvm.base.uvm_entity;
 import uvm.base.uvm_once;
 
-import uvm.seq.uvm_sequence_item;
-import uvm.seq.uvm_sequence_base;
 import uvm.meta.meta;		// qualifiedTypeName
 import uvm.meta.misc;		// qualifiedTypeName
 import uvm.base.uvm_globals: uvm_is_match;
@@ -3275,6 +3271,8 @@ abstract class uvm_component: uvm_report_object, ParContext
 			    int parent_handle=0,
 			    string stream_name="main", string label="",
 			    string desc="", SimTime begin_time=0) {
+    import uvm.seq.uvm_sequence_item;
+    import uvm.seq.uvm_sequence_base;
     synchronized(this) {
 
       uvm_event!uvm_object e;
@@ -3510,6 +3508,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   final void m_set_cl_verb() {
     import uvm.base.uvm_coreservice;
     import uvm.base.uvm_root;
+    import uvm.base.uvm_cmdline_processor;
     synchronized(this) {
       // _ALL_ can be used for ids
       // +uvm_set_verbosity=<comp>,<id>,<verbosity>,<phase|time>,<offset>
@@ -3608,7 +3607,7 @@ abstract class uvm_component: uvm_report_object, ParContext
     // _ALL_ can be used for ids or severities
     // +uvm_set_action=<comp>,<id>,<severity>,<action[|action]>
     // +uvm_set_action=uvm_test_top.env0.*,_ALL_,UVM_ERROR,UVM_NO_ACTION
-
+    import uvm.base.uvm_cmdline_processor;
     synchronized(this) {
       uvm_severity sev;
       uvm_action action;
@@ -3693,7 +3692,7 @@ abstract class uvm_component: uvm_report_object, ParContext
     // _ALL_ can be used for ids or severities
     //  +uvm_set_severity=<comp>,<id>,<orig_severity>,<new_severity>
     //  +uvm_set_severity=uvm_test_top.env0.*,BAD_CRC,UVM_ERROR,UVM_WARNING
-
+    import uvm.base.uvm_cmdline_processor;
     synchronized(this) {
       uvm_severity orig_sev;
       uvm_severity sev;
@@ -3924,6 +3923,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 						    int        what)
     if (is(T: uvm_component)) {
       static if (I < t.tupleof.length) {
+	import uvm.comps.uvm_agent;
 	enum FLAGS = uvm_field_auto_get_flags!(t, I);
 	alias EE = UVM_ELEMENT_TYPE!(typeof(t.tupleof[I]));
 	static if ((is(EE: uvm_component) ||

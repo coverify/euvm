@@ -66,7 +66,6 @@ import uvm.base.uvm_pool;
 import uvm.base.uvm_queue;
 import uvm.base.uvm_once;
 import uvm.base.uvm_entity;
-import uvm.base.uvm_component;
 import uvm.meta.mcd;
 import uvm.meta.meta;
 
@@ -583,6 +582,8 @@ class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
 
 class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
 {
+  import uvm.base.uvm_component: uvm_component;
+
   static class uvm_once: uvm_once_base
   {
     @uvm_private_sync

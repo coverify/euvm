@@ -63,7 +63,6 @@ import uvm.base.uvm_object_globals;
 import uvm.base.uvm_domain;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_misc: uvm_create_random_seed;
-import uvm.seq.uvm_sequencer_base;
 import esdl.base.core: Process, fork, Fork;
 
 abstract class uvm_task_phase: uvm_phase
@@ -96,6 +95,7 @@ abstract class uvm_task_phase: uvm_phase
   final void m_traverse(uvm_component comp,
 			uvm_phase phase,
 			uvm_phase_state state) {
+    import uvm.seq.uvm_sequencer_base;
     uvm_domain phase_domain = phase.get_domain();
     uvm_domain comp_domain = comp.get_domain();
 

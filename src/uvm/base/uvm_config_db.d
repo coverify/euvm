@@ -40,7 +40,6 @@
 
 module uvm.base.uvm_config_db;
 
-import uvm.base.uvm_component;
 import uvm.base.uvm_phase;
 import uvm.base.uvm_pool;
 import uvm.base.uvm_resource_db;
@@ -116,6 +115,7 @@ mixin(uvm_once_sync_string!(uvm_once_config_db, "uvm_config_db"));
 
 class uvm_config_db (T = int): uvm_resource_db!T
 {
+  import uvm.base.uvm_component: uvm_component;
 
   // This particular one can remain static even if here are multiple
   // instances of UVM. The idea is that uvm_component would be a

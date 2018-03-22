@@ -64,7 +64,6 @@ import uvm.base.uvm_object_globals;
 import uvm.base.uvm_report_object;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_port_base;
-import uvm.comps.uvm_agent;
 import uvm.meta.mcd;
 import uvm.meta.misc;
 import uvm.vpi.uvm_vpi_intf;
@@ -2352,6 +2351,14 @@ abstract class uvm_object: uvm_void
     return null;
   }
 
+  // Moved from uvm_misc
+  string uvm_object_value_str() {
+    import std.conv;
+    // if (v is null) {
+    //   return "<null>";
+    // }
+    return "@" ~ (get_inst_id()).to!string();
+  }
 }
 
 

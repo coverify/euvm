@@ -40,7 +40,6 @@ module uvm.base.uvm_misc;
 //------------------------------------------------------------------------------
 import std.string: format;
 
-import uvm.base.uvm_root: uvm_root;
 import uvm.base.uvm_factory;
 import uvm.base.uvm_config_db;
 import uvm.base.uvm_object_globals;
@@ -65,7 +64,7 @@ abstract class uvm_void: uvm_void_if {
 
 
 
-alias m_uvm_config_obj_misc = uvm_config_db!(uvm_object);
+// alias m_uvm_config_obj_misc = uvm_config_db!(uvm_object);
 
 
 // Append/prepend symbolic values for order-dependent APIs
@@ -718,13 +717,15 @@ uint uvm_global_random_seed() {
 // Function- uvm_object_value_str
 //
 //
-import uvm.base.uvm_object: uvm_object;
-string uvm_object_value_str(uvm_object v) {
-  if (v is null) {
-    return "<null>";
-  }
-  return "@" ~ (v.get_inst_id()).to!string();
-}
+
+// Moved to uvm_object.d
+// import uvm.base.uvm_object: uvm_object;
+// string uvm_object_value_str(uvm_object v) {
+//   if (v is null) {
+//     return "<null>";
+//   }
+//   return "@" ~ (v.get_inst_id()).to!string();
+// }
 
 // Function- uvm_leaf_scope
 //
@@ -973,12 +974,14 @@ final class uvm_utils (TYPE=uvm_void, string FIELD="config") {
 
   static types_t find_all(uvm_component start) {
     import uvm.base.uvm_coreservice;
+    import uvm.base.uvm_root: uvm_root;
 
     uvm_component[] list;
 
     types_t types;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     uvm_root top = cs.get_root();
+
     top.find_all("*", list, start);
     foreach (comp; list) {
       TYPE typ = cast(TYPE) comp;
@@ -1039,7 +1042,7 @@ final class uvm_utils (TYPE=uvm_void, string FIELD="config") {
   static TYPE get_config(uvm_component comp, bool is_fatal) {
     uvm_object obj;
 
-    if (!m_uvm_config_obj_misc.get(comp,"",FIELD, obj)) {
+    if (!uvm_config_db!(uvm_object).get(comp,"",FIELD, obj)) {
       if (is_fatal) {
 	comp.uvm_report_fatal("NO_SET_CFG",
 			      "no set_config to field '" ~ FIELD ~

@@ -24,7 +24,8 @@
 
 module uvm.base.uvm_printer;
 
-import uvm.base.uvm_globals;
+// import uvm.base.uvm_globals;
+
 import std.conv: to;
 import esdl.base.core: SimTime;
 import std.traits: isFloatingPoint;
@@ -83,7 +84,7 @@ struct uvm_printer_row_info
 
 import esdl.data.bvec;
 
-import uvm.base.uvm_misc: uvm_scope_stack, uvm_object_value_str,
+import uvm.base.uvm_misc: uvm_scope_stack,
   uvm_leaf_scope, uvm_bitvec_to_string;
 import uvm.base.uvm_object;
 import uvm.base.uvm_object_globals;
@@ -324,8 +325,9 @@ abstract class uvm_printer
 
       row_info.type_name = (value !is null) ? value.get_type_name() : "object";
       row_info.size = "-";
-      row_info.val = knobs.reference ? uvm_object_value_str(value) : "-";
-
+      row_info.val =
+	knobs.reference ?
+	((value is null) ? "<null>" : value.uvm_object_value_str) : "-";
       _m_rows ~= row_info;
     }
   }
