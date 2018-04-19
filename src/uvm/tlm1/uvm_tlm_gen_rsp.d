@@ -209,7 +209,7 @@ class uvm_tlm_gen_rsp_channel(RSP): uvm_component
 	("slave_export",  this, m_generate_fifo, m_response_fifo);
 
       // This function is defined in the base class uvm_component
-      set_report_id_action_hier(s_connection_error_id, UVM_NO_ACTION);
+      set_report_id_action_hier(s_connection_error_id, uvm_action_type.UVM_NO_ACTION);
 
     }
   }
@@ -402,7 +402,7 @@ class uvm_tlm_gen_rsp_vpi_channel(RSP): uvm_component
 	("slave_export",  this, m_generate_fifo, m_response_fifo);
 
       // This function is defined in the base class uvm_component
-      set_report_id_action_hier(s_connection_error_id, UVM_NO_ACTION);
+      set_report_id_action_hier(s_connection_error_id, uvm_action_type.UVM_NO_ACTION);
 
     }
   }

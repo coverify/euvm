@@ -27,11 +27,6 @@
 
 module uvm.base.uvm_spell_chkr;
 
-import uvm.base.uvm_globals;	// uvm_info
-import std.string: format;
-import uvm.base.uvm_object_globals;
-
-
 
 // A stateless template class. Need no synchronization.
 class uvm_spell_chkr(T=int)
@@ -83,6 +78,9 @@ class uvm_spell_chkr(T=int)
   // not required for dlang since assoc arrays are anyways passed by
   // ref in dlang
   static bool check ( /* const ref */ tab_t strtab, in string s) {
+    import uvm.base.uvm_globals;	// uvm_info
+    import uvm.base.uvm_object_globals;
+    import std.string: format;
 
     // SV version uses a queue, but a dynamic array would be fine too
     // string min_key[$];
@@ -115,7 +113,7 @@ class uvm_spell_chkr(T=int)
     if(min == max) {
       uvm_info("UVM/CONFIGDB/SPELLCHK",
 	       format("%s not located, no alternatives to suggest", s),
-	       UVM_NONE);
+	       uvm_verbosity.UVM_NONE);
     }
     else {
       // dump all the alternatives with the minimum distance
@@ -130,7 +128,7 @@ class uvm_spell_chkr(T=int)
       }
 	   		
       uvm_info("UVM/CONFIGDB/SPELLCHK",
-	       format("%s not located, did you mean %s", s, q), UVM_NONE);
+	       format("%s not located, did you mean %s", s, q), uvm_verbosity.UVM_NONE);
     }
     return 0;
   }
@@ -154,6 +152,7 @@ class uvm_spell_chkr(T=int)
   // C implementatiion located at http://www.merriampark.com/ldc.htm.
   //--------------------------------------------------------------------
   static private int levenshtein_distance(string s, string t) {
+    import std.algorithm: min;
     //Step 1
     int n = cast(int) s.length + 1;
     int m = cast(int) t.length + 1;
@@ -180,7 +179,6 @@ class uvm_spell_chkr(T=int)
 	int cost = !(s[i-1] is t[j-1]);
 
 	//Step 6
-	import std.algorithm: min;
 	d[j*n+i] = min(d[(j-1)*n+i]+1, d[j*n+i-1]+1, d[(j-1)*n+i-1]+cost);
       }
     }

@@ -33,10 +33,10 @@ module uvm.base.uvm_barrier;
 // released.
 //-----------------------------------------------------------------------------
 
-import uvm.base.uvm_object;
-import uvm.base.uvm_event;
-import uvm.base.uvm_printer;
-import uvm.base.uvm_object_globals;
+import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_event: uvm_event;
+import uvm.base.uvm_printer: uvm_printer;
+
 import uvm.meta.misc;
 import uvm.meta.meta;
 
@@ -232,11 +232,12 @@ class uvm_barrier: uvm_object
   }
 
   override void do_print (uvm_printer printer) {
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
-      printer.print("threshold", _threshold, UVM_DEC, '.',);
-      printer.print("num_waiters", _num_waiters, UVM_DEC, '.');
-      printer.print("at_threshold", _at_threshold, UVM_BIN, '.');
-      printer.print("auto_reset", _auto_reset, UVM_BIN, '.');
+      printer.print("threshold", _threshold, uvm_radix_enum.UVM_DEC, '.',);
+      printer.print("num_waiters", _num_waiters, uvm_radix_enum.UVM_DEC, '.');
+      printer.print("at_threshold", _at_threshold, uvm_radix_enum.UVM_BIN, '.');
+      printer.print("auto_reset", _auto_reset, uvm_radix_enum.UVM_BIN, '.');
     }
   }
 

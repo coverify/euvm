@@ -26,11 +26,10 @@
 
 module uvm.base.uvm_factory;
 
-import uvm.base.uvm_object;
+import uvm.base.uvm_object: uvm_object;
 import uvm.base.uvm_component: uvm_component;
-import uvm.base.uvm_globals;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_entity;
+
+
 import uvm.base.uvm_once;
 
 import uvm.meta.misc;
@@ -503,17 +502,19 @@ class uvm_default_factory: uvm_factory
 
 
   override void register(uvm_object_wrapper obj) {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       if(obj is null) {
 	uvm_report_fatal("NULLWR", "Attempting to register a null object" ~
-			 " with the factory", UVM_NONE);
+			 " with the factory", uvm_verbosity.UVM_NONE);
       }
       if(obj.get_type_name() != "" && obj.get_type_name() != "<unknown>") {
 	if(obj.get_type_name() in _m_type_names) {
 	  uvm_report_warning("TPRGED", "Type name '" ~ obj.get_type_name() ~
 			     "' already registered with factory. No " ~
 			     "string-based lookup support for multiple" ~
-			     " types with the same type name.", UVM_NONE);
+			     " types with the same type name.", uvm_verbosity.UVM_NONE);
 	}
 	else {
 	  _m_type_names[obj.get_type_name()] = obj;
@@ -523,7 +524,7 @@ class uvm_default_factory: uvm_factory
       if(obj in _m_types) {
 	if(obj.get_type_name() != "" && obj.get_type_name() != "<unknown>") {
 	  uvm_report_warning("TPRGED", "Object type '" ~ obj.get_type_name() ~
-			     "' already registered with factory. ", UVM_NONE);
+			     "' already registered with factory. ", uvm_verbosity.UVM_NONE);
 	}
       }
       else {
@@ -604,6 +605,8 @@ class uvm_default_factory: uvm_factory
   override void set_inst_override_by_name(string original_type_name,
 						string override_type_name,
 						string full_inst_path) {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       uvm_object_wrapper original_type;
       uvm_object_wrapper override_type;
@@ -623,7 +626,7 @@ class uvm_default_factory: uvm_factory
 			 "' and instance path '" ~ full_inst_path ~
 			 "' because the type it's supposed " ~
 			 "to produce ~  '" ~ override_type_name ~
-			 "',  is not registered with the factory.", UVM_NONE);
+			 "',  is not registered with the factory.", uvm_verbosity.UVM_NONE);
 	return;
       }
 
@@ -679,6 +682,8 @@ class uvm_default_factory: uvm_factory
   override void set_type_override_by_type(uvm_object_wrapper original_type,
 						uvm_object_wrapper override_type,
 						bool replace = true) {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       bool replaced = false;
 
@@ -687,12 +692,12 @@ class uvm_default_factory: uvm_factory
 	if(original_type.get_type_name() == "" ||
 	   original_type.get_type_name() == "<unknown>") {
 	  uvm_report_warning("TYPDUP", "Original and override type " ~
-			     "arguments are identical", UVM_NONE);
+			     "arguments are identical", uvm_verbosity.UVM_NONE);
 	}
 	else {
 	  uvm_report_warning("TYPDUP", "Original and override type " ~
 			     "arguments are identical: " ~
-			     original_type.get_type_name(), UVM_NONE);
+			     original_type.get_type_name(), uvm_verbosity.UVM_NONE);
 	}
       }
 
@@ -718,12 +723,12 @@ class uvm_default_factory: uvm_factory
 	      type_override.ovrd_type_name ~ "'";
 	    if(!replace) {
 	      msg ~= ".  Set 'replace' argument to replace the existing entry.";
-	      uvm_report_info("TPREGD", msg, UVM_MEDIUM);
+	      uvm_report_info("TPREGD", msg, uvm_verbosity.UVM_MEDIUM);
 	      return;
 	    }
 	    msg ~= ".  Replacing with override to produce type '" ~
 	      override_type.get_type_name() ~ "'.";
-	    uvm_report_info("TPREGR", msg, UVM_MEDIUM);
+	    uvm_report_info("TPREGR", msg, uvm_verbosity.UVM_MEDIUM);
 	    replaced = true;
 	    type_override.orig_type = original_type;
 	    type_override.orig_type_name = original_type.get_type_name();
@@ -759,6 +764,8 @@ class uvm_default_factory: uvm_factory
   override void set_type_override_by_name(string original_type_name,
 					  string override_type_name,
 					  bool replace = true) {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       bool replaced = false;
 
@@ -779,7 +786,7 @@ class uvm_default_factory: uvm_factory
 			 "Cannot register override for original type '" ~
 			 original_type_name ~ "' because the override type '" ~
 			 override_type_name ~
-			 "' is not registered with the factory.", UVM_NONE);
+			 "' is not registered with the factory.", uvm_verbosity.UVM_NONE);
 	return;
       }
 
@@ -787,7 +794,7 @@ class uvm_default_factory: uvm_factory
       if(original_type_name == override_type_name) {
 	uvm_report_warning("TYPDUP", "Requested and actual type name " ~
 			   " arguments are identical: " ~ original_type_name ~
-			   ". Ignoring this override.", UVM_NONE);
+			   ". Ignoring this override.", uvm_verbosity.UVM_NONE);
 	return;
       }
 
@@ -798,7 +805,7 @@ class uvm_default_factory: uvm_factory
 			    "' already registered to produce '" ~
 			    type_override.ovrd_type_name ~
 			    "'.  Set 'replace' argument to replace the " ~
-			    "existing entry.", UVM_MEDIUM);
+			    "existing entry.", uvm_verbosity.UVM_MEDIUM);
 	    return;
 	  }
 	  uvm_report_info("TPREGR", "Original object type '" ~
@@ -806,7 +813,7 @@ class uvm_default_factory: uvm_factory
 			  "' already registered to produce '" ~
 			  type_override.ovrd_type_name ~
 			  "'.  Replacing with override to produce type '" ~
-			  override_type_name ~ "'.", UVM_MEDIUM);
+			  override_type_name ~ "'.", uvm_verbosity.UVM_MEDIUM);
 	  replaced = true;
 	  type_override.ovrd_type = override_type;
 	  type_override.ovrd_type_name = override_type_name;
@@ -908,6 +915,8 @@ class uvm_default_factory: uvm_factory
   override uvm_object create_object_by_name(string requested_type_name,
 					    string parent_inst_path="",
 					    string name="") {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       uvm_object_wrapper wrapper;
       string inst_path;
@@ -940,11 +949,11 @@ class uvm_default_factory: uvm_factory
 	    uvm_report_warning("BDTYP", "Cannot create an object of type '" ~
 			       requested_type_name ~
 			       "' because it is not registered with the factory.",
-			       UVM_NONE);
+			       uvm_verbosity.UVM_NONE);
 
 	    uvm_report_warning("BDTYP", "Object.factory Cannot create an " ~
 			       "object of type '" ~ requested_type_name ~ "'.",
-			       UVM_NONE);
+			       uvm_verbosity.UVM_NONE);
 	    return null;
 	  }
 	  else {
@@ -953,7 +962,7 @@ class uvm_default_factory: uvm_factory
 	      uvm_report_warning("BDTYP", "Object.factory created an object " ~
 				 "but could not cast it to uvm_object type '" ~
 				 requested_type_name ~ "'.",
-				 UVM_NONE);
+				 uvm_verbosity.UVM_NONE);
 	    }
 	    uobj.set_name(name);
 	    return uobj;
@@ -982,6 +991,8 @@ class uvm_default_factory: uvm_factory
 						  string parent_inst_path,
 						  string name,
 						  uvm_component parent) {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       uvm_object_wrapper wrapper;
       string inst_path;
@@ -1014,10 +1025,10 @@ class uvm_default_factory: uvm_factory
 	    uvm_report_warning("BDTYP", "Cannot create a component of type '" ~
 			       requested_type_name ~
 			       "' because it is not registered with the factory.",
-			       UVM_NONE);
+			       uvm_verbosity.UVM_NONE);
 	    uvm_report_warning("BDTYP", "Object.factory Cannot create an " ~
 			       "object of type '" ~ requested_type_name ~ "'.",
-			       UVM_NONE);
+			       uvm_verbosity.UVM_NONE);
 	    return null;
 	  }
 	  else {
@@ -1027,7 +1038,7 @@ class uvm_default_factory: uvm_factory
 				 "object but could not cast it to " ~
 				 "uvm_component type '" ~
 				 requested_type_name ~ "'.",
-				 UVM_NONE);
+				 uvm_verbosity.UVM_NONE);
 	    }
 	    ucomp._set_name_force(name);
 	    return ucomp;
@@ -1080,6 +1091,8 @@ class uvm_default_factory: uvm_factory
 
   override uvm_object_wrapper find_override_by_type(uvm_object_wrapper requested_type,
 						    string full_inst_path) {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       uvm_object_wrapper ovrrd;
       uvm_factory_override lindex;
@@ -1093,7 +1106,7 @@ class uvm_default_factory: uvm_factory
 	   override_info.orig_type is requested_type) {
 	  uvm_report_error("OVRDLOOP",
 			   "Recursive loop detected while finding override.",
-			   UVM_NONE);
+			   uvm_verbosity.UVM_NONE);
 	  if(!m_debug_pass) {
 	    debug_create_by_type(requested_type, full_inst_path);
 	  }
@@ -1192,6 +1205,8 @@ class uvm_default_factory: uvm_factory
 
   override uvm_object_wrapper find_override_by_name(string requested_type_name,
 						    string full_inst_path) {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       uvm_object_wrapper rtype;
       uvm_factory_queue_class qc;
@@ -1208,7 +1223,7 @@ class uvm_default_factory: uvm_factory
 	  if(requested_type_name != "") {
 	  uvm_report_warning("TYPNTF", {"Requested type name ",
 	  requested_type_name, " is not registered with the factory. The instance override to ",
-	  full_inst_path, " is ignored"}, UVM_NONE);
+	  full_inst_path, " is ignored"}, uvm_verbosity.UVM_NONE);
 	  }
 	  _m_lookup_strs[requested_type_name] = true;
 	  return null;
@@ -1298,6 +1313,8 @@ class uvm_default_factory: uvm_factory
   // function uvm_object_wrapper find_wrapper_by_name            (string type_name);
 
   override uvm_object_wrapper find_wrapper_by_name(string type_name) {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       if(type_name in _m_type_names) {
 	return _m_type_names[type_name];
@@ -1305,7 +1322,7 @@ class uvm_default_factory: uvm_factory
 
       uvm_report_warning("UnknownTypeName",
 			 "find_wrapper_by_name: Type name '" ~ type_name ~
-			 "' not registered with the factory.", UVM_NONE);
+			 "' not registered with the factory.", uvm_verbosity.UVM_NONE);
       return null;
     }
   }
@@ -1318,6 +1335,8 @@ class uvm_default_factory: uvm_factory
   // extern  virtual function void print (int all_types=1);
 
   override void print(int all_types=1) {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       uvm_factory_queue_class[string] sorted_override_queues;
 
@@ -1460,7 +1479,7 @@ class uvm_default_factory: uvm_factory
       qs ~= "(*) Types with no associated type name will be printed" ~
 	" as <unknown>\n\n####\n\n";
 
-      uvm_info("UVM/FACTORY/PRINT", qs, UVM_NONE);
+      uvm_info("UVM/FACTORY/PRINT", qs, uvm_verbosity.UVM_NONE);
 
     }
   }
@@ -1475,6 +1494,8 @@ class uvm_default_factory: uvm_factory
 				 uvm_object_wrapper requested_type,
 				 string parent_inst_path,
 				 string name) {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       string full_inst_path;
       uvm_object_wrapper result;
@@ -1497,7 +1518,7 @@ class uvm_default_factory: uvm_factory
 	  uvm_report_warning("Factory Warning",
 			     "The factory does not recognize '" ~
 			     requested_type_name ~
-			     "' as a registered type.", UVM_NONE);
+			     "' as a registered type.", uvm_verbosity.UVM_NONE);
 	  return;
 	}
 	m_debug_pass = true;
@@ -1531,6 +1552,8 @@ class uvm_default_factory: uvm_factory
   protected void  m_debug_display(string requested_type_name,
 				  uvm_object_wrapper result,
 				  string full_inst_path) {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
 
       size_t    max1,max2,max3;
@@ -1608,7 +1631,7 @@ class uvm_default_factory: uvm_factory
 
       qs ~= "\n(*) Types with no associated type name will be printed as <unknown>\n\n####\n\n";
 
-      uvm_info("UVM/FACTORY/DUMP", qs, UVM_NONE);
+      uvm_info("UVM/FACTORY/DUMP", qs, uvm_verbosity.UVM_NONE);
     }
   }
 
@@ -1657,6 +1680,8 @@ class uvm_default_factory: uvm_factory
   bool check_inst_override_exists(uvm_object_wrapper original_type,
 				  uvm_object_wrapper override_type,
 				  string full_inst_path) {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       uvm_factory_override ovrrd;
       uvm_factory_queue_class qc;
@@ -1679,7 +1704,7 @@ class uvm_default_factory: uvm_factory
 			  "' already exists: override type '" ~
 			  override_type.get_type_name() ~
 			  "' with full_inst_path '" ~
-			  full_inst_path ~ "'", UVM_HIGH);
+			  full_inst_path ~ "'", uvm_verbosity.UVM_HIGH);
 	  return true;
 	}
       }
@@ -2067,11 +2092,13 @@ final class uvm_factory_override
        string orig_type_name,
        uvm_object_wrapper orig_type,
        uvm_object_wrapper ovrd_type) {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       if(ovrd_type is null) {
 	uvm_report_fatal("NULLWR",
 			 "Attempting to register a null override object" ~
-			 " with the factory", UVM_NONE);
+			 " with the factory", uvm_verbosity.UVM_NONE);
       }
       _full_inst_path = full_inst_path;
       _orig_type_name = (orig_type is null) ?

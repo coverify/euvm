@@ -23,21 +23,21 @@
 
 module uvm.base.uvm_transaction;
 
-import uvm.base.uvm_object;
-import uvm.base.uvm_event;
-import uvm.base.uvm_recorder;
-import uvm.base.uvm_printer;
-import uvm.base.uvm_pool;
+import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_event;	// : uvm_event; // TBD IMPORTS
+import uvm.base.uvm_recorder: uvm_recorder;
+import uvm.base.uvm_printer: uvm_printer;
+import uvm.base.uvm_pool: uvm_object_string_pool;
 import uvm.base.uvm_object_globals;
-import uvm.base.uvm_tr_stream;
-import uvm.base.uvm_tr_database;
+import uvm.base.uvm_tr_stream: uvm_tr_stream;
+
 import uvm.meta.mcd;
 import uvm.meta.misc;
-import uvm.base.uvm_links;
 
 import esdl.base.core: SimTime, getRootEntity;
 import std.string: format;
 
+alias uvm_event_pool = uvm_object_string_pool!(uvm_event!(uvm_object));
 // typedef class uvm_event;
 // typedef class uvm_event_pool;
 // typedef class uvm_component;
@@ -673,6 +673,7 @@ abstract class uvm_transaction: uvm_object
   // ---------
 
   override void do_record (uvm_recorder recorder) {
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       super.do_record(recorder);
       if(_accept_time != -1) {
@@ -681,7 +682,7 @@ abstract class uvm_transaction: uvm_object
 
       if(_initiator !is null) {
 	uvm_recursion_policy_enum p = recorder.policy;
-	recorder.policy = UVM_REFERENCE;
+	recorder.policy = uvm_recursion_policy_enum.UVM_REFERENCE;
 	recorder.record("initiator", _initiator);
 	recorder.policy = p;
       }
@@ -720,6 +721,8 @@ abstract class uvm_transaction: uvm_object
 
   int m_begin_tr (SimTime begin_time = 0,
 		  int parent_handle = 0) {
+    import uvm.base.uvm_tr_database;
+    import uvm.base.uvm_links;
     synchronized(this) {
       int m_begin_tr_;
       SimTime tmp_time =

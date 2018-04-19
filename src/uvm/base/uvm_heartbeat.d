@@ -26,16 +26,14 @@
 
 module uvm.base.uvm_heartbeat;
 
-import uvm.base.uvm_object;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_callback;
-import uvm.base.uvm_event;
-import uvm.base.uvm_objection;
+import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_callback: uvm_callbacks;
+import uvm.base.uvm_event: uvm_event;
+import uvm.base.uvm_objection: uvm_objection, uvm_objection_callback;
+
 import esdl.base.core;
 import esdl.data.time;
 import esdl.data.queue;
-
-import std.string: format;
 
 import uvm.meta.misc;
 
@@ -45,8 +43,6 @@ enum uvm_heartbeat_modes
        UVM_ANY_ACTIVE,
        UVM_NO_HB_MODE
   }
-
-mixin(declareEnums!uvm_heartbeat_modes());
 
 // typedef class uvm_heartbeat_callback;
 alias uvm_heartbeat_cbs_t =
@@ -73,7 +69,7 @@ alias uvm_heartbeat_cbs_t =
 // typedef class uvm_objection_callback;
 class uvm_heartbeat: uvm_object
 {
-  import uvm.base.uvm_component;
+  import uvm.base.uvm_component: uvm_component;
   mixin(uvm_sync_string);
 
   @uvm_protected_sync
@@ -134,11 +130,12 @@ class uvm_heartbeat: uvm_object
   // mode is changed to the new value.
 
   final uvm_heartbeat_modes set_mode(uvm_heartbeat_modes mode
-				     = UVM_NO_HB_MODE) {
+				     = uvm_heartbeat_modes.UVM_NO_HB_MODE) {
     synchronized(this) {
       auto set_mode_ = _m_mode;
-      if(mode == UVM_ANY_ACTIVE || mode == UVM_ONE_ACTIVE
-	 || mode == UVM_ALL_ACTIVE) {
+      if(mode == uvm_heartbeat_modes.UVM_ANY_ACTIVE ||
+	 mode == uvm_heartbeat_modes.UVM_ONE_ACTIVE ||
+	 mode == uvm_heartbeat_modes.UVM_ALL_ACTIVE) {
 	_m_mode = mode;
       }
       return set_mode_;
@@ -237,12 +234,13 @@ class uvm_heartbeat: uvm_object
   // current event.
 
   final void start (uvm_event!uvm_object e = null) {
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       if(_m_event is null && e is null) {
 	_m_cntxt.uvm_report_warning("NOEVNT", "start() was called for: " ~
 				    get_name() ~ " with a null trigger " ~
 				    "and no currently set trigger",
-				    UVM_NONE);
+				    uvm_verbosity.UVM_NONE);
 	return;
       }
       if((_m_event !is null) && (e !is _m_event) && _m_started) {
@@ -250,7 +248,7 @@ class uvm_heartbeat: uvm_object
 				  get_name() ~ " with trigger " ~
 				  e.get_name() ~ " which is different " ~
 				  "from the original trigger " ~
-				  _m_event.get_name(), UVM_NONE);
+				  _m_event.get_name(), uvm_verbosity.UVM_NONE);
 	return;
       }
       if(e !is null) {
@@ -309,6 +307,8 @@ class uvm_heartbeat: uvm_object
 
   // task
   final void m_hb_process_1() {
+    import uvm.base.uvm_object_globals;
+    import std.string: format;
     bool  triggered = false;
     SimTime last_trigger = 0;
     // The process waits for the event trigger. The first trigger is
@@ -319,7 +319,7 @@ class uvm_heartbeat: uvm_object
       synchronized(this) {
 	if(triggered) {
 	  final switch (_m_mode) {
-	  case UVM_ALL_ACTIVE:
+	  case uvm_heartbeat_modes.UVM_ALL_ACTIVE:
 	    foreach(obj, c; m_cb.get_counts()) {
 	      if(! c) {
 		_m_cntxt.uvm_report_fatal("HBFAIL",
@@ -331,11 +331,11 @@ class uvm_heartbeat: uvm_object
 						 obj.get_full_name(),
 						 last_trigger,
 						 m_cb.get_last_trigger(obj)),
-					  UVM_NONE);
+					  uvm_verbosity.UVM_NONE);
 	      }
 	    }
 	    break;
-	  case UVM_ANY_ACTIVE:
+	  case uvm_heartbeat_modes.UVM_ANY_ACTIVE:
 	    if(m_cb.num_counts() && !m_cb.objects_triggered()) {
 	      string s;
 	      foreach(obj, c; m_cb.get_counts()) {
@@ -349,10 +349,10 @@ class uvm_heartbeat: uvm_object
 					       " components is:%s",
 					       _m_objection.get_name(),
 					       last_trigger, s),
-					UVM_NONE);
+					uvm_verbosity.UVM_NONE);
 	    }
 	    break;
-	  case UVM_ONE_ACTIVE:
+	  case uvm_heartbeat_modes.UVM_ONE_ACTIVE:
 	    if(m_cb.objects_triggered() > 1) {
 	      string s;
 	      foreach(obj, c; m_cb.get_counts())  {
@@ -369,7 +369,7 @@ class uvm_heartbeat: uvm_object
 					       " components is:%s",
 					       _m_objection.get_name(),
 					       last_trigger, s),
-					UVM_NONE);
+					uvm_verbosity.UVM_NONE);
 	    }
 	    if(m_cb.num_counts && !m_cb.objects_triggered()) {
 	      string s;
@@ -384,10 +384,10 @@ class uvm_heartbeat: uvm_object
 					       "components is:%s",
 					       _m_objection.get_name(),
 					       last_trigger, s),
-					UVM_NONE);
+					uvm_verbosity.UVM_NONE);
 	    }
 	    break;
-	  case UVM_NO_HB_MODE:
+	  case uvm_heartbeat_modes.UVM_NO_HB_MODE:
 	    // FIXME -- SV version does not do anything in this switch case leg
 	    assert(false, "Should not reach UVM_NO_HB_MODE");
 	  }

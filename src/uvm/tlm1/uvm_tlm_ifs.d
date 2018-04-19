@@ -64,7 +64,7 @@ abstract class uvm_tlm_if_base(T1=int, T2=int)
 
   // task
   public void put(T1 t) {
-    uvm_report_error("put", UVM_TASK_ERROR, UVM_NONE);
+    uvm_report_error("put", UVM_TASK_ERROR, uvm_verbosity.UVM_NONE);
   }
 
   // Group: Blocking get
@@ -82,7 +82,7 @@ abstract class uvm_tlm_if_base(T1=int, T2=int)
 
   // task
   public void get(out T2 t) {
-    uvm_report_error("get", UVM_TASK_ERROR, UVM_NONE);
+    uvm_report_error("get", UVM_TASK_ERROR, uvm_verbosity.UVM_NONE);
   }
 
 
@@ -101,7 +101,7 @@ abstract class uvm_tlm_if_base(T1=int, T2=int)
 
   // task
   public void peek(out T2 t) {
-    uvm_report_error("peek", UVM_TASK_ERROR, UVM_NONE);
+    uvm_report_error("peek", UVM_TASK_ERROR, uvm_verbosity.UVM_NONE);
   }
 
 
@@ -115,7 +115,7 @@ abstract class uvm_tlm_if_base(T1=int, T2=int)
   // so and returns 1, otherwise it returns 0.
 
   public bool try_put(T1 t) {
-    uvm_report_error("try_put", UVM_FUNCTION_ERROR, UVM_NONE);
+    uvm_report_error("try_put", UVM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return false;
   }
 
@@ -125,7 +125,7 @@ abstract class uvm_tlm_if_base(T1=int, T2=int)
   // Returns 1 if the component is ready to accept the transaction; 0 otherwise.
 
   public bool can_put() {
-    uvm_report_error("can_put", UVM_FUNCTION_ERROR, UVM_NONE);
+    uvm_report_error("can_put", UVM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return false;
   }
 
@@ -141,7 +141,7 @@ abstract class uvm_tlm_if_base(T1=int, T2=int)
   // and 0 is returned.
 
   public bool try_get(out T2 t) {
-    uvm_report_error("try_get", UVM_FUNCTION_ERROR, UVM_NONE);
+    uvm_report_error("try_get", UVM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return false;
   }
 
@@ -152,7 +152,7 @@ abstract class uvm_tlm_if_base(T1=int, T2=int)
   // 0 otherwise.
 
   public bool can_get() {
-    uvm_report_error("can_get", UVM_FUNCTION_ERROR, UVM_NONE);
+    uvm_report_error("can_get", UVM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return false;
   }
 
@@ -169,7 +169,7 @@ abstract class uvm_tlm_if_base(T1=int, T2=int)
   // returned.
 
   public bool try_peek(out T2 t) {
-    uvm_report_error("try_peek", UVM_FUNCTION_ERROR, UVM_NONE);
+    uvm_report_error("try_peek", UVM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return false;
   }
 
@@ -179,7 +179,7 @@ abstract class uvm_tlm_if_base(T1=int, T2=int)
   // Returns 1 if a new transaction is available; 0 otherwise.
 
   public bool can_peek() {
-    uvm_report_error("can_ppeek", UVM_FUNCTION_ERROR, UVM_NONE);
+    uvm_report_error("can_ppeek", UVM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return false;
   }
 
@@ -193,7 +193,7 @@ abstract class uvm_tlm_if_base(T1=int, T2=int)
 
   // task
   public void transport(T1 req , out T2 rsp) {
-    uvm_report_error("transport", UVM_TASK_ERROR, UVM_NONE);
+    uvm_report_error("transport", UVM_TASK_ERROR, uvm_verbosity.UVM_NONE);
   }
 
 
@@ -208,7 +208,7 @@ abstract class uvm_tlm_if_base(T1=int, T2=int)
   // a 0 must be returned; otherwise 1.
 
   public bool nb_transport(T1 req, out T2 rsp) {
-    uvm_report_error("nb_transport", UVM_FUNCTION_ERROR, UVM_NONE);
+    uvm_report_error("nb_transport", UVM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return false;
   }
 
@@ -221,7 +221,7 @@ abstract class uvm_tlm_if_base(T1=int, T2=int)
   // The operation must complete without blocking.
 
   public void write(T1 t) {
-    uvm_report_error("write", UVM_FUNCTION_ERROR, UVM_NONE);
+    uvm_report_error("write", UVM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
   }
 
 }

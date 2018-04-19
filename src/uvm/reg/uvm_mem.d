@@ -1247,7 +1247,7 @@ class uvm_mem: uvm_object
     }
 
     uvm_info("RegModel", format("Poked memory '%s[%0d]' with value 'h%h",
-				get_full_name(), offset, value), UVM_HIGH);
+				get_full_name(), offset, value), uvm_verbosity.UVM_HIGH);
   }
 
 
@@ -1326,7 +1326,7 @@ class uvm_mem: uvm_object
     }
 
     uvm_info("RegModel", format("Peeked memory '%s[%0d]' has value 'h%h",
-				get_full_name(), offset, value), UVM_HIGH);
+				get_full_name(), offset, value), uvm_verbosity.UVM_HIGH);
   }
 
 
@@ -1508,7 +1508,7 @@ class uvm_mem: uvm_object
     }
 
     // REPORT
-    if(uvm_report_enabled(UVM_HIGH, UVM_INFO, "RegModel")) {
+    if(uvm_report_enabled(uvm_verbosity.UVM_HIGH, uvm_severity.UVM_INFO, "RegModel")) {
       string path_s, value_s, pre_s, range_s;
       if (rw.path is UVM_FRONTDOOR) {
 	path_s = (map_info.frontdoor !is null) ? "user frontdoor" :
@@ -1536,7 +1536,7 @@ class uvm_mem: uvm_object
       }
 
       uvm_report_info("RegModel", pre_s ~ "Wrote memory via " ~ path_s ~ ": " ~
-		      get_full_name() ~ range_s ~ value_s, UVM_HIGH);
+		      get_full_name() ~ range_s ~ value_s, uvm_verbosity.UVM_HIGH);
     }
 
     m_write_in_progress = false;
@@ -1624,7 +1624,7 @@ class uvm_mem: uvm_object
     }
 
     // REPORT
-    if (uvm_report_enabled(UVM_HIGH, UVM_INFO, "RegModel")) {
+    if (uvm_report_enabled(uvm_verbosity.UVM_HIGH, uvm_severity.UVM_INFO, "RegModel")) {
       string path_s, value_s, pre_s, range_s;
       if(rw.path is UVM_FRONTDOOR) {
 	path_s = (map_info.frontdoor !is null) ? "user frontdoor" :
@@ -1652,7 +1652,7 @@ class uvm_mem: uvm_object
       }
 
       uvm_report_info("RegModel", pre_s ~ "Read memory via " ~ path_s ~ ": " ~
-		      get_full_name() ~ range_s ~ value_s, UVM_HIGH);
+		      get_full_name() ~ range_s ~ value_s, uvm_verbosity.UVM_HIGH);
     }
 
     m_read_in_progress = false;
@@ -2090,7 +2090,7 @@ class uvm_mem: uvm_object
       foreach (i, path; paths) {
 	uvm_hdl_path_concat hdl_concat = path;
 	foreach(j, sl; hdl_concat.slices) {
-	  uvm_info("RegModel", format("backdoor_write to %s ", sl.path), UVM_DEBUG);
+	  uvm_info("RegModel", format("backdoor_write to %s ", sl.path), uvm_verbosity.UVM_DEBUG);
 	  if (sl.offset < 0) {
 	    ok &= uvm_hdl_deposit(sl.path ~ "[" ~ idx ~ "]", v);
 	    continue;
@@ -2137,7 +2137,7 @@ class uvm_mem: uvm_object
 	  foreach (j, sl; hdl_concat.slices) {
 	    string hdl_path = sl.path ~ "[" ~ idx ~ "]";
 	    
-	    uvm_info("RegModel", "backdoor_read from " ~ hdl_path, UVM_DEBUG);
+	    uvm_info("RegModel", "backdoor_read from " ~ hdl_path, uvm_verbosity.UVM_DEBUG);
  
 	    if(sl.offset < 0) {
 	      ok &= uvm_hdl_read(hdl_path, val);
@@ -2426,10 +2426,11 @@ class uvm_mem: uvm_object
   // do_print
 
   override void do_print (uvm_printer printer) {
+    import uvm.base.uvm_object_globals;
     super.do_print(printer);
     //printer.print_generic(" ", " ", -1, convert2string());
-    printer.print_int("n_bits", get_n_bits(), 32, UVM_UNSIGNED);
-    printer.print_int("size", get_size(), 32, UVM_UNSIGNED);
+    printer.print_int("n_bits", get_n_bits(), 32, uvm_radix_enum.UVM_UNSIGNED);
+    printer.print_int("size", get_size(), 32, uvm_radix_enum.UVM_UNSIGNED);
   }
 
 

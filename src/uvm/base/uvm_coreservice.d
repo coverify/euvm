@@ -20,17 +20,16 @@
 
 module uvm.base.uvm_coreservice;
 
-import uvm.base.uvm_factory;
-import uvm.base.uvm_report_server;
-import uvm.base.uvm_traversal;
-import uvm.base.uvm_tr_database;
-import uvm.base.uvm_entity;
+import uvm.base.uvm_factory: uvm_factory, uvm_default_factory;
+import uvm.base.uvm_report_server: uvm_report_server, uvm_default_report_server;
+import uvm.base.uvm_traversal: uvm_visitor, uvm_component_name_check_visitor;
+import uvm.base.uvm_tr_database: uvm_tr_database, uvm_text_tr_database;
+import uvm.base.uvm_root: uvm_root;
+import uvm.base.uvm_component: uvm_component;
 import uvm.base.uvm_once;
 
 import uvm.meta.misc;
 
-import esdl.base.core: Process;
-import std.random: Random;
 
 //----------------------------------------------------------------------
 // Class: uvm_coreservice_t
@@ -46,8 +45,6 @@ import std.random: Random;
 
 abstract class uvm_coreservice_t
 {
-  import uvm.base.uvm_root: uvm_root;
-  import uvm.base.uvm_component;
   static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
@@ -134,8 +131,6 @@ abstract class uvm_coreservice_t
 //----------------------------------------------------------------------
 class uvm_default_coreservice_t: uvm_coreservice_t
 {
-  import uvm.base.uvm_root: uvm_root;
-  import uvm.base.uvm_component;
   // this() {
   //   synchronized(this) {
   //     _factory = new uvm_default_factory();
@@ -174,6 +169,8 @@ class uvm_default_coreservice_t: uvm_coreservice_t
   // If no default record database has been set before this method
   // is called, returns an instance of <uvm_text_tr_database>
   override uvm_tr_database get_default_tr_database() {
+    import esdl.base.core: Process;
+    import std.random: Random;
     synchronized(this) {
       if (_tr_database is null) {
 	Process p = Process.self();

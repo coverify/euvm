@@ -120,7 +120,7 @@ class uvm_vpi_monitor(RSP, string VPI_PREFIX): uvm_monitor
     super.setup_phase(phase);
     s_vpi_systf_data tf_data;
     uvm_info("VPIREG", "Registering vpi system task: " ~
-	     vpi_monitor_task, UVM_NONE);
+	     vpi_monitor_task, uvm_verbosity.UVM_NONE);
     tf_data.type = vpiSysFunc;
     tf_data.tfname = cast(char*) vpi_monitor_task.toStringz;
     tf_data.calltf = &vpi_task_calltf;

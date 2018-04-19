@@ -35,24 +35,18 @@
 
 module uvm.base.uvm_topdown_phase;
 
-import uvm.base.uvm_phase;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_globals;
-import uvm.base.uvm_domain;
-import uvm.base.uvm_misc: uvm_create_random_seed;
-
-import esdl.base.core: Process;
-import std.string: format;
+import uvm.base.uvm_phase: uvm_phase;
+import uvm.base.uvm_object_globals: uvm_phase_state, uvm_phase_type, uvm_verbosity;
 
 abstract class uvm_topdown_phase: uvm_phase
 {
-  import uvm.base.uvm_component;
+  import uvm.base.uvm_component: uvm_component;
   // Function: new
   //
   // Create a new instance of a top-down phase
   //
   this(string name) {
-    super(name,UVM_PHASE_IMP);
+    super(name, uvm_phase_type.UVM_PHASE_IMP);
   }
 
 
@@ -64,6 +58,10 @@ abstract class uvm_topdown_phase: uvm_phase
   override void traverse(uvm_component comp,
 			 uvm_phase phase,
 			 uvm_phase_state state) {
+    import uvm.base.uvm_domain;
+    import uvm.base.uvm_globals;
+    import std.string: format;
+
     uvm_domain phase_domain = phase.get_domain();
     uvm_domain comp_domain = comp.get_domain();
 
@@ -74,18 +72,18 @@ abstract class uvm_topdown_phase: uvm_phase
 				    phase.get_name(), state,
 				    comp.get_full_name(), comp_domain.get_name(),
 				    phase_domain.get_name()),
-		 UVM_DEBUG);
+		 uvm_verbosity.UVM_DEBUG);
       }
 
       if (phase_domain is uvm_domain.get_common_domain() ||
 	  phase_domain is comp_domain) {
 	switch (state) {
-	case UVM_PHASE_STARTED:
+	case uvm_phase_state.UVM_PHASE_STARTED:
 	  comp.m_current_phase = phase;
 	  comp.m_apply_verbosity_settings(phase);
 	  comp.phase_started(phase);
 	  break;
-	case UVM_PHASE_EXECUTING:
+	case uvm_phase_state.UVM_PHASE_EXECUTING:
 	  if (!(phase.get_name() == "build" && comp.m_build_done)) {
 	    uvm_phase ph = this;
 	    comp.inc_phasing_active();
@@ -97,10 +95,10 @@ abstract class uvm_topdown_phase: uvm_phase
 	    comp.dec_phasing_active();
 	  }
 	  break;
-	case UVM_PHASE_READY_TO_END:
+	case uvm_phase_state.UVM_PHASE_READY_TO_END:
 	  comp.phase_ready_to_end(phase);
 	  break;
-	case UVM_PHASE_ENDED:
+	case uvm_phase_state.UVM_PHASE_ENDED:
 	  comp.phase_ended(phase);
 	  comp.m_current_phase = null;
 	  break;
@@ -122,6 +120,8 @@ abstract class uvm_topdown_phase: uvm_phase
   //
   override void execute(uvm_component comp,
 			uvm_phase phase) {
+    import esdl.base.core: Process;
+    import uvm.base.uvm_misc;
     // reseed this process for random stability
     auto proc = Process.self;
     proc.srandom(uvm_create_random_seed(phase.get_type_name(),

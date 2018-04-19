@@ -34,9 +34,11 @@ module uvm.base.uvm_comparer;
 //------------------------------------------------------------------------------
 
 import uvm.base.uvm_misc: uvm_scope_stack;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_object;
-import uvm.base.uvm_globals;
+import uvm.base.uvm_object: uvm_object;
+
+import uvm.base.uvm_object_globals:  uvm_recursion_policy_enum, uvm_severity,
+  uvm_integral_t, uvm_radix_enum, uvm_bitstream_t, uvm_verbosity;
+
 import uvm.meta.misc;
 import esdl.data.bvec;
 
@@ -158,29 +160,30 @@ class uvm_comparer
   bool compare(T)(string name,
 		  T lhs,
 		  T rhs,
-		  uvm_radix_enum radix=UVM_NORADIX)
+		  uvm_radix_enum radix=uvm_radix_enum.UVM_NORADIX)
     if(isBitVector!T || isIntegral!T || is(T == bool))  {
+      import uvm.base.uvm_object_globals;
       synchronized(this) {
 	string msg;
 	if(lhs != rhs) {
 	  uvm_object.m_uvm_status_container.scope_stack.set_arg(name);
 	  switch(radix) {
-	  case UVM_BIN:
+	  case uvm_radix_enum.UVM_BIN:
 	    msg = format("lhs = 'b%0b : rhs = 'b%0b", lhs, rhs);
 	    break;
-	  case UVM_OCT:
+	  case uvm_radix_enum.UVM_OCT:
 	    msg = format("lhs = 'o%0o : rhs = 'o%0o", lhs, rhs);
 	    break;
-	  case UVM_DEC:
+	  case uvm_radix_enum.UVM_DEC:
 	    msg = format("lhs = %0d : rhs = %0d", lhs, rhs);
 	    break;
-	  case UVM_TIME:
+	  case uvm_radix_enum.UVM_TIME:
 	    msg = format("lhs = %0d : rhs = %0d", lhs, rhs);
 	    break;
-	  case UVM_STRING:
+	  case uvm_radix_enum.UVM_STRING:
 	    msg = format("lhs = %0s : rhs = %0s", lhs, rhs);
 	    break;
-	  case UVM_ENUM:
+	  case uvm_radix_enum.UVM_ENUM:
 	    //Printed as decimal, user should cuse compare string for enum val
 	    msg = format("lhs = %0d : rhs = %0d", lhs, rhs);
 	    break;
@@ -252,12 +255,13 @@ class uvm_comparer
 		  T lhs,
 		  T rhs)
     if(is(T: uvm_object)) {
+      import uvm.base.uvm_object_globals;
       synchronized(this) {
 	bool compare_;
 	if(rhs is lhs)
 	  return true;
 
-	if(_policy == UVM_REFERENCE && lhs != rhs) {
+	if(_policy == uvm_recursion_policy_enum.UVM_REFERENCE && lhs != rhs) {
 	  uvm_object.m_uvm_status_container.scope_stack.set_arg(name);
 	  print_msg_object(lhs, rhs);
 	  return false;
@@ -295,7 +299,7 @@ class uvm_comparer
   // The radix is used for reporting purposes, the default radix is hex.
 
   bool compare_field(T)(string name, T lhs, T rhs,
-			uvm_radix_enum radix=UVM_NORADIX)
+			uvm_radix_enum radix=uvm_radix_enum.UVM_NORADIX)
     if(isBitVector!T || isIntegral!T || isBoolean!T)
   {
     synchronized(this) {
@@ -303,22 +307,22 @@ class uvm_comparer
 	string msg;
 	uvm_object.m_uvm_status_container.scope_stack.set_arg(name);
 	switch(radix) {
-	case UVM_BIN:
+	case uvm_radix_enum.UVM_BIN:
 	  msg = format("lhs = 'b%0b : rhs = 'b%0b", lhs, rhs);
 	  break;
-	case UVM_OCT:
+	case uvm_radix_enum.UVM_OCT:
 	  msg = format("lhs = 'o%0o : rhs = 'o%0o", lhs, rhs);
 	  break;
-	case UVM_DEC:
+	case uvm_radix_enum.UVM_DEC:
 	  msg = format("lhs = %0d : rhs = %0d", lhs, rhs);
 	  break;
-	case UVM_TIME:
+	case uvm_radix_enum.UVM_TIME:
 	  msg = format("lhs = %0d : rhs = %0d", lhs, rhs);
 	  break;
-	case UVM_STRING:
+	case uvm_radix_enum.UVM_STRING:
 	  msg = format("lhs = %0s : rhs = %0s", lhs, rhs);
 	  break;
-	case UVM_ENUM:
+	case uvm_radix_enum.UVM_ENUM:
 	  //Printed as decimal, user should cuse compare string for enum val
 	  msg = format("lhs = %0d : rhs = %0d", lhs, rhs);
 	  break;
@@ -338,6 +342,7 @@ class uvm_comparer
 		     uvm_bitstream_t rhs,
 		     int size,
 		     uvm_radix_enum radix=uvm_radix_enum.UVM_NORADIX) {
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       uvm_bitstream_t mask;
       string msg;
@@ -350,27 +355,27 @@ class uvm_comparer
       if((lhs & mask) != (rhs & mask)) {
 	uvm_object.m_uvm_status_container.scope_stack.set_arg(name);
 	switch(radix) {
-	case UVM_BIN:
+	case uvm_radix_enum.UVM_BIN:
 	  msg = format("lhs = 'b%0b : rhs = 'b%0b",
 		       lhs&mask, rhs&mask);
 	  break;
-	case UVM_OCT:
+	case uvm_radix_enum.UVM_OCT:
 	  msg = format("lhs = 'o%0o : rhs = 'o%0o",
 		       lhs&mask, rhs&mask);
 	  break;
-	case UVM_DEC:
+	case uvm_radix_enum.UVM_DEC:
 	  msg = format("lhs = %0d : rhs = %0d",
 		       lhs&mask, rhs&mask);
 	  break;
-	case UVM_TIME:
+	case uvm_radix_enum.UVM_TIME:
 	  msg = format("lhs = %0d : rhs = %0d",
 		       lhs&mask, rhs&mask);
 	  break;
-	case UVM_STRING:
+	case uvm_radix_enum.UVM_STRING:
 	  msg = format("lhs = %0s : rhs = %0s",
 		       lhs&mask, rhs&mask);
 	  break;
-	case UVM_ENUM:
+	case uvm_radix_enum.UVM_ENUM:
 	  //Printed as decimal, user should cuse compare string for enum val
 	  msg = format("lhs = %0d : rhs = %0d",
 		       lhs&mask, rhs&mask);
@@ -400,6 +405,7 @@ class uvm_comparer
 			 uvm_integral_t rhs,
 			 int     size,
 			 uvm_radix_enum radix=uvm_radix_enum.UVM_NORADIX) {
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       LogicVec!64 mask;
       string msg;
@@ -410,27 +416,27 @@ class uvm_comparer
 	uvm_object.m_uvm_status_container.scope_stack.set_arg(name);
 	switch(radix) {
 	  import std.string: format;
-	case UVM_BIN:
+	case uvm_radix_enum.UVM_BIN:
 	  msg = format("lhs = 'b%0b : rhs = 'b%0b",
 		       lhs&mask, rhs&mask);
 	  break;
-	case UVM_OCT:
+	case uvm_radix_enum.UVM_OCT:
 	  msg = format("lhs = 'o%0o : rhs = 'o%0o",
 		       lhs&mask, rhs&mask);
 	  break;
-	case UVM_DEC:
+	case uvm_radix_enum.UVM_DEC:
 	  msg = format("lhs = %0d : rhs = %0d",
 		       lhs&mask, rhs&mask);
 	  break;
-	case UVM_TIME:
+	case uvm_radix_enum.UVM_TIME:
 	  msg = format("lhs = %0d : rhs = %0d",
 		       lhs&mask, rhs&mask);
 	  break;
-	case UVM_STRING:
+	case uvm_radix_enum.UVM_STRING:
 	  msg = format("lhs = %0s : rhs = %0s",
 		       lhs&mask, rhs&mask);
 	  break;
-	case UVM_ENUM:
+	case uvm_radix_enum.UVM_ENUM:
 	  //Printed as decimal, user should cuse compare string for enum val
 	  msg = format("lhs = %0d : rhs = %0d",
 		       lhs&mask, rhs&mask);
@@ -487,12 +493,13 @@ class uvm_comparer
   bool compare_object(string name,
 		      uvm_object lhs,
 		      uvm_object rhs) {
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       bool compare_;
       if(rhs is lhs)
 	return true;
 
-      if(_policy is UVM_REFERENCE && lhs !is rhs) {
+      if(_policy is uvm_recursion_policy_enum.UVM_REFERENCE && lhs !is rhs) {
 	uvm_object.m_uvm_status_container.scope_stack.set_arg(name);
 	print_msg_object(lhs, rhs);
 	return false;
@@ -572,15 +579,16 @@ class uvm_comparer
 
   //Need this function because sformat doesn't support objects
   final void print_rollup(uvm_object rhs, uvm_object lhs) {
+    import uvm.base.uvm_object_globals;
+    import uvm.base.uvm_coreservice;
+    import uvm.base.uvm_root;
+    import std.string: format;
     synchronized(this) {
-      import uvm.base.uvm_coreservice;
-      import uvm.base.uvm_root;
       uvm_coreservice_t cs = uvm_coreservice_t.get();
       uvm_root root = cs.get_root();
       string msg;
       if(uvm_object.m_uvm_status_container.scope_stack.depth() == 0) {
-	if(_result && (_show_max || (cast(uvm_severity) _sev != UVM_INFO))) {
-	  import std.string: format;
+	if(_result && (_show_max || (cast(uvm_severity) _sev != uvm_severity.UVM_INFO))) {
 	  if(_show_max < _result)
 	    msg = format("%0d Miscompare(s) (%0d shown) for object ",
 			 _result, _show_max);
@@ -629,6 +637,7 @@ class uvm_comparer
   // init ??
 
   static uvm_comparer init() {
+    import uvm.base.uvm_object_globals;
     return uvm_default_comparer();
   }
 

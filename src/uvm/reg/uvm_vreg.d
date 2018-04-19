@@ -313,7 +313,7 @@ class uvm_vreg: uvm_object
 				    this.get_full_name(),
 				    this.mem.get_full_name(),
 				    this.offset,
-				    mem.get_full_name(), offset),UVM_MEDIUM);
+				    mem.get_full_name(), offset),uvm_verbosity.UVM_MEDIUM);
 	this.release_region();
       }
 
@@ -421,7 +421,7 @@ class uvm_vreg: uvm_object
 				    this.mem.get_full_name(),
 				    this.offset,
 				    mem.get_full_name(),
-				    allocate_.get_start_offset()),UVM_MEDIUM);
+				    allocate_.get_start_offset()),uvm_verbosity.UVM_MEDIUM);
 
 	this.release_region();
       }
@@ -1100,7 +1100,7 @@ class uvm_vreg: uvm_object
 				" %s with: 'h%h",
 				this.get_full_name(), idx,
 				(path == UVM_FRONTDOOR) ? "frontdoor" : "backdoor",
-				value),UVM_MEDIUM);
+				value),uvm_verbosity.UVM_MEDIUM);
 
     this.write_in_progress = false;
     this.fname = "";
@@ -1233,7 +1233,7 @@ class uvm_vreg: uvm_object
 	     format("Read virtual register \"%s\"[%0d] via %s:" ~
 		    " 'h%h", this.get_full_name(), idx,
 		    (path == UVM_FRONTDOOR) ? "frontdoor" : "backdoor",
-		    value),UVM_MEDIUM);
+		    value),uvm_verbosity.UVM_MEDIUM);
 
     this.read_in_progress = false;
     this.fname = "";
@@ -1297,7 +1297,7 @@ class uvm_vreg: uvm_object
     }
 
     uvm_info("RegModel", format("Poked virtual register \"%s\"[%0d] with: 'h%h",
-				this.get_full_name(), idx, value),UVM_MEDIUM);
+				this.get_full_name(), idx, value),uvm_verbosity.UVM_MEDIUM);
     this.fname = "";
     this.lineno = 0;
 
@@ -1363,7 +1363,7 @@ class uvm_vreg: uvm_object
     }
 
     uvm_info("RegModel", format("Peeked virtual register \"%s\"[%0d]: 'h%h",
-				this.get_full_name(), idx, value),UVM_MEDIUM);
+				this.get_full_name(), idx, value),uvm_verbosity.UVM_MEDIUM);
 
     this.fname = "";
     this.lineno = 0;

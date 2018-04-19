@@ -87,7 +87,7 @@ class uvm_push_driver(REQ=uvm_sequence_item,
     if (req_export.size() != 1) {
       uvm_report_fatal("Connection Error",
 		       format("Must connect to seq_item_port(%0d)",
-			      req_export.size()), UVM_NONE);
+			      req_export.size()), uvm_verbosity.UVM_NONE);
     }
   }
 
@@ -98,7 +98,7 @@ class uvm_push_driver(REQ=uvm_sequence_item,
 
   // task
   void put(REQ item) {
-    uvm_report_fatal("UVM_PUSH_DRIVER", "Put task for push driver is not implemented", UVM_NONE);
+    uvm_report_fatal("UVM_PUSH_DRIVER", "Put task for push driver is not implemented", uvm_verbosity.UVM_NONE);
   }
 
   enum string type_name = "uvm_push_driver!(REQ,RSP)";

@@ -40,20 +40,12 @@
 
 module uvm.base.uvm_config_db;
 
-import uvm.base.uvm_phase;
-import uvm.base.uvm_pool;
-import uvm.base.uvm_resource_db;
-import uvm.base.uvm_resource;
-import uvm.base.uvm_array;
-import uvm.base.uvm_root;
-import uvm.base.uvm_entity;
+import uvm.base.uvm_resource_db: uvm_resource_db;
+import uvm.base.uvm_resource: uvm_resource, uvm_resource_pool,
+  uvm_resource_types, uvm_resource_base;
 import uvm.base.uvm_once;
-import uvm.base.uvm_globals;
-import uvm.base.uvm_factory;	// uvm_object_wrapper
+
 import uvm.meta.misc;
-import uvm.base.uvm_object;
-import uvm.base.uvm_entity;
-import uvm.base.uvm_object_globals;
 
 import esdl.base.core;
 
@@ -90,8 +82,9 @@ final private class m_uvm_waiter
 // separate _m_waiters instance. It is really not required since the
 // string KEY is going to be unique for every field_name irrespective
 // of the type of the field.
-  class uvm_once_config_db: uvm_once_base
+class uvm_once_config_db: uvm_once_base
 {
+  import uvm.base.uvm_array: uvm_array;
   // Internal waiter list for wait_modified
   private uvm_array!(m_uvm_waiter)[string] _m_waiters;
 }
@@ -127,6 +120,7 @@ class uvm_config_db (T = int): uvm_resource_db!T
 
   static class uvm_once: uvm_once_base
   {
+    import uvm.base.uvm_pool: uvm_pool;
     @uvm_immutable_sync
     private uvm_pool!(string, uvm_resource!T) _m_rsc;
     this() {
@@ -229,8 +223,12 @@ class uvm_config_db (T = int): uvm_resource_db!T
 		  string inst_name,
 		  string field_name,
 		  T value) {
+
     import uvm.base.uvm_coreservice;
+    import uvm.base.uvm_root;
     import esdl.base.core: Process;
+    import uvm.base.uvm_phase;
+    import uvm.base.uvm_globals;
 
     uvm_resource!T r;
     bool exists = false;
@@ -295,7 +293,7 @@ class uvm_config_db (T = int): uvm_resource_db!T
 
     if(exists) {
       uvm_resource_pool rp = uvm_resource_pool.get();
-      rp.set_priority_name(r, uvm_resource_types.PRI_HIGH);
+      rp.set_priority_name(r, uvm_resource_types.priority_e.PRI_HIGH);
     }
     else {
       //Doesn't exist yet, so put it in resource db at the head.
@@ -363,6 +361,7 @@ class uvm_config_db (T = int): uvm_resource_db!T
   // task
   static void wait_modified(uvm_component cntxt, string inst_name,
 			    string field_name) {
+    import uvm.base.uvm_array;
     import uvm.base.uvm_coreservice;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     Process p = Process.self();
@@ -408,40 +407,44 @@ class uvm_config_db (T = int): uvm_resource_db!T
 
 }
 
-// Section: Types
+/////////////////////////////////////////////////////////////////
+// To avoid module import dependencies, moved to uvm_config_types
+/////////////////////////////////////////////////////////////////
 
-//----------------------------------------------------------------------
-// Topic: uvm_config_int
-//
-// Convenience type for uvm_config_db#(uvm_bitstream_t)
-//
-//| typedef uvm_config_db#(uvm_bitstream_t) uvm_config_int;
-alias uvm_config_int = uvm_config_db!uvm_bitstream_t;
+// // Section: Types
 
-//----------------------------------------------------------------------
-// Topic: uvm_config_string
-//
-// Convenience type for uvm_config_db#(string)
-//
-//| typedef uvm_config_db#(string) uvm_config_string;
-alias uvm_config_string = uvm_config_db!string;
+// //----------------------------------------------------------------------
+// // Topic: uvm_config_int
+// //
+// // Convenience type for uvm_config_db#(uvm_bitstream_t)
+// //
+// //| typedef uvm_config_db#(uvm_bitstream_t) uvm_config_int;
+// alias uvm_config_int = uvm_config_db!uvm_bitstream_t;
 
-//----------------------------------------------------------------------
-// Topic: uvm_config_object
-//
-// Convenience type for uvm_config_db#(uvm_object)
-//
-//| typedef uvm_config_db#(uvm_object) uvm_config_object;
-alias uvm_config_object = uvm_config_db!uvm_object;
+// //----------------------------------------------------------------------
+// // Topic: uvm_config_string
+// //
+// // Convenience type for uvm_config_db#(string)
+// //
+// //| typedef uvm_config_db#(string) uvm_config_string;
+// alias uvm_config_string = uvm_config_db!string;
 
-//----------------------------------------------------------------------
-// Topic: uvm_config_wrapper
-//
-// Convenience type for uvm_config_db#(uvm_object_wrapper)
-//
-//| typedef uvm_config_db#(uvm_object_wrapper) uvm_config_wrapper;
+// //----------------------------------------------------------------------
+// // Topic: uvm_config_object
+// //
+// // Convenience type for uvm_config_db#(uvm_object)
+// //
+// //| typedef uvm_config_db#(uvm_object) uvm_config_object;
+// alias uvm_config_object = uvm_config_db!uvm_object;
 
-alias uvm_config_wrapper = uvm_config_db!uvm_object_wrapper;
+// //----------------------------------------------------------------------
+// // Topic: uvm_config_wrapper
+// //
+// // Convenience type for uvm_config_db#(uvm_object_wrapper)
+// //
+// //| typedef uvm_config_db#(uvm_object_wrapper) uvm_config_wrapper;
+
+// alias uvm_config_wrapper = uvm_config_db!uvm_object_wrapper;
 
 
 //----------------------------------------------------------------------
@@ -464,7 +467,7 @@ alias uvm_config_wrapper = uvm_config_db!uvm_object_wrapper;
 // singleton resources
 package class uvm_config_db_options
 {
-  import uvm.base.uvm_cmdline_processor;
+  import uvm.base.uvm_cmdline_processor: uvm_cmdline_processor;
 
   static class uvm_once: uvm_once_base
   {

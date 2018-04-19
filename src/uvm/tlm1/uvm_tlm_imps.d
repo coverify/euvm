@@ -39,7 +39,7 @@ module uvm.tlm1.uvm_tlm_imps;
 *define UVM_BLOCKING_PUT_IMP(IMP, TYPE, arg) \
   task put (TYPE arg); \
     if (m_imp_list.size()) == 0) begin \
-      uvm_report_error("Port Not Bound","Blocking put to unbound port will wait forever.", UVM_NONE);
+      uvm_report_error("Port Not Bound","Blocking put to unbound port will wait forever.", uvm_verbosity.UVM_NONE);
       @IMP;
     end
     if (bcast_mode) begin \
@@ -301,7 +301,7 @@ mixin template UVM_TLM_GET_TYPE_NAME() {
 mixin template UVM_PORT_COMMON(uint MASK, string TYPE_NAME) {
   this(string name, uvm_component parent,
        int min_size=1, int max_size=1) {
-    super(name, parent, UVM_PORT, min_size, max_size);
+    super(name, parent, uvm_port_type_e.UVM_PORT, min_size, max_size);
     m_if_mask = MASK;
   }
   mixin UVM_TLM_GET_TYPE_NAME!(TYPE_NAME);
@@ -310,7 +310,7 @@ mixin template UVM_PORT_COMMON(uint MASK, string TYPE_NAME) {
 mixin template UVM_PORT_COMMON(uint MASK) {
   this(string name, uvm_component parent,
        int min_size=1, int max_size=1) {
-    super(name, parent, UVM_PORT, min_size, max_size);
+    super(name, parent, uvm_port_type_e.UVM_PORT, min_size, max_size);
     m_if_mask = MASK;
   }
   mixin UVM_TLM_GET_TYPE_NAME;
@@ -327,7 +327,7 @@ mixin template UVM_PORT_COMMON(uint MASK) {
 mixin template UVM_SEQ_PORT(uint MASK, string TYPE_NAME) {
   this(string name, uvm_component parent,
        int min_size=0, int max_size=1) {
-    super(name, parent, UVM_PORT, min_size, max_size);
+    super(name, parent, uvm_port_type_e.UVM_PORT, min_size, max_size);
     m_if_mask = MASK;
   }
   
@@ -337,7 +337,7 @@ mixin template UVM_SEQ_PORT(uint MASK, string TYPE_NAME) {
 mixin template UVM_SEQ_PORT(uint MASK) {
   this(string name, uvm_component parent,
        int min_size=0, int max_size=1) {
-    super(name, parent, UVM_PORT, min_size, max_size);
+    super(name, parent, uvm_port_type_e.UVM_PORT, min_size, max_size);
     m_if_mask = MASK;
   }
   
@@ -355,7 +355,7 @@ mixin template UVM_SEQ_PORT(uint MASK) {
 mixin template UVM_EXPORT_COMMON(uint MASK, string TYPE_NAME) {
   this(string name, uvm_component parent,
        int min_size=1, int max_size=1) {
-    super(name, parent, UVM_EXPORT, min_size, max_size);
+    super(name, parent, uvm_port_type_e.UVM_EXPORT, min_size, max_size);
     m_if_mask = MASK;
   }
   mixin UVM_TLM_GET_TYPE_NAME!(TYPE_NAME);
@@ -364,7 +364,7 @@ mixin template UVM_EXPORT_COMMON(uint MASK, string TYPE_NAME) {
 mixin template UVM_EXPORT_COMMON(uint MASK) {
   this(string name, uvm_component parent,
        int min_size=1, int max_size=1) {
-    super(name, parent, UVM_EXPORT, min_size, max_size);
+    super(name, parent, uvm_port_type_e.UVM_EXPORT, min_size, max_size);
     m_if_mask = MASK;
   }
   mixin UVM_TLM_GET_TYPE_NAME;
@@ -383,7 +383,7 @@ mixin template UVM_IMP_COMMON(uint MASK, string TYPE_NAME, IMP) {
   private IMP _m_imp;
   this(string name, IMP imp) {
     synchronized(this) {
-      super(name, imp, UVM_IMPLEMENTATION, 1, 1);
+      super(name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
       _m_imp = IMP;
       m_if_mask = MASK;
     }
@@ -395,7 +395,7 @@ mixin template UVM_IMP_COMMON(uint MASK, IMP) {
   private IMP _m_imp;
   this(string name, IMP imp) {
     synchronized(this) {
-      super(name, imp, UVM_IMPLEMENTATION, 1, 1);
+      super(name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
       _m_imp = IMP;
       m_if_mask = MASK;
     }

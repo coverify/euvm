@@ -331,6 +331,7 @@ class axi_scoreboard(int DW, int AW): uvm_scoreboard
   
   void write_rd(sha3_seq_item rsp) {
     // rsp.print();
+    import std.string: format;
     auto expected = sponge(prev_req.phrase.ptr,
 			   cast(uint) prev_req.phrase.length);
 

@@ -188,7 +188,7 @@ module axi_tb #	(parameter integer DW	= 32,
 
    initial begin
       $dumpfile("interface.vcd");
-      $dumpvars(4, dut);
+      $dumpvars(0, dut);
       $dumpon;
       s00_axi_aclk = 0;
       forever begin

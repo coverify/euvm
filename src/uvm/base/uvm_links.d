@@ -24,7 +24,7 @@
 
 module uvm.base.uvm_links;
 
-import uvm.base.uvm_object;
+import uvm.base.uvm_object: uvm_object;
 import uvm.base.uvm_object_defines;
 
 

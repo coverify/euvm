@@ -142,7 +142,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
     if (get_next_item_called is true) {
       uvm_report_error(get_full_name(),
 		       "Get_next_item called twice without item_done" ~
-		       " or get in between", UVM_NONE);
+		       " or get in between", uvm_verbosity.UVM_NONE);
     }
 
     if (! sequence_item_requested) {
@@ -170,7 +170,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
 
     if (get_next_item_called is true) {
       uvm_report_error(get_full_name(), "get_next_item/try_next_item called" ~
-		       " twice without item_done or get in between", UVM_NONE);
+		       " twice without item_done or get in between", uvm_verbosity.UVM_NONE);
       return;
     }
 
@@ -210,7 +210,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
 		       seq.get_full_name() ~ "' did not produce an item" ~
 		       " within an NBA delay. Sequences should not consume" ~
 		       " time between calls to start_item and finish_item. " ~
-		       "Returning null item.", UVM_NONE);
+		       "Returning null item.", uvm_verbosity.UVM_NONE);
 
   }
 
@@ -262,7 +262,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   //
 
   // task
-  final void get(out REQ t) {
+  void get(out REQ t) {
     if (sequence_item_requested is false) {
       m_select_sequence();
     }
@@ -272,7 +272,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   }
 
   // task
-  final REQ get() {
+  REQ get() {
     REQ t;
     this.get(t);
     return t;
@@ -284,7 +284,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   //
 
   // task
-  final void peek(out REQ t) {
+  void peek(out REQ t) {
     if (sequence_item_requested is false) {
       m_select_sequence();
     }
@@ -295,7 +295,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   }
 
   // task
-  final REQ peek() {
+  REQ peek() {
     REQ t;
     this.peek(t);
     return t;
@@ -321,11 +321,11 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   // item_done_trigger
   // -----------------
 
-  final void item_done_trigger(RSP item = null) {
+  void item_done_trigger(RSP item = null) {
     item_done(item);
   }
 
-  final RSP item_done_get_trigger_data() {
+  RSP item_done_get_trigger_data() {
     return last_rsp(0);
   }
 

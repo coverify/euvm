@@ -33,9 +33,7 @@ module uvm.base.uvm_array;
 // demand, and passed and stored by reference.
 //------------------------------------------------------------------------------
 
-import uvm.base.uvm_object;
-import uvm.base.uvm_globals: uvm_report_warning;
-import std.string: format;
+import uvm.base.uvm_object: uvm_object;
 
 class uvm_array (T=int): uvm_object
 {
@@ -101,6 +99,8 @@ class uvm_array (T=int): uvm_object
   // and returned.
 
   T get (ptrdiff_t index) {
+    import uvm.base.uvm_globals: uvm_report_warning;
+    import std.string: format;
     synchronized(this) {
       T default_value;
       if (index >= size() || index < 0) {
@@ -130,9 +130,11 @@ class uvm_array (T=int): uvm_object
   // Inserts the item at the given ~index~ in the array.
 
   void insert (ptrdiff_t index, T item) {
+    import uvm.base.uvm_globals: uvm_report_warning;
+    import std.string: format;
+    import uvm.base.uvm_globals;
     synchronized(this) {
       if (index >= size() || index < 0) {
-	import uvm.base.uvm_globals;
 	uvm_report_warning("ARRAYINS",
 			   format("insert: given index out of range for array of" ~
 				  " size %0d. Ignoring insert request", size()));
@@ -153,6 +155,8 @@ class uvm_array (T=int): uvm_object
   // it is named delete in systemverilog version -- but D reserves
   // delete as a keyword
   void remove (ptrdiff_t index=-1) {
+    import uvm.base.uvm_globals: uvm_report_warning;
+    import std.string: format;
     synchronized(this) {
       if (index >= size() || index < -1) {
 	uvm_report_warning("ARRAYDEL",
@@ -223,8 +227,8 @@ class uvm_array (T=int): uvm_object
   }
 
   override string get_type_name () {
+    import std.conv: to;
     synchronized(this) {
-      import std.conv: to;
       return to!string(typeid(this));
     }
   }
@@ -248,8 +252,8 @@ class uvm_array (T=int): uvm_object
   }
 
   string to(S)() if(is(S == string)) {
+    import std.conv: to;
     synchronized(this) {
-      import std.conv: to;
       return std.conv.to!string(_array);
     }
   }

@@ -37,19 +37,21 @@
 // information.
 
 module uvm.base.uvm_globals;
-import uvm.base.uvm_report_object;
-import uvm.base.uvm_report_message;
-import uvm.base.uvm_message_defines;
+import uvm.base.uvm_report_object: uvm_report_object;
+import uvm.base.uvm_report_message: uvm_report_message;
+import uvm.base.uvm_object_globals: uvm_severity, uvm_verbosity, uvm_action, uvm_action_type;
 
 import esdl.base.core: wait;
+import esdl.data.bvec;
+import esdl.data.bstr;		// BitStream
 
 import std.traits: EnumMembers;
 import std.conv;
 
-version(UVM_NO_DEPRECATED) { }
- else {
-   version = UVM_INCLUDE_DEPRECATED;
- }
+// version(UVM_NO_DEPRECATED) { }
+//  else {
+//    version = UVM_INCLUDE_DEPRECATED;
+//  }
 
 interface uvm_report_intf
 {
@@ -90,7 +92,7 @@ interface uvm_report_intf
 
   void uvm_info(string file=__FILE__, size_t line=__LINE__)
     (string id, string message, uvm_verbosity verbosity) {
-    if (uvm_report_enabled(verbosity, UVM_INFO, id))
+    if (uvm_report_enabled(verbosity, uvm_severity.UVM_INFO, id))
       uvm_report_info(id, message, verbosity, file, line);
   }
 
@@ -98,14 +100,14 @@ interface uvm_report_intf
     (string id, string message, uvm_verbosity verbosity, MF mf)
     if (MF.length > 0 && is(MF[0]: uvm_report_message_element_base)) {
       uvm_report_message rm;
-      uvm_message(UVM_INFO, id, message, verbosity, file, line, rm, mf);
+      uvm_message(uvm_severity.UVM_INFO, id, message, verbosity, file, line, rm, mf);
     }
 
   void uvm_info(string file=__FILE__, size_t line=__LINE__, MF...)
     (string id, string message, uvm_verbosity verbosity,
      ref uvm_report_message rm, MF mf)
     if (MF.length == 0 || is(MF[0]: uvm_report_message_element_base)) {
-      uvm_message(UVM_INFO, id, message, verbosity, file, line, rm, mf);
+      uvm_message(uvm_severity.UVM_INFO, id, message, verbosity, file, line, rm, mf);
     }
 
 
@@ -121,21 +123,21 @@ interface uvm_report_intf
 
   void uvm_warning(string file=__FILE__, size_t line=__LINE__)
     (string id, string message) {
-    if (uvm_report_enabled(UVM_NONE, UVM_WARNING, id))
-      uvm_report_warning(id, message, UVM_NONE, file, line);
+    if (uvm_report_enabled(uvm_verbosity.UVM_NONE, uvm_severity.UVM_WARNING, id))
+      uvm_report_warning(id, message, uvm_verbosity.UVM_NONE, file, line);
   }
 
   void uvm_warning(string file=__FILE__, size_t line=__LINE__, MF...)
     (string id, string message, MF mf)
     if(MF.length > 0 && is(MF[0]: uvm_report_message_element_base)) {
       uvm_report_message rm;
-      uvm_message(UVM_WARNING, id, message, UVM_NONE, file, line, rm, mf);
+      uvm_message(uvm_severity.UVM_WARNING, id, message, uvm_verbosity.UVM_NONE, file, line, rm, mf);
     }
 
   void uvm_warning(string file=__FILE__, size_t line=__LINE__, MF...)
     (string id, string message, ref uvm_report_message rm, MF mf)
     if(MF.length == 0 || is(MF[0]: uvm_report_message_element_base)) {
-      uvm_message(UVM_WARNING, id, message, UVM_NONE, file, line, rm, mf);
+      uvm_message(uvm_severity.UVM_WARNING, id, message, uvm_verbosity.UVM_NONE, file, line, rm, mf);
     }
 
   // MACRO: `uvm_error
@@ -150,21 +152,21 @@ interface uvm_report_intf
 
   void uvm_error(string file=__FILE__, size_t line=__LINE__)
     (string id, string message) {
-    if (uvm_report_enabled(UVM_NONE, UVM_ERROR, id))
-      uvm_report_error(id, message, UVM_NONE, file, line);
+    if (uvm_report_enabled(uvm_verbosity.UVM_NONE, uvm_severity.UVM_ERROR, id))
+      uvm_report_error(id, message, uvm_verbosity.UVM_NONE, file, line);
   }
 
   void uvm_error(string file=__FILE__, size_t line=__LINE__, MF...)
     (string id, string message, MF mf)
     if(MF.length > 0 && is(MF[0]: uvm_report_message_element_base)) {
       uvm_report_message rm;
-      uvm_message(UVM_ERROR, id, message, UVM_NONE, file, line, rm, mf);
+      uvm_message(uvm_severity.UVM_ERROR, id, message, uvm_verbosity.UVM_NONE, file, line, rm, mf);
     }
 
   void uvm_error(string file=__FILE__, size_t line=__LINE__, MF...)
     (string id, string message, ref uvm_report_message rm, MF mf)
     if(MF.length == 0 || is(MF[0]: uvm_report_message_element_base)) {
-      uvm_message(UVM_ERROR, id, message, UVM_NONE, file, line, rm, mf);
+      uvm_message(uvm_severity.UVM_ERROR, id, message, uvm_verbosity.UVM_NONE, file, line, rm, mf);
     }
 
   // MACRO: `uvm_fatal
@@ -179,21 +181,21 @@ interface uvm_report_intf
 
   void uvm_fatal(string file=__FILE__, size_t line=__LINE__)
     (string id, string message) {
-    if (uvm_report_enabled(UVM_NONE, UVM_FATAL, id))
-      uvm_report_fatal(id, message, UVM_NONE, file, line);
+    if (uvm_report_enabled(uvm_verbosity.UVM_NONE, uvm_severity.UVM_FATAL, id))
+      uvm_report_fatal(id, message, uvm_verbosity.UVM_NONE, file, line);
   }
 
   void uvm_fatal(string file=__FILE__, size_t line=__LINE__, MF...)
     (string id, string message, MF mf)
     if(MF.length > 0 && is(MF[0]: uvm_report_message_element_base)) {
       uvm_report_message rm;
-      uvm_message(UVM_FATAL, id, message, UVM_NONE, file, line, rm, mf);
+      uvm_message(uvm_severity.UVM_FATAL, id, message, uvm_verbosity.UVM_NONE, file, line, rm, mf);
     }
 
   void uvm_fatal(string file=__FILE__, size_t line=__LINE__, MF...)
     (string id, string message, ref uvm_report_message rm, MF mf)
     if(MF.length == 0 || is(MF[0]: uvm_report_message_element_base)) {
-      uvm_message(UVM_FATAL, id, message, UVM_NONE, file, line, rm, mf);
+      uvm_message(uvm_severity.UVM_FATAL, id, message, uvm_verbosity.UVM_NONE, file, line, rm, mf);
     }
 }
 
@@ -226,7 +228,7 @@ void uvm_message(MF...)(uvm_severity severity, string id, string message,
 
 void uvm_info(string file=__FILE__, size_t line=__LINE__)
   (string id, string message, uvm_verbosity verbosity) {
-  if (uvm_report_enabled(verbosity, UVM_INFO, id))
+  if (uvm_report_enabled(verbosity, uvm_severity.UVM_INFO, id))
     uvm_report_info(id, message, verbosity, file, line);
 }
 
@@ -234,14 +236,14 @@ void uvm_info(string file=__FILE__, size_t line=__LINE__, MF...)
   (string id, string message, uvm_verbosity verbosity, MF mf)
   if (MF.length > 0 && is(MF[0]: uvm_report_message_element_base)) {
     uvm_report_message rm;
-    uvm_message(UVM_INFO, id, message, verbosity, file, line, rm, mf);
+    uvm_message(uvm_severity.UVM_INFO, id, message, verbosity, file, line, rm, mf);
   }
 
 void uvm_info(string file=__FILE__, size_t line=__LINE__, MF...)
   (string id, string message, uvm_verbosity verbosity,
    ref uvm_report_message rm, MF mf)
   if (MF.length == 0 || is(MF[0]: uvm_report_message_element_base)) {
-    uvm_message(UVM_INFO, id, message, verbosity, file, line, rm, mf);
+    uvm_message(uvm_severity.UVM_INFO, id, message, verbosity, file, line, rm, mf);
   }
 
 
@@ -257,21 +259,21 @@ void uvm_info(string file=__FILE__, size_t line=__LINE__, MF...)
 
 void uvm_warning(string file=__FILE__, size_t line=__LINE__)
   (string id, string message) {
-  if (uvm_report_enabled(UVM_NONE, UVM_WARNING, id))
-    uvm_report_warning(id, message, UVM_NONE, file, line);
+  if (uvm_report_enabled(uvm_verbosity.UVM_NONE, uvm_severity.UVM_WARNING, id))
+    uvm_report_warning(id, message, uvm_verbosity.UVM_NONE, file, line);
 }
 
 void uvm_warning(string file=__FILE__, size_t line=__LINE__, MF...)
   (string id, string message, MF mf)
   if(MF.length > 0 && is(MF[0]: uvm_report_message_element_base)) {
     uvm_report_message rm;
-    uvm_message(UVM_WARNING, id, message, UVM_NONE, file, line, rm, mf);
+    uvm_message(uvm_severity.UVM_WARNING, id, message, uvm_verbosity.UVM_NONE, file, line, rm, mf);
   }
 
 void uvm_warning(string file=__FILE__, size_t line=__LINE__, MF...)
   (string id, string message, ref uvm_report_message rm, MF mf)
   if(MF.length == 0 || is(MF[0]: uvm_report_message_element_base)) {
-    uvm_message(UVM_WARNING, id, message, UVM_NONE, file, line, rm, mf);
+    uvm_message(uvm_severity.UVM_WARNING, id, message, uvm_verbosity.UVM_NONE, file, line, rm, mf);
   }
 
 // MACRO: `uvm_error
@@ -286,21 +288,21 @@ void uvm_warning(string file=__FILE__, size_t line=__LINE__, MF...)
 
 void uvm_error(string file=__FILE__, size_t line=__LINE__)
   (string id, string message) {
-  if (uvm_report_enabled(UVM_NONE, UVM_ERROR, id))
-    uvm_report_error(id, message, UVM_NONE, file, line);
+  if (uvm_report_enabled(uvm_verbosity.UVM_NONE, uvm_severity.UVM_ERROR, id))
+    uvm_report_error(id, message, uvm_verbosity.UVM_NONE, file, line);
 }
 
 void uvm_error(string file=__FILE__, size_t line=__LINE__, MF...)
   (string id, string message, MF mf)
   if(MF.length > 0 && is(MF[0]: uvm_report_message_element_base)) {
     uvm_report_message rm;
-    uvm_message(UVM_ERROR, id, message, UVM_NONE, file, line, rm, mf);
+    uvm_message(uvm_severity.UVM_ERROR, id, message, uvm_verbosity.UVM_NONE, file, line, rm, mf);
   }
 
 void uvm_error(string file=__FILE__, size_t line=__LINE__, MF...)
   (string id, string message, ref uvm_report_message rm, MF mf)
   if(MF.length == 0 || is(MF[0]: uvm_report_message_element_base)) {
-    uvm_message(UVM_ERROR, id, message, UVM_NONE, file, line, rm, mf);
+    uvm_message(uvm_severity.UVM_ERROR, id, message, uvm_verbosity.UVM_NONE, file, line, rm, mf);
   }
 
 // MACRO: `uvm_fatal
@@ -315,21 +317,21 @@ void uvm_error(string file=__FILE__, size_t line=__LINE__, MF...)
 
 void uvm_fatal(string file=__FILE__, size_t line=__LINE__)
   (string id, string message) {
-  if (uvm_report_enabled(UVM_NONE, UVM_FATAL, id))
-    uvm_report_fatal(id, message, UVM_NONE, file, line);
+  if (uvm_report_enabled(uvm_verbosity.UVM_NONE, uvm_severity.UVM_FATAL, id))
+    uvm_report_fatal(id, message, uvm_verbosity.UVM_NONE, file, line);
 }
 
 void uvm_fatal(string file=__FILE__, size_t line=__LINE__, MF...)
   (string id, string message, MF mf)
   if(MF.length > 0 && is(MF[0]: uvm_report_message_element_base)) {
     uvm_report_message rm;
-    uvm_message(UVM_FATAL, id, message, UVM_NONE, file, line, rm, mf);
+    uvm_message(uvm_severity.UVM_FATAL, id, message, uvm_verbosity.UVM_NONE, file, line, rm, mf);
   }
 
 void uvm_fatal(string file=__FILE__, size_t line=__LINE__, MF...)
   (string id, string message, ref uvm_report_message rm, MF mf)
   if(MF.length == 0 || is(MF[0]: uvm_report_message_element_base)) {
-    uvm_message(UVM_FATAL, id, message, UVM_NONE, file, line, rm, mf);
+    uvm_message(uvm_severity.UVM_FATAL, id, message, uvm_verbosity.UVM_NONE, file, line, rm, mf);
   }
 
 static void uvm_message_context(MF...)(uvm_severity severity, string id,
@@ -357,7 +359,7 @@ static void uvm_message_context(MF...)(uvm_severity severity, string id,
 
 static void uvm_info_context(string file=__FILE__, size_t line=__LINE__)
   (string id, string message, uvm_verbosity verbosity, uvm_report_object ro) {
-  if (ro.uvm_report_enabled(verbosity, UVM_INFO, id)) {
+  if (ro.uvm_report_enabled(verbosity, uvm_severity.UVM_INFO, id)) {
     ro.uvm_report_info(id, message, verbosity, file, line);
   }
 }
@@ -367,7 +369,7 @@ static void uvm_info_context(string file=__FILE__, size_t line=__LINE__, MF...)
    uvm_report_object ro, MF mf)
   if(MF.length > 0 && is(MF[0]: uvm_report_message_element_base)) {
     uvm_report_message rm;
-    uvm_message_context(UVM_INFO, id, message, verbosity,
+    uvm_message_context(uvm_severity.UVM_INFO, id, message, verbosity,
 			file, line, ro, rm, mf);
   }
 
@@ -375,7 +377,7 @@ static void uvm_info_context(string file=__FILE__, size_t line=__LINE__, MF...)
   (string id, string message, uvm_verbosity verbosity,
    uvm_report_object ro, ref uvm_report_message rm, MF mf)
   if(MF.length == 0 || is(MF[0]: uvm_report_message_element_base)) {
-    uvm_message_context(UVM_INFO, id, message, verbosity,
+    uvm_message_context(uvm_severity.UVM_INFO, id, message, verbosity,
 			file, line, ro, rm, mf);
   }
 
@@ -389,8 +391,8 @@ static void uvm_info_context(string file=__FILE__, size_t line=__LINE__, MF...)
 
 static void uvm_warning_context(string file=__FILE__, size_t line=__LINE__)
   (string id, string message, uvm_report_object ro) {
-  if (ro.uvm_report_enabled(UVM_NONE, UVM_WARNING, id)) {
-    ro.uvm_report_warning(id, message, UVM_NONE, file, line);
+  if (ro.uvm_report_enabled(uvm_verbosity.UVM_NONE, uvm_severity.UVM_WARNING, id)) {
+    ro.uvm_report_warning(id, message, uvm_verbosity.UVM_NONE, file, line);
   }
 }
 
@@ -398,7 +400,7 @@ static void uvm_warning_context(string file=__FILE__, size_t line=__LINE__, MF..
   (string id, string message, uvm_report_object ro, MF mf)
   if(MF.length > 0 && is(MF[0]: uvm_report_message_element_base)) {
     uvm_report_message rm;
-    uvm_message_context(UVM_WARNING, id, message, UVM_NONE,
+    uvm_message_context(uvm_severity.UVM_WARNING, id, message, uvm_verbosity.UVM_NONE,
 			file, line, ro, rm, mf);
   }
 
@@ -406,7 +408,7 @@ static void uvm_warning_context(string file=__FILE__, size_t line=__LINE__, MF..
   (string id, string message, uvm_report_object ro,
    ref uvm_report_message rm, MF mf)
   if(MF.length == 0 || is(MF[0]: uvm_report_message_element_base)) {
-    uvm_message_context(UVM_WARNING, id, message, UVM_NONE,
+    uvm_message_context(uvm_severity.UVM_WARNING, id, message, uvm_verbosity.UVM_NONE,
 			file, line, ro, rm, mf);
   }
 
@@ -420,8 +422,8 @@ static void uvm_warning_context(string file=__FILE__, size_t line=__LINE__, MF..
 
 static void uvm_error_context(string file=__FILE__, size_t line=__LINE__)
   (string id, string message, uvm_report_object ro) {
-  if (ro.uvm_report_enabled(UVM_NONE, UVM_ERROR, id)) {
-    ro.uvm_report_error(id, message, UVM_NONE, file, line);
+  if (ro.uvm_report_enabled(uvm_verbosity.UVM_NONE, uvm_severity.UVM_ERROR, id)) {
+    ro.uvm_report_error(id, message, uvm_verbosity.UVM_NONE, file, line);
   }
 }
 
@@ -429,7 +431,7 @@ static void uvm_error_context(string file=__FILE__, size_t line=__LINE__, MF...)
   (string id, string message, uvm_report_object ro, MF mf)
   if(MF.length > 0 && is(MF[0]: uvm_report_message_element_base)) {
     uvm_report_message rm;
-    uvm_message_context(UVM_ERROR, id, message, UVM_NONE,
+    uvm_message_context(uvm_severity.UVM_ERROR, id, message, uvm_verbosity.UVM_NONE,
 			file, line, ro, rm, mf);
   }
 
@@ -437,7 +439,7 @@ static void uvm_error_context(string file=__FILE__, size_t line=__LINE__, MF...)
   (string id, string message, uvm_report_object ro,
    ref uvm_report_message rm, MF mf)
   if(MF.length == 0 || is(MF[0]: uvm_report_message_element_base)) {
-    uvm_message_context(UVM_ERROR, id, message, UVM_NONE,
+    uvm_message_context(uvm_severity.UVM_ERROR, id, message, uvm_verbosity.UVM_NONE,
 			file, line, ro, rm, mf);
   }
 
@@ -451,8 +453,8 @@ static void uvm_error_context(string file=__FILE__, size_t line=__LINE__, MF...)
 
 static void uvm_fatal_context(string file=__FILE__, size_t line=__LINE__)
   (string id, string message, uvm_report_object ro) {
-  if (ro.uvm_report_enabled(UVM_NONE, UVM_FATAL, id)) {
-    ro.uvm_report_fatal(id, message, UVM_NONE, file, line);
+  if (ro.uvm_report_enabled(uvm_verbosity.UVM_NONE, uvm_severity.UVM_FATAL, id)) {
+    ro.uvm_report_fatal(id, message, uvm_verbosity.UVM_NONE, file, line);
   }
 }
 
@@ -460,7 +462,7 @@ static void uvm_fatal_context(string file=__FILE__, size_t line=__LINE__, MF...)
   (string id, string message, uvm_report_object ro, MF mf)
   if(MF.length > 0 && is(MF[0]: uvm_report_message_element_base)) {
     uvm_report_message rm;
-    uvm_message_context(UVM_FATAL, id, message, UVM_NONE,
+    uvm_message_context(uvm_severity.UVM_FATAL, id, message, uvm_verbosity.UVM_NONE,
 			file, line, ro, rm, mf);
   }
 
@@ -468,7 +470,7 @@ static void uvm_fatal_context(string file=__FILE__, size_t line=__LINE__, MF...)
   (string id, string message, uvm_report_object ro,
    ref uvm_report_message rm, MF mf)
   if(MF.length == 0 || is(MF[0]: uvm_report_message_element_base)) {
-    uvm_message_context(UVM_FATAL, id, message, UVM_NONE,
+    uvm_message_context(uvm_severity.UVM_FATAL, id, message, uvm_verbosity.UVM_NONE,
 			file, line, ro, rm, mf);
   }
 
@@ -677,8 +679,6 @@ version (UVM_INCLUDE_DEPRECATED) {
 //     context.uvm_report_fatal(id, message, UVM_NONE, file, line);
 // }
 
-import uvm.base.uvm_object_globals;
-
 
 // Function: uvm_get_report_object
 //
@@ -729,8 +729,8 @@ void uvm_report(uvm_severity severity,
   import uvm.base.uvm_root;
 
   if(verbosity is int.min) {
-    verbosity = (severity is UVM_ERROR) ? UVM_LOW :
-      (severity is UVM_FATAL) ? UVM_NONE : UVM_MEDIUM;
+    verbosity = (severity is uvm_severity.UVM_ERROR) ? uvm_verbosity.UVM_LOW :
+      (severity is uvm_severity.UVM_FATAL) ? uvm_verbosity.UVM_NONE : uvm_verbosity.UVM_MEDIUM;
   }
 
   uvm_coreservice_t cs = uvm_coreservice_t.get();
@@ -876,10 +876,10 @@ void uvm_process_report_message(uvm_report_message report_message) {
 // TODO merge with uvm_enum_wrapper#(uvm_severity)
 bool uvm_string_to_severity (string sev_str, out uvm_severity sev) {
   switch (sev_str) {
-  case "UVM_INFO":    sev = UVM_INFO;    break;
-  case "UVM_WARNING": sev = UVM_WARNING; break;
-  case "UVM_ERROR":   sev = UVM_ERROR;   break;
-  case "UVM_FATAL":   sev = UVM_FATAL;   break;
+  case "UVM_INFO":    sev = uvm_severity.UVM_INFO;    break;
+  case "UVM_WARNING": sev = uvm_severity.UVM_WARNING; break;
+  case "UVM_ERROR":   sev = uvm_severity.UVM_ERROR;   break;
+  case "UVM_FATAL":   sev = uvm_severity.UVM_FATAL;   break;
   default: return false;
   }
   return true;
@@ -892,14 +892,14 @@ bool uvm_string_to_action (string action_str, out uvm_action action) {
   // action = 0; // taken care since action is of type "out"
   foreach(a; actions[]) {
     switch (a) {
-    case "UVM_NO_ACTION": action |= UVM_NO_ACTION; break;
-    case "UVM_DISPLAY":   action |= UVM_DISPLAY;   break;
-    case "UVM_LOG":       action |= UVM_LOG;       break;
-    case "UVM_COUNT":     action |= UVM_COUNT;     break;
-    case "UVM_EXIT":      action |= UVM_EXIT;      break;
-    case "UVM_CALL_HOOK": action |= UVM_CALL_HOOK; break;
-    case "UVM_STOP":      action |= UVM_STOP;      break;
-    case "UVM_RM_RECORD": action |= UVM_RM_RECORD; break;
+    case "UVM_NO_ACTION": action |= uvm_action_type.UVM_NO_ACTION; break;
+    case "UVM_DISPLAY":   action |= uvm_action_type.UVM_DISPLAY;   break;
+    case "UVM_LOG":       action |= uvm_action_type.UVM_LOG;       break;
+    case "UVM_COUNT":     action |= uvm_action_type.UVM_COUNT;     break;
+    case "UVM_EXIT":      action |= uvm_action_type.UVM_EXIT;      break;
+    case "UVM_CALL_HOOK": action |= uvm_action_type.UVM_CALL_HOOK; break;
+    case "UVM_STOP":      action |= uvm_action_type.UVM_STOP;      break;
+    case "UVM_RM_RECORD": action |= uvm_action_type.UVM_RM_RECORD; break;
     default: retval = false;
     }
   }
@@ -944,7 +944,7 @@ version(UVM_INCLUDE_DEPRECATED) {
   // component-level setting.  See <uvm_component::set_config_object> for
   // details on setting configuration.
 
-  import uvm.base.uvm_object;
+  import uvm.base.uvm_object: uvm_object;
   void set_config_object (string inst_name,
 			  string field_name,
 			  uvm_object value,
@@ -1028,9 +1028,6 @@ enum UVM_LARGE_STRING = UVM_LINE_WIDTH*UVM_NUM_LINES*8;
 // Converts an input string to its bit-vector equivalent. Max bit-vector
 // length is approximately 14000 characters.
 //----------------------------------------------------------------------------
-
-import esdl.data.bvec;
-import esdl.data.bstr;		// BitStream
 
 bstr uvm_string_to_bits(string str) {
   bstr uvm_string_to_bits_;

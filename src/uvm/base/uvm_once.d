@@ -20,7 +20,6 @@
 
 module uvm.base.uvm_once;
 
-import uvm.base.uvm_entity;
 import std.traits: fullyQualifiedName;
 
 class uvm_once_base
@@ -51,6 +50,7 @@ class uvm_root_once
   }
   
   static T get_once(T)() {
+    import uvm.base.uvm_entity;
     uvm_root_once once = uvm_entity_base.get().root_once();
     synchronized(once) {
       T instance;

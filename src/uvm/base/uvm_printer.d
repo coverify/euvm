@@ -24,8 +24,6 @@
 
 module uvm.base.uvm_printer;
 
-// import uvm.base.uvm_globals;
-
 import std.conv: to;
 import esdl.base.core: SimTime;
 import std.traits: isFloatingPoint;
@@ -86,8 +84,8 @@ import esdl.data.bvec;
 
 import uvm.base.uvm_misc: uvm_scope_stack,
   uvm_leaf_scope, uvm_bitvec_to_string;
-import uvm.base.uvm_object;
-import uvm.base.uvm_object_globals;
+import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_object_globals: uvm_radix_enum;
 
 import uvm.meta.misc;
 import uvm.meta.meta;
@@ -144,7 +142,7 @@ abstract class uvm_printer
 
   void print(T)(string          name,
 		T               value,
-		uvm_radix_enum  radix=UVM_NORADIX,
+		uvm_radix_enum  radix=uvm_radix_enum.UVM_NORADIX,
 		char            scope_separator='.',
 		string          type_name="")
     if(isBitVector!T || isIntegral!T || is(T: bool)) {
@@ -154,7 +152,7 @@ abstract class uvm_printer
   void print_integral(T)(string          name,
 			 T               value,
 			 ptrdiff_t       size = -1,
-			 uvm_radix_enum  radix=UVM_NORADIX,
+			 uvm_radix_enum  radix=uvm_radix_enum.UVM_NORADIX,
 			 char            scope_separator='.',
 			 string          type_name="")
     if(isBitVector!T || isIntegral!T || is(T: bool)) {
@@ -180,9 +178,9 @@ abstract class uvm_printer
 	}
 
 	if(type_name == "") {
-	  if(radix is UVM_TIME)        type_name = "time";
-	  else if(radix is UVM_STRING) type_name = "string";
-	  else if(radix is UVM_ENUM)   type_name = qualifiedTypeName!T ~
+	  if(radix is uvm_radix_enum.UVM_TIME)        type_name = "time";
+	  else if(radix is uvm_radix_enum.UVM_STRING) type_name = "string";
+	  else if(radix is uvm_radix_enum.UVM_ENUM)   type_name = qualifiedTypeName!T ~
 					 " (enum)";
 	  else {
 	    static if(isBitVector!T) {
@@ -199,7 +197,7 @@ abstract class uvm_printer
 
 	auto sz_str = size.to!string;
 
-	if(radix is UVM_NORADIX) {
+	if(radix is uvm_radix_enum.UVM_NORADIX) {
 	  static if(isBitVector!T  || isBoolean!T ||
 		    is(T == byte)  || is(T == ubyte)  ||
 		    is(T == short) || is(T == ushort) ||
@@ -208,7 +206,7 @@ abstract class uvm_printer
 	    radix = knobs.default_radix;
 	  }
 	  else {		// cover the enums
-	    radix = UVM_ENUM;
+	    radix = uvm_radix_enum.UVM_ENUM;
 	  }
 	}
 
@@ -372,7 +370,7 @@ abstract class uvm_printer
 		char   scope_separator='.')
     if(is(T == SimTime)) {
       synchronized(this) {
-	print(name, value.to!ulong, UVM_TIME, scope_separator);
+	print(name, value.to!ulong, uvm_radix_enum.UVM_TIME, scope_separator);
       }
     }
 
@@ -924,7 +922,6 @@ class uvm_line_printer: /*extends*/ uvm_tree_printer {
 //
 //------------------------------------------------------------------------------
 
-import uvm.base.uvm_object_globals;
 import uvm.meta.mcd;
 
 class uvm_printer_knobs {
@@ -1138,15 +1135,15 @@ class uvm_printer_knobs {
       if(_show_radix is false) {
 	return "";
       }
-      if(radix == UVM_NORADIX) {
+      if(radix == uvm_radix_enum.UVM_NORADIX) {
 	radix = _default_radix;
       }
       switch(radix) {
-      case UVM_BIN:      return _bin_radix;
-      case UVM_OCT:      return _oct_radix;
-      case UVM_DEC:      return _dec_radix;
-      case UVM_HEX:      return _hex_radix;
-      case UVM_UNSIGNED: return _unsigned_radix;
+      case uvm_radix_enum.UVM_BIN:      return _bin_radix;
+      case uvm_radix_enum.UVM_OCT:      return _oct_radix;
+      case uvm_radix_enum.UVM_DEC:      return _dec_radix;
+      case uvm_radix_enum.UVM_HEX:      return _hex_radix;
+      case uvm_radix_enum.UVM_UNSIGNED: return _unsigned_radix;
       default:           return "";
       }
     }

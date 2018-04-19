@@ -24,12 +24,10 @@
 
 module uvm.dap.uvm_get_to_lock_dap;
 
-import uvm.dap.uvm_set_get_dap_base;
+import uvm.dap.uvm_set_get_dap_base: uvm_set_get_dap_base;
 
-import uvm.base.uvm_printer;
-import uvm.base.uvm_packer;
-import uvm.base.uvm_globals;	// uvm_info
-import std.string: format;
+import uvm.base.uvm_printer: uvm_printer;
+import uvm.base.uvm_packer: uvm_packer;
 import uvm.base.uvm_object_defines;
 
 // Class: uvm_get_to_lock_dap
@@ -78,6 +76,8 @@ class uvm_get_to_lock_dap(T=int): uvm_set_get_dap_base!T
   // ~set~ will result in an error if the value has
   // already been retrieved via a call to ~get~.
   override void set(T value) {
+    import std.string: format;
+    import uvm.base.uvm_globals;
     synchronized(this) {
       if(_m_locked) {
 	uvm_error("UVM/GET_TO_LOCK_DAP/SAG",
@@ -143,16 +143,19 @@ class uvm_get_to_lock_dap(T=int): uvm_set_get_dap_base!T
   // A call to any of these methods will result in an error.
 
   override void do_copy(uvm_object rhs) {
+    import uvm.base.uvm_globals;
     uvm_error("UVM/GET_TO_LOCK_DAP/CPY",
 	      "'copy()' is not supported for 'uvm_get_to_lock_dap!T'");
   }
 
   override void do_pack(uvm_packer packer) {
+    import uvm.base.uvm_globals;
     uvm_error("UVM/GET_TO_LOCK_DAP/PCK",
 	      "'pack()' is not supported for 'uvm_get_to_lock_dap!T'");
   }
 
   override void do_unpack(uvm_packer packer) {
+    import uvm.base.uvm_globals;
     uvm_error("UVM/GET_TO_LOCK_DAP/UPK",
 	      "'unpack()' is not supported for 'uvm_get_to_lock_dap!T'");
   }
@@ -161,6 +164,7 @@ class uvm_get_to_lock_dap(T=int): uvm_set_get_dap_base!T
 
   // Function- convert2string
   override string convert2string() {
+    import std.string: format;
     synchronized(this) {
       if(_m_locked) {
 	return format("(%s) %s [LOCKED]", T.stringof, _m_value);
@@ -173,6 +177,7 @@ class uvm_get_to_lock_dap(T=int): uvm_set_get_dap_base!T
 
   // Function- do_print
   override void do_print(uvm_printer printer) {
+    import std.string: format;
     synchronized(this) {
       super.do_print(printer);
       printer.print_field_int("lock_state", _m_locked);

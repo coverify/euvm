@@ -273,7 +273,7 @@ class uvm_reg_item: uvm_sequence_item
 
       char[] value_s;
       if (_value.length > 1 &&
-	  uvm_report_enabled(UVM_HIGH, UVM_INFO, "RegModel")) {
+	  uvm_report_enabled(uvm_verbosity.UVM_HIGH, uvm_severity.UVM_INFO, "RegModel")) {
 	value_s = cast(char[]) "'{";
 	foreach (v; _value) {
 	  value_s ~= cast(char[]) format("%0h,", v);

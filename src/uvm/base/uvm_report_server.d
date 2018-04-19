@@ -40,17 +40,14 @@ import uvm.meta.mcd;
 import uvm.meta.meta;
 import uvm.meta.misc;
 
-import uvm.base.uvm_object;
-import uvm.base.uvm_globals;
-import uvm.base.uvm_recorder;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_report_handler;
-import uvm.base.uvm_report_object;
-import uvm.base.uvm_report_catcher;
-import uvm.base.uvm_report_message;
-import uvm.base.uvm_tr_database;
-import uvm.base.uvm_tr_stream;
-import uvm.base.uvm_printer;
+import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_report_object: uvm_report_object;
+import uvm.base.uvm_report_message: uvm_report_message,
+  uvm_report_message_element_container;
+import uvm.base.uvm_tr_database: uvm_tr_database;
+import uvm.base.uvm_tr_stream: uvm_tr_stream;
+import uvm.base.uvm_printer: uvm_printer;
+import uvm.base.uvm_object_globals: uvm_severity, uvm_verbosity, uvm_radix_enum, UVM_FILE, uvm_action_type;
 
 import esdl.base.core: finish, getRootEntity, Process, SimTime;
 
@@ -58,10 +55,10 @@ import std.traits: EnumMembers;
 import std.string: format;
 import std.conv: to;
 
-version(UVM_NO_DEPRECATED) { }
- else {
-   version = UVM_INCLUDE_DEPRECATED;
- }
+// version(UVM_NO_DEPRECATED) { }
+//  else {
+//    version = UVM_INCLUDE_DEPRECATED;
+//  }
 
 
 class uvm_report_server: /*extends*/ uvm_object
@@ -132,6 +129,7 @@ class uvm_report_server: /*extends*/ uvm_object
   // the copy is cummulative (only items from the source are transferred, already existing entries are not deleted,
   // existing entries/counts are overridden when they exist in the source set)
   override void do_copy (uvm_object rhs) {
+    import uvm.base.uvm_globals;
     synchronized(this) {
       super.do_copy(rhs);
       uvm_report_server rhs_ = cast(uvm_report_server) rhs;
@@ -362,18 +360,18 @@ class uvm_default_report_server: uvm_report_server
       uvm_severity l_severity_count_index;
       string l_id_count_index;
 
-      printer.print("quit_count", _m_quit_count, UVM_DEC, '.', "int");
+      printer.print("quit_count", _m_quit_count, uvm_radix_enum.UVM_DEC, '.', "int");
       printer.print("max_quit_count", _m_max_quit_count,
-		    UVM_DEC, '.', "int");
+		    uvm_radix_enum.UVM_DEC, '.', "int");
       printer.print("max_quit_overridable", _max_quit_overridable,
-		    UVM_BIN, '.', "bit");
+		    uvm_radix_enum.UVM_BIN, '.', "bit");
 
       if(_m_severity_count.length != 0) {
 	printer.print_array_header("severity_count", _m_severity_count.length,
 				   "severity counts");
 	foreach(l_severity_count_index, count; _m_severity_count) {
 	  printer.print(format("[%s]", l_severity_count_index.to!string()),
-			count, UVM_DEC);
+			count, uvm_radix_enum.UVM_DEC);
 	}
 	printer.print_array_footer();
       }
@@ -383,19 +381,19 @@ class uvm_default_report_server: uvm_report_server
 				   "id counts");
 	foreach(l_id_count_index, count; _m_id_count) {
 	  printer.print(format("[%s]",l_id_count_index),
-			count, UVM_DEC);
+			count, uvm_radix_enum.UVM_DEC);
 	}
 	printer.print_array_footer();
       }
 
       printer.print("enable_report_id_count_summary", _enable_report_id_count_summary,
-		    UVM_BIN, '.', "bit");
+		    uvm_radix_enum.UVM_BIN, '.', "bit");
       printer.print("record_all_messages", _record_all_messages,
-		    UVM_BIN, '.', "bit");
+		    uvm_radix_enum.UVM_BIN, '.', "bit");
       printer.print("show_verbosity", _show_verbosity,
-		    UVM_BIN, '.', "bit");
+		    uvm_radix_enum.UVM_BIN, '.', "bit");
       printer.print("show_terminator", _show_terminator,
-		    UVM_BIN, '.', "bit");
+		    uvm_radix_enum.UVM_BIN, '.', "bit");
     }
   }
 
@@ -419,13 +417,15 @@ class uvm_default_report_server: uvm_report_server
   // no maximum.
 
   override void set_max_quit_count(int count, bool overridable = true) {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       if (_max_quit_overridable == 0) {
 	uvm_report_info("NOMAXQUITOVR",
 			format("The max quit count setting of " ~
 			       "%0d is not overridable to %0d " ~
 			       "due to a previous setting.",
-			       _m_max_quit_count, count), UVM_NONE);
+			       _m_max_quit_count, count), uvm_verbosity.UVM_NONE);
 	return;
       }
       _max_quit_overridable = overridable;
@@ -628,6 +628,8 @@ class uvm_default_report_server: uvm_report_server
 
   override void process_report_message(uvm_report_message report_message) {
     import uvm.base.uvm_coreservice;
+    import uvm.base.uvm_report_handler;
+    import uvm.base.uvm_report_catcher;
     synchronized(this) {
       uvm_report_handler l_report_handler = report_message.get_report_handler();
       Process p = Process.self();
@@ -642,7 +644,7 @@ class uvm_default_report_server: uvm_report_server
       	// return 1 then continue processing the report.  If the hook
       	// returns 0 then skip processing the report.
 
-      	if(report_message.get_action() & UVM_CALL_HOOK) {
+      	if(report_message.get_action() & uvm_action_type.UVM_CALL_HOOK) {
       	  report_ok =
       	    l_report_handler.run_hooks(report_message.get_report_object(),
       				       report_message.get_severity(),
@@ -659,7 +661,7 @@ class uvm_default_report_server: uvm_report_server
 	  uvm_report_catcher.process_all_report_catchers(report_message);
       }
 
-      if(report_message.get_action() == UVM_NO_ACTION) {
+      if(report_message.get_action() == uvm_action_type.UVM_NO_ACTION) {
 	report_ok = 0;
       }
 
@@ -672,7 +674,7 @@ class uvm_default_report_server: uvm_report_server
 	version(UVM_DEPRECATED_REPORTING) {
 
 	  // no need to compose when neither UVM_DISPLAY nor UVM_LOG is set
-	  if (report_message.get_action() & (UVM_LOG|UVM_DISPLAY)) {
+	  if (report_message.get_action() & (uvm_action_type.UVM_LOG|uvm_action_type.UVM_DISPLAY)) {
 	    m = compose_message(report_message.get_severity(),
 				l_report_handler.get_full_name(),
 				report_message.get_id(),
@@ -695,7 +697,7 @@ class uvm_default_report_server: uvm_report_server
 	}
 	else {
 	  // no need to compose when neither UVM_DISPLAY nor UVM_LOG is set
-	  if (report_message.get_action() & (UVM_LOG|UVM_DISPLAY)) {
+	  if (report_message.get_action() & (uvm_action_type.UVM_LOG|uvm_action_type.UVM_DISPLAY)) {
 	    m = svr.compose_report_message(report_message);
 	  }
 	  svr.execute_report_message(report_message, m);
@@ -724,9 +726,11 @@ class uvm_default_report_server: uvm_report_server
 
   override void execute_report_message(uvm_report_message report_message,
 				       string composed_message) {
+    import uvm.base.uvm_root;
+    import uvm.base.uvm_coreservice;
+    import uvm.base.uvm_recorder;
+    import uvm.base.uvm_report_handler;
     synchronized(this) {
-      import uvm.base.uvm_root;
-      import uvm.base.uvm_coreservice;
       Process p = Process.self();
 
       // Update counts
@@ -734,11 +738,11 @@ class uvm_default_report_server: uvm_report_server
       incr_id_count(report_message.get_id());
 
       if(_record_all_messages) {
-	report_message.set_action(report_message.get_action() | UVM_RM_RECORD);
+	report_message.set_action(report_message.get_action() | uvm_action_type.UVM_RM_RECORD);
       }
 
       // UVM_RM_RECORD action
-      if(report_message.get_action() & UVM_RM_RECORD) {
+      if(report_message.get_action() & uvm_action_type.UVM_RM_RECORD) {
 	uvm_tr_stream stream;
 	uvm_report_object ro = report_message.get_report_object();
 	uvm_report_handler rh = report_message.get_report_handler();
@@ -780,14 +784,14 @@ class uvm_default_report_server: uvm_report_server
       }
 
       // DISPLAY action
-      if(report_message.get_action() & UVM_DISPLAY)
+      if(report_message.get_action() & uvm_action_type.UVM_DISPLAY)
 	vdisplay("%s", composed_message);
 
       // LOG action
       // if log is set we need to send to the file but not resend to the
       // display. So, we need to mask off stdout for an mcd or we need
       // to ignore the stdout file handle for a file handle.
-      if(report_message.get_action() & UVM_LOG) {
+      if(report_message.get_action() & uvm_action_type.UVM_LOG) {
 	if( (report_message.get_file() == 0) ||
 	    (report_message.get_file() != 0x8000_0001) ) { //ignore stdout handle
 	  UVM_FILE tmp_file = report_message.get_file();
@@ -799,25 +803,25 @@ class uvm_default_report_server: uvm_report_server
       }
 
       // Process the UVM_COUNT action
-      if(report_message.get_action() & UVM_COUNT) {
+      if(report_message.get_action() & uvm_action_type.UVM_COUNT) {
 	if(get_max_quit_count() != 0) {
 	  incr_quit_count();
 	  // If quit count is reached, add the UVM_EXIT action.
 	  if(is_quit_count_reached()) {
-	    report_message.set_action(report_message.get_action() | UVM_EXIT);
+	    report_message.set_action(report_message.get_action() | uvm_action_type.UVM_EXIT);
 	  }
 	}
       }
 
       // Process the UVM_EXIT action
-      if(report_message.get_action() & UVM_EXIT) {
+      if(report_message.get_action() & uvm_action_type.UVM_EXIT) {
 	uvm_coreservice_t cs = uvm_coreservice_t.get();
 	uvm_root l_root = cs.get_root();
 	l_root.die();
       }
 
       // Process the UVM_STOP action
-      if (report_message.get_action() & UVM_STOP) {
+      if (report_message.get_action() & uvm_action_type.UVM_STOP) {
 	debug(FINISH) {
 	  import std.stdio;
 	  writeln("uvm_report_server.process_report");
@@ -836,6 +840,8 @@ class uvm_default_report_server: uvm_report_server
 
   override string compose_report_message(uvm_report_message report_message,
 					 string report_object_name = "") {
+    import uvm.base.uvm_report_handler;
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
 
       string filename_line_string;
@@ -910,6 +916,9 @@ class uvm_default_report_server: uvm_report_server
   // The <run_test> method in uvm_top calls this method.
 
   override void report_summarize(UVM_FILE file = 0) {
+    import uvm.base.uvm_report_catcher;
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       string q;
 
@@ -935,7 +944,7 @@ class uvm_default_report_server: uvm_report_server
 	  q ~= format("[%s] %5d\n", l_id, l_count);
 	}
       }
-      uvm_info("UVM/REPORT/SERVER", q ,UVM_LOW);
+      uvm_info("UVM/REPORT/SERVER", q ,uvm_verbosity.UVM_LOW);
     }
   }
 
@@ -996,7 +1005,7 @@ class uvm_default_report_server: uvm_report_server
 
       l_report_message = uvm_report_message.new_report_message();
       l_report_message.set_report_message(severity, id, message,
-					  UVM_NONE, filename, line, "");
+					  uvm_verbosity.UVM_NONE, filename, line, "");
 
       return compose_report_message(l_report_message, name);
     }

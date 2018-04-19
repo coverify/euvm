@@ -222,7 +222,7 @@ class uvm_sequence_item: uvm_transaction, uvm_report_intf
     synchronized(this) {
       if (item is null) {
 	uvm_report_fatal(get_full_name(),
-			 "set_id_info called with null parameter", UVM_NONE);
+			 "set_id_info called with null parameter", uvm_verbosity.UVM_NONE);
       }
       this.set_transaction_id(item.get_transaction_id());
       this.set_sequence_id(item.get_sequence_id());
@@ -421,7 +421,6 @@ class uvm_sequence_item: uvm_transaction, uvm_report_intf
   // Group: Reporting
   //----------------------------------------------------------------------------
 
-  // import uvm.base.uvm_message_defines: uvm_report_mixin;
   // mixin uvm_report_mixin;
 
   //---------------------------
@@ -473,8 +472,8 @@ class uvm_sequence_item: uvm_transaction, uvm_report_intf
 					   string context_name = "",
 					   bool report_enabled_checked = false) {
     if(verbosity == -1) {
-      verbosity = (severity == UVM_ERROR) ? UVM_LOW :
-	(severity == UVM_FATAL) ? UVM_NONE : UVM_MEDIUM;
+      verbosity = (severity == uvm_severity.UVM_ERROR) ? uvm_verbosity.UVM_LOW :
+	(severity == uvm_severity.UVM_FATAL) ? uvm_verbosity.UVM_NONE : uvm_verbosity.UVM_MEDIUM;
     }
     uvm_report(severity, id, message, verbosity, file,
 	       line, context_name, report_enabled_checked);
@@ -507,7 +506,7 @@ class uvm_sequence_item: uvm_transaction, uvm_report_intf
   void uvm_report_info(string file = __FILE__,
 		       size_t line = __LINE__)( string id,
 						string message,
-						int verbosity = UVM_MEDIUM,
+						int verbosity = uvm_verbosity.UVM_MEDIUM,
 						string context_name = "",
 						bool report_enabled_checked = false) {
 
@@ -523,7 +522,7 @@ class uvm_sequence_item: uvm_transaction, uvm_report_intf
 			string context_name = "",
 			bool report_enabled_checked = false) {
 
-    this.uvm_report(UVM_INFO, id, message, verbosity, filename, line,
+    this.uvm_report(uvm_severity.UVM_INFO, id, message, verbosity, filename, line,
                     context_name, report_enabled_checked);
   }
 
@@ -532,7 +531,7 @@ class uvm_sequence_item: uvm_transaction, uvm_report_intf
   void uvm_report_warning(string file = __FILE__,
 			  size_t line = __LINE__)( string id,
 						   string message,
-						   int verbosity = UVM_MEDIUM,
+						   int verbosity = uvm_verbosity.UVM_MEDIUM,
 						   string context_name = "",
 						   bool report_enabled_checked = false) {
 
@@ -548,7 +547,7 @@ class uvm_sequence_item: uvm_transaction, uvm_report_intf
 			   string context_name = "",
 			   bool report_enabled_checked = false) {
 
-    this.uvm_report(UVM_WARNING, id, message, verbosity, filename, line,
+    this.uvm_report(uvm_severity.UVM_WARNING, id, message, verbosity, filename, line,
                     context_name, report_enabled_checked);
   }
 
@@ -572,7 +571,7 @@ class uvm_sequence_item: uvm_transaction, uvm_report_intf
 			 size_t line = 0,
 			 string context_name = "",
 			 bool report_enabled_checked = false) {
-    this.uvm_report(UVM_ERROR, id, message, verbosity, filename, line,
+    this.uvm_report(uvm_severity.UVM_ERROR, id, message, verbosity, filename, line,
                     context_name, report_enabled_checked);
   }
 
@@ -586,7 +585,7 @@ class uvm_sequence_item: uvm_transaction, uvm_report_intf
   void uvm_report_fatal(string file = __FILE__,
 			size_t line = __LINE__)( string id,
 						 string message,
-						 int verbosity = UVM_NONE,
+						 int verbosity = uvm_verbosity.UVM_NONE,
 						 string context_name = "",
 						 bool report_enabled_checked = false) {
 
@@ -601,7 +600,7 @@ class uvm_sequence_item: uvm_transaction, uvm_report_intf
 			 size_t line,
 			 string context_name = "",
 			 bool report_enabled_checked = false) {
-    this.uvm_report(UVM_FATAL, id, message, verbosity, filename, line,
+    this.uvm_report(uvm_severity.UVM_FATAL, id, message, verbosity, filename, line,
                     context_name, report_enabled_checked);
   }
 
@@ -631,7 +630,7 @@ class uvm_sequence_item: uvm_transaction, uvm_report_intf
     if (print_seq) {
       int depth = get_depth();
       string temp_str0, temp_str1;
-      printer.print("depth", depth, UVM_DEC, '.', "int");
+      printer.print("depth", depth, uvm_radix_enum.UVM_DEC, '.', "int");
       if(parent_sequence !is null) {
 	temp_str0 = parent_sequence.get_name();
 	temp_str1 = parent_sequence.get_full_name();

@@ -21,17 +21,14 @@
 module uvm.base.uvm_entity;
 
 import uvm.base.uvm_root: uvm_root;
-import uvm.base.uvm_globals;
-import uvm.base.uvm_object_globals;
 import uvm.base.uvm_once;
-import uvm.base.uvm_misc: uvm_seed_map;
 
 import uvm.meta.misc;
 import uvm.meta.meta;
+
 import esdl.base.core;
 import core.sync.semaphore: Semaphore;
 
-import std.random;
 
 // This is where the uvm gets instantiated as part of the ESDL
 // simulator. Unlike the SystemVerilog version where uvm_root is a
@@ -153,6 +150,7 @@ class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
     private T _uvm_root_instance;
 
   this() {
+    import std.random;		// uniform
     synchronized(this) {
       super();
       /* Now handled in initial block
@@ -201,6 +199,7 @@ class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
   }
 
   void initial() {
+    import uvm.base.uvm_misc: uvm_seed_map;
     lockStage();
     fileCaveat();
     _uvm_root_instance = new T();
@@ -223,6 +222,8 @@ class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
   uint _seed;
 
   void set_seed(uint seed) {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       if(_uvm_root_initialized) {
 	uvm_report_fatal("SEED",

@@ -48,7 +48,7 @@ import uvm.base.uvm_globals;
 
 abstract class uvm_agent: uvm_component
 {
-  uvm_active_passive_enum is_active = UVM_ACTIVE;
+  uvm_active_passive_enum is_active = uvm_active_passive_enum.UVM_ACTIVE;
 
   // Function: new
   //

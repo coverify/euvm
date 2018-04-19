@@ -24,17 +24,17 @@
 
 module uvm.base.uvm_object_globals;
 
-import uvm.base.uvm_entity;
 import uvm.base.uvm_once;
 
 import esdl.data.bvec;
 import esdl.data.time;
 import uvm.meta.misc;
+import uvm.meta.mcd;
 
-version(UVM_NO_DEPRECATED) { }
- else {
-   version = UVM_INCLUDE_DEPRECATED;
- }
+// version(UVM_NO_DEPRECATED) { }
+//  else {
+//    version = UVM_INCLUDE_DEPRECATED;
+//  }
 
 //This bit marks where filtering should occur to remove uvm stuff from a
 //scope
@@ -110,8 +110,6 @@ enum uvm_radix_enum: int
       UVM_NORADIX   = 0x0000000
       }
 
-mixin(declareEnums!uvm_radix_enum());
-
 enum int UVM_RADIX = 0xf000000; //4 bits setting the radix
 
 
@@ -119,19 +117,19 @@ enum int UVM_RADIX = 0xf000000; //4 bits setting the radix
 
 char uvm_radix_to_string(uvm_radix_enum radix) {
   switch (radix) {
-  case UVM_BIN:        return 'b';
-  case UVM_OCT:        return 'o';
-  case UVM_DEC:        return 'd';
-  case UVM_HEX:        return 'h';
-  case UVM_UNSIGNED:   return 'u';
-  case UVM_UNFORMAT2:  return 'u';
-  case UVM_UNFORMAT4:  return 'z';
-  case UVM_STRING:     return 's';
-  case UVM_TIME:       return 't';
-  case UVM_ENUM:       return 's';
-  case UVM_REAL:       return 'g';
-  case UVM_REAL_DEC:   return 'f';
-  case UVM_REAL_EXP:   return 'e';
+  case uvm_radix_enum.UVM_BIN:        return 'b';
+  case uvm_radix_enum.UVM_OCT:        return 'o';
+  case uvm_radix_enum.UVM_DEC:        return 'd';
+  case uvm_radix_enum.UVM_HEX:        return 'h';
+  case uvm_radix_enum.UVM_UNSIGNED:   return 'u';
+  case uvm_radix_enum.UVM_UNFORMAT2:  return 'u';
+  case uvm_radix_enum.UVM_UNFORMAT4:  return 'z';
+  case uvm_radix_enum.UVM_STRING:     return 's';
+  case uvm_radix_enum.UVM_TIME:       return 't';
+  case uvm_radix_enum.UVM_ENUM:       return 's';
+  case uvm_radix_enum.UVM_REAL:       return 'g';
+  case uvm_radix_enum.UVM_REAL_DEC:   return 'f';
+  case uvm_radix_enum.UVM_REAL_EXP:   return 'e';
   default:             return 'x'; //hex
   }
 }
@@ -151,8 +149,6 @@ enum uvm_recursion_policy_enum: int
       UVM_REFERENCE      = 0x1000
       }
 
-mixin(declareEnums!uvm_recursion_policy_enum());
-
 
 // Enum: uvm_active_passive_enum
 //
@@ -166,8 +162,6 @@ enum uvm_active_passive_enum: bool
   {   UVM_PASSIVE=false,
       UVM_ACTIVE=true
       }
-
-mixin(declareEnums!uvm_active_passive_enum());
 
 // Parameter: `uvm_field_* macro flags
 //
@@ -228,8 +222,6 @@ enum uvm_field_auto_enum: int
       UVM_NOBUILD      = (1 << 18),
       }
 
-mixin(declareEnums!uvm_field_auto_enum());
-
 enum int UVM_MACRO_NUMFLAGS    = 19;
 //Extra values that are used for extra methods
 
@@ -251,7 +243,6 @@ enum uvm_field_xtra_enum: int
       UVM_PARALLELIZE    = UVM_START_FUNCS + 4,
       UVM_END_FUNCS      = UVM_PARALLELIZE
       }
-mixin(declareEnums!uvm_field_xtra_enum());
 
 
 //Global string variables
@@ -284,11 +275,6 @@ enum uvm_severity: byte
       UVM_FATAL
       }
 
-mixin(declareEnums!uvm_severity());
-
-version(UVM_INCLUDE_DEPRECATED) {
-  alias uvm_severity_type = uvm_severity;
-}
 
 // Enum: uvm_action
 //
@@ -321,8 +307,6 @@ enum uvm_action_type: byte
       UVM_RM_RECORD = 0b1000000
       }
 
-mixin(declareEnums!uvm_action_type());
-
 // Enum: uvm_verbosity
 //
 // Defines standard verbosity levels for reports.
@@ -346,10 +330,6 @@ enum uvm_verbosity: int
       UVM_FULL   = 400,
       UVM_DEBUG  = 500
       }
-
-mixin(declareEnums!uvm_verbosity());
-
-import uvm.meta.mcd;
 
 alias UVM_FILE = MCD;
 
@@ -377,8 +357,6 @@ enum uvm_port_type_e: byte
       UVM_IMPLEMENTATION
       }
 
-mixin(declareEnums!uvm_port_type_e());
-
 //-----------------
 // Group: Sequences
 //-----------------
@@ -405,10 +383,6 @@ enum uvm_sequencer_arb_mode: byte
       UVM_SEQ_ARB_STRICT_RANDOM,
       UVM_SEQ_ARB_USER
       }
-
-mixin(declareEnums!uvm_sequencer_arb_mode());
-
-alias UVM_SEQ_ARB_TYPE = uvm_sequencer_arb_mode; // backward compat
 
 
 // Enum: uvm_sequence_state_enum
@@ -438,20 +412,17 @@ alias UVM_SEQ_ARB_TYPE = uvm_sequencer_arb_mode; // backward compat
 // UVM_FINISHED           - The sequence is completely finished executing.
 
 enum uvm_sequence_state: int
-  {   UVM_CREATED   = 1,
-      UVM_PRE_START = 2,
-      UVM_PRE_FRAME = 4,
-      UVM_FRAME     = 8,
-      UVM_POST_FRAME= 16,
-      UVM_POST_START= 32,
-      UVM_ENDED     = 64,
-      UVM_STOPPED   = 128,
-      UVM_FINISHED  = 256
+  {   UVM_CREATED    = 1,
+      UVM_PRE_START  = 2,
+      UVM_PRE_FRAME  = 4,
+      UVM_FRAME      = 8,
+      UVM_POST_FRAME = 16,
+      UVM_POST_START = 32,
+      UVM_ENDED      = 64,
+      UVM_STOPPED    = 128,
+      UVM_FINISHED   = 256
       }
 
-alias uvm_sequence_state_enum = uvm_sequence_state; // backward compat
-
-mixin(declareEnums!uvm_sequence_state());
 
 
 // Enum: uvm_sequence_lib_mode
@@ -469,8 +440,6 @@ enum uvm_sequence_lib_mode: byte
       UVM_SEQ_LIB_ITEM,
       UVM_SEQ_LIB_USER
       }
-
-mixin(declareEnums!uvm_sequence_lib_mode());
 
 
 //---------------
@@ -517,8 +486,6 @@ enum  uvm_phase_type: byte
       UVM_PHASE_DOMAIN,
       UVM_PHASE_GLOBAL
       }
-
-mixin(declareEnums!uvm_phase_type());
 
 
 // Enum: uvm_phase_state
@@ -588,9 +555,6 @@ enum uvm_phase_state: int
       UVM_PHASE_JUMPING       = 512
       }
 
-mixin(declareEnums!uvm_phase_state());
-
-
 
 // Enum: uvm_wait_op
 //
@@ -612,7 +576,6 @@ enum uvm_wait_op: byte
       UVM_GTE
       }
 
-mixin(declareEnums!uvm_wait_op());
 
 //------------------
 // Group: Objections
@@ -628,12 +591,10 @@ mixin(declareEnums!uvm_wait_op());
 // UVM_ALL_DROPPED - all objections have been dropped
 //
 enum uvm_objection_event: byte
-  {   UVM_RAISED      = 0x01,
-      UVM_DROPPED     = 0x02,
-      UVM_ALL_DROPPED = 0x04
-      }
-
-mixin(declareEnums!uvm_objection_event());
+{   UVM_RAISED      = 0x01,
+    UVM_DROPPED     = 0x02,
+    UVM_ALL_DROPPED = 0x04
+    }
 
 //------------------------------
 // Group: Default Policy Classes

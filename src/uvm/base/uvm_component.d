@@ -27,37 +27,29 @@ module uvm.base.uvm_component;
 // typedef class uvm_sequence_base;
 // typedef class uvm_sequence_item;
 
-import uvm.base.uvm_object;
 import uvm.base.uvm_object_globals;
-import uvm.base.uvm_globals;
-import uvm.base.uvm_objection;
-import uvm.base.uvm_phase;
-import uvm.base.uvm_domain;
-import uvm.base.uvm_pool;
-import uvm.base.uvm_common_phases;
-import uvm.base.uvm_config_db;
-import uvm.base.uvm_spell_chkr;
-// import uvm.base.uvm_globals;
-import uvm.base.uvm_config_db;
-import uvm.base.uvm_factory;
-import uvm.base.uvm_printer;
-import uvm.base.uvm_recorder;
-import uvm.base.uvm_transaction;
-import uvm.base.uvm_resource;
-import uvm.base.uvm_queue;
-import uvm.base.uvm_event;
+import uvm.base.uvm_object: uvm_object, uvm_field_auto_get_flags;
+import uvm.base.uvm_objection: uvm_objection;
+import uvm.base.uvm_phase: uvm_phase;
+import uvm.base.uvm_domain: uvm_domain;
+import uvm.base.uvm_common_phases: uvm_build_phase, uvm_run_phase;
+import uvm.base.uvm_factory: uvm_object_wrapper, uvm_factory;
+import uvm.base.uvm_printer: uvm_printer;
+import uvm.base.uvm_recorder: uvm_recorder;
+import uvm.base.uvm_pool: uvm_object_string_pool;
+import uvm.base.uvm_transaction: uvm_transaction;
+import uvm.base.uvm_event: uvm_event;
 import uvm.base.uvm_misc: UVM_ELEMENT_TYPE, UVM_IN_TUPLE;
-import uvm.base.uvm_links;
-import uvm.base.uvm_port_base;
-import uvm.base.uvm_tr_stream;
-import uvm.base.uvm_tr_database;
-import uvm.base.uvm_entity;
+import uvm.base.uvm_tr_stream: uvm_tr_stream;
+import uvm.base.uvm_tr_database: uvm_tr_database;
+import uvm.base.uvm_entity: uvm_entity, uvm_entity_base;
+import uvm.base.uvm_report_object: uvm_report_object;
+import uvm.base.uvm_port_base: uvm_port_base;
+
 import uvm.base.uvm_once;
 
 import uvm.meta.meta;		// qualifiedTypeName
 import uvm.meta.misc;		// qualifiedTypeName
-import uvm.base.uvm_globals: uvm_is_match;
-import uvm.base.uvm_report_object;
 
 import esdl.base.core;
 import esdl.data.queue;
@@ -71,6 +63,7 @@ import std.random: Random;
 import std.algorithm;
 import std.exception: enforce;
 
+alias uvm_event_pool = uvm_object_string_pool!(uvm_event!(uvm_object));
 
 
 //------------------------------------------------------------------------------
@@ -105,10 +98,10 @@ import std.exception: enforce;
 //
 //------------------------------------------------------------------------------
 
-version(UVM_NO_DEPRECATED) { }
- else {
-   version = UVM_INCLUDE_DEPRECATED;
- }
+// version(UVM_NO_DEPRECATED) { }
+//  else {
+//    version = UVM_INCLUDE_DEPRECATED;
+//  }
 
 
 struct m_verbosity_setting {
@@ -286,6 +279,7 @@ abstract class uvm_component: uvm_report_object, ParContext
     import uvm.base.uvm_root;
     import uvm.base.uvm_entity;
     import uvm.base.uvm_coreservice;
+    import uvm.base.uvm_config_db;
     synchronized(this) {
 
       super(name);
@@ -312,15 +306,15 @@ abstract class uvm_component: uvm_report_object, ParContext
       uvm_phase bld = common.find(uvm_build_phase.get());
       if(bld is null) {
 	uvm_report_fatal("COMP/INTERNAL",
-			 "attempt to find build phase object failed",UVM_NONE);
+			 "attempt to find build phase object failed",uvm_verbosity.UVM_NONE);
       }
-      if(bld.get_state() == UVM_PHASE_DONE) {
+      if(bld.get_state() == uvm_phase_state.UVM_PHASE_DONE) {
 	uvm_report_fatal("ILLCRT", "It is illegal to create a component ('" ~
 			 name ~ "' under '" ~
 			 (parent is null ? top.get_full_name() :
 			  parent.get_full_name()) ~
 			 "') after the build phase has ended.",
-			 UVM_NONE);
+			 uvm_verbosity.UVM_NONE);
       }
 
       if(name == "") {
@@ -335,11 +329,11 @@ abstract class uvm_component: uvm_report_object, ParContext
 	parent = top;
       }
 
-      if(uvm_report_enabled(UVM_MEDIUM+1, UVM_INFO, "NEWCOMP")) {
+      if(uvm_report_enabled(uvm_verbosity.UVM_MEDIUM+1, uvm_severity.UVM_INFO, "NEWCOMP")) {
 	uvm_info("NEWCOMP", "Creating " ~
 		 (parent is top ? "uvm_top" :
 		  parent.get_full_name()) ~ "." ~ name,
-		 cast(uvm_verbosity) (UVM_MEDIUM+1));
+		 cast(uvm_verbosity) (uvm_verbosity.UVM_MEDIUM+1));
       }
 
       if(parent.has_child(name) && this !is parent.get_child(name)) {
@@ -766,14 +760,14 @@ abstract class uvm_component: uvm_report_object, ParContext
     }
     // super is called in m_uvm_component_automation
     // super.uvm__auto_build(); --
-    m_uvm_component_automation(UVM_BUILD);
+    m_uvm_component_automation(uvm_field_auto_enum.UVM_BUILD);
     // .uvm__auto_build!(0, typeof(this))(this);
   }
 
   void uvm__parallelize() {
     // super is called in m_uvm_component_automation
     // super.uvm__parallelize();
-    m_uvm_component_automation(UVM_PARALLELIZE);
+    m_uvm_component_automation(uvm_field_xtra_enum.UVM_PARALLELIZE);
     // .uvm__auto_build!(0, typeof(this))(this);
   }
 
@@ -1356,7 +1350,7 @@ abstract class uvm_component: uvm_report_object, ParContext
       //schedule = domain.find(uvm_domain::get_uvm_schedule());
       uvm_phase schedule = domain.find_by_name("uvm_sched");
       if(schedule is null) {
-	schedule = new uvm_phase("uvm_sched", UVM_PHASE_SCHEDULE);
+	schedule = new uvm_phase("uvm_sched", uvm_phase_type.UVM_PHASE_SCHEDULE);
 	uvm_domain.add_uvm_phases(schedule);
 	domain.add(schedule);
 	uvm_domain common = uvm_domain.get_common_domain();
@@ -1610,6 +1604,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 
     void set_config(T)(string inst_name, string field_name, T value)
       if(isIntegral!T || is(T == uvm_bitstream_t) || is(T == string)) {
+	import uvm.base.uvm_config_db;
   	synchronized(once) {
   	  if(m_config_deprecated_warned) {
   	    uvm_warning("UVM/CFG/SET/DPR", "get/set_config_* API has been" ~
@@ -1681,6 +1676,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   			   string field_name,
   			   uvm_object value,
   			   bool clone = true) {
+      import uvm.base.uvm_config_db;
       synchronized(once) {
   	if(m_config_deprecated_warned) {
   	  uvm_warning("UVM/CFG/SET/DPR", "get/set_config_* API has been" ~
@@ -1717,7 +1713,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   	}
       }
 
-      uvm_config_object.set(this, inst_name, field_name, value);
+      uvm_config_db!(uvm_object).set(this, inst_name, field_name, value);
 
       auto wrapper = new uvm_config_object_wrapper();
       synchronized(wrapper) {
@@ -1799,6 +1795,7 @@ abstract class uvm_component: uvm_report_object, ParContext
     bool get_config_object (string field_name,
   			    ref uvm_object value,
   			    bool clone=true) {
+      import uvm.base.uvm_config_db;
       synchronized(once) {
   	if(m_config_deprecated_warned) {
   	  uvm_warning("UVM/CFG/SET/DPR", "get/set_config_* API has been" ~
@@ -1806,7 +1803,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   	  m_config_deprecated_warned = true;
   	}
       }
-      if(! uvm_config_object.get(this, "", field_name, value)) {
+      if(! uvm_config_db!(uvm_object).get(this, "", field_name, value)) {
   	return false;
       }
 
@@ -1835,6 +1832,9 @@ abstract class uvm_component: uvm_report_object, ParContext
   //|  endfunction
 
   final void check_config_usage (bool recurse=true) {
+    import uvm.base.uvm_resource;
+    import uvm.base.uvm_pool;
+    import uvm.base.uvm_queue;
     uvm_resource_pool rp = uvm_resource_pool.get();
     uvm_queue!(uvm_resource_base) rq = rp.find_unused_resources();
 
@@ -1843,7 +1843,7 @@ abstract class uvm_component: uvm_report_object, ParContext
     }
 
     uvm_report_info("CFGNRD"," ::: The following resources have" ~
-		    " at least one write and no reads :::", UVM_INFO);
+		    " at least one write and no reads :::", uvm_severity.UVM_INFO);
     rp.print_resources(rq, 1);
   }
 
@@ -1875,6 +1875,9 @@ abstract class uvm_component: uvm_report_object, ParContext
   // apply_config_settings is automatically called with ~verbose~ = 1.
 
   void apply_config_settings (bool verbose=false) {
+    import uvm.base.uvm_resource;
+    import uvm.base.uvm_pool;
+    import uvm.base.uvm_queue;
 
     uvm_resource_pool rp = uvm_resource_pool.get();
 
@@ -1882,7 +1885,7 @@ abstract class uvm_component: uvm_report_object, ParContext
     // fields declared with `uvm_field macros (checking
     // that there aren't any duplicates along the way)
 
-    // m_uvm_object_automation (null, UVM_CHECK_FIELDS, "");
+    // m_uvm_object_automation (null, uvm_field_xtra_enum.UVM_CHECK_FIELDS, "");
 
     // // if no declared fields, nothing to do.
     // if(m_uvm_status_container.no_fields) {
@@ -1891,7 +1894,7 @@ abstract class uvm_component: uvm_report_object, ParContext
     // }
 
     if(verbose) {
-      uvm_report_info("CFGAPL","applying configuration settings", UVM_NONE);
+      uvm_report_info("CFGAPL","applying configuration settings", uvm_verbosity.UVM_NONE);
     }
 
     // The following is VERY expensive. Needs refactoring. Should
@@ -1935,7 +1938,7 @@ abstract class uvm_component: uvm_report_object, ParContext
       if(verbose) {
 	uvm_report_info("CFGAPL",
 			format("applying configuration to field %s", name),
-			UVM_NONE);
+			uvm_verbosity.UVM_NONE);
       }
 
       auto rit = cast(uvm_resource!uvm_integral_t) r;
@@ -2011,7 +2014,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 				else if(verbose) {
 				  uvm_report_info("CFGAPL",
 						  format("field %s has an unsupported" ~
-							 " type", name), UVM_NONE);
+							 " type", name), uvm_verbosity.UVM_NONE);
 				}
 			      } // else: !if($cast(rcow, r))
 			    } // else: !if($cast(rs, r))
@@ -2086,9 +2089,12 @@ abstract class uvm_component: uvm_report_object, ParContext
 
   final void print_config(bool recurse = false, bool audit = false) {
 
+    import uvm.base.uvm_resource;
+    import uvm.base.uvm_pool;
+
     uvm_resource_pool rp = uvm_resource_pool.get();
 
-    uvm_report_info("CFGPRT", "visible resources:", UVM_INFO);
+    uvm_report_info("CFGPRT", "visible resources:", uvm_severity.UVM_INFO);
     rp.print_resources(rp.lookup_scope(get_full_name()), audit);
 
     if(recurse) {
@@ -2742,7 +2748,7 @@ abstract class uvm_component: uvm_report_object, ParContext
       uvm_recorder recorder;
       tr.end_tr(end_time, free_handle);
 
-      if((cast(uvm_verbosity) _recording_detail) != UVM_NONE) {
+      if((cast(uvm_verbosity) _recording_detail) != uvm_verbosity.UVM_NONE) {
 
 	if(tr in _m_tr_h) {
 
@@ -3128,8 +3134,8 @@ abstract class uvm_component: uvm_report_object, ParContext
   
 
   protected bool m_add_child(uvm_component child) {
+    import std.string: format;
     synchronized(this) {
-      import std.string: format;
       string name = child.get_name();
       if(name in _m_children && _m_children[name] !is child) {
 	uvm_warning("BDCLD",
@@ -3273,6 +3279,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 			    string desc="", SimTime begin_time=0) {
     import uvm.seq.uvm_sequence_item;
     import uvm.seq.uvm_sequence_base;
+    import uvm.base.uvm_links;
     synchronized(this) {
 
       uvm_event!uvm_object e;
@@ -3322,7 +3329,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 	name = tr.get_type_name();
       }
 
-      if((cast(uvm_verbosity) _recording_detail) != UVM_NONE) {
+      if((cast(uvm_verbosity) _recording_detail) != uvm_verbosity.UVM_NONE) {
 	if((stream_name == "") || (stream_name == "main")) {
 	  if(_m_main_stream is null) {
 	    _m_main_stream = db.open_stream("main", this.get_full_name(), "TVM");
@@ -3426,7 +3433,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   @uvm_immutable_sync
   protected uvm_event_pool _event_pool;
 
-  private uint _recording_detail = UVM_NONE;
+  private uint _recording_detail = uvm_verbosity.UVM_NONE;
 
   // do_print (override)
   // --------
@@ -3437,33 +3444,33 @@ abstract class uvm_component: uvm_report_object, ParContext
       super.do_print(printer);
 
       // It is printed only if its value is other than the default (UVM_NONE)
-      if(cast(uvm_verbosity) _recording_detail !is UVM_NONE)
+      if(cast(uvm_verbosity) _recording_detail !is uvm_verbosity.UVM_NONE)
 	switch (_recording_detail) {
-	case UVM_LOW:
+	case uvm_verbosity.UVM_LOW:
 	  printer.print_generic("recording_detail", "uvm_verbosity",
 				8*_recording_detail.sizeof, "UVM_LOW");
 	  break;
-	case UVM_MEDIUM:
+	case uvm_verbosity.UVM_MEDIUM:
 	  printer.print_generic("recording_detail", "uvm_verbosity",
 				8*_recording_detail.sizeof, "UVM_MEDIUM");
 	  break;
-	UVM_HIGH:
+	case uvm_verbosity.UVM_HIGH:
 	  printer.print_generic("recording_detail", "uvm_verbosity",
 				8*_recording_detail.sizeof, "UVM_HIGH");
 	  break;
-	UVM_FULL:
+	case uvm_verbosity.UVM_FULL:
 	  printer.print_generic("recording_detail", "uvm_verbosity",
 				8*_recording_detail.sizeof, "UVM_FULL");
 	  break;
 	default:
-	  printer.print("recording_detail", _recording_detail, UVM_DEC, '.', "integral");
+	  printer.print("recording_detail", _recording_detail, uvm_radix_enum.UVM_DEC, '.', "integral");
 	  break;
 	}
 
       version(UVM_INCLUDE_DEPRECATED) {
       	if(_enable_stop_interrupt !is false) {
       	  printer.print("enable_stop_interrupt", _enable_stop_interrupt,
-      			UVM_BIN, '.', "bit");
+      			uvm_radix_enum.UVM_BIN, '.', "bit");
       	}
       }
     }
@@ -3509,6 +3516,7 @@ abstract class uvm_component: uvm_report_object, ParContext
     import uvm.base.uvm_coreservice;
     import uvm.base.uvm_root;
     import uvm.base.uvm_cmdline_processor;
+    import uvm.base.uvm_globals;
     synchronized(this) {
       // _ALL_ can be used for ids
       // +uvm_set_verbosity=<comp>,<id>,<verbosity>,<phase|time>,<offset>
@@ -3608,6 +3616,7 @@ abstract class uvm_component: uvm_report_object, ParContext
     // +uvm_set_action=<comp>,<id>,<severity>,<action[|action]>
     // +uvm_set_action=uvm_test_top.env0.*,_ALL_,UVM_ERROR,UVM_NO_ACTION
     import uvm.base.uvm_cmdline_processor;
+    import uvm.base.uvm_globals;
     synchronized(this) {
       uvm_severity sev;
       uvm_action action;
@@ -3662,10 +3671,10 @@ abstract class uvm_component: uvm_report_object, ParContext
 
 	  if(args[1] == "_ALL_") {
 	    if(args[2] == "_ALL_") {
-	      set_report_severity_action(UVM_INFO, action);
-	      set_report_severity_action(UVM_WARNING, action);
-	      set_report_severity_action(UVM_ERROR, action);
-	      set_report_severity_action(UVM_FATAL, action);
+	      set_report_severity_action(uvm_severity.UVM_INFO, action);
+	      set_report_severity_action(uvm_severity.UVM_WARNING, action);
+	      set_report_severity_action(uvm_severity.UVM_ERROR, action);
+	      set_report_severity_action(uvm_severity.UVM_FATAL, action);
 	    }
 	    else {
 	      set_report_severity_action(sev, action);
@@ -3693,6 +3702,7 @@ abstract class uvm_component: uvm_report_object, ParContext
     //  +uvm_set_severity=<comp>,<id>,<orig_severity>,<new_severity>
     //  +uvm_set_severity=uvm_test_top.env0.*,BAD_CRC,UVM_ERROR,UVM_WARNING
     import uvm.base.uvm_cmdline_processor;
+    import uvm.base.uvm_globals;
     synchronized(this) {
       uvm_severity orig_sev;
       uvm_severity sev;
@@ -3738,19 +3748,19 @@ abstract class uvm_component: uvm_report_object, ParContext
 	  }
 
 	  if(args[1] == "_ALL_" && args[2] == "_ALL_") {
-	    set_report_severity_override(UVM_INFO,sev);
-	    set_report_severity_override(UVM_WARNING,sev);
-	    set_report_severity_override(UVM_ERROR,sev);
-	    set_report_severity_override(UVM_FATAL,sev);
+	    set_report_severity_override(uvm_severity.UVM_INFO,sev);
+	    set_report_severity_override(uvm_severity.UVM_WARNING,sev);
+	    set_report_severity_override(uvm_severity.UVM_ERROR,sev);
+	    set_report_severity_override(uvm_severity.UVM_FATAL,sev);
 	  }
 	  else if(args[1] == "_ALL_") {
 	    set_report_severity_override(orig_sev,sev);
 	  }
 	  else if(args[2] == "_ALL_") {
-	    set_report_severity_id_override(UVM_INFO,args[1],sev);
-	    set_report_severity_id_override(UVM_WARNING,args[1],sev);
-	    set_report_severity_id_override(UVM_ERROR,args[1],sev);
-	    set_report_severity_id_override(UVM_FATAL,args[1],sev);
+	    set_report_severity_id_override(uvm_severity.UVM_INFO,args[1],sev);
+	    set_report_severity_id_override(uvm_severity.UVM_WARNING,args[1],sev);
+	    set_report_severity_id_override(uvm_severity.UVM_ERROR,args[1],sev);
+	    set_report_severity_id_override(uvm_severity.UVM_FATAL,args[1],sev);
 	  }
 	  else {
 	    set_report_severity_id_override(orig_sev,args[1],sev);
@@ -3872,6 +3882,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 					     _esdl__Multicore pflags,
 					     uvm_component parent)
     if (is(E: uvm_component)) {
+      import uvm.base.uvm_globals;
       switch(what) {
       case uvm_field_xtra_enum.UVM_PARALLELIZE:
 	static if (is(E: uvm_component)) {
@@ -3882,7 +3893,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 	}
 	break;
       case uvm_field_auto_enum.UVM_BUILD:
-        if (! (flags & UVM_NOBUILD) && flags & UVM_BUILD) {
+        if (! (flags & uvm_field_auto_enum.UVM_NOBUILD) && flags & uvm_field_auto_enum.UVM_BUILD) {
 	  if (e is null) {
 	    e = E.type_id.create(name, parent);
 	  }
@@ -3905,10 +3916,12 @@ abstract class uvm_component: uvm_report_object, ParContext
 						int flags,
 						_esdl__Multicore pflags,
 						P parent)
-    if (is(E: uvm_port_base!IF, IF)) {
+  if (is(E: uvm_port_base!IF, IF)) {
+    import uvm.base.uvm_port_base;
+
       switch(what) {
       case uvm_field_auto_enum.UVM_BUILD:
-        if (! (flags & UVM_NOBUILD) && flags & UVM_BUILD) {
+        if (! (flags & uvm_field_auto_enum.UVM_NOBUILD) && flags & uvm_field_auto_enum.UVM_BUILD) {
 	  static if(is(E: uvm_port_base!IF, IF)) {
 	    e = new E(name, parent);
 	  }
@@ -3930,20 +3943,20 @@ abstract class uvm_component: uvm_report_object, ParContext
 		    is(EE: uvm_port_base!IF, IF)) &&
 		   FLAGS != 0) {
 	  _esdl__Multicore pflags;
-	  if (what == UVM_BUILD) {
+	  if (what == uvm_field_auto_enum.UVM_BUILD) {
 	    bool is_active = true; // if not uvm_agent, everything is active
 	    static if (is(T: uvm_agent)) {
 	      is_active = t.get_is_active();
 	    }
 	    bool active_flag =
-	      UVM_IN_TUPLE!(0, UVM_ACTIVE, __traits(getAttributes, t.tupleof[I]));
+	      UVM_IN_TUPLE!(0, uvm_active_passive_enum.UVM_ACTIVE, __traits(getAttributes, t.tupleof[I]));
 	    if (! active_flag || is_active) {
 	      _m_uvm_component_automation(t.tupleof[I], what,
 					  t.tupleof[I].stringof[2..$],
 					  FLAGS, pflags, t);
 	    }
 	  }
-	  else if (what == UVM_PARALLELIZE) {
+	  else if (what == uvm_field_xtra_enum.UVM_PARALLELIZE) {
 	    pflags = _esdl__uda!(_esdl__Multicore, T, I);
 	    _m_uvm_component_automation(t.tupleof[I], what,
 					t.tupleof[I].stringof[2..$],
@@ -4024,7 +4037,7 @@ template UVM__IS_MEMBER_COMPONENT(L)
 // 			   "calling run_test or use run_test to do so. "
 // 			   "To run a test using run_test, use +UVM_TESTNAME "
 // 			   "or supply the test name in the argument to "
-// 			   "run_test(). Exiting simulation.", UVM_NONE);
+// 			   "run_test(). Exiting simulation.", uvm_verbosity.UVM_NONE);
 // 	  return;
 // 	}
 //       }
@@ -4047,7 +4060,7 @@ template UVM__IS_MEMBER_COMPONENT(L)
 // void uvm__auto_build(T, U, size_t I, N...)(T t, ref U u,
 // 					    uint[] indices = []) {
 //   enum bool isActiveAttr =
-//     findUvmAttr!(0, UVM_ACTIVE, __traits(getAttributes, t.tupleof[I]));
+//     findUvmAttr!(0, uvm_active_passive_enum.UVM_ACTIVE, __traits(getAttributes, t.tupleof[I]));
 //   enum bool noAutoAttr =
 //     findUvmAttr!(0, UVM_NO_AUTO, __traits(getAttributes, t.tupleof[I]));
 //   enum bool isAbstract = isAbstractClass!U;

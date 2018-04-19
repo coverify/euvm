@@ -603,7 +603,7 @@ class uvm_reg_map: uvm_object
 		 get_full_name() ~
 		 "'. Accesses via this map will send abstract " ~
 		 "'uvm_reg_item' items to sequencer '" ~
-		 sequencer.get_full_name() ~ "'", UVM_MEDIUM);
+		 sequencer.get_full_name() ~ "'", uvm_verbosity.UVM_MEDIUM);
       }
 
       _m_sequencer = sequencer;
@@ -1832,7 +1832,7 @@ class uvm_reg_map: uvm_object
        
 	uvm_info(get_type_name(),
 		 format("Writing 'h%0h at 'h%0h via map \"%s\"...",
-			data, addr, rw.map.get_full_name()), UVM_FULL);
+			data, addr, rw.map.get_full_name()), uvm_verbosity.UVM_FULL);
 
 	if (rw.element_kind == UVM_FIELD) {
 	  for (int z=0; z<bus_width; z++) {
@@ -1886,7 +1886,7 @@ class uvm_reg_map: uvm_object
 	uvm_info(get_type_name(),
 		 format("Wrote 'h%0h at 'h%0h via map \"%s\": %s...",
 			data, addr, rw.map.get_full_name(),
-			rw.status), UVM_FULL);
+			rw.status), uvm_verbosity.UVM_FULL);
 
 	if (rw.status == UVM_NOT_OK) break;
 
@@ -1983,7 +1983,7 @@ class uvm_reg_map: uvm_object
 
 	uvm_info(get_type_name(),
 		 format("Reading address 'h%0h via map \"%s\"...",
-			addr, get_full_name()), UVM_FULL);
+			addr, get_full_name()), uvm_verbosity.UVM_FULL);
                 
 	if (rw.element_kind == UVM_FIELD) {
 	  for (int z=0;z<bus_width;z++) {
@@ -2037,7 +2037,7 @@ class uvm_reg_map: uvm_object
 	uvm_info(get_type_name(),
 		 format("Read 'h%0h at 'h%0h via map \"%s\": %s...",
 			data, addr, get_full_name(), rw.status),
-		 UVM_FULL);
+		 uvm_verbosity.UVM_FULL);
 
 	if (rw.status == UVM_NOT_OK) break;
 

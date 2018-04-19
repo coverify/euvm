@@ -22,14 +22,16 @@
 //------------------------------------------------------------------------------
 
 module uvm.base.uvm_report_message;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_printer;
-import uvm.base.uvm_recorder;
-import uvm.base.uvm_object;
+import uvm.base.uvm_object_globals: uvm_action, uvm_radix_enum, uvm_action_type,
+  UVM_FILE, uvm_severity, uvm_verbosity;
+import uvm.base.uvm_printer: uvm_printer;
+import uvm.base.uvm_recorder: uvm_recorder;
+import uvm.base.uvm_object: uvm_object;
 import uvm.base.uvm_object_defines;
-import uvm.base.uvm_report_object;
-import uvm.base.uvm_report_handler;
-import uvm.base.uvm_report_server;
+import uvm.base.uvm_report_object: uvm_report_object;
+import uvm.base.uvm_report_handler: uvm_report_handler;
+import uvm.base.uvm_report_server: uvm_report_server;
+
 import uvm.meta.misc;
 
 import esdl.base.core;
@@ -42,7 +44,7 @@ import std.conv: to;
 // add_tag, add_string and add_object
 uvm_report_message_element_base
 uvm_message_add(alias VAR, string LABEL="",
-		uvm_action ACTION=(UVM_LOG|UVM_RM_RECORD))()
+		uvm_action ACTION=(uvm_action_type.UVM_LOG|uvm_action_type.UVM_RM_RECORD))()
   if (is(typeof(VAR) == string) || is(typeof(VAR): uvm_object)) {
     static if (is (typeof(VAR): string)) {
       alias V = string;
@@ -88,8 +90,8 @@ uvm_message_add(alias VAR, uvm_action ACTION)()
 
 // add_int
 uvm_report_message_element_base
-uvm_message_add(alias VAR, uvm_radix_enum RADIX=UVM_HEX, string LABEL="",
-		uvm_action ACTION=(UVM_LOG|UVM_RM_RECORD))()
+uvm_message_add(alias VAR, uvm_radix_enum RADIX=uvm_radix_enum.UVM_HEX, string LABEL="",
+		uvm_action ACTION=(uvm_action_type.UVM_LOG|uvm_action_type.UVM_RM_RECORD))()
   if (isIntegral!(typeof(VAR)) || isBitVector!(typeof(VAR))) {
     static if (LABEL == "") {
       return new uvm_report_message_element!(typeof(VAR))(VAR.stringof, VAR, ACTION, RADIX);
@@ -101,9 +103,9 @@ uvm_message_add(alias VAR, uvm_radix_enum RADIX=UVM_HEX, string LABEL="",
 
 uvm_report_message_element_base
 uvm_message_add(alias VAR, string LABEL,
-		uvm_action ACTION=(UVM_LOG|UVM_RM_RECORD))()
+		uvm_action ACTION=(uvm_action_type.UVM_LOG|uvm_action_type.UVM_RM_RECORD))()
   if (isIntegral!(typeof(VAR)) || isBitVector!(typeof(VAR))) {
-    uvm_radix_enum RADIX=UVM_HEX;    
+    uvm_radix_enum RADIX=uvm_radix_enum.UVM_HEX;    
     static if (LABEL == "") {
       return new uvm_report_message_element!(typeof(VAR))(VAR.stringof, VAR, ACTION, RADIX);
     }
@@ -115,7 +117,7 @@ uvm_message_add(alias VAR, string LABEL,
 uvm_report_message_element_base
 uvm_message_add(alias VAR, uvm_action ACTION)()
   if (isIntegral!(typeof(VAR)) || isBitVector!(typeof(VAR))) {
-    uvm_radix_enum RADIX=UVM_HEX;
+    uvm_radix_enum RADIX=uvm_radix_enum.UVM_HEX;
     string LABEL="";
     if (LABEL == "") {
       return new uvm_report_message_element!(typeof(VAR))(VAR.stringof, VAR, ACTION, RADIX);
@@ -211,7 +213,7 @@ abstract class uvm_report_message_element_base
 
   void print(uvm_printer printer) {
     synchronized(this) {
-      if (_action & (UVM_LOG | UVM_DISPLAY)) {
+      if (_action & (uvm_action_type.UVM_LOG | uvm_action_type.UVM_DISPLAY)) {
 	do_print(printer);
       }
     }
@@ -219,7 +221,7 @@ abstract class uvm_report_message_element_base
 
   void record(uvm_recorder recorder) {
     synchronized(this) {
-      if (_action & UVM_RM_RECORD) {
+      if (_action & uvm_action_type.UVM_RM_RECORD) {
 	do_record(recorder);
       }
     }
@@ -260,8 +262,8 @@ class uvm_report_message_element(T) if(isIntegral!T || isBitVector!T):
   @uvm_protected_sync
   private uvm_radix_enum  _radix;
 
-  this(string name="", T value=T.init, uvm_action action=(UVM_LOG|UVM_RM_RECORD),
-       uvm_radix_enum radix=UVM_NORADIX) {
+  this(string name="", T value=T.init, uvm_action action=(uvm_action_type.UVM_LOG|uvm_action_type.UVM_RM_RECORD),
+       uvm_radix_enum radix=uvm_radix_enum.UVM_NORADIX) {
     synchronized(this) {
       super(name, action);
       _val = value;
@@ -643,7 +645,7 @@ class uvm_report_message_element_container: uvm_object
 
   void add_int(T)(string name, T value,
 		  size_t size, uvm_radix_enum radix,
-		  uvm_action action = (UVM_LOG|UVM_RM_RECORD))
+		  uvm_action action = (uvm_action_type.UVM_LOG|uvm_action_type.UVM_RM_RECORD))
     if(isIntegral!T || isBitVector!T) {
       synchronized(this) {
 	uvm_report_message_int_element!T urme;
@@ -669,7 +671,7 @@ class uvm_report_message_element_container: uvm_object
 
   void add(T)(string name, T value,
 	      uvm_radix_enum radix,
-	      uvm_action action = (UVM_LOG|UVM_RM_RECORD))
+	      uvm_action action = (uvm_action_type.UVM_LOG|uvm_action_type.UVM_RM_RECORD))
     if(isIntegral!T || isBitVector!T) {
       synchronized(this) {
 	uvm_report_message_int_element!T urme;
@@ -734,7 +736,7 @@ class uvm_report_message_element_container: uvm_object
   //
 
   void add(T)(string name, T obj,
-	      uvm_action action = (UVM_LOG|UVM_RM_RECORD))
+	      uvm_action action = (uvm_action_type.UVM_LOG|uvm_action_type.UVM_RM_RECORD))
     if(is(T: uvm_object)) {
       synchronized(this) {
 	Random rand_state;
@@ -950,11 +952,11 @@ class uvm_report_message: uvm_object
 			    l_verbosity.sizeof * 8, l_verbosity.to!string);
       // }
       // else {
-      //	printer.print_int("verbosity", _verbosity, UVM_HEX);
+      //	printer.print_int("verbosity", _verbosity, uvm_radix_enum.UVM_HEX);
       // }
 
       printer.print("filename", _filename);
-      printer.print("line", _line, UVM_UNSIGNED);
+      printer.print("line", _line, uvm_radix_enum.UVM_UNSIGNED);
       printer.print("context_name", _context_name);
 
       if (_report_message_element_container.size != 0) {
@@ -1310,7 +1312,7 @@ class uvm_report_message: uvm_object
 	recorder.record_string("context_name", _context_name);
       }
       recorder.record_string("filename", _filename);
-      recorder.record_field("line", _line, UVM_UNSIGNED);
+      recorder.record_field("line", _line, uvm_radix_enum.UVM_UNSIGNED);
       recorder.record_string("severity", _severity.to!string);
       uvm_verbosity l_verbosity = cast(uvm_verbosity) _verbosity;
       // if (l_verbosity !is null) {
@@ -1351,7 +1353,7 @@ class uvm_report_message: uvm_object
 
   void add(T)(string name, T value,
 	      uvm_radix_enum radix,
-	      uvm_action action = (UVM_LOG|UVM_RM_RECORD))
+	      uvm_action action = (uvm_action_type.UVM_LOG|uvm_action_type.UVM_RM_RECORD))
     if(isIntegral!T || isBitVector!T) {
       // synchronized(this) {
       _report_message_element_container.add(name, value, radix, action);
@@ -1361,7 +1363,7 @@ class uvm_report_message: uvm_object
   void add_int(T)(string name, T value,
 		  size_t size,
 		  uvm_radix_enum radix,
-		  uvm_action action = (UVM_LOG|UVM_RM_RECORD))
+		  uvm_action action = (uvm_action_type.UVM_LOG|uvm_action_type.UVM_RM_RECORD))
     if(isIntegral!T || isBitVector!T) {
       // synchronized(this) {
       _report_message_element_container.add_int(name, value, size, radix, action);

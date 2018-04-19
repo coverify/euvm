@@ -421,7 +421,7 @@ class uvm_vreg_field: uvm_object
     uvm_info("RegModel", format("Wrote virtual field \"%s\"[%0d] via %s" ~
 				" with: 'h%h", this.get_full_name(), idx,
 				(path == UVM_FRONTDOOR) ? "frontdoor" : "backdoor",
-				value),UVM_MEDIUM);
+				value),uvm_verbosity.UVM_MEDIUM);
 
     write_in_progress = false;
     this.fname = "";
@@ -549,7 +549,7 @@ class uvm_vreg_field: uvm_object
     uvm_info("RegModel", format("Read virtual field \"%s\"[%0d] via %s: 'h%h",
 				this.get_full_name(), idx,
 				(path == UVM_FRONTDOOR) ? "frontdoor" : "backdoor",
-				value),UVM_MEDIUM);
+				value),uvm_verbosity.UVM_MEDIUM);
 
 
     read_in_progress = false;
@@ -682,7 +682,7 @@ class uvm_vreg_field: uvm_object
     this.parent.XatomicX(0);
 
     uvm_info("RegModel", format("Wrote virtual field \"%s\"[%0d] with: 'h%h",
-				this.get_full_name(), idx, value),UVM_MEDIUM);
+				this.get_full_name(), idx, value),uvm_verbosity.UVM_MEDIUM);
 
     this.fname = "";
     this.lineno = 0;
@@ -780,7 +780,7 @@ class uvm_vreg_field: uvm_object
 
     uvm_info("RegModel",
 	     format("Peeked virtual field \"%s\"[%0d]: 'h%h",
-		    this.get_full_name(), idx, value),UVM_MEDIUM);
+		    this.get_full_name(), idx, value),uvm_verbosity.UVM_MEDIUM);
 
     this.fname = "";
     this.lineno = 0;

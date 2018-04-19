@@ -25,14 +25,9 @@
 module uvm.base.uvm_objection;
 
 
-import uvm.base.uvm_callback;
-// import uvm.base.uvm_misc;
-import uvm.base.uvm_globals;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_queue;
-import uvm.base.uvm_registry;
-import uvm.base.uvm_domain;
-import uvm.base.uvm_entity;
+import uvm.base.uvm_callback: uvm_callbacks, uvm_callback, uvm_register_cb;
+import uvm.base.uvm_object_globals: uvm_objection_event;
+import uvm.base.uvm_registry: uvm_object_registry;
 
 import uvm.meta.misc;
 import uvm.meta.meta;
@@ -46,13 +41,13 @@ import std.string: format;
 import std.algorithm.searching;
 import std.string : lastIndexOf;
 
-version(UVM_NO_DEPRECATED) { }
- else {
-   version = UVM_INCLUDE_DEPRECATED;
- }
+// version(UVM_NO_DEPRECATED) { }
+//  else {
+//    version = UVM_INCLUDE_DEPRECATED;
+//  }
 
 alias uvm_objection_cbs_t =
-  uvm_callbacks!(uvm_objection,uvm_objection_callback);
+  uvm_callbacks!(uvm_objection, uvm_objection_callback);
 
 // typedef class uvm_cmdline_processor;
 // typedef class uvm_callbacks_objection;
@@ -109,8 +104,8 @@ class uvm_objection_events {
 
 import uvm.meta.misc;
 import uvm.meta.meta;
-import uvm.base.uvm_report_object;
-import uvm.base.uvm_object;
+import uvm.base.uvm_report_object: uvm_report_object;
+import uvm.base.uvm_object: uvm_object;
 import uvm.base.uvm_once;
 
 import esdl.data.time: sec;
@@ -241,9 +236,9 @@ class uvm_objection: uvm_report_object
   // all objection objects.
 
   this(string name="") {
+    import uvm.base.uvm_cmdline_processor;
+    import uvm.base.uvm_root: uvm_top, uvm_root;
     synchronized(this) {
-      import uvm.base.uvm_cmdline_processor;
-      import uvm.base.uvm_root: uvm_top, uvm_root;
       uvm_root m_top = uvm_top();
 
       string[] trace_args;
@@ -290,6 +285,8 @@ class uvm_objection: uvm_report_object
 
   final void m_report(uvm_object obj, uvm_object source_obj,
 		      string description, int count, string action) {
+    import uvm.base.uvm_object_globals;
+    import uvm.base.uvm_globals;
     // declared in SV version but not used anywhere
     // string desc;
     synchronized(this) {
@@ -298,7 +295,7 @@ class uvm_objection: uvm_report_object
       int count_ = (psource !is null) ? *psource : 0;
       int total_ = (ptotal !is null) ? *ptotal : 0;
 
-      if(!uvm_report_enabled(UVM_NONE,UVM_INFO, "OBJTN_TRC") ||
+      if(!uvm_report_enabled(uvm_verbosity.UVM_NONE, uvm_severity.UVM_INFO, "OBJTN_TRC") ||
 	 ! _m_trace_mode) {
 	return;
       }
@@ -313,7 +310,7 @@ class uvm_objection: uvm_report_object
 			       action, count,
 			       (description != "") ?
 			       " (" ~ description ~ ")" : "",
-			       count_, total_), UVM_NONE);
+			       count_, total_), uvm_verbosity.UVM_NONE);
       }
       else {
 	size_t cpath = 0;
@@ -348,7 +345,7 @@ class uvm_objection: uvm_report_object
 			       count, action == "raised" ?
 			       "to" : "from", action, sname,
 			       description != "" ? ", "
-			       ~ description : "", count_, total_), UVM_NONE);
+			       ~ description : "", count_, total_), uvm_verbosity.UVM_NONE);
       }
     }
   }
@@ -1224,6 +1221,7 @@ class uvm_objection: uvm_report_object
   // task
   final void wait_for(uvm_objection_event objt_event, uvm_object obj=null) {
 
+    import uvm.base.uvm_object_globals;
     import uvm.base.uvm_root: uvm_top, uvm_root;
     uvm_root m_top = uvm_top();
 
@@ -1246,9 +1244,9 @@ class uvm_objection: uvm_report_object
     }
 
     final switch(objt_event) {
-    case UVM_RAISED:      wait(obje.raised); break;
-    case UVM_DROPPED:     wait(obje.dropped); break;
-    case UVM_ALL_DROPPED: wait(obje.all_dropped); break;
+    case uvm_objection_event.UVM_RAISED:      wait(obje.raised); break;
+    case uvm_objection_event.UVM_DROPPED:     wait(obje.dropped); break;
+    case uvm_objection_event.UVM_ALL_DROPPED: wait(obje.all_dropped); break;
     }
 
     synchronized(this) {
@@ -1451,8 +1449,10 @@ class uvm_objection: uvm_report_object
 
   final void display_objections(uvm_object obj=null,
 				bool show_header = true) {
+    import uvm.base.uvm_object_globals;
+    import uvm.base.uvm_globals;
     string m = m_display_objections(obj, show_header);
-    uvm_info("UVM/OBJ/DISPLAY", m, UVM_NONE);
+    uvm_info("UVM/OBJ/DISPLAY", m, uvm_verbosity.UVM_NONE);
   }
 
 
@@ -1581,6 +1581,7 @@ class uvm_test_done_objection: uvm_objection
 
     // task
     final void m_do_stop_all(uvm_component comp) {
+      import uvm.base.uvm_domain;
       // we use an external traversal to ensure all forks are
       // made from a single thread.
       foreach(child; comp.get_children) {
@@ -1615,13 +1616,15 @@ class uvm_test_done_objection: uvm_objection
     // if any.
 
     final void stop_request() {
+      import uvm.base.uvm_object_globals;
+      import uvm.base.uvm_globals;
+      import uvm.base.uvm_root: uvm_top, uvm_root;
       synchronized(this) {
-	import uvm.base.uvm_root: uvm_top, uvm_root;
 	uvm_root m_top = uvm_top();
 
   	uvm_info_context("STOP_REQ",
   			 "Stop-request called. Waiting for all-dropped on uvm_test_done",
-  			 UVM_FULL, m_top);
+  			 uvm_verbosity.UVM_FULL, m_top);
   	fork!("uvm_objection/stop_request")({m_stop_request();});
       }
     }
@@ -1629,6 +1632,7 @@ class uvm_test_done_objection: uvm_objection
     // task
     final void m_stop_request() {
       import uvm.base.uvm_root: uvm_top, uvm_root;
+      import uvm.base.uvm_globals;
       uvm_root m_top = uvm_top();
 
       raise_objection(m_top,
@@ -1662,6 +1666,8 @@ class uvm_test_done_objection: uvm_objection
   			       uvm_object source_obj,
   			       string description,
   			       int count) {
+      import uvm.base.uvm_object_globals;
+      import uvm.base.uvm_globals;
       import uvm.base.uvm_root: uvm_top, uvm_root;
       uvm_root m_top = uvm_top();
 
@@ -1679,7 +1685,7 @@ class uvm_test_done_objection: uvm_objection
   	uvm_info_context("TEST_DONE",
   			 "All end-of-test objections have been" ~
   			 " dropped. Calling stop tasks",
-  			 UVM_FULL, m_top);
+  			 uvm_verbosity.UVM_FULL, m_top);
   	// join({ // guard
   	Fork guard = fork!("uvm_objection/all_dropped/guard")({
   	    m_executing_stop_processes = 1;
@@ -1703,7 +1709,7 @@ class uvm_test_done_objection: uvm_objection
   	guard.abortTree();
 
   	uvm_info_context("TEST_DONE", "'run' phase is ready " ~
-  			 "to proceed to the 'extract' phase", UVM_LOW,m_top);
+  			 "to proceed to the 'extract' phase", uvm_verbosity.UVM_LOW,m_top);
       }
 
       synchronized(this) {

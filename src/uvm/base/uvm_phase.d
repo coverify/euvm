@@ -131,24 +131,24 @@
 
 module uvm.base.uvm_phase;
 
-import uvm.base.uvm_object;
-import uvm.base.uvm_objection;
-import uvm.base.uvm_object_globals;
+import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_objection: uvm_objection, uvm_test_done_objection;
+import uvm.base.uvm_callback: uvm_callback, uvm_callbacks, uvm_register_cb;
+import uvm.base.uvm_domain: uvm_domain;
+import uvm.base.uvm_task_phase: uvm_task_phase;
 import uvm.base.uvm_object_defines;
-import uvm.base.uvm_globals;
-import uvm.base.uvm_callback;
-import uvm.base.uvm_domain;
-import uvm.base.uvm_entity;
 import uvm.base.uvm_once;
-import uvm.base.uvm_task_phase;
+
+import uvm.base.uvm_object_globals: uvm_phase_type, uvm_phase_state, uvm_wait_op, uvm_verbosity;
+
 import uvm.meta.misc;
 import uvm.meta.mailbox;
 import uvm.meta.mcd;
+
 import esdl.base.core: waitDelta, wait, Fork, abortForks, getRootEntity,
   sleep, fork;
 import esdl.data.time;
 import esdl.data.sync;
-import uvm.base.uvm_cmdline_processor;
 
 import std.string: format;
 import std.conv: to;
@@ -159,7 +159,7 @@ import esdl.data.queue;
 
 class uvm_phase: uvm_object
 {
-  import uvm.base.uvm_component;
+  import uvm.base.uvm_component: uvm_component;
 
   mixin(uvm_sync_string);
   mixin(uvm_once_sync_string);
@@ -176,6 +176,7 @@ class uvm_phase: uvm_object
     @uvm_immutable_sync
     private immutable bool _m_use_ovm_run_semantic;
     this() {
+      import uvm.base.uvm_cmdline_processor;
       synchronized(this) {
 	_m_phase_hopper = new Mailbox!uvm_phase();
 
@@ -238,6 +239,7 @@ class uvm_phase: uvm_object
   this(string name="uvm_phase",
        uvm_phase_type phase_type=uvm_phase_type.UVM_PHASE_SCHEDULE,
        uvm_phase parent=null) {
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       super(name);
       _m_state = new WithEvent!uvm_phase_state("_m_state");
@@ -250,18 +252,18 @@ class uvm_phase: uvm_object
       // The common domain is the only thing that initializes m_state.  All
       // other states are initialized by being 'added' to a schedule.
       if ((name == "common") &&
-	  (phase_type == UVM_PHASE_DOMAIN)) {
-	_m_state = UVM_PHASE_DORMANT;
+	  (phase_type == uvm_phase_type.UVM_PHASE_DOMAIN)) {
+	_m_state = uvm_phase_state.UVM_PHASE_DORMANT;
       }
    
       _m_run_count = 0;
       _m_parent = parent;
 
 
-      if(parent is null && (phase_type is UVM_PHASE_SCHEDULE ||
-			    phase_type is UVM_PHASE_DOMAIN )) {
+      if(parent is null && (phase_type is uvm_phase_type.UVM_PHASE_SCHEDULE ||
+			    phase_type is uvm_phase_type.UVM_PHASE_DOMAIN )) {
 	//_m_parent = this;
-	_m_end_node = new uvm_phase(name ~ "_end", UVM_PHASE_TERMINAL, this);
+	_m_end_node = new uvm_phase(name ~ "_end", uvm_phase_type.UVM_PHASE_TERMINAL, this);
 	this.add_successor(_m_end_node);
 	_m_end_node.add_predecessor(this);
       }
@@ -437,13 +439,16 @@ class uvm_phase: uvm_object
 		 uvm_phase with_phase = null,
 		 uvm_phase after_phase = null,
 		 uvm_phase before_phase = null) {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
+
     uvm_phase new_node, begin_node, end_node, tmp_node;
     uvm_phase_state_change state_chg;
     if(phase is null) {
       uvm_fatal("PH/NULL", "add: phase argument is null");
     }
 
-    if(with_phase !is null && with_phase.get_phase_type() == UVM_PHASE_IMP) {
+    if(with_phase !is null && with_phase.get_phase_type() == uvm_phase_type.UVM_PHASE_IMP) {
       string nm = with_phase.get_name();
       with_phase = find(with_phase);
       if(with_phase is null) {
@@ -454,7 +459,7 @@ class uvm_phase: uvm_object
     }
 
     if(before_phase !is null &&
-       before_phase.get_phase_type() == UVM_PHASE_IMP) {
+       before_phase.get_phase_type() == uvm_phase_type.UVM_PHASE_IMP) {
       string nm = before_phase.get_name();
       before_phase = find(before_phase);
       if(before_phase is null) {
@@ -465,7 +470,7 @@ class uvm_phase: uvm_object
     }
 
     if(after_phase !is null &&
-       after_phase.get_phase_type() == UVM_PHASE_IMP) {
+       after_phase.get_phase_type() == uvm_phase_type.UVM_PHASE_IMP) {
       string nm = after_phase.get_name();
       after_phase = find(after_phase);
       if(after_phase is null) {
@@ -490,8 +495,8 @@ class uvm_phase: uvm_object
     }
 
     // If we are inserting a new "leaf node"
-    if(phase.get_phase_type() == UVM_PHASE_IMP) {
-      new_node = new uvm_phase(phase.get_name(), UVM_PHASE_NODE, this);
+    if(phase.get_phase_type() == uvm_phase_type.UVM_PHASE_IMP) {
+      new_node = new uvm_phase(phase.get_name(), uvm_phase_type.UVM_PHASE_NODE, this);
       new_node.m_imp = phase;
       begin_node = new_node;
       end_node = new_node;
@@ -548,7 +553,7 @@ class uvm_phase: uvm_object
 	       " begin_node=" ~   ((begin_node is null)   ? "null" :
 				   begin_node.get_name())  ~
 	       " end_node=" ~     ((end_node is null)     ? "null" :
-				   end_node.get_name()), UVM_DEBUG);
+				   end_node.get_name()), uvm_verbosity.UVM_DEBUG);
     }
 
 
@@ -629,7 +634,7 @@ class uvm_phase: uvm_object
     state_chg.m_phase = tmp_node;
     state_chg.m_jump_to = null;
     state_chg.m_prev_state = tmp_node.m_state;
-    tmp_node.m_state = UVM_PHASE_DORMANT;
+    tmp_node.m_state = uvm_phase_state.UVM_PHASE_DORMANT;
     uvm_do_callbacks(cb => cb.phase_state_change(tmp_node, state_chg));
   }
 
@@ -651,9 +656,10 @@ class uvm_phase: uvm_object
   // The singleton IMP phases have no hierarchy.
   //
   override string get_full_name() {
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       // string dom; -- redundant in SV implementation
-      if(m_phase_type == UVM_PHASE_IMP) {
+      if(m_phase_type == uvm_phase_type.UVM_PHASE_IMP) {
 	return get_name();
       }
       string get_full_name_ = get_domain_name();
@@ -661,8 +667,8 @@ class uvm_phase: uvm_object
       if(sch != "") {
 	get_full_name_ ~= "." ~ sch;
       }
-      if(m_phase_type != UVM_PHASE_DOMAIN &&
-	 m_phase_type != UVM_PHASE_SCHEDULE) {
+      if(m_phase_type != uvm_phase_type.UVM_PHASE_DOMAIN &&
+	 m_phase_type != uvm_phase_type.UVM_PHASE_SCHEDULE) {
 	get_full_name_ ~= "." ~ get_name();
       }
       return get_full_name_;
@@ -675,19 +681,20 @@ class uvm_phase: uvm_object
   // Returns the topmost parent schedule node, if any, for hierarchical graph traversal
   //
   final uvm_phase get_schedule(bool hier = false) {
+    import uvm.base.uvm_object_globals;
     uvm_phase sched = this;
     if(hier) {
       while(sched.m_parent !is null &&
-	    (sched.m_parent.get_phase_type() == UVM_PHASE_SCHEDULE)) {
+	    (sched.m_parent.get_phase_type() == uvm_phase_type.UVM_PHASE_SCHEDULE)) {
 	sched = sched.m_parent;
       }
     }
-    if(sched.m_phase_type == UVM_PHASE_SCHEDULE) {
+    if(sched.m_phase_type == uvm_phase_type.UVM_PHASE_SCHEDULE) {
       return sched;
     }
-    if(sched.m_phase_type == UVM_PHASE_NODE) {
+    if(sched.m_phase_type == uvm_phase_type.UVM_PHASE_NODE) {
       auto parent = m_parent;
-      if(parent !is null && parent.m_phase_type != UVM_PHASE_DOMAIN) {
+      if(parent !is null && parent.m_phase_type != uvm_phase_type.UVM_PHASE_DOMAIN) {
 	return parent;
       }
     }
@@ -700,13 +707,14 @@ class uvm_phase: uvm_object
   // Returns the schedule name associated with this phase node
   //
   final string get_schedule_name(bool hier = 0) {
+    import uvm.base.uvm_object_globals;
     uvm_phase sched = get_schedule(hier);
     if(sched is null) {
       return "";
     }
     string s = sched.get_name();
     while(sched.m_parent !is null && sched.m_parent !is sched &&
-	  (sched.m_parent.get_phase_type() == UVM_PHASE_SCHEDULE)) {
+	  (sched.m_parent.get_phase_type() == uvm_phase_type.UVM_PHASE_SCHEDULE)) {
       sched = sched.m_parent;
       s = sched.get_name() ~ (s.length > 0 ? "." : "")  ~ s;
     }
@@ -719,8 +727,10 @@ class uvm_phase: uvm_object
   // Returns the enclosing domain
   //
   final uvm_domain get_domain() {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
     uvm_phase phase = this;
-    while(phase !is null && phase.m_phase_type !is UVM_PHASE_DOMAIN) {
+    while(phase !is null && phase.m_phase_type !is uvm_phase_type.UVM_PHASE_DOMAIN) {
       phase = phase.m_parent;
     }
     if(phase is null) { // no parent domain
@@ -767,6 +777,8 @@ class uvm_phase: uvm_object
   // the predecessor node.
   //
   final void get_adjacent_predecessor_nodes(out uvm_phase[] pred) {
+    import uvm.base.uvm_object_globals;
+
     bool done;
     bool[uvm_phase] predecessors;
 
@@ -780,7 +792,7 @@ class uvm_phase: uvm_object
     do {
       done = true;
       foreach(p, unused; predecessors) {
-	if (p.get_phase_type() != UVM_PHASE_NODE) {
+	if (p.get_phase_type() != uvm_phase_type.UVM_PHASE_NODE) {
 	  predecessors.remove(p);
 	  foreach(next_p; p.get_predecessors()) {
 	    predecessors[next_p] = true;
@@ -805,6 +817,7 @@ class uvm_phase: uvm_object
   // and the successor node.
   //
   final void get_adjacent_successor_nodes(out uvm_phase[] succ) {
+    import uvm.base.uvm_object_globals;
     bool done;
     bool[uvm_phase] successors;
 
@@ -818,7 +831,7 @@ class uvm_phase: uvm_object
     do {
       done = true;
       foreach(s, unused; successors) {
-	if (s.get_phase_type() != UVM_PHASE_NODE) {
+	if (s.get_phase_type() != uvm_phase_type.UVM_PHASE_NODE) {
 	  successors.remove(s);
 	  foreach(next_s; s.get_successors()) {
 	    successors[next_s] = true;
@@ -849,6 +862,8 @@ class uvm_phase: uvm_object
 			       string description,
 			       int count,
 			       string action) {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
     string m_obj_name = (obj is null) ? "uvm_top" : obj.get_full_name();
    
     string m_action;
@@ -865,7 +880,7 @@ class uvm_phase: uvm_object
     }
 
     string m_addon;
-    if (this.get_phase_type() == UVM_PHASE_IMP) {
+    if (this.get_phase_type() == uvm_phase_type.UVM_PHASE_IMP) {
       m_addon = " (This is a UVM_PHASE_IMP, you have to query the" ~
 	" schedule to find the UVM_PHASE_NODE)";
     }
@@ -994,6 +1009,7 @@ class uvm_phase: uvm_object
   final void sync(uvm_domain target,
 		  uvm_phase phase = null,
 		  uvm_phase with_phase = null) {
+    import uvm.base.uvm_globals;
     if(!this.is_domain()) {
       uvm_fatal("PH_BADSYNC","sync() called from a non-domain phase " ~
 		"schedule node");
@@ -1057,6 +1073,7 @@ class uvm_phase: uvm_object
   final void unsync(uvm_domain target,
 		    uvm_phase phase = null,
 		    uvm_phase with_phase = null) {
+    import uvm.base.uvm_globals;
     if(!this.is_domain()) {
       uvm_fatal("PH_BADSYNC","unsync() called from a non-domain phase " ~
 		"schedule node");
@@ -1127,29 +1144,30 @@ class uvm_phase: uvm_object
   // task
   final void wait_for_state(uvm_phase_state state,
 			    uvm_wait_op op = uvm_wait_op.UVM_EQ) {
+    import uvm.base.uvm_object_globals;
     final switch(op) {
       // wait((state & m_state) !is 0);
-    case UVM_EQ:  while((m_state.get & state) is 0)
+    case uvm_wait_op.UVM_EQ:  while((m_state.get & state) is 0)
 	m_state.getEvent.wait();
       break;
       // wait((state & m_state) is 0);
-    case UVM_NE:  while((m_state.get & state) !is 0)
+    case uvm_wait_op.UVM_NE:  while((m_state.get & state) !is 0)
 	m_state.getEvent.wait();
       break;
       // wait(m_state <  state);
-    case UVM_LT:  while(m_state.get >= state)
+    case uvm_wait_op.UVM_LT:  while(m_state.get >= state)
 	m_state.getEvent.wait();
       break;
       // wait(m_state <=  state);
-    case UVM_LTE: while(m_state.get > state)
+    case uvm_wait_op.UVM_LTE: while(m_state.get > state)
 	m_state.getEvent.wait();
       break;
       // wait(m_state >  state);
-    case UVM_GT:  while(m_state.get <= state)
+    case uvm_wait_op.UVM_GT:  while(m_state.get <= state)
 	m_state.getEvent.wait();
       break;
       // wait(m_state >=  state);
-    case UVM_GTE: while(m_state.get < state)
+    case uvm_wait_op.UVM_GTE: while(m_state.get < state)
 	m_state.getEvent.wait();
       break;
     }
@@ -1213,9 +1231,11 @@ class uvm_phase: uvm_object
   // Specify a phase to transition to when phase is complete.
 
   void set_jump_phase(uvm_phase phase) {
+    import uvm.base.uvm_object_globals;
+    import uvm.base.uvm_globals;
 
-    if((m_state.get <  UVM_PHASE_STARTED) ||
-       (m_state.get >  UVM_PHASE_ENDED) )
+    if((m_state.get <  uvm_phase_state.UVM_PHASE_STARTED) ||
+       (m_state.get >  uvm_phase_state.UVM_PHASE_ENDED) )
       {
 	uvm_error("JMPPHIDL", "Attempting to jump from phase \"" ~
 		  get_name() ~  "\" which is not currently active " ~
@@ -1249,13 +1269,13 @@ class uvm_phase: uvm_object
       else {
 	m_jump_fwd = true;
 	uvm_info("PH_JUMPF", format("jumping forward to phase %s",
-				    phase.get_name()), UVM_DEBUG);
+				    phase.get_name()), uvm_verbosity.UVM_DEBUG);
       }
     }
     else {
       m_jump_bkwd = true;
       uvm_info("PH_JUMPB", format("jumping backward to phase %s",
-				  phase.get_name()), UVM_DEBUG);
+				  phase.get_name()), uvm_verbosity.UVM_DEBUG);
     }
 
     m_jump_phase = d;
@@ -1285,6 +1305,7 @@ class uvm_phase: uvm_object
   // i.e. a global jump.
   //
   final void jump_all(uvm_phase phase) {
+    import uvm.base.uvm_globals;
     uvm_warning("NOTIMPL","uvm_phase.jump_all is not implemented and " ~
 		"has been replaced by uvm_domain.jump_all");
   }
@@ -1451,15 +1472,17 @@ class uvm_phase: uvm_object
   // ------------------
 
   final void m_print_successors() {
+    import uvm.base.uvm_object_globals;
+    import uvm.base.uvm_globals;
     enum string spaces = "                                                 ";
     static int level;
-    if(m_phase_type is UVM_PHASE_DOMAIN) {
+    if(m_phase_type is uvm_phase_type.UVM_PHASE_DOMAIN) {
       level = 0;
     }
     uvm_info("UVM/PHASE/SUCC",
 	     format("%s%s (%s) id=%0d", spaces[0..level*2+1],
 		    get_name(), m_phase_type, get_inst_id()),
-	     UVM_NONE);
+	     uvm_verbosity.UVM_NONE);
     ++level;
     foreach(succ; get_successors()) {
       succ.m_print_successors();
@@ -1623,6 +1646,7 @@ class uvm_phase: uvm_object
   // of the successors returned by get_adjacent_successor_nodes
   final void
   get_predecessors_for_successors(out bool[uvm_phase] pred_of_succ) {
+    import uvm.base.uvm_object_globals;
     // This synchronization guard results in deadlock
     // synchronized(this) {
     bool done;
@@ -1643,7 +1667,7 @@ class uvm_phase: uvm_object
       done = true;
       import std.algorithm.sorting;
       foreach(pred; sort(pred_of_succ.keys)) {
-	if(pred.get_phase_type() !is UVM_PHASE_NODE) {
+	if(pred.get_phase_type() !is uvm_phase_type.UVM_PHASE_NODE) {
 	  pred_of_succ.remove(pred);
 	  foreach(next_pred; pred.get_predecessors()) {
 	    pred_of_succ[next_pred] = true;
@@ -1665,6 +1689,7 @@ class uvm_phase: uvm_object
   // task
   final void m_wait_for_pred() {
 
+    import uvm.base.uvm_object_globals;
     bool[uvm_phase] pred_of_succ;
     get_predecessors_for_successors(pred_of_succ);
 
@@ -1676,16 +1701,16 @@ class uvm_phase: uvm_object
 			  "READY_TO_END. Current state is %s",
 			  sibling.get_name(), sibling.get_inst_id(),
 			  sibling.m_state.get());
-	UVM_PH_TRACE("PH/TRC/WAIT_PRED_OF_SUCC", s, this, UVM_HIGH);
+	UVM_PH_TRACE("PH/TRC/WAIT_PRED_OF_SUCC", s, this, uvm_verbosity.UVM_HIGH);
       }
 
-      sibling.wait_for_state(UVM_PHASE_READY_TO_END, UVM_GTE);
+      sibling.wait_for_state(uvm_phase_state.UVM_PHASE_READY_TO_END, uvm_wait_op.UVM_GTE);
 
       if (m_phase_trace) {
 	string s = format("Phase '%s' (%0d) is now READY_TO_END. " ~
 			  "Releasing phase",
 			  sibling.get_name(),sibling.get_inst_id());
-	UVM_PH_TRACE("PH/TRC/WAIT_PRED_OF_SUCC",s,this,UVM_HIGH);
+	UVM_PH_TRACE("PH/TRC/WAIT_PRED_OF_SUCC",s,this,uvm_verbosity.UVM_HIGH);
       }
     }
 
@@ -1699,12 +1724,12 @@ class uvm_phase: uvm_object
 	UVM_PH_TRACE("PH/TRC/WAIT_PRED_OF_SUCC",
 		     "*** All pred to succ " ~ s ~
 		     " in READY_TO_END state, so ending phase ***",
-		     this, UVM_HIGH);
+		     this, uvm_verbosity.UVM_HIGH);
       }
       else {
 	UVM_PH_TRACE("PH/TRC/WAIT_PRED_OF_SUCC",
 		     "*** No pred to succ other than myself, " ~
-		     "so ending phase ***", this, UVM_HIGH);
+		     "so ending phase ***", this, uvm_verbosity.UVM_HIGH);
       }
     }
     wait(0); // #0; // LET ANY WAITERS WAKE UP
@@ -1799,7 +1824,9 @@ class uvm_phase: uvm_object
   void execute_phase() {
     import uvm.base.uvm_root;
     import uvm.base.uvm_coreservice;
-
+    import uvm.base.uvm_object_globals;
+    import uvm.base.uvm_globals;
+    
     uvm_task_phase task_phase;
 
     uvm_coreservice_t cs = uvm_coreservice_t.get();
@@ -1810,13 +1837,13 @@ class uvm_phase: uvm_object
     // (the next conditional speeds this up)
     // Also, this helps us fast-forward through terminal (end) nodes
     foreach(pred; get_predecessors()) {
-      while(pred.m_state.get != UVM_PHASE_DONE) {
+      while(pred.m_state.get != uvm_phase_state.UVM_PHASE_DONE) {
 	pred.m_state.getEvent.wait();
       }
     }
 
     // If DONE (by, say, a forward jump), return immed
-    if(m_state.get == UVM_PHASE_DONE) {
+    if(m_state.get == uvm_phase_state.UVM_PHASE_DONE) {
       return;
     }
 
@@ -1832,13 +1859,13 @@ class uvm_phase: uvm_object
     // relationship to be ready. Sync can be 2-way -
     // this additional state avoids deadlock.
     state_chg.m_prev_state = m_state;
-    m_state = UVM_PHASE_SYNCING;
+    m_state = uvm_phase_state.UVM_PHASE_SYNCING;
     uvm_do_callbacks(cb => cb.phase_state_change(this, state_chg));
     wait(0);
     if(m_sync.length != 0) {
 
       foreach(sync; m_sync[]) {
-	while(sync.m_state.get < UVM_PHASE_SYNCING) {
+	while(sync.m_state.get < uvm_phase_state.UVM_PHASE_SYNCING) {
 	  sync.m_state.getEvent.wait();
 	}
       }
@@ -1849,20 +1876,20 @@ class uvm_phase: uvm_object
 
 
       if(m_phase_trace) {
-	UVM_PH_TRACE("PH/TRC/STRT","Starting phase", this, UVM_LOW);
+	UVM_PH_TRACE("PH/TRC/STRT","Starting phase", this, uvm_verbosity.UVM_LOW);
       }
     }
 
     // If we're a schedule or domain, then "fake" execution
-    if(m_phase_type !is UVM_PHASE_NODE) {
+    if(m_phase_type !is uvm_phase_type.UVM_PHASE_NODE) {
       state_chg.m_prev_state = m_state;
-      m_state = UVM_PHASE_STARTED;
+      m_state = uvm_phase_state.UVM_PHASE_STARTED;
       uvm_do_callbacks(cb => cb.phase_state_change(this, state_chg));
 
       wait(0);			// #0;
 
       state_chg.m_prev_state = m_state;
-      m_state = UVM_PHASE_EXECUTING;
+      m_state = uvm_phase_state.UVM_PHASE_EXECUTING;
       uvm_do_callbacks(cb => cb.phase_state_change(this, state_chg));
 
       wait(0);			// #0;
@@ -1875,10 +1902,10 @@ class uvm_phase: uvm_object
       // STARTED:
       //---------
       state_chg.m_prev_state = m_state;
-      m_state = UVM_PHASE_STARTED;
+      m_state = uvm_phase_state.UVM_PHASE_STARTED;
       uvm_do_callbacks(cb => cb.phase_state_change(this, state_chg));
 
-      m_imp.traverse(top, this, UVM_PHASE_STARTED);
+      m_imp.traverse(top, this, uvm_phase_state.UVM_PHASE_STARTED);
       m_ready_to_end_count = 0 ; // reset the ready_to_end count when phase starts
 
       // #0; // LET ANY WAITERS WAKE UP
@@ -1893,17 +1920,17 @@ class uvm_phase: uvm_object
 	// EXECUTING: (function phases)
 	//-----------
 	state_chg.m_prev_state = m_state;
-	m_state = UVM_PHASE_EXECUTING;
+	m_state = uvm_phase_state.UVM_PHASE_EXECUTING;
 	uvm_do_callbacks(cb => cb.phase_state_change(this, state_chg));
 
 	wait(0);
-	m_imp.traverse(top, this, UVM_PHASE_EXECUTING);
+	m_imp.traverse(top, this, uvm_phase_state.UVM_PHASE_EXECUTING);
       }
       else {
 	add_executing_phase(this);
 
         state_chg.m_prev_state = m_state;
-        m_state = UVM_PHASE_EXECUTING;
+        m_state = uvm_phase_state.UVM_PHASE_EXECUTING;
         uvm_do_callbacks(cb => cb.phase_state_change(this, state_chg));
 
 	m_phase_proc = fork!("uvm_phases/master_phase_process")
@@ -1913,7 +1940,7 @@ class uvm_phase: uvm_object
 	    // EXECUTING: (task phases)
 	    //-----------
 
-	    task_phase.traverse(top, this, UVM_PHASE_EXECUTING);
+	    task_phase.traverse(top, this, uvm_phase_state.UVM_PHASE_EXECUTING);
 
 	    // wait(0) -- SV version
 	    sleep();
@@ -1928,7 +1955,7 @@ class uvm_phase: uvm_object
 	      wait(m_premature_end.getEvent);
 	    }
 	    UVM_PH_TRACE("PH/TRC/EXE/JUMP","PHASE EXIT ON JUMP REQUEST",
-			 this, UVM_DEBUG);
+			 this, uvm_verbosity.UVM_DEBUG);
 	  },
 	  { // WAIT_FOR_ALL_DROPPED
 
@@ -1936,15 +1963,15 @@ class uvm_phase: uvm_object
 	    if(phase_done.get_objection_total(top) ||
 	       m_use_ovm_run_semantic && m_imp.get_name() == "run") {
 	      if (!phase_done.m_top_all_dropped) {
-		phase_done.wait_for(UVM_ALL_DROPPED, top);
+		phase_done.wait_for(uvm_objection_event.UVM_ALL_DROPPED, top);
 	      }
 	      UVM_PH_TRACE("PH/TRC/EXE/ALLDROP","PHASE EXIT ALL_DROPPED",
-			   this, UVM_DEBUG);
+			   this, uvm_verbosity.UVM_DEBUG);
 	    }
 	    else {
 	      if (m_phase_trace) {
 		UVM_PH_TRACE("PH/TRC/SKIP","No objections raised, " ~
-			     "skipping phase", this, UVM_LOW);
+			     "skipping phase", this, uvm_verbosity.UVM_LOW);
 	      }
 	    }
 
@@ -1958,18 +1985,18 @@ class uvm_phase: uvm_object
 	    while(do_ready_to_end) {
 	      uvm_wait_for_nba_region(); // Let all siblings see no objections before traverse might raise another
 	      UVM_PH_TRACE("PH_READY_TO_END","PHASE READY TO END",
-			   this, UVM_DEBUG);
+			   this, uvm_verbosity.UVM_DEBUG);
 	      synchronized(this) {
 		++_m_ready_to_end_count;
 		if(m_phase_trace)
 		  UVM_PH_TRACE("PH_READY_TO_END_CB","CALLING READY_TO_END CB",
-			       this, UVM_HIGH);
+			       this, uvm_verbosity.UVM_HIGH);
 		state_chg.m_prev_state = _m_state;
-		_m_state = UVM_PHASE_READY_TO_END;
+		_m_state = uvm_phase_state.UVM_PHASE_READY_TO_END;
 	      }
 	      uvm_do_callbacks(cb => cb.phase_state_change(this, state_chg));
 	      if(m_imp !is null) {
-		m_imp.traverse(top, this, UVM_PHASE_READY_TO_END);
+		m_imp.traverse(top, this, uvm_phase_state.UVM_PHASE_READY_TO_END);
 	      }
 
 	      uvm_wait_for_nba_region(); // Give traverse targets a chance to object
@@ -1978,7 +2005,7 @@ class uvm_phase: uvm_object
 
 	      synchronized(this) {
 		//when we don't wait in task above, we drop out of while loop
-		do_ready_to_end = (_m_state.get == UVM_PHASE_EXECUTING) &&
+		do_ready_to_end = (_m_state.get == uvm_phase_state.UVM_PHASE_EXECUTING) &&
 		  (_m_ready_to_end_count < _max_ready_to_end_iter);
 	      }
 	    }
@@ -1993,7 +2020,7 @@ class uvm_phase: uvm_object
 		UVM_PH_TRACE("PH/TRC/TO_WAIT",
 			     format("STARTING PHASE TIMEOUT WATCHDOG" ~
 				    " (timeout == %s)", top.phase_timeout),
-			     this, UVM_HIGH);
+			     this, uvm_verbosity.UVM_HIGH);
 	      }
 	      
 	      // `uvm_delay(top.phase_timeout)
@@ -2006,7 +2033,7 @@ class uvm_phase: uvm_object
 	      if(getRootEntity().getSimTime() == root.phase_sim_timeout) {
 		if(m_phase_trace) {
 		  UVM_PH_TRACE("PH/TRC/TIMEOUT", "PHASE TIMEOUT WATCHDOG " ~
-			       "EXPIRED", this, UVM_LOW);
+			       "EXPIRED", this, uvm_verbosity.UVM_LOW);
 		}
 		foreach(p; get_executing_phases()) {
 		  if((p.phase_done !is null) &&
@@ -2017,7 +2044,7 @@ class uvm_phase: uvm_object
 					  "objections:\n%s",
 					  p.get_full_name(),
 					  p.phase_done.convert2string()),
-				   this, UVM_LOW);
+				   this, uvm_verbosity.UVM_LOW);
 		  }
 		}
 
@@ -2029,7 +2056,7 @@ class uvm_phase: uvm_object
 	      else {
 		if(m_phase_trace) {
 		  UVM_PH_TRACE("PH/TRC/TIMEOUT", "PHASE TIMEOUT WATCHDOG " ~
-			       "EXPIRED", this, UVM_LOW);
+			       "EXPIRED", this, uvm_verbosity.UVM_LOW);
 		}
 		foreach(p; get_executing_phases()) {
 		  if((p.phase_done !is null) &&
@@ -2040,7 +2067,7 @@ class uvm_phase: uvm_object
 					  "objections:\n%s",
 					  p.get_full_name(),
 					  p.phase_done.convert2string()),
-				   this, UVM_LOW);
+				   this, uvm_verbosity.UVM_LOW);
 		  }
 		}
 
@@ -2051,7 +2078,7 @@ class uvm_phase: uvm_object
 	      }
 	      if(m_phase_trace)
 		UVM_PH_TRACE("PH/TRC/EXE/3","PHASE EXIT TIMEOUT",
-			     this, UVM_DEBUG);
+			     this, uvm_verbosity.UVM_DEBUG);
 	    }
 	    else {
 	      sleep();
@@ -2080,7 +2107,7 @@ class uvm_phase: uvm_object
     // satisfied preventing deadlocks.
     // GSA TBD insert new jump support
 
-    if(get_phase_type == UVM_PHASE_NODE) {
+    if(get_phase_type == uvm_phase_type.UVM_PHASE_NODE) {
 
       if(m_premature_end.get) {
 	if(m_jump_phase !is null) {
@@ -2091,19 +2118,19 @@ class uvm_phase: uvm_object
 			  "jumping to phase %s", get_name(),
 			  get_schedule_name(), get_domain_name(),
 			  m_jump_phase.get_name()),
-		   UVM_MEDIUM);
+		   uvm_verbosity.UVM_MEDIUM);
 
 	}
 	else {
 	  uvm_info("PH_JUMP",
 		   format("phase %s (schedule %s, domain %s) is ending" ~
 			  " prematurely", get_name(), get_schedule_name(),
-			  get_domain_name()), UVM_MEDIUM);
+			  get_domain_name()), uvm_verbosity.UVM_MEDIUM);
 	}
 	wait(0); // #0; // LET ANY WAITERS ON READY_TO_END TO WAKE UP
 
 	if(m_phase_trace) {
-	  UVM_PH_TRACE("PH_END","ENDING PHASE PREMATURELY", this, UVM_HIGH);
+	  UVM_PH_TRACE("PH_END","ENDING PHASE PREMATURELY", this, uvm_verbosity.UVM_HIGH);
 	}
       }
       else {
@@ -2120,14 +2147,14 @@ class uvm_phase: uvm_object
       // execute 'phase_ended' callbacks
       synchronized(this) {
 	if(m_phase_trace) {
-	  UVM_PH_TRACE("PH_END","ENDING PHASE",this,UVM_HIGH);
+	  UVM_PH_TRACE("PH_END","ENDING PHASE",this,uvm_verbosity.UVM_HIGH);
 	}
 	state_chg.m_prev_state = _m_state;
-	_m_state = UVM_PHASE_ENDED;
+	_m_state = uvm_phase_state.UVM_PHASE_ENDED;
       }
       uvm_do_callbacks(cb => cb.phase_state_change(this, state_chg));
       if(m_imp !is null) {
-	m_imp.traverse(top, this, UVM_PHASE_ENDED);
+	m_imp.traverse(top, this, uvm_phase_state.UVM_PHASE_ENDED);
       }
 
       wait(0); // LET ANY WAITERS WAKE UP
@@ -2139,10 +2166,10 @@ class uvm_phase: uvm_object
       synchronized(this) {
 	state_chg.m_prev_state = m_state;
 	if(m_premature_end.get) {
-	  m_state = UVM_PHASE_JUMPING;
+	  m_state = uvm_phase_state.UVM_PHASE_JUMPING;
 	}
 	else {
-	  m_state = UVM_PHASE_CLEANUP ;
+	  m_state = uvm_phase_state.UVM_PHASE_CLEANUP ;
 	}
       }
 	    
@@ -2168,7 +2195,7 @@ class uvm_phase: uvm_object
     if(m_jump_fwd.get || m_jump_bkwd.get) {
 
       if(m_jump_fwd.get) {
-	clear_successors(UVM_PHASE_DONE, m_jump_phase);
+	clear_successors(uvm_phase_state.UVM_PHASE_DONE, m_jump_phase);
       }
 
       m_jump_phase.clear_successors();
@@ -2177,10 +2204,10 @@ class uvm_phase: uvm_object
     else {
 
       if (m_phase_trace) {
-	UVM_PH_TRACE("PH/TRC/DONE", "Completed phase", this, UVM_LOW);
+	UVM_PH_TRACE("PH/TRC/DONE", "Completed phase", this, uvm_verbosity.UVM_LOW);
       }
       state_chg.m_prev_state = m_state;
-      m_state = UVM_PHASE_DONE;
+      m_state = uvm_phase_state.UVM_PHASE_DONE;
       uvm_do_callbacks(cb => cb.phase_state_change(this, state_chg));
       synchronized(this) {
 	_m_phase_proc = null;
@@ -2212,17 +2239,17 @@ class uvm_phase: uvm_object
     else {
       // execute all the successors
       foreach(succ; get_successors()) {
-	if(succ.m_state.get < UVM_PHASE_SCHEDULED) {
+	if(succ.m_state.get < uvm_phase_state.UVM_PHASE_SCHEDULED) {
 	  state_chg.m_prev_state = succ.m_state;
 	  state_chg.m_phase = succ;
-	  succ.m_state = UVM_PHASE_SCHEDULED;
+	  succ.m_state = uvm_phase_state.UVM_PHASE_SCHEDULED;
 	  uvm_do_callbacks(cb => cb.phase_state_change(succ, state_chg));
 	  wait(0); // LET ANY WAITERS WAKE UP
 	  synchronized(this) {
 	    m_phase_hopper.try_put(succ);
 	    if(m_phase_trace) {
 	      UVM_PH_TRACE("PH/TRC/SCHEDULED", "Scheduled from phase " ~
-			   get_full_name(), succ, UVM_LOW);
+			   get_full_name(), succ, uvm_verbosity.UVM_LOW);
 	    }
 	  }
 	}
@@ -2248,6 +2275,8 @@ class uvm_phase: uvm_object
   private void m_print_termination_state() {
     import uvm.base.uvm_root;
     import uvm.base.uvm_coreservice;
+    import uvm.base.uvm_object_globals;
+    import uvm.base.uvm_globals;
     synchronized(this) {
       uvm_coreservice_t cs = uvm_coreservice_t.get();
       uvm_root top = cs.get_root();
@@ -2255,13 +2284,13 @@ class uvm_phase: uvm_object
 	uvm_info("PH_TERMSTATE",
 		 format("phase %s outstanding objections = %0d",
 			get_name(), phase_done.get_objection_total(top)),
-		 UVM_DEBUG);
+		 uvm_verbosity.UVM_DEBUG);
       }
       else {
 	uvm_info("PH_TERMSTATE",
 		 format("phase %s has no outstanding objections",
 			get_name()),
-		 UVM_DEBUG);
+		 uvm_verbosity.UVM_DEBUG);
       }
     }
   }
@@ -2272,6 +2301,7 @@ class uvm_phase: uvm_object
   final void wait_for_self_and_siblings_to_drop() {
     import uvm.base.uvm_root;
     import uvm.base.uvm_coreservice;
+    import uvm.base.uvm_object_globals;
     bool need_to_check_all = true;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     uvm_root top = cs.get_root();
@@ -2289,18 +2319,18 @@ class uvm_phase: uvm_object
       // wait for own objections to drop
       if((phase_done !is null) &&
 	 (phase_done.get_objection_total(top) != 0)) {
-	m_state = UVM_PHASE_EXECUTING;
-	phase_done.wait_for(UVM_ALL_DROPPED, top);
+	m_state = uvm_phase_state.UVM_PHASE_EXECUTING;
+	phase_done.wait_for(uvm_objection_event.UVM_ALL_DROPPED, top);
 	need_to_check_all = true;
       }
 
       // now wait for siblings to drop
       foreach(sib, unused; siblings) {
-	sib.wait_for_state(UVM_PHASE_EXECUTING, UVM_GTE); // sibling must be at least executing
+	sib.wait_for_state(uvm_phase_state.UVM_PHASE_EXECUTING, uvm_wait_op.UVM_GTE); // sibling must be at least executing
 	if((sib.phase_done !is null) &&
 	   (sib.phase_done.get_objection_total(top) != 0)) {
-	  m_state = UVM_PHASE_EXECUTING ;
-	  sib.phase_done.wait_for(UVM_ALL_DROPPED, top); // sibling must drop any objection
+	  m_state = uvm_phase_state.UVM_PHASE_EXECUTING;
+	  sib.phase_done.wait_for(uvm_objection_event.UVM_ALL_DROPPED, top); // sibling must drop any objection
 	  need_to_check_all = true;
 	}
       }
@@ -2311,8 +2341,10 @@ class uvm_phase: uvm_object
   // ----
 
   final void kill() {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
-      uvm_info("PH_KILL", "killing phase '" ~ get_name() ~ "'", UVM_DEBUG);
+      uvm_info("PH_KILL", "killing phase '" ~ get_name() ~ "'", uvm_verbosity.UVM_DEBUG);
 
       if(_m_phase_proc !is null) {
 	_m_phase_proc.abort();
@@ -2363,8 +2395,9 @@ class uvm_phase: uvm_object
   }
 
   final bool is_domain() {
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
-      return(m_phase_type == UVM_PHASE_DOMAIN);
+      return(m_phase_type == uvm_phase_type.UVM_PHASE_DOMAIN);
     }
   }
 
@@ -2528,6 +2561,7 @@ void UVM_PH_TRACE(string file=__FILE__,
 		  size_t line=__LINE__)(string ID, string MSG,
 					uvm_phase PH,
 					uvm_verbosity VERB) {
+  import uvm.base.uvm_globals;
   uvm_info!(file, line)(ID, format("Phase '%0s' (id=%0d) ",
 				   PH.get_full_name(), PH.get_inst_id()) ~
 			MSG, VERB);

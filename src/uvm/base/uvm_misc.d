@@ -38,14 +38,10 @@ module uvm.base.uvm_misc;
 // containers along with other UVM objects.
 //
 //------------------------------------------------------------------------------
-import std.string: format;
 
-import uvm.base.uvm_factory;
-import uvm.base.uvm_config_db;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_entity;
+import uvm.base.uvm_factory: uvm_factory;
+
 import uvm.base.uvm_once;
-// import uvm.base.uvm_object_globals;
 
 import uvm.meta.misc;
 
@@ -72,8 +68,6 @@ enum uvm_apprepend: bool
   {   UVM_APPEND = false,
       UVM_PREPEND = true
       }
-
-mixin(declareEnums!uvm_apprepend());
 
 
 // Forward declaration since scope stack uses uvm_objects now
@@ -175,6 +169,7 @@ final class uvm_scope_stack
   // ------------
 
   void down_element (int element) {
+    import std.string: format;
     synchronized(this) {
       _m_stack ~= format("[%0d]", element);
       _m_arg = "";
@@ -363,7 +358,7 @@ final class uvm_status_container {
   // 	  uvm_report_error("MLTFLD",
   // 			   format("Field %s is defined multiple times" ~
   // 				  " in type '%s'", field,
-  // 				  obj.get_type_name()), UVM_NONE);
+  // 				  obj.get_type_name()), uvm_verbosity.UVM_NONE);
   //     }
   //     _field_array[field] = true;
   //   }
@@ -784,6 +779,7 @@ string uvm_to_string(T)(T value,
 			uvm_radix_enum radix=uvm_radix_enum.UVM_NORADIX,
 			string radix_str="")
   if(isBitVector!T || isIntegral!T || is(T == bool)) {
+    import std.string: format;
     static if(isIntegral!T)       _bvec!T val = value;
     else static if(is(T == bool)) Bit!1 val = value;
     else                        alias val = value;
@@ -809,6 +805,7 @@ string uvm_to_string(T)(T value,
 string uvm_bitvec_to_string(T)(T value, size_t size,
 			       uvm_radix_enum radix=uvm_radix_enum.UVM_NORADIX,
 			       string radix_str="") {
+  import std.string: format;
   // sign extend & don't show radix for negative values
   static if(isBitVector!T && T.ISSIGNED) {
     if (radix == uvm_radix_enum.UVM_DEC && (cast(Bit!1) value[$-1]) is 1) {
@@ -817,6 +814,7 @@ string uvm_bitvec_to_string(T)(T value, size_t size,
   }
 
   static if(isIntegral!T && isSigned!T) {
+    import std.string: format;
     if (radix == uvm_radix_enum.UVM_DEC && value < 0) {
       return format("%0d", value);
     }
@@ -868,8 +866,9 @@ string uvm_bitvec_to_string(T)(T value, size_t size,
   }
 }
 
-alias uvm_bitstream_to_string = uvm_bitvec_to_string!uvm_bitstream_t;
-alias uvm_integral_to_string  = uvm_bitvec_to_string!uvm_integral_t;
+// Moved to uvm_aliases
+// alias uvm_bitstream_to_string = uvm_bitvec_to_string!uvm_bitstream_t;
+// alias uvm_integral_to_string  = uvm_bitvec_to_string!uvm_integral_t;
 
 
 // Function- uvm_get_array_index_int
@@ -1016,6 +1015,7 @@ final class uvm_utils (TYPE=uvm_void, string FIELD="config") {
 
   static TYPE create_type_by_name(string type_name, string contxt) {
     import uvm.base.uvm_coreservice;
+    import uvm.base.uvm_factory: uvm_factory;
     uvm_object obj;
 
     uvm_coreservice_t cs = uvm_coreservice_t.get();
@@ -1040,6 +1040,7 @@ final class uvm_utils (TYPE=uvm_void, string FIELD="config") {
   // operation.
 
   static TYPE get_config(uvm_component comp, bool is_fatal) {
+    import uvm.base.uvm_config_db;
     uvm_object obj;
 
     if (!uvm_config_db!(uvm_object).get(comp,"",FIELD, obj)) {
@@ -1048,14 +1049,14 @@ final class uvm_utils (TYPE=uvm_void, string FIELD="config") {
 			      "no set_config to field '" ~ FIELD ~
 			      "' for component '" ~
 			      comp.get_full_name() ~ "'",
-			      UVM_MEDIUM);
+			      uvm_verbosity.UVM_MEDIUM);
       }
       else {
 	comp.uvm_report_warning("NO_SET_CFG",
 				"no set_config to field '" ~ FIELD ~
 				"' for component '" ~
 				comp.get_full_name() ~ "'",
-				UVM_MEDIUM);
+				uvm_verbosity.UVM_MEDIUM);
       }
       return null;
     }
@@ -1067,14 +1068,14 @@ final class uvm_utils (TYPE=uvm_void, string FIELD="config") {
 			       "set_config_object with field name " ~
 			       FIELD ~ " is not of type '" ~
 			       TYPE.type_name ~ "'",
-			       UVM_NONE);
+			       uvm_verbosity.UVM_NONE);
       }
       else {
 	comp.uvm_report_warning( "GET_CFG_TYPE_FAIL",
 				 "set_config_object with field name " ~
 				 FIELD ~ " is not of type '" ~
 				 TYPE.type_name ~ "'",
-				 UVM_NONE);
+				 uvm_verbosity.UVM_NONE);
       }
     }
     return cfg;

@@ -44,16 +44,15 @@
 // specialized resource (i.e. resource subtype).
 
 module uvm.base.uvm_resource_specializations;
-import uvm.base.uvm_resource;
-import uvm.base.uvm_root;
-import uvm.base.uvm_object;
-import uvm.base.uvm_globals;
+import uvm.base.uvm_resource: uvm_resource, uvm_resource_base;
+import uvm.base.uvm_object: uvm_object;
 import std.string: format;
 
 mixin template UVM_RESOURCE_GET_FCNS(base_type)
 {
   static this_subtype get_by_name(string rscope, string name,
 				  bool rpterr = true) {
+    import uvm.base.uvm_globals;
     uvm_resource_base b =
       uvm_resource!base_type.get_by_name(rscope, name, rpterr);
     this_subtype t = cast(this_subtype) b;
@@ -65,6 +64,7 @@ mixin template UVM_RESOURCE_GET_FCNS(base_type)
 
   static this_subtype get_by_type(string rscope = "",
 				  TypeInfo type_handle = null) {
+    import uvm.base.uvm_globals;
     uvm_resource_base b =
       uvm_resource!base_type.get_by_type(rscope, type_handle);
     this_subtype t = cast(this_subtype) b;

@@ -228,7 +228,7 @@ class uvm_tlm_fifo_common(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
       if(m.num() > 0 && m_pending_blocked_gets != 0) {
 	uvm_report_error("flush failed" ,
 			 "there are blocked gets preventing the flush",
-			 UVM_NONE);
+			 uvm_verbosity.UVM_NONE);
       }
     }
   }

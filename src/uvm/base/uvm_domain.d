@@ -23,18 +23,10 @@
 
 module uvm.base.uvm_domain;
 
-import uvm.base.uvm_common_phases;
-import uvm.base.uvm_phase;
-import uvm.base.uvm_runtime_phases;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_globals;
-import uvm.base.uvm_entity;
+import uvm.base.uvm_phase: uvm_phase;
 import uvm.base.uvm_once;
+
 import uvm.meta.misc;
-
-import esdl.data.queue;
-
-import std.algorithm;
 
 final class uvm_once_domain_globals: uvm_once_base
 {
@@ -116,6 +108,7 @@ class uvm_domain: uvm_phase
   //
   static uvm_domain get_common_domain() {
 
+    import uvm.base.uvm_common_phases;
     // defined in SV version but not used anywhere
     // uvm_phase schedule;
     synchronized(once) {
@@ -162,6 +155,7 @@ class uvm_domain: uvm_phase
   // Appends to the given ~schedule~ the built-in UVM phases.
   //
   static void add_uvm_phases(uvm_phase schedule) {
+    import uvm.base.uvm_runtime_phases;
     assert(schedule !is null);
     synchronized(schedule) {
       schedule.add(uvm_pre_reset_phase.get());
@@ -184,10 +178,11 @@ class uvm_domain: uvm_phase
   // Get a handle to the singleton ~uvm~ domain
   //
   static uvm_domain get_uvm_domain() {
+    import uvm.base.uvm_object_globals;
     synchronized(once) {
       if (m_uvm_domain is null) {
 	m_uvm_domain = new uvm_domain("uvm");
-	m_uvm_schedule = new uvm_phase("uvm_sched", UVM_PHASE_SCHEDULE);
+	m_uvm_schedule = new uvm_phase("uvm_sched", uvm_phase_type.UVM_PHASE_SCHEDULE);
 	add_uvm_phases(m_uvm_schedule);
 	m_uvm_domain.add(m_uvm_schedule);
       }
@@ -199,7 +194,9 @@ class uvm_domain: uvm_phase
   //
   // Create a new instance of a phase domain.
   this(string name="") {
-    super(name,UVM_PHASE_DOMAIN);
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
+    super(name, uvm_phase_type.UVM_PHASE_DOMAIN);
     synchronized(once) {
       if (name in once._m_domains) {
 	uvm_error("UNIQDOMNAM",
@@ -214,12 +211,14 @@ class uvm_domain: uvm_phase
   // jumps all active phases of this domain to to-phase if
   // there is a path between active-phase and to-phase
   override void jump(uvm_phase phase) {
+    import uvm.base.uvm_object_globals;
+    import std.algorithm;	// filter
     // synchronized(this) {
     uvm_phase[] phases = m_get_transitive_children();
     foreach(ph;
 	    filter!((uvm_phase p) {
-		return (p.get_state >= UVM_PHASE_STARTED &&
-			p.get_state <= UVM_PHASE_CLEANUP);
+		return (p.get_state >= uvm_phase_state.UVM_PHASE_STARTED &&
+			p.get_state <= uvm_phase_state.UVM_PHASE_CLEANUP);
 	      }) (phases)) {
       if(ph.is_before(phase) || ph.is_after(phase))
 	ph.jump(phase);

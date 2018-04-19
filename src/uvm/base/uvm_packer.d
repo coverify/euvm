@@ -38,11 +38,11 @@ module uvm.base.uvm_packer;
 //
 //-------------------------------------------------------------------------------
 
-import uvm.base.uvm_misc: uvm_status_container, uvm_scope_stack;
-import uvm.base.uvm_object;
-import uvm.base.uvm_printer;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_globals;
+import uvm.base.uvm_misc: uvm_scope_stack;
+import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_object_globals: uvm_bitstream_t, uvm_integral_t,
+  uvm_recursion_policy_enum;
+
 import uvm.meta.misc;
 
 import esdl.data.packer;
@@ -90,22 +90,24 @@ class uvm_packer
 
   void pack(T)(T value)
     if(is(T: uvm_object)) {
+      import uvm.base.uvm_object_globals;
+      import uvm.base.uvm_globals;
       synchronized(this) {
 	if(value.m_uvm_status_container.check_cycle(value)) {
 	  uvm_report_warning("CYCFND",
 			     format("Cycle detected for object @%0d" ~
 				    " during pack", value.get_inst_id()),
-			     UVM_NONE);
+			     uvm_verbosity.UVM_NONE);
 	  return;
 	}
 	value.m_uvm_status_container.add_cycle_check(value);
 
-	if((policy != UVM_REFERENCE) && (value !is null) ) {
+	if((policy != uvm_recursion_policy_enum.UVM_REFERENCE) && (value !is null) ) {
 	  if(use_metadata is true) {
 	    _m_bits.pack(cast(UBitVec!4) 1);
 	  }
 	  scope_stack.down(value.get_name());
-	  value.m_uvm_object_automation(null, UVM_PACK, "");
+	  value.m_uvm_object_automation(null, uvm_field_auto_enum.UVM_PACK, "");
 	  value.do_pack(this);
 	  scope_stack.up();
 	}
@@ -172,6 +174,7 @@ class uvm_packer
   // -----------------
 
   void pack_bits(bool[] value, int size = -1) {
+    import uvm.base.uvm_globals;
     synchronized(this) {
       if (size < 0) {
 	size = cast(int) value.length;
@@ -385,13 +388,15 @@ class uvm_packer
     }
 
   void unpack(T)(T value) if(is(T: uvm_object)) {
+    import uvm.base.uvm_object_globals;
+    import uvm.base.uvm_globals;
     synchronized(this) {
       byte is_non_null = 1;
       if(value.m_uvm_status_container.check_cycle(value)) {
 	uvm_report_warning("CYCFND",
 			   format("Cycle detected for object @%0d" ~
 				  " during unpack", value.get_inst_id()),
-			   UVM_NONE);
+			   uvm_verbosity.UVM_NONE);
 	return;
       }
       value.m_uvm_status_container.add_cycle_check(value);
@@ -407,7 +412,7 @@ class uvm_packer
       if (value !is null) {
 	if (is_non_null > 0) {
 	  _scope_stack.down(value.get_name());
-	  value.m_uvm_object_automation(null, UVM_UNPACK,"");
+	  value.m_uvm_object_automation(null, uvm_field_xtra_enum.UVM_UNPACK, "");
 	  value.do_unpack(this);
 	  _scope_stack.up();
 	}
@@ -419,7 +424,7 @@ class uvm_packer
       }
       else if ((is_non_null != 0) && (value is null)) {
 	uvm_report_error("UNPOBJ",
-			 "cannot unpack into null object", UVM_NONE);
+			 "cannot unpack into null object", uvm_verbosity.UVM_NONE);
       }
       value.m_uvm_status_container.remove_cycle_check(value);
     }
@@ -496,6 +501,7 @@ class uvm_packer
   // -------------------
 
   void unpack_bits(bool[] value, int size = -1) {
+    import uvm.base.uvm_globals;
     synchronized(this) {
       if (size < 0) {
 	size = cast(int) value.length;
@@ -533,6 +539,8 @@ class uvm_packer
   // -------------------
 
   void unpack_integrals(T)(T[] value, int size = -1) {
+    import uvm.base.uvm_object_globals;
+    import uvm.base.uvm_globals;
     synchronized(this) {
       int max_size = cast(int) (value.length * T.sizeof * 8);
 
@@ -913,17 +921,21 @@ class uvm_packer
   }
 
   final void index_error(int index, string id, int sz) {
+    import uvm.base.uvm_object_globals;
+    import uvm.base.uvm_globals;
     uvm_report_error("PCKIDX",
 		     format("index %0d for get_%0s too large; valid index range is 0-%0d.",
-			    index,id,((_m_bits.length+sz-1)/sz)-1), UVM_NONE);
+			    index,id,((_m_bits.length+sz-1)/sz)-1), uvm_verbosity.UVM_NONE);
   }
 
   final bool enough_bits(size_t needed, string id) {
+    import uvm.base.uvm_object_globals;
+    import uvm.base.uvm_globals;
     synchronized(this) {
       if ((_m_bits.length - _m_bits.unpackIndex) < needed) {
 	uvm_report_error("PCKSZ",
 			 format("%0d bits needed to unpack %0s, yet only %0d available.",
-				needed, id, (_m_bits.length - _m_bits.unpackIndex)), UVM_NONE);
+				needed, id, (_m_bits.length - _m_bits.unpackIndex)), uvm_verbosity.UVM_NONE);
 	return false;
       }
       return true;

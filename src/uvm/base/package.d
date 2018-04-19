@@ -1,5 +1,6 @@
 module uvm.base;
 
+public import uvm.base.uvm_aliases;
 public import uvm.base.uvm_array;
 public import uvm.base.uvm_async_lock;
 public import uvm.base.uvm_barrier;
@@ -20,7 +21,6 @@ public import uvm.base.uvm_global_defines;
 public import uvm.base.uvm_globals;
 public import uvm.base.uvm_heartbeat;
 public import uvm.base.uvm_links;
-public import uvm.base.uvm_message_defines;
 public import uvm.base.uvm_misc;
 public import uvm.base.uvm_object;
 public import uvm.base.uvm_object_defines;

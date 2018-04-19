@@ -161,7 +161,7 @@ class uvm_vpi_driver(REQ, string VPI_PREFIX): uvm_driver!REQ
     {
       s_vpi_systf_data tf_data;
       uvm_info("VPIREG", "Registering vpi system task: " ~
-	       vpi_get_next_item_task, UVM_NONE);
+	       vpi_get_next_item_task, uvm_verbosity.UVM_NONE);
       tf_data.type = vpiSysFunc;
       tf_data.tfname = cast(char*) vpi_get_next_item_task.toStringz;
       tf_data.calltf = &vpi_get_next_item_calltf;
@@ -172,7 +172,7 @@ class uvm_vpi_driver(REQ, string VPI_PREFIX): uvm_driver!REQ
     {
       s_vpi_systf_data tf_data;
       uvm_info("VPIREG", "Registering vpi system task: " ~
-    	       vpi_item_done_task, UVM_NONE);
+    	       vpi_item_done_task, uvm_verbosity.UVM_NONE);
       tf_data.type = vpiSysFunc;
       tf_data.tfname = cast(char*) vpi_item_done_task.toStringz;
       tf_data.calltf = &vpi_item_done_calltf;

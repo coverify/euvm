@@ -33,13 +33,15 @@ module uvm.base.uvm_queue;
 // demand, and passed and stored by reference.
 //------------------------------------------------------------------------------
 
-import uvm.base.uvm_object;
+import uvm.base.uvm_object: uvm_object;
 import uvm.base.uvm_once;
-import uvm.base.uvm_globals: uvm_report_warning;
-import std.string: format;
-import esdl.data.queue;
+
 import uvm.meta.misc;
+
+import esdl.data.queue;
+
 import std.conv;
+import std.string: format;
 
 
 class uvm_queue (T=int): uvm_object
@@ -229,6 +231,7 @@ class uvm_queue (T=int): uvm_object
   // and returned.
 
   T get (ptrdiff_t index) {
+    import uvm.base.uvm_globals;
     synchronized(this) {
       T default_value;
       if (index >= size() || index < 0) {
@@ -259,9 +262,9 @@ class uvm_queue (T=int): uvm_object
   // Inserts the item at the given ~index~ in the queue.
 
   void insert (ptrdiff_t index, T item) {
+    import uvm.base.uvm_globals;
     synchronized(this) {
       if (index >= size() || index < 0) {
-	import uvm.base.uvm_globals;
 	uvm_report_warning("QUEUEINS",
 			   format("%s:insert: given index out of range for queue of" ~
 				  " size %0d. Ignoring insert request",
@@ -281,6 +284,7 @@ class uvm_queue (T=int): uvm_object
   // it is named delete in systemverilog version -- but D reserves
   // delete as a keyword
   void remove (ptrdiff_t index=-1) {
+    import uvm.base.uvm_globals;
     synchronized(this) {
       if (index != -1 &&
 	  (index >= size() || index < -1)) {
@@ -412,8 +416,8 @@ class uvm_queue (T=int): uvm_object
   }
 
   string to(S)() if(is(S == string)) {
+    import std.conv: to;
     synchronized(this) {
-      import std.conv: to;
       return std.conv.to!string(_queue.toArray);
     }
   }

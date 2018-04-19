@@ -70,7 +70,7 @@ class uvm_analysis_port(T): uvm_port_base!(uvm_tlm_if_base!(T,T))
 {
   public this(string name=null, uvm_component parent=null) {
     synchronized(this) {
-      super(name, parent, UVM_PORT, 0, UVM_UNBOUNDED_CONNECTIONS);
+      super(name, parent, uvm_port_type_e.UVM_PORT, 0, UVM_UNBOUNDED_CONNECTIONS);
       m_if_mask = UVM_TLM_ANALYSIS_MASK;
     }
   }
@@ -89,7 +89,7 @@ class uvm_analysis_port(T): uvm_port_base!(uvm_tlm_if_base!(T,T))
 	if ( tif is null ) {
 	  uvm_report_fatal ("NTCONN", "No uvm_tlm interface is connected to " ~
 			    get_full_name() ~ " for executing write()",
-			    UVM_NONE);
+			    uvm_verbosity.UVM_NONE);
 	}
 	tif.write (t);
       }
@@ -133,7 +133,7 @@ if (is(IMP: uvm_component))
   private IMP m_imp;
   public this (string name, IMP imp) {
     synchronized(this) {
-      super (name, imp, UVM_IMPLEMENTATION, 1, 1);
+      super (name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
       m_if_mask = UVM_TLM_ANALYSIS_MASK;
     }
@@ -160,7 +160,7 @@ if (is(IMP: uvm_component))
   private IMP m_imp;
   public this (string name, IMP imp) {
     synchronized(this) {
-      super (name, imp, UVM_IMPLEMENTATION, 1, 1);
+      super (name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
       m_if_mask = UVM_TLM_ANALYSIS_MASK;
     }
@@ -190,7 +190,7 @@ if (is(IMP: uvm_component))
     private IMP m_imp;
     public this (string name, IMP imp) {
       synchronized(this) {
-	super (name, imp, UVM_IMPLEMENTATION, 1, 1);
+	super (name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
 	m_imp = imp;
 	m_if_mask = UVM_TLM_ANALYSIS_MASK;
       }
@@ -237,7 +237,7 @@ class uvm_analysis_export(T): uvm_port_base!(uvm_tlm_if_base!(T,T))
   // Instantiate the export.
   public this(string name=null, uvm_component parent = null) {
     synchronized(this) {
-      super(name, parent, UVM_EXPORT, 1, UVM_UNBOUNDED_CONNECTIONS);
+      super(name, parent, uvm_port_type_e.UVM_EXPORT, 1, UVM_UNBOUNDED_CONNECTIONS);
       m_if_mask = UVM_TLM_ANALYSIS_MASK;
     }
   }
@@ -258,7 +258,7 @@ class uvm_analysis_export(T): uvm_port_base!(uvm_tlm_if_base!(T,T))
 	if (tif is null) {
 	  uvm_report_fatal ("NTCONN", "No uvm_tlm interface is connected to " ~
 			    get_full_name() ~ " for executing write()",
-			    UVM_NONE);
+			    uvm_verbosity.UVM_NONE);
 	}
 	tif.write (t);
       }
