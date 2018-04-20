@@ -297,6 +297,20 @@ class uvm_root: uvm_component, uvm_root_intf
     string[] test_names;
     size_t test_name_count = clp.get_arg_values("+UVM_TESTNAME=", test_names);
 
+    if (test_name_count == 0) {
+      import uvm.dpi.uvm_dpi_utils;
+      // look for DPI
+      if (uvm_dpi_is_usable()) {
+	// Use DPI function to get the name of the test
+	string testname = uvm_dpi_utils.instance().get_testname();
+	// string test_name = uvm_dpi_utils.instance().get_testname();
+	if (testname != "") {
+	  test_names ~= testname;
+	  test_name_count = 1;
+	}
+      }
+    }
+
     // If at least one, use first in queue.
     if(test_name_count > 0) {
       test_name = test_names[0];
