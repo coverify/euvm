@@ -160,15 +160,15 @@ class uvm_tlm_gen_rsp_channel(RSP): uvm_component
   // and put_response_export.
 
   uvm_slave_imp!(RSP, RSP, this_type,
-		 uvm_tlm_fifo_egress!RSP,
-		 uvm_tlm_fifo_ingress!RSP) slave_export;
+		 uvm_tlm_async_push_fifo!RSP,
+		 uvm_tlm_async_pull_fifo!RSP) slave_export;
 
   alias blocking_slave_export     = slave_export;
   alias nonblocking_slave_export  = slave_export;
 
   // internal fifos
-  protected uvm_tlm_fifo_egress!(RSP) m_generate_fifo;
-  protected uvm_tlm_fifo_ingress!(RSP) m_response_fifo;
+  protected uvm_tlm_async_push_fifo!(RSP) m_generate_fifo;
+  protected uvm_tlm_async_pull_fifo!(RSP) m_response_fifo;
 
 
   // Function: new
@@ -185,10 +185,10 @@ class uvm_tlm_gen_rsp_channel(RSP): uvm_component
     synchronized(this) {
       super(name, parent);
 
-      m_generate_fifo  = new uvm_tlm_fifo_egress!(RSP)
+      m_generate_fifo  = new uvm_tlm_async_push_fifo!(RSP)
 	("generate_fifo",  this, generate_fifo_size);
 
-      m_response_fifo = new uvm_tlm_fifo_ingress!(RSP)
+      m_response_fifo = new uvm_tlm_async_pull_fifo!(RSP)
 	("response_fifo", this, response_fifo_size);
 
       response_ap     = new uvm_analysis_port!(RSP)
@@ -204,8 +204,8 @@ class uvm_tlm_gen_rsp_channel(RSP): uvm_component
 	("get_peek_response_export", this);
 
       slave_export = new uvm_slave_imp!(RSP, RSP, this_type,
-					uvm_tlm_fifo_egress!RSP,
-					uvm_tlm_fifo_ingress!RSP)
+					uvm_tlm_async_push_fifo!RSP,
+					uvm_tlm_async_pull_fifo!RSP)
 	("slave_export",  this, m_generate_fifo, m_response_fifo);
 
       // This function is defined in the base class uvm_component
@@ -353,15 +353,15 @@ class uvm_tlm_gen_rsp_vpi_channel(RSP): uvm_component
   // and put_response_export.
 
   uvm_slave_imp!(RSP, RSP, this_type,
-		 uvm_tlm_fifo_vpi_egress!RSP,
-		 uvm_tlm_fifo_vpi_ingress!RSP) slave_export;
+		 uvm_tlm_vpi_push_fifo!RSP,
+		 uvm_tlm_vpi_pull_fifo!RSP) slave_export;
 
   alias blocking_slave_export     = slave_export;
   alias nonblocking_slave_export  = slave_export;
 
   // internal fifos
-  protected uvm_tlm_fifo_vpi_egress!(RSP) m_generate_fifo;
-  protected uvm_tlm_fifo_vpi_ingress!(RSP) m_response_fifo;
+  protected uvm_tlm_vpi_push_fifo!(RSP) m_generate_fifo;
+  protected uvm_tlm_vpi_pull_fifo!(RSP) m_response_fifo;
 
 
   // Function: new
@@ -378,10 +378,10 @@ class uvm_tlm_gen_rsp_vpi_channel(RSP): uvm_component
     synchronized(this) {
       super(name, parent);
 
-      m_generate_fifo  = new uvm_tlm_fifo_vpi_egress!(RSP)
+      m_generate_fifo  = new uvm_tlm_vpi_push_fifo!(RSP)
 	("generate_fifo",  this, generate_fifo_size);
 
-      m_response_fifo = new uvm_tlm_fifo_vpi_ingress!(RSP)
+      m_response_fifo = new uvm_tlm_vpi_pull_fifo!(RSP)
 	("response_fifo", this, response_fifo_size);
 
       response_ap     = new uvm_analysis_port!(RSP)
@@ -397,8 +397,8 @@ class uvm_tlm_gen_rsp_vpi_channel(RSP): uvm_component
 	("get_peek_response_export", this);
 
       slave_export = new uvm_slave_imp!(RSP, RSP, this_type,
-					uvm_tlm_fifo_vpi_egress!RSP,
-					uvm_tlm_fifo_vpi_ingress!RSP)
+					uvm_tlm_vpi_push_fifo!RSP,
+					uvm_tlm_vpi_pull_fifo!RSP)
 	("slave_export",  this, m_generate_fifo, m_response_fifo);
 
       // This function is defined in the base class uvm_component

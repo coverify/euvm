@@ -245,7 +245,7 @@ class uvm_tlm_fifo(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
   }
 }
 
-class uvm_tlm_fifo_ingress(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
+class uvm_tlm_async_pull_fifo(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
 {
   mixin uvm_component_essentials;
   public this(string name=null, uvm_component parent = null, int size = 1) {
@@ -256,7 +256,7 @@ class uvm_tlm_fifo_ingress(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
   }
 }
 
-class uvm_tlm_fifo_egress(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
+class uvm_tlm_async_push_fifo(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
 {
   mixin uvm_component_essentials;
   public this(string name=null, uvm_component parent = null, int size = 1) {
@@ -267,7 +267,18 @@ class uvm_tlm_fifo_egress(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
   }
 }
 
-class uvm_tlm_fifo_vpi_ingress(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
+class uvm_tlm_async_fifo(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
+{
+  mixin uvm_component_essentials;
+  public this(string name=null, uvm_component parent = null, int size = 1) {
+    synchronized(this) {
+      super(name, parent, size);
+      _m = new MailInOutbox!T(parent, size);
+    }
+  }
+}
+
+class uvm_tlm_vpi_pull_fifo(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
 {
   mixin uvm_component_essentials;
   public this(string name=null, uvm_component parent = null, int size = 1) {
@@ -278,7 +289,7 @@ class uvm_tlm_fifo_vpi_ingress(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
   }
 }
 
-class uvm_tlm_fifo_vpi_egress(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
+class uvm_tlm_vpi_push_fifo(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
 {
   mixin uvm_component_essentials;
   public this(string name=null, uvm_component parent = null, int size = 1) {

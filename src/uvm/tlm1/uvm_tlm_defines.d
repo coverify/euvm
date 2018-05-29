@@ -384,30 +384,30 @@ module uvm.tlm1.uvm_tlm_defines;
 // // for a scoreboard (or other analysis component) to support input from many
 // // places. For example:
 // //
-// //| `uvm_analysis_imp_decl(_ingress)
-// //| `uvm_analysis_imp_decl(_egress)
+// //| `uvm_analysis_imp_decl(_pull)
+// //| `uvm_analysis_imp_decl(_push)
 // //|
 // //| class myscoreboard extends uvm_component;
-// //|   uvm_analysis_imp_ingress#(mydata, myscoreboard) ingress;
-// //|   uvm_analysis_imp_egress#(mydata, myscoreboard) egress;
-// //|   mydata ingress_list[$];
+// //|   uvm_analysis_imp_pull#(mydata, myscoreboard) pull;
+// //|   uvm_analysis_imp_push#(mydata, myscoreboard) push;
+// //|   mydata pull_list[$];
 // //|   ...
 // //|
 // //|   function new(string name, uvm_component parent);
 // //|     super.new(name,parent);
-// //|     ingress = new("ingress", this);
-// //|     egress = new("egress", this);
+// //|     pull = new("pull", this);
+// //|     push = new("push", this);
 // //|   endfunction
 // //|
-// //|   function void write_ingress(mydata t);
-// //|     ingress_list.push_back(t);
+// //|   function void write_pull(mydata t);
+// //|     pull_list.push_back(t);
 // //|   endfunction
 // //|
-// //|   function void write_egress(mydata t);
-// //|     find_match_in_ingress_list(t);
+// //|   function void write_push(mydata t);
+// //|     find_match_in_pull_list(t);
 // //|   endfunction
 // //|
-// //|   function void find_match_in_ingress_list(mydata t);
+// //|   function void find_match_in_pull_list(mydata t);
 // //|     //implement scoreboarding for this particular dut
 // //|     ...
 // //|   endfunction

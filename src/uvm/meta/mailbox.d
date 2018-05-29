@@ -241,6 +241,114 @@ class Mailbox(T): MailboxBase!T
   override void writeNotify() {_writeEvent.notify();}
 }
 
+class MailInOutbox(T): MailboxBase!T
+{
+  private uvm_async_lock  _readEvent;
+  private uvm_async_lock  _writeEvent;
+
+  this(uvm_component parent, size_t bound = 0) {
+    synchronized(this) {
+      super(bound);
+      _readEvent = new uvm_async_lock(parent);
+      _writeEvent = new uvm_async_lock(parent);
+    }
+  }
+  
+  override void readWait() {_readEvent.wait();}
+  override void writeWait() {_writeEvent.wait();}
+  override void readNotify() {_readEvent.notify();}
+  override void writeNotify() {_writeEvent.notify();}
+
+  override void put(T val) {
+    while(true) {
+      if(bound is 0) {
+	synchronized(this) {
+	  if(numFree is 0) {
+	    GrowBuffer();
+	  }
+	}
+      }
+      else {
+	if(numFree is 0) {
+	  readWait();
+	}
+      }
+      synchronized(this) {
+	if(numFree !is 0) {
+	  writeBuffer(val);
+	  writeNotify();
+	  break;
+	}
+      }
+    }
+  }
+
+  override bool try_put(T val) {
+    synchronized(this) {
+      if(bound is 0) {
+	if(numFree is 0) {
+	  GrowBuffer();
+	}
+      }
+      else {
+	if(numFree is 0) {
+	  return false;
+	}
+      }
+      writeBuffer(val);
+      writeNotify();
+      return true;
+    }
+  }
+
+  override void peek(ref T val) {
+    while(true) {
+      if(numFilled is 0) {
+	writeWait();
+      }
+      synchronized(this) {
+	if(numFilled !is 0) {
+	  peekBuffer(val);
+	  break;
+	}
+      }
+    }
+  }
+
+  override void get(ref T val) {
+    while(true) {
+      if(numFilled is 0) {
+	writeWait();
+      }
+      synchronized(this) {
+	if(numFilled !is 0) {
+	  readBuffer(val);
+	  readNotify();
+	  break;
+	}
+      }
+    }
+  }
+
+  override bool try_get(ref T val) {
+    synchronized(this) {
+      if(numFilled is 0) return false;
+      readBuffer(val);
+      readNotify();
+      return true;
+    }
+  }
+
+  override bool try_peek(ref T val) {
+    synchronized(this) {
+      if(numFilled is 0) return false;
+      peekBuffer(val);
+      return true;
+    }
+  }
+
+}
+
 class MailOutbox(T): MailboxBase!T
 {
   private uvm_async_event _readEvent;

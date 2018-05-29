@@ -807,13 +807,13 @@ string uvm_bitvec_to_string(T)(T value, size_t size,
 			       string radix_str="") {
   import std.string: format;
   // sign extend & don't show radix for negative values
-  static if(isBitVector!T && T.ISSIGNED) {
+  static if (isBitVector!T && T.ISSIGNED) {
     if (radix == uvm_radix_enum.UVM_DEC && (cast(Bit!1) value[$-1]) is 1) {
       return format("%0d", value);
     }
   }
 
-  static if(isIntegral!T && isSigned!T) {
+  static if (isIntegral!T && isSigned!T) {
     import std.string: format;
     if (radix == uvm_radix_enum.UVM_DEC && value < 0) {
       return format("%0d", value);
@@ -821,11 +821,11 @@ string uvm_bitvec_to_string(T)(T value, size_t size,
   }
 
   // TODO $countbits(value,'z) would be even better
-  static if(isBitVector!T) {
-    if(size < T.SIZE) {
-      if(value.isX()) {
+  static if (isBitVector!T) {
+    if (size < T.SIZE) {
+      if (value.isX()) {
 	T t_ = 0;
-	for(int idx=0 ; idx<size; idx++) {
+	for (int idx=0 ; idx<size; idx++) {
 	  t_[idx] = value[idx];
 	}
 	value = t_;
