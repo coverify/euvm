@@ -34,7 +34,7 @@ import std.string: format;
 
 version(UVM_NO_RAND) {}
  else {
-   import esdl.data.rand;
+   import esdl.rand;
  }
 
 //------------------------------------------------------------------------------
@@ -111,12 +111,12 @@ abstract class uvm_sequence (REQ_T = uvm_sequence_item, RSP_T = REQ_T):
 				   bool rerandomize=false) {
     synchronized(this) {
       if (m_sequencer is null) {
-	uvm_report_fatal("SSENDREQ", "Null m_sequencer reference", UVM_NONE);
+	uvm_report_fatal("SSENDREQ", "Null m_sequencer reference", uvm_verbosity.UVM_NONE);
       }
 
       REQ_T m_request = cast(REQ_T) request;
       if (request is null) {
-	uvm_report_fatal("SSENDREQ", "Failure to cast uvm_sequence_item to request", UVM_NONE);
+	uvm_report_fatal("SSENDREQ", "Failure to cast uvm_sequence_item to request", uvm_verbosity.UVM_NONE);
       }
       m_sequencer.send_request(this, m_request, rerandomize);
     }
@@ -138,8 +138,8 @@ abstract class uvm_sequence (REQ_T = uvm_sequence_item, RSP_T = REQ_T):
     synchronized(this) {
       _param_sequencer = cast(sequencer_t) m_sequencer;
       if (_param_sequencer is null) {
-	uvm_report_fatal("SGTCURR", "Failure to cast m_sequencer to the"
-			 " parameterized sequencer", UVM_NONE);
+	uvm_report_fatal("SGTCURR", "Failure to cast m_sequencer to the" ~
+			 " parameterized sequencer", uvm_verbosity.UVM_NONE);
       }
       return (_param_sequencer.get_current_item());
     }
@@ -179,13 +179,13 @@ abstract class uvm_sequence (REQ_T = uvm_sequence_item, RSP_T = REQ_T):
   override void put_response(uvm_sequence_item response_item) {
     if (response_item is null) {
       uvm_report_fatal("PUTRSP", "Received a null in response",
-		       UVM_NONE);
+		       uvm_verbosity.UVM_NONE);
     }
     RSP_T response = cast(RSP_T) response_item;
     if (response is null) {
       uvm_report_fatal("PUTRSP",
 		       format("Failure to cast response to type %s in put_response",
-			      RSP_T.stringof), UVM_NONE);
+			      RSP_T.stringof), uvm_verbosity.UVM_NONE);
     }
     put_base_response(response_item);
   }

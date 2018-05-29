@@ -210,76 +210,76 @@ abstract class uvm_tlm_fifo_base(T=int): uvm_component
   }
 
   override public void flush() {
-    uvm_report_error("flush", UVM_TLM_FIFO_FUNCTION_ERROR, UVM_NONE);
+    uvm_report_error("flush", UVM_TLM_FIFO_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
   }
 
   public size_t size() {
-    uvm_report_error("size", UVM_TLM_FIFO_FUNCTION_ERROR, UVM_NONE);
+    uvm_report_error("size", UVM_TLM_FIFO_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return 0;
   }
 
   // task
   public void put(T t) {
-    uvm_report_error("put", UVM_TLM_FIFO_TASK_ERROR, UVM_NONE);
+    uvm_report_error("put", UVM_TLM_FIFO_TASK_ERROR, uvm_verbosity.UVM_NONE);
   }
 
   // task
   public void get(out T t) {
-    uvm_report_error("get", UVM_TLM_FIFO_TASK_ERROR, UVM_NONE);
+    uvm_report_error("get", UVM_TLM_FIFO_TASK_ERROR, uvm_verbosity.UVM_NONE);
   }
 
   // task
   public void peek(out T t) {
-    uvm_report_error("peek", UVM_TLM_FIFO_TASK_ERROR, UVM_NONE);
+    uvm_report_error("peek", UVM_TLM_FIFO_TASK_ERROR, uvm_verbosity.UVM_NONE);
   }
 
   public bool try_put(T t) {
-    uvm_report_error("try_put", UVM_TLM_FIFO_FUNCTION_ERROR, UVM_NONE);
+    uvm_report_error("try_put", UVM_TLM_FIFO_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return 0;
   }
 
   public bool try_get(out T t) {
-    uvm_report_error("try_get", UVM_TLM_FIFO_FUNCTION_ERROR, UVM_NONE);
+    uvm_report_error("try_get", UVM_TLM_FIFO_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return 0;
   }
 
   public bool try_peek(out T t) {
-    uvm_report_error("try_peek", UVM_TLM_FIFO_FUNCTION_ERROR, UVM_NONE);
+    uvm_report_error("try_peek", UVM_TLM_FIFO_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return 0;
   }
 
   public bool can_put() {
-    uvm_report_error("can_put", UVM_TLM_FIFO_FUNCTION_ERROR, UVM_NONE);
+    uvm_report_error("can_put", UVM_TLM_FIFO_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return 0;
   }
 
   public bool can_get() {
-    uvm_report_error("can_get", UVM_TLM_FIFO_FUNCTION_ERROR, UVM_NONE);
+    uvm_report_error("can_get", UVM_TLM_FIFO_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return 0;
   }
 
   public bool can_peek() {
-    uvm_report_error("can_peek", UVM_TLM_FIFO_FUNCTION_ERROR, UVM_NONE);
+    uvm_report_error("can_peek", UVM_TLM_FIFO_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return 0;
   }
 
   public uvm_tlm_event ok_to_put() {
-    uvm_report_error("ok_to_put", UVM_TLM_FIFO_FUNCTION_ERROR, UVM_NONE);
+    uvm_report_error("ok_to_put", UVM_TLM_FIFO_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return null;
   }
 
   public uvm_tlm_event ok_to_get() {
-    uvm_report_error("ok_to_get", UVM_TLM_FIFO_FUNCTION_ERROR, UVM_NONE);
+    uvm_report_error("ok_to_get", UVM_TLM_FIFO_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return null;
   }
 
   public uvm_tlm_event ok_to_peek() {
-    uvm_report_error("ok_to_peek", UVM_TLM_FIFO_FUNCTION_ERROR, UVM_NONE);
+    uvm_report_error("ok_to_peek", UVM_TLM_FIFO_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return null;
   }
 
   public bool is_empty() {
-    uvm_report_error("is_empty", UVM_TLM_FIFO_FUNCTION_ERROR, UVM_NONE);
+    uvm_report_error("is_empty", UVM_TLM_FIFO_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return 0;
   }
 
@@ -289,7 +289,7 @@ abstract class uvm_tlm_fifo_base(T=int): uvm_component
   }
 
   public size_t used() {
-    uvm_report_error("used", UVM_TLM_FIFO_FUNCTION_ERROR, UVM_NONE);
+    uvm_report_error("used", UVM_TLM_FIFO_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return 0;
   }
 

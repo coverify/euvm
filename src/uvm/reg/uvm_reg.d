@@ -1283,7 +1283,7 @@ abstract class uvm_reg: uvm_object
     }
 
     uvm_info("RegModel", format("Poked register \"%s\": 'h%h",
-				get_full_name(), value),UVM_HIGH);
+				get_full_name(), value),uvm_verbosity.UVM_HIGH);
 
     do_predict(rw, UVM_PREDICT_WRITE);
 
@@ -1372,7 +1372,7 @@ abstract class uvm_reg: uvm_object
     }
     
     uvm_info("RegModel", format("Peeked register \"%s\": 'h%h",
-				get_full_name(), value),UVM_HIGH);
+				get_full_name(), value),uvm_verbosity.UVM_HIGH);
 
     do_predict(rw, UVM_PREDICT_READ);
 
@@ -1785,7 +1785,7 @@ abstract class uvm_reg: uvm_object
 			    field.get_lsb_pos(),
 			    field.get_n_bits(), val,
 			    field.get_n_bits(), exp),
-		     UVM_NONE);
+		     uvm_verbosity.UVM_NONE);
 	  }
 	}
       }
@@ -1984,7 +1984,7 @@ abstract class uvm_reg: uvm_object
     rw.element_kind = UVM_REG;
 
     // REPORT
-    if (uvm_report_enabled(UVM_HIGH, UVM_INFO, "RegModel")) {
+    if (uvm_report_enabled(uvm_verbosity.UVM_HIGH, uvm_severity.UVM_INFO, "RegModel")) {
       string path_s,value_s;
       if (rw.path == UVM_FRONTDOOR) {
 	path_s = (map_info.frontdoor !is null) ? "user frontdoor" :
@@ -1997,7 +1997,7 @@ abstract class uvm_reg: uvm_object
       value_s = format("=0x%0h",rw.get_value(0));
 
       uvm_report_info("RegModel", "Wrote register via " ~ path_s ~ ": " ~
-		      get_full_name() ~ value_s, UVM_HIGH);
+		      get_full_name() ~ value_s, uvm_verbosity.UVM_HIGH);
     }
 
     _m_write_in_progress = false;
@@ -2217,7 +2217,7 @@ abstract class uvm_reg: uvm_object
     rw.element_kind = UVM_REG;
 
     // REPORT
-    if (uvm_report_enabled(UVM_HIGH, UVM_INFO, "RegModel"))  {
+    if (uvm_report_enabled(uvm_verbosity.UVM_HIGH, uvm_severity.UVM_INFO, "RegModel"))  {
       string path_s,value_s;
       if (rw.path == UVM_FRONTDOOR)
 	path_s = (map_info.frontdoor !is null) ? "user frontdoor" :
@@ -2229,7 +2229,7 @@ abstract class uvm_reg: uvm_object
       value_s = format("=%0h", rw.get_value(0));
 
       uvm_report_info("RegModel", "Read  register via " ~ path_s ~ ": " ~
-		      get_full_name() ~ value_s, UVM_HIGH);
+		      get_full_name() ~ value_s, uvm_verbosity.UVM_HIGH);
     }
     _m_read_in_progress = false;
   }
@@ -2737,7 +2737,7 @@ abstract class uvm_reg: uvm_object
       uvm_hdl_path_concat hdl_concat = path;
       foreach (hdl_slice; hdl_concat.slices) {
 	uvm_info("RegMem", "backdoor_write to " ~
-		 hdl_slice.path, UVM_DEBUG);
+		 hdl_slice.path, uvm_verbosity.UVM_DEBUG);
 
 	if (hdl_slice.offset < 0) {
 	  // ok &= uvm_hdl_deposit(hdl_slice.path, rw.value[0]);
@@ -2777,7 +2777,7 @@ abstract class uvm_reg: uvm_object
 	val = 0;
 	foreach (hdl_slice; hdl_concat.slices) {
 	  uvm_info("RegMem", "backdoor_read from %s " ~
-		   hdl_slice.path, UVM_DEBUG);
+		   hdl_slice.path, uvm_verbosity.UVM_DEBUG);
 
 	  if (hdl_slice.offset < 0) {
 	    ok &= uvm_hdl_read(hdl_slice.path,val);
@@ -2818,7 +2818,7 @@ abstract class uvm_reg: uvm_object
 	uvm_info("RegMem", 
 		 // format("returned backdoor value 0x%0x", rw.value[0]),
 		 format("returned backdoor value 0x%0x", rw.get_value(0)),
-		 UVM_DEBUG);
+		 uvm_verbosity.UVM_DEBUG);
       
       }
 

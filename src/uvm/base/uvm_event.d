@@ -34,12 +34,10 @@ module uvm.base.uvm_event;
 //
 //------------------------------------------------------------------------------
 
-import uvm.base.uvm_object;
-import uvm.base.uvm_event_callback;
-import uvm.base.uvm_printer;
-import uvm.base.uvm_globals;
-import uvm.base.uvm_misc;
-import uvm.base.uvm_object_globals;
+import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_event_callback: uvm_event_callback;
+import uvm.base.uvm_printer: uvm_printer;
+
 import uvm.meta.misc;
 import uvm.meta.meta;
 
@@ -286,9 +284,10 @@ abstract class uvm_event_base: uvm_object
   }
 
   override void do_print (uvm_printer printer) {
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
-      printer.print("num_waiters", _num_waiters, UVM_DEC, '.', "int");
-      printer.print("on", _on, UVM_BIN, '.', "bit");
+      printer.print("num_waiters", _num_waiters, uvm_radix_enum.UVM_DEC, '.', "int");
+      printer.print("on", _on, uvm_radix_enum.UVM_BIN, '.', "bit");
       printer.print("trigger_time", _trigger_time);
       printer.m_scope.down("callbacks");
       foreach(size_t e, ref c; _callbacks) {
@@ -440,8 +439,10 @@ class uvm_event(T=uvm_object): uvm_event_base
 
 
   void add_callback (uvm_event_callback!T cb, bool append = true) {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
+    import std.algorithm;
     synchronized(this) {
-      import std.algorithm;
       if(countUntil(_callbacks[], cb) != -1) {
 	uvm_report_warning("CBRGED","add_callback: Callback already registered. Ignoring.", uvm_verbosity.UVM_NONE);
 	return;
@@ -460,8 +461,10 @@ class uvm_event(T=uvm_object): uvm_event_base
   // Unregisters the given callback, ~cb~, from this event.
 
   void delete_callback (uvm_event_callback!T cb) {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
+    import std.algorithm;
     synchronized(this) {
-      import std.algorithm;
       auto r = countUntil(_callbacks[], cb);
       if(r !is -1) {
 	_callbacks.remove(r);

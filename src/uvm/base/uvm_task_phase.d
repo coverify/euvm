@@ -58,24 +58,19 @@
 
 module uvm.base.uvm_task_phase;
 
-import uvm.base.uvm_phase;
-import uvm.base.uvm_component;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_domain;
-import uvm.base.uvm_globals;
-import uvm.base.uvm_misc;
-import uvm.seq.uvm_sequencer_base;
-import esdl.base.core: Process, fork, Fork;
+import uvm.base.uvm_phase: uvm_phase;
+import uvm.base.uvm_object_globals: uvm_phase_state, uvm_phase_type, uvm_verbosity;
 
 abstract class uvm_task_phase: uvm_phase
 {
+  import uvm.base.uvm_component: uvm_component;
 
   // Function: new
   //
   // Create a new instance of a task-based phase
   //
   this(string name) {
-    super(name,UVM_PHASE_IMP);
+    super(name, uvm_phase_type.UVM_PHASE_IMP);
   }
 
 
@@ -96,6 +91,10 @@ abstract class uvm_task_phase: uvm_phase
   final void m_traverse(uvm_component comp,
 			uvm_phase phase,
 			uvm_phase_state state) {
+    import uvm.base.uvm_domain;
+    import uvm.base.uvm_globals;
+    import uvm.seq.uvm_sequencer_base;
+    import std.string: format;
     uvm_domain phase_domain = phase.get_domain();
     uvm_domain comp_domain = comp.get_domain();
 
@@ -104,20 +103,19 @@ abstract class uvm_task_phase: uvm_phase
     }
 
     synchronized(this) {
-      import std.string: format;
       if (m_phase_trace) {
-	uvm_info("PH_TRACE",format("topdown-phase phase=%s state=%s comp=%s "
+	uvm_info("PH_TRACE",format("topdown-phase phase=%s state=%s comp=%s " ~
 				   "comp.domain=%s phase.domain=%s",
 				   phase.get_name(), state,
 				   comp.get_full_name(), comp_domain.get_name(),
 				   phase_domain.get_name()),
-		 UVM_DEBUG);
+		 uvm_verbosity.UVM_DEBUG);
       }
 
       if (phase_domain is uvm_domain.get_common_domain() ||
 	  phase_domain is comp_domain) {
 	switch (state) {
-	case UVM_PHASE_STARTED:
+	case uvm_phase_state.UVM_PHASE_STARTED:
 	  comp.m_current_phase = phase;
 	  comp.m_apply_verbosity_settings(phase);
 	  comp.phase_started(phase);
@@ -126,7 +124,7 @@ abstract class uvm_task_phase: uvm_phase
             seqr.start_phase_sequence(phase);
 	  }
 	  break;
-	case UVM_PHASE_EXECUTING:
+	case uvm_phase_state.UVM_PHASE_EXECUTING:
 	  uvm_phase ph = this;
 	  auto pphase = this in comp.m_phase_imps;
 	  if (pphase !is null) {
@@ -134,10 +132,10 @@ abstract class uvm_task_phase: uvm_phase
 	  }
 	  ph.execute(comp, phase);
 	  break;
-	case UVM_PHASE_READY_TO_END:
+	case uvm_phase_state.UVM_PHASE_READY_TO_END:
 	  comp.phase_ready_to_end(phase);
 	  break;
-	case UVM_PHASE_ENDED:
+	case uvm_phase_state.UVM_PHASE_ENDED:
 	  auto seqr = cast(uvm_sequencer_base) comp;
           if (seqr !is null) {
             seqr.stop_phase_sequence(phase);
@@ -159,6 +157,8 @@ abstract class uvm_task_phase: uvm_phase
   //
   override void execute(uvm_component comp,
 			uvm_phase phase) {
+    import uvm.base.uvm_misc;
+    import esdl.base.core: fork, Process;
     fork("uvm_task_phase/execute(" ~ phase.get_name() ~
 	 ")[" ~ comp.get_full_name() ~ "]",
 	 {

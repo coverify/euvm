@@ -33,7 +33,7 @@ import uvm.base.uvm_comparer;
 import uvm.base.uvm_packer;
 import uvm.base.uvm_recorder;
 
-import esdl.data.rand;
+import esdl.rand;
 import std.string: format;
 //----------------------------------------------------------------------
 // Title: TLM Generic Payload & Extensions
@@ -406,13 +406,14 @@ class uvm_tlm_generic_payload: uvm_sequence_item
   // Function- do_print
   //
   override void do_print(uvm_printer printer) {
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       ubyte be;
       super.do_print(printer);
-      printer.print("address", _m_address, UVM_HEX);
+      printer.print("address", _m_address, uvm_radix_enum.UVM_HEX);
       printer.print("command", _m_command);
       printer.print("response_status", _m_response_status);
-      printer.print("streaming_width", _m_streaming_width, UVM_HEX);
+      printer.print("streaming_width", _m_streaming_width, uvm_radix_enum.UVM_HEX);
 
       printer.print_array_header("data", _m_length, "darray(byte)");
       for(int i=0; i < _m_length && i < _m_data.length; ++i) {
@@ -524,9 +525,9 @@ class uvm_tlm_generic_payload: uvm_sequence_item
 		   get_full_name(), gp.get_full_name(), this.convert2string(),
 		   gp.convert2string());
 	  switch (comparer.sev) {
-	  case UVM_WARNING: uvm_warning("MISCMP", msg); break;
-	  case UVM_ERROR:   uvm_error("MISCMP", msg); break;
-	  default:          uvm_info("MISCMP", msg, UVM_LOW); break;
+	  case uvm_severity.UVM_WARNING: uvm_warning("MISCMP", msg); break;
+	  case uvm_severity.UVM_ERROR:   uvm_error("MISCMP", msg); break;
+	  default:          uvm_info("MISCMP", msg, uvm_verbosity.UVM_LOW); break;
 	  }
 	}
 	return do_compare_;
@@ -1005,7 +1006,7 @@ class uvm_tlm_generic_payload: uvm_sequence_item
       }
       else {
 	uvm_info("GP_EXT", format("Unable to find extension to clear"),
-		 UVM_MEDIUM);
+		 uvm_verbosity.UVM_MEDIUM);
       }
     }
   }

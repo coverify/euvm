@@ -27,51 +27,44 @@ module uvm.base.uvm_component;
 // typedef class uvm_sequence_base;
 // typedef class uvm_sequence_item;
 
-import uvm.base.uvm_object;
 import uvm.base.uvm_object_globals;
-import uvm.base.uvm_globals;
-import uvm.base.uvm_objection;
-import uvm.base.uvm_phase;
-import uvm.base.uvm_domain;
-import uvm.base.uvm_pool;
-import uvm.base.uvm_root;
-import uvm.base.uvm_common_phases;
-import uvm.base.uvm_config_db;
-import uvm.base.uvm_spell_chkr;
-import uvm.base.uvm_cmdline_processor;
-// import uvm.base.uvm_globals;
-import uvm.base.uvm_config_db;
-import uvm.base.uvm_factory;
-import uvm.base.uvm_printer;
-import uvm.base.uvm_recorder;
-import uvm.base.uvm_transaction;
-import uvm.base.uvm_resource;
-import uvm.base.uvm_queue;
-import uvm.base.uvm_event;
-import uvm.base.uvm_misc;
-import uvm.base.uvm_links;
-import uvm.base.uvm_port_base;
-import uvm.base.uvm_tr_stream;
-import uvm.base.uvm_tr_database;
-import uvm.comps.uvm_agent;
-import uvm.base.uvm_coreservice;
-import uvm.base.uvm_entity;
+import uvm.base.uvm_object: uvm_object, uvm_field_auto_get_flags;
+import uvm.base.uvm_objection: uvm_objection;
+import uvm.base.uvm_phase: uvm_phase;
+import uvm.base.uvm_domain: uvm_domain;
+import uvm.base.uvm_common_phases: uvm_build_phase, uvm_run_phase;
+import uvm.base.uvm_factory: uvm_object_wrapper, uvm_factory;
+import uvm.base.uvm_printer: uvm_printer;
+import uvm.base.uvm_recorder: uvm_recorder;
+import uvm.base.uvm_pool: uvm_object_string_pool;
+import uvm.base.uvm_transaction: uvm_transaction;
+import uvm.base.uvm_event: uvm_event;
+import uvm.base.uvm_misc: UVM_ELEMENT_TYPE, UVM_IN_TUPLE;
+import uvm.base.uvm_tr_stream: uvm_tr_stream;
+import uvm.base.uvm_tr_database: uvm_tr_database;
+import uvm.base.uvm_entity: uvm_entity, uvm_entity_base;
+import uvm.base.uvm_report_object: uvm_report_object;
+import uvm.base.uvm_port_base: uvm_port_base;
+
 import uvm.base.uvm_once;
 
-import uvm.seq.uvm_sequence_item;
-import uvm.seq.uvm_sequence_base;
 import uvm.meta.meta;		// qualifiedTypeName
+import uvm.meta.misc;		// qualifiedTypeName
+
+import esdl.base.core;
+import esdl.data.queue;
 
 import std.traits: isIntegral, isAbstractClass, isArray;
 
 import std.string: format;
 import std.conv: to;
+import std.random: Random;
 
 import std.algorithm;
 import std.exception: enforce;
-import esdl.data.queue;
 
-import uvm.base.uvm_globals: uvm_is_match;
+alias uvm_event_pool = uvm_object_string_pool!(uvm_event!(uvm_object));
+
 
 //------------------------------------------------------------------------------
 //
@@ -105,13 +98,10 @@ import uvm.base.uvm_globals: uvm_is_match;
 //
 //------------------------------------------------------------------------------
 
-import uvm.base.uvm_report_object;
-import esdl.base.core;
-
-version(UVM_NO_DEPRECATED) { }
- else {
-   version = UVM_INCLUDE_DEPRECATED;
- }
+// version(UVM_NO_DEPRECATED) { }
+//  else {
+//    version = UVM_INCLUDE_DEPRECATED;
+//  }
 
 
 struct m_verbosity_setting {
@@ -191,11 +181,68 @@ abstract class uvm_component: uvm_report_object, ParContext
 
   mixin(uvm_sync_string);
 
-  mixin ParContextMixin;
+  // mixin(ParContextMixinString());
 
-  parallelize _par__info = parallelize(ParallelPolicy._UNDEFINED_, uint.max);
+  //////////////////////////////////////////////////////
+  // Implementation of the parallelize UDP functionality
+  //////////////////////////////////////////////////////
+
+  // Lock to inhibit parallel threads in the same Entity
+  // This valriable is set in elaboration phase and in the later
+  // phases it is only accessed. Therefor this variable can be
+  // treated as effectively immutable.
+
+  // In practice, the end-user does not need to bother about
+  // this Lock. It is automatically picked up by the simulator
+  // when a process wakes up and subsequently, when the process
+  // deactivates (starts waiting for an event), the simulator
+  // gives away the Lock
+  MulticoreConfig _esdl__multicoreConfig;
+  MulticoreConfig _esdl__getHierMulticoreConfig() {
+    // of the ParContext does not have a MulticoreConfig Object, get it
+    // from the enclosing ParContext
+    if (_esdl__multicoreConfig is null) {
+      _esdl__multicoreConfig =
+	_esdl__parInheritFrom()._esdl__getHierMulticoreConfig();
+    }
+    return _esdl__multicoreConfig;
+  }
+  MulticoreConfig _esdl__getMulticoreConfig() {
+    // of the ParContext does not have a MulticoreConfig Object, get it
+    // from the enclosing ParContext
+    return _esdl__multicoreConfig;
+  }
+  static if(!__traits(compiles, _esdl__parLock)) {
+    import core.sync.semaphore: CoreSemaphore = Semaphore;
+    CoreSemaphore _esdl__parLock;
+  }
+
+  // This variable keeps the information provided by the user as
+  // an argument to the parallelize UDP -- For the hierarchy
+  // levels where the parallelize UDP is not specified, the value
+  // for this variable is copied from the uppper hierarchy
+  // This variable is set and used only during the elaboration
+  // phase
+  static if(!__traits(compiles, _esdl__parInfo)) {
+    _esdl__Multicore _esdl__parInfo = _esdl__Multicore(MulticorePolicy._UNDEFINED_,
+						       uint.max); // default value
+    final _esdl__Multicore _esdl__getParInfo() {
+      return _esdl__parInfo;
+    }
+  }
+
+  // Effectively immutable in the run phase since the variable is
+  // set durin gthe elaboration
+  final CoreSemaphore _esdl__getParLock() {
+    return _esdl__parLock;
+  }
+
+  //////////////////////////////////////////////////////////////
+  
+  _esdl__Multicore _par__info = _esdl__Multicore(MulticorePolicy._UNDEFINED_, uint.max);
 
   ParContext _esdl__parInheritFrom() {
+    import uvm.base.uvm_coreservice;
     auto c = get_parent();
     if(c is null) {
       uvm_coreservice_t cs = uvm_coreservice_t.get();
@@ -206,6 +253,10 @@ abstract class uvm_component: uvm_report_object, ParContext
 
   uint _esdl__parComponentId() {
     return get_id();
+  }
+
+  string _esdl__getName() {
+    return get_full_name();
   }
 
   // Function- new
@@ -225,6 +276,10 @@ abstract class uvm_component: uvm_report_object, ParContext
   // This constructor is called by all the uvm_component derivatives
   // except for uvm_root instances
   this(string name, uvm_component parent) {
+    import uvm.base.uvm_root;
+    import uvm.base.uvm_entity;
+    import uvm.base.uvm_coreservice;
+    import uvm.base.uvm_config_db;
     synchronized(this) {
 
       super(name);
@@ -251,15 +306,15 @@ abstract class uvm_component: uvm_report_object, ParContext
       uvm_phase bld = common.find(uvm_build_phase.get());
       if(bld is null) {
 	uvm_report_fatal("COMP/INTERNAL",
-			 "attempt to find build phase object failed",UVM_NONE);
+			 "attempt to find build phase object failed",uvm_verbosity.UVM_NONE);
       }
-      if(bld.get_state() == UVM_PHASE_DONE) {
+      if(bld.get_state() == uvm_phase_state.UVM_PHASE_DONE) {
 	uvm_report_fatal("ILLCRT", "It is illegal to create a component ('" ~
 			 name ~ "' under '" ~
 			 (parent is null ? top.get_full_name() :
 			  parent.get_full_name()) ~
 			 "') after the build phase has ended.",
-			 UVM_NONE);
+			 uvm_verbosity.UVM_NONE);
       }
 
       if(name == "") {
@@ -274,18 +329,18 @@ abstract class uvm_component: uvm_report_object, ParContext
 	parent = top;
       }
 
-      if(uvm_report_enabled(UVM_MEDIUM+1, UVM_INFO, "NEWCOMP")) {
+      if(uvm_report_enabled(uvm_verbosity.UVM_MEDIUM+1, uvm_severity.UVM_INFO, "NEWCOMP")) {
 	uvm_info("NEWCOMP", "Creating " ~
 		 (parent is top ? "uvm_top" :
 		  parent.get_full_name()) ~ "." ~ name,
-		 cast(uvm_verbosity) (UVM_MEDIUM+1));
+		 cast(uvm_verbosity) (uvm_verbosity.UVM_MEDIUM+1));
       }
 
       if(parent.has_child(name) && this !is parent.get_child(name)) {
 	if(parent is top) {
-	  string error_str = "Name '" ~ name ~ "' is not unique to other"
-	    " top-level instances. If parent is a module, build a unique"
-	    " name by combining the the module name and component name: "
+	  string error_str = "Name '" ~ name ~ "' is not unique to other" ~
+	    " top-level instances. If parent is a module, build a unique" ~
+	    " name by combining the the module name and component name: " ~
 	    "$sformatf(\"%m.%s\" ~ \"" ~ name ~ "\").";
 	  uvm_fatal("CLDEXT", error_str);
 	}
@@ -339,6 +394,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   // is not yet available. This function is called later as the name
   // of the instance becomes available.
   package void set_root_name(string name) {
+    import uvm.base.uvm_root;
     synchronized(this) {
       assert(cast(uvm_root) this);
       if(get_name() == "__top__") {
@@ -384,11 +440,22 @@ abstract class uvm_component: uvm_report_object, ParContext
     }
   }
 
+  // No need to add unnecessary dependency on uvm_root -- use
+  // uvm_root_intf instead to break dependency
   // Traverse the component hierarchy and return the uvm_root
-  uvm_root get_root() {
+  import uvm.base.uvm_root: uvm_root_intf;
+  uvm_root_intf get_root() {
     return get_parent().get_root();
   }
   
+  uvm_entity_base get_entity() {
+    return this.get_root.get_entity();
+  }
+  
+  RootEntity get_root_entity() {
+    return this.get_entity.getRoot();
+  }
+
   //   extern virtual function uvm_component get_parent ();
 
 
@@ -466,7 +533,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   final int get_next_child(ref string name) {
     synchronized(this) {
       auto found = find(_children_names, name);
-      enforce(found.length != 0, "get_next_child could not match a child"
+      enforce(found.length != 0, "get_next_child could not match a child" ~
 	      "with name: " ~ name);
       if(found.length is 1) {
 	return 0;
@@ -540,7 +607,7 @@ abstract class uvm_component: uvm_report_object, ParContext
     synchronized(this) {
       if(_m_name != "") {
 	uvm_error("INVSTNM",
-		  format("It is illegal to change the name of a component. "
+		  format("It is illegal to change the name of a component. " ~
 			 "The component name will not be changed to \"%s\"",
 			 name));
 	return;
@@ -567,6 +634,8 @@ abstract class uvm_component: uvm_report_object, ParContext
   // wildcards.
 
   final uvm_component lookup(string name) {
+    import uvm.base.uvm_root;
+    import uvm.base.uvm_coreservice;
     synchronized(this) {
       uvm_coreservice_t cs = uvm_coreservice_t.get();
       uvm_root top = cs.get_root(); // uvm_root.get();
@@ -691,14 +760,14 @@ abstract class uvm_component: uvm_report_object, ParContext
     }
     // super is called in m_uvm_component_automation
     // super.uvm__auto_build(); --
-    m_uvm_component_automation(UVM_BUILD);
+    m_uvm_component_automation(uvm_field_auto_enum.UVM_BUILD);
     // .uvm__auto_build!(0, typeof(this))(this);
   }
 
   void uvm__parallelize() {
     // super is called in m_uvm_component_automation
     // super.uvm__parallelize();
-    m_uvm_component_automation(UVM_PARALLELIZE);
+    m_uvm_component_automation(uvm_field_xtra_enum.UVM_PARALLELIZE);
     // .uvm__auto_build!(0, typeof(this))(this);
   }
 
@@ -722,13 +791,13 @@ abstract class uvm_component: uvm_report_object, ParContext
     return;
   }
 
-  // Function- admin_phase
+  // Function- setup_phase
   //
-  // The <uvm_admin_phase> phase implementation method.
+  // The <uvm_setup_phase> phase implementation method.
   //
   // This method should never be called directly.
 
-  void admin_phase(uvm_phase phase) {}
+  void setup_phase(uvm_phase phase) {}
 
   // Function- end_of_elaboration_phase
   //
@@ -1281,7 +1350,7 @@ abstract class uvm_component: uvm_report_object, ParContext
       //schedule = domain.find(uvm_domain::get_uvm_schedule());
       uvm_phase schedule = domain.find_by_name("uvm_sched");
       if(schedule is null) {
-	schedule = new uvm_phase("uvm_sched", UVM_PHASE_SCHEDULE);
+	schedule = new uvm_phase("uvm_sched", uvm_phase_type.UVM_PHASE_SCHEDULE);
 	uvm_domain.add_uvm_phases(schedule);
 	domain.add(schedule);
 	uvm_domain common = uvm_domain.get_common_domain();
@@ -1535,6 +1604,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 
     void set_config(T)(string inst_name, string field_name, T value)
       if(isIntegral!T || is(T == uvm_bitstream_t) || is(T == string)) {
+	import uvm.base.uvm_config_db;
   	synchronized(once) {
   	  if(m_config_deprecated_warned) {
   	    uvm_warning("UVM/CFG/SET/DPR", "get/set_config_* API has been" ~
@@ -1606,6 +1676,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   			   string field_name,
   			   uvm_object value,
   			   bool clone = true) {
+      import uvm.base.uvm_config_db;
       synchronized(once) {
   	if(m_config_deprecated_warned) {
   	  uvm_warning("UVM/CFG/SET/DPR", "get/set_config_* API has been" ~
@@ -1615,7 +1686,7 @@ abstract class uvm_component: uvm_report_object, ParContext
       }
       if(value is null) {
   	uvm_warning("NULLCFG", "A null object was provided as a " ~
-  		    format("configuration object for set_config_object"
+  		    format("configuration object for set_config_object" ~
   			   "(\"%s\",\"%s\")", inst_name, field_name) ~
   		    ". Verify that this is intended.");
       }
@@ -1625,15 +1696,15 @@ abstract class uvm_component: uvm_report_object, ParContext
   	if(tmp is null) {
   	  auto comp = cast(uvm_component) value;
   	  if(comp !is null) {
-  	    uvm_error("INVCLNC", "Clone failed during set_config_object "
-  		      "with an object that is a uvm_component. Components"
+  	    uvm_error("INVCLNC", "Clone failed during set_config_object " ~
+  		      "with an object that is a uvm_component. Components" ~
   		      " cannot be cloned.");
   	    return;
   	  }
   	  else {
-  	    uvm_warning("INVCLN", "Clone failed during set_config_object, "
-  			"the original reference will be used for configuration"
-  			". Check that the create method for the object type"
+  	    uvm_warning("INVCLN", "Clone failed during set_config_object, " ~
+  			"the original reference will be used for configuration" ~
+  			". Check that the create method for the object type" ~
   			" is defined properly.");
   	  }
   	}
@@ -1642,7 +1713,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   	}
       }
 
-      uvm_config_object.set(this, inst_name, field_name, value);
+      uvm_config_db!(uvm_object).set(this, inst_name, field_name, value);
 
       auto wrapper = new uvm_config_object_wrapper();
       synchronized(wrapper) {
@@ -1724,6 +1795,7 @@ abstract class uvm_component: uvm_report_object, ParContext
     bool get_config_object (string field_name,
   			    ref uvm_object value,
   			    bool clone=true) {
+      import uvm.base.uvm_config_db;
       synchronized(once) {
   	if(m_config_deprecated_warned) {
   	  uvm_warning("UVM/CFG/SET/DPR", "get/set_config_* API has been" ~
@@ -1731,7 +1803,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   	  m_config_deprecated_warned = true;
   	}
       }
-      if(! uvm_config_object.get(this, "", field_name, value)) {
+      if(! uvm_config_db!(uvm_object).get(this, "", field_name, value)) {
   	return false;
       }
 
@@ -1760,6 +1832,9 @@ abstract class uvm_component: uvm_report_object, ParContext
   //|  endfunction
 
   final void check_config_usage (bool recurse=true) {
+    import uvm.base.uvm_resource;
+    import uvm.base.uvm_pool;
+    import uvm.base.uvm_queue;
     uvm_resource_pool rp = uvm_resource_pool.get();
     uvm_queue!(uvm_resource_base) rq = rp.find_unused_resources();
 
@@ -1767,8 +1842,8 @@ abstract class uvm_component: uvm_report_object, ParContext
       return;
     }
 
-    uvm_report_info("CFGNRD"," ::: The following resources have"
-		    " at least one write and no reads :::", UVM_INFO);
+    uvm_report_info("CFGNRD"," ::: The following resources have" ~
+		    " at least one write and no reads :::", uvm_severity.UVM_INFO);
     rp.print_resources(rq, 1);
   }
 
@@ -1800,6 +1875,9 @@ abstract class uvm_component: uvm_report_object, ParContext
   // apply_config_settings is automatically called with ~verbose~ = 1.
 
   void apply_config_settings (bool verbose=false) {
+    import uvm.base.uvm_resource;
+    import uvm.base.uvm_pool;
+    import uvm.base.uvm_queue;
 
     uvm_resource_pool rp = uvm_resource_pool.get();
 
@@ -1807,7 +1885,7 @@ abstract class uvm_component: uvm_report_object, ParContext
     // fields declared with `uvm_field macros (checking
     // that there aren't any duplicates along the way)
 
-    // m_uvm_object_automation (null, UVM_CHECK_FIELDS, "");
+    // m_uvm_object_automation (null, uvm_field_xtra_enum.UVM_CHECK_FIELDS, "");
 
     // // if no declared fields, nothing to do.
     // if(m_uvm_status_container.no_fields) {
@@ -1816,7 +1894,7 @@ abstract class uvm_component: uvm_report_object, ParContext
     // }
 
     if(verbose) {
-      uvm_report_info("CFGAPL","applying configuration settings", UVM_NONE);
+      uvm_report_info("CFGAPL","applying configuration settings", uvm_verbosity.UVM_NONE);
     }
 
     // The following is VERY expensive. Needs refactoring. Should
@@ -1860,7 +1938,7 @@ abstract class uvm_component: uvm_report_object, ParContext
       if(verbose) {
 	uvm_report_info("CFGAPL",
 			format("applying configuration to field %s", name),
-			UVM_NONE);
+			uvm_verbosity.UVM_NONE);
       }
 
       auto rit = cast(uvm_resource!uvm_integral_t) r;
@@ -1936,7 +2014,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 				else if(verbose) {
 				  uvm_report_info("CFGAPL",
 						  format("field %s has an unsupported" ~
-							 " type", name), UVM_NONE);
+							 " type", name), uvm_verbosity.UVM_NONE);
 				}
 			      } // else: !if($cast(rcow, r))
 			    } // else: !if($cast(rs, r))
@@ -1984,7 +2062,7 @@ abstract class uvm_component: uvm_report_object, ParContext
     synchronized(once) {
       if(! print_config_warned) {
 	uvm_report_warning("deprecated",
-			   "uvm_component.print_config_settings"
+			   "uvm_component.print_config_settings" ~
 			   " has been deprecated.  Use print_config() instead");
 	print_config_warned = true;
       }
@@ -2011,9 +2089,12 @@ abstract class uvm_component: uvm_report_object, ParContext
 
   final void print_config(bool recurse = false, bool audit = false) {
 
+    import uvm.base.uvm_resource;
+    import uvm.base.uvm_pool;
+
     uvm_resource_pool rp = uvm_resource_pool.get();
 
-    uvm_report_info("CFGPRT", "visible resources:", UVM_INFO);
+    uvm_report_info("CFGPRT", "visible resources:", uvm_severity.UVM_INFO);
     rp.print_resources(rp.lookup_scope(get_full_name()), audit);
 
     if(recurse) {
@@ -2129,6 +2210,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 
   final uvm_component create_component (string requested_type_name,
 					string name) {
+    import uvm.base.uvm_coreservice;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     uvm_factory factory = cs.get_factory();
     return factory.create_component_by_name(requested_type_name,
@@ -2153,6 +2235,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 
   final uvm_object create_object (string requested_type_name,
 				  string name = "") {
+    import uvm.base.uvm_coreservice;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     uvm_factory factory = cs.get_factory();
     return factory.create_object_by_name(requested_type_name,
@@ -2183,6 +2266,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   static void set_type_override_by_type(uvm_object_wrapper original_type,
 					uvm_object_wrapper override_type,
 					bool replace = true) {
+    import uvm.base.uvm_coreservice;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     uvm_factory factory = cs.get_factory();
     factory.set_type_override_by_type(original_type, override_type,
@@ -2244,6 +2328,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   final void set_inst_override_by_type(string relative_inst_path,
 				       uvm_object_wrapper original_type,
 				       uvm_object_wrapper override_type) {
+    import uvm.base.uvm_coreservice;
     string full_inst_path;
 
     if(relative_inst_path == "") {
@@ -2278,6 +2363,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   static void set_type_override(string original_type_name,
 				string override_type_name,
 				bool replace = true) {
+    import uvm.base.uvm_coreservice;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     uvm_factory factory = cs.get_factory();
     factory.set_type_override_by_name(original_type_name,
@@ -2308,6 +2394,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   final void  set_inst_override(string relative_inst_path,
 				string original_type_name,
 				string override_type_name) {
+    import uvm.base.uvm_coreservice;
     string full_inst_path;
 
     if(relative_inst_path == "") {
@@ -2334,6 +2421,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 
   final void  print_override_info (string requested_type_name,
 				   string name = "") {
+    import uvm.base.uvm_coreservice;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     uvm_factory factory = cs.get_factory();
     factory.debug_create_by_name(requested_type_name,
@@ -2660,7 +2748,7 @@ abstract class uvm_component: uvm_report_object, ParContext
       uvm_recorder recorder;
       tr.end_tr(end_time, free_handle);
 
-      if((cast(uvm_verbosity) _recording_detail) != UVM_NONE) {
+      if((cast(uvm_verbosity) _recording_detail) != uvm_verbosity.UVM_NONE) {
 
 	if(tr in _m_tr_h) {
 
@@ -2732,7 +2820,7 @@ abstract class uvm_component: uvm_report_object, ParContext
       if(keep_active) etype = "Error, Link";
       else etype = "Error";
 
-      if(error_time == 0) error_time = getRootEntity.getSimTime;
+      if(error_time == 0) error_time = get_root_entity.getSimTime();
 
       if((stream_name == "") || (stream_name == "main")) {
 	if(_m_main_stream is null) {
@@ -2805,7 +2893,7 @@ abstract class uvm_component: uvm_report_object, ParContext
       else etype = "Event";
 
       if(event_time == 0) {
-	event_time = getRootEntity.getSimTime();
+	event_time = get_root_entity.getSimTime();
       }
 
       if((stream_name == "") || (stream_name == "main")) {
@@ -2956,6 +3044,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   // m_get_tr_database
   // ---------------------
   uvm_tr_database m_get_tr_database() {
+    import uvm.base.uvm_coreservice;
     synchronized(this) {
       if(_tr_database is null) {
 	uvm_coreservice_t cs = uvm_coreservice_t.get();
@@ -3045,12 +3134,12 @@ abstract class uvm_component: uvm_report_object, ParContext
   
 
   protected bool m_add_child(uvm_component child) {
+    import std.string: format;
     synchronized(this) {
-      import std.string: format;
       string name = child.get_name();
       if(name in _m_children && _m_children[name] !is child) {
 	uvm_warning("BDCLD",
-		    format ("A child with the name '%0s' (type=%0s)"
+		    format ("A child with the name '%0s' (type=%0s)" ~
 			    " already exists.",
 			    name, (cast(uvm_component) _m_children[name]).get_type_name()));
 	return false;
@@ -3080,6 +3169,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   // ---------------
 
   private void m_set_full_name() {
+    import uvm.base.uvm_coreservice;
     synchronized(this) {
       auto cs = uvm_coreservice_t.get();
       auto top = cs.get_root();
@@ -3159,7 +3249,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   // FIXME -- use @disable feature from D -- make it compile time error
   override uvm_object create (string name = "") {
     uvm_error("ILLCRT",
-	      "create cannot be called on a uvm_component."
+	      "create cannot be called on a uvm_component." ~
 	      " Use create_component instead.");
     return null;
   }
@@ -3170,8 +3260,8 @@ abstract class uvm_component: uvm_report_object, ParContext
 
   override uvm_object clone() {
     uvm_error("ILLCLN",
-	      format("Attempting to clone '%s'."
-		     "  Clone cannot be called on a uvm_component."
+	      format("Attempting to clone '%s'." ~
+		     "  Clone cannot be called on a uvm_component." ~
 		     "  The clone target variable will be set to null.",
 		     get_full_name()));
     return null;
@@ -3187,6 +3277,9 @@ abstract class uvm_component: uvm_report_object, ParContext
 			    int parent_handle=0,
 			    string stream_name="main", string label="",
 			    string desc="", SimTime begin_time=0) {
+    import uvm.seq.uvm_sequence_item;
+    import uvm.seq.uvm_sequence_base;
+    import uvm.base.uvm_links;
     synchronized(this) {
 
       uvm_event!uvm_object e;
@@ -3236,7 +3329,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 	name = tr.get_type_name();
       }
 
-      if((cast(uvm_verbosity) _recording_detail) != UVM_NONE) {
+      if((cast(uvm_verbosity) _recording_detail) != uvm_verbosity.UVM_NONE) {
 	if((stream_name == "") || (stream_name == "main")) {
 	  if(_m_main_stream is null) {
 	    _m_main_stream = db.open_stream("main", this.get_full_name(), "TVM");
@@ -3321,10 +3414,26 @@ abstract class uvm_component: uvm_report_object, ParContext
     }
   }
 
+  void _uvm__configure_parallelism(MulticoreConfig config) { // to be called only by a uvm_root
+    import std.stdio;
+    import uvm.base.uvm_root;
+    writeln("Calling _uvm__configure_parallelism on: ", get_full_name());
+    assert(cast(uvm_root) this);
+    _set_id();
+    assert(config !is null);
+    if(config._threadIndex == uint.max) {
+      config._threadIndex =
+	_esdl__parComponentId() % config._threadPool.length;
+    }
+    assert(_esdl__multicoreConfig is null);
+    _esdl__multicoreConfig = config;
+    _uvm__parallelize_done = true;
+  }
+
   @uvm_immutable_sync
   protected uvm_event_pool _event_pool;
 
-  private uint _recording_detail = UVM_NONE;
+  private uint _recording_detail = uvm_verbosity.UVM_NONE;
 
   // do_print (override)
   // --------
@@ -3335,33 +3444,33 @@ abstract class uvm_component: uvm_report_object, ParContext
       super.do_print(printer);
 
       // It is printed only if its value is other than the default (UVM_NONE)
-      if(cast(uvm_verbosity) _recording_detail !is UVM_NONE)
+      if(cast(uvm_verbosity) _recording_detail !is uvm_verbosity.UVM_NONE)
 	switch (_recording_detail) {
-	case UVM_LOW:
+	case uvm_verbosity.UVM_LOW:
 	  printer.print_generic("recording_detail", "uvm_verbosity",
 				8*_recording_detail.sizeof, "UVM_LOW");
 	  break;
-	case UVM_MEDIUM:
+	case uvm_verbosity.UVM_MEDIUM:
 	  printer.print_generic("recording_detail", "uvm_verbosity",
 				8*_recording_detail.sizeof, "UVM_MEDIUM");
 	  break;
-	UVM_HIGH:
+	case uvm_verbosity.UVM_HIGH:
 	  printer.print_generic("recording_detail", "uvm_verbosity",
 				8*_recording_detail.sizeof, "UVM_HIGH");
 	  break;
-	UVM_FULL:
+	case uvm_verbosity.UVM_FULL:
 	  printer.print_generic("recording_detail", "uvm_verbosity",
 				8*_recording_detail.sizeof, "UVM_FULL");
 	  break;
 	default:
-	  printer.print("recording_detail", _recording_detail, UVM_DEC, '.', "integral");
+	  printer.print("recording_detail", _recording_detail, uvm_radix_enum.UVM_DEC, '.', "integral");
 	  break;
 	}
 
       version(UVM_INCLUDE_DEPRECATED) {
       	if(_enable_stop_interrupt !is false) {
       	  printer.print("enable_stop_interrupt", _enable_stop_interrupt,
-      			UVM_BIN, '.', "bit");
+      			uvm_radix_enum.UVM_BIN, '.', "bit");
       	}
       }
     }
@@ -3404,6 +3513,10 @@ abstract class uvm_component: uvm_report_object, ParContext
   // m_set_cl_verb
   // -------------
   final void m_set_cl_verb() {
+    import uvm.base.uvm_coreservice;
+    import uvm.base.uvm_root;
+    import uvm.base.uvm_cmdline_processor;
+    import uvm.base.uvm_globals;
     synchronized(this) {
       // _ALL_ can be used for ids
       // +uvm_set_verbosity=<comp>,<id>,<verbosity>,<phase|time>,<offset>
@@ -3502,7 +3615,8 @@ abstract class uvm_component: uvm_report_object, ParContext
     // _ALL_ can be used for ids or severities
     // +uvm_set_action=<comp>,<id>,<severity>,<action[|action]>
     // +uvm_set_action=uvm_test_top.env0.*,_ALL_,UVM_ERROR,UVM_NO_ACTION
-
+    import uvm.base.uvm_cmdline_processor;
+    import uvm.base.uvm_globals;
     synchronized(this) {
       uvm_severity sev;
       uvm_action action;
@@ -3557,10 +3671,10 @@ abstract class uvm_component: uvm_report_object, ParContext
 
 	  if(args[1] == "_ALL_") {
 	    if(args[2] == "_ALL_") {
-	      set_report_severity_action(UVM_INFO, action);
-	      set_report_severity_action(UVM_WARNING, action);
-	      set_report_severity_action(UVM_ERROR, action);
-	      set_report_severity_action(UVM_FATAL, action);
+	      set_report_severity_action(uvm_severity.UVM_INFO, action);
+	      set_report_severity_action(uvm_severity.UVM_WARNING, action);
+	      set_report_severity_action(uvm_severity.UVM_ERROR, action);
+	      set_report_severity_action(uvm_severity.UVM_FATAL, action);
 	    }
 	    else {
 	      set_report_severity_action(sev, action);
@@ -3587,7 +3701,8 @@ abstract class uvm_component: uvm_report_object, ParContext
     // _ALL_ can be used for ids or severities
     //  +uvm_set_severity=<comp>,<id>,<orig_severity>,<new_severity>
     //  +uvm_set_severity=uvm_test_top.env0.*,BAD_CRC,UVM_ERROR,UVM_WARNING
-
+    import uvm.base.uvm_cmdline_processor;
+    import uvm.base.uvm_globals;
     synchronized(this) {
       uvm_severity orig_sev;
       uvm_severity sev;
@@ -3633,19 +3748,19 @@ abstract class uvm_component: uvm_report_object, ParContext
 	  }
 
 	  if(args[1] == "_ALL_" && args[2] == "_ALL_") {
-	    set_report_severity_override(UVM_INFO,sev);
-	    set_report_severity_override(UVM_WARNING,sev);
-	    set_report_severity_override(UVM_ERROR,sev);
-	    set_report_severity_override(UVM_FATAL,sev);
+	    set_report_severity_override(uvm_severity.UVM_INFO,sev);
+	    set_report_severity_override(uvm_severity.UVM_WARNING,sev);
+	    set_report_severity_override(uvm_severity.UVM_ERROR,sev);
+	    set_report_severity_override(uvm_severity.UVM_FATAL,sev);
 	  }
 	  else if(args[1] == "_ALL_") {
 	    set_report_severity_override(orig_sev,sev);
 	  }
 	  else if(args[2] == "_ALL_") {
-	    set_report_severity_id_override(UVM_INFO,args[1],sev);
-	    set_report_severity_id_override(UVM_WARNING,args[1],sev);
-	    set_report_severity_id_override(UVM_ERROR,args[1],sev);
-	    set_report_severity_id_override(UVM_FATAL,args[1],sev);
+	    set_report_severity_id_override(uvm_severity.UVM_INFO,args[1],sev);
+	    set_report_severity_id_override(uvm_severity.UVM_WARNING,args[1],sev);
+	    set_report_severity_id_override(uvm_severity.UVM_ERROR,args[1],sev);
+	    set_report_severity_id_override(uvm_severity.UVM_FATAL,args[1],sev);
 	  }
 	  else {
 	    set_report_severity_id_override(orig_sev,args[1],sev);
@@ -3674,8 +3789,8 @@ abstract class uvm_component: uvm_report_object, ParContext
 	  }
 	  else {
 	    Process p = Process.self;
-	    auto p_rand = p.getRandState();
-
+	    Random p_rand;
+	    p.getRandState(p_rand);
 	    fork!("uvm_component/apply_verbosity_settings")({
 		wait(setting.offset);
 		// synchronized(this) {
@@ -3685,7 +3800,6 @@ abstract class uvm_component: uvm_report_object, ParContext
 		  set_report_id_verbosity(setting.id, setting.verbosity);
 		// }
 	      });
-
 	    p.setRandState(p_rand);
 	  }
 	  // Remove after use
@@ -3724,7 +3838,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   }
 
   void set_simulation_status(ubyte status) {
-    getRootEntity.setExitStatus(status);
+    get_root_entity.setExitStatus(status);
   }
 
   void m_uvm_component_automation(int what) { }
@@ -3733,7 +3847,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 						int what,
 						string name,
 						int flags,
-						parallelize pflags,
+						_esdl__Multicore pflags,
 						P parent)
     if (isArray!E && !is(E == string)) {
       switch(what) {
@@ -3765,20 +3879,21 @@ abstract class uvm_component: uvm_report_object, ParContext
 					     int what,
 					     string name,
 					     int flags,
-					     parallelize pflags,
+					     _esdl__Multicore pflags,
 					     uvm_component parent)
     if (is(E: uvm_component)) {
+      import uvm.base.uvm_globals;
       switch(what) {
       case uvm_field_xtra_enum.UVM_PARALLELIZE:
 	static if (is(E: uvm_component)) {
 	  if (e !is null) {
-	    uvm__config_parallelism(e, pflags);
 	    e._set_id();
+	    uvm__config_parallelism(e, pflags);
 	  }
 	}
 	break;
       case uvm_field_auto_enum.UVM_BUILD:
-        if (! (flags & UVM_NOBUILD) && flags & UVM_BUILD) {
+        if (! (flags & uvm_field_auto_enum.UVM_NOBUILD) && flags & uvm_field_auto_enum.UVM_BUILD) {
 	  if (e is null) {
 	    e = E.type_id.create(name, parent);
 	  }
@@ -3799,12 +3914,14 @@ abstract class uvm_component: uvm_report_object, ParContext
 						int what,
 						string name,
 						int flags,
-						parallelize pflags,
+						_esdl__Multicore pflags,
 						P parent)
-    if (is(E: uvm_port_base!IF, IF)) {
+  if (is(E: uvm_port_base!IF, IF)) {
+    import uvm.base.uvm_port_base;
+
       switch(what) {
       case uvm_field_auto_enum.UVM_BUILD:
-        if (! (flags & UVM_NOBUILD) && flags & UVM_BUILD) {
+        if (! (flags & uvm_field_auto_enum.UVM_NOBUILD) && flags & uvm_field_auto_enum.UVM_BUILD) {
 	  static if(is(E: uvm_port_base!IF, IF)) {
 	    e = new E(name, parent);
 	  }
@@ -3819,27 +3936,28 @@ abstract class uvm_component: uvm_report_object, ParContext
 						    int        what)
     if (is(T: uvm_component)) {
       static if (I < t.tupleof.length) {
+	import uvm.comps.uvm_agent;
 	enum FLAGS = uvm_field_auto_get_flags!(t, I);
 	alias EE = UVM_ELEMENT_TYPE!(typeof(t.tupleof[I]));
 	static if ((is(EE: uvm_component) ||
 		    is(EE: uvm_port_base!IF, IF)) &&
 		   FLAGS != 0) {
-	  parallelize pflags;
-	  if (what == UVM_BUILD) {
+	  _esdl__Multicore pflags;
+	  if (what == uvm_field_auto_enum.UVM_BUILD) {
 	    bool is_active = true; // if not uvm_agent, everything is active
 	    static if (is(T: uvm_agent)) {
 	      is_active = t.get_is_active();
 	    }
 	    bool active_flag =
-	      UVM_IN_TUPLE!(0, UVM_ACTIVE, __traits(getAttributes, t.tupleof[I]));
+	      UVM_IN_TUPLE!(0, uvm_active_passive_enum.UVM_ACTIVE, __traits(getAttributes, t.tupleof[I]));
 	    if (! active_flag || is_active) {
 	      _m_uvm_component_automation(t.tupleof[I], what,
 					  t.tupleof[I].stringof[2..$],
 					  FLAGS, pflags, t);
 	    }
 	  }
-	  else if (what == UVM_PARALLELIZE) {
-	    pflags = _esdl__get_parallelism!(I, T)(t);
+	  else if (what == uvm_field_xtra_enum.UVM_PARALLELIZE) {
+	    pflags = _esdl__uda!(_esdl__Multicore, T, I);
 	    _m_uvm_component_automation(t.tupleof[I], what,
 					t.tupleof[I].stringof[2..$],
 					FLAGS, pflags, null);
@@ -3919,7 +4037,7 @@ template UVM__IS_MEMBER_COMPONENT(L)
 // 			   "calling run_test or use run_test to do so. "
 // 			   "To run a test using run_test, use +UVM_TESTNAME "
 // 			   "or supply the test name in the argument to "
-// 			   "run_test(). Exiting simulation.", UVM_NONE);
+// 			   "run_test(). Exiting simulation.", uvm_verbosity.UVM_NONE);
 // 	  return;
 // 	}
 //       }
@@ -3942,7 +4060,7 @@ template UVM__IS_MEMBER_COMPONENT(L)
 // void uvm__auto_build(T, U, size_t I, N...)(T t, ref U u,
 // 					    uint[] indices = []) {
 //   enum bool isActiveAttr =
-//     findUvmAttr!(0, UVM_ACTIVE, __traits(getAttributes, t.tupleof[I]));
+//     findUvmAttr!(0, uvm_active_passive_enum.UVM_ACTIVE, __traits(getAttributes, t.tupleof[I]));
 //   enum bool noAutoAttr =
 //     findUvmAttr!(0, UVM_NO_AUTO, __traits(getAttributes, t.tupleof[I]));
 //   enum bool isAbstract = isAbstractClass!U;
@@ -4107,79 +4225,57 @@ template UVM__IS_MEMBER_COMPONENT(L)
 //   }
 // }
 
-void uvm__config_parallelism(T)(T t, ref parallelize linfo)
+void uvm__config_parallelism(T)(T t, ref _esdl__Multicore linfo)
   if(is(T : uvm_component) && is(T == class)) {
+    assert(t !is null);
     if (! t._uvm__parallelize_done) {
+      // if not defined for instance try getting information for class
+      // attributes
       if(linfo.isUndefined) {
-	linfo = _esdl__get_parallelism(t);
+	linfo = _esdl__uda!(_esdl__Multicore, T);
       }
 
-      ParConfig pconf;
-      parallelize pinfo;
-      assert(t !is null);
-      if(t.get_parent !is null) {
-	pconf = t.get_parent.getParConfig;
-	pinfo = t.get_parent._par__info;
-      }
-
-      if(t.get_parent is null ||
-	 pinfo._parallel == ParallelPolicy._UNDEFINED_) {
-	// the parent had no parallel info
-	// get it from RootEntity
-	pinfo = Process.self().getParentEntity()._esdl__getParInfo();
-	pconf = Process.self().getParentEntity().getParConfig();
-      }
-
-      parallelize par__info;
-      ParConfig   par__conf;
-
-      if(linfo._parallel == ParallelPolicy._UNDEFINED_) {
-	// no parallelize attribute. take hier information
-	if(pinfo._parallel == ParallelPolicy.SINGLE) {
-	  par__info._parallel = ParallelPolicy.INHERIT;
-	}
-	else {
-	  par__info = pinfo;
-	}
+      auto parent = t.get_parent();
+      MulticoreConfig pconf;
+      
+      if (parent is null || parent is t) { // this is uvm_root
+	pconf = Process.self().getParentEntity()._esdl__getMulticoreConfig();
+	assert(pconf !is null);
       }
       else {
-	par__info = linfo;
+	pconf = t.get_parent._esdl__getMulticoreConfig;
+	assert(pconf !is null);
       }
-
-      if(par__info._parallel == ParallelPolicy.INHERIT) {
-	par__conf = pconf;
+	
+      assert(t._esdl__getMulticoreConfig is null);
+      
+      auto config = linfo.makeCfg(pconf);
+      
+      if(config._threadIndex == uint.max) {
+	config._threadIndex =
+	  t._esdl__parComponentId() % config._threadPool.length;
       }
-      else {
-	// UDP @parallelize without argument
-	auto nthreads = getRootEntity.getNumPoolThreads();
-	if(par__info._poolIndex != uint.max) {
-	  assert(par__info._poolIndex < nthreads);
-	  par__conf = new ParConfig(par__info._poolIndex);
-	}
-	else {
-	  par__conf = new ParConfig(t._esdl__parComponentId() % nthreads);
-	}
-      }
-      t._esdl__parConfig = par__conf;
-      t._par__info = par__info;
+      // import std.stdio;
+      // writeln("setting multicore  for ", t.get_full_name());
+      t._esdl__multicoreConfig = config;
     }
     t._uvm__parallelize_done = true;
   }
 
 
 
-private template findUvmAttr(size_t I, alias S, A...) {
-  static if(I < A.length) {
-    static if(is(typeof(A[I]) == typeof(S)) && A[I] == S) {
-      enum bool findUvmAttr = true;
-    }
-    else {
-      enum bool findUvmAttr = findUvmAttr!(I+1, S, A);
-    }
-  }
-  else {
-    enum bool findUvmAttr = false;
-  }
-}
+// private template findUvmAttr(size_t I, alias S, A...) {
+//   static if(I < A.length) {
+//     static if(is(typeof(A[I]) == typeof(S)) && A[I] == S) {
+//       enum bool findUvmAttr = true;
+//     }
+//     else {
+//       enum bool findUvmAttr = findUvmAttr!(I+1, S, A);
+//     }
+//   }
+//   else {
+//     enum bool findUvmAttr = false;
+//   }
+// }
 
-alias UVM_PARALLEL = parallelize;
+alias UVM_PARALLEL = _esdl__Multicore;

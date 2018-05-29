@@ -56,21 +56,14 @@
 
 module uvm.base.uvm_callback;
 
-import uvm.meta.misc;
-import uvm.base.uvm_misc;
-import uvm.base.uvm_report_object;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_globals;
-import uvm.base.uvm_object;
-import uvm.base.uvm_pool;
-import uvm.base.uvm_queue;
-import uvm.base.uvm_root;
+import uvm.base.uvm_misc: uvm_apprepend;
+import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_queue: uvm_queue;
 import uvm.base.uvm_once;
-import uvm.base.uvm_entity;
-import uvm.base.uvm_component;
-import uvm.base.uvm_coreservice;
+
 import uvm.meta.mcd;
 import uvm.meta.meta;
+import uvm.meta.misc;
 
 import esdl.data.queue;
 import esdl.data.sync;
@@ -97,7 +90,7 @@ import std.conv: to;
 
 class uvm_callbacks_base: uvm_object
 {
-
+  import uvm.base.uvm_pool: uvm_pool;
   static class uvm_once: uvm_once_base
   {
     @uvm_public_sync
@@ -110,15 +103,19 @@ class uvm_callbacks_base: uvm_object
     private uvm_pool!(ClassInfo, uvm_callbacks_base) _typeid_map;
     this() {
       synchronized(this) {
-	_m_b_inst = new uvm_callbacks_base;
-	_m_pool = new uvm_pool!(uvm_object, uvm_queue!(uvm_callback));
-	_typeid_map = new uvm_pool!(ClassInfo, uvm_callbacks_base);
+	_m_b_inst = new uvm_callbacks_base("m_b_inst(uvm_callbacks_base)");
+	_m_pool = new uvm_pool!(uvm_object, uvm_queue!(uvm_callback))("uvm_callbacks_base/m_pool");
+	_typeid_map = new uvm_pool!(ClassInfo, uvm_callbacks_base)("uvm_callbacks_base/typeid_map");
       }
     }
   };
 
   mixin(uvm_once_sync_string);
   mixin(uvm_sync_string);
+
+  this(string name) {
+    super(name);
+  }
 
   alias this_type = uvm_callbacks_base;
 
@@ -224,13 +221,20 @@ class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
   {
     @uvm_private_sync
     private this_type _m_t_inst;
+    @uvm_private_sync
+    uvm_queue!uvm_callback _m_tw_cb_q;
+    // this() {
+    //   synchronized(this) {
+    // 	_m_tw_cb_q =
+    // 	  new uvm_queue!uvm_callback("uvm_callback/typewide_queue(" ~
+    // 				     T.stringof ~ ")");
+    //   }
+    // }
   }
   
   mixin(uvm_once_sync_string);
   mixin(uvm_sync_string);
 
-  @uvm_immutable_sync
-  uvm_queue!uvm_callback _m_tw_cb_q;
   enum string m_typename = qualifiedTypeName!T;
 
   alias this_type  = uvm_typed_callbacks!(T);
@@ -259,10 +263,8 @@ class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
   //   }
   // }
 
-  this() {
-    synchronized(this) {
-      _m_tw_cb_q = new uvm_queue!uvm_callback("uvm_callback/typewide_queue");
-    }
+  this(string name) {
+    super(name);
   }
 
   static this_type m_initialize() {
@@ -270,13 +272,12 @@ class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
       if(m_t_inst is null) {
 	// super_type.m_initialize taken care of by once constructor
 	// super_type.m_initialize();
-	m_t_inst = new this_type();
+	m_t_inst = new this_type("m_t_inst(uvm_typed_callbacks#(" ~
+				 T.stringof ~ ")");
 
-	// This is taken care of in the "this" method of m_t_inst. That way it
-	// becomes effectively immutable
-	// synchronized(m_t_inst) {
-	//	m_t_inst.m_tw_cb_q = new uvm_queue!uvm_callback("uvm_callback/typewide_queue");
-	// }
+	m_tw_cb_q =
+	  new uvm_queue!uvm_callback("uvm_callback/typewide_queue(" ~
+				     T.stringof ~ ")");
       }
       return m_t_inst;
     }
@@ -323,6 +324,7 @@ class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
   // no shared variable -- therefor no synchronized lock is required
   static bool m_cb_find_name(uvm_queue!uvm_callback q,
 			     string name, string where) {
+    import uvm.base.uvm_globals;
     foreach(cb; q) {
       if(cb.get_name() == name) {
 	uvm_warning("UVM/CB/NAM/SAM", "A callback named \"" ~ name ~
@@ -411,6 +413,9 @@ class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
 
 
   static void display(T obj=null) {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
+
     string[] cbq;
     string[] inst_q;
     string[] mode_q;
@@ -535,7 +540,7 @@ class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
 		   blanks[0..max_cb_name-cbq[i].length], inst_q[i],
 		   blanks[0..max_inst_name - inst_q[i].length], mode_q[i]);
     }
-    uvm_info("UVM/CB/DISPLAY", qs, UVM_NONE);
+    uvm_info("UVM/CB/DISPLAY", qs, uvm_verbosity.UVM_NONE);
 
     m_tracing = true; //allow tracing to be resumed
   }
@@ -577,6 +582,8 @@ class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
 
 class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
 {
+  import uvm.base.uvm_component: uvm_component;
+
   static class uvm_once: uvm_once_base
   {
     @uvm_private_sync
@@ -585,6 +592,11 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
 
   mixin(uvm_once_sync_string);
   mixin(uvm_sync_string);
+
+  this(string name) {
+    super(name);
+  }
+
   // Parameter: T
   //
   // This type parameter specifies the base object type with which the
@@ -637,10 +649,12 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
   // ---
 
   static this_type get() {
+    import uvm.base.uvm_globals;
     if (m_inst is null) {
       super_type.m_initialize();
 
-      m_inst = new this_type();
+      m_inst = new this_type("m_inst(uvm_callbacks#(" ~ T.stringof ~
+			     ", " ~ CB.stringof ~ ")");
 
       static if(is(CB == uvm_callback)) {
 	// The base inst in the super class gets set to this base inst
@@ -719,6 +733,10 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
 
   static void add(T obj, uvm_callback cb,
 		  uvm_apprepend ordering = uvm_apprepend.UVM_APPEND) {
+    import uvm.base.uvm_object_globals;
+    import uvm.base.uvm_report_object;
+    import uvm.base.uvm_globals;
+
     string nm, tnm;
 
     get();
@@ -743,7 +761,7 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
 
       uvm_report_error("CBUNREG",
 		       "Null callback object cannot be registered with object " ~
-		       nm ~ " (" ~ tnm ~ ")", UVM_NONE);
+		       nm ~ " (" ~ tnm ~ ")", uvm_verbosity.UVM_NONE);
       return;
     }
 
@@ -769,7 +787,7 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
     //			 "Callback " ~ cb.get_name() ~
     //			 " cannot be registered with object " ~
     //			 nm ~ " because callback type " ~ cb.get_type_name() ~
-    //			 " is not registered with object type " ~ tnm, UVM_NONE);
+    //			 " is not registered with object type " ~ tnm, uvm_verbosity.UVM_NONE);
     //   // return statement missing in SV version
     //   return;
     // }
@@ -787,7 +805,7 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
 
 	uvm_report_warning("CBPREG",
 			   "Callback object " ~ cb.get_name() ~
-			   " is already registered with type " ~ tnm, UVM_NONE);
+			   " is already registered with type " ~ tnm, uvm_verbosity.UVM_NONE);
       }
       else {
 	uvm_cb_trace_noobj(cb,
@@ -827,7 +845,7 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
       if(m_cb_find(q, cb) !is -1) {
 	uvm_report_warning("CBPREG", "Callback object " ~ cb.get_name() ~
 			   " is already registered" ~ " with object " ~
-			   obj.get_full_name(), UVM_NONE);
+			   obj.get_full_name(), uvm_verbosity.UVM_NONE);
       }
       else {
 	m_cb_find_name(q, cb.get_name(), "object instance " ~
@@ -856,6 +874,10 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
 			  uvm_callback cb,
 			  uvm_component root,
 			  uvm_apprepend ordering=uvm_apprepend.UVM_APPEND) {
+    import uvm.base.uvm_coreservice;
+    import uvm.base.uvm_root;
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
 
     get();
 
@@ -864,17 +886,17 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
     uvm_root top = cs.get_root();
 
     if(cb is null) {
-      uvm_report_error("CBUNREG", "Null callback object cannot be registered"
-		       " with object(s) " ~ name, UVM_NONE);
+      uvm_report_error("CBUNREG", "Null callback object cannot be registered" ~
+		       " with object(s) " ~ name, uvm_verbosity.UVM_NONE);
       return;
     }
-    uvm_cb_trace_noobj(cb, format("Add (%s) callback %0s by name to object(s)"
+    uvm_cb_trace_noobj(cb, format("Add (%s) callback %0s by name to object(s)" ~
 				  " %0s ", ordering, cb.get_name(), name));
     top.find_all(name, cq, root);
     if(cq.length == 0) {
-      uvm_report_warning("CBNOMTC", "add_by_name failed to find any components"
+      uvm_report_warning("CBNOMTC", "add_by_name failed to find any components" ~
 			 " matching the name " ~ name ~ " ~ callback " ~
-			 cb.get_name() ~ " will not be registered.", UVM_NONE);
+			 cb.get_name() ~ " will not be registered.", uvm_verbosity.UVM_NONE);
     }
     foreach(c; cq) {
       T t = cast(T) c;
@@ -899,6 +921,8 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
   //| uvm_callbacks!(my_comp, my_callback).delete(comp_a, cb);
 
   static void remove(T obj, uvm_callback cb) {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
     uvm_object b_obj = obj;	// God knows why b_obj is declared, could we not do with obj itself
     bool found;
     get();
@@ -921,7 +945,7 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
       string nm;
       if(obj is null) nm = "(*)"; else nm = obj.get_full_name();
       uvm_report_warning("CBUNREG", "Callback " ~ cb.get_name() ~ " cannot be removed from object " ~
-			 nm ~ " because it is not currently registered to that object.", UVM_NONE);
+			 nm ~ " because it is not currently registered to that object.", uvm_verbosity.UVM_NONE);
     }
   }
 
@@ -936,6 +960,11 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
 
   static void delete_by_name(string name, uvm_callback cb,
 			     uvm_component root) {
+    import uvm.base.uvm_coreservice;
+    import uvm.base.uvm_root;
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
+
     get();
 
     uvm_coreservice_t cs = uvm_coreservice_t.get();
@@ -947,7 +976,7 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
     top.find_all(name, cq, root);
     if(cq.length == 0) {
       uvm_report_warning("CBNOMTC", "delete_by_name failed to find any components matching the name " ~
-			 name ~ " ~ callback " ~ cb.get_name() ~ " will not be unregistered.", UVM_NONE);
+			 name ~ " ~ callback " ~ cb.get_name() ~ " will not be unregistered.", uvm_verbosity.UVM_NONE);
     }
     foreach(c; cq) {
       T t = cast(T) c;
@@ -981,7 +1010,7 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
   }
 
   static uvm_queue!(uvm_callback) m_get_q (T obj) {
-    uvm_queue!(uvm_callback) q = new uvm_queue!(uvm_callback)("uvm_callback/m_get_q/q");
+    uvm_queue!(uvm_callback) q;
     m_get_q(q, obj);
     return q;
   }
@@ -1173,6 +1202,8 @@ class uvm_derived_callbacks (T=uvm_object, ST=uvm_object, CB=uvm_callback):
   // }
 
   static bool register_super_type() {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
     this_user_type u_inst = this_user_type.get();
     // this_type      inst = this_type.get();
     uvm_callbacks_base s_obj;
@@ -1186,7 +1217,7 @@ class uvm_derived_callbacks (T=uvm_object, ST=uvm_object, CB=uvm_callback):
 			   " is already registered to super type " ~
 			   qualifiedTypeName!ST ~
 			   ". Ignoring attempt to register to super type " ~
-			   qualifiedTypeName!ST, UVM_NONE);
+			   qualifiedTypeName!ST, uvm_verbosity.UVM_NONE);
 	return true;
       }
       u_inst.m_super_type = typeid(ST);
@@ -1306,7 +1337,7 @@ class uvm_callback_iter (T = uvm_object, CB = uvm_callback)
        if (reporter is null) reporter = uvm_top;
        if (obj !is null) who = {obj.get_full_name(), " is executing "};
        else if (_m_obj !is null) who = {_m_obj.get_full_name(), " is executing "};
-       reporter.uvm_report_info("CLLBK_TRC", {who, "callback ", _m_cb.get_name()}, UVM_LOW);
+       reporter.uvm_report_info("CLLBK_TRC", {who, "callback ", _m_cb.get_name()}, uvm_verbosity.UVM_LOW);
        }
        }
   ****/
@@ -1411,7 +1442,7 @@ class uvm_callback: uvm_object
 
 mixin template uvm_register_cb(T, CB) if(is(CB: uvm_callback))
   {
-    import uvm.base.uvm_callback;
+    import uvm.base.uvm_callback: uvm_callbacks, uvm_cb_trace_noobj;
     import std.string: format;
     // static this() {
     //   if(uvm_is_uvm_thread) {
@@ -1718,7 +1749,7 @@ version(UVM_CB_TRACE_ON) {
   //     msg = (OBJ == null) ? "null" : $sformatf("%s (%s@%0d)", \
   //       OBJ.get_full_name(), OBJ.get_type_name(), OBJ.get_inst_id()); \
   //     `uvm_info("UVMCB_TRC", $sformatf("%s: callback %s (%s@%0d) : to object %s",  \
-  //        OPER, CB.get_name(), CB.get_type_name(), CB.get_inst_id(), msg), UVM_NONE) \
+  //        OPER, CB.get_name(), CB.get_type_name(), CB.get_inst_id(), msg), uvm_verbosity.UVM_NONE) \
   //   end
   void uvm_cb_trace(T, CB)(T obj, CB cb, string oper) {
     string msg = (obj is null) ? "null" :
@@ -1726,21 +1757,21 @@ version(UVM_CB_TRACE_ON) {
 	     obj.get_full_name(), obj.get_type_name(), obj.get_inst_id());
     uvm_info("UVMCB_TRC", format("%s: callback %s (%s@%0d) : to object %s",
 				 oper, cb.get_name(), cb.get_type_name(),
-				 cb.get_inst_id(), msg), UVM_NONE);
+				 cb.get_inst_id(), msg), uvm_verbosity.UVM_NONE);
   }
 
   // `define uvm_cb_trace_noobj(CB,OPER) \
   //   begin \
   //     if(uvm_callbacks_base::m_tracing) \
   //       `uvm_info("UVMCB_TRC", $sformatf("%s : callback %s (%s@%0d)" ,  \
-  //        OPER, CB.get_name(), CB.get_type_name(), CB.get_inst_id()), UVM_NONE) \
+  //        OPER, CB.get_name(), CB.get_type_name(), CB.get_inst_id()), uvm_verbosity.UVM_NONE) \
   //   end
   void uvm_cb_trace_noobj(CB)(CB cb, string oper) {
     if(uvm_callbacks_base.m_tracing) {
       uvm_info("UVMCB_TRC",
 	       format("%s : callback %s (%s@%0d)",
 		      oper, cb.get_name(), cb.get_type_name(),
-		      cb.get_inst_id()), UVM_NONE);
+		      cb.get_inst_id()), uvm_verbosity.UVM_NONE);
     }
   }
 }

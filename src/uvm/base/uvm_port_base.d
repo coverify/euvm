@@ -21,13 +21,9 @@
 //------------------------------------------------------------------------------
 
 module uvm.base.uvm_port_base;
-import uvm.base.uvm_component;
-import uvm.base.uvm_phase;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_root;
-import uvm.base.uvm_domain;
-import uvm.base.uvm_config_db;
-import uvm.base.uvm_coreservice;
+import uvm.base.uvm_component: uvm_component;
+import uvm.base.uvm_phase: uvm_phase;
+import uvm.base.uvm_object_globals: uvm_port_type_e;
 
 import uvm.meta.misc;
 import std.string: format;
@@ -136,10 +132,11 @@ class uvm_port_component(PORT=uvm_object): uvm_port_component_base
   private PORT _m_port;
 
   this(string name, uvm_component parent, PORT port) {
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       super(name, parent);
       if(port is null) {
-	uvm_report_fatal("Bad usage", "Null handle to port", UVM_NONE);
+	uvm_report_fatal("Bad usage", "Null handle to port", uvm_verbosity.UVM_NONE);
       }
       _m_port = port;
     }
@@ -277,6 +274,8 @@ abstract class uvm_port_base(IF = uvm_void): IF
 	      int min_size = 0,
 	      int max_size = 1
 	      ) {
+    import uvm.base.uvm_config_db;
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       // uvm_component comp;
       _m_port_type = port_type;
@@ -287,7 +286,7 @@ abstract class uvm_port_base(IF = uvm_void): IF
       int tmp;
       if (!uvm_config_db!int.get(_m_comp, "", "check_connection_relationships",
 				 tmp)) {
-	_m_comp.set_report_id_action(s_connection_warning_id, UVM_NO_ACTION);
+	_m_comp.set_report_id_action(s_connection_warning_id, uvm_action_type.UVM_NO_ACTION);
       }
     }
   }
@@ -340,11 +339,12 @@ abstract class uvm_port_base(IF = uvm_void): IF
   // "uvm_port", "uvm_export" or "uvm_implementation" is returned.
 
   string get_type_name() {
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       switch(_m_port_type) {
-      case UVM_PORT : return "port";
-      case UVM_EXPORT : return "export";
-      case UVM_IMPLEMENTATION : return "implementation";
+      case uvm_port_type_e.UVM_PORT : return "port";
+      case uvm_port_type_e.UVM_EXPORT : return "export";
+      case uvm_port_type_e.UVM_IMPLEMENTATION : return "implementation";
       default:
 	assert(false, "Invalid port type");
       }
@@ -392,16 +392,18 @@ abstract class uvm_port_base(IF = uvm_void): IF
   // Function: is_port
 
   final bool is_port() {
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
-      return _m_port_type == UVM_PORT;
+      return _m_port_type == uvm_port_type_e.UVM_PORT;
     }
   }
 
   // Function: is_export
 
   final bool is_export() {
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
-      return _m_port_type == UVM_EXPORT;
+      return _m_port_type == uvm_port_type_e.UVM_EXPORT;
     }
   }
 
@@ -411,8 +413,9 @@ abstract class uvm_port_base(IF = uvm_void): IF
   // 0 otherwise.
 
   final bool is_imp() {
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
-      return _m_port_type == UVM_IMPLEMENTATION;
+      return _m_port_type == uvm_port_type_e.UVM_IMPLEMENTATION;
     }
   }
 
@@ -501,11 +504,14 @@ abstract class uvm_port_base(IF = uvm_void): IF
   // port's ~connect~ method calls are made.
 
   void connect (this_type provider) {
+    import uvm.base.uvm_domain;
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
-      uvm_coreservice_t cs = uvm_coreservice_t.get();
-      uvm_root top = cs.get_root();
-      if (end_of_elaboration_ph.get_state() == UVM_PHASE_EXECUTING || // TBD tidy
-	  end_of_elaboration_ph.get_state() == UVM_PHASE_DONE ) {
+      // next two lines add dependency on uvm_root -- otherwise redundant code from SV UVM
+      // uvm_coreservice_t cs = uvm_coreservice_t.get();
+      // uvm_root top = cs.get_root();
+      if (end_of_elaboration_ph.get_state() == uvm_phase_state.UVM_PHASE_EXECUTING || // TBD tidy
+	  end_of_elaboration_ph.get_state() == uvm_phase_state.UVM_PHASE_DONE ) {
 	m_comp.uvm_report_warning("Late Connection", "Attempt to connect " ~
 				  this.get_full_name() ~ " (of type " ~
 				  this.get_type_name() ~ ") at or after " ~
@@ -515,14 +521,14 @@ abstract class uvm_port_base(IF = uvm_void): IF
 
       if (provider is null) {
 	m_comp.uvm_report_error(s_connection_error_id,
-				"Cannot connect to null port handle", UVM_NONE);
+				"Cannot connect to null port handle", uvm_verbosity.UVM_NONE);
 	return;
       }
 
       if (provider is this) {
 	m_comp.uvm_report_error(s_connection_error_id,
 				"Cannot connect a port instance to itself",
-				UVM_NONE);
+				uvm_verbosity.UVM_NONE);
 	return;
       }
 
@@ -530,32 +536,32 @@ abstract class uvm_port_base(IF = uvm_void): IF
 	m_comp.uvm_report_error(s_connection_error_id,
 				provider.get_full_name() ~ " (of type " ~
 				provider.get_type_name() ~
-				") does not provide the complete interface"
+				") does not provide the complete interface" ~
 				" required of this port (type " ~
-				get_type_name() ~ ")", UVM_NONE);
+				get_type_name() ~ ")", uvm_verbosity.UVM_NONE);
 	return;
       }
 
       // IMP.connect(anything) is illegal
       if (is_imp()) {
 	m_comp.uvm_report_error(s_connection_error_id,
-				format("Cannot call an imp port's connect"
-				       " method. An imp is connected only"
-				       " to the component passed in its"
-				       " constructor. (You attempted to bind"
+				format("Cannot call an imp port's connect" ~
+				       " method. An imp is connected only" ~
+				       " to the component passed in its" ~
+				       " constructor. (You attempted to bind" ~
 				       " this imp to %s)",
-				       provider.get_full_name()), UVM_NONE);
+				       provider.get_full_name()), uvm_verbosity.UVM_NONE);
 	return;
       }
 
       // EXPORT.connect(PORT) are illegal
       if (is_export() && provider.is_port()) {
 	m_comp.uvm_report_error(s_connection_error_id,
-				format("Cannot connect exports to ports"
-				       " Try calling port.connect(export)"
-				       " instead. (You attempted to bind"
+				format("Cannot connect exports to ports" ~
+				       " Try calling port.connect(export)" ~
+				       " instead. (You attempted to bind" ~
 				       " this export to %s).",
-				       provider.get_full_name()), UVM_NONE);
+				       provider.get_full_name()), uvm_verbosity.UVM_NONE);
 	return;
       }
 
@@ -579,6 +585,8 @@ abstract class uvm_port_base(IF = uvm_void): IF
   // connections are not resolved until then.
 
   final void debug_connected_to (int level=0, int max_level=-1) {
+    import uvm.base.uvm_domain;
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       string save;
       string indent;
@@ -592,10 +600,11 @@ abstract class uvm_port_base(IF = uvm_void): IF
 	  save = "This port's fanout network:\n\n  " ~
 	    get_full_name() ~ " (" ~ get_type_name() ~ ")\n" ~ save ~ "\n";
 	if (_m_imp_list.length == 0) {
-	  uvm_coreservice_t cs = uvm_coreservice_t.get();
-	  uvm_root top = cs.get_root();
-	  if (end_of_elaboration_ph.get_state() == UVM_PHASE_EXECUTING ||
-	      end_of_elaboration_ph.get_state() == UVM_PHASE_DONE ) { // TBD tidy
+	  // next two lines add dependency on uvm_root -- otherwise redundant code from SV UVM
+	  // uvm_coreservice_t cs = uvm_coreservice_t.get();
+	  // uvm_root top = cs.get_root();
+	  if (end_of_elaboration_ph.get_state() == uvm_phase_state.UVM_PHASE_EXECUTING ||
+	      end_of_elaboration_ph.get_state() == uvm_phase_state.UVM_PHASE_DONE ) { // TBD tidy
 	    save ~= "  Connected implementations: none\n";
 	  }
 	  else {
@@ -769,6 +778,7 @@ abstract class uvm_port_base(IF = uvm_void): IF
   // --------------------
 
   final private bool  m_check_relationship(this_type provider) {
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
 
       // Checks that the connection is between ports that are hierarchically
@@ -800,7 +810,7 @@ abstract class uvm_port_base(IF = uvm_void): IF
 	  ") is not up one level of hierarchy from this port. " ~
 	  "A port-to-port connection takes the form " ~
 	  "child_component.child_port.connect(parent_port)";
-	m_comp.uvm_report_warning(s_connection_warning_id, s, UVM_NONE);
+	m_comp.uvm_report_warning(s_connection_warning_id, s, uvm_verbosity.UVM_NONE);
 	return false;
       }
 
@@ -814,7 +824,7 @@ abstract class uvm_port_base(IF = uvm_void): IF
 	  ") is not at the same level of hierarchy as this port. " ~
 	  "A port-to-export connection takes the form " ~
 	  "component1.port.connect(component2.export)";
-	m_comp.uvm_report_warning(s_connection_warning_id, s, UVM_NONE);
+	m_comp.uvm_report_warning(s_connection_warning_id, s, uvm_verbosity.UVM_NONE);
 	return false;
       }
 
@@ -828,7 +838,7 @@ abstract class uvm_port_base(IF = uvm_void): IF
 	  ") is not down one level of hierarchy from this export. " ~
 	  "An export-to-export or export-to-imp connection takes the form " ~
 	  "parent_export.connect(child_component.child_export)";
-	m_comp.uvm_report_warning(s_connection_warning_id, s, UVM_NONE);
+	m_comp.uvm_report_warning(s_connection_warning_id, s, uvm_verbosity.UVM_NONE);
 	return false;
       }
 
@@ -866,6 +876,7 @@ abstract class uvm_port_base(IF = uvm_void): IF
   // end_of_elaboration phase. Users should not need to call it directly.
 
   void resolve_bindings() {
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       if (_m_resolved) { // don't repeat ourselves
 	return;
@@ -885,16 +896,16 @@ abstract class uvm_port_base(IF = uvm_void): IF
 
       if (size() < min_size() ) {
 	m_comp.uvm_report_error(s_connection_error_id,
-				format("connection count of %0d does not"
+				format("connection count of %0d does not" ~
 				       " meet required minimum of %0d",
-				       size(), min_size()), UVM_NONE);
+				       size(), min_size()), uvm_verbosity.UVM_NONE);
       }
 
       if (max_size() !is UVM_UNBOUNDED_CONNECTIONS && size() > max_size() ) {
 	m_comp.uvm_report_error(s_connection_error_id,
-				format("connection count of %0d exceeds"
+				format("connection count of %0d exceeds" ~
 				       " maximum of %0d",
-				       size(), max_size()), UVM_NONE);
+				       size(), max_size()), uvm_verbosity.UVM_NONE);
       }
 
       if (size()) {
@@ -912,16 +923,17 @@ abstract class uvm_port_base(IF = uvm_void): IF
   // port connections are not resolved before then.
 
   final uvm_port_base!IF get_if(size_t index=0) {
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       if (size() == 0) {
 	m_comp.uvm_report_warning("get_if",
-				  "Port size is zero; cannot get interface"
-				  " at any index", UVM_NONE);
+				  "Port size is zero; cannot get interface" ~
+				  " at any index", uvm_verbosity.UVM_NONE);
 	return null;
       }
       if (index < 0 || index >= size()) {
 	string s = format("Index %0d out of range [0,%0d]", index, size()-1);
-	m_comp.uvm_report_warning(s_connection_error_id, s, UVM_NONE);
+	m_comp.uvm_report_warning(s_connection_error_id, s, uvm_verbosity.UVM_NONE);
 	return null;
       }
       foreach (nm, port; _m_imp_list) {

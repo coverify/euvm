@@ -59,7 +59,7 @@ mixin template uvm_object_utils(T=void)
   mixin m_uvm_object_auto_utils!(U);
   version(UVM_NO_RAND) {}
   else {
-    import esdl.data.rand;
+    import esdl.rand;
     mixin Randomization;
   }
   // `uvm_field_utils_begin(U)
@@ -114,11 +114,9 @@ string uvm_component_utils_string()() {
   return "mixin uvm_component_utils!(typeof(this));";
 }
 
-import uvm.base.uvm_root: uvm_root;
-
 mixin template uvm_component_essentials(T=void)
 {
-  import uvm.base.uvm_root;
+  import uvm.base.uvm_root: uvm_root;
   static if(is(T == void)) {
     alias U = typeof(this);
   }
@@ -136,7 +134,7 @@ mixin template uvm_component_essentials(T=void)
   // mixin m_uvm_object_auto_utils!(U);
   // version(UVM_NO_RAND) { }
   // else {
-  //   import esdl.data.rand;
+  //   import esdl.rand;
   //   mixin Randomization;
   // }
   // `uvm_field_utils_begin(U)
@@ -170,7 +168,7 @@ mixin template uvm_component_essentials(T=void)
 
 mixin template uvm_component_utils(T=void)
 {
-  import uvm.base.uvm_root;
+  import uvm.base.uvm_root: uvm_root;
   static if(is(T == void)) {
     alias U = typeof(this);
   }
@@ -188,7 +186,7 @@ mixin template uvm_component_utils(T=void)
 
   version(UVM_NO_RAND) { }
   else {
-    import esdl.data.rand;
+    import esdl.rand;
     mixin Randomization;
   }
   // `uvm_field_utils_begin(U)
@@ -264,6 +262,7 @@ mixin template uvm_component_registry_mixin(T, string S)
 
 mixin template uvm_new_func()
 {
+  import uvm.base.uvm_component: uvm_component;
   this (string name, uvm_component parent) {
     super(name, parent);
   }
@@ -375,23 +374,17 @@ mixin template m_uvm_component_registry_internal(T, string S)
 
 mixin template m_uvm_object_auto_utils(T)
 {
-  import uvm.base.uvm_object_globals: uvm_bitstream_t;
-  import uvm.base.uvm_globals;
-  import uvm.base.uvm_object;
-  import uvm.base.uvm_component;
-  import uvm.seq.uvm_sequence_item;
-  import uvm.seq.uvm_sequence_base;
-  import uvm.base.uvm_object_globals;
-  import uvm.base.uvm_printer;
-  import uvm.base.uvm_recorder;
-  import std.traits: isArray;
-  import std.string: format;
 
   override void m_uvm_object_automation(uvm_object rhs,  
 					int        what, 
 					string     str) {
+    import uvm.base.uvm_object_globals: uvm_field_xtra_enum,
+      uvm_field_auto_enum;
+    import uvm.base.uvm_globals;
     uvm_object[] current_scopes;
-    if (what == UVM_SETINT || what == UVM_SETSTR || what == UVM_SETOBJ) {
+    if (what == uvm_field_xtra_enum.UVM_SETINT ||
+	what == uvm_field_xtra_enum.UVM_SETSTR ||
+	what == uvm_field_xtra_enum.UVM_SETOBJ) {
       if (m_uvm_status_container.m_do_cycle_check(this)) {
 	return;
       }
@@ -415,7 +408,9 @@ mixin template m_uvm_object_auto_utils(T)
     // if(!$cast(local_data__, tmp_data__)) return;
 
     _m_uvm_object_automation!0(this, rhs_, what, str); // defined in uvm_object
-    if (what == UVM_SETINT || what == UVM_SETSTR || what == UVM_SETOBJ) {
+    if (what == uvm_field_xtra_enum.UVM_SETINT ||
+	what == uvm_field_xtra_enum.UVM_SETSTR ||
+	what == uvm_field_xtra_enum.UVM_SETOBJ) {
       // remove all scopes recorded (through super and other objects
       // visited before)
       m_uvm_status_container.m_uvm_cycle_scopes = current_scopes[0..$-1];
@@ -436,7 +431,7 @@ mixin template m_uvm_object_auto_utils(T)
   // 	}
   //     }
   //     else {
-  // 	import esdl.data.rand;
+  // 	import esdl.rand;
   // 	static if(! is(U: _esdl__ConstraintBase)) {
   // 	  if(F!(I)(lhs, rhs)) {
   // 	    // shortcircuit useful for compare etc
@@ -469,7 +464,7 @@ mixin template m_uvm_object_auto_utils(T)
   // 	F!(I)(t);
   //     }
   //     else {
-  // 	import esdl.data.rand;
+  // 	import esdl.rand;
   // 	static if(! is(U: _esdl__ConstraintBase)) {
   // 	  F!(I)(t);
   // 	}
@@ -577,7 +572,7 @@ mixin template m_uvm_object_auto_utils(T)
   // 		!(FLAGS & UVM_NOCOPY)) {
   // 	// version(UVM_NO_RAND) { }
   // 	// else {
-  // 	//   import esdl.data.rand;
+  // 	//   import esdl.rand;
   // 	//   static if (is(U: _esdl__ConstraintBase)) {
   // 	//     uvm_object_auto_copy_field!(I+1)(lhs, rhs);
   // 	//   }

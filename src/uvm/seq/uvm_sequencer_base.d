@@ -30,7 +30,6 @@ import uvm.base.uvm_once;
 import uvm.base.uvm_config_db;
 import uvm.base.uvm_entity;
 import uvm.base.uvm_factory;
-import uvm.base.uvm_message_defines;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_object_defines;
 import uvm.base.uvm_globals;
@@ -46,7 +45,7 @@ import esdl.base.core;
 
 version(UVM_NO_RAND) {}
  else {
-   import esdl.data.rand;
+   import esdl.rand;
  }
   
 import std.random: uniform;
@@ -169,10 +168,11 @@ class uvm_sequencer_base: uvm_component
   this(string name, uvm_component parent) {
     synchronized(this) {
       super(name, parent);
-      _m_lock_arb_size = new WithEvent!int;
-      _m_is_relevant_completed = new WithEvent!bool;
-      _m_wait_for_item_sequence_id = new WithEvent!int;
-      _m_wait_for_item_transaction_id = new WithEvent!int;
+      _m_lock_arb_size = new WithEvent!int("_m_lock_arb_size");
+      _m_is_relevant_completed = new WithEvent!bool("_m_is_relevant_completed");
+      _m_wait_for_item_sequence_id = new WithEvent!int("_m_wait_for_item_sequence_id");
+      _m_wait_for_item_transaction_id = new WithEvent!int("_m_wait_for_item_transaction_id");
+      _m_wait_for_item_ids.initialize("_m_wait_for_item_ids");
       _m_wait_for_item_ids = _m_wait_for_item_sequence_id.getEvent() |
 	_m_wait_for_item_transaction_id.getEvent();
       _m_sequencer_id = inc_g_sequencer_id();
@@ -192,11 +192,11 @@ class uvm_sequencer_base: uvm_component
 			     uvm_sequence_base child) {
 
     if(child is null) {
-      uvm_report_fatal("uvm_sequencer", "is_child passed null child", UVM_NONE);
+      uvm_report_fatal("uvm_sequencer", "is_child passed null child", uvm_verbosity.UVM_NONE);
     }
 
     if (parent is null) {
-      uvm_report_fatal("uvm_sequencer", "is_child passed null parent", UVM_NONE);
+      uvm_report_fatal("uvm_sequencer", "is_child passed null parent", uvm_verbosity.UVM_NONE);
     }
 
     uvm_sequence_base child_parent = child.get_parent_sequence();
@@ -342,7 +342,7 @@ class uvm_sequencer_base: uvm_component
 	  if (seq is null) {
 	    uvm_info("UVM/SQR/PH/DEF/SB/NULL",
 		     "Default phase sequence for phase '" ~ phase.get_name() ~
-		     "' explicitly disabled", UVM_FULL);
+		     "' explicitly disabled", uvm_verbosity.UVM_FULL);
 	    return;
 	  }
 	}
@@ -355,7 +355,7 @@ class uvm_sequencer_base: uvm_component
 	    if (wrapper is null) {
 	      uvm_info("UVM/SQR/PH/DEF/OW/NULL",
 		       "Default phase sequence for phase '" ~
-		       phase.get_name() ~ "' explicitly disabled", UVM_FULL);
+		       phase.get_name() ~ "' explicitly disabled", uvm_verbosity.UVM_FULL);
 	      return;
 	    }
 
@@ -374,13 +374,13 @@ class uvm_sequencer_base: uvm_component
   
       if(seq is null) {
 	uvm_info("PHASESEQ", "No default phase sequence for phase '" ~
-		 phase.get_name() ~ "'", UVM_FULL);
+		 phase.get_name() ~ "'", uvm_verbosity.UVM_FULL);
 	return;
       }
   
       uvm_info("PHASESEQ", "Starting default sequence '" ~
 	       seq.get_type_name() ~ "' for phase '" ~ phase.get_name() ~
-	       "'", UVM_FULL);
+	       "'", uvm_verbosity.UVM_FULL);
   
       seq.print_sequence_info = true;
       seq.set_sequencer(this);
@@ -438,13 +438,13 @@ class uvm_sequencer_base: uvm_component
 	uvm_info("PHASESEQ",
 		 "Killing default sequence '" ~
 		 pseq_wrap.seq.get_type_name() ~
-		 "' for phase '" ~ phase.get_name() ~ "'", UVM_FULL);
+		 "' for phase '" ~ phase.get_name() ~ "'", uvm_verbosity.UVM_FULL);
         pseq_wrap.seq.kill();
       }
       else {
         uvm_info("PHASESEQ",
 		 "No default sequence to kill for phase '" ~
-		 phase.get_name() ~ "'", UVM_FULL);
+		 phase.get_name() ~ "'", uvm_verbosity.UVM_FULL);
       }
     }
   }
@@ -471,7 +471,7 @@ class uvm_sequencer_base: uvm_component
 			     bool lock_request = false) {
     if (sequence_ptr is null) {
       uvm_report_fatal("uvm_sequencer",
-		       "wait_for_grant passed null sequence_ptr", UVM_NONE);
+		       "wait_for_grant passed null sequence_ptr", uvm_verbosity.UVM_NONE);
     }
 
     uvm_sequence_request req_s;
@@ -486,7 +486,7 @@ class uvm_sequencer_base: uvm_component
 	synchronized(req_s) {
 	  req_s.grant = false;
 	  req_s.sequence_id = my_seq_id;
-	  req_s.request = SEQ_TYPE_LOCK;
+	  req_s.request = seq_req_t.SEQ_TYPE_LOCK;
 	  req_s.sequence_ptr = sequence_ptr;
 	  req_s.request_id = inc_g_request_id();
 	  req_s.process_id = Process.self;
@@ -498,7 +498,7 @@ class uvm_sequencer_base: uvm_component
       req_s = new uvm_sequence_request();
       synchronized(req_s) {
 	req_s.grant = false;
-	req_s.request = SEQ_TYPE_REQ;
+	req_s.request = seq_req_t.SEQ_TYPE_REQ;
 	req_s.sequence_id = my_seq_id;
 	req_s.item_priority = item_priority;
 	req_s.sequence_ptr = sequence_ptr;
@@ -586,7 +586,7 @@ class uvm_sequencer_base: uvm_component
   bool is_blocked(uvm_sequence_base sequence_ptr) {
     if (sequence_ptr is null) {
       uvm_report_fatal("uvm_sequence_controller",
-		       "is_blocked passed null sequence_ptr", UVM_NONE);
+		       "is_blocked passed null sequence_ptr", uvm_verbosity.UVM_NONE);
     }
 
     synchronized(this) {
@@ -616,7 +616,7 @@ class uvm_sequencer_base: uvm_component
   bool has_lock(uvm_sequence_base sequence_ptr) {
     if (sequence_ptr is null) {
       uvm_report_fatal("uvm_sequence_controller",
-		       "has_lock passed null sequence_ptr", UVM_NONE);
+		       "has_lock passed null sequence_ptr", uvm_verbosity.UVM_NONE);
     }
     synchronized(this) {
       int my_seq_id = m_register_sequence(sequence_ptr);
@@ -798,7 +798,7 @@ class uvm_sequencer_base: uvm_component
   // set_arbitration
   // ---------------
 
-  void set_arbitration(UVM_SEQ_ARB_TYPE val) {
+  void set_arbitration(uvm_sequencer_arb_mode val) {
     synchronized(this) {
       _m_arbitration = val;
     }
@@ -813,7 +813,7 @@ class uvm_sequencer_base: uvm_component
   // get_arbitration
   // ---------------
 
-  UVM_SEQ_ARB_TYPE get_arbitration() {
+  uvm_sequencer_arb_mode get_arbitration() {
     synchronized(this) {
       return _m_arbitration;
     }
@@ -885,7 +885,7 @@ class uvm_sequencer_base: uvm_component
     synchronized(this) {
       // first remove sequences with dead lock control process
       auto defunct_items =
-	filter!(item => item.request == SEQ_TYPE_LOCK &&
+	filter!(item => item.request == seq_req_t.SEQ_TYPE_LOCK &&
 		item.process_id.isDefunct())(_arb_sequence_q[]);
       foreach(item; defunct_items) {
 	uvm_error("SEQLCKZMB",
@@ -904,16 +904,16 @@ class uvm_sequencer_base: uvm_component
       size_t b = _arb_sequence_q.length; // index for first non-LOCK request
 
       // int[] q1;
-      // q1 = arb_sequence_q.find_first_index(item) with (item.request!=SEQ_TYPE_LOCK);
+      // q1 = arb_sequence_q.find_first_index(item) with (item.request!=seq_req_t.SEQ_TYPE_LOCK);
       auto c = countUntil!(item =>
-			   item.request != SEQ_TYPE_LOCK)(_arb_sequence_q[]);
+			   item.request != seq_req_t.SEQ_TYPE_LOCK)(_arb_sequence_q[]);
       // if(q1.size())
       // 	b=q1[0];  
       if(c != -1) {
 	b = c;
       }
       if(b != 0) { // at least one lock
-	auto leading_lock_reqs = _arb_sequence_q[0..b]; // set of locks; arb_sequence[b] is the first req!=SEQ_TYPE_LOCK	
+	auto leading_lock_reqs = _arb_sequence_q[0..b]; // set of locks; arb_sequence[b] is the first req!=seq_req_t.SEQ_TYPE_LOCK	
 	// split into blocked/not-blocked requests
 	foreach(item; leading_lock_reqs) {
 	  if(is_blocked(item.sequence_ptr) != 0) {
@@ -1000,10 +1000,10 @@ class uvm_sequencer_base: uvm_component
 	}
 
 	if (i < _arb_sequence_q.length)
-	  if (_arb_sequence_q[i].request == SEQ_TYPE_REQ)
+	  if (_arb_sequence_q[i].request == seq_req_t.SEQ_TYPE_REQ)
 	    if (is_blocked(_arb_sequence_q[i].sequence_ptr) is false)
 	      if (_arb_sequence_q[i].sequence_ptr.is_relevant() is true) {
-		if (_m_arbitration == UVM_SEQ_ARB_FIFO) {
+		if (_m_arbitration == uvm_sequencer_arb_mode.UVM_SEQ_ARB_FIFO) {
 		  return i;
 		}
 		else avail_sequences.pushBack(i);
@@ -1013,7 +1013,7 @@ class uvm_sequencer_base: uvm_component
       }
 
       // Return immediately if there are 0 or 1 available sequences
-      if (_m_arbitration is UVM_SEQ_ARB_FIFO) {
+      if (_m_arbitration is uvm_sequencer_arb_mode.UVM_SEQ_ARB_FIFO) {
 	return -1;
       }
       if (avail_sequences.length < 1)  {
@@ -1043,7 +1043,7 @@ class uvm_sequencer_base: uvm_component
 
       //  Weighted Priority Distribution
       // Pick an available sequence based on weighted priorities of available sequences
-      if (_m_arbitration == UVM_SEQ_ARB_WEIGHTED) {
+      if (_m_arbitration == uvm_sequencer_arb_mode.UVM_SEQ_ARB_WEIGHTED) {
 	int sum_priority_val = 0;
 	for (i = 0; i < avail_sequences.length; ++i) {
 	  sum_priority_val +=
@@ -1063,18 +1063,18 @@ class uvm_sequencer_base: uvm_component
 	    m_get_seq_item_priority(_arb_sequence_q[avail_sequences[i]]);
 	}
 	uvm_report_fatal("Sequencer", "UVM Internal error in weighted" ~
-			 " arbitration code", UVM_NONE);
+			 " arbitration code", uvm_verbosity.UVM_NONE);
       }
 
       //  Random Distribution
-      if (_m_arbitration == UVM_SEQ_ARB_RANDOM) {
+      if (_m_arbitration == uvm_sequencer_arb_mode.UVM_SEQ_ARB_RANDOM) {
 	i = cast(int) uniform(0, avail_sequences.length);
 	return avail_sequences[i];
       }
 
       //  Strict Fifo
-      if (_m_arbitration == UVM_SEQ_ARB_STRICT_FIFO ||
-	  _m_arbitration == UVM_SEQ_ARB_STRICT_RANDOM) {
+      if (_m_arbitration == uvm_sequencer_arb_mode.UVM_SEQ_ARB_STRICT_FIFO ||
+	  _m_arbitration == uvm_sequencer_arb_mode.UVM_SEQ_ARB_STRICT_RANDOM) {
 	int highest_pri = 0;
 	// Build a list of sequences at the highest priority
 	for (i = 0; i < avail_sequences.length; ++i) {
@@ -1093,7 +1093,7 @@ class uvm_sequencer_base: uvm_component
 	}
 
 	// Now choose one based on arbitration type
-	if (_m_arbitration == UVM_SEQ_ARB_STRICT_FIFO) {
+	if (_m_arbitration == uvm_sequencer_arb_mode.UVM_SEQ_ARB_STRICT_FIFO) {
 	  return(highest_sequences[0]);
 	}
 
@@ -1101,7 +1101,7 @@ class uvm_sequencer_base: uvm_component
 	return highest_sequences[i];
       }
 
-      if (_m_arbitration == UVM_SEQ_ARB_USER) {
+      if (_m_arbitration == uvm_sequencer_arb_mode.UVM_SEQ_ARB_USER) {
 	i = user_priority_arbitration( avail_sequences);
 
 	// Check that the returned sequence is in the list of available
@@ -1112,15 +1112,15 @@ class uvm_sequencer_base: uvm_component
 	highest_sequences = filter!(a => a == i)(avail_sequences[]);
 	if (highest_sequences.length == 0) {
 	  uvm_report_fatal("Sequencer",
-			   format("Error in User arbitration, sequence %0d"
+			   format("Error in User arbitration, sequence %0d" ~
 				  " not available\n%s", i, convert2string()),
-			   UVM_NONE);
+			   uvm_verbosity.UVM_NONE);
 	}
 	return(i);
       }
 
       uvm_report_fatal("Sequencer", "Internal error: Failed to choose sequence",
-		       UVM_NONE);
+		       uvm_verbosity.UVM_NONE);
       // The assert statement is required since otherwise DMD
       // complains that the function does not return a value
       assert(false, "Sequencer, Internal error: Failed to choose sequence");
@@ -1168,7 +1168,7 @@ class uvm_sequencer_base: uvm_component
   private void m_lock_req(uvm_sequence_base sequence_ptr, bool lock) {
     if (sequence_ptr is null) {
       uvm_report_fatal("uvm_sequence_controller",
-		       "lock_req passed null sequence_ptr", UVM_NONE);
+		       "lock_req passed null sequence_ptr", uvm_verbosity.UVM_NONE);
     }
     uvm_sequence_request new_req;
     synchronized(this) {	// FIXME -- deadlock possible flag
@@ -1177,7 +1177,7 @@ class uvm_sequencer_base: uvm_component
       synchronized(new_req) {
 	new_req.grant = false;
 	new_req.sequence_id = sequence_ptr.get_sequence_id();
-	new_req.request = SEQ_TYPE_LOCK;
+	new_req.request = seq_req_t.SEQ_TYPE_LOCK;
 	new_req.sequence_ptr = sequence_ptr;
 	new_req.request_id = inc_g_request_id();
 	new_req.process_id = Process.self;
@@ -1214,7 +1214,7 @@ class uvm_sequencer_base: uvm_component
   void m_unlock_req(uvm_sequence_base sequence_ptr) {
     if (sequence_ptr is null) {
       uvm_report_fatal("uvm_sequencer",
-		       "m_unlock_req passed null sequence_ptr", UVM_NONE);
+		       "m_unlock_req passed null sequence_ptr", uvm_verbosity.UVM_NONE);
     }
     synchronized(this) {	// FIXME -- deadlock possible flag
       int seqid = sequence_ptr.get_inst_id();
@@ -1230,7 +1230,7 @@ class uvm_sequencer_base: uvm_component
 	uvm_report_warning("SQRUNL", 
 			   "Sequence '" ~ sequence_ptr.get_full_name() ~
 			   "' called ungrab / unlock, but didn't have lock",
-			   UVM_NONE);
+			   uvm_verbosity.UVM_NONE);
       }
     }
   }
@@ -1248,11 +1248,11 @@ class uvm_sequencer_base: uvm_component
 	if (_arb_sequence_q.length > i) {
 	  if ((_arb_sequence_q[i].sequence_id == seq_id) ||
 	      (is_child(sequence_ptr, _arb_sequence_q[i].sequence_ptr))) {
-	    if (sequence_ptr.get_sequence_state() == UVM_FINISHED)
+	    if (sequence_ptr.get_sequence_state() == uvm_sequence_state.UVM_FINISHED)
 	      uvm_error("SEQFINERR",
-			format("Parent sequence '%s' should not finish before"
-			       " all items from itself and items from descendent"
-			       " sequences are processed.  The item request from"
+			format("Parent sequence '%s' should not finish before" ~
+			       " all items from itself and items from descendent" ~
+			       " sequences are processed.  The item request from" ~
 			       " the sequence '%s' is being removed.",
 			       sequence_ptr.get_full_name(),
 			       _arb_sequence_q[i].sequence_ptr.get_full_name()));
@@ -1271,11 +1271,11 @@ class uvm_sequencer_base: uvm_component
 	if (_lock_list.length > i) {
 	  if ((_lock_list[i].get_inst_id() == sequence_ptr.get_inst_id()) ||
 	      (is_child(sequence_ptr, _lock_list[i]))) {
-	    if (sequence_ptr.get_sequence_state() == UVM_FINISHED)
+	    if (sequence_ptr.get_sequence_state() == uvm_sequence_state.UVM_FINISHED)
 	      uvm_error("SEQFINERR",
-			format("Parent sequence '%s' should not finish before"
-			       " locks from itself and descedent sequences are"
-			       " removed.  The lock held by the child sequence"
+			format("Parent sequence '%s' should not finish before" ~
+			       " locks from itself and descedent sequences are" ~
+			       " removed.  The lock held by the child sequence" ~
 			       " '%s' is being removed.",
 			       sequence_ptr.get_full_name(),
 			       _lock_list[i].get_full_name()));
@@ -1328,31 +1328,31 @@ class uvm_sequencer_base: uvm_component
 	// for sequence library functionality.
 	if (uvm_config_db!(string).get(this, "", "default_sequence",
 				       _default_sequence)) {
-	  uvm_warning("UVM_DEPRECATED", "default_sequence config parameter is"
-		      " deprecated and not part of the UVM standard. See"
-		      " documentation for uvm_sequencer_base::"
+	  uvm_warning("UVM_DEPRECATED", "default_sequence config parameter is" ~
+		      " deprecated and not part of the UVM standard. See" ~
+		      " documentation for uvm_sequencer_base::" ~
 		      "start_phase_sequence().");
 	  _m_default_seq_set = true;
 	}
 	if (uvm_config_db!(int).get(this, "", "count", _count)) {
-	  uvm_warning("UVM_DEPRECATED", "count config parameter is deprecated"
+	  uvm_warning("UVM_DEPRECATED", "count config parameter is deprecated" ~
 		      " and not part of the UVM standard");
 	}
 	if (uvm_config_db!(uint).get(this, "", "max_random_count",
 				     _max_random_count)) {
-	  uvm_warning("UVM_DEPRECATED", "count config parameter is deprecated"
+	  uvm_warning("UVM_DEPRECATED", "count config parameter is deprecated" ~
 		      " and not part of the UVM standard");
 	}
 	if (uvm_config_db!(uint).get(this, "", "max_random_depth",
 				     _max_random_depth)) {
-	  uvm_warning("UVM_DEPRECATED", "max_random_depth config parameter is"
-		      " deprecated and not part of the UVM standard. Use "
-		      "'uvm_sequence_library' class for sequence library "
+	  uvm_warning("UVM_DEPRECATED", "max_random_depth config parameter is" ~
+		      " deprecated and not part of the UVM standard. Use " ~
+		      "'uvm_sequence_library' class for sequence library " ~
 		      "functionality");
 	}
 	if (uvm_config_db!(int).get(this, "", "pound_zero_count", dummy)) {
-	  uvm_warning("UVM_DEPRECATED", "pound_zero_count was set but ignored. "
-		      "Sequencer/driver synchronization now uses "
+	  uvm_warning("UVM_DEPRECATED", "pound_zero_count was set but ignored. " ~
+		      "Sequencer/driver synchronization now uses " ~
 		      "'uvm_wait_for_nba_region'");
 	}
       }
@@ -1505,7 +1505,7 @@ class uvm_sequencer_base: uvm_component
     synchronized(this) {
       m_arb_size = m_lock_arb_size.get;
       for (int i = 0; i < _arb_sequence_q.length; ++i) {
-	if (_arb_sequence_q[i].request == SEQ_TYPE_REQ) {
+	if (_arb_sequence_q[i].request == seq_req_t.SEQ_TYPE_REQ) {
 	  if (is_blocked(_arb_sequence_q[i].sequence_ptr) is false) {
 	    if (_arb_sequence_q[i].sequence_ptr.is_relevant() is false) {
 	      is_relevant_entries.pushBack(i);
@@ -1580,7 +1580,7 @@ class uvm_sequencer_base: uvm_component
 	uvm_report_fatal("SEQITEMPRI",
 			 format("Sequence item from %s has illegal priority: %0d",
 				seq_q_entry.sequence_ptr.get_full_name(),
-				seq_q_entry.item_priority), UVM_NONE);
+				seq_q_entry.item_priority), uvm_verbosity.UVM_NONE);
       }
       return seq_q_entry.item_priority;
     }
@@ -1589,7 +1589,7 @@ class uvm_sequencer_base: uvm_component
       uvm_report_fatal("SEQDEFPRI",
 		       format("Sequence %s has illegal priority: %0d",
 			      seq_q_entry.sequence_ptr.get_full_name(),
-			      seq_q_entry.sequence_ptr.get_priority()), UVM_NONE);
+			      seq_q_entry.sequence_ptr.get_priority()), uvm_verbosity.UVM_NONE);
     }
     return seq_q_entry.sequence_ptr.get_priority();
   }
@@ -1730,10 +1730,10 @@ class uvm_sequencer_base: uvm_component
 	// Have run-time phases and no user setting of default sequence
 	if(_m_default_seq_set == false && m_domain !is null) {
 	  _default_sequence = "";
-	  uvm_info("NODEFSEQ", "The \"default_sequence\" has not been set. "
-		   "Since this sequencer has a runtime phase schedule, the "
+	  uvm_info("NODEFSEQ", "The \"default_sequence\" has not been set. " ~
+		   "Since this sequencer has a runtime phase schedule, the " ~
 		   "uvm_random_sequence is not being started for the run phase.",
-		   UVM_HIGH);
+		   uvm_verbosity.UVM_HIGH);
 	  return;
 	}
 
@@ -1744,9 +1744,9 @@ class uvm_sequencer_base: uvm_component
 	     uvm_config_db!(uvm_object_wrapper).exists(this, "run_phase",
 						       "default_sequence", 0))) {
 
-	  uvm_warning("MULDEFSEQ", "A default phase sequence has been set via the "
-		      "\"<phase_name>.default_sequence\" configuration option."
-		      "The deprecated \"default_sequence\" configuration option"
+	  uvm_warning("MULDEFSEQ", "A default phase sequence has been set via the " ~
+		      "\"<phase_name>.default_sequence\" configuration option." ~
+		      "The deprecated \"default_sequence\" configuration option" ~
 		      " is ignored.");
 	  return;
 	}
@@ -1755,15 +1755,15 @@ class uvm_sequencer_base: uvm_component
 	if(_sequences.length == 2 &&
 	   _sequences[0] == "uvm_random_sequence" &&
 	   _sequences[1] == "uvm_exhaustive_sequence") {
-	  uvm_report_warning("NOUSERSEQ", "No user sequence available. "
+	  uvm_report_warning("NOUSERSEQ", "No user sequence available. " ~
 			     "Not starting the (deprecated) default sequence.",
-			     UVM_HIGH);
+			     uvm_verbosity.UVM_HIGH);
 	  return;
 	}
 
 	uvm_warning("UVM_DEPRECATED", "Starting (deprecated) default sequence '" ~
 		    _default_sequence ~ "' on sequencer '" ~ get_full_name() ~
-		    "'. See documentation for uvm_sequencer_base::"
+		    "'. See documentation for uvm_sequencer_base::" ~
 		    "start_phase_sequence() for information on " ~
 		    "starting default sequences in UVM.");
 
@@ -1775,11 +1775,11 @@ class uvm_sequencer_base: uvm_component
 	//create the sequence object
 	if (m_seq is null) {
 	  uvm_report_fatal("FCTSEQ", "Default sequence set to invalid value : " ~
-			   _default_sequence, UVM_NONE);
+			   _default_sequence, uvm_verbosity.UVM_NONE);
 	}
 
 	if (m_seq is null) {
-	  uvm_report_fatal("STRDEFSEQ", "Null m_sequencer reference", UVM_NONE);
+	  uvm_report_fatal("STRDEFSEQ", "Null m_sequencer reference", uvm_verbosity.UVM_NONE);
 	}
 	synchronized(m_seq) {
 	  m_seq.set_starting_phase = run_ph;
@@ -1847,7 +1847,7 @@ class uvm_sequencer_base: uvm_component
 	if (m_seq is null) {
 	  uvm_report_fatal("FCTSEQ",
 			   format("Factory cannot produce a sequence of type %0s.",
-				  m_seq_type), UVM_NONE);
+				  m_seq_type), uvm_verbosity.UVM_NONE);
 	}
 
 	m_seq.print_sequence_info = true;
@@ -1908,8 +1908,6 @@ private enum seq_req_t: byte
   {   SEQ_TYPE_REQ,
       SEQ_TYPE_LOCK,
       SEQ_TYPE_GRAB} // FIXME SEQ_TYPE_GRAB is unused
-
-mixin(declareEnums!seq_req_t());
 
 class uvm_sequence_request
 {

@@ -141,7 +141,6 @@ import uvm.base.uvm_factory;
 import uvm.base.uvm_recorder;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_phase;
-import uvm.base.uvm_message_defines;
 import uvm.base.uvm_tr_stream;
 import uvm.dap.uvm_get_to_lock_dap;
 import uvm.meta.misc;
@@ -151,7 +150,7 @@ import esdl.data.queue;
 
 version(UVM_NO_RAND) {}
  else {
-   import esdl.data.rand;
+   import esdl.rand;
  }
 
 import std.string;
@@ -261,8 +260,8 @@ class uvm_sequence_base: uvm_sequence_item
   this(string name = "uvm_sequence") {
     synchronized(this) {
       super(name);
-      _m_sequence_state = new WithEvent!uvm_sequence_state;
-      _m_sequence_state = UVM_CREATED;
+      _m_sequence_state = new WithEvent!uvm_sequence_state("_m_sequence_state");
+      _m_sequence_state = uvm_sequence_state.UVM_CREATED;
       _m_wait_for_grant_semaphore = 0;
       _response_queue_event.initialize("_response_queue_event");
       m_init_phase_daps(true);
@@ -363,12 +362,12 @@ class uvm_sequence_base: uvm_sequence_item
       set_item_context(parent_sequence, sequencer);
 
       // if (!(m_sequence_state inside {CREATED,STOPPED,FINISHED}))
-      if(_m_sequence_state != UVM_CREATED &&
-	 _m_sequence_state != UVM_STOPPED &&
-	 _m_sequence_state != UVM_FINISHED) {
+      if(_m_sequence_state != uvm_sequence_state.UVM_CREATED &&
+	 _m_sequence_state != uvm_sequence_state.UVM_STOPPED &&
+	 _m_sequence_state != uvm_sequence_state.UVM_FINISHED) {
 	uvm_report_fatal("SEQ_NOT_DONE",
 			 "Sequence " ~ get_full_name() ~ " already started",
-			 UVM_NONE);
+			 uvm_verbosity.UVM_NONE);
       }
 
       if(_m_parent_sequence !is null) {
@@ -381,7 +380,7 @@ class uvm_sequence_base: uvm_sequence_item
 	uvm_report_fatal("SEQPRI",
 			 format("Sequence %s start has illegal priority: %0d",
 				get_full_name(),
-				this_priority), UVM_NONE);
+				this_priority), uvm_verbosity.UVM_NONE);
       }
       if (this_priority < 0) {
 	if (parent_sequence is null) {
@@ -427,7 +426,7 @@ class uvm_sequence_base: uvm_sequence_item
 
     // Change the state to PRE_START, do this before the fork so that
     // the "if (!(m_sequence_state inside {...}" works
-    m_sequence_state = UVM_PRE_START;
+    m_sequence_state = uvm_sequence_state.UVM_PRE_START;
     
     auto seqFork = fork!("uvm_sequence_base/start")({
 	m_sequence_process = Process.self;
@@ -443,7 +442,7 @@ class uvm_sequence_base: uvm_sequence_item
 	pre_start();
 
 	if (call_pre_post is true) {
-	  m_sequence_state = UVM_PRE_FRAME;
+	  m_sequence_state = uvm_sequence_state.UVM_PRE_FRAME;
 	  wait(0);
 	  pre_frame();
 	}
@@ -453,11 +452,11 @@ class uvm_sequence_base: uvm_sequence_item
 	  parent_sequence.mid_do(this); // function
 	}
 
-	m_sequence_state = UVM_FRAME;
+	m_sequence_state = uvm_sequence_state.UVM_FRAME;
 	wait(0);
 	frame();
 
-	m_sequence_state = UVM_ENDED;
+	m_sequence_state = uvm_sequence_state.UVM_ENDED;
 	wait(0);
 
 	if(parent_sequence !is null) {
@@ -465,12 +464,12 @@ class uvm_sequence_base: uvm_sequence_item
 	}
 
 	if (call_pre_post is true) {
-	  m_sequence_state = UVM_POST_FRAME;
+	  m_sequence_state = uvm_sequence_state.UVM_POST_FRAME;
 	  wait(0);
 	  post_frame();
 	}
 
-	m_sequence_state = UVM_POST_START;
+	m_sequence_state = uvm_sequence_state.UVM_POST_START;
 	wait(0);
 	post_start();
 
@@ -479,7 +478,7 @@ class uvm_sequence_base: uvm_sequence_item
 	  m_safe_drop_starting_phase("automatic phase objection");
         }
          
-	m_sequence_state = UVM_FINISHED;
+	m_sequence_state = uvm_sequence_state.UVM_FINISHED;
 	wait(0);
 
       });
@@ -492,7 +491,7 @@ class uvm_sequence_base: uvm_sequence_item
 
       // Clean up any sequencer queues after exiting; if we
       // were forcibly stoped, this step has already taken place
-      if (_m_sequence_state != UVM_STOPPED) {
+      if (_m_sequence_state != uvm_sequence_state.UVM_STOPPED) {
 	if (_m_sequencer !is null) {
 	  _m_sequencer.m_sequence_exiting(this);
 	}
@@ -895,8 +894,8 @@ class uvm_sequence_base: uvm_sequence_item
       _wait_rel_default = true;
       if (_is_rel_default !is _wait_rel_default) {
 	uvm_report_fatal("RELMSM",
-			 "is_relevant() was implemented without defining"
-			 " wait_for_relevant()", UVM_NONE);
+			 "is_relevant() was implemented without defining" ~
+			 " wait_for_relevant()", uvm_verbosity.UVM_NONE);
       }
     }
     sleep();  // this is intended to never return
@@ -921,7 +920,7 @@ class uvm_sequence_base: uvm_sequence_item
     }
 
     if (sequencer is null) {
-      uvm_report_fatal("LOCKSEQR", "Null m_sequencer reference", UVM_NONE);
+      uvm_report_fatal("LOCKSEQR", "Null m_sequencer reference", uvm_verbosity.UVM_NONE);
     }
 
     sequencer.lock(this);
@@ -943,7 +942,7 @@ class uvm_sequence_base: uvm_sequence_item
   void grab(uvm_sequencer_base sequencer = null) {
     if (sequencer is null) {
       if (m_sequencer is null) {
-	uvm_report_fatal("GRAB", "Null m_sequencer reference", UVM_NONE);
+	uvm_report_fatal("GRAB", "Null m_sequencer reference", uvm_verbosity.UVM_NONE);
       }
       m_sequencer.grab(this);
     }
@@ -963,7 +962,7 @@ class uvm_sequence_base: uvm_sequence_item
     synchronized(this) {
       if (sequencer is null) {
 	if (_m_sequencer is null) {
-	  uvm_report_fatal("UNLOCK", "Null m_sequencer reference", UVM_NONE);
+	  uvm_report_fatal("UNLOCK", "Null m_sequencer reference", uvm_verbosity.UVM_NONE);
 	}
 	_m_sequencer.unlock(this);
       }
@@ -1071,7 +1070,7 @@ class uvm_sequence_base: uvm_sequence_item
 	_m_sequence_process.abort();
 	_m_sequence_process = null;
       }
-      _m_sequence_state = UVM_STOPPED;
+      _m_sequence_state = uvm_sequence_state.UVM_STOPPED;
       if((_m_parent_sequence !is null) &&
 	 (_m_parent_sequence.in_children_array(this))) {
 	m_parent_sequence.rem_children_array(this);
@@ -1120,16 +1119,16 @@ class uvm_sequence_base: uvm_sequence_item
       if(item is null) {
 	uvm_report_fatal("NULLITM",
 			 "attempting to start a null item from sequence '" ~
-			 get_full_name() ~ "'", UVM_NONE);
+			 get_full_name() ~ "'", uvm_verbosity.UVM_NONE);
 	return;
       }
 
       auto seq = cast(uvm_sequence_base) item;
       if(seq !is null) {
 	uvm_report_fatal("SEQNOTITM",
-			 "attempting to start a sequence using start_item()"
+			 "attempting to start a sequence using start_item()" ~
 			 " from sequence '" ~ get_full_name() ~
-			 "'. Use seq.start() instead.", UVM_NONE);
+			 "'. Use seq.start() instead.", uvm_verbosity.UVM_NONE);
 	return;
       }
 
@@ -1141,9 +1140,9 @@ class uvm_sequence_base: uvm_sequence_item
 	sequencer = get_sequencer();
 
       if(sequencer is null) {
-	uvm_report_fatal("SEQ", "neither the item's sequencer nor dedicated "
+	uvm_report_fatal("SEQ", "neither the item's sequencer nor dedicated " ~
 			 "sequencer has been supplied to start item in " ~
-			 get_full_name(), UVM_NONE);
+			 get_full_name(), uvm_verbosity.UVM_NONE);
 	return;
       }
 
@@ -1182,7 +1181,7 @@ class uvm_sequence_base: uvm_sequence_item
     uvm_sequencer_base sequencer = item.get_sequencer();
 
     if (sequencer is null) {
-      uvm_report_fatal("STRITM", "sequence_item has null sequencer", UVM_NONE);
+      uvm_report_fatal("STRITM", "sequence_item has null sequencer", uvm_verbosity.UVM_NONE);
     }
 
     mid_do(item);
@@ -1215,7 +1214,7 @@ class uvm_sequence_base: uvm_sequence_item
   // task
   void wait_for_grant(int item_priority = -1, bool lock_request = false) {
     if (m_sequencer is null) {
-      uvm_report_fatal("WAITGRANT", "Null m_sequencer reference", UVM_NONE);
+      uvm_report_fatal("WAITGRANT", "Null m_sequencer reference", uvm_verbosity.UVM_NONE);
     }
     m_sequencer.wait_for_grant(this, item_priority, lock_request);
   }
@@ -1231,7 +1230,7 @@ class uvm_sequence_base: uvm_sequence_item
   void send_request(uvm_sequence_item request, bool rerandomize = false) {
     synchronized(this) {
       if (_m_sequencer is null) {
-	uvm_report_fatal("SENDREQ", "Null m_sequencer reference", UVM_NONE);
+	uvm_report_fatal("SENDREQ", "Null m_sequencer reference", uvm_verbosity.UVM_NONE);
       }
       _m_sequencer.send_request(this, request, rerandomize);
     }
@@ -1253,7 +1252,7 @@ class uvm_sequence_base: uvm_sequence_item
   // task
   void wait_for_item_done(int transaction_id = -1) {
     if (m_sequencer is null) {
-      uvm_report_fatal("WAITITEMDONE", "Null m_sequencer reference", UVM_NONE);
+      uvm_report_fatal("WAITITEMDONE", "Null m_sequencer reference", uvm_verbosity.UVM_NONE);
     }
     m_sequencer.wait_for_item_done(this, transaction_id);
   }
@@ -1375,8 +1374,8 @@ class uvm_sequence_base: uvm_sequence_item
 	return;
       }
       if (_response_queue_error_report_disabled == 0) {
-	uvm_report_error(get_full_name(), "Response queue overflow, "
-			 "response was dropped", UVM_NONE);
+	uvm_report_error(get_full_name(), "Response queue overflow, " ~
+			 "response was dropped", uvm_verbosity.UVM_NONE);
       }
     }
   }
@@ -1504,7 +1503,7 @@ class uvm_sequence_base: uvm_sequence_item
   	}
   	else {
   	  uvm_report_warning("NULLSQ", format("%0s sequencer is null.",
-  					      get_type_name()), UVM_NONE);
+  					      get_type_name()), uvm_verbosity.UVM_NONE);
   	  return 0;
   	}
       }
@@ -1526,15 +1525,15 @@ class uvm_sequence_base: uvm_sequence_item
   	  uvm_report_error("SEQRNG",
   			   format("Kind arg '%0d' out of range. Need 0-%0d",
   				  req_kind, _m_sequencer.sequences.length-1),
-  			   UVM_NONE);
+  			   uvm_verbosity.UVM_NONE);
   	}
   	string m_seq_type = _m_sequencer.sequences[req_kind];
   	uvm_sequence_base m_seq = cast(uvm_sequence_base)
   	  factory.create_object_by_name(m_seq_type, get_full_name(), m_seq_type);
   	if(m_seq is null) {
   	  uvm_report_fatal("FCTSEQ",
-  			   format("Factory cannot produce a sequence of type"
-  				  " %0s.", m_seq_type), UVM_NONE);
+  			   format("Factory cannot produce a sequence of type" ~
+  				  " %0s.", m_seq_type), uvm_verbosity.UVM_NONE);
   	}
   	m_seq.set_use_sequence_info(true);
   	return m_seq;
@@ -1558,8 +1557,8 @@ class uvm_sequence_base: uvm_sequence_item
   	factory.create_object_by_name(m_seq_type, get_full_name(), m_seq_type);
       if (m_seq is null) {
   	uvm_report_fatal("FCTSEQ",
-  			 format("Factory cannot produce a sequence of type"
-  				" %0s.", m_seq_type), UVM_NONE);
+  			 format("Factory cannot produce a sequence of type" ~
+  				" %0s.", m_seq_type), uvm_verbosity.UVM_NONE);
       }
 
       m_seq.set_item_context(this, m_sequencer);
@@ -1570,7 +1569,7 @@ class uvm_sequence_base: uvm_sequence_item
 	  m_seq.randomize();
 	}
 	catch {
-	  uvm_report_warning("RNDFLD", "Randomization failed in"
+	  uvm_report_warning("RNDFLD", "Randomization failed in" ~
 			     " do_sequence_kind()");
 	}
       }
@@ -1591,8 +1590,8 @@ class uvm_sequence_base: uvm_sequence_item
 	factory.create_object_by_name(seq_name, get_full_name(), seq_name);
       if (m_seq is null) {
 	uvm_report_fatal("FCTSEQ",
-			 format("Factory cannot produce a sequence of type"
-				" %0s.", seq_name), UVM_NONE);
+			 format("Factory cannot produce a sequence of type" ~
+				" %0s.", seq_name), uvm_verbosity.UVM_NONE);
       }
       m_seq.set_use_sequence_info(true);
       return m_seq;
@@ -1606,7 +1605,7 @@ class uvm_sequence_base: uvm_sequence_item
     // task
     void create_and_start_sequence_by_name(string seq_name) {
       uvm_warning("UVM_DEPRECATED",
-  		  format("uvm_sequence_base.create_and_start_sequence_by_name"
+  		  format("uvm_sequence_base.create_and_start_sequence_by_name" ~
   			 " deprecated."));
       uvm_sequence_base m_seq = get_sequence_by_name(seq_name);
       m_seq.start(m_sequencer, this, this.get_priority(), 0);
@@ -2057,8 +2056,8 @@ class uvm_sequence_base: uvm_sequence_item
       if(p_sequencer is null) {
 	import std.string: format;
 	uvm_fatal("DCLPSQ",
-		  format("%m %s Error casting p_sequencer, please verify"
-			 " that this sequence/sequence item is intended "
+		  format("%m %s Error casting p_sequencer, please verify" ~
+			 " that this sequence/sequence item is intended " ~
 			 "to execute on this type of sequencer",
 			 get_full_name()));
       }

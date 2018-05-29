@@ -63,14 +63,14 @@
 
 module uvm.base.uvm_common_phases;
 
-import uvm.base.uvm_phase;
-import uvm.base.uvm_bottomup_phase;
-import uvm.base.uvm_topdown_phase;
-import uvm.base.uvm_component;
-import uvm.base.uvm_globals;
-import uvm.base.uvm_task_phase;
-import uvm.base.uvm_entity;
+import uvm.base.uvm_phase: uvm_phase;
+import uvm.base.uvm_bottomup_phase: uvm_bottomup_phase;
+import uvm.base.uvm_topdown_phase: uvm_topdown_phase;
+import uvm.base.uvm_component: uvm_component;
+import uvm.base.uvm_task_phase: uvm_task_phase;
+
 import uvm.base.uvm_once;
+
 import uvm.meta.misc;
 import uvm.meta.meta;
 
@@ -175,15 +175,15 @@ final class uvm_connect_phase: uvm_bottomup_phase
   }
 }
 
-final class uvm_admin_phase: uvm_topdown_phase
+final class uvm_setup_phase: uvm_topdown_phase
 {
   static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
-    uvm_admin_phase _m_inst;
+    uvm_setup_phase _m_inst;
     this() {
       synchronized(this) {
-	_m_inst = new uvm_admin_phase();
+	_m_inst = new uvm_setup_phase();
       }
     }
   };
@@ -191,7 +191,7 @@ final class uvm_admin_phase: uvm_topdown_phase
   mixin(uvm_once_sync_string);
   
   final override void exec_func(uvm_component comp, uvm_phase phase) {
-    comp.admin_phase(phase);
+    comp.setup_phase(phase);
     // Do the auto elab stuff here
     debug(UVM_AUTO) {
       uvm_info("UVM_AUTO", "Elaborating: " ~ comp.get_full_name() ~ ":" ~
@@ -204,7 +204,7 @@ final class uvm_admin_phase: uvm_topdown_phase
 
   // Function: get
   // Returns the singleton phase handle
-  static uvm_admin_phase get() {
+  static uvm_setup_phase get() {
     return m_inst;
   }
 

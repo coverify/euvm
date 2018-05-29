@@ -1553,12 +1553,12 @@ abstract class uvm_reg_block: uvm_object
 
     if (!needs_update()) {
       uvm_report_info("RegModel", format("%s:%0d - RegModel block %s does not need updating",
-				  fname, lineno, this.get_name()), UVM_HIGH);
+				  fname, lineno, this.get_name()), uvm_verbosity.UVM_HIGH);
       return;
     }
    
     uvm_report_info("RegModel", format("%s:%0d - Updating model block %s with %s path",
-				fname, lineno, this.get_name(), path ), UVM_HIGH);
+				fname, lineno, this.get_name(), path ), uvm_verbosity.UVM_HIGH);
 
     foreach (rg_, unused; get_regs()) {
       uvm_reg rg = rg_;

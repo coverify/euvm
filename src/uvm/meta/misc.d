@@ -115,9 +115,9 @@ class QueueWithEvent(T)
     _event.wait();
   }
 
-  this() {
+  this(string name) {
     synchronized(this) {
-      _event.initialize("_event", Process.self);
+      _event.initialize(name, Process.self);
     }
   }
 
@@ -155,8 +155,8 @@ class AssocWithEvent(K, V)
     _event.wait();
   }
 
-  this() {
-    _event.initialize("_event", Process.self);
+  this(string name) {
+    _event.initialize(name, Process.self);
   }
 }
 
@@ -170,24 +170,24 @@ class WithEvent(T) {
   T _val;
   Event _event;
 
-  this(T val, NamedComp parent=null) {
+  this(string name, T val, NamedComp parent=null) {
     synchronized(this) {
       if(parent is null) {
 	parent = Process.self;
       }
       assert(parent !is null);
-      _event.initialize("_event", parent);
+      _event.initialize(name, parent);
       _val = val;
     }
   }
 
-  this(NamedComp parent=null) {
+  this(string name, NamedComp parent=null) {
     synchronized(this) {
       if(parent is null) {
 	parent = Process.self;
       }
       assert(parent !is null);
-      _event.initialize("_event", parent);
+      _event.initialize(name, parent);
     }
   }
 

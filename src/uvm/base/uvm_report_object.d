@@ -81,23 +81,26 @@ module uvm.base.uvm_report_object;
 //
 //------------------------------------------------------------------------------
 
-import uvm.base.uvm_coreservice;
-import uvm.base.uvm_object;
-import uvm.base.uvm_report_handler;
-import uvm.base.uvm_report_server;
-import uvm.base.uvm_report_catcher;
-import uvm.base.uvm_report_message;
-import uvm.base.uvm_callback;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_root;
+import uvm.meta.misc;
+
+import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_report_handler: uvm_report_handler;
+import uvm.base.uvm_report_server: uvm_report_server;
+import uvm.base.uvm_report_catcher: uvm_report_catcher;
+import uvm.base.uvm_report_message: uvm_report_message;
+import uvm.base.uvm_callback: uvm_register_cb;
+
+import uvm.base.uvm_object_globals: uvm_severity, uvm_action, uvm_verbosity, uvm_action_type, UVM_FILE;
+import uvm.base.uvm_globals: uvm_report_intf;
+
 import esdl.base.core: finish;
 
-version(UVM_NO_DEPRECATED) { }
- else {
-   version = UVM_INCLUDE_DEPRECATED;
- }
+// version(UVM_NO_DEPRECATED) { }
+//  else {
+//    version = UVM_INCLUDE_DEPRECATED;
+//  }
 
-class uvm_report_object: /*extends*/ uvm_object
+class uvm_report_object: /*extends*/ uvm_object, uvm_report_intf
 {
   mixin(uvm_sync_string);
 
@@ -129,8 +132,10 @@ class uvm_report_object: /*extends*/ uvm_object
   // Group: Reporting
   //----------------------------------------------------------------------------
 
-  import uvm.base.uvm_message_defines: uvm_report_mixin;
-  mixin uvm_report_mixin;
+  // import uvm.base.uvm_message_defines: uvm_report_mixin_string;
+  // // mixin uvm_report_mixin;
+  // mixin(uvm_report_mixin_string());
+  
 
   // Function: uvm_get_report_object
   //
@@ -171,8 +176,8 @@ class uvm_report_object: /*extends*/ uvm_object
 					string context_name = "",
 					bool report_enabled_checked = false) {
     if(verbosity == -1) {
-      verbosity = (severity == UVM_ERROR) ? UVM_LOG :
-	(severity == UVM_FATAL) ? UVM_NONE : UVM_MEDIUM;
+      verbosity = (severity == uvm_severity.UVM_ERROR) ? uvm_action_type.UVM_LOG :
+	(severity == uvm_severity.UVM_FATAL) ? uvm_verbosity.UVM_NONE : uvm_verbosity.UVM_MEDIUM;
     }
     uvm_report(severity, id, message, verbosity, file, line,
 	       context_name, report_enabled_checked);
@@ -203,7 +208,7 @@ class uvm_report_object: /*extends*/ uvm_object
   void uvm_report_info(string file=__FILE__,
 		       size_t line=__LINE__)(string id,
 					     string message,
-					     int verbosity=UVM_MEDIUM,
+					     int verbosity=uvm_verbosity.UVM_MEDIUM,
 					     string context_name = "",
 					     bool report_enabled_checked = false) {
     uvm_report_info(id, message, verbosity, file, line,
@@ -219,7 +224,7 @@ class uvm_report_object: /*extends*/ uvm_object
   		       string context_name = "",
   		       bool report_enabled_checked = false) {
 
-    uvm_report(UVM_INFO, id, message, verbosity,
+    uvm_report(uvm_severity.UVM_INFO, id, message, verbosity,
   	       filename, line, context_name, report_enabled_checked);
   }
 
@@ -228,7 +233,7 @@ class uvm_report_object: /*extends*/ uvm_object
   void uvm_report_warning(string file=__FILE__,
 			  size_t line=__LINE__)(string id,
 						string message,
-						int verbosity=UVM_MEDIUM,
+						int verbosity=uvm_verbosity.UVM_MEDIUM,
 						string context_name = "",
 						bool report_enabled_checked = false) {
     uvm_report_warning(id, message, verbosity, file, line,
@@ -243,7 +248,7 @@ class uvm_report_object: /*extends*/ uvm_object
 			   string context_name = "",
 			   bool report_enabled_checked = false) {
 
-    uvm_report (UVM_WARNING, id, message, verbosity,
+    uvm_report (uvm_severity.UVM_WARNING, id, message, verbosity,
 		filename, line, context_name, report_enabled_checked);
   }
 
@@ -252,7 +257,7 @@ class uvm_report_object: /*extends*/ uvm_object
   void uvm_report_error(string file=__FILE__,
 			size_t line=__LINE__)(string id,
 					      string message,
-					      int verbosity=UVM_LOW,
+					      int verbosity=uvm_verbosity.UVM_LOW,
 					      string context_name = "",
 					      bool report_enabled_checked = false) {
     uvm_report_error(id, message, verbosity, file, line,
@@ -266,7 +271,7 @@ class uvm_report_object: /*extends*/ uvm_object
 			 size_t line,
 			 string context_name = "",
 			 bool report_enabled_checked = false) {
-    uvm_report(UVM_ERROR, id, message, verbosity,
+    uvm_report(uvm_severity.UVM_ERROR, id, message, verbosity,
 	       filename, line, context_name, report_enabled_checked);
   }
 
@@ -312,7 +317,7 @@ class uvm_report_object: /*extends*/ uvm_object
   void uvm_report_fatal(string file=__FILE__,
 			size_t line=__LINE__)(string id,
 					      string message,
-					      int verbosity=UVM_NONE,
+					      int verbosity=uvm_verbosity.UVM_NONE,
 					      string context_name = "",
 					      bool report_enabled_checked = false) {
     uvm_report_fatal(id, message, verbosity, file, line,
@@ -327,7 +332,7 @@ class uvm_report_object: /*extends*/ uvm_object
 			 string context_name = "",
 			 bool report_enabled_checked = false) {
 
-    uvm_report (UVM_FATAL, id, message, verbosity,
+    uvm_report (uvm_severity.UVM_FATAL, id, message, verbosity,
 		filename, line, context_name, report_enabled_checked);
   }
 
@@ -639,6 +644,8 @@ class uvm_report_object: /*extends*/ uvm_object
     // Use <uvm_root::report_header()>
 
     void report_header(UVM_FILE file = UVM_FILE.init) {
+      import uvm.base.uvm_root;
+      import uvm.base.uvm_coreservice;
       uvm_coreservice_t cs = uvm_coreservice_t.get();
       uvm_root l_root = cs.get_root();
       l_root.report_header(file);
@@ -679,6 +686,8 @@ class uvm_report_object: /*extends*/ uvm_object
     // rs.die()
 
     void die() {
+      import uvm.base.uvm_root;
+      import uvm.base.uvm_coreservice;
       uvm_coreservice_t cs = uvm_coreservice_t.get();
       uvm_root l_root = cs.get_root();
       l_root.die();

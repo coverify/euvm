@@ -24,7 +24,7 @@
 
 module uvm.dap.uvm_set_get_dap_base;
 
-import uvm.base.uvm_object;
+import uvm.base.uvm_object: uvm_object;
 
 // Class: uvm_set_get_dap_base
 // Provides the 'set' and 'get' interface for Data Access Policies (DAPs)

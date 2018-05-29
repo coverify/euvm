@@ -22,8 +22,8 @@
 //------------------------------------------------------------------------------
 
 module uvm.base.uvm_event_callback;
-import uvm.base.uvm_object;
-import uvm.base.uvm_event;
+import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_event: uvm_event;
 
 //------------------------------------------------------------------------------
 //

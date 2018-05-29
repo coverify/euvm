@@ -165,34 +165,28 @@ class uvm_tlm_fifo_common(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
   }
 
   override public bool try_get(out T t) {
-    synchronized(this) {
-      if(!m.try_get(t)) {
-	return false;
-      }
-
-      get_ap.write(t);
-      return true;
+    if(! m.try_get(t)) {
+      return false;
     }
+
+    get_ap.write(t);
+    return true;
   }
 
   override public bool try_peek(out T t) {
-    synchronized(this) {
-      if(!m.try_peek(t)) {
-	return false;
-      }
-      return true;
+    if(! m.try_peek(t)) {
+      return false;
     }
+    return true;
   }
 
   override public bool try_put(T t) {
-    synchronized(this) {
-      if(!m.try_put(t)) {
-	return false;
-      }
-
-      put_ap.write(t);
-      return true;
+    if(! m.try_put(t)) {
+      return false;
     }
+
+    put_ap.write(t);
+    return true;
   }
 
   // Should always be called under synchronized(this) lock
@@ -234,7 +228,7 @@ class uvm_tlm_fifo_common(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
       if(m.num() > 0 && m_pending_blocked_gets != 0) {
 	uvm_report_error("flush failed" ,
 			 "there are blocked gets preventing the flush",
-			 UVM_NONE);
+			 uvm_verbosity.UVM_NONE);
       }
     }
   }
@@ -251,24 +245,57 @@ class uvm_tlm_fifo(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
   }
 }
 
-class uvm_tlm_fifo_ingress(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
+class uvm_tlm_async_pull_fifo(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
 {
   mixin uvm_component_essentials;
   public this(string name=null, uvm_component parent = null, int size = 1) {
     synchronized(this) {
       super(name, parent, size);
-      _m = new MailInbox!T(size);
+      _m = new MailInbox!T(parent, size);
     }
   }
 }
 
-class uvm_tlm_fifo_egress(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
+class uvm_tlm_async_push_fifo(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
 {
   mixin uvm_component_essentials;
   public this(string name=null, uvm_component parent = null, int size = 1) {
     synchronized(this) {
       super(name, parent, size);
-      _m = new MailOutbox!T(size);
+      _m = new MailOutbox!T(parent, size);
+    }
+  }
+}
+
+class uvm_tlm_async_fifo(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
+{
+  mixin uvm_component_essentials;
+  public this(string name=null, uvm_component parent = null, int size = 1) {
+    synchronized(this) {
+      super(name, parent, size);
+      _m = new MailInOutbox!T(parent, size);
+    }
+  }
+}
+
+class uvm_tlm_vpi_pull_fifo(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
+{
+  mixin uvm_component_essentials;
+  public this(string name=null, uvm_component parent = null, int size = 1) {
+    synchronized(this) {
+      super(name, parent, size);
+      _m = new MailVpiInbox!T(parent, size);
+    }
+  }
+}
+
+class uvm_tlm_vpi_push_fifo(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
+{
+  mixin uvm_component_essentials;
+  public this(string name=null, uvm_component parent = null, int size = 1) {
+    synchronized(this) {
+      super(name, parent, size);
+      _m = new MailVpiOutbox!T(parent, size);
     }
   }
 }

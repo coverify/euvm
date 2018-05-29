@@ -52,7 +52,7 @@ class uvm_tlm_b_target_socket_base(T=uvm_tlm_generic_payload)
   {
     this(string name, uvm_component parent) {
       synchronized(this) {
-	super(name, parent, UVM_IMPLEMENTATION, 1, 1);
+	super(name, parent, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
 	m_if_mask = UVM_TLM_B_MASK;
       }
     }
@@ -75,7 +75,7 @@ class uvm_tlm_b_initiator_socket_base(T=uvm_tlm_generic_payload)
     this(string name, uvm_component parent,
 	 int min_size=1, int max_size=1) {
       synchronized(this) {
-	super(name, parent, UVM_PORT, min_size, max_size);
+	super(name, parent, uvm_port_type_e.UVM_PORT, min_size, max_size);
 	m_if_mask = UVM_TLM_B_MASK;
       }
     }
@@ -108,7 +108,7 @@ class uvm_tlm_nb_target_socket_base(T=uvm_tlm_generic_payload,
 
     this(string name, uvm_component parent) {
       synchronized(this) {
-	super (name, parent, UVM_IMPLEMENTATION, 1, 1);
+	super (name, parent, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
 	m_if_mask = UVM_TLM_NB_FW_MASK;
       }
     }
@@ -140,7 +140,7 @@ class uvm_tlm_nb_initiator_socket_base(T=uvm_tlm_generic_payload,
   {
     this(string name, uvm_component parent) {
       synchronized(this) {
-	super (name, parent, UVM_PORT, 1, 1);
+	super (name, parent, uvm_port_type_e.UVM_PORT, 1, 1);
 	m_if_mask = UVM_TLM_NB_FW_MASK;
       }
     }
@@ -177,7 +177,7 @@ class uvm_tlm_nb_passthrough_initiator_socket_base(T=uvm_tlm_generic_payload,
     this(string name, uvm_component parent,
 	 int min_size=1, int max_size=1) {
       synchronized(this) {
-	super(name, parent, UVM_PORT, min_size, max_size);
+	super(name, parent, uvm_port_type_e.UVM_PORT, min_size, max_size);
 	m_if_mask = UVM_TLM_NB_FW_MASK;
 	bw_export = new uvm_tlm_nb_transport_bw_export!(T,P)("bw_export",
 							     get_comp());
@@ -209,7 +209,7 @@ class uvm_tlm_nb_passthrough_target_socket_base(T=uvm_tlm_generic_payload,
 
     this(string name, uvm_component parent,
 	 int min_size=1, int max_size=1) {
-      super (name, parent, UVM_EXPORT, min_size, max_size);
+      super (name, parent, uvm_port_type_e.UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_NB_FW_MASK;
       bw_port = new uvm_tlm_nb_transport_bw_port!(T,P)("bw_port", get_comp());
     }
@@ -237,7 +237,7 @@ class uvm_tlm_b_passthrough_initiator_socket_base(T=uvm_tlm_generic_payload)
     this(string name, uvm_component parent,
 	 int min_size=1, int max_size=1) {
       synchronized(this) {
-	super (name, parent, UVM_PORT, min_size, max_size);
+	super (name, parent, uvm_port_type_e.UVM_PORT, min_size, max_size);
 	m_if_mask = UVM_TLM_B_MASK;
       }
     }

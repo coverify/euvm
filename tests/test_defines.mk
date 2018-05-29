@@ -27,5 +27,7 @@ DMD = $(DMDDIR)/bin/ldmd2
 
 DMDLIBDIR = $(DMDDIR)/lib
 PHOBOS = phobos2-ldc
+UVMLIB = uvm-ldc
+ESDLLIB = esdl-ldc
 
 LIBDIR = $(VLANGDIR)/lib

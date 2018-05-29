@@ -43,7 +43,7 @@ import uvm.reg.uvm_reg_map;
 import uvm.reg.uvm_reg_model;
 import uvm.seq.uvm_sequence_base;
 
-import esdl.data.rand;
+import esdl.rand;
 import std.uni: toUpper;
 import std.conv: to;
 
@@ -227,7 +227,7 @@ class uvm_reg_field: uvm_object
       }
 
       if (!is_rand) {
-	uvm_info("RANDMODE", "TBD -- implement rand_mode", UVM_NONE);
+	uvm_info("RANDMODE", "TBD -- implement rand_mode", uvm_verbosity.UVM_NONE);
 	// _value.rand_mode(0);
       }
     }

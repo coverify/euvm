@@ -46,20 +46,17 @@ module uvm.base.uvm_report_handler;
 //
 //------------------------------------------------------------------------------
 
-import uvm.base.uvm_coreservice;
-import uvm.base.uvm_pool;
-import uvm.base.uvm_object_globals;
+import uvm.base.uvm_pool: uvm_pool;
+import uvm.base.uvm_object_globals: uvm_action, UVM_FILE,
+  uvm_severity, uvm_verbosity, uvm_action_type, uvm_radix_enum;
 
-import uvm.base.uvm_report_server;
-import uvm.base.uvm_report_object;
-import uvm.base.uvm_report_message;
-import uvm.base.uvm_cmdline_processor;
-import uvm.base.uvm_object;
-import uvm.base.uvm_object_defines;
-import uvm.base.uvm_printer;
-import uvm.base.uvm_version;
+import uvm.base.uvm_report_object: uvm_report_object;
+import uvm.base.uvm_report_message: uvm_report_message;
+import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_printer: uvm_printer;
 import uvm.base.uvm_globals: uvm_report_enabled;
-import uvm.base.uvm_entity;
+import uvm.base.uvm_object_defines;
+import uvm.base.uvm_version;
 import uvm.base.uvm_once;
 
 import uvm.meta.misc;
@@ -69,10 +66,10 @@ import esdl.base.core: Process;
 import std.string: format;
 import std.conv: to;
 
-version(UVM_NO_DEPRECATED) { }
- else {
-   version = UVM_INCLUDE_DEPRECATED;
- }
+// version(UVM_NO_DEPRECATED) { }
+//  else {
+//    version = UVM_INCLUDE_DEPRECATED;
+//  }
 
 alias uvm_id_actions_array = uvm_pool!(string, uvm_action);
 alias uvm_id_file_array = uvm_pool!(string, UVM_FILE);
@@ -138,9 +135,9 @@ class uvm_report_handler: uvm_object
   // of the current configuration.  A snippet of example output is shown here:
   //
   // |uvm_test_top                uvm_report_handler  -     @555                    
-  // |  max_verbosity_level       uvm_verbosity       32    UVM_FULL                
+  // |  max_verbosity_level       uvm_verbosity       32    uvm_verbosity.UVM_FULL                
   // |  id_verbosities            uvm_pool            3     -                       
-  // |    [ID1]                   uvm_verbosity       32    UVM_LOW                 
+  // |    [ID1]                   uvm_verbosity       32    uvm_verbosity.UVM_LOW                 
   // |  severity_id_verbosities   array               4     -                       
   // |    [UVM_INFO:ID4]          int                 32    501                     
   // |  id_actions                uvm_pool            2     -                       
@@ -281,7 +278,7 @@ class uvm_report_handler: uvm_object
       }
 
       // default file handle
-      printer.print("default_file_handle", _default_file_handle, UVM_HEX,
+      printer.print("default_file_handle", _default_file_handle, uvm_radix_enum.UVM_HEX,
 		    '.', "int");
 
       // id files 
@@ -289,7 +286,7 @@ class uvm_report_handler: uvm_object
 	printer.print_array_header("id_file_handles", _id_file_handles.num(),
 				   "uvm_pool");
 	foreach(idx, handle; _id_file_handles) {
-	  printer.print(format("[%s]", idx), handle, UVM_HEX, '.', "UVM_FILE");
+	  printer.print(format("[%s]", idx), handle, uvm_radix_enum.UVM_HEX, '.', "UVM_FILE");
 	}
 	printer.print_array_footer();
       }
@@ -299,7 +296,7 @@ class uvm_report_handler: uvm_object
 	printer.print_array_header("severity_file_handles", 4, "array");
 	foreach(l_severity, handle; _severity_file_handles) {
 	  printer.print(format("[%s]", l_severity.to!string()), 
-			handle, UVM_HEX, '.', "UVM_FILE");
+			handle, uvm_radix_enum.UVM_HEX, '.', "UVM_FILE");
 	}
 	printer.print_array_footer();
       }
@@ -316,7 +313,7 @@ class uvm_report_handler: uvm_object
 	foreach (l_severity, id_f_ary; _severity_id_file_handles) {
 	  foreach(idx, handle; id_f_ary) {
 	    printer.print(format("[%s:%s]", l_severity.to!string(), idx),
-			  handle, UVM_HEX, '.', "UVM_FILE");
+			  handle, uvm_radix_enum.UVM_HEX, '.', "UVM_FILE");
 	  }
 	}
 	printer.print_array_footer();
@@ -337,8 +334,8 @@ class uvm_report_handler: uvm_object
   // (e.g. <uvm_report_error>) in <uvm_report_object>.
 
   void process_report_message(uvm_report_message report_message) {
+    import uvm.base.uvm_report_server;
     synchronized(this) {
-      Process p = Process.self();
       uvm_report_server srvr = uvm_report_server.get_server();
       string id = report_message.get_id();
       uvm_severity severity = report_message.get_severity();
@@ -376,18 +373,18 @@ class uvm_report_handler: uvm_object
   static string format_action(uvm_action action) {
     string s;
 
-    if(action is UVM_NO_ACTION) {
+    if(action is uvm_action_type.UVM_NO_ACTION) {
       s = "NO ACTION";
     }
     else {
       s = "";
-      if(action & UVM_DISPLAY)   s ~= "DISPLAY ";
-      if(action & UVM_LOG)       s ~= "LOG ";
-      if(action & UVM_RM_RECORD) s ~= "RM_RECORD ";
-      if(action & UVM_COUNT)     s ~= "COUNT ";
-      if(action & UVM_EXIT)      s ~= "EXIT ";
-      if(action & UVM_CALL_HOOK) s ~= "CALL_HOOK ";
-      if(action & UVM_STOP)      s ~= "STOP ";
+      if(action & uvm_action_type.UVM_DISPLAY)   s ~= "DISPLAY ";
+      if(action & uvm_action_type.UVM_LOG)       s ~= "LOG ";
+      if(action & uvm_action_type.UVM_RM_RECORD) s ~= "RM_RECORD ";
+      if(action & uvm_action_type.UVM_COUNT)     s ~= "COUNT ";
+      if(action & uvm_action_type.UVM_EXIT)      s ~= "EXIT ";
+      if(action & uvm_action_type.UVM_CALL_HOOK) s ~= "CALL_HOOK ";
+      if(action & uvm_action_type.UVM_STOP)      s ~= "STOP ";
     }
 
     return s;
@@ -401,22 +398,22 @@ class uvm_report_handler: uvm_object
   final void initialize() {
     synchronized(this) {
       set_default_file(0);
-      _m_max_verbosity_level = UVM_MEDIUM;
+      _m_max_verbosity_level = uvm_verbosity.UVM_MEDIUM;
 
       _id_file_handles = new uvm_id_file_array();
       _id_actions = new uvm_id_actions_array();
       _id_verbosities = new uvm_id_verbosities_array();
       _sev_overrides = new uvm_sev_override_array();
 
-      set_severity_action(UVM_INFO,    UVM_DISPLAY);
-      set_severity_action(UVM_WARNING, UVM_DISPLAY);
-      set_severity_action(UVM_ERROR,   UVM_DISPLAY | UVM_COUNT);
-      set_severity_action(UVM_FATAL,   UVM_DISPLAY | UVM_EXIT);
+      set_severity_action(uvm_severity.UVM_INFO,    uvm_action_type.UVM_DISPLAY);
+      set_severity_action(uvm_severity.UVM_WARNING, uvm_action_type.UVM_DISPLAY);
+      set_severity_action(uvm_severity.UVM_ERROR,   uvm_action_type.UVM_DISPLAY | uvm_action_type.UVM_COUNT);
+      set_severity_action(uvm_severity.UVM_FATAL,   uvm_action_type.UVM_DISPLAY | uvm_action_type.UVM_EXIT);
 
-      set_severity_file(UVM_INFO, _default_file_handle);
-      set_severity_file(UVM_WARNING, _default_file_handle);
-      set_severity_file(UVM_ERROR,   _default_file_handle);
-      set_severity_file(UVM_FATAL,   _default_file_handle);
+      set_severity_file(uvm_severity.UVM_INFO, _default_file_handle);
+      set_severity_file(uvm_severity.UVM_WARNING, _default_file_handle);
+      set_severity_file(uvm_severity.UVM_ERROR,   _default_file_handle);
+      set_severity_file(uvm_severity.UVM_FATAL,   _default_file_handle);
     }
   }
 
@@ -664,11 +661,12 @@ class uvm_report_handler: uvm_object
 	      size_t line = 0,
 	      uvm_report_object client = null
 	      ) {
+    import uvm.base.uvm_coreservice;
     synchronized(this) {
       bool l_report_enabled = false;
       uvm_report_message l_report_message;
       uvm_coreservice_t cs = uvm_coreservice_t.get();
-      if (!uvm_report_enabled(verbosity_level, UVM_INFO, id)) {
+      if (!uvm_report_enabled(verbosity_level, uvm_severity.UVM_INFO, id)) {
 	return;
       }
 
@@ -707,19 +705,19 @@ class uvm_report_handler: uvm_object
 	bool ok = client.report_hook(id, message, verbosity, filename, line);
 
 	final switch(severity) {
-	case UVM_INFO:
+	case uvm_severity.UVM_INFO:
 	  ok &= client.report_info_hook(id, message, verbosity,
 					filename, line);
 	  break;
-	case UVM_WARNING:
+	case uvm_severity.UVM_WARNING:
 	  ok &= client.report_warning_hook(id, message, verbosity,
 					   filename, line);
 	  break;
-	case UVM_ERROR:
+	case uvm_severity.UVM_ERROR:
 	  ok &= client.report_error_hook(id, message, verbosity,
 					 filename, line);
 	  break;
-	case UVM_FATAL:
+	case uvm_severity.UVM_FATAL:
 	  ok &= client.report_fatal_hook(id, message, verbosity,
 					 filename, line);
 	  break;
@@ -734,6 +732,7 @@ class uvm_report_handler: uvm_object
     // Internal method for debug.
 
     final void dump_state() {
+      import uvm.base.uvm_report_server;
       synchronized(this) {
 	uvm_action a;
 	string idx;
@@ -840,7 +839,7 @@ class uvm_report_handler: uvm_object
 
 	q ~= "---------------------------------" ~
 	  "-------------------------------------";
-	uvm_info("UVM/REPORT/HANDLER", q, UVM_LOW);
+	uvm_info("UVM/REPORT/HANDLER", q, uvm_verbosity.UVM_LOW);
       
       }
     }

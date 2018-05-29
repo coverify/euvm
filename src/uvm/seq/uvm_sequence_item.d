@@ -36,16 +36,15 @@
 //------------------------------------------------------------------------------
 
 module uvm.seq.uvm_sequence_item;
-import uvm.base.uvm_coreservice;
 import uvm.base.uvm_factory;
 import uvm.base.uvm_printer;
 import uvm.base.uvm_object_globals;
+import uvm.base.uvm_globals: uvm_report_intf;
 import uvm.base.uvm_transaction;
 import uvm.base.uvm_registry;
 import uvm.base.uvm_report_object;
 import uvm.base.uvm_report_handler;
 import uvm.base.uvm_report_message;
-import uvm.base.uvm_root;
 
 import uvm.seq.uvm_sequence_base;
 import uvm.seq.uvm_sequencer_base;
@@ -55,10 +54,10 @@ import esdl.data.queue;
 
 version(UVM_NO_RAND) {}
  else {
-   import esdl.data.rand;
+   import esdl.rand;
  }
 
-class uvm_sequence_item: uvm_transaction
+class uvm_sequence_item: uvm_transaction, uvm_report_intf
 {
   mixin(uvm_sync_string);
 
@@ -170,7 +169,7 @@ class uvm_sequence_item: uvm_transaction
   // Set the sequence and sequencer execution context for a sequence item
 
   void set_item_context(uvm_sequence_base parent_seq,
-			       uvm_sequencer_base sequencer = null) {
+			uvm_sequencer_base sequencer = null) {
     synchronized(this) {
       set_use_sequence_info(true);
       if(parent_seq !is null) set_parent_sequence(parent_seq);
@@ -223,7 +222,7 @@ class uvm_sequence_item: uvm_transaction
     synchronized(this) {
       if (item is null) {
 	uvm_report_fatal(get_full_name(),
-			 "set_id_info called with null parameter", UVM_NONE);
+			 "set_id_info called with null parameter", uvm_verbosity.UVM_NONE);
       }
       this.set_transaction_id(item.get_transaction_id());
       this.set_sequence_id(item.get_sequence_id());
@@ -333,22 +332,26 @@ class uvm_sequence_item: uvm_transaction
   // Internal method; overrides must follow same naming convention
 
   override string get_full_name() {
+    string get_full_name_;
+    uvm_sequence_base parent_sequence;
+    uvm_sequencer_base sequencer;
     synchronized(this) {
-      string get_full_name_;
-      if(_m_parent_sequence !is null) {
-	get_full_name_ = _m_parent_sequence.get_full_name() ~ ".";
-      }
-      else if(_m_sequencer !is null) {
-	get_full_name_ = _m_sequencer.get_full_name() ~ ".";
-      }
-      if(get_name() != "") {
-	get_full_name_ ~= get_name();
-      }
-      else {
-	get_full_name_ ~= "_item";
-      }
-      return get_full_name_;
+      parent_sequence = _m_parent_sequence;
+      sequencer = _m_sequencer;
     }
+    if(parent_sequence !is null) {
+      get_full_name_ = parent_sequence.get_full_name() ~ ".";
+    }
+    else if(sequencer !is null) {
+      get_full_name_ = m_sequencer.get_full_name() ~ ".";
+    }
+    if(get_name() != "") {
+      get_full_name_ ~= get_name();
+    }
+    else {
+      get_full_name_ ~= "_item";
+    }
+    return get_full_name_;
   }
 
 
@@ -418,8 +421,7 @@ class uvm_sequence_item: uvm_transaction
   // Group: Reporting
   //----------------------------------------------------------------------------
 
-  import uvm.base.uvm_message_defines: uvm_report_mixin;
-  mixin uvm_report_mixin;
+  // mixin uvm_report_mixin;
 
   //---------------------------
   // Group: Reporting Interface
@@ -438,6 +440,7 @@ class uvm_sequence_item: uvm_transaction
 
   uvm_report_object uvm_get_report_object() {
     synchronized(this) {
+      import uvm.base.uvm_coreservice;
       if(_m_sequencer is null) {
 	uvm_coreservice_t cs = uvm_coreservice_t.get();
 	return cs.get_root();
@@ -449,13 +452,13 @@ class uvm_sequence_item: uvm_transaction
   }
 
   bool uvm_report_enabled(int verbosity, 
-			 uvm_severity severity=uvm_severity.UVM_INFO,
+			  uvm_severity severity=uvm_severity.UVM_INFO,
 			  string id="") {
     synchronized(this) {
       uvm_report_object l_report_object = uvm_get_report_object();
       if(l_report_object.get_report_verbosity_level(severity, id) <
 	 verbosity) {
-      return false;
+	return false;
       }
       return true;
     }
@@ -468,12 +471,12 @@ class uvm_sequence_item: uvm_transaction
 					   int verbosity = -1,
 					   string context_name = "",
 					   bool report_enabled_checked = false) {
-      if(verbosity == -1) {
-	verbosity = (severity == UVM_ERROR) ? UVM_LOW :
-	  (severity == UVM_FATAL) ? UVM_NONE : UVM_MEDIUM;
-      }
-      uvm_report(severity, id, message, verbosity, file,
-		 line, context_name, report_enabled_checked);
+    if(verbosity == -1) {
+      verbosity = (severity == uvm_severity.UVM_ERROR) ? uvm_verbosity.UVM_LOW :
+	(severity == uvm_severity.UVM_FATAL) ? uvm_verbosity.UVM_NONE : uvm_verbosity.UVM_MEDIUM;
+    }
+    uvm_report(severity, id, message, verbosity, file,
+	       line, context_name, report_enabled_checked);
   }
 
   // Function: uvm_report
@@ -503,7 +506,7 @@ class uvm_sequence_item: uvm_transaction
   void uvm_report_info(string file = __FILE__,
 		       size_t line = __LINE__)( string id,
 						string message,
-						int verbosity = UVM_MEDIUM,
+						int verbosity = uvm_verbosity.UVM_MEDIUM,
 						string context_name = "",
 						bool report_enabled_checked = false) {
 
@@ -519,7 +522,7 @@ class uvm_sequence_item: uvm_transaction
 			string context_name = "",
 			bool report_enabled_checked = false) {
 
-    this.uvm_report(UVM_INFO, id, message, verbosity, filename, line,
+    this.uvm_report(uvm_severity.UVM_INFO, id, message, verbosity, filename, line,
                     context_name, report_enabled_checked);
   }
 
@@ -528,7 +531,7 @@ class uvm_sequence_item: uvm_transaction
   void uvm_report_warning(string file = __FILE__,
 			  size_t line = __LINE__)( string id,
 						   string message,
-						   int verbosity = UVM_MEDIUM,
+						   int verbosity = uvm_verbosity.UVM_MEDIUM,
 						   string context_name = "",
 						   bool report_enabled_checked = false) {
 
@@ -544,7 +547,7 @@ class uvm_sequence_item: uvm_transaction
 			   string context_name = "",
 			   bool report_enabled_checked = false) {
 
-    this.uvm_report(UVM_WARNING, id, message, verbosity, filename, line,
+    this.uvm_report(uvm_severity.UVM_WARNING, id, message, verbosity, filename, line,
                     context_name, report_enabled_checked);
   }
 
@@ -568,7 +571,7 @@ class uvm_sequence_item: uvm_transaction
 			 size_t line = 0,
 			 string context_name = "",
 			 bool report_enabled_checked = false) {
-    this.uvm_report(UVM_ERROR, id, message, verbosity, filename, line,
+    this.uvm_report(uvm_severity.UVM_ERROR, id, message, verbosity, filename, line,
                     context_name, report_enabled_checked);
   }
 
@@ -582,7 +585,7 @@ class uvm_sequence_item: uvm_transaction
   void uvm_report_fatal(string file = __FILE__,
 			size_t line = __LINE__)( string id,
 						 string message,
-						 int verbosity = UVM_NONE,
+						 int verbosity = uvm_verbosity.UVM_NONE,
 						 string context_name = "",
 						 bool report_enabled_checked = false) {
 
@@ -597,7 +600,7 @@ class uvm_sequence_item: uvm_transaction
 			 size_t line,
 			 string context_name = "",
 			 bool report_enabled_checked = false) {
-    this.uvm_report(UVM_FATAL, id, message, verbosity, filename, line,
+    this.uvm_report(uvm_severity.UVM_FATAL, id, message, verbosity, filename, line,
                     context_name, report_enabled_checked);
   }
 
@@ -615,22 +618,28 @@ class uvm_sequence_item: uvm_transaction
   // Internal method
 
   override void do_print (uvm_printer printer) {
+    super.do_print(printer);
+    bool print_seq;
+    uvm_sequence_base parent_sequence;
+    uvm_sequencer_base sequencer;
     synchronized(this) {
-      string temp_str0, temp_str1;
+      print_seq = _print_sequence_info || _m_use_sequence_info;
+      parent_sequence = _m_parent_sequence;
+      sequencer = _m_sequencer;
+    }
+    if (print_seq) {
       int depth = get_depth();
-      super.do_print(printer);
-      if(_print_sequence_info || _m_use_sequence_info) {
-	printer.print("depth", depth, UVM_DEC, '.', "int");
-	if(_m_parent_sequence !is null) {
-	  temp_str0 = _m_parent_sequence.get_name();
-	  temp_str1 = _m_parent_sequence.get_full_name();
-	}
+      string temp_str0, temp_str1;
+      printer.print("depth", depth, uvm_radix_enum.UVM_DEC, '.', "int");
+      if(parent_sequence !is null) {
+	temp_str0 = parent_sequence.get_name();
+	temp_str1 = parent_sequence.get_full_name();
 	printer.print_string("parent sequence (name)", temp_str0);
 	printer.print_string("parent sequence (full name)", temp_str1);
-	temp_str1 = "";
-	if(_m_sequencer !is null) {
-	  temp_str1 = _m_sequencer.get_full_name();
-	}
+      }
+      temp_str1 = "";
+      if(sequencer !is null) {
+	temp_str1 = sequencer.get_full_name();
 	printer.print_string("sequencer", temp_str1);
       }
     }

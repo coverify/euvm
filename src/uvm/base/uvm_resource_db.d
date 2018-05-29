@@ -40,12 +40,10 @@
 
 module uvm.base.uvm_resource_db;
 
-import uvm.base.uvm_cmdline_processor;
-import uvm.base.uvm_resource;
-import uvm.base.uvm_object;
-import uvm.base.uvm_globals;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_entity;
+import uvm.base.uvm_resource: uvm_resource, uvm_resource_types,
+  uvm_resource_pool;
+import uvm.base.uvm_object: uvm_object;
+
 import uvm.base.uvm_once;
 
 import uvm.meta.misc;
@@ -120,12 +118,14 @@ class uvm_resource_db (T=uvm_object) {
 				   string name,
 				   uvm_object accessor,
 				   rsrc_t rsrc) {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
     string msg = format("%s '%s%s' (type %s) %s by %s = %s", rtype, rscope,
 			name=="" ? "" : "." ~ name, typeid(T), action,
 			(accessor !is null) ? accessor.get_full_name() :
 			"<unknown>", rsrc is null ?
 			"null (failed lookup)" : rsrc.convert2string());
-    uvm_info(id, msg, UVM_LOW);
+    uvm_info(id, msg, uvm_verbosity.UVM_LOW);
   }
 
   // function: set
@@ -194,7 +194,7 @@ class uvm_resource_db (T=uvm_object) {
 				T val, uvm_object accessor = null) {
     rsrc_t rsrc = new rsrc_t(name, rscope);
     rsrc.write(val, accessor);
-    rsrc.set_override(uvm_resource_types.TYPE_OVERRIDE);
+    rsrc.set_override(uvm_resource_types.override_e.TYPE_OVERRIDE);
 
     if(uvm_resource_db_options.is_tracing()) {
       m_show_msg("RSRCDB/SETOVRDTYP","Resource", "set", rscope, name,
@@ -214,7 +214,7 @@ class uvm_resource_db (T=uvm_object) {
 				T val, uvm_object accessor = null) {
     rsrc_t rsrc = new rsrc_t(name, rscope);
     rsrc.write(val, accessor);
-    rsrc.set_override(uvm_resource_types.NAME_OVERRIDE);
+    rsrc.set_override(uvm_resource_types.override_e.NAME_OVERRIDE);
 
     if(uvm_resource_db_options.is_tracing()) {
       m_show_msg("RSRCDB/SETOVRDNAM","Resource", "set", rscope, name,
@@ -414,6 +414,7 @@ class uvm_resource_db_options
 
 
   static private void init() {
+    import uvm.base.uvm_cmdline_processor;
     uvm_cmdline_processor clp = uvm_cmdline_processor.get_inst();
     string[] trace_args;
     synchronized(once) {

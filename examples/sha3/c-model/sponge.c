@@ -3,6 +3,7 @@
 #include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include "round.h"
 #include "sponge.h"
 #include "keccak_f.h"
@@ -51,7 +52,7 @@ uint8_t *padding(uint8_t* M, int32_t* S){
   int32_t i=*S;
   int32_t newS=(*S+72-(*S%72));;
   uint8_t *nM;
-  nM=malloc(*S+(72-(*S%72)));
+  nM=malloc(newS);
   /*Copy string*/
   for(int32_t j=0;j<*S;j++){
     *(nM+j)=*(M+j);
@@ -62,8 +63,13 @@ uint8_t *padding(uint8_t* M, int32_t* S){
     *(nM+i)=0x00;
     i++;
   }
-  *(nM+i)=0x80;
-  i++;
-  *S=i;
+  if (i == newS - 1) {
+    *(nM+i) = 0x80;
+  }
+  else {
+    assert(*(nM+newS-1) == 0x01);
+    *(nM+newS-1) |= 0x80;
+  }
+  *S=newS;
   return nM;
 }

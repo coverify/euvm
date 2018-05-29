@@ -42,16 +42,20 @@ module uvm.base.uvm_recorder;
 //
 //------------------------------------------------------------------------------
 
-import uvm.base.uvm_root;
-import uvm.base.uvm_object;
-import uvm.base.uvm_misc;
-import uvm.base.uvm_globals;
-import uvm.base.uvm_object_globals;
+import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_misc: uvm_scope_stack, uvm_bitvec_to_string;
+
+import uvm.base.uvm_object_globals: uvm_radix_enum, UVM_FILE,
+  uvm_bitstream_t, uvm_integral_t, uvm_recursion_policy_enum;
+
+import uvm.base.uvm_tr_stream: uvm_tr_stream, uvm_text_tr_stream;
+import uvm.base.uvm_tr_database: uvm_text_tr_database;
+
+import uvm.base.uvm_object_defines;
+import uvm.base.uvm_once;
+
 import uvm.meta.mcd;
 import uvm.meta.misc;
-import uvm.base.uvm_report_message;
-import uvm.base.uvm_tr_stream;
-import uvm.base.uvm_entity;
 import uvm.dap.uvm_set_before_get_dap;
 
 import esdl.data.time;
@@ -68,9 +72,6 @@ import std.string: format;
 import std.traits: isNumeric, isFloatingPoint, isIntegral, isBoolean;
 
 import std.random;
-import uvm.base.uvm_object_defines;
-import uvm.base.uvm_tr_database;
-import uvm.base.uvm_once;
 
 
 abstract class uvm_recorder: uvm_object
@@ -235,6 +236,7 @@ abstract class uvm_recorder: uvm_object
   // to the record being initialized via <do_open>.
   //
   uvm_tr_stream get_stream() {
+    import uvm.base.uvm_globals;
     synchronized(this) {
       uvm_tr_stream get_stream_;
       if (!_m_stream_dap.try_get(get_stream_)) {
@@ -322,7 +324,7 @@ abstract class uvm_recorder: uvm_object
 
       _m_is_closed = false;
       if(p !is null) {
-	s = p.getRandState();
+	p.getRandState(s);
       }
       _m_stream_dap = new uvm_set_before_get_dap!uvm_tr_stream("stream_dap");
       if(p !is null) {
@@ -395,6 +397,7 @@ abstract class uvm_recorder: uvm_object
   //  recorder being ~freed~ in between.
   // - ~stream~ is ~null~
   void m_do_open(uvm_tr_stream stream, SimTime open_time, string type_name) {
+    import uvm.base.uvm_globals;
     synchronized(this) {
       uvm_tr_stream m_stream;
       if(stream is null) {
@@ -523,7 +526,7 @@ abstract class uvm_recorder: uvm_object
   // This method will trigger a <do_record_field> call.
   alias record_field = record;
   void record(T)(string name, T value, size_t size,
-		 uvm_radix_enum radix=UVM_NORADIX)
+		 uvm_radix_enum radix=uvm_radix_enum.UVM_NORADIX)
     if(isBitVector!T && T.SIZE > 64) {
       synchronized(this) {
 	if (get_stream() is null) {
@@ -533,7 +536,7 @@ abstract class uvm_recorder: uvm_object
       }
     }
 
-  void record(T)(string name, T value, uvm_radix_enum radix=UVM_NORADIX)
+  void record(T)(string name, T value, uvm_radix_enum radix=uvm_radix_enum.UVM_NORADIX)
     if(isBitVector!T && T.SIZE > 64) {
       synchronized(this) {
 	if (get_stream() is null) {
@@ -557,7 +560,7 @@ abstract class uvm_recorder: uvm_object
   //
   // This method will trigger a <do_record_field_int> call.
   alias record_field_int = record;
-  void record(T)(string name, T value, uvm_radix_enum radix=UVM_NORADIX)
+  void record(T)(string name, T value, uvm_radix_enum radix=uvm_radix_enum.UVM_NORADIX)
     if(isIntegral!T || (isBitVector!T && T.SIZE <= 64) || isBoolean!T) {
       synchronized(this) {
 	if (get_stream() is null) {
@@ -1017,7 +1020,7 @@ class uvm_text_recorder: uvm_recorder
 
       _scope_stack.set_arg(name);
 
-      write_attribute_int(_scope_stack.get(), ival, UVM_REAL, S);
+      write_attribute_int(_scope_stack.get(), ival, uvm_radix_enum.UVM_REAL, S);
     }
   }
 
@@ -1041,10 +1044,10 @@ class uvm_text_recorder: uvm_recorder
 	  v = value.get_inst_id();
 	}
 	_scope_stack.set_arg(name);
-	write_attribute_int(_scope_stack.get(), v, UVM_DEC, 32);
+	write_attribute_int(_scope_stack.get(), v, uvm_radix_enum.UVM_DEC, 32);
       }
 
-      if(_policy != UVM_REFERENCE) {
+      if(_policy != uvm_recursion_policy_enum.UVM_REFERENCE) {
 	if(value !is null) {
 	  if(value.m_uvm_status_container.check_cycle(value)) return;
 	  value.m_uvm_status_container.add_cycle_check(value);
@@ -1087,7 +1090,7 @@ class uvm_text_recorder: uvm_recorder
 					 SimTime value) {
     synchronized(this) {
       _scope_stack.set_arg(name);
-      write_attribute_int(_scope_stack.get(), value, UVM_TIME, 64);
+      write_attribute_int(_scope_stack.get(), value, uvm_radix_enum.UVM_TIME, 64);
     }
   }
 
@@ -1098,11 +1101,12 @@ class uvm_text_recorder: uvm_recorder
   override protected void do_record_generic(string name,
 					    string value,
 					    string type_name) {
+    import uvm.base.uvm_globals;
     synchronized(this) {
       _scope_stack.set_arg(name);
       write_attribute(_scope_stack.get(),
 		      uvm_string_to_bits(value),
-		      UVM_STRING,
+		      uvm_radix_enum.UVM_STRING,
 		      8+value.length);
     }
   }

@@ -64,7 +64,7 @@ abstract class uvm_sqr_if_base(T1=uvm_object, T2=T1)
 
   // task
   public void get_next_item(out T1 t) {
-    uvm_report_error("get_next_item", UVM_SEQ_ITEM_TASK_ERROR, UVM_NONE);
+    uvm_report_error("get_next_item", UVM_SEQ_ITEM_TASK_ERROR, uvm_verbosity.UVM_NONE);
   }
 
 
@@ -89,7 +89,7 @@ abstract class uvm_sqr_if_base(T1=uvm_object, T2=T1)
 
   // task
   public void try_next_item(out T1 t) {
-    uvm_report_error("try_next_item", UVM_SEQ_ITEM_TASK_ERROR, UVM_NONE);
+    uvm_report_error("try_next_item", UVM_SEQ_ITEM_TASK_ERROR, uvm_verbosity.UVM_NONE);
   }
 
 
@@ -112,7 +112,7 @@ abstract class uvm_sqr_if_base(T1=uvm_object, T2=T1)
   // will cause the sequencer to arbitrate for a new item.
 
   public void item_done(T2 t = null) {
-    uvm_report_error("item_done", UVM_SEQ_ITEM_FUNCTION_ERROR, UVM_NONE);
+    uvm_report_error("item_done", UVM_SEQ_ITEM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
   }
 
 
@@ -127,7 +127,7 @@ abstract class uvm_sqr_if_base(T1=uvm_object, T2=T1)
 
   // task
   public void wait_for_sequences() {
-    uvm_report_error("wait_for_sequences", UVM_SEQ_ITEM_TASK_ERROR, UVM_NONE);
+    uvm_report_error("wait_for_sequences", UVM_SEQ_ITEM_TASK_ERROR, uvm_verbosity.UVM_NONE);
   }
 
 
@@ -137,7 +137,7 @@ abstract class uvm_sqr_if_base(T1=uvm_object, T2=T1)
   // Implementations should return 1 if an item is available, 0 otherwise.
 
   public bool has_do_available() {
-    uvm_report_error("has_do_available", UVM_SEQ_ITEM_FUNCTION_ERROR, UVM_NONE);
+    uvm_report_error("has_do_available", UVM_SEQ_ITEM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return false;
   }
 
@@ -168,7 +168,7 @@ abstract class uvm_sqr_if_base(T1=uvm_object, T2=T1)
 
   // task
   public void get(out T1 t) {
-    uvm_report_error("get", UVM_SEQ_ITEM_TASK_ERROR, UVM_NONE);
+    uvm_report_error("get", UVM_SEQ_ITEM_TASK_ERROR, uvm_verbosity.UVM_NONE);
   }
 
   // Task: peek
@@ -193,7 +193,7 @@ abstract class uvm_sqr_if_base(T1=uvm_object, T2=T1)
 
   // task
   public void peek(out T1 t) {
-    uvm_report_error("peek", UVM_SEQ_ITEM_TASK_ERROR, UVM_NONE);
+    uvm_report_error("peek", UVM_SEQ_ITEM_TASK_ERROR, uvm_verbosity.UVM_NONE);
   }
 
 
@@ -212,7 +212,7 @@ abstract class uvm_sqr_if_base(T1=uvm_object, T2=T1)
 
   // task
   public void put(T2 t) {
-    uvm_report_error("put", UVM_SEQ_ITEM_TASK_ERROR, UVM_NONE);
+    uvm_report_error("put", UVM_SEQ_ITEM_TASK_ERROR, uvm_verbosity.UVM_NONE);
   }
 
 
@@ -221,7 +221,7 @@ abstract class uvm_sqr_if_base(T1=uvm_object, T2=T1)
   // Internal method.
 
   public void put_response(T2 t) {
-    uvm_report_error("put_response", UVM_SEQ_ITEM_FUNCTION_ERROR, UVM_NONE);
+    uvm_report_error("put_response", UVM_SEQ_ITEM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
   }
 
 }

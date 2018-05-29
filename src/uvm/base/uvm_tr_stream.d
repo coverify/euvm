@@ -24,21 +24,19 @@
 
 module uvm.base.uvm_tr_stream;
 
-import uvm.base.uvm_tr_database;
-import uvm.base.uvm_object;
-import uvm.base.uvm_object_defines;
-import uvm.base.uvm_recorder;
-import uvm.base.uvm_globals;
-import uvm.base.uvm_entity;
+import uvm.base.uvm_tr_database: uvm_tr_database, uvm_text_tr_database;
+import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_recorder: uvm_recorder, uvm_text_recorder;
 import uvm.base.uvm_once;
+import uvm.base.uvm_object_defines;
+import uvm.dap.uvm_set_before_get_dap: uvm_set_before_get_dap;
+
 import uvm.meta.misc;
-import uvm.dap.uvm_set_before_get_dap;
 import uvm.meta.mcd;
 
 import esdl.base.core: SimTime, getRootEntity, Process;
 
 import std.random;
-import std.string: format;
 
 //------------------------------------------------------------------------------
 // File: Transaction Recording Streams
@@ -176,6 +174,8 @@ abstract class uvm_tr_stream: uvm_object
   // A warning will be asserted if get_db is called prior to
   // the stream being initialized via <do_open>.
   uvm_tr_database get_db() {
+    import uvm.base.uvm_globals;
+    import std.string: format;
     synchronized(this) {
       m_uvm_tr_stream_cfg m_cfg;
       if(!_m_cfg_dap.try_get(m_cfg)) {
@@ -198,6 +198,8 @@ abstract class uvm_tr_stream: uvm_object
   // A warning will be asserted if get_scope is called prior to
   // the stream being initialized via <do_open>.
   string get_scope() {
+    import uvm.base.uvm_globals;
+    import std.string: format;
     synchronized(this) {
       m_uvm_tr_stream_cfg m_cfg;
       if(!_m_cfg_dap.try_get(m_cfg)) {
@@ -220,6 +222,8 @@ abstract class uvm_tr_stream: uvm_object
   // A warning will be asserted if get_stream_type_name is called prior to
   // the stream being initialized via <do_open>.
   string get_stream_type_name() {
+    import uvm.base.uvm_globals;
+    import std.string: format;
     synchronized(this) {
       m_uvm_tr_stream_cfg m_cfg;
       if(!_m_cfg_dap.try_get(m_cfg)) {
@@ -306,7 +310,7 @@ abstract class uvm_tr_stream: uvm_object
       Process p = Process.self();
       Random s;
       if(p !is null) {
-	s = p.getRandState();
+	p.getRandState(s);
       }
       _m_cfg_dap =  new uvm_set_before_get_dap!m_uvm_tr_stream_cfg("cfg_dap");
 
@@ -346,6 +350,8 @@ abstract class uvm_tr_stream: uvm_object
   void m_do_open(uvm_tr_database db,
 		 string hscope="",
 		 string stream_type_name="") {
+    import uvm.base.uvm_globals;
+    import std.string: format;
     synchronized(this) {
       m_uvm_tr_stream_cfg m_cfg;
       uvm_tr_database m_db;
@@ -437,7 +443,7 @@ abstract class uvm_tr_stream: uvm_object
 	Random s;
 
 	if (p !is null) {
-	  s = p.getRandState();
+	  p.getRandState(s);
 	}
 
 	result = do_open_recorder(name, m_time, type_name);
@@ -712,8 +718,8 @@ class uvm_text_tr_stream: uvm_tr_stream
   //
   // Text-backend specific implementation.
   override protected uvm_recorder do_open_recorder(string name,
-					  SimTime open_time,
-					  string type_name) {
+						   SimTime open_time,
+						   string type_name) {
     synchronized(this) {
       if(_m_text_db.open_db()) {
 	return uvm_text_recorder.type_id.create(name);

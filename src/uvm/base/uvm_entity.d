@@ -21,24 +21,69 @@
 module uvm.base.uvm_entity;
 
 import uvm.base.uvm_root: uvm_root;
-import uvm.base.uvm_globals;
-import uvm.base.uvm_object_globals;
 import uvm.base.uvm_once;
-import uvm.base.uvm_misc;
 
 import uvm.meta.misc;
 import uvm.meta.meta;
+
 import esdl.base.core;
 import core.sync.semaphore: Semaphore;
 
-import std.random;
 
 // This is where the uvm gets instantiated as part of the ESDL
 // simulator. Unlike the SystemVerilog version where uvm_root is a
 // singleton, we can have multiple instances of uvm_root, but each
 // ESDL RootEntity could have only one instance of uvm_root.
 
-class uvm_entity_base: Entity
+class uvm_harness: RootEntity
+{
+  override size_t _esdl__defProcStackSize() {
+    return 1024 * 1024;		// Todo use lower values if limited available memory
+  }
+
+  void config_stack(size_t size) {
+    _esdl__configStack(size);
+  }
+  
+  void start() {
+    super.simulate();
+  }
+
+  void start_bg() {
+    super.forkSim();
+    foreach (child; getChildComps()) {
+      auto entity = cast(uvm_entity_base) child;
+      if (entity !is null) {
+	entity.wait_for_end_of_elaboration();
+      }
+    }
+  }
+}
+
+class uvm_tb_root: uvm_root
+{
+  override void initial() {
+    run_test();
+  }
+}
+
+class uvm_tb: uvm_harness
+{
+  uvm_entity!(uvm_tb_root) root_entity;
+  void set_seed(uint seed) {
+    root_entity.set_seed(seed);
+  }
+}
+
+class uvm_testbench(ROOT) if (is (ROOT: uvm_root)) : uvm_harness
+{
+  uvm_entity!(ROOT) root_entity;
+  void set_seed(uint seed) {
+    root_entity.set_seed(seed);
+  }
+}
+
+abstract class uvm_entity_base: Entity
 {
   mixin(uvm_sync_string);
   this() {
@@ -49,9 +94,6 @@ class uvm_entity_base: Entity
       _root_once = new uvm_root_once();
     }
   }
-
-  // Only for use by the uvm_root constructor -- use nowhere else
-  static package uvm_entity_base _uvm_entity_inst;
 
   @uvm_immutable_sync
   private Semaphore _uvm_root_init_semaphore;
@@ -73,6 +115,7 @@ class uvm_entity_base: Entity
     return null;
   }
 
+  abstract void wait_for_end_of_elaboration();
   abstract uvm_root _get_uvm_root();
   abstract uvm_root get_root();
   // The randomization seed passed from the top.
@@ -107,24 +150,27 @@ class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
     private T _uvm_root_instance;
 
   this() {
+    import std.random;		// uniform
     synchronized(this) {
       super();
+      /* Now handled in initial block
       // set static variable that would later be used by uvm_root
       // constructor. Can not pass this instance as an argument to
       // the uvm_root constructor since the constructor has no
       // argument. If an argument is introduced, that will spoil
       // uvm_root user API.
-      uvm_entity_base._uvm_entity_inst = this;
-      _uvm_root_instance = new T();
+      // _uvm_root_instance = new T();
+      // _uvm_root_instance.initialize(this);
+      */
       resetThreadContext();
       _seed = uniform!int;
     }
   }
 
-  override void _esdl__postElab() {
-    uvm_root_instance.set_name(getFullName() ~ ".(" ~
-			       qualifiedTypeName!T ~ ")");
-  }
+  // override void _esdl__postElab() {
+  //   uvm_root_instance.set_name(getFullName() ~ ".(" ~
+  // 			       qualifiedTypeName!T ~ ")");
+  // }
 
   override T _get_uvm_root() {
     return uvm_root_instance;
@@ -134,7 +180,7 @@ class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
   // Make the uvm_root available only after the simulaion has
   // started and the uvm_root is ready to use
   override T get_root() {
-    while(uvm_root_initialized is false) {
+    while (uvm_root_initialized is false) {
       uvm_root_init_semaphore.wait();
       uvm_root_init_semaphore.notify();
     }
@@ -144,18 +190,31 @@ class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
     return uvm_root_instance;
   }
 
+  override void wait_for_end_of_elaboration() {
+    while (uvm_root_initialized is false) {
+      uvm_root_init_semaphore.wait();
+      uvm_root_init_semaphore.notify();
+    }
+    uvm_root_instance.wait_for_end_of_elaboration();
+  }
+
   void initial() {
+    import uvm.base.uvm_misc: uvm_seed_map;
     lockStage();
     fileCaveat();
-    // init_domains can not be moved to the constructor since it
-    // results in notification of some events, which can only
-    // happen once the simulation starts
-    uvm_root_instance.init_domains();
+    _uvm_root_instance = new T();
+    _uvm_root_instance.set_name(getFullName() ~ ".(" ~
+				qualifiedTypeName!T ~ ")");
+    _uvm_root_instance.initialize(this);
+
+    // initialize parallelism for the uvm_root_instance
+    configure_parallelism();
+
     wait(0);
     uvm_root_initialized = true;
     uvm_root_init_semaphore.notify();
     uvm_seed_map.set_seed(_seed);
-    uvm_root_instance.initial();
+    _uvm_root_instance.initial();
   }
 
   Task!(initial) _init;
@@ -163,6 +222,8 @@ class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
   uint _seed;
 
   void set_seed(uint seed) {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       if(_uvm_root_initialized) {
 	uvm_report_fatal("SEED",
@@ -173,4 +234,16 @@ class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
       _seed = seed;
     }
   }
+
+  // Configure parallelism for the uvm_root instance
+  private void configure_parallelism() {
+    // at instance level, we do not have a way for the user to add
+    // attributes to uvm_root
+    auto linfo = _esdl__uda!(_esdl__Multicore, T);
+    auto pconf = this._esdl__getMulticoreConfig();
+    assert(pconf !is null);
+    auto config = linfo.makeCfg(pconf);
+    uvm_root_instance._uvm__configure_parallelism(config);
+  }
+  
 }

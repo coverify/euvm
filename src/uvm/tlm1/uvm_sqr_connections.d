@@ -74,7 +74,7 @@ class uvm_seq_item_pull_port(REQ=int, RSP=REQ):
   public this(string name=null, uvm_component parent=null,
 	      int min_size=0, int max_size=1) {
     synchronized(this) {
-      super(name, parent, UVM_PORT, min_size, max_size);
+      super(name, parent, uvm_port_type_e.UVM_PORT, min_size, max_size);
       m_if_mask = UVM_SEQ_ITEM_PULL_MASK;
     }
   }
@@ -103,7 +103,7 @@ class uvm_seq_item_pull_export(REQ=int, RSP=REQ):
   public this(string name, uvm_component parent,
 	      int min_size=1, int max_size=1) {
     synchronized(this) {
-      super(name, parent, UVM_EXPORT, min_size, max_size);
+      super(name, parent, uvm_port_type_e.UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_SEQ_ITEM_PULL_MASK;
     }
   }
@@ -131,7 +131,7 @@ class uvm_seq_item_pull_imp(REQ=int, RSP=REQ, IMP=int):
   private IMP m_imp;
   public this(string name, IMP imp) {
     synchronized(this) {
-      super (name, imp, UVM_IMPLEMENTATION, 1, 1);
+      super (name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
       m_if_mask = UVM_SEQ_ITEM_PULL_MASK;
     }

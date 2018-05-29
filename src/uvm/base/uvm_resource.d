@@ -108,16 +108,13 @@
 
 module uvm.base.uvm_resource;
 
-import uvm.base.uvm_object;
-import uvm.base.uvm_globals;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_root;
-import uvm.base.uvm_printer;
-import uvm.base.uvm_spell_chkr;
-import uvm.base.uvm_entity;
+import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_printer: uvm_printer, uvm_line_printer;
+
 import uvm.base.uvm_once;
 
 import uvm.meta.meta;
+import uvm.meta.misc;
 
 import esdl.base.core: SimTime, getRootEntity, Process;
 
@@ -126,10 +123,10 @@ import std.random: Random;
 import std.algorithm: sort;
 import std.conv: to;
 
-version(UVM_NO_DEPRECATED) { }
- else {
-   version = UVM_INCLUDE_DEPRECATED;
- }
+// version(UVM_NO_DEPRECATED) { }
+//  else {
+//    version = UVM_INCLUDE_DEPRECATED;
+//  }
 
 //----------------------------------------------------------------------
 // Class: uvm_resource_types
@@ -155,7 +152,6 @@ class uvm_resource_types
 	NAME_OVERRIDE = 0b10,
 	BOTH_OVERRIDE = 0b11
 	}
-  mixin(declareEnums!override_e());
 
   // general purpose queue of resourcex
   alias rsrc_q_t = uvm_queue!uvm_resource_base;
@@ -165,7 +161,6 @@ class uvm_resource_types
     {   PRI_HIGH,
 	PRI_LOW
 	}
-  mixin(declareEnums!priority_e());
 
   // access record for resources.  A set of these is stored for each
   // resource by accessing object.  It's updated for each read/write.
@@ -299,7 +294,7 @@ abstract class uvm_resource_base: uvm_object
   this(string name = null, string s = "*") {
     synchronized(this) {
       super(name);
-      _modified = new WithEvent!bool();
+      _modified = new WithEvent!bool("_modified");
       set_scope(s);
       modified = false;
       _read_only = false;
@@ -464,6 +459,7 @@ abstract class uvm_resource_base: uvm_object
   //
 
   void set_scope(string s) {
+    import uvm.base.uvm_globals;
     synchronized(this) {
       _rscope = uvm_glob_to_re(s);
     }
@@ -486,6 +482,7 @@ abstract class uvm_resource_base: uvm_object
   // is visible in a scope.  Return one if it is, zero otherwise.
   //
   bool match_scope(string s) {
+    import uvm.base.uvm_globals;
     synchronized(this) {
       int err = uvm_re_match(_rscope, s);
       return (err == 0);
@@ -646,6 +643,8 @@ abstract class uvm_resource_base: uvm_object
   // Dump the access records for this resource
   //
   final void print_accessors() {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       string qs;
 
@@ -664,7 +663,7 @@ abstract class uvm_resource_base: uvm_object
 		     access_record.write_count,
 		     access_record.write_time);
       }
-      uvm_info("UVM/RESOURCE/ACCESSOR", qs, UVM_NONE);
+      uvm_info("UVM/RESOURCE/ACCESSOR", qs, uvm_verbosity.UVM_NONE);
     }
   }
 
@@ -818,6 +817,7 @@ class uvm_resource_pool {
   // map.
 
   final bool spell_check(string s) {
+    import uvm.base.uvm_spell_chkr;
     synchronized(this) {
       return uvm_spell_chkr!(uvm_resource_types.rsrc_q_t).check(_rtab, s);
     }
@@ -870,7 +870,7 @@ class uvm_resource_pool {
 	// Insert the resource into the queue associated with its name.
 	// If we are doing a name override then insert it in the front of
 	// the queue, otherwise insert it in the back.
-	if(ovrrd & uvm_resource_types.NAME_OVERRIDE) {
+	if(ovrrd & uvm_resource_types.override_e.NAME_OVERRIDE) {
 	  rq.push_front(rsrc);
 	}
 	else {
@@ -892,7 +892,7 @@ class uvm_resource_pool {
       // insert the resource into the queue associated with its type.  If
       // we are doing a type override then insert it in the front of the
       // queue, otherwise insert it in the back of the queue.
-      if(ovrrd & uvm_resource_types.TYPE_OVERRIDE) {
+      if(ovrrd & uvm_resource_types.override_e.TYPE_OVERRIDE) {
 	rq.push_front(rsrc);
       }
       else {
@@ -908,7 +908,7 @@ class uvm_resource_pool {
   // and will override both by name and type.
 
   final void set_override(uvm_resource_base rsrc) {
-    set(rsrc, (uvm_resource_types.BOTH_OVERRIDE));
+    set(rsrc, (uvm_resource_types.override_e.BOTH_OVERRIDE));
   }
 
 
@@ -918,7 +918,7 @@ class uvm_resource_pool {
   // using normal precedence in the type map and will override the name.
 
   final void set_name_override(uvm_resource_base rsrc) {
-    set(rsrc, uvm_resource_types.NAME_OVERRIDE);
+    set(rsrc, uvm_resource_types.override_e.NAME_OVERRIDE);
   }
 
 
@@ -928,7 +928,7 @@ class uvm_resource_pool {
   // using normal precedence in the name map and will override the type.
 
   final void set_type_override(uvm_resource_base rsrc) {
-    set(rsrc, uvm_resource_types.TYPE_OVERRIDE);
+    set(rsrc, uvm_resource_types.override_e.TYPE_OVERRIDE);
   }
 
 
@@ -963,6 +963,8 @@ class uvm_resource_pool {
   // Format and print the get history list.
 
   final void dump_get_records() {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       bool success;
       string qs;
@@ -975,7 +977,7 @@ class uvm_resource_pool {
 		     ((success)?"success":"fail"),
 		     record.t);
       }
-      uvm_info("UVM/RESOURCE/GETRECORD", qs, UVM_NONE);
+      uvm_info("UVM/RESOURCE/GETRECORD", qs, uvm_verbosity.UVM_NONE);
     }
   }
 
@@ -1018,7 +1020,7 @@ class uvm_resource_pool {
       // ensure rand stability during lookup
       Process p = Process.self();
       Random s;
-      if(p !is null) s=p.getRandState();
+      if(p !is null) p.getRandState(s);
       q = new  uvm_resource_types.rsrc_q_t("uvm_resource/lookup_name/q");
       if(p !is null) p.setRandState(s);
 
@@ -1194,6 +1196,7 @@ class uvm_resource_pool {
   // expression argument and whose scope matches the current scope.
 
   final uvm_resource_types.rsrc_q_t lookup_regex(string re, string rscope) {
+    import uvm.base.uvm_globals;
     synchronized(this) {
 
       re = uvm_glob_to_re(re);
@@ -1264,6 +1267,7 @@ class uvm_resource_pool {
   private void set_priority_queue(uvm_resource_base rsrc,
 				  /*ref*/ uvm_resource_types.rsrc_q_t q,
 				  uvm_resource_types.priority_e pri) {
+    import uvm.base.uvm_globals;
     synchronized(this) {
       string name = rsrc.get_name();
       uvm_resource_base r;
@@ -1284,8 +1288,8 @@ class uvm_resource_pool {
       q.remove(i);
 
       final switch (pri) {
-      case uvm_resource_types.PRI_HIGH: q.push_front(rsrc); break;
-      case uvm_resource_types.PRI_LOW:  q.push_back(rsrc); break;
+      case uvm_resource_types.priority_e.PRI_HIGH: q.push_front(rsrc); break;
+      case uvm_resource_types.priority_e.PRI_LOW:  q.push_back(rsrc); break;
       }
     }
   }
@@ -1299,17 +1303,18 @@ class uvm_resource_pool {
 
   final void set_priority_type(uvm_resource_base rsrc,
 			       uvm_resource_types.priority_e pri) {
+    import uvm.base.uvm_globals;
     synchronized(this) {
 
       if(rsrc is null) {
-	uvm_report_warning("NULLRASRC", "attempting to change"
+	uvm_report_warning("NULLRASRC", "attempting to change" ~
 			   " the serach priority of a null resource");
 	return;
       }
 
       TypeInfo type_handle = rsrc.get_type_handle();
       if(type_handle !in _ttab) {
-	string msg = format("Type handle for resrouce named %s not found in"
+	string msg = format("Type handle for resrouce named %s not found in" ~
 			    " type map; cannot change its search priority",
 			    rsrc.get_name());
 	uvm_report_error("RNFTYPE", msg);
@@ -1330,15 +1335,16 @@ class uvm_resource_pool {
 
   final void set_priority_name(uvm_resource_base rsrc,
 			       uvm_resource_types.priority_e pri) {
+    import uvm.base.uvm_globals;
     synchronized(this) {
       if(rsrc is null) {
-	uvm_report_warning("NULLRASRC", "attempting to change the serach"
+	uvm_report_warning("NULLRASRC", "attempting to change the serach" ~
 			   " priority of a null resource");
 	return;
       }
       string name = rsrc.get_name();
       if(name !in _rtab) {
-	string msg = format("Resrouce named %s not found in name map;"
+	string msg = format("Resrouce named %s not found in name map;" ~
 			    " cannot change its search priority", name);
 	uvm_report_error("RNFNAME", msg);
 	return;
@@ -1405,6 +1411,8 @@ class uvm_resource_pool {
 
   final void print_resources(uvm_resource_types.rsrc_q_t rq,
 			     bool audit = false) {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
 
       // moved to once
@@ -1417,7 +1425,7 @@ class uvm_resource_pool {
 
       if(rq is null || rq.size() is 0) {
 	import uvm.meta.mcd;
-	uvm_info("UVM/RESOURCE/PRINT", "<none>", UVM_NONE);
+	uvm_info("UVM/RESOURCE/PRINT", "<none>", uvm_verbosity.UVM_NONE);
 	return;
       }
 
@@ -1439,15 +1447,17 @@ class uvm_resource_pool {
   // the audit trail is dumped for each resource.
 
   final void dump(bool audit = false) {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       import uvm.meta.mcd;
-      uvm_info("UVM/RESOURCE/DUMP", "\n=== resource pool ===", UVM_NONE);
+      uvm_info("UVM/RESOURCE/DUMP", "\n=== resource pool ===", uvm_verbosity.UVM_NONE);
 
       foreach (name, rq; _rtab) {
 	print_resources(rq, audit);
       }
 
-      uvm_info("UVM/RESOURCE/DUMP", "=== end of resource pool ===", UVM_NONE);
+      uvm_info("UVM/RESOURCE/DUMP", "=== end of resource pool ===", uvm_verbosity.UVM_NONE);
 
     }
   }
@@ -1509,6 +1519,7 @@ class uvm_resource (T=int): uvm_resource_base
   }
 
   this(string name="", string rscope="") {
+    import uvm.base.uvm_globals;
     synchronized(this) {
       super(name, rscope);
 
@@ -1528,6 +1539,7 @@ class uvm_resource (T=int): uvm_resource_base
   }
 
   string to(S)() if(is(S == string)) {
+    import std.string: format;
     synchronized(this) {
       version(UVM_USE_RESOURCE_CONVERTER) {
 	m_get_converter();
@@ -1536,7 +1548,6 @@ class uvm_resource (T=int): uvm_resource_base
 	}
       }
       else {
-	import std.string: format;
 	return format("(%s) %0s", qualifiedTypeName!T, _val);
       }
     }
@@ -1627,6 +1638,7 @@ class uvm_resource (T=int): uvm_resource_base
   static this_type get_by_name(string rscope,
 			       string name,
 			       bool rpterr = true) {
+    import uvm.base.uvm_globals;
     uvm_resource_pool rp = uvm_resource_pool.get();
     uvm_resource_base rsrc_base = rp.get_by_name(rscope, name,
 						 typeid(T),
@@ -1657,6 +1669,7 @@ class uvm_resource (T=int): uvm_resource_base
 
   static this_type get_by_type(string rscope = "",
 			       TypeInfo type_handle=null) {
+    import uvm.base.uvm_globals;
     uvm_resource_pool rp = uvm_resource_pool.get();
 
     if(type_handle is null) {
@@ -1715,6 +1728,7 @@ class uvm_resource (T=int): uvm_resource_base
   // updated and the modified bit is not set.
 
   void write(T t, uvm_object accessor = null) {
+    import uvm.base.uvm_globals;
     synchronized(this) {
       if(is_read_only()) {
 	uvm_report_error("resource",

@@ -23,17 +23,19 @@
 
 module uvm.base.uvm_report_catcher;
 
-import uvm.base.uvm_report_object;
-import uvm.base.uvm_report_handler;
-import uvm.base.uvm_report_server;
-import uvm.base.uvm_report_message;
-import uvm.base.uvm_callback;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_root;
-import uvm.base.uvm_entity;
+import uvm.base.uvm_report_object: uvm_report_object;
+import uvm.base.uvm_report_message: uvm_report_message,
+  uvm_report_message_element_container;
+import uvm.base.uvm_callback: uvm_callback, uvm_callbacks,
+  uvm_callbacks_base, uvm_callback_iter;
+import uvm.base.uvm_object: uvm_object;
+
+import uvm.base.uvm_object_globals: uvm_severity, uvm_action, uvm_integral_t,
+  uvm_bitstream_t, uvm_radix_enum, uvm_action_type, uvm_verbosity, UVM_FILE;
+import uvm.base.uvm_globals: uvm_report_intf, uvm_info_context;
+
 import uvm.base.uvm_once;
-import uvm.base.uvm_object;
-import uvm.base.uvm_globals;
+
 import uvm.meta.misc;
 import uvm.meta.mcd;
 
@@ -123,7 +125,7 @@ alias uvm_report_cb_iter = uvm_callback_iter!(uvm_report_object, uvm_report_catc
 //
 //------------------------------------------------------------------------------
 
-abstract class uvm_report_catcher: uvm_callback
+abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
 {
   // Keep the message specific variables static (thread local)
   // as we know a message will not cross thread boudaries
@@ -169,9 +171,7 @@ abstract class uvm_report_catcher: uvm_callback
 	CAUGHT
 	};
 
-  mixin(declareEnums!action_e());
-
-
+  
   // Function: new
   //
   // Create a new report catcher. The name argument is optional, but
@@ -217,6 +217,7 @@ abstract class uvm_report_catcher: uvm_callback
   // a uvm_report_message, the user-defined context will be returned.
 
   static string get_context() {
+    import uvm.base.uvm_report_handler;
     string context_str = _m_modified_report_message.get_context();
     if (context_str == "") {
       uvm_report_handler rh =
@@ -365,7 +366,7 @@ abstract class uvm_report_catcher: uvm_callback
 			       T value,
 			       uvm_radix_enum radix,
 			       uvm_action action =
-			       (UVM_LOG|UVM_RM_RECORD))
+			       (uvm_action_type.UVM_LOG|uvm_action_type.UVM_RM_RECORD))
     if(isBitVector!T || isIntegral!T) {
       _m_modified_report_message.add(name, value, radix, action);
     }
@@ -439,6 +440,7 @@ abstract class uvm_report_catcher: uvm_callback
   // method can be used by calling uvm_report_cb::display(<uvm_report_object>).
 
   static void print_catcher(UVM_FILE file=0) {
+    import uvm.base.uvm_root: uvm_top;
     string enabled;
     // static uvm_report_cb_iter iter = new(null);
     string q;
@@ -456,7 +458,7 @@ abstract class uvm_report_catcher: uvm_callback
       q ~= format("%20s : %s\n", catcher.get_name(), enabled);
     }
     q ~= "--------------------------------------------------------------\n";
-    uvm_info_context("UVM/REPORT/CATCHER", q, UVM_LOW, uvm_top);
+    uvm_info_context("UVM/REPORT/CATCHER", q, uvm_verbosity.UVM_LOW, uvm_top);
 
   }
 
@@ -486,8 +488,10 @@ abstract class uvm_report_catcher: uvm_callback
 
   // Group: Reporting
 
-  import uvm.base.uvm_message_defines: uvm_report_mixin;
-  mixin uvm_report_mixin;
+  // import uvm.base.uvm_message_defines: uvm_report_mixin_string;
+
+  // mixin uvm_report_mixin;
+  // mixin(uvm_report_mixin_string());
 
   // Function: uvm_report_fatal
   //
@@ -501,7 +505,7 @@ abstract class uvm_report_catcher: uvm_callback
 				  size_t line = 0,
 				  string context_name = "",
 				  bool report_enabled_checked = false) {
-    this.uvm_report(UVM_FATAL, id, message, UVM_NONE, fname, line,
+    this.uvm_report(uvm_severity.UVM_FATAL, id, message, uvm_verbosity.UVM_NONE, fname, line,
 		    context_name, report_enabled_checked);
   }
 
@@ -520,7 +524,7 @@ abstract class uvm_report_catcher: uvm_callback
 				  string context_name = "",
 				  bool report_enabled_checked = 0) {
 
-    this.uvm_report(UVM_ERROR, id, message, UVM_NONE, fname, line,
+    this.uvm_report(uvm_severity.UVM_ERROR, id, message, uvm_verbosity.UVM_NONE, fname, line,
 		    context_name, report_enabled_checked);
   }
 
@@ -536,7 +540,7 @@ abstract class uvm_report_catcher: uvm_callback
 				    size_t line = 0,
 				    string context_name = "",
 				    bool report_enabled_checked = 0) {
-    this.uvm_report(UVM_WARNING, id, message, UVM_NONE, fname, line,
+    this.uvm_report(uvm_severity.UVM_WARNING, id, message, uvm_verbosity.UVM_NONE, fname, line,
 		    context_name, report_enabled_checked);
   }
 
@@ -552,7 +556,7 @@ abstract class uvm_report_catcher: uvm_callback
 				 size_t line = 0,
 				 string context_name = "",
 				 bool report_enabled_checked = false) {
-    this.uvm_report(UVM_INFO, id, message, verbosity, fname, line,
+    this.uvm_report(uvm_severity.UVM_INFO, id, message, verbosity, fname, line,
 		    context_name, report_enabled_checked);
   }
 
@@ -582,7 +586,8 @@ abstract class uvm_report_catcher: uvm_callback
   }
   
   // protected
-  static void uvm_process_report_message(uvm_report_message msg) {
+  void uvm_process_report_message(uvm_report_message msg) {
+    import uvm.base.uvm_report_server;
     uvm_report_object ro = _m_modified_report_message.get_report_object();
     uvm_action a = ro.get_report_action(msg.get_severity(), msg.get_id());
     if(a) {
@@ -595,7 +600,7 @@ abstract class uvm_report_catcher: uvm_callback
       msg.set_file(ro.get_report_file_handle(msg.get_severity(), msg.get_id()));
       msg.set_action(a);
       // no need to compose when neither UVM_DISPLAY nor UVM_LOG is set
-      if (a & (UVM_LOG|UVM_DISPLAY)) {
+      if (a & (uvm_action_type.UVM_LOG|uvm_action_type.UVM_DISPLAY)) {
 	composed_message = rs.compose_report_message(msg);
       }
       rs.execute_report_message(msg, composed_message);
@@ -610,13 +615,14 @@ abstract class uvm_report_catcher: uvm_callback
   // times if the message is not ~CAUGHT~.
 
   static protected void issue() {
+    import uvm.base.uvm_report_server;
     string composed_message;
     uvm_report_server rs = _m_modified_report_message.get_report_server();
 
     if(cast(uvm_action_type) (_m_modified_report_message.get_action()) !=
-       UVM_NO_ACTION) {
+       uvm_action_type.UVM_NO_ACTION) {
       // no need to compose when neither UVM_DISPLAY nor UVM_LOG is set
-      if(_m_modified_report_message.get_action() & (UVM_LOG|UVM_DISPLAY)) {
+      if(_m_modified_report_message.get_action() & (uvm_action_type.UVM_LOG|uvm_action_type.UVM_DISPLAY)) {
 	composed_message = rs.compose_report_message(_m_modified_report_message);
       }
       rs.execute_report_message(_m_modified_report_message, composed_message);
@@ -650,7 +656,7 @@ abstract class uvm_report_catcher: uvm_callback
 	Process p = Process.self(); // Keep random stability
 	Random randstate;
 	if (p !is null) {
-	  randstate = p.getRandState();
+	  p.getRandState(randstate);
 	}
 	_m_orig_report_message = cast(uvm_report_message) rm.clone();
 	assert(_m_orig_report_message !is null);
@@ -684,10 +690,10 @@ abstract class uvm_report_catcher: uvm_callback
 	if(thrown is false) {
 	  // bool break_loop = true;
 	  final switch(orig_severity) {
-	  case UVM_FATAL:   _m_caught_fatal++; break;
-	  case UVM_ERROR:   _m_caught_error++; break;
-	  case UVM_WARNING: _m_caught_warning++; break;
-	  case UVM_INFO:    // break_loop = false;
+	  case uvm_severity.UVM_FATAL:   _m_caught_fatal++; break;
+	  case uvm_severity.UVM_ERROR:   _m_caught_error++; break;
+	  case uvm_severity.UVM_WARNING: _m_caught_warning++; break;
+	  case uvm_severity.UVM_INFO:    // break_loop = false;
 	    break;
 	  }
 	  // if(break_loop) {
@@ -698,17 +704,17 @@ abstract class uvm_report_catcher: uvm_callback
 
       //update counters if message was returned with demoted severity
       switch(orig_severity) {
-      case UVM_FATAL:
+      case uvm_severity.UVM_FATAL:
 	if(_m_modified_report_message.get_severity() < orig_severity) {
 	  _m_demoted_fatal++;
 	}
 	break;
-      case UVM_ERROR:
+      case uvm_severity.UVM_ERROR:
 	if(_m_modified_report_message.get_severity() < orig_severity) {
 	  _m_demoted_error++;
 	}
 	break;
-      case UVM_WARNING:
+      case uvm_severity.UVM_WARNING:
 	if(_m_modified_report_message.get_severity() < orig_severity) {
 	  _m_demoted_warning++;
 	}
@@ -733,18 +739,18 @@ abstract class uvm_report_catcher: uvm_callback
     // catch is a keyword in Dlang
     action_e act = this.do_catch();
 
-    if(act == UNKNOWN_ACTION) {
+    if(act == action_e.UNKNOWN_ACTION) {
       this.uvm_report_error("RPTCTHR",
 			    "uvm_report_this.catch() in catcher instance " ~
 			    this.get_name() ~ " must return THROW or CAUGHT",
-			    UVM_NONE, __FILE__, __LINE__);
+			    uvm_verbosity.UVM_NONE, __FILE__, __LINE__);
     }
 
     if(_m_debug_flags & DO_NOT_MODIFY) {
       _m_modified_report_message.copy(_m_orig_report_message);
     }
 
-    if(act is CAUGHT  && !(_m_debug_flags & DO_NOT_CATCH)) {
+    if(act is action_e.CAUGHT  && !(_m_debug_flags & DO_NOT_CATCH)) {
       return false;
     }
     return true;
@@ -757,6 +763,7 @@ abstract class uvm_report_catcher: uvm_callback
   // It prints the statistics for the active catchers.
 
   static void summarize() {
+    import uvm.base.uvm_root: uvm_top;
     string s;
     string q;
     if(_do_report) {
@@ -774,7 +781,7 @@ abstract class uvm_report_catcher: uvm_callback
       q ~= format("Number of caught UVM_WARNING reports :%5d\n",
 		  _m_caught_warning);
 
-      uvm_info_context("UVM/REPORT/CATCHER", q, UVM_LOW, uvm_top);
+      uvm_info_context("UVM/REPORT/CATCHER", q, uvm_verbosity.UVM_LOW, uvm_top);
     }
   }
 }

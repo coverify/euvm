@@ -52,10 +52,11 @@ alias writef           vwrite;
 
 void vdisplay(T...)(T args) {
   static if(args.length == 0) {
-    writeln();
+    write('\n');
   }
   else {
-    writefln(args);
+    import std.string: format;
+    write(format(args), '\n');
   }
 }
 

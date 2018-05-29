@@ -33,18 +33,15 @@ module uvm.base.uvm_tr_database;
 // of the DUT.
 //
 
-import uvm.base.uvm_recorder;
-import uvm.base.uvm_tr_stream;
-import uvm.base.uvm_links;
-import uvm.base.uvm_object;
-import uvm.base.uvm_globals;
+import uvm.base.uvm_tr_stream: uvm_tr_stream, uvm_text_tr_stream;
+import uvm.base.uvm_links: uvm_link_base, uvm_parent_child_link,
+  uvm_related_link;
+import uvm.base.uvm_object: uvm_object;
 import uvm.base.uvm_object_defines;
 
-import uvm.dap.uvm_simple_lock_dap;
 
 import uvm.meta.mcd;
 import uvm.meta.misc;
-import uvm.base.uvm_object_globals;
 
 import esdl.base.core;
 
@@ -173,7 +170,7 @@ abstract class uvm_tr_database: uvm_object
 	Random s;
 
 	if (p !is null) {
-	  s = p.getRandState();
+	  p.getRandState(s);
 	}
 
 	open_stream_ = do_open_stream(name, hscope, type_name);
@@ -237,6 +234,8 @@ abstract class uvm_tr_database: uvm_object
   //
   // This method will trigger a <do_establish_link> call.
   void establish_link(uvm_link_base link) {
+    import uvm.base.uvm_recorder;
+    import uvm.base.uvm_globals;
     synchronized(this) {
       uvm_object lhs = link.get_lhs();
       uvm_object rhs = link.get_rhs();
@@ -334,6 +333,8 @@ abstract class uvm_tr_database: uvm_object
 
 class uvm_text_tr_database: uvm_tr_database
 {
+  import uvm.dap.uvm_simple_lock_dap: uvm_simple_lock_dap;
+  import uvm.base.uvm_object_globals: UVM_FILE;
   mixin(uvm_sync_string);
 
   // Variable- m_filename_dap
@@ -423,6 +424,7 @@ class uvm_text_tr_database: uvm_tr_database
   //
   // Text-Backend implementation of <uvm_tr_database::establish_link>.
   override protected void do_establish_link(uvm_link_base link) {
+    import uvm.base.uvm_recorder;
     synchronized(this) {
       uvm_object lhs = link.get_lhs();
       uvm_object rhs = link.get_rhs();
@@ -467,6 +469,7 @@ class uvm_text_tr_database: uvm_tr_database
   //
   // By default, the database will use a file named "tr_db.log".
   void set_file_name(string filename) {
+    import uvm.base.uvm_globals;
     synchronized(this) {
       if(filename == "") {
 	uvm_warning("UVM/TXT_DB/EMPTY_NAME",

@@ -37,7 +37,7 @@ import uvm.base.uvm_root;
 import uvm.meta.misc;
 
 import esdl.data.bvec;
-import esdl.data.rand;
+import esdl.rand;
 
 import std.string: format;
 
@@ -201,7 +201,7 @@ class uvm_mem_mam
 			     format("Cannot reconfigure Memory Allocation " ~
 				    "Manager with a different number of " ~
 				    "bytes (%0d !== %0d)",
-				    cfg._n_bytes, this._cfg._n_bytes), UVM_LOW);
+				    cfg._n_bytes, this._cfg._n_bytes), uvm_verbosity.UVM_LOW);
 	return this._cfg;
       }
 
@@ -219,7 +219,7 @@ class uvm_mem_mam
 				      used.get_start_offset(),
 				      used.get_end_offset(),
 				      cfg.start_offset, cfg.end_offset),
-			       UVM_LOW);
+			       uvm_verbosity.UVM_LOW);
 	  return this._cfg;
 	}
       }
@@ -287,7 +287,7 @@ class uvm_mem_mam
       }
 
       uvm_report_info("RegModel", format("Attempting to reserve ['h%h:'h%h]...",
-					 start_offset, end_offset), UVM_MEDIUM);
+					 start_offset, end_offset), uvm_verbosity.UVM_MEDIUM);
 
       foreach (i, used; this._in_use) {
 	if (start_offset <= used.get_end_offset() &&
@@ -366,7 +366,7 @@ class uvm_mem_mam
       try {
 	alloc.randomize();
       }
-      catch {
+      catch(Throwable) {
 	uvm_report_error("RegModel", "Unable to randomize policy");
 	return null;
       }

@@ -48,16 +48,14 @@ module uvm.base.uvm_cmdline_processor;
 // in the Built-in UVM Aware Command Line Arguments section.
 //
 
-import uvm.base.uvm_report_object;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_root: uvm_top;
-import uvm.base.uvm_root;
-import uvm.base.uvm_entity;
+import uvm.base.uvm_report_object: uvm_report_object;
+import uvm.base.uvm_object_globals: uvm_verbosity;
+
 import uvm.base.uvm_once;
+
 import uvm.meta.misc;
 
 import std.regex; // : Regex, regex, match
-import uvm.dpi.uvm_svcmd_dpi;
 import std.string: toUpper;
 
 final class uvm_cmdline_processor: /*extends*/ uvm_report_object
@@ -181,6 +179,8 @@ final class uvm_cmdline_processor: /*extends*/ uvm_report_object
   //|                                                                   //not barfoo.sv.
 
   final size_t get_arg_matches (string gmatch, out string[] args) {
+    import uvm.base.uvm_object_globals;
+
     auto len = gmatch.length;
     if((gmatch.length > 2) && (gmatch[0] is '/') && (gmatch[$-1] is '/')) {
       gmatch = gmatch[1..$-1];
@@ -194,7 +194,7 @@ final class uvm_cmdline_processor: /*extends*/ uvm_report_object
       writeln(e.msg);
       uvm_report_error("UVM_CMDLINE_PROC",
 		       "Unable to compile the regular expression: "
-		       ~ gmatch, UVM_NONE);
+		       ~ gmatch, uvm_verbosity.UVM_NONE);
       return 0;
     }
     foreach (arg; _m_argv) {
@@ -280,6 +280,7 @@ final class uvm_cmdline_processor: /*extends*/ uvm_report_object
   // This is a vendor specific string.
 
   static string get_tool_name () {
+    import uvm.dpi.uvm_svcmd_dpi;
     return uvm_dpi_get_tool_name();
   }
 
@@ -289,12 +290,14 @@ final class uvm_cmdline_processor: /*extends*/ uvm_report_object
   // This is a vendor specific string.
 
   static string  get_tool_version () {
+    import uvm.dpi.uvm_svcmd_dpi;
     return uvm_dpi_get_tool_version();
   }
 
   // constructor
 
   this(string name = "") {
+    import uvm.dpi.uvm_svcmd_dpi;
     synchronized(this) {
       string[] argv;
       string[] plus_argv;
@@ -491,22 +494,22 @@ final class uvm_cmdline_processor: /*extends*/ uvm_report_object
 
 
   // The implementation of this is in uvm_root.
-
   static bool m_convert_verb(string verb_str,
 			     out uvm_verbosity verb_enum) {
+    import uvm.base.uvm_object_globals;
     switch (verb_str) {
-    case "NONE"       : verb_enum = UVM_NONE;   return true;
-    case "UVM_NONE"   : verb_enum = UVM_NONE;   return true;
-    case "LOW"        : verb_enum = UVM_LOW;    return true;
-    case "UVM_LOW"    : verb_enum = UVM_LOW;    return true;
-    case "MEDIUM"     : verb_enum = UVM_MEDIUM; return true;
-    case "UVM_MEDIUM" : verb_enum = UVM_MEDIUM; return true;
-    case "HIGH"       : verb_enum = UVM_HIGH;   return true;
-    case "UVM_HIGH"   : verb_enum = UVM_HIGH;   return true;
-    case "FULL"       : verb_enum = UVM_FULL;   return true;
-    case "UVM_FULL"   : verb_enum = UVM_FULL;   return true;
-    case "DEBUG"      : verb_enum = UVM_DEBUG;  return true;
-    case "UVM_DEBUG"  : verb_enum = UVM_DEBUG;  return true;
+    case "NONE"       : verb_enum = uvm_verbosity.UVM_NONE;   return true;
+    case "UVM_NONE"   : verb_enum = uvm_verbosity.UVM_NONE;   return true;
+    case "LOW"        : verb_enum = uvm_verbosity.UVM_LOW;    return true;
+    case "UVM_LOW"    : verb_enum = uvm_verbosity.UVM_LOW;    return true;
+    case "MEDIUM"     : verb_enum = uvm_verbosity.UVM_MEDIUM; return true;
+    case "UVM_MEDIUM" : verb_enum = uvm_verbosity.UVM_MEDIUM; return true;
+    case "HIGH"       : verb_enum = uvm_verbosity.UVM_HIGH;   return true;
+    case "UVM_HIGH"   : verb_enum = uvm_verbosity.UVM_HIGH;   return true;
+    case "FULL"       : verb_enum = uvm_verbosity.UVM_FULL;   return true;
+    case "UVM_FULL"   : verb_enum = uvm_verbosity.UVM_FULL;   return true;
+    case "DEBUG"      : verb_enum = uvm_verbosity.UVM_DEBUG;  return true;
+    case "UVM_DEBUG"  : verb_enum = uvm_verbosity.UVM_DEBUG;  return true;
     default           :                         return false;
     }
   }

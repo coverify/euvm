@@ -238,7 +238,7 @@ class uvm_tlm_req_rsp_channel(REQ=int, RSP=REQ): uvm_component
       create_aliased_exports();
 
       // This function is defined in the base class uvm_component
-      set_report_id_action_hier(s_connection_error_id, UVM_NO_ACTION);
+      set_report_id_action_hier(s_connection_error_id, uvm_action_type.UVM_NO_ACTION);
 
     }
   }

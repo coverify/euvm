@@ -35,16 +35,15 @@ module uvm.base.uvm_pool;
 // be allocated on demand, and passed and stored by reference.
 //------------------------------------------------------------------------------
 
-import uvm.base.uvm_object;
-import uvm.base.uvm_globals;
-import uvm.base.uvm_printer;
-import uvm.base.uvm_root;
-import uvm.base.uvm_once;
-import uvm.base.uvm_coreservice;
-import std.conv: to;
-import uvm.meta.meta;
-import std.string: format;
+import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_printer: uvm_printer;
 
+import uvm.base.uvm_once;
+
+import uvm.meta.meta;
+import uvm.meta.misc;
+
+import std.conv: to;
 
 class uvm_pool(KEY=int, VAL=uvm_void): /*extends*/ uvm_object
 {
@@ -159,6 +158,7 @@ class uvm_pool(KEY=int, VAL=uvm_void): /*extends*/ uvm_object
   // private __gshared this_type[uvm_object] _m_global_pool;
 
   static this_type get_global_pool() {
+    // import uvm.base.uvm_coreservice;
     // synchronized(typeid(this_type)) {
     //   uvm_coreservice_t cs = uvm_coreservice_t.get();
     //   uvm_root top = cs.get_root();
@@ -231,6 +231,7 @@ class uvm_pool(KEY=int, VAL=uvm_void): /*extends*/ uvm_object
   // Removes the item with the given ~key~ from the pool.
 
   void remove(KEY key) {
+    import uvm.base.uvm_globals;
     synchronized(this) {
       if(!exists(key)) {
 	uvm_report_warning("POOLDEL",
@@ -289,10 +290,10 @@ class uvm_pool(KEY=int, VAL=uvm_void): /*extends*/ uvm_object
   // and 1 is returned.
 
   int first(ref KEY key) {
+    import std.algorithm;
     synchronized(this) {
       this._keys = _pool.keys;
       static if(__traits(compiles, KEY.init < KEY.init)) {
-	import std.algorithm;
 	sort(_keys);
       }
       if(_keys.length == 0) {
@@ -317,10 +318,10 @@ class uvm_pool(KEY=int, VAL=uvm_void): /*extends*/ uvm_object
   // the pool and 1 is returned.
 
   int last(ref KEY key) {
+    import std.algorithm;
     synchronized(this) {
       this._keys = _pool.keys;
       static if(__traits(compiles, KEY.init < KEY.init)) {
-	import std.algorithm;
 	sort(_keys);
       }
       if(_keys.length == 0) {
@@ -436,7 +437,6 @@ class uvm_pool(KEY=int, VAL=uvm_void): /*extends*/ uvm_object
 //------------------------------------------------------------------------------
 
 class uvm_object_string_pool(VAL=uvm_object): /*extends*/ uvm_pool!(string,VAL) {
-  import std.string: format;
 
   alias this_type = uvm_object_string_pool!(VAL);
 
@@ -481,6 +481,7 @@ class uvm_object_string_pool(VAL=uvm_object): /*extends*/ uvm_pool!(string,VAL) 
   mixin(uvm_once_sync_string);
 
   static this_type get_global_pool() {
+    // import uvm.base.uvm_coreservice;
     // synchronized(typeid(this_type)) {
     //   uvm_coreservice_t cs = uvm_coreservice_t.get();
     //   uvm_root top = cs.get_root();
@@ -529,6 +530,8 @@ class uvm_object_string_pool(VAL=uvm_object): /*extends*/ uvm_pool!(string,VAL) 
   // Removes the item with the given string ~key~ from the pool.
 
   override void remove(string key) {
+    import uvm.base.uvm_globals;
+    import std.string: format;
     synchronized(this) {
       if(!exists(key)) {
 	uvm_report_warning("POOLDEL",
@@ -553,8 +556,13 @@ class uvm_object_string_pool(VAL=uvm_object): /*extends*/ uvm_pool!(string,VAL) 
   }
 }
 
-import uvm.base.uvm_barrier;
-import uvm.base.uvm_event;
 
-alias uvm_object_string_pool!(uvm_barrier) uvm_barrier_pool;
-alias uvm_object_string_pool!(uvm_event!(uvm_object)) uvm_event_pool;
+// Moved to uvm_aliases
+// import uvm.base.uvm_barrier;
+// import uvm.base.uvm_event;
+// alias uvm_object_string_pool!(uvm_barrier) uvm_barrier_pool;
+// alias uvm_object_string_pool!(uvm_event!(uvm_object)) uvm_event_pool;
+// alias uvm_queue_string_pool = uvm_object_string_pool!(uvm_queue!string);
+// alias uvm_string_object_resource_pool =
+//   uvm_pool!(string, uvm_resource!(uvm_object));;
+

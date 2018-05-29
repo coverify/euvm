@@ -68,27 +68,19 @@ module uvm.base.uvm_root;
 
 // typedef class uvm_test_done_objection;
 // typedef class uvm_cmdline_processor;
-import uvm.base.uvm_component; // uvm_component
-import uvm.base.uvm_cmdline_processor;
-import uvm.base.uvm_entity;
-import uvm.base.uvm_object_globals;
+import uvm.base.uvm_async_lock: uvm_async_lock, uvm_async_event;
+import uvm.base.uvm_component:  uvm_component;
+import uvm.base.uvm_cmdline_processor: uvm_cmdline_processor;
+import uvm.base.uvm_entity: uvm_entity_base;
+import uvm.base.uvm_printer: uvm_printer;
+import uvm.base.uvm_object_globals: UVM_FILE;
+import uvm.base.uvm_objection: uvm_objection;
+import uvm.base.uvm_phase: uvm_phase;
 import uvm.base.uvm_global_defines;
-import uvm.base.uvm_printer;
-import uvm.base.uvm_factory;
-import uvm.base.uvm_globals;
-import uvm.base.uvm_objection;
-import uvm.base.uvm_phase;
-import uvm.base.uvm_report_handler;
-import uvm.base.uvm_report_object;
-import uvm.base.uvm_report_server;
-import uvm.base.uvm_domain;
 import uvm.base.uvm_object_defines;
-import uvm.base.uvm_traversal;
-import uvm.base.uvm_coreservice;
-import uvm.base.uvm_config_db;
 import uvm.base.uvm_version;
 
-public import uvm.meta.misc;
+import uvm.meta.misc;
 import uvm.meta.meta;
 
 import esdl.base.core;
@@ -100,10 +92,10 @@ import std.string: format;
 
 import core.sync.semaphore: Semaphore;
 
-version(UVM_NO_DEPRECATED) { }
- else {
-   version = UVM_INCLUDE_DEPRECATED;
- }
+// version(UVM_NO_DEPRECATED) { }
+//  else {
+//    version = UVM_INCLUDE_DEPRECATED;
+//  }
 
 //------------------------------------------------------------------------------
 // Variable: uvm_top
@@ -120,7 +112,28 @@ uvm_root uvm_top() {
   return uvm_entity_inst._get_uvm_root();
 }
 
-class uvm_root: uvm_component
+interface uvm_root_intf
+{
+  uvm_entity_base get_entity();
+  RootEntity get_root_entity();
+  void set_thread_context();
+  void print_header();
+  void initial();
+  void run_test(string test_name="");
+  void set_timeout(Time timeout, bool overridable=true);  uvm_component find(string comp_match);
+  void find_all(string comp_match, ref Queue!uvm_component comps,
+		uvm_component comp=null);
+  void find_all(string comp_match, ref uvm_component[] comps,
+		uvm_component comp=null);
+  uvm_component[] find_all(string comp_match, uvm_component comp=null);
+  void print_topology(uvm_printer printer=null);
+  SimTime phase_sim_timeout();
+  void register_async_lock(uvm_async_lock lock);
+  void register_async_event(uvm_async_event event);
+  void finalize();
+}
+
+class uvm_root: uvm_component, uvm_root_intf
 {
   // adding the mixin here results in gotchas if the user does not add
   // the mixin in the derived classes
@@ -137,35 +150,50 @@ class uvm_root: uvm_component
     synchronized(this) {
       super();
       _elab_done_semaphore = new Semaphore(); // count 0
+    }
+  }
 
-      // from static variable
-      _uvm_entity_instance =
-	uvm_entity_base._uvm_entity_inst;
-      _phase_timeout = new WithEvent!Time(UVM_DEFAULT_TIMEOUT,
-					  _uvm_entity_instance);
-      _m_phase_all_done = new WithEvent!bool(_uvm_entity_instance);
-      _clp = uvm_cmdline_processor.get_inst();
+  // initialize gets called by the uvm_entity_base constructor right
+  // after calling uvm_root constructor
+  void initialize(uvm_entity_base base) {
+    import uvm.base.uvm_domain;
+    synchronized(this) {
       m_rh.set_name("reporter");
+      _clp = uvm_cmdline_processor.get_inst();
+
+      // Moved to uvm_entity module
       report_header();
       // This sets up the global verbosity. Other command line args may
       // change individual component verbosity.
       m_check_verbosity();
+
+      // from static variable
+      _uvm_entity_instance = base;
+      // uvm_entity_base._uvm_entity_instance;
+      _phase_timeout = new WithEvent!Time("_phase_timeout",
+					  UVM_DEFAULT_TIMEOUT, base);
+      _m_phase_all_done = new WithEvent!bool("_m_phase_all_done", base);
+
+      // in the SV version these two lines are handled in
+      // the uvm_root.get function
+      uvm_domain.get_common_domain(); // FIXME -- comment this line??
+      m_domain = uvm_domain.get_uvm_domain();
+      
     }
+  }
+  
+  override uvm_entity_base get_entity() {
+    return _uvm_entity_instance;
+  }
+
+  override RootEntity get_root_entity() {
+    return this.get_entity.getRoot();
   }
 
   override void set_thread_context() {
     uvm_entity_instance.set_thread_context();
   }
 
-
-  // in the SV version these two lines are handled in
-  // the uvm_root.get function
-  void init_domains() {
-    synchronized(this) {
-      uvm_domain.get_common_domain(); // FIXME -- comment this line??
-      m_domain = uvm_domain.get_uvm_domain();
-    }
-  }
 
   // uvm_root
 
@@ -186,6 +214,7 @@ class uvm_root: uvm_component
   // | uvm_root r;
   // | r = uvm_root::get();
   static uvm_root get() {
+    import uvm.base.uvm_coreservice;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     uvm_root root = cs.get_root();
     return root;
@@ -193,17 +222,24 @@ class uvm_root: uvm_component
 
   // This function is retuired to get the uvm_root of any
   // uvm_component by way of traversing component hierarchy
-  override uvm_root get_root() {
+  override uvm_root_intf get_root() {
     return this;
   }
 
   @uvm_immutable_sync
   uvm_cmdline_processor _clp;
 
-
+  void print_header() {
+    report_header();
+    // This sets up the global verbosity. Other command line args may
+    // change individual component verbosity.
+    m_check_verbosity();
+  }
+  
   // this function can be overridden by the user
   void initial() {
-    run_test();
+    // run_test would be called in an override of initial function
+    // run_test();
   }
 
   override string get_type_name() {
@@ -232,6 +268,11 @@ class uvm_root: uvm_component
 
   // task
   void run_test(string test_name="") {
+    import uvm.base.uvm_config_db;
+    import uvm.base.uvm_coreservice;
+    import uvm.base.uvm_report_server;
+    import uvm.base.uvm_factory;
+    import uvm.base.uvm_object_globals;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     uvm_factory factory = cs.get_factory();
 
@@ -256,6 +297,20 @@ class uvm_root: uvm_component
     string[] test_names;
     size_t test_name_count = clp.get_arg_values("+UVM_TESTNAME=", test_names);
 
+    if (test_name_count == 0) {
+      import uvm.dpi.uvm_dpi_utils;
+      // look for DPI
+      if (uvm_dpi_is_usable()) {
+	// Use DPI function to get the name of the test
+	string testname = uvm_dpi_utils.instance().get_testname();
+	// string test_name = uvm_dpi_utils.instance().get_testname();
+	if (testname != "") {
+	  test_names ~= testname;
+	  test_name_count = 1;
+	}
+      }
+    }
+
     // If at least one, use first in queue.
     if(test_name_count > 0) {
       test_name = test_names[0];
@@ -274,24 +329,24 @@ class uvm_root: uvm_component
 	test_list ~= sep ~ test_names[i];
       }
       uvm_report_warning("MULTTST",
-			 format("Multiple (%0d) +UVM_TESTNAME arguments "
-				"provided on the command line.  '%s' will "
+			 format("Multiple (%0d) +UVM_TESTNAME arguments " ~
+				"provided on the command line.  '%s' will " ~
 				"be used.  Provided list: %s.",
 				test_name_count, test_name, test_list),
-			 UVM_NONE);
+			 uvm_verbosity.UVM_NONE);
     }
 
     // if test now defined, create it using common factory
     if(test_name != "") {
       if("uvm_test_top" in m_children) {
 	uvm_report_fatal("TTINST",
-			 "An uvm_test_top already exists via a "
-			 "previous call to run_test", UVM_NONE);
+			 "An uvm_test_top already exists via a " ~
+			 "previous call to run_test", uvm_verbosity.UVM_NONE);
 	wait(0); // #0 // forces shutdown because $finish is forked
       }
 
       uvm_test_top = cast(uvm_component)
-	factory.create_component_by_name(test_name, "", "uvm_test_top", null);
+	factory.create_component_by_name(test_name, "", "uvm_test_top", this);
       // Special case for VLang
       // uvm_test_top.set_name("uvm_test_top");
 
@@ -300,32 +355,34 @@ class uvm_root: uvm_component
 	  "command line +UVM_TESTNAME=" ~ test_name :
 	  "call to run_test(" ~ test_name ~ ")";
 	uvm_report_fatal("INVTST", "Requested test from " ~ msg ~ " not found.",
-			 UVM_NONE);
+			 uvm_verbosity.UVM_NONE);
       }
+      // inherit multicore config from root
+      uvm_test_top._esdl__multicoreConfig = _esdl__multicoreConfig;
     }
 
-    // if(m_children.length is 0) {
-    //   uvm_report_fatal("NOCOMP",
-    //		       "No components instantiated. You must either "
-    //		       "instantiate at least one component before "
-    //		       "calling run_test or use run_test to do so. "
-    //		       "To run a test using run_test, use +UVM_TESTNAME "
-    //		       "or supply the test name in the argument to "
-    //		       "run_test(). Exiting simulation.", UVM_NONE);
-    //   return;
-    // }
+    if(m_children.length is 0) {
+      uvm_report_fatal("NOCOMP",
+    		       "No components instantiated. You must either " ~
+    		       "instantiate at least one component before " ~
+    		       "calling run_test or use run_test to do so. " ~
+    		       "To run a test using run_test, use +UVM_TESTNAME " ~
+    		       "or supply the test name in the argument to " ~
+    		       "run_test(). Exiting simulation.", uvm_verbosity.UVM_NONE);
+      return;
+    }
 
     if(test_name == "") {
-      uvm_report_info("RNTST", "Running test ...", UVM_LOW);
+      uvm_report_info("RNTST", "Running test ...", uvm_verbosity.UVM_LOW);
     }
     else if (test_name == uvm_test_top.get_type_name()) {
       uvm_report_info("RNTST", "Running test " ~ test_name ~ "...",
-		      UVM_LOW);
+		      uvm_verbosity.UVM_LOW);
     }
     else {
       uvm_report_info("RNTST", "Running test " ~ uvm_test_top.get_type_name() ~
 		      " (via factory override for test \"" ~ test_name ~
-		      "\")...", UVM_LOW);
+		      "\")...", uvm_verbosity.UVM_LOW);
     }
 
     // phase runner, isolated from calling process
@@ -350,7 +407,11 @@ class uvm_root: uvm_component
     uvm_report_server l_rs = uvm_report_server.get_server();
     l_rs.report_summarize();
 
+    // disable all locks that have been register with this root
+    this.finalize();
+
     unlockStage();
+    
     if(finish_on_completion) {
       debug(FINISH) {
 	import std.stdio;
@@ -380,6 +441,7 @@ class uvm_root: uvm_component
   }
 
   private void _die() {
+    import uvm.base.uvm_report_server;
     uvm_report_server l_rs = uvm_report_server.get_server();
     // do the pre_abort callbacks
     m_do_pre_abort();
@@ -406,13 +468,14 @@ class uvm_root: uvm_component
   private bool _m_uvm_timeout_overridable = true;
 
   void set_timeout(Time timeout, bool overridable=true) {
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       import std.string;
       if(_m_uvm_timeout_overridable is false) {
 	uvm_report_info("NOTIMOUTOVR",
-			format("The global timeout setting of %0d is not "
+			format("The global timeout setting of %0d is not " ~
 			       "overridable to %0d due to a previous setting.",
-			       phase_timeout, timeout), UVM_NONE);
+			       phase_timeout, timeout), uvm_verbosity.UVM_NONE);
 	return;
       }
       _m_uvm_timeout_overridable = overridable;
@@ -452,6 +515,7 @@ class uvm_root: uvm_component
   // Function: find
 
   uvm_component find(string comp_match) {
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       import std.string: format;
       uvm_component[] comp_list;
@@ -460,17 +524,17 @@ class uvm_root: uvm_component
 
       if(comp_list.length > 1) {
 	uvm_report_warning("MMATCH",
-			   format("Found %0d components matching '%s'."
+			   format("Found %0d components matching '%s'." ~
 				  " Returning first match, %0s.",
 				  comp_list.length, comp_match,
-				  comp_list[0].get_full_name()), UVM_NONE);
+				  comp_list[0].get_full_name()), uvm_verbosity.UVM_NONE);
       }
 
       if(comp_list.length is 0) {
 	uvm_report_warning("CMPNFD",
 			   "Component matching '" ~comp_match ~
 			   "' was not found in the list of uvm_components",
-			   UVM_NONE);
+			   uvm_verbosity.UVM_NONE);
 	return null;
       }
       return comp_list[0];
@@ -525,12 +589,13 @@ class uvm_root: uvm_component
   // default output.
 
   void print_topology(uvm_printer printer=null) {
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       // string s; // defined in SV version but never used
 
       if(m_children.length is 0) {
-	uvm_report_warning("EMTCOMP", "print_topology - No UVM "
-			   "components to print.", UVM_NONE);
+	uvm_report_warning("EMTCOMP", "print_topology - No UVM " ~
+			   "components to print.", uvm_verbosity.UVM_NONE);
 	return;
       }
 
@@ -543,7 +608,7 @@ class uvm_root: uvm_component
 	}
       }
       uvm_info("UVMTOP", "UVM testbench topology:\n" ~ printer.emit(),
-	       UVM_NONE);
+	       uvm_verbosity.UVM_NONE);
     }
   }
 
@@ -651,7 +716,7 @@ class uvm_root: uvm_component
     m_do_dump_args();
   }
 
-  // override void admin_phase(uvm_phase phase) {
+  // override void setup_phase(uvm_phase phase) {
   //   foreach(child; get_children()) {
   //     child.uvm__auto_elab();
   //   }
@@ -666,6 +731,8 @@ class uvm_root: uvm_component
   // -----------------------
 
   void m_do_verbosity_settings() {
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
 
     string[] set_verbosity_settings;
     string[] split_vals;
@@ -677,18 +744,18 @@ class uvm_root: uvm_component
       uvm_split_string(setting, ',', split_vals);
       if(split_vals.length < 4 || split_vals.length > 5) {
 	uvm_report_warning("INVLCMDARGS",
-			   format("Invalid number of arguments found on "
-				  "the command line for setting "
+			   format("Invalid number of arguments found on " ~
+				  "the command line for setting " ~
 				  "'+uvm_set_verbosity=%s'.  Setting ignored.",
-				  setting), UVM_NONE); // , "", "");
+				  setting), uvm_verbosity.UVM_NONE); // , "", "");
       }
       uvm_verbosity tmp_verb;
       // Invalid verbosity
       if(!clp.m_convert_verb(split_vals[2], tmp_verb)) {
 	uvm_report_warning("INVLCMDVERB",
-			   format("Invalid verbosity found on the command "
+			   format("Invalid verbosity found on the command " ~
 				  "line for setting '%s'.",
-				  setting), UVM_NONE); // , "", "");
+				  setting), uvm_verbosity.UVM_NONE); // , "", "");
       }
     }
   }
@@ -703,6 +770,7 @@ class uvm_root: uvm_component
     // synchronized(this) {
     // declared in SV version -- redundant
     // string[] split_timeout;
+    import uvm.base.uvm_object_globals;
 
     string[] timeout_settings;
     size_t timeout_count = clp.get_arg_values("+UVM_TIMEOUT=", timeout_settings);
@@ -720,15 +788,15 @@ class uvm_root: uvm_component
 	  timeout_list ~= sep ~ timeout_settings[i];
 	}
 	uvm_report_warning("MULTTIMOUT",
-			   format("Multiple (%0d) +UVM_TIMEOUT arguments "
-				  "provided on the command line.  '%s' will "
+			   format("Multiple (%0d) +UVM_TIMEOUT arguments " ~
+				  "provided on the command line.  '%s' will " ~
 				  "be used.  Provided list: %s.",
 				  timeout_count, timeout, timeout_list),
-			   UVM_NONE);
+			   uvm_verbosity.UVM_NONE);
       }
       uvm_report_info("TIMOUTSET",
-		      format("'+UVM_TIMEOUT=%s' provided on the command "
-			     "line is being applied.", timeout), UVM_NONE);
+		      format("'+UVM_TIMEOUT=%s' provided on the command " ~
+			     "line is being applied.", timeout), uvm_verbosity.UVM_NONE);
 
       uint timeout_int;
       string override_spec;
@@ -768,6 +836,10 @@ class uvm_root: uvm_component
   // -----------------------
 
   void m_process_inst_override(string ovr) {
+    import uvm.base.uvm_coreservice;
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_factory;
+    import uvm.base.uvm_object_globals;
     string[] split_val;
 
     uvm_coreservice_t cs = uvm_coreservice_t.get();
@@ -778,12 +850,12 @@ class uvm_root: uvm_component
     if(split_val.length !is 3 ) {
       uvm_report_error("UVM_CMDLINE_PROC",
 		       "Invalid setting for +uvm_set_inst_override=" ~ ovr ~
-		       ", setting must specify <requested_type>,"
-		       "<override_type>,<instance_path>", UVM_NONE);
+		       ", setting must specify <requested_type>," ~
+		       "<override_type>,<instance_path>", uvm_verbosity.UVM_NONE);
     }
     uvm_report_info("INSTOVR",
-		    "Applying instance override from the command line: "
-		    "+uvm_set_inst_override=" ~ ovr, UVM_NONE);
+		    "Applying instance override from the command line: " ~
+		    "+uvm_set_inst_override=" ~ ovr, uvm_verbosity.UVM_NONE);
     factory.set_inst_override_by_name(split_val[0], split_val[1], split_val[2]);
   }
 
@@ -792,6 +864,10 @@ class uvm_root: uvm_component
   // -----------------------
 
   void m_process_type_override(string ovr) {
+    import uvm.base.uvm_coreservice;
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_factory;
+    import uvm.base.uvm_object_globals;
     string[] split_val;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     uvm_factory factory = cs.get_factory();
@@ -801,8 +877,8 @@ class uvm_root: uvm_component
     if(split_val.length > 3 || split_val.length < 2) {
       uvm_report_error("UVM_CMDLINE_PROC",
 		       "Invalid setting for +uvm_set_type_override=" ~ ovr ~
-		       ", setting must specify <requested_type>,"
-		       "<override_type>[,<replace>]", UVM_NONE);
+		       ", setting must specify <requested_type>," ~
+		       "<override_type>[,<replace>]", uvm_verbosity.UVM_NONE);
       return;
     }
 
@@ -812,16 +888,16 @@ class uvm_root: uvm_component
       if(split_val[2] == "0") replace =  false;
       else if(split_val[2] == "1") replace = true;
       else {
-	uvm_report_error("UVM_CMDLINE_PROC", "Invalid replace arg for "
+	uvm_report_error("UVM_CMDLINE_PROC", "Invalid replace arg for " ~
 			 "+uvm_set_type_override=" ~ ovr ~
-			 " value must be 0 or 1", UVM_NONE);
+			 " value must be 0 or 1", uvm_verbosity.UVM_NONE);
 	return;
       }
     }
 
-    uvm_report_info("UVM_CMDLINE_PROC", "Applying type override from "
+    uvm_report_info("UVM_CMDLINE_PROC", "Applying type override from " ~
 		    "the command line: +uvm_set_type_override=" ~ ovr,
-		    UVM_NONE);
+		    uvm_verbosity.UVM_NONE);
     factory.set_type_override_by_name(split_val[0], split_val[1], replace);
   }
 
@@ -854,6 +930,9 @@ class uvm_root: uvm_component
   // ----------------------
 
   void m_do_max_quit_settings() {
+    import uvm.base.uvm_report_server;
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
     uvm_report_server srvr = uvm_report_server.get_server();
     string[] max_quit_settings;
     size_t max_quit_count = clp.get_arg_values("+UVM_MAX_QUIT_COUNT=",
@@ -869,16 +948,16 @@ class uvm_root: uvm_component
 	  max_quit_list ~= sep ~ max_quit_settings[i];
 	}
 	uvm_report_warning("MULTMAXQUIT",
-			   format("Multiple (%0d) +UVM_MAX_QUIT_COUNT "
-				  "arguments provided on the command line."
+			   format("Multiple (%0d) +UVM_MAX_QUIT_COUNT " ~
+				  "arguments provided on the command line." ~
 				  "  '%s' will be used.  Provided list: %s.",
 				  max_quit_count, max_quit, max_quit_list),
-			   UVM_NONE);
+			   uvm_verbosity.UVM_NONE);
       }
       uvm_report_info("MAXQUITSET",
-		      format("'+UVM_MAX_QUIT_COUNT=%s' provided on the "
+		      format("'+UVM_MAX_QUIT_COUNT=%s' provided on the " ~
 			     "command line is being applied.", max_quit),
-		      UVM_NONE);
+		      uvm_verbosity.UVM_NONE);
       string[] split_max_quit;
       uvm_split_string(max_quit, ',', split_max_quit);
       int max_quit_int = parse!int(split_max_quit[0]); // .atoi();
@@ -895,6 +974,7 @@ class uvm_root: uvm_component
   // --------------
 
   void m_do_dump_args() {
+    import uvm.base.uvm_object_globals;
     string[] dump_args;
     string[] all_args;
     string out_string;
@@ -904,7 +984,7 @@ class uvm_root: uvm_component
 	if(arg == "__-f__") continue;
 	out_string ~= out_string ~ arg ~ " ";
       }
-      uvm_report_info("DUMPARGS", out_string, UVM_NONE);
+      uvm_report_info("DUMPARGS", out_string, uvm_verbosity.UVM_NONE);
     }
   }
 
@@ -914,6 +994,10 @@ class uvm_root: uvm_component
   // ----------------
 
   void m_process_config(string cfg, bool is_int) {
+    import uvm.base.uvm_coreservice;
+    import uvm.base.uvm_config_db;
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_object_globals;
     int v;
     string[] split_val;
 
@@ -922,7 +1006,7 @@ class uvm_root: uvm_component
       uvm_report_error("UVM_CMDLINE_PROC",
 		       "Invalid +uvm_set_config command\"" ~ cfg ~
 		       "\" missing field and value: component is \"" ~
-		       split_val[0] ~ "\"", UVM_NONE);
+		       split_val[0] ~ "\"", uvm_verbosity.UVM_NONE);
       return;
     }
 
@@ -930,15 +1014,15 @@ class uvm_root: uvm_component
       uvm_report_error("UVM_CMDLINE_PROC",
 		       "Invalid +uvm_set_config command\"" ~ cfg ~
 		       "\" missing value: component is \"" ~ split_val[0] ~
-		       "\"  field is \"" ~ split_val[1] ~ "\"", UVM_NONE);
+		       "\"  field is \"" ~ split_val[1] ~ "\"", uvm_verbosity.UVM_NONE);
       return;
     }
 
     if(split_val.length > 3) {
       uvm_report_error("UVM_CMDLINE_PROC",
-		       format("Invalid +uvm_set_config command\"%s\" : "
-			      "expected only 3 fields (component, field "
-			      "and value).", cfg), UVM_NONE);
+		       format("Invalid +uvm_set_config command\"%s\" : " ~
+			      "expected only 3 fields (component, field " ~
+			      "and value).", cfg), uvm_verbosity.UVM_NONE);
       return;
     }
 
@@ -968,14 +1052,14 @@ class uvm_root: uvm_component
       }
 
       uvm_report_info("UVM_CMDLINE_PROC",
-		      "Applying config setting from the command line: "
-		      "+uvm_set_config_int=" ~ cfg, UVM_NONE);
+		      "Applying config setting from the command line: " ~
+		      "+uvm_set_config_int=" ~ cfg, uvm_verbosity.UVM_NONE);
       uvm_config_db!int.set(m_uvm_top, split_val[0], split_val[1], v);
     }
     else {
       uvm_report_info("UVM_CMDLINE_PROC",
-		      "Applying config setting from the command line: "
-		      "+uvm_set_config_string=" ~ cfg, UVM_NONE);
+		      "Applying config setting from the command line: " ~
+		      "+uvm_set_config_string=" ~ cfg, uvm_verbosity.UVM_NONE);
       uvm_config_db!string.set(m_uvm_top, split_val[0], split_val[1], split_val[2]);
     }
   }
@@ -985,6 +1069,11 @@ class uvm_root: uvm_component
   // ----------------
 
   void m_process_default_sequence(string cfg) {
+    import uvm.base.uvm_coreservice;
+    import uvm.base.uvm_config_db;
+    import uvm.base.uvm_globals;
+    import uvm.base.uvm_factory;
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       string[] split_val;
       uvm_coreservice_t cs = uvm_coreservice_t.get();
@@ -997,7 +1086,7 @@ class uvm_root: uvm_component
 	uvm_report_error("UVM_CMDLINE_PROC",
 			 "Invalid +uvm_set_default_sequence command\"" ~
 			 cfg ~ "\" missing phase and type: sequencer is \"" ~
-			 split_val[0] ~ "\"", UVM_NONE);
+			 split_val[0] ~ "\"", uvm_verbosity.UVM_NONE);
 	return;
       }
 
@@ -1006,7 +1095,7 @@ class uvm_root: uvm_component
 			 "Invalid +uvm_set_default_sequence command\"" ~ cfg ~
 			 "\" missing type: sequencer is \"" ~ split_val[0] ~
 			 "\"  phase is \"" ~ split_val[1] ~ "\"",
-			 UVM_NONE);
+			 uvm_verbosity.UVM_NONE);
 	return;
       }
 
@@ -1014,7 +1103,7 @@ class uvm_root: uvm_component
 	uvm_report_error("UVM_CMDLINE_PROC", 
 			 format("Invalid +uvm_set_default_sequence command" ~
 				"\"%s\" : expected only 3 fields (sequencer" ~
-				", phase and type).", cfg), UVM_NONE);
+				", phase and type).", cfg), uvm_verbosity.UVM_NONE);
       }
 
       w = f.find_wrapper_by_name(split_val[2]);
@@ -1022,13 +1111,13 @@ class uvm_root: uvm_component
 	uvm_report_error("UVM_CMDLINE_PROC",
 			 format("Invalid type '%s' provided to +" ~
 				"uvm_set_default_sequence", split_val[2]),
-			 UVM_NONE);
+			 uvm_verbosity.UVM_NONE);
 	return;
       }
       else {
 	uvm_report_info("UVM_CMDLINE_PROC",
 			"Setting default sequence from the command " ~
-			"line: +uvm_set_default_sequence=" ~ cfg, UVM_NONE);
+			"line: +uvm_set_default_sequence=" ~ cfg, uvm_verbosity.UVM_NONE);
 	uvm_config_db!(uvm_object_wrapper).set(this, split_val[0] ~
 					       "." ~ split_val[1],
 					       "default_sequence", w);
@@ -1041,11 +1130,12 @@ class uvm_root: uvm_component
   // ----------------
 
   void m_check_verbosity() {
+    import uvm.base.uvm_object_globals;
 
     string verb_string;
     string[] verb_settings;
     int plusarg;
-    uvm_verbosity verbosity = UVM_MEDIUM;
+    uvm_verbosity verbosity = uvm_verbosity.UVM_MEDIUM;
 
     // Retrieve the verbosities provided on the command line.
     size_t verb_count = clp.get_arg_values(`+UVM_VERBOSITY=`, verb_settings);
@@ -1072,39 +1162,39 @@ class uvm_root: uvm_component
       }
 
       uvm_report_warning("MULTVERB",
-			 format("Multiple (%0d) +UVM_VERBOSITY arguments "
-				"provided on the command line.  '%s' "
+			 format("Multiple (%0d) +UVM_VERBOSITY arguments " ~
+				"provided on the command line.  '%s' " ~
 				"will be used.  Provided list: %s.",
 				verb_count, verb_string, verb_list),
-			 UVM_NONE);
+			 uvm_verbosity.UVM_NONE);
     }
 
     if(plusarg is 1) {
       switch(verb_string) {
-      case "UVM_NONE"    : verbosity = UVM_NONE; break;
-      case "NONE"        : verbosity = UVM_NONE; break;
-      case "UVM_LOW"     : verbosity = UVM_LOW; break;
-      case "LOW"         : verbosity = UVM_LOW; break;
-      case "UVM_MEDIUM"  : verbosity = UVM_MEDIUM; break;
-      case "MEDIUM"      : verbosity = UVM_MEDIUM; break;
-      case "UVM_HIGH"    : verbosity = UVM_HIGH; break;
-      case "HIGH"        : verbosity = UVM_HIGH; break;
-      case "UVM_FULL"    : verbosity = UVM_FULL; break;
-      case "FULL"        : verbosity = UVM_FULL; break;
-      case "UVM_DEBUG"   : verbosity = UVM_DEBUG; break;
-      case "DEBUG"       : verbosity = UVM_DEBUG; break;
+      case "UVM_NONE"    : verbosity = uvm_verbosity.UVM_NONE; break;
+      case "NONE"        : verbosity = uvm_verbosity.UVM_NONE; break;
+      case "UVM_LOW"     : verbosity = uvm_verbosity.UVM_LOW; break;
+      case "LOW"         : verbosity = uvm_verbosity.UVM_LOW; break;
+      case "UVM_MEDIUM"  : verbosity = uvm_verbosity.UVM_MEDIUM; break;
+      case "MEDIUM"      : verbosity = uvm_verbosity.UVM_MEDIUM; break;
+      case "UVM_HIGH"    : verbosity = uvm_verbosity.UVM_HIGH; break;
+      case "HIGH"        : verbosity = uvm_verbosity.UVM_HIGH; break;
+      case "UVM_FULL"    : verbosity = uvm_verbosity.UVM_FULL; break;
+      case "FULL"        : verbosity = uvm_verbosity.UVM_FULL; break;
+      case "UVM_DEBUG"   : verbosity = uvm_verbosity.UVM_DEBUG; break;
+      case "DEBUG"       : verbosity = uvm_verbosity.UVM_DEBUG; break;
       default       : {
 	verbosity = cast(uvm_verbosity) parse!int(verb_string); // .atoi();
 	if(verbosity > 0) {
 	  uvm_report_info("NSTVERB",
-			  format("Non-standard verbosity value, using "
-				 "provided '%0d'.", verbosity), UVM_NONE);
+			  format("Non-standard verbosity value, using " ~
+				 "provided '%0d'.", verbosity), uvm_verbosity.UVM_NONE);
 	}
 	if(verbosity is 0) {
-	  verbosity = UVM_MEDIUM;
+	  verbosity = uvm_verbosity.UVM_MEDIUM;
 	  uvm_report_warning("ILLVERB",
-			     "Illegal verbosity value, using default "
-			     "of UVM_MEDIUM.", UVM_NONE);
+			     "Illegal verbosity value, using default " ~
+			     "of UVM_MEDIUM.", uvm_verbosity.UVM_NONE);
 	}
       }
       }
@@ -1122,6 +1212,8 @@ class uvm_root: uvm_component
   }
   
   private void _report_header(UVM_FILE file = 0) {
+    import uvm.base.uvm_report_server;
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       string q;
       uvm_report_server srvr;
@@ -1170,7 +1262,7 @@ class uvm_root: uvm_component
 	q ~= "\n      (Specify +UVM_NO_RELNOTES to turn off this notice)\n";
       }
 
-      uvm_info("UVM/RELNOTES", q, UVM_LOW);
+      uvm_info("UVM/RELNOTES", q, uvm_verbosity.UVM_LOW);
     }
   }
 
@@ -1209,8 +1301,8 @@ class uvm_root: uvm_component
       uvm_fatal("RUNPHSTIME",
 		"The run phase must start at time 0, current time is " ~
 		format("%s", getRootEntity().getSimTime()) ~
-		". No non-zero delays are allowed before run_test(), and"
-		" pre-run user defined phases may not consume simulation"
+		". No non-zero delays are allowed before run_test(), and" ~
+		" pre-run user defined phases may not consume simulation" ~
 		" time before the start of the run phase.");
     }
   }
@@ -1220,13 +1312,16 @@ class uvm_root: uvm_component
   // -------------
   // At end of elab phase we need to do tlm binding resolution.
   override void phase_started(uvm_phase phase) {
+    import uvm.base.uvm_report_server;
+    import uvm.base.uvm_domain;
+    import uvm.base.uvm_object_globals;
     synchronized(this) {
       if(phase is end_of_elaboration_ph) {
 	do_resolve_bindings();
 	if(enable_print_topology) print_topology();
 	uvm_report_server srvr = uvm_report_server.get_server();
-	if(srvr.get_severity_count(UVM_ERROR) > 0) {
-	  uvm_report_fatal("BUILDERR", "stopping due to build errors", UVM_NONE);
+	if(srvr.get_severity_count(uvm_severity.UVM_ERROR) > 0) {
+	  uvm_report_fatal("BUILDERR", "stopping due to build errors", uvm_verbosity.UVM_NONE);
 	}
       }
     }
@@ -1239,6 +1334,7 @@ class uvm_root: uvm_component
   bool _elab_done;
 
   override void phase_ended(uvm_phase phase) {
+    import uvm.base.uvm_domain;
     if(phase is end_of_elaboration_ph) {
       synchronized(this) {
 	elab_done = true;
@@ -1285,6 +1381,8 @@ class uvm_root: uvm_component
   private bool _m_relnotes_done = false;
 
   override void end_of_elaboration_phase(uvm_phase phase) {
+    import uvm.base.uvm_coreservice;
+    import uvm.base.uvm_traversal;
     synchronized(this) {
       auto p = new uvm_component_proxy("proxy");
       auto adapter = new uvm_top_down_visitor_adapter!uvm_component("adapter");
@@ -1297,20 +1395,47 @@ class uvm_root: uvm_component
 
   override void uvm__auto_build() {
     super.uvm__auto_build();
-    if(m_children.length is 0) {
-      uvm_fatal("NOCOMP",
-		"No components instantiated. You must either " ~
-		"instantiate at least one component before " ~
-		"calling run_test or use run_test to do so. " ~
-		"To run a test using run_test, use +UVM_TESTNAME " ~
-		"or supply the test name in the argument to " ~
-		"run_test(). Exiting simulation.");
-      return;
-    }
+    // if(m_children.length is 0) {
+    //   uvm_fatal("NOCOMP",
+    // 		"No components instantiated. You must either " ~
+    // 		"instantiate at least one component before " ~
+    // 		"calling run_test or use run_test to do so. " ~
+    // 		"To run a test using run_test, use +UVM_TESTNAME " ~
+    // 		"or supply the test name in the argument to " ~
+    // 		"run_test(). Exiting simulation.");
+    //   return;
+    // }
   }
 
   override void set_name(string name) {
     super.set_root_name(name);
+  }
+
+  private uvm_async_lock[] _async_locks;
+  
+  final void register_async_lock(uvm_async_lock lock) {
+    synchronized(this) {
+      _async_locks ~= lock;
+    }
+  }
+
+  private uvm_async_event[] _async_events;
+  
+  final void register_async_event(uvm_async_event event) {
+    synchronized(this) {
+      _async_events ~= event;
+    }
+  }
+
+  final void finalize() {
+    synchronized(this) {
+      foreach (lock; _async_locks) {
+	lock.disable();
+      }
+      foreach (event; _async_events) {
+	event.disableWait();
+      }
+    }
   }
 }
 
@@ -1340,7 +1465,7 @@ class uvm_root: uvm_component
 // 			      string name,
 // 			      string id,
 // 			      string message,
-// 			      int verbosity_level=UVM_MEDIUM,
+// 			      int verbosity_level=uvm_verbosity.UVM_MEDIUM,
 // 			      string filename="",
 // 			      size_t line=0,
 // 			      uvm_report_object client=null) {

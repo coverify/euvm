@@ -40,7 +40,7 @@ class uvm_tlm_b_transport_port(T=uvm_tlm_generic_payload)
     this(string name, uvm_component parent,
 	 int min_size=1, int max_size=1) {
       synchronized(this) {
-	super(name, parent, UVM_PORT, min_size, max_size);
+	super(name, parent, uvm_port_type_e.UVM_PORT, min_size, max_size);
 	m_if_mask = UVM_TLM_B_MASK;
       }
     }
@@ -77,7 +77,7 @@ class uvm_tlm_nb_transport_fw_port(T=uvm_tlm_generic_payload,
     this(string name, uvm_component parent,
 	 int min_size=1, int max_size=1) {
       synchronized(this) {
-	super(name, parent, UVM_PORT, min_size, max_size);
+	super(name, parent, uvm_port_type_e.UVM_PORT, min_size, max_size);
 	m_if_mask = UVM_TLM_NB_FW_MASK;
       }
     }
@@ -112,7 +112,7 @@ class uvm_tlm_nb_transport_bw_port(T=uvm_tlm_generic_payload,
     this(string name, uvm_component parent,
 	 int min_size=1, int max_size=1) {
       synchronized(this) {
-	super(name, parent, UVM_PORT, min_size, max_size);
+	super(name, parent, uvm_port_type_e.UVM_PORT, min_size, max_size);
 	m_if_mask = UVM_TLM_NB_BW_MASK;
       }
     }

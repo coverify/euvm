@@ -40,7 +40,7 @@ import esdl.data.queue;
 
 version(UVM_NO_RAND) {}
  else {
-  import esdl.data.rand;
+  import esdl.rand;
  }   
 
 import std.string: format;
@@ -121,12 +121,12 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
 			     bool rerandomize = false) {
     synchronized(this) {
       if (sequence_ptr is null) {
-	uvm_report_fatal("SNDREQ", "Send request sequence_ptr"
-			 " is null", UVM_NONE);
+	uvm_report_fatal("SNDREQ", "Send request sequence_ptr" ~
+			 " is null", uvm_verbosity.UVM_NONE);
       }
       if (sequence_ptr.m_wait_for_grant_semaphore < 1) {
-	uvm_report_fatal("SNDREQ", "Send request called without"
-			 " wait_for_grant", UVM_NONE);
+	uvm_report_fatal("SNDREQ", "Send request called without" ~
+			 " wait_for_grant", uvm_verbosity.UVM_NONE);
       }
       sequence_ptr.dec_wait_for_grant_semaphore();
 
@@ -139,7 +139,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
 	      randomize(param_t);
 	    }
 	    catch {
-	      uvm_report_warning("SQRSNDREQ", "Failed to rerandomize sequence"
+	      uvm_report_warning("SQRSNDREQ", "Failed to rerandomize sequence" ~
 				 " item in send_request");
 	    }
 	  }
@@ -150,17 +150,17 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
 	m_last_req_push_front(param_t);
       }
       else {
-	uvm_report_fatal(get_name(), format("send_request failed to cast"
-					    " sequence item"), UVM_NONE);
+	uvm_report_fatal(get_name(), format("send_request failed to cast" ~
+					    " sequence item"), uvm_verbosity.UVM_NONE);
       }
       param_t.set_sequence_id(sequence_ptr.m_get_sqr_sequence_id(m_sequencer_id,
 								 true));
       t.set_sequencer(this);
       if (_m_req_fifo.try_put(param_t) is false) {
 	uvm_report_fatal(get_full_name(),
-			 format("Concurrent calls to send_request() not"
-				" supported. Check your driver for concurrent"
-				" calls to get_next_item()"), UVM_NONE);
+			 format("Concurrent calls to send_request() not" ~
+				" supported. Check your driver for concurrent" ~
+				" calls to get_next_item()"), uvm_verbosity.UVM_NONE);
       }
       _m_num_reqs_sent++;
       // Grant any locks as soon as possible
@@ -224,7 +224,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
     synchronized(this) {
       if(max > 1024) {
 	uvm_report_warning("HSTOB",
-			   format("Invalid last size; 1024 is the maximum"
+			   format("Invalid last size; 1024 is the maximum" ~
 				  " and will be used"));
 	max = 1024;
       }
@@ -265,7 +265,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
     synchronized(this) {
       if(n > _m_num_last_reqs) {
 	uvm_report_warning("HSTOB",
-			   format("Invalid last access (%0d), the max"
+			   format("Invalid last access (%0d), the max" ~
 				  " history is %0d", n, _m_num_last_reqs));
 	return null;
       }
@@ -330,7 +330,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
     synchronized(this) {
       if(max > 1024) {
 	uvm_report_warning("HSTOB",
-			   format("Invalid last size; 1024 is the maximum"
+			   format("Invalid last size; 1024 is the maximum" ~
 				  " and will be used"));
 	max = 1024;
       }
@@ -371,7 +371,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
     synchronized(this) {
       if(n > _m_num_last_rsps) {
 	uvm_report_warning("HSTOB",
-			   format("Invalid last access (%0d), the max"
+			   format("Invalid last access (%0d), the max" ~
 				  " history is %0d", n, _m_num_last_rsps));
 	return null;
       }
@@ -412,7 +412,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
       uvm_sequence_base sequence_ptr;
 
       if (t is null) {
-	uvm_report_fatal("SQRPUT", "Driver put a null response", UVM_NONE);
+	uvm_report_fatal("SQRPUT", "Driver put a null response", uvm_verbosity.UVM_NONE);
       }
 
       m_last_rsp_push_front(t);
@@ -423,7 +423,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
 	version(CDNS_NO_SQR_CHK_SEQ_ID) {}
 	else {
 	  uvm_report_fatal("SQRPUT", "Driver put a response with null" ~
-			   " sequence_id", UVM_NONE);
+			   " sequence_id", uvm_verbosity.UVM_NONE);
 	}
 	return;
       }
@@ -442,8 +442,8 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
       }
       else {
 	uvm_report_info("Sequencer",
-			format("Dropping response for sequence %0d, sequence"
-			       " not found.  Probable cause: sequence exited"
+			format("Dropping response for sequence %0d, sequence" ~
+			       " not found.  Probable cause: sequence exited" ~
 			       " or has been killed", t.get_sequence_id()));
       }
     }
@@ -480,8 +480,8 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   override void do_print (uvm_printer printer) {
     synchronized(this) {
       super.do_print(printer);
-      printer.print("num_last_reqs", _m_num_last_reqs, UVM_DEC);
-      printer.print("num_last_rsps", _m_num_last_rsps, UVM_DEC);
+      printer.print("num_last_reqs", _m_num_last_reqs, uvm_radix_enum.UVM_DEC);
+      printer.print("num_last_rsps", _m_num_last_rsps, uvm_radix_enum.UVM_DEC);
     }
   }
 
@@ -495,7 +495,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
 
       if (response is null) {
 	uvm_report_fatal("ANALWRT", "Failure to cast analysis port write item",
-			 UVM_NONE);
+			 uvm_verbosity.UVM_NONE);
       }
       put_response(response);
     }

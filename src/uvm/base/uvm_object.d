@@ -30,6 +30,10 @@ module uvm.base.uvm_object;
 // typedef class uvm_objection;
 // typedef class uvm_component;
 
+// version (UVM_NO_DEPRECATED) { }
+//  else {
+//    version = UVM_INCLUDE_DEPRECATED;
+//  }
 
 // internal
 // typedef class uvm_status_container;
@@ -45,34 +49,27 @@ module uvm.base.uvm_object;
 // <create> and <get_type_name>.
 //
 //------------------------------------------------------------------------------
-import uvm.base.uvm_coreservice;
-import uvm.base.uvm_misc;
 
-import uvm.base.uvm_recorder;
+import uvm.base.uvm_misc: uvm_void, uvm_status_container;
+import uvm.base.uvm_recorder; // TBD IMPORTS
 
 
-import uvm.base.uvm_entity;
 import uvm.base.uvm_once;
-import uvm.base.uvm_factory;
-import uvm.base.uvm_printer;
-import uvm.base.uvm_comparer;
-import uvm.base.uvm_packer;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_report_object;
-import uvm.base.uvm_globals;
-import uvm.base.uvm_root;
-import uvm.base.uvm_component: uvm_component, uvm__config_parallelism;
-import uvm.base.uvm_port_base;
-import uvm.comps.uvm_agent;
+import uvm.base.uvm_factory: uvm_object_wrapper;
+import uvm.base.uvm_printer: uvm_printer;
+import uvm.base.uvm_comparer: uvm_comparer;
+import uvm.base.uvm_packer: uvm_packer;
+
 import uvm.meta.mcd;
 import uvm.meta.misc;
+import uvm.vpi.uvm_vpi_intf;
 
 import esdl.base.core;
 import esdl.data.bvec;
 
 version(UVM_NO_RAND) {}
  else {
-   import esdl.data.rand;
+   import esdl.rand;
  }
 
 import std.traits;
@@ -124,15 +121,21 @@ abstract class uvm_object: uvm_void
     synchronized(this) {
       _m_inst_id = inst_id;
       _m_leaf_name = name;
-      auto proc = Procedure.self;
-      if(proc !is null) {
-	auto seed = uniform!int(proc.getRandGen());
-	debug(SEED) {
-	  import std.stdio;
-	  writeln("Setting seed: ", seed, " for instance: ", get_full_name);
-	}
-	this.reseed(seed);
-      }
+      // auto proc = Procedure.self;
+      // if(proc !is null) {
+      // 	auto seed = uniform!int(proc.getRandGen());
+      // 	debug(SEED) {
+      // 	  import std.stdio;
+      // 	  auto thread = PoolThread.self;
+      // 	  auto func = Process.self;
+      // 	  if (func !is null) {
+      // 	    writeln("Process ", thread ? thread.getPoolIndex : -1, " : ",
+      // 		    func.getFullName);
+      // 	  }
+      // 	  writeln("Setting ", get_full_name, " seed: ", seed);
+      // 	}
+      // 	this.reseed(seed);
+      // }
     }
   }
 
@@ -171,6 +174,7 @@ abstract class uvm_object: uvm_void
   }
 
   final void reseed () {
+    import uvm.base.uvm_misc: uvm_create_random_seed;
     synchronized(this) {
       if(use_uvm_seeding) {
 	version(UVM_NO_RAND) {}
@@ -182,6 +186,25 @@ abstract class uvm_object: uvm_void
     }
   }
 
+  void _esdl__setupSolver() {
+    version(UVM_NO_RAND) {}
+    else {
+      if (! _esdl__isRandSeeded()) {
+	auto proc = Procedure.self;
+	if(proc !is null) {
+	  auto seed = uniform!int(proc.getRandGen());
+	  debug(SEED) {
+	    import std.stdio;
+	    auto thread = PoolThread.self;
+	    writeln("Procedure ", thread ? thread.getPoolIndex : -1, " : ",
+      		    proc.getFullName);
+	    writeln("Setting ", get_full_name, " seed: ", seed);
+	  }
+	  this.reseed(seed);
+	}
+      }
+    }
+  }
 
   // // Group: Identification
 
@@ -281,8 +304,11 @@ abstract class uvm_object: uvm_void
   // This function is implemented by the `uvm_*_utils macros, if employed.
 
   static uvm_object_wrapper get_type () {
+    import uvm.base.uvm_object_globals;
+    import uvm.base.uvm_globals;
+
     uvm_report_error("NOTYPID", "get_type not implemented in derived class.",
-		     UVM_NONE);
+		     uvm_verbosity.UVM_NONE);
     return null;
   }
 
@@ -316,6 +342,8 @@ abstract class uvm_object: uvm_void
   // This function is implemented by the `uvm_*_utils macros, if employed.
 
   uvm_object_wrapper get_object_type () {
+    import uvm.base.uvm_coreservice;
+    import uvm.base.uvm_factory;
     if(get_type_name() == "<unknown>") return null;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     uvm_factory factory = cs.get_factory();
@@ -390,12 +418,14 @@ abstract class uvm_object: uvm_void
   // virtual, derived classes may override this implementation if desired.
 
   uvm_object clone () {
+    import uvm.base.uvm_object_globals;
+    import uvm.base.uvm_globals;
     uvm_object tmp = this.create(get_name());
     if(tmp is null) {
       uvm_report_warning("CRFLD",
-			 format("The create method failed for %s,  "
+			 format("The create method failed for %s,  " ~
 				"object cannot be cloned", get_name()),
-			 UVM_NONE);
+			 uvm_verbosity.UVM_NONE);
     }
     else {
       tmp.copy(this);
@@ -421,6 +451,8 @@ abstract class uvm_object: uvm_void
   // class to format the output.
 
   final void print(uvm_printer printer = null) {
+    import uvm.base.uvm_object_globals;
+    import uvm.base.uvm_globals;
     if (printer is null) {
       printer = uvm_default_printer;
     }
@@ -451,11 +483,14 @@ abstract class uvm_object: uvm_void
 					 string name,
 					 int flags)
     if (isArray!E && !is(E == string)) {
+      import uvm.base.uvm_misc: uvm_get_array_index_int, uvm_is_array;
+      import uvm.base.uvm_object_globals;
+      import uvm.base.uvm_globals;
       alias EE = ElementType!E;
       switch(what) {
       case uvm_field_auto_enum.UVM_COPY:
-	if(!(flags & UVM_NOCOPY) && flags & UVM_COPY) {
-	  if(flags & UVM_REFERENCE) {
+	if(!(flags & uvm_field_auto_enum.UVM_NOCOPY) && flags & uvm_field_auto_enum.UVM_COPY) {
+	  if(flags & uvm_recursion_policy_enum.UVM_REFERENCE) {
 	    e = rhs;
 	  }
 	  else {
@@ -471,15 +506,15 @@ abstract class uvm_object: uvm_void
 	}
 	break;
       case uvm_field_auto_enum.UVM_COMPARE:
-	if (! flags & UVM_NOCOMPARE) {
-	  if (flags & UVM_REFERENCE  && m_uvm_status_container.comparer.show_max <= 1 && e !is rhs) {
+	if (!(flags & uvm_field_auto_enum.UVM_NOCOMPARE)) {
+	  if (flags & uvm_recursion_policy_enum.UVM_REFERENCE  && m_uvm_status_container.comparer.show_max <= 1 && e !is rhs) {
 	    if (m_uvm_status_container.comparer.show_max == 1) {
 	      m_uvm_status_container.scope_stack.set_arg(name);
 	      m_uvm_status_container.comparer.print_msg("");
 	    }
-	    else if ((m_uvm_status_container.comparer.is_physical && flags & UVM_PHYSICAL) ||
-		     (m_uvm_status_container.comparer.is_abstract && flags & UVM_ABSTRACT) ||
-		     (! flags & UVM_PHYSICAL && ! flags & UVM_ABSTRACT)) {
+	    else if ((m_uvm_status_container.comparer.is_physical && flags & uvm_field_auto_enum.UVM_PHYSICAL) ||
+		     (m_uvm_status_container.comparer.is_abstract && flags & uvm_field_auto_enum.UVM_ABSTRACT) ||
+		     (! flags & uvm_field_auto_enum.UVM_PHYSICAL && ! flags & uvm_field_auto_enum.UVM_ABSTRACT)) {
 	      m_uvm_status_container.comparer.incr_result;
 	    }
 	    if (m_uvm_status_container.comparer.result &&
@@ -511,7 +546,7 @@ abstract class uvm_object: uvm_void
 	if (p__ is null) p__ = uvm_default_printer;
 	auto k__ = p__.knobs;
 	
-	if (!(flags & UVM_NOPRINT) && flags & UVM_PRINT) {
+	if (!(flags & uvm_field_auto_enum.UVM_NOPRINT) && flags & uvm_field_auto_enum.UVM_PRINT) {
 	  m_uvm_status_container.printer.print_generic(name, E.stringof,
 						       e.length, "-");
 	  size_t i;
@@ -543,7 +578,7 @@ abstract class uvm_object: uvm_void
 	}
 	break;
       case uvm_field_auto_enum.UVM_RECORD:
-	if (!(flags & UVM_NORECORD) && flags & UVM_RECORD) {
+	if (!(flags & uvm_field_auto_enum.UVM_NORECORD) && flags & uvm_field_auto_enum.UVM_RECORD) {
 	  if (e.length == 0) {
 	    m_uvm_status_container.recorder.record(name, e.length,
 						   uvm_radix_enum.UVM_DEC);
@@ -570,7 +605,7 @@ abstract class uvm_object: uvm_void
 	}
 	break;
       case uvm_field_auto_enum.UVM_PACK:
-        if (!(flags & UVM_NOPACK) && flags & UVM_PACK) {
+        if (!(flags & uvm_field_auto_enum.UVM_NOPACK) && flags & uvm_field_auto_enum.UVM_PACK) {
 	  static if (isDynamicArray!E) {
 	    m_uvm_status_container.packer.pack(e.length);
 	  }
@@ -582,7 +617,7 @@ abstract class uvm_object: uvm_void
 	}
 	break;
       case uvm_field_xtra_enum.UVM_UNPACK:
-        if (!(flags & UVM_NOPACK) && flags & UVM_PACK) {
+        if (!(flags & uvm_field_auto_enum.UVM_NOPACK) && flags & uvm_field_auto_enum.UVM_PACK) {
 	  static if (isDynamicArray!E) {
 	    size_t size;
 	    m_uvm_status_container.packer.unpack(size);
@@ -600,27 +635,88 @@ abstract class uvm_object: uvm_void
 	uvm_field_xtra_enum.UVM_SETSTR:
 	m_uvm_status_container.scope_stack.set_arg(name);
 	if (uvm_is_match(str, m_uvm_status_container.scope_stack.get())) {
-	  if (flags & UVM_READONLY) {
+	  if (flags & uvm_field_auto_enum.UVM_READONLY) {
 	    uvm_report_warning("RDONLY",
 			       format("Readonly argument match %s is ignored",
 				      m_uvm_status_container.get_full_scope_arg()),
-			       UVM_NONE);
+			       uvm_verbosity.UVM_NONE);
 	  }
 	  else {
-	    uvm_report_warning("MSMTCH",
-			       format("%s: static arrays cannot be resized" ~
-				      " via configuraton.",
-				      m_uvm_status_container.get_full_scope_arg()),
-			       UVM_NONE);
+	    static if (isStaticArray!E) {
+	      uvm_report_warning("MSMTCH",
+				 format("%s: static arrays cannot be resized" ~
+					" via configuraton.",
+					m_uvm_status_container.get_full_scope_arg()),
+				 uvm_verbosity.UVM_NONE);
+	    }
+	    else static if (isDynamicArray!E) {
+	      e.length = cast(size_t) m_uvm_status_container.bitstream();
+	      m_uvm_status_container.status = true;
+	    }
 	  }
 	}
-	m_uvm_status_container.scope_stack.unset_arg(name);
-	// else if(!((FLAG)&UVM_READONLY))
-	for (size_t i=0; i!=e.length; ++i) {
-	  _m_uvm_object_automation(e[i], EE.init, what, str,
-				  name ~ format("[%d]", i),
-				  flags);
+	else if (!(flags & uvm_field_auto_enum.UVM_READONLY)) {
+	  bool index_is_wildcard;
+	  int index = uvm_get_array_index_int(str, index_is_wildcard);
+	  if (uvm_is_array(str) && (index != -1)) {
+	    if (index_is_wildcard) {
+	      for (int i=0; i!=e.length; ++i) {
+		if (uvm_is_match(str,
+				 m_uvm_status_container.scope_stack.get_arg() ~
+				 format("[%d]", i))) {
+		  if (m_uvm_status_container.print_matches) {
+		    uvm_report_info("STRMTC", "set_int()" ~
+				    ": Matched string " ~ str ~ " to field " ~
+				    m_uvm_status_container.get_full_scope_arg() ~
+				    format("[%d]", i), uvm_verbosity.UVM_LOW);
+		  }
+		  EE value = cast(EE) m_uvm_status_container.bitstream;
+		  uvm_bitstream_t check = value;
+		  if (m_uvm_status_container.bitstream == check) {
+		    e[i] = value;
+		    m_uvm_status_container.status = true;
+		  }
+		  else {
+		    uvm_report_warning("OVRFLW", "set_int()" ~
+				       ": Matched string " ~ str ~
+				       " to field " ~
+				       m_uvm_status_container.get_full_scope_arg() ~
+				       ", but variable is not set because of " ~
+				       "overflow error");
+		  }
+		}
+	      }
+	    }
+	    else if (uvm_is_match(str, m_uvm_status_container.scope_stack.get_arg()
+				  ~ format("[%d]", index))) {
+	      if (index+1 > e.length) {
+		e.length = index + 1;
+	      }
+	      if (m_uvm_status_container.print_matches) {
+		uvm_report_info("STRMTC", "set_int()" ~ ": Matched string " ~
+				str ~ " to field " ~
+				m_uvm_status_container.get_full_scope_arg(),
+				uvm_verbosity.UVM_LOW);
+	      }
+	      EE value = cast(EE) m_uvm_status_container.bitstream;
+	      uvm_bitstream_t check = value;
+	      if (m_uvm_status_container.bitstream == check) {
+		e[index] = value;
+		m_uvm_status_container.status = true;
+	      }
+	      else {
+		uvm_report_warning("OVRFLW", "set_int()" ~
+				   ": Matched string " ~ str ~
+				   " to field " ~
+				   m_uvm_status_container.get_full_scope_arg() ~
+				   ", but variable is not set because of " ~
+				   "overflow error");
+	      }
+	    }
+	  }
 	}
+	// else if(!((FLAG)&uvm_field_auto_enum.UVM_READONLY))
+	// m_uvm_status_container.scope_stack.unset_arg(name);
 	break;
       case uvm_field_xtra_enum.UVM_CHECK_FIELDS:
 	// uvm_warning("UVMUTLS",
@@ -655,14 +751,16 @@ abstract class uvm_object: uvm_void
 					 string name,
 					 int flags)
     if (isBitVector!E || isIntegral!E || is(E == bool)) {
+      import uvm.base.uvm_object_globals;
+      import uvm.base.uvm_globals;
       switch(what) {
       case uvm_field_auto_enum.UVM_COPY:
-	if (!(flags & UVM_NOCOPY) && flags & UVM_COPY) {
+	if (!(flags & uvm_field_auto_enum.UVM_NOCOPY) && flags & uvm_field_auto_enum.UVM_COPY) {
 	  e = rhs;
 	}
 	break;
       case uvm_field_auto_enum.UVM_COMPARE:
-	if (!(flags & UVM_NOCOMPARE) && flags & UVM_COMPARE) {
+	if (!(flags & uvm_field_auto_enum.UVM_NOCOMPARE) && flags & uvm_field_auto_enum.UVM_COMPARE) {
 	  if (e !is rhs) {
 	    m_uvm_status_container.comparer.compare(name, e, rhs);
 	    if(m_uvm_status_container.comparer.result &&
@@ -671,24 +769,24 @@ abstract class uvm_object: uvm_void
 	}
 	break;
       case uvm_field_auto_enum.UVM_PRINT:
-	if (!(flags & UVM_NOPRINT) && flags & UVM_PRINT) {
+	if (!(flags & uvm_field_auto_enum.UVM_NOPRINT) && flags & uvm_field_auto_enum.UVM_PRINT) {
 	  m_uvm_status_container.printer.print(name, e,
 					       cast (uvm_radix_enum) (flags & UVM_RADIX));
 	}
 	break;
       case uvm_field_auto_enum.UVM_RECORD:
-	if (!(flags & UVM_NORECORD) && flags & UVM_RECORD) {
+	if (!(flags & uvm_field_auto_enum.UVM_NORECORD) && flags & uvm_field_auto_enum.UVM_RECORD) {
 	  m_uvm_status_container.recorder.record(name, e,
 						 cast (uvm_radix_enum) (flags & UVM_RADIX));
 	}
 	break;
       case uvm_field_auto_enum.UVM_PACK:
-        if (! (flags & UVM_NOPACK) && flags & UVM_PACK) {
+        if (! (flags & uvm_field_auto_enum.UVM_NOPACK) && flags & uvm_field_auto_enum.UVM_PACK) {
           m_uvm_status_container.packer.pack(e);
         }
 	break;
       case uvm_field_xtra_enum.UVM_UNPACK:
-        if (! (flags & UVM_NOPACK) && flags & UVM_PACK) {
+        if (! (flags & uvm_field_auto_enum.UVM_NOPACK) && flags & uvm_field_auto_enum.UVM_PACK) {
           m_uvm_status_container.packer.unpack(e);
         }
 	break;
@@ -697,18 +795,18 @@ abstract class uvm_object: uvm_void
 	m_uvm_status_container.scope_stack.set_arg(name);
 	matched = uvm_is_match(str, m_uvm_status_container.scope_stack.get());
 	if (matched) {
-	  if (flags & UVM_READONLY) {
+	  if (flags & uvm_field_auto_enum.UVM_READONLY) {
 	    uvm_report_warning("RDONLY",
 			       format("Readonly argument match %s is ignored",
 				      m_uvm_status_container.get_full_scope_arg()),
-			       UVM_NONE);
+			       uvm_verbosity.UVM_NONE);
 	  }
 	  else {
 	    if (m_uvm_status_container.print_matches) {
 	      uvm_report_info("STRMTC", "set_int()" ~ ": Matched string " ~
 			      str ~ " to field " ~
 			      m_uvm_status_container.get_full_scope_arg(),
-			      UVM_LOW);
+			      uvm_verbosity.UVM_LOW);
 	    }
 	    E value = cast(E) m_uvm_status_container.bitstream;
 	    uvm_bitstream_t check = value;
@@ -733,11 +831,11 @@ abstract class uvm_object: uvm_void
 	static if (is(E == enum)) {
           m_uvm_status_container.scope_stack.set_arg(name);
           if (uvm_is_match(str, m_uvm_status_container.scope_stack.get())) {
-            if (flags & UVM_READONLY) {
+            if (flags & uvm_field_auto_enum.UVM_READONLY) {
               uvm_report_warning("RDONLY",
 				 format("Readonly argument match %s is ignored",
 					m_uvm_status_container.get_full_scope_arg()),
-				 UVM_NONE);
+				 uvm_verbosity.UVM_NONE);
             }
             else {
               if (m_uvm_status_container.print_matches) {
@@ -745,7 +843,7 @@ abstract class uvm_object: uvm_void
 				"set_str()" ~ ": Matched string " ~ str ~
 				" to field " ~
 				m_uvm_status_container.get_full_scope_arg(),
-				UVM_LOW);
+				uvm_verbosity.UVM_LOW);
 	      }
 	      E value;
               if (uvm_enum_wrapper!E.from_name(m_uvm_status_container.stringv,
@@ -782,12 +880,12 @@ abstract class uvm_object: uvm_void
     if (is(E == string)) {
       switch(what) {
       case uvm_field_auto_enum.UVM_COPY:
-	if (!(flags & UVM_NOCOPY) && flags & UVM_COPY) {
+	if (!(flags & uvm_field_auto_enum.UVM_NOCOPY) && flags & uvm_field_auto_enum.UVM_COPY) {
 	  e = rhs;
 	}
 	break;
       case uvm_field_auto_enum.UVM_COMPARE:
-	if (!(flags & UVM_NOCOMPARE) && flags & UVM_COMPARE) {
+	if (!(flags & uvm_field_auto_enum.UVM_NOCOMPARE) && flags & uvm_field_auto_enum.UVM_COMPARE) {
 	  if (e !is rhs) {
 	    m_uvm_status_container.comparer.compare(name, e, rhs);
 	    if(m_uvm_status_container.comparer.result &&
@@ -796,22 +894,22 @@ abstract class uvm_object: uvm_void
 	}
 	break;
       case uvm_field_auto_enum.UVM_PRINT:
-	if (!(flags & UVM_NOPRINT) && flags & UVM_PRINT) {
+	if (!(flags & uvm_field_auto_enum.UVM_NOPRINT) && flags & uvm_field_auto_enum.UVM_PRINT) {
 	  m_uvm_status_container.printer.print(name, e);
 	}
 	break;
       case uvm_field_auto_enum.UVM_RECORD:
-	if (!(flags & UVM_NORECORD) && flags & UVM_RECORD) {
+	if (!(flags & uvm_field_auto_enum.UVM_NORECORD) && flags & uvm_field_auto_enum.UVM_RECORD) {
 	  m_uvm_status_container.recorder.record(name, e);
 	}
 	break;
       case uvm_field_auto_enum.UVM_PACK:
-        if (! (flags & UVM_NOPACK) && flags & UVM_PACK) {
+        if (! (flags & uvm_field_auto_enum.UVM_NOPACK) && flags & uvm_field_auto_enum.UVM_PACK) {
           m_uvm_status_container.packer.pack(e);
         }
 	break;
       case uvm_field_xtra_enum.UVM_UNPACK:
-        if (! (flags & UVM_NOPACK) && flags & UVM_PACK) {
+        if (! (flags & uvm_field_auto_enum.UVM_NOPACK) && flags & uvm_field_auto_enum.UVM_PACK) {
           m_uvm_status_container.packer.unpack(e);
         }
 	break;
@@ -822,11 +920,11 @@ abstract class uvm_object: uvm_void
       case uvm_field_xtra_enum.UVM_SETSTR:
 	m_uvm_status_container.scope_stack.set_arg(name);
 	if (uvm_is_match(str, m_uvm_status_container.scope_stack.get())) {
-	  if(flags & UVM_READONLY) {
+	  if(flags & uvm_field_auto_enum.UVM_READONLY) {
 	    uvm_report_warning("RDONLY",
 			       format("Readonly argument match %s is ignored",
 				      m_uvm_status_container.get_full_scope_arg()),
-			       UVM_NONE);
+			       uvm_verbosity.UVM_NONE);
 	  }
 	  else {
 	    if (m_uvm_status_container.print_matches) {
@@ -834,7 +932,7 @@ abstract class uvm_object: uvm_void
 			      "set_str()" ~ ": Matched string " ~ str ~
 			      " to field " ~
 			      m_uvm_status_container.get_full_scope_arg(),
-			      UVM_LOW);
+			      uvm_verbosity.UVM_LOW);
 	    }
 	    e = m_uvm_status_container.stringv;
 	    m_uvm_status_container.status = true;
@@ -864,10 +962,12 @@ abstract class uvm_object: uvm_void
 					 string name,
 					 int flags)
     if (is(E: uvm_object)) {
+      import uvm.base.uvm_object_globals;
+      import uvm.base.uvm_globals;
       switch(what) {
       case uvm_field_auto_enum.UVM_COPY:
-	if (!(flags & UVM_NOCOPY) && flags & UVM_COPY) {
-	  if(flags & UVM_REFERENCE || rhs is null) {
+	if (!(flags & uvm_field_auto_enum.UVM_NOCOPY) && flags & uvm_field_auto_enum.UVM_COPY) {
+	  if(flags & uvm_recursion_policy_enum.UVM_REFERENCE || rhs is null) {
 	    e = rhs;
 	  }
 	  else {
@@ -888,7 +988,7 @@ abstract class uvm_object: uvm_void
 	}
 	break;
       case uvm_field_auto_enum.UVM_COMPARE:
-	if (!(flags & UVM_NOCOMPARE) && flags & UVM_COMPARE) {
+	if (!(flags & uvm_field_auto_enum.UVM_NOCOMPARE) && flags & uvm_field_auto_enum.UVM_COMPARE) {
 	  if (e !is rhs) {
 	    m_uvm_status_container.comparer.compare(name, e, rhs);
 	    if(m_uvm_status_container.comparer.result &&
@@ -897,8 +997,8 @@ abstract class uvm_object: uvm_void
 	}
 	break;
       case uvm_field_auto_enum.UVM_PRINT:
-	if (!(flags & UVM_NOPRINT) && flags & UVM_PRINT) {
-	  if ((flags & UVM_REFERENCE) != 0) {
+	if (!(flags & uvm_field_auto_enum.UVM_NOPRINT) && flags & uvm_field_auto_enum.UVM_PRINT) {
+	  if ((flags & uvm_recursion_policy_enum.UVM_REFERENCE) != 0) {
 	    m_uvm_status_container.printer.print_object_header(name, e);
 	  }
 	  else {
@@ -907,26 +1007,26 @@ abstract class uvm_object: uvm_void
         }
 	break;
       case uvm_field_auto_enum.UVM_RECORD:
-	if (!(flags & UVM_NORECORD) && flags & UVM_RECORD) {
+	if (!(flags & uvm_field_auto_enum.UVM_NORECORD) && flags & uvm_field_auto_enum.UVM_RECORD) {
 	  m_uvm_status_container.recorder.record(name, e);
         }
 	break;
       case uvm_field_auto_enum.UVM_PACK:
-        if (! (flags & UVM_NOPACK) && flags & UVM_PACK &&
-	    ! (flags & UVM_REFERENCE)) { // do not pack if UVM_REFERENCE
+        if (! (flags & uvm_field_auto_enum.UVM_NOPACK) && flags & uvm_field_auto_enum.UVM_PACK &&
+	    ! (flags & uvm_recursion_policy_enum.UVM_REFERENCE)) { // do not pack if UVM_REFERENCE
 	  m_uvm_status_container.packer.pack(e);
 	}
 	break;
       case uvm_field_xtra_enum.UVM_UNPACK:
-        if (! (flags & UVM_NOPACK) && flags & UVM_PACK &&
-	    ! (flags & UVM_REFERENCE)) { // do not pack if UVM_REFERENCE
+        if (! (flags & uvm_field_auto_enum.UVM_NOPACK) && flags & uvm_field_auto_enum.UVM_PACK &&
+	    ! (flags & uvm_recursion_policy_enum.UVM_REFERENCE)) { // do not pack if UVM_REFERENCE
 	  m_uvm_status_container.packer.unpack(e);
 	}
 	break;
       case uvm_field_xtra_enum.UVM_SETINT,
 	uvm_field_xtra_enum.UVM_SETSTR:
-	if ((e !is null) && (flags & UVM_READONLY) == 0 &&
-	    (flags & UVM_REFERENCE) == 0) {
+	if ((e !is null) && (flags & uvm_field_auto_enum.UVM_READONLY) == 0 &&
+	    (flags & uvm_recursion_policy_enum.UVM_REFERENCE) == 0) {
 	  m_uvm_status_container.scope_stack.down(name);
 	  e.m_uvm_object_automation(null, what, str);
 	  m_uvm_status_container.scope_stack.up();
@@ -935,18 +1035,18 @@ abstract class uvm_object: uvm_void
       case uvm_field_xtra_enum.UVM_SETOBJ:
 	m_uvm_status_container.scope_stack.set_arg(name);
 	if (uvm_is_match(str, m_uvm_status_container.scope_stack.get())) {
-	  if (flags & UVM_READONLY) {
+	  if (flags & uvm_field_auto_enum.UVM_READONLY) {
 	    uvm_report_warning("RDONLY",
 			       format("Readonly argument match %s is ignored",
 				      m_uvm_status_container.get_full_scope_arg()),
-			       UVM_NONE);
+			       uvm_verbosity.UVM_NONE);
 	  }
 	  else {
 	    if (m_uvm_status_container.print_matches) {
 	      uvm_report_info("STRMTC", "set_object()" ~ ": Matched string " ~
 			      str ~ " to field " ~
 			      m_uvm_status_container.get_full_scope_arg(),
-			      UVM_LOW);
+			      uvm_verbosity.UVM_LOW);
 	    }
 	    E value = cast(E) m_uvm_status_container.object;
 	    if (value !is null) {
@@ -955,7 +1055,7 @@ abstract class uvm_object: uvm_void
 	    }
 	  }
 	}
-	else if ((e !is null) && ((flags & UVM_READONLY) == 0)) {
+	else if ((e !is null) && ((flags & uvm_field_auto_enum.UVM_READONLY) == 0)) {
 	  int cnt;
 	  //Only traverse if there is a possible match.
 	  for (cnt=0; cnt < str.length; ++cnt) {
@@ -1003,6 +1103,8 @@ abstract class uvm_object: uvm_void
 						int        what, 
 						string     str)
     if (is(T: uvm_object)) {
+      import uvm.base.uvm_object_globals;
+      import uvm.base.uvm_misc: UVM_ELEMENT_TYPE;
       static if (I < t.tupleof.length) {
 	enum FLAGS = uvm_field_auto_get_flags!(t, I);
 	alias EE = UVM_ELEMENT_TYPE!(typeof(t.tupleof[I]));
@@ -1034,8 +1136,8 @@ abstract class uvm_object: uvm_void
   //   static if (I < t.tupleof.length) {
   //     import std.traits: isIntegral, isFloatingPoint;
   //     enum int FLAGS = uvm_field_auto_get_flags!(t, I);
-  //     static if(FLAGS & UVM_PRINT &&
-  // 		!(FLAGS & UVM_NOPRINT)) {
+  //     static if(FLAGS & uvm_field_auto_enum.UVM_PRINT &&
+  // 		!(FLAGS & uvm_field_auto_enum.UVM_NOPRINT)) {
   // 	debug(UVM_UTILS) {
   // 	  pragma(msg, "Printing : " ~ t.tupleof[I].stringof);
   // 	}
@@ -1045,7 +1147,7 @@ abstract class uvm_object: uvm_void
   // 	// do not use isIntegral -- we keep that for enums
   // 	// version(UVM_NO_RAND) { }
   // 	// else {
-  // 	//   import esdl.data.rand;
+  // 	//   import esdl.rand;
   // 	//   static if(is(U: _esdl__ConstraintBase)) {
   // 	//     // shortcircuit useful for compare etc
   // 	//     uvm_field_auto_sprint_field!(I+1)(t, printer);
@@ -1063,7 +1165,7 @@ abstract class uvm_object: uvm_void
   // 			cast(uvm_radix_enum) (FLAGS & UVM_RADIX));
   // 	}
   // 	else static if(is(U: uvm_object)) {
-  // 	  static if((FLAGS & UVM_REFERENCE) != 0) {
+  // 	  static if((FLAGS & uvm_recursion_policy_enum.UVM_REFERENCE) != 0) {
   // 	    printer.print_object_header(name, value);
   // 	  }
   // 	  else {
@@ -1113,7 +1215,7 @@ abstract class uvm_object: uvm_void
   //     else {
   // 	static if (is(E: uvm_object)) {
   // 	  auto iname = name ~ format("[%d]", index);
-  // 	  static if((FLAGS & UVM_REFERENCE) != 0) {
+  // 	  static if((FLAGS & uvm_recursion_policy_enum.UVM_REFERENCE) != 0) {
   // 	    printer.print_object_header(iname, t[index]);
   // 	  }
   // 	  else {
@@ -1129,6 +1231,8 @@ abstract class uvm_object: uvm_void
   // }
 
   final string sprint (uvm_printer printer=null) {
+    import uvm.base.uvm_object_globals;
+    import uvm.base.uvm_globals;
 
     if(printer is null) {
       printer = uvm_default_printer;
@@ -1138,7 +1242,7 @@ abstract class uvm_object: uvm_void
       // not at top-level, must be recursing into sub-object
       if(! printer.istop()) {
 	m_uvm_status_container.printer = printer;
-	m_uvm_object_automation(null, UVM_PRINT, "");
+	m_uvm_object_automation(null, uvm_field_auto_enum.UVM_PRINT, "");
 	// uvm_field_auto_sprint(printer);
 	do_print(printer);
 	return "";
@@ -1286,8 +1390,8 @@ abstract class uvm_object: uvm_void
   //   static if (I < t.tupleof.length) {
   //     import std.traits: isIntegral, isFloatingPoint;
   //     enum int FLAGS = uvm_field_auto_get_flags!(t, I);
-  //     static if(FLAGS & UVM_RECORD &&
-  // 		!(FLAGS & UVM_NORECORD)) {
+  //     static if(FLAGS & uvm_field_auto_enum.UVM_RECORD &&
+  // 		!(FLAGS & uvm_field_auto_enum.UVM_NORECORD)) {
   // 	debug(UVM_UTILS) {
   // 	  pragma(msg, "Recording : " ~ t.tupleof[I].stringof);
   // 	}
@@ -1297,7 +1401,7 @@ abstract class uvm_object: uvm_void
   // 	// do not use isIntegral -- we keep that for enums
   // 	version(UVM_NO_RAND) { }
   // 	else {
-  // 	  import esdl.data.rand;
+  // 	  import esdl.rand;
   // 	  static if(is(U: _esdl__ConstraintBase)) {
   // 	    // shortcircuit useful for compare etc
   // 	    uvm_field_auto_record_field!(I+1)(t, recorder);
@@ -1338,6 +1442,7 @@ abstract class uvm_object: uvm_void
   // }
 
   final void record(uvm_recorder recorder=null) {
+    import uvm.base.uvm_object_globals;
 
     if(recorder is null) {
       return;
@@ -1351,7 +1456,7 @@ abstract class uvm_object: uvm_void
     synchronized(recorder) {
       recorder.inc_recording_depth();
 
-      m_uvm_object_automation(null, UVM_RECORD, "");
+      m_uvm_object_automation(null, uvm_field_auto_enum.UVM_RECORD, "");
       // uvm_field_auto_record(recorder);
 
       do_record(recorder);
@@ -1405,6 +1510,8 @@ abstract class uvm_object: uvm_void
   static uvm_object[uvm_object] _uvm_global_copy_map;
 
   final void copy(uvm_object rhs) {
+    import uvm.base.uvm_object_globals;
+    import uvm.base.uvm_globals;
 
     // Thread static
     static int depth;
@@ -1413,8 +1520,8 @@ abstract class uvm_object: uvm_void
     }
 
     if(rhs is null) {
-      uvm_report_warning("NULLCP", "A null object was supplied to copy;"
-			 " copy is ignored", UVM_NONE);
+      uvm_report_warning("NULLCP", "A null object was supplied to copy;" ~
+			 " copy is ignored", uvm_verbosity.UVM_NONE);
       return;
     }
 
@@ -1422,7 +1529,7 @@ abstract class uvm_object: uvm_void
 
     ++depth;
 
-    m_uvm_object_automation(rhs, UVM_COPY, "");
+    m_uvm_object_automation(rhs, uvm_field_auto_enum.UVM_COPY, "");
 
     // overridden by mixin(uvm_object_utils);
     // uvm_field_auto_copy(rhs);
@@ -1482,7 +1589,9 @@ abstract class uvm_object: uvm_void
 
   // void uvm_field_auto_compare(uvm_object rhs) { }
 
-  final bool compare (uvm_object rhs, uvm_comparer comparer = null) {
+  final bool compare(uvm_object rhs, uvm_comparer comparer = null) {
+    import uvm.base.uvm_object_globals;
+    import uvm.base.uvm_globals;
     if(comparer !is null) {
       m_uvm_status_container.comparer = comparer;
     }
@@ -1541,10 +1650,8 @@ abstract class uvm_object: uvm_void
       if(! done) {
 	comparer.set_compare_map(rhs, this);
 
-	m_uvm_object_automation(rhs, UVM_COMPARE, "");
+	m_uvm_object_automation(rhs, uvm_field_auto_enum.UVM_COMPARE, "");
 
-	// overridden by mixin(uvm_object_utils);
-	// uvm_field_auto_compare(rhs);
 	dc = do_compare(rhs, comparer);
       }
 
@@ -1599,7 +1706,7 @@ abstract class uvm_object: uvm_void
 
   // void uvm_field_auto_pack() {
   //   uvm_report_warning("NOUTILS", "default uvm_field_auto_pack --"
-  // 		       "no uvm_object_utils", UVM_NONE);
+  // 		       "no uvm_object_utils", uvm_verbosity.UVM_NONE);
   // }
 
   final size_t pack (ref Bit!1[] bitstream, uvm_packer packer=null) {
@@ -1709,7 +1816,7 @@ abstract class uvm_object: uvm_void
 
   // void uvm_field_auto_unpack() {
   //   uvm_report_warning("NOUTILS", "default uvm_field_auto_unpack --"
-  // 		       "no uvm_object_utils", UVM_NONE);
+  // 		       "no uvm_object_utils", uvm_verbosity.UVM_NONE);
   // }
 
   final size_t unpack (ref Bit!1[] bitstream,
@@ -1816,7 +1923,10 @@ abstract class uvm_object: uvm_void
     return;
   }
 
+  void do_vpi_put(uvm_vpi_iter iter) { }
 
+  void do_vpi_get(uvm_vpi_iter iter) { }
+  
   // Group: Configuration
   // static bool uvm_set_value(E, U)(ref E var, U value) {
   //   static if(is(U: E)) {
@@ -1874,6 +1984,8 @@ abstract class uvm_object: uvm_void
   void set_local(T)(string field_name, T value,
 		    bool recurse = true)
     if (isIntegral!T || isBitVector!T || is(T == enum) || is(T == bool)) {
+      import uvm.base.uvm_object_globals;
+      import uvm.base.uvm_globals;
       m_uvm_status_container.reset_cycle_checks();
       m_uvm_status_container.reset_cycle_scopes();
 
@@ -1882,12 +1994,12 @@ abstract class uvm_object: uvm_void
       static if (isBitVector!T || isIntegral!T ||
 		 is(T == enum) || is(T == bool)) {
 	m_uvm_status_container.bitstream = value;
-	m_uvm_object_automation(null, UVM_SETINT, field_name);
+	m_uvm_object_automation(null, uvm_field_xtra_enum.UVM_SETINT, field_name);
       }
       if (m_uvm_status_container.warning &&
 	  ! m_uvm_status_container.status) {
 	uvm_report_error("NOMTC", format("did not find a match for" ~
-					 " field %s", field_name), UVM_NONE);
+					 " field %s", field_name), uvm_verbosity.UVM_NONE);
       }
       m_uvm_status_container.reset_cycle_checks();
     }
@@ -1895,6 +2007,8 @@ abstract class uvm_object: uvm_void
   void set_local(T)(string field_name, T value,
 		    bool clone = true, bool recurse = true)
     if (is(T: uvm_object)) {
+      import uvm.base.uvm_object_globals;
+      import uvm.base.uvm_globals;
       m_uvm_status_container.reset_cycle_checks();
       m_uvm_status_container.reset_cycle_scopes();
 
@@ -1912,12 +2026,12 @@ abstract class uvm_object: uvm_void
       }
 
       m_uvm_status_container.object = value_;
-      m_uvm_object_automation(null, UVM_SETOBJ, field_name);
+      m_uvm_object_automation(null, uvm_field_xtra_enum.UVM_SETOBJ, field_name);
 
       if (m_uvm_status_container.warning &&
 	  ! m_uvm_status_container.status) {
 	uvm_report_error("NOMTC", format("did not find a match for" ~
-					 " field %s", field_name), UVM_NONE);
+					 " field %s", field_name), uvm_verbosity.UVM_NONE);
       }
       m_uvm_status_container.reset_cycle_checks();
     }
@@ -1925,18 +2039,20 @@ abstract class uvm_object: uvm_void
   void set_local(T)(string field_name, T value,
 		    bool recurse = true)
     if (is(T == string)) {
+      import uvm.base.uvm_object_globals;
+      import uvm.base.uvm_globals;
       m_uvm_status_container.reset_cycle_checks();
       m_uvm_status_container.reset_cycle_scopes();
 
       m_uvm_status_container.status = 0;
       static if (is(T == string)) {
 	m_uvm_status_container.stringv = value;
-	m_uvm_object_automation(null, UVM_SETSTR, field_name);
+	m_uvm_object_automation(null, uvm_field_xtra_enum.UVM_SETSTR, field_name);
       }
       if (m_uvm_status_container.warning &&
 	  ! m_uvm_status_container.status) {
 	uvm_report_error("NOMTC", format("did not find a match for" ~
-					 " field %s", field_name), UVM_NONE);
+					 " field %s", field_name), uvm_verbosity.UVM_NONE);
       }
       m_uvm_status_container.reset_cycle_checks();
     }
@@ -1956,7 +2072,7 @@ abstract class uvm_object: uvm_void
   // 			    regx, value, matched, name, hier);
   //     }
   //     else {
-  // 	static if ((! (FLAGS & UVM_REFERENCE)) &&
+  // 	static if ((! (FLAGS & uvm_recursion_policy_enum.UVM_REFERENCE)) &&
   // 		   is(E: uvm_object)) {
   // 	  bool cyclic = false;
   // 	  // first check for any cycle
@@ -1970,11 +2086,11 @@ abstract class uvm_object: uvm_void
   // 					    name ~ ".", hier ~ this);
   // 	  }
   // 	}
-  // 	static if(FLAGS & UVM_READONLY) {
+  // 	static if(FLAGS & uvm_field_auto_enum.UVM_READONLY) {
   // 	  if(uvm_is_match(regx, name)) {
   // 	    uvm_report_warning("RDONLY",
   // 			       format("Readonly argument match %s is ignored",
-  // 				      name), UVM_NONE);
+  // 				      name), uvm_verbosity.UVM_NONE);
   // 	  }
   // 	}
   // 	else {
@@ -1989,7 +2105,7 @@ abstract class uvm_object: uvm_void
   // 	  else {
   // 	    // uvm_report_info("NOMATCH", "set_object()" ~ ": Could not match string " ~
   // 	    // 		    regx ~ " to field " ~ name,
-  // 	    // 		    UVM_LOW);
+  // 	    // 		    uvm_verbosity.UVM_LOW);
   // 	  }
   // 	}
   //     }
@@ -2014,7 +2130,7 @@ abstract class uvm_object: uvm_void
   // 			    matched, name, hier);
   //     }
   //     else {
-  // 	static if ((! (FLAGS & UVM_REFERENCE)) &&
+  // 	static if ((! (FLAGS & uvm_recursion_policy_enum.UVM_REFERENCE)) &&
   // 		   is(E: uvm_object)) {
   // 	  bool cyclic = false;
   // 	  // first check for any cycle
@@ -2028,12 +2144,12 @@ abstract class uvm_object: uvm_void
   // 					name ~ ".", hier ~ this);
   // 	  }
   // 	}
-  // 	static if(FLAGS & UVM_READONLY) {
+  // 	static if(FLAGS & uvm_field_auto_enum.UVM_READONLY) {
   // 	  if(uvm_is_match(regx, name)) {
   // 	    uvm_report_warning("RDONLY",
   // 			       format("Readonly argument match %s is ignored",
   // 				      name),
-  // 			       UVM_NONE);
+  // 			       uvm_verbosity.UVM_NONE);
   // 	  }
   // 	}
   // 	else {
@@ -2047,7 +2163,7 @@ abstract class uvm_object: uvm_void
   // 	  }
   // 	  else {
   // 	    // uvm_report_info("NOMATCH", "set_object()" ~ ": Could not match string " ~
-  // 	    // 		      regx ~ " to field " ~ name, UVM_LOW);
+  // 	    // 		      regx ~ " to field " ~ name, uvm_verbosity.UVM_LOW);
   // 	  }
   // 	}
   //     }
@@ -2178,6 +2294,8 @@ abstract class uvm_object: uvm_void
   //---------------------------------------------------------------------------
 
   final private void m_pack(ref uvm_packer packer) {
+    import uvm.base.uvm_object_globals;
+    import uvm.base.uvm_globals;
     if(packer !is null) {
       m_uvm_status_container.packer = packer;
     }
@@ -2189,7 +2307,7 @@ abstract class uvm_object: uvm_void
     packer.reset();
     packer.scope_stack.down(get_name());
 
-    m_uvm_object_automation(null, UVM_PACK, "");
+    m_uvm_object_automation(null, uvm_field_auto_enum.UVM_PACK, "");
     do_pack(packer);
 
     packer.set_packed_size();
@@ -2198,6 +2316,7 @@ abstract class uvm_object: uvm_void
   }
 
   final private void m_unpack_pre  (ref uvm_packer packer) {
+    import uvm.base.uvm_object_globals;
     if(packer !is null) {
       m_uvm_status_container.packer = packer;
     }
@@ -2209,12 +2328,14 @@ abstract class uvm_object: uvm_void
   }
 
   private final void m_unpack_post (uvm_packer packer) {
+    import uvm.base.uvm_object_globals;
+    import uvm.base.uvm_globals;
     size_t provided_size = packer.get_packed_size();
 
     //Put this object into the hierarchy
     packer.scope_stack.down(get_name());
 
-    m_uvm_object_automation(null, UVM_UNPACK, "");
+    m_uvm_object_automation(null, uvm_field_xtra_enum.UVM_UNPACK, "");
 
     do_unpack(packer);
 
@@ -2223,33 +2344,57 @@ abstract class uvm_object: uvm_void
 
     if(packer.get_packed_size() !is provided_size) {
       uvm_report_warning("BDUNPK",
-			 format("Unpack operation unsuccessful: unpacked "
+			 format("Unpack operation unsuccessful: unpacked " ~
 				"%0d bits from a total of %0d bits",
 				packer.get_packed_size(), provided_size),
-			 UVM_NONE);
+			 uvm_verbosity.UVM_NONE);
     }
   }
 
   // The print_matches bit causes an informative message to be printed
   // when a field is set using one of the set methods.
 
-  @uvm_private_sync
-  private string _m_leaf_name;
+  version(UVM_NO_RAND) {
+    @uvm_private_sync
+      private string _m_leaf_name;
 
-  @uvm_private_sync
-  private int _m_inst_id;
+    @uvm_private_sync
+      private int _m_inst_id;
+  }
+  else {
+    @rand!false @uvm_private_sync
+      private string _m_leaf_name;
+
+    @rand!false @uvm_private_sync
+      private int _m_inst_id;
+  }
 
   // static protected int m_inst_count;
   // static /*protected*/ uvm_status_container m_uvm_status_container = new;
 
   void m_uvm_object_automation(uvm_object tmp_data__,
 			       int        what__,
-			       string     str__) { }
-
-  protected uvm_report_object m_get_report_object() {
-    return null;
+			       string     str__) {
+    // import std.stdio;
+    // writeln("Not yet implemented: ", what__);
   }
 
+  // FIXME: in SV gets overridden by uvm_report_object and is indicated as
+  // deprecated in that class
+  version(UVM_INCLUDE_DEPRECATED) {
+    protected uvm_object m_get_report_object() {
+      return null;
+    }
+  }
+
+  // Moved from uvm_misc
+  string uvm_object_value_str() {
+    import std.conv;
+    // if (v is null) {
+    //   return "<null>";
+    // }
+    return "@" ~ (get_inst_id()).to!string();
+  }
 }
 
 
@@ -2262,7 +2407,7 @@ template uvm_field_auto_get_flags(alias t, size_t I)
 template uvm_field_auto_acc_flags(A...)
 {
   import uvm.base.uvm_object_globals: uvm_recursion_policy_enum,
-                                      uvm_field_auto_enum;
+    uvm_field_auto_enum, uvm_radix_enum;
   static if(A.length is 0) {
     enum int uvm_field_auto_acc_flags = 0;
   }

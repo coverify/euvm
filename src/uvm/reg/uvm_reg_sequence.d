@@ -77,7 +77,7 @@ import uvm.meta.misc;
 
 class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
 {
-  import esdl.data.rand;
+  import esdl.rand;
   
   mixin uvm_object_utils;
 
@@ -171,7 +171,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
     }
     uvm_info("REG_XLATE_SEQ_START",
 	     "Starting RegModel translation sequence on sequencer " ~
-	     m_sequencer.get_full_name() ~ "'", UVM_LOW);
+	     m_sequencer.get_full_name() ~ "'", uvm_verbosity.UVM_LOW);
     while(true) {
       uvm_reg_item reg_item;
       _reg_seqr.peek(reg_item);
@@ -207,7 +207,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
       uvm_fatal("REG/DO_ITEM/NULL","do_reg_item: adapter handle is null");
     }
 
-    uvm_info("DO_RW_ACCESS","Doing transaction: " ~ rw.convert2string(), UVM_HIGH);
+    uvm_info("DO_RW_ACCESS","Doing transaction: " ~ rw.convert2string(), uvm_verbosity.UVM_HIGH);
 
     if (_parent_select == seq_parent_e.LOCAL) {
       _upstream_parent = rw.parent;

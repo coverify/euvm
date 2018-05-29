@@ -90,7 +90,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
       _get_next_item_called     = false;
       // Empty the request fifo
       if (m_req_fifo.used()) {
-	uvm_report_info(get_full_name(), "Sequences stopped.  Removing"
+	uvm_report_info(get_full_name(), "Sequences stopped.  Removing" ~
 			" request from sequencer fifo");
 	while (m_req_fifo.try_get(t)) {}
       }
@@ -141,8 +141,8 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
 
     if (get_next_item_called is true) {
       uvm_report_error(get_full_name(),
-		       "Get_next_item called twice without item_done"
-		       " or get in between", UVM_NONE);
+		       "Get_next_item called twice without item_done" ~
+		       " or get in between", uvm_verbosity.UVM_NONE);
     }
 
     if (! sequence_item_requested) {
@@ -169,8 +169,8 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
     // time arb_time;
 
     if (get_next_item_called is true) {
-      uvm_report_error(get_full_name(), "get_next_item/try_next_item called"
-		       " twice without item_done or get in between", UVM_NONE);
+      uvm_report_error(get_full_name(), "get_next_item/try_next_item called" ~
+		       " twice without item_done or get in between", uvm_verbosity.UVM_NONE);
       return;
     }
 
@@ -207,10 +207,10 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
     if (!m_req_fifo.try_peek(t))
       uvm_report_error("TRY_NEXT_BLOCKED",
 		       "try_next_item: the selected sequence '" ~
-		       seq.get_full_name() ~ "' did not produce an item"
-		       " within an NBA delay. Sequences should not consume"
-		       " time between calls to start_item and finish_item. "
-		       "Returning null item.", UVM_NONE);
+		       seq.get_full_name() ~ "' did not produce an item" ~
+		       " within an NBA delay. Sequences should not consume" ~
+		       " time between calls to start_item and finish_item. " ~
+		       "Returning null item.", uvm_verbosity.UVM_NONE);
 
   }
 
@@ -228,9 +228,9 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
 
       REQ t;
       if (m_req_fifo.try_get(t) is false) {
-	uvm_report_fatal(get_full_name(), "Item_done() called with no"
-			 " outstanding requests. Each call to item_done()"
-			 " must be paired with a previous call to"
+	uvm_report_fatal(get_full_name(), "Item_done() called with no" ~
+			 " outstanding requests. Each call to item_done()" ~
+			 " must be paired with a previous call to" ~
 			 " get_next_item().");
       }
       else {
@@ -262,7 +262,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   //
 
   // task
-  final void get(out REQ t) {
+  void get(out REQ t) {
     if (sequence_item_requested is false) {
       m_select_sequence();
     }
@@ -272,7 +272,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   }
 
   // task
-  final REQ get() {
+  REQ get() {
     REQ t;
     this.get(t);
     return t;
@@ -284,7 +284,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   //
 
   // task
-  final void peek(out REQ t) {
+  void peek(out REQ t) {
     if (sequence_item_requested is false) {
       m_select_sequence();
     }
@@ -295,7 +295,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   }
 
   // task
-  final REQ peek() {
+  REQ peek() {
     REQ t;
     this.peek(t);
     return t;
@@ -321,11 +321,11 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   // item_done_trigger
   // -----------------
 
-  final void item_done_trigger(RSP item = null) {
+  void item_done_trigger(RSP item = null) {
     item_done(item);
   }
 
-  final RSP item_done_get_trigger_data() {
+  RSP item_done_get_trigger_data() {
     return last_rsp(0);
   }
 
