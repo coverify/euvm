@@ -22,12 +22,13 @@ DFLAGS = -m$(MODEL) -g -fPIC -w -O # -version=UVM_NO_DEPRECATED
 ESDLDIR = ${HOME}/code/vlang
 VLANGDIR = ${HOME}/code/vlang-uvm
 
-DMDDIR = ${VLANG_ROOT_DIR}
+DMDDIR = /home/puneet/release/vlang-dev-1.9
 DMD = $(DMDDIR)/bin/ldmd2
 
 DMDLIBDIR = $(DMDDIR)/lib
-PHOBOS = phobos2-ldc
-UVMLIB = uvm-ldc
-ESDLLIB = esdl-ldc
+PHOBOS = phobos2-ldc-shared
+DRUNTIME = druntime-ldc-shared
+UVMLIB = uvm-ldc-shared
+ESDLLIB = esdl-ldc-shared
 
 LIBDIR = $(VLANGDIR)/lib

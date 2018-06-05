@@ -81,18 +81,16 @@ class uvm_vpi_driver(REQ, string VPI_PREFIX): uvm_driver!REQ
 
   static int vpi_get_next_item_calltf(char* user_data) {
     try {
-      vpiHandle systf_handle =
-	vpi_handle(vpiSysTfCall, null);
-      assert(systf_handle !is null);
       DRIVER drv = cast(DRIVER) user_data;
       REQ req;
       auto retval = drv.get_req_port.try_peek(req);
+      vpiHandle systf_handle = vpi_handle(vpiSysTfCall, null);
+      assert(systf_handle !is null);
       if (retval && req !is null) {
-	vpiHandle arg_iterator =
-	  vpi_iterate(vpiArgument, systf_handle);
+	vpiHandle arg_iterator = vpi_iterate(vpiArgument, systf_handle);
 	assert(arg_iterator !is null);
-	req.do_vpi_put(uvm_vpi_iter(arg_iterator,
-				    drv.vpi_get_next_item_task));
+	auto iter = new uvm_vpi_iter(arg_iterator, drv.vpi_get_next_item_task);
+	req.do_vpi_put(iter);
 	vpiReturnVal(VpiStatus.SUCCESS);
 	return 0;
       }
@@ -163,6 +161,9 @@ class uvm_vpi_driver(REQ, string VPI_PREFIX): uvm_driver!REQ
       uvm_info("VPIREG", "Registering vpi system task: " ~
 	       vpi_get_next_item_task, uvm_verbosity.UVM_NONE);
       tf_data.type = vpiSysFunc;
+      tf_data.sysfunctype = vpiIntFunc;
+      tf_data.compiletf   = null;
+      tf_data.sizetf      = null;
       tf_data.tfname = cast(char*) vpi_get_next_item_task.toStringz;
       tf_data.calltf = &vpi_get_next_item_calltf;
       // tf_data.compiletf = &pull_avmm_compiletf;
@@ -174,6 +175,9 @@ class uvm_vpi_driver(REQ, string VPI_PREFIX): uvm_driver!REQ
       uvm_info("VPIREG", "Registering vpi system task: " ~
     	       vpi_item_done_task, uvm_verbosity.UVM_NONE);
       tf_data.type = vpiSysFunc;
+      tf_data.sysfunctype = vpiIntFunc;
+      tf_data.compiletf   = null;
+      tf_data.sizetf      = null;
       tf_data.tfname = cast(char*) vpi_item_done_task.toStringz;
       tf_data.calltf = &vpi_item_done_calltf;
       // tf_data.compiletf = &pull_avmm_compiletf;

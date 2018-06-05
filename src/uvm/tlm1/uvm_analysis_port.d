@@ -65,6 +65,8 @@ import uvm.base.uvm_object_globals;
 import uvm.tlm1.uvm_tlm_ifs;
 import uvm.tlm1.uvm_tlm_defines;
 
+private alias Identity(alias A) = A;
+private alias parentOf(alias sym) = Identity!(__traits(parent, sym));
 
 class uvm_analysis_port(T): uvm_port_base!(uvm_tlm_if_base!(T,T))
 {
@@ -209,7 +211,6 @@ if (is(IMP: uvm_component))
 
 template uvm_analysis_imp(alias F)
 {
-  import std.traits: parentOf;
   alias uvm_analysis_imp = uvm_analysis_imp!(parentOf!F, F);
 }
 

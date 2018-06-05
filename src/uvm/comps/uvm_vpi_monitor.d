@@ -82,13 +82,14 @@ class uvm_vpi_monitor(RSP, string VPI_PREFIX): uvm_monitor
     try {
       MONITOR mon = cast(MONITOR) user_data;
       RSP rsp;
-      auto root = mon.get_root_entity();
+      // auto root = mon.get_root_entity();
       mon.gen_rsp_port.get(rsp);
       vpiHandle systf_handle = vpi_handle(vpiSysTfCall, null);
       assert(systf_handle !is null);
       vpiHandle arg_iterator = vpi_iterate(vpiArgument, systf_handle);
       assert(arg_iterator !is null);
-      rsp.do_vpi_get(uvm_vpi_iter(arg_iterator, mon.vpi_monitor_task));
+      auto iter = new uvm_vpi_iter(arg_iterator, mon.vpi_monitor_task);
+      rsp.do_vpi_get(iter);
       mon.put_rsp_port.put(rsp);
       vpiReturnVal(VpiStatus.SUCCESS);
       return 0;
@@ -122,6 +123,9 @@ class uvm_vpi_monitor(RSP, string VPI_PREFIX): uvm_monitor
     uvm_info("VPIREG", "Registering vpi system task: " ~
 	     vpi_monitor_task, uvm_verbosity.UVM_NONE);
     tf_data.type = vpiSysFunc;
+    tf_data.sysfunctype = vpiIntFunc;
+    tf_data.compiletf   = null;
+    tf_data.sizetf      = null;
     tf_data.tfname = cast(char*) vpi_monitor_task.toStringz;
     tf_data.calltf = &vpi_task_calltf;
     // tf_data.compiletf = &pull_avmm_compiletf;

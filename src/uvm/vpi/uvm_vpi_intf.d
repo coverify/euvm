@@ -185,7 +185,8 @@ struct uvm_vpi_handle {
   }
 }
 
-struct uvm_vpi_iter {
+// struct
+class uvm_vpi_iter {
   import std.string: format;
   immutable string _name;
   immutable bool _check;
