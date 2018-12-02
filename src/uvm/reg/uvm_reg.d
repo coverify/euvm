@@ -47,7 +47,7 @@ import uvm.base.uvm_object_globals;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_pool;
 import uvm.base.uvm_queue;
-import uvm.base.uvm_root: uvm_entity_base;
+import uvm.base.uvm_entity: uvm_entity_base;
 
 import uvm.dpi.uvm_hdl;
 

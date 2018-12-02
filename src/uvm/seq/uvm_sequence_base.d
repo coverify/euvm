@@ -143,6 +143,8 @@ import uvm.base.uvm_object_globals;
 import uvm.base.uvm_phase;
 import uvm.base.uvm_tr_stream;
 import uvm.dap.uvm_get_to_lock_dap;
+import uvm.base.uvm_misc: uvm_create_random_seed;
+
 import uvm.meta.misc;
 
 import esdl.base.core;
@@ -431,6 +433,17 @@ class uvm_sequence_base: uvm_sequence_item
     auto seqFork = fork!("uvm_sequence_base/start")({
 	m_sequence_process = Process.self;
 
+	// The following code segment is intrduced in embedded UVM to enable random stability
+	// not present in SV UVM
+	if (_m_sequencer !is null) {
+	  m_sequence_process.srandom(uvm_create_random_seed(this.get_type_name(),
+							    _m_sequencer.get_full_name()));
+	}
+	else {
+	  m_sequence_process.srandom(uvm_create_random_seed(this.get_type_name(),
+							    this.get_full_name()));
+	}
+	
 	wait(0);
 
         // Raise the objection if enabled

@@ -73,14 +73,6 @@ abstract class uvm_event_base: uvm_object
   @uvm_protected_sync
   private SimTime _trigger_time = 0;
 
-  // private state variable, make sure that all read-writes are guarded
-  private Queue!(uvm_event_callback!(uvm_object)) _callbacks;
-
-  Queue!(uvm_event_callback!(uvm_object)) get_callbacks() {
-    synchronized(this) {
-      return _callbacks.dup;
-    }
-  }
 
   // Function: new
   //
@@ -289,11 +281,6 @@ abstract class uvm_event_base: uvm_object
       printer.print("num_waiters", _num_waiters, uvm_radix_enum.UVM_DEC, '.', "int");
       printer.print("on", _on, uvm_radix_enum.UVM_BIN, '.', "bit");
       printer.print("trigger_time", _trigger_time);
-      printer.m_scope.down("callbacks");
-      foreach(size_t e, ref c; _callbacks) {
-	printer.print(format("[%0d]",e), c, '[');
-      }
-      printer.m_scope.up();
     }
   }
 
@@ -310,7 +297,6 @@ abstract class uvm_event_base: uvm_object
 	_num_waiters  = e.get_num_waiters();
 	_on           = e.is_on();
 	_trigger_time = e.get_trigger_time();
-	_callbacks    = e.get_callbacks();
       }
     }
   }
@@ -345,6 +331,15 @@ class uvm_event(T=uvm_object): uvm_event_base
     super(name);
   }
 
+
+  // private state variable, make sure that all read-writes are guarded
+  private Queue!(uvm_event_callback!T) _callbacks;
+
+  Queue!(uvm_event_callback!T) get_callbacks() {
+    synchronized(this) {
+      return _callbacks.dup;
+    }
+  }
 
   // Task: wait_trigger_data
   //
@@ -479,6 +474,11 @@ class uvm_event(T=uvm_object): uvm_event_base
   override void do_print(uvm_printer printer) {
     synchronized(this) {
       super.do_print(printer);
+      printer.m_scope.down("callbacks");
+      foreach(size_t e, ref c; _callbacks) {
+	printer.print(format("[%0d]",e), c, '[');
+      }
+      printer.m_scope.up();
       printer.print("trigger_data", _trigger_data);
     }
   }
@@ -488,6 +488,7 @@ class uvm_event(T=uvm_object): uvm_event_base
       super.do_copy(rhs);
       auto e = cast(uvm_event!T) rhs;
       if(e is null) return;
+      _callbacks    = e.get_callbacks();
       _trigger_data = e.trigger_data;
     }
   } // do_copy

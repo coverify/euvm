@@ -606,8 +606,8 @@ final class uvm_seed_map
   private uint create_random_seed(string type_id, string inst_id="") {
     synchronized(this) {
       if (type_id !in _seed_table) {
-	_seed_table[type_id] = oneway_hash (type_id ~ "." ~ inst_id,
-					    m_global_random_seed);
+	_seed_table[type_id] = uvm_oneway_hash(type_id ~ "." ~ inst_id,
+					       m_global_random_seed);
       }
       if (type_id !in _count) {
 	_count[type_id] = 0;
@@ -623,7 +623,7 @@ final class uvm_seed_map
     }
   }
 
-  // Function- oneway_hash
+  // Function- uvm_oneway_hash
   //
   // A one-way hash function that is useful for creating srandom seeds. An
   // unsigned int value is generated from the string input. An initial seed can
@@ -634,13 +634,13 @@ final class uvm_seed_map
   // TBD -- replace all this junk with std.hash implementation once it
   // gets into DMD
 
-  static private uint oneway_hash (string string_in, uint seed ) {
+  static private uint uvm_oneway_hash (string string_in, uint seed ) {
     enum int UVM_STR_CRC_POLYNOMIAL = 0x04c11db6;
     bool          msb;
     ubyte         current_byte;
     uint          crc1 = 0xffffffff;
 
-    uint oneway_hash_ = seed;
+    uint uvm_oneway_hash_ = seed;
 
     for (int _byte=0; _byte < string_in.length; _byte++) {
       current_byte = cast(ubyte) string_in[_byte];
@@ -664,9 +664,9 @@ final class uvm_seed_map
       byte_swapped_crc1 += (crc1 >> i*8) & 0x000000ff;
     }
 
-    // oneway_hash_ += ~{crc1[7:0], crc1[15:8], crc1[23:16], crc1[31:24]};
-    oneway_hash_ += ~byte_swapped_crc1;
-    return oneway_hash_;
+    // uvm_oneway_hash_ += ~{crc1[7:0], crc1[15:8], crc1[23:16], crc1[31:24]};
+    uvm_oneway_hash_ += ~byte_swapped_crc1;
+    return uvm_oneway_hash_;
   }
 
 }

@@ -878,6 +878,9 @@ abstract class uvm_object: uvm_void
 					 string name,
 					 int flags)
     if (is(E == string)) {
+      import uvm.base.uvm_object_globals;
+      import uvm.base.uvm_globals;
+      
       switch(what) {
       case uvm_field_auto_enum.UVM_COPY:
 	if (!(flags & uvm_field_auto_enum.UVM_NOCOPY) && flags & uvm_field_auto_enum.UVM_COPY) {

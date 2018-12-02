@@ -30,7 +30,7 @@ enum uint UVM_MAJOR_REV = 1;
 enum uint UVM_MINOR_REV = 2;
 enum string UVM_FIX_REV = "";
 
-enum string uvm_co_copyright   = "(C) 2012-2018 Coverify Systems Technology LLP";
+enum string uvm_co_copyright   = "(C) 2012-2018 Coverify Systems Technology";
 enum string uvm_mgc_copyright  = "(C) 2007-2014 Mentor Graphics Corporation";
 enum string uvm_cdn_copyright  = "(C) 2007-2014 Cadence Design Systems, Inc.";
 enum string uvm_snps_copyright = "(C) 2006-2014 Synopsys, Inc.";
