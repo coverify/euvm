@@ -78,19 +78,24 @@ class uvm_vpi_monitor(RSP, string VPI_PREFIX): uvm_monitor
     }
   }
   
+  private vpiHandle _vpi_systf_handle;
+  private vpiHandle _vpi_arg_iterator;
+  private uvm_vpi_iter _vpi_iter;
+  private RSP _vpi_rsp;
+  
   static int vpi_task_calltf(char* user_data) {
     try {
       MONITOR mon = cast(MONITOR) user_data;
-      RSP rsp;
-      // auto root = mon.get_root_entity();
-      mon.gen_rsp_port.get(rsp);
-      vpiHandle systf_handle = vpi_handle(vpiSysTfCall, null);
-      assert(systf_handle !is null);
-      vpiHandle arg_iterator = vpi_iterate(vpiArgument, systf_handle);
-      assert(arg_iterator !is null);
-      auto iter = new uvm_vpi_iter(arg_iterator, mon.vpi_monitor_task);
-      rsp.do_vpi_get(iter);
-      mon.put_rsp_port.put(rsp);
+      assert(mon !is null);
+      assert(mon._vpi_iter !is null);
+      mon.gen_rsp_port.get(mon._vpi_rsp);
+      mon._vpi_systf_handle = vpi_handle(vpiSysTfCall, null);
+      assert(mon._vpi_systf_handle !is null);
+      mon._vpi_arg_iterator = vpi_iterate(vpiArgument, mon._vpi_systf_handle);
+      assert(mon._vpi_arg_iterator !is null);
+      mon._vpi_iter.assign(mon._vpi_arg_iterator, mon.vpi_monitor_task);
+      mon._vpi_rsp.do_vpi_get(mon._vpi_iter);
+      mon.put_rsp_port.put(mon._vpi_rsp);
       vpiReturnVal(VpiStatus.SUCCESS);
       return 0;
     }
@@ -140,6 +145,7 @@ class uvm_vpi_monitor(RSP, string VPI_PREFIX): uvm_monitor
 
   this(string name, uvm_component parent) {
     super(name, parent);
+    _vpi_iter = new uvm_vpi_iter();
     if (vpi_task_prefix == "") {
       if (VPI_PREFIX == "") {
 	vpi_task_prefix = RSP.stringof;

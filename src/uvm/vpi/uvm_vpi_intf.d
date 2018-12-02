@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------
-//   Copyright 2016      Coverify Systems Technology
+//   Copyright 2016-18    Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -21,11 +21,20 @@ module uvm.vpi.uvm_vpi_intf;
 import esdl.intf.vpi;
 import core.stdc.string: strlen;
 
-struct uvm_vpi_handle {
-  immutable bool _check;
-  immutable bool _action;
+class uvm_vpi_handle {
+  bool _check;
+  bool _action;
   vpiHandle _handle;
+
+  this() {}
+  
   this(vpiHandle handle, bool action = true, bool check = false) {
+    _check  = check;
+    _action = action;
+    _handle = handle;
+  }
+  
+  void assign(vpiHandle handle, bool action = true, bool check = false) {
     _check  = check;
     _action = action;
     _handle = handle;
@@ -75,10 +84,10 @@ struct uvm_vpi_handle {
 	val.format = vpiScalarVal;
 	vpi_get_value(_handle, &val);
 	if(val.value.scalar == 0) {
-	  t = false;
+	  t = cast(T) false;
 	}
 	else {
-	  t = true;
+	  t = cast(T) true;
 	}
       }
     }
@@ -188,11 +197,17 @@ struct uvm_vpi_handle {
 // struct
 class uvm_vpi_iter {
   import std.string: format;
-  immutable string _name;
-  immutable bool _check;
-  immutable bool _action;
+  string         _name;
+  bool           _check;
+  bool           _action;
   vpiHandle      _iter;
   int            _count;
+  uvm_vpi_handle _handle;
+
+  this() {
+    _handle = new uvm_vpi_handle();
+  }
+
   this(vpiHandle iter, string name,
        bool action = true, bool check = false) {
     _check = check;
@@ -200,8 +215,18 @@ class uvm_vpi_iter {
     _iter = iter;
     _name = name;
     _count = 0;
+    _handle = new uvm_vpi_handle();
   }
 
+  void assign(vpiHandle iter, string name,
+	      bool action = true, bool check = false) {
+    _check = check;
+    _action = action;
+    _iter = iter;
+    _name = name;
+    _count = 0;
+  }
+  
   void get_values(T...)(ref T t) {
     static if(T.length > 0) {
       get_values_by_one(t[0], t[1..$]);
@@ -219,8 +244,8 @@ class uvm_vpi_iter {
     _count++;
     assert(h, format("Task %s takes %s arguments, but more are expected",
 		     _name, _count));
-    uvm_vpi_handle handle = uvm_vpi_handle(h, _action, _check);
-    handle.get_value(t);
+    _handle.assign(h, _action, _check);
+    _handle.get_value(t);
   }
   
   private void put_next_value(T)(T t, vpiFlagsTypeT flag = vpiNoDelay) {
@@ -228,8 +253,8 @@ class uvm_vpi_iter {
     _count++;
     assert(h, format("Task %s takes %s arguments, but more are expected",
 		     _name, _count));
-    uvm_vpi_handle handle = uvm_vpi_handle(h, _action, _check);
-    handle.put_value(t, flag);
+    _handle.assign(h, _action, _check);
+    _handle.put_value(t, flag);
   }
 
   private void get_values_by_one(U, T...)(ref U u, ref T t) {
