@@ -1,11 +1,16 @@
 //
 //------------------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2011 Cadence Design Systems, Inc.
-//   Copyright 2010-2011 Synopsys, Inc.
-//   Copyright 2013      NVIDIA Corporation
-//   Copyright 2013      Verilab, Inc.
-//   Copyright 2014-2016 Coverify Systems Technology
+// Copyright 2014-2018 Coverify Systems Technology
+// Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2015 Analog Devices, Inc.
+// Copyright 2014 Semifore
+// Copyright 2017 Intel Corporation
+// Copyright 2018 Qualcomm, Inc.
+// Copyright 2011 Synopsys, Inc.
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2013 Verilab
+// Copyright 2013-2018 NVIDIA Corporation
+// Copyright 2017 Cisco Systems, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -35,7 +40,7 @@ import uvm.base.uvm_once;
 import uvm.meta.misc;
 import uvm.meta.mcd;
 
-import esdl.data.queue;
+// import esdl.data.queue;
 import std.string: format;
 
 // typedef class uvm_object;
@@ -43,12 +48,18 @@ import std.string: format;
 // typedef class uvm_object_wrapper;
 // typedef class uvm_factory_override;
 
+struct m_uvm_factory_type_pair_t
+{
+  uvm_object_wrapper m_type;
+  string             m_type_name;
+} 
+
 //Instance overrides by requested type lookup
 final class uvm_factory_queue_class
 {
-  Queue!(uvm_factory_override) _queue;
+  uvm_factory_override[] _queue;
 
-  public Queue!(uvm_factory_override) get_queue() {
+  public uvm_factory_override[] get_queue() {
     synchronized(this) {
       return _queue.dup;
     }
@@ -93,62 +104,63 @@ final class uvm_factory_queue_class
 
   final size_t length() {
     synchronized(this) {
-      return _queue.length();
+      return _queue.length;
     }
   }
 
-  // Function: pop_front
+  // Function -- NODOCS -- pop_front
   //
   // Returns the first element in the queue (index=0),
   // or ~null~ if the queue is empty.
 
   final uvm_factory_override pop_front() {
     synchronized(this) {
-      auto retval = _queue.front();
-      _queue.removeFront();
+      auto retval = _queue[0];
+      _queue = _queue[1..$];
       return retval;
     }
   }
 
 
-  // Function: pop_back
+  // Function -- NODOCS -- pop_back
   //
   // Returns the last element in the queue (index=size()-1),
   // or ~null~ if the queue is empty.
 
   final uvm_factory_override pop_back() {
     synchronized(this) {
-      auto retval = _queue.back();
-      _queue.removeBack();
+      auto retval = _queue[$-1];
+      _queue.length -= 1;
       return retval;
     }
   }
 
 
-  // Function: push_front
+  // Function -- NODOCS -- push_front
   //
   // Inserts the given ~item~ at the front of the queue.
 
   final void push_front(uvm_factory_override item) {
     synchronized(this) {
-      _queue.pushFront(item);
+      import std.array: insertInPlace;
+      _queue.insertInPlace(0, item);
     }
   }
 
-  // Function: push_back
+  // Function -- NODOCS -- push_back
   //
   // Inserts the given ~item~ at the back of the queue.
 
   final void push_back(uvm_factory_override item) {
     synchronized(this) {
-      _queue.pushBack(item);
+      _queue ~= item;
     }
   }
 
 }
 
 //------------------------------------------------------------------------------
-// Title: UVM Factory
+// Title -- NODOCS -- UVM Factory
 //
 // This page covers the classes that define the UVM factory facility.
 //------------------------------------------------------------------------------
@@ -156,7 +168,7 @@ final class uvm_factory_queue_class
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_factory
+// CLASS -- NODOCS -- uvm_factory
 //
 //------------------------------------------------------------------------------
 //
@@ -186,6 +198,7 @@ final class uvm_factory_queue_class
 // See <uvm_default_factory::Usage> section for details on configuring and using the factory.
 //
 
+// @uvm-ieee 1800.2-2017 auto 8.3.1.1
 abstract class uvm_factory
 {
   static class uvm_once: uvm_once_base
@@ -196,27 +209,11 @@ abstract class uvm_factory
 
   mixin(uvm_once_sync_string);
 
-  // Group: Retrieving the factory
+  // Group -- NODOCS -- Retrieving the factory
 
 
-
-  // Function: get
-  // Static accessor for <uvm_factory>
-  //
-  // The static accessor is provided as a convenience wrapper
-  // around retrieving the factory via the <uvm_coreservice_t::get_factory>
-  // method.
-  //
-  // | // Using the uvm_coreservice_t:
-  // | uvm_coreservice_t cs;
-  // | uvm_factory f;
-  // | cs = uvm_coreservice_t::get();
-  // | f = cs.get_factory();
-  //
-  // | // Not using the uvm_coreservice_t:
-  // | uvm_factory f;
-  // | f = uvm_factory::get();
-  //
+         
+  // @uvm-ieee 1800.2-2017 auto 8.3.1.2.1
   static  uvm_factory get() {
     import uvm.base.uvm_coreservice;
     uvm_coreservice_t s = uvm_coreservice_t.get();
@@ -224,9 +221,16 @@ abstract class uvm_factory
   }
 
 
-  // Group: Registering Types
+  // @uvm-ieee 1800.2-2017 auto 8.3.1.2.2
+  static void set(uvm_factory f) {
+    import uvm.base.uvm_coreservice;
+    uvm_coreservice_t s = uvm_coreservice_t.get();
+    s.set_factory(f);
+  }
 
-  // Function: register
+  // Group -- NODOCS -- Registering Types
+
+  // Function -- NODOCS -- register
   //
   // Registers the given proxy object, ~obj~, with the factory. The proxy object
   // is a lightweight substitute for the component or object it represents. When
@@ -239,22 +243,21 @@ abstract class uvm_factory
   // If the proxy object's ~get_type_name~ method returns the empty string,
   // name-based lookup is effectively disabled.
 
+  // @uvm-ieee 1800.2-2017 auto 8.3.1.3
   abstract void register(uvm_object_wrapper obj);
 
 
-  // Group: Type & Instance Overrides
+  // Group -- NODOCS -- Type & Instance Overrides
 
-  // Function: set_inst_override_by_type
+  // Function -- NODOCS -- set_inst_override_by_type
 
-  // set_inst_override_by_type
-  // -------------------------
-
+  // @uvm-ieee 1800.2-2017 auto 8.3.1.4.1
   abstract void set_inst_override_by_type(uvm_object_wrapper original_type,
 					  uvm_object_wrapper override_type,
 					  string full_inst_path);
 
 
-  // Function: set_inst_override_by_name
+  // Function -- NODOCS -- set_inst_override_by_name
   //
   // Configures the factory to create an object of the override's type whenever
   // a request is made to create an object of the original type using a context
@@ -281,25 +284,22 @@ abstract class uvm_factory
   // match prevails. Thus, more specific overrides should be registered
   // first, followed by more general overrides.
 
-  // set_inst_override_by_name
-  // -------------------------
-
+  // @uvm-ieee 1800.2-2017 auto 8.3.1.4.1
   abstract void set_inst_override_by_name(string original_type_name,
 					  string override_type_name,
 					  string full_inst_path);
 
 
-  // Function: set_type_override_by_type
+  // Function -- NODOCS -- set_type_override_by_type
 
-  // set_type_override_by_type
-  // -------------------------
 
+  // @uvm-ieee 1800.2-2017 auto 8.3.1.4.2
   abstract void set_type_override_by_type(uvm_object_wrapper original_type,
 					  uvm_object_wrapper override_type,
 					  bool replace = true);
 
 
-  // Function: set_type_override_by_name
+  // Function -- NODOCS -- set_type_override_by_name
   //
   // Configures the factory to create an object of the override's type whenever
   // a request is made to create an object of the original type, provided no
@@ -321,38 +321,33 @@ abstract class uvm_factory
   // set_type_override_by_name
   // -------------------------
 
+  // @uvm-ieee 1800.2-2017 auto 8.3.1.4.2
   abstract void set_type_override_by_name(string original_type_name,
 					  string override_type_name,
 					  bool replace = true);
 
 
-  // Group: Creation
+  // Group -- NODOCS -- Creation
 
-  // Function: create_object_by_type
+  // Function -- NODOCS -- create_object_by_type
 
-  // create_object_by_type
-  // ---------------------
-
+  // @uvm-ieee 1800.2-2017 auto 8.3.1.5
   abstract uvm_object create_object_by_type(uvm_object_wrapper requested_type,
 					    string parent_inst_path="",
 					    string name="");
 
 
-  // Function: create_component_by_type
+  // Function -- NODOCS -- create_component_by_type
 
-  // create_component_by_type
-  // ------------------------
-
+  // @uvm-ieee 1800.2-2017 auto 8.3.1.5
   abstract uvm_component create_component_by_type(uvm_object_wrapper requested_type,
 						  string parent_inst_path,
 						  string name,
 						  uvm_component parent);
 
-  // Function: create_object_by_name
+  // Function -- NODOCS -- create_object_by_name
 
-  // create_object_by_name
-  // ---------------------
-
+  // @uvm-ieee 1800.2-2017 auto 8.3.1.5
   abstract uvm_object create_object_by_name(string requested_type_name,
 					    string parent_inst_path="",
 					    string name="");
@@ -394,9 +389,7 @@ abstract class uvm_factory
   // that which formed the loop. Using the previous example, if ~bar~
   // overrides ~xyz~, then ~bar~ is returned after the error is issued.
 
-  // create_component_by_name
-  // ------------------------
-
+  // @uvm-ieee 1800.2-2017 auto 8.3.1.5
   abstract uvm_component create_component_by_name(string requested_type_name,
 						  string parent_inst_path,
 						  string name,
@@ -405,7 +398,7 @@ abstract class uvm_factory
 
   // Group: Debug
 
-  // Function: debug_create_by_type
+  // Function -- NODOCS -- debug_create_by_type
 
   // debug_create_by_type
   // --------------------
@@ -414,7 +407,7 @@ abstract class uvm_factory
 				     string parent_inst_path="",
 				     string name="");
 
-  // Function: debug_create_by_name
+  // Function -- NODOCS -- debug_create_by_name
   //
   // These methods perform the same search algorithm as the ~create_*~ methods,
   // but they do not create new objects. Instead, they provide detailed
@@ -429,15 +422,16 @@ abstract class uvm_factory
 				      string parent_inst_path="",
 				      string name="");
 
-  // Function: find_override_by_type
+  // Function -- NODOCS -- find_override_by_type
 
   // find_override_by_type
   // ---------------------
 
+  // @uvm-ieee 1800.2-2017 auto 8.3.1.7.1
   abstract uvm_object_wrapper find_override_by_type(uvm_object_wrapper requested_type,
 						    string full_inst_path);
 
-  // Function: find_override_by_name
+  // Function -- NODOCS -- find_override_by_name
   //
   // These methods return the proxy to the object that would be created given
   // the arguments. The ~full_inst_path~ is typically derived from the parent's
@@ -447,11 +441,12 @@ abstract class uvm_factory
   // find_override_by_name
   // ---------------------
 
+  // @uvm-ieee 1800.2-2017 auto 8.3.1.7.1
   abstract uvm_object_wrapper find_override_by_name(string requested_type_name,
 						    string full_inst_path);
 
 
-  // Function: find_wrapper_by_name
+  // Function -- NODOCS -- find_wrapper_by_name
   //
   // This method returns the <uvm_object_wrapper> associated with a given
   // ~type_name~.
@@ -459,10 +454,11 @@ abstract class uvm_factory
   // find_wrapper_by_name
   // ------------
 
+  // @uvm-ieee 1800.2-2017 auto 8.3.1.7.2
   abstract uvm_object_wrapper find_wrapper_by_name(string type_name);
 
 
-  // Function: print
+  // Function -- NODOCS -- print
   //
   // Prints the state of the uvm_factory, including registered types, instance
   // overrides, and type overrides.
@@ -476,30 +472,30 @@ abstract class uvm_factory
   // print
   // -----
 
+  // @uvm-ieee 1800.2-2017 auto 8.3.1.7.5
   abstract void print(int all_types=1);
 
 }
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_default_factory
+// CLASS -- NODOCS -- uvm_default_factory
 //
 //------------------------------------------------------------------------------
 //
-// Default implementation of the UVM factory.
-
+// Default implementation of the UVM factory.  The library implements the
+// following public API beyond what is documented in IEEE 1800.2.
+   
+// @uvm-ieee 1800.2-2017 auto 8.3.3
 class uvm_default_factory: uvm_factory
 {
 
   mixin(uvm_sync_string);
-  // Group: Registering Types
+  // Group -- NODOCS -- Registering Types
 
-  // Function: register
+  // Function -- NODOCS -- register
   //
   // Registers the given proxy object, ~obj~, with the factory.
-
-  // extern virtual function void register (uvm_object_wrapper obj);
-
 
   override void register(uvm_object_wrapper obj) {
     import uvm.base.uvm_globals;
@@ -528,6 +524,7 @@ class uvm_default_factory: uvm_factory
 	}
       }
       else {
+	uvm_factory_override[] overrides;
 	_m_types[obj] = true;
 	// If a named override happens before the type is registered, need to copy
 	// the override queue.
@@ -553,14 +550,9 @@ class uvm_default_factory: uvm_factory
   }
 
 
-  // Group: Type & Instance Overrides
+  // Group -- NODOCS -- Type & Instance Overrides
 
-  // Function: set_inst_override_by_type
-
-  // extern virtual function
-  // void set_inst_override_by_type (uvm_object_wrapper original_type,
-  //				  uvm_object_wrapper override_type,
-  //				  string full_inst_path);
+  // Function -- NODOCS -- set_inst_override_by_type
 
   override void set_inst_override_by_type(uvm_object_wrapper original_type,
 						uvm_object_wrapper override_type,
@@ -592,15 +584,14 @@ class uvm_default_factory: uvm_factory
     }
   }
 
-  // Function: set_inst_override_by_name
+  // Function -- NODOCS -- set_inst_override_by_name
   //
   // Configures the factory to create an object of the override's type whenever
   // a request is made to create an object of the original type using a context
   // that matches ~full_inst_path~.
-  // extern virtual function
-  // void set_inst_override_by_name (string original_type_name,
-  //				  string override_type_name,
-  //				  string full_inst_path);
+  // 
+  // ~original_type_name~ may be the factory-registered type name or an aliased name
+  // specified with <set_inst_alias> in the context of ~full_inst_path~.
 
   override void set_inst_override_by_name(string original_type_name,
 						string override_type_name,
@@ -657,7 +648,7 @@ class uvm_default_factory: uvm_factory
 					     full_inst_path);
 	    }
 	  }
-	  _m_wildcard_inst_overrides.pushBack(ovrrd);
+	  _m_wildcard_inst_overrides ~= ovrrd;
 	}
 	else {
 	  if(original_type_name !in _m_inst_override_name_queues) {
@@ -672,12 +663,7 @@ class uvm_default_factory: uvm_factory
 
 
 
-  // Function: set_type_override_by_type
-
-  // extern virtual function
-  // void set_type_override_by_type (uvm_object_wrapper original_type,
-  //				  uvm_object_wrapper override_type,
-  //				  bit replace=1);
+  // Function -- NODOCS -- set_type_override_by_type
 
   override void set_type_override_by_type(uvm_object_wrapper original_type,
 						uvm_object_wrapper override_type,
@@ -744,22 +730,20 @@ class uvm_default_factory: uvm_factory
 					      original_type.get_type_name(),
 					      original_type, override_type);
 
-	_m_type_overrides.pushBack(ovrrd);
+	_m_type_overrides ~= ovrrd;
       }
     }
   }
 
 
-  // Function: set_type_override_by_name
+  // Function -- NODOCS -- set_type_override_by_name
   //
   // Configures the factory to create an object of the override's type whenever
   // a request is made to create an object of the original type, provided no
   // instance override applies.
-
-  // extern virtual function
-  // void set_type_override_by_name (string original_type_name,
-  //				  string override_type_name,
-  //				  bit replace=1);
+  //
+  // ~original_type_name~ may be the factory-registered type name or an aliased name
+  // specified with <set_type_alias>.
 
   override void set_type_override_by_name(string original_type_name,
 					  string override_type_name,
@@ -828,7 +812,7 @@ class uvm_default_factory: uvm_factory
 	auto ovrrd = new uvm_factory_override("*", original_type_name,
 					      original_type, override_type);
 
-	_m_type_overrides.pushBack(ovrrd);
+	_m_type_overrides ~= ovrrd;
 	//    _m_type_names[original_type_name] = override.ovrd_type;
       }
 
@@ -836,14 +820,10 @@ class uvm_default_factory: uvm_factory
   }
 
 
-  // Group: Creation
 
-  // Function: create_object_by_type
+  // Group -- NODOCS -- Creation
 
-  // extern virtual function
-  // uvm_object    create_object_by_type    (uvm_object_wrapper requested_type,
-  //					  string parent_inst_path="",
-  //					  string name="");
+  // Function -- NODOCS -- create_object_by_type
 
   override uvm_object create_object_by_type(uvm_object_wrapper requested_type,
 					    string parent_inst_path="",
@@ -862,7 +842,7 @@ class uvm_default_factory: uvm_factory
 	full_inst_path = parent_inst_path;
       }
 
-      _m_override_info.clear();
+      _m_override_info.length = 0;
 
       requested_type = find_override_by_type(requested_type, full_inst_path);
 
@@ -871,13 +851,8 @@ class uvm_default_factory: uvm_factory
     }
   }
 
-  // Function: create_component_by_type
+  // Function -- NODOCS -- create_component_by_type
 
-  // extern virtual function
-  // uvm_component create_component_by_type (uvm_object_wrapper requested_type,
-  //					  string parent_inst_path="",
-  //					  string name,
-  //					  uvm_component parent);
 
   override uvm_component create_component_by_type(uvm_object_wrapper requested_type,
 						  string parent_inst_path,
@@ -896,7 +871,7 @@ class uvm_default_factory: uvm_factory
 	full_inst_path = parent_inst_path;
       }
 
-      _m_override_info.clear();
+      _m_override_info.length = 0;
 
       requested_type = find_override_by_type(requested_type, full_inst_path);
 
@@ -905,12 +880,7 @@ class uvm_default_factory: uvm_factory
     }
   }
 
-  // Function: create_object_by_name
-
-  // extern virtual function
-  // uvm_object    create_object_by_name    (string requested_type_name,
-  //					  string parent_inst_path="",
-  //					  string name="");
+  // Function -- NODOCS -- create_object_by_name
 
   override uvm_object create_object_by_name(string requested_type_name,
 					    string parent_inst_path="",
@@ -931,7 +901,7 @@ class uvm_default_factory: uvm_factory
 	inst_path = parent_inst_path;
       }
 
-      _m_override_info.clear();
+      _m_override_info.length = 0;
 
       wrapper = find_override_by_name(requested_type_name, inst_path);
 
@@ -976,16 +946,10 @@ class uvm_default_factory: uvm_factory
     }
   }
 
-  // Function: create_component_by_name
+  // Function -- NODOCS -- create_component_by_name
   //
   // Creates and returns a component or object of the requested type, which may
   // be specified by type or by name.
-
-  // extern virtual function
-  // uvm_component create_component_by_name (string requested_type_name,
-  //					  string parent_inst_path="",
-  //					  string name,
-  //					  uvm_component parent);
 
   override uvm_component create_component_by_name(string requested_type_name,
 						  string parent_inst_path,
@@ -1007,7 +971,7 @@ class uvm_default_factory: uvm_factory
 	inst_path = parent_inst_path;
       }
 
-      _m_override_info.clear();
+      _m_override_info.length = 0;
 
       wrapper = find_override_by_name(requested_type_name, inst_path);
 
@@ -1055,12 +1019,14 @@ class uvm_default_factory: uvm_factory
   // Group: Debug
 
   // Function: debug_create_by_type
-
-  // extern virtual function
-  // void debug_create_by_type (uvm_object_wrapper requested_type,
-  //			     string parent_inst_path="",
-  //			     string name="");
-
+  // Debug traces for ~create_*_by_type~ methods.
+  //
+  // This method performs the same search algorithm as the <create_object_by_type> and
+  // <create_component_by_type> methods, however instead of creating the new object or component,
+  // the method shall generate a report message detailing how the object or component would
+  // have been constructed after all overrides are accounted for.
+  //
+  // @uvm-accellera The details of this API are specific to the Accellera implementation, and are not being considered for contribution to 1800.2
   override void debug_create_by_type(uvm_object_wrapper requested_type,
 				     string parent_inst_path="",
 				     string name="") {
@@ -1068,13 +1034,14 @@ class uvm_default_factory: uvm_factory
   }
 
   // Function: debug_create_by_name
+  // Debug traces for ~create_*_by_name~ methods.
   //
-  // These methods perform the same search algorithm as the ~create_*~ methods,
-  // but they do not create new objects.
-  // extern virtual function
-  // void debug_create_by_name (string requested_type_name,
-  //			     string parent_inst_path="",
-  //			     string name="");
+  // This method performs the same search algorithm as the <create_object_by_name> and
+  // <create_component_by_name> methods, however instead of creating the new object or component,
+  // the method shall generate a report message detailing how the object or component would
+  // have been constructed after all overrides are accounted for.
+  //
+  // @uvm-accellera The details of this API are specific to the Accellera implementation, and are not being considered for contribution to 1800.2
 
   override void  debug_create_by_name(string requested_type_name,
 				      string parent_inst_path="",
@@ -1083,11 +1050,7 @@ class uvm_default_factory: uvm_factory
   }
 
 
-  // Function: find_override_by_type
-
-  // extern virtual function
-  // uvm_object_wrapper find_override_by_type (uvm_object_wrapper requested_type,
-  //					    string full_inst_path);
+  // Function -- NODOCS -- find_override_by_type
 
   override uvm_object_wrapper find_override_by_type(uvm_object_wrapper requested_type,
 						    string full_inst_path) {
@@ -1124,7 +1087,7 @@ class uvm_default_factory: uvm_factory
 	       qovrrd.orig_type_name != "" &&
 	       qovrrd.orig_type_name == requested_type.get_type_name())) &&
 	     uvm_is_match(qovrrd.full_inst_path, full_inst_path)) {
-	    _m_override_info.pushBack(qovrrd);
+	    _m_override_info ~= qovrrd;
 	    if(m_debug_pass) {
 	      if(ovrrd is null) {
 		ovrrd = qovrrd.ovrd_type;
@@ -1152,7 +1115,7 @@ class uvm_default_factory: uvm_factory
 	    type_override.orig_type_name != "" &&
 	    requested_type !is null &&
 	    type_override.orig_type_name == requested_type.get_type_name())) {
-	  _m_override_info.pushBack(type_override);
+	  _m_override_info ~= type_override;
 	  if(m_debug_pass) {
 	    if(ovrrd is null) {
 	      ovrrd = type_override.ovrd_type;
@@ -1194,14 +1157,10 @@ class uvm_default_factory: uvm_factory
     }
   }
 
-  // Function: find_override_by_name
+  // Function -- NODOCS -- find_override_by_name
   //
   // These methods return the proxy to the object that would be created given
   // the arguments.
-
-  // extern virtual function
-  // uvm_object_wrapper find_override_by_name (string requested_type_name,
-  //					    string full_inst_path);
 
   override uvm_object_wrapper find_override_by_name(string requested_type_name,
 						    string full_inst_path) {
@@ -1246,7 +1205,7 @@ class uvm_default_factory: uvm_factory
 	    // for(int index = 0; index<qc.length; ++index) {
 	    if(uvm_is_match(qovrrd.orig_type_name, requested_type_name) &&
 	       uvm_is_match(qovrrd.full_inst_path, full_inst_path)) {
-	      _m_override_info.pushBack(qovrrd);
+	      _m_override_info ~= qovrrd;
 	      if(m_debug_pass) {
 		if(ovrrd is null) {
 		  ovrrd = qovrrd.ovrd_type;
@@ -1282,7 +1241,7 @@ class uvm_default_factory: uvm_factory
       // type override - exact match
       foreach(index, type_override; _m_type_overrides) {
 	if(type_override.orig_type_name == requested_type_name) {
-	  _m_override_info.pushBack(type_override);
+	  _m_override_info ~= type_override;
 	  if(m_debug_pass) {
 	    if(ovrrd is null) {
 	      ovrrd = type_override.ovrd_type;
@@ -1309,9 +1268,6 @@ class uvm_default_factory: uvm_factory
     }
   }
 
-  // extern virtual
-  // function uvm_object_wrapper find_wrapper_by_name            (string type_name);
-
   override uvm_object_wrapper find_wrapper_by_name(string type_name) {
     import uvm.base.uvm_globals;
     import uvm.base.uvm_object_globals;
@@ -1327,12 +1283,11 @@ class uvm_default_factory: uvm_factory
     }
   }
 
-  // Function: print
+  // Function -- NODOCS -- print
   //
   // Prints the state of the uvm_factory, including registered types, instance
   // overrides, and type overrides.
   //
-  // extern  virtual function void print (int all_types=1);
 
   override void print(int all_types=1) {
     import uvm.base.uvm_globals;
@@ -1510,7 +1465,7 @@ class uvm_default_factory: uvm_factory
 	full_inst_path = parent_inst_path;
       }
 
-      _m_override_info.clear();
+      _m_override_info.length = 0;
 
       if(requested_type is null) {
 	if(requested_type_name !in _m_type_names &&
@@ -1640,9 +1595,9 @@ class uvm_default_factory: uvm_factory
   private bool[string]                  _m_lookup_strs;
   private uvm_object_wrapper[string]    _m_type_names;
 
-  private Queue!(uvm_factory_override)  _m_type_overrides;
+  private uvm_factory_override[]  _m_type_overrides;
 
-  Queue!(uvm_factory_override) m_type_overrides() {
+  uvm_factory_override[] m_type_overrides() {
     synchronized(this) {
       return _m_type_overrides.dup();
     }
@@ -1664,8 +1619,8 @@ class uvm_default_factory: uvm_factory
     }
   }
   
-  private Queue!(uvm_factory_override)                _m_wildcard_inst_overrides;
-  private Queue!(uvm_factory_override)                _m_override_info;
+  private uvm_factory_override[]                _m_wildcard_inst_overrides;
+  private uvm_factory_override[]                _m_override_info;
 
   static bool m_has_wildcard(string nm) {
     foreach(i, n_; nm) {
@@ -1715,7 +1670,7 @@ class uvm_default_factory: uvm_factory
 
 //------------------------------------------------------------------------------
 //
-// Group: Usage
+// Group -- NODOCS -- Usage
 //
 // Using the factory involves three basic operations
 //
@@ -1811,9 +1766,11 @@ class uvm_default_factory: uvm_factory
 //|    endfunction
 //|
 //|    // get_type_name not implemented by macro for parameterized classes
-//|    const static string type_name = {"driverB #(",T::type_name,")"};
+//|    static function string type_name();
+//|      return {"driverB #(",T::type_name(),")"};
+//|    endfunction : type_name
 //|    virtual function string get_type_name();
-//|      return type_name;
+//|      return type_name();
 //|    endfunction
 //|
 //|    // using the factory allows pkt overrides from outside the class
@@ -1841,9 +1798,11 @@ class uvm_default_factory: uvm_factory
 //|      super.new(name,parent);
 //|    endfunction
 //|
-//|    const static string type_name = {"driverD1 #(",T::type_name,")"};
+//|    static function string type_name();
+//|      return {"driverD1 #(",T::type_name,")"};
+//|    endfunction : type_name
 //|    virtual function string get_type_name();
-//|      ...return type_name;
+//|      return type_name();
 //|    endfunction
 //|
 //|  endclass
@@ -1856,9 +1815,11 @@ class uvm_default_factory: uvm_factory
 //|      super.new(name,parent);
 //|    endfunction
 //|
-//|    const static string type_name = {"driverD2 #(",T::type_name,")"};
+//|    static function string type_name();
+//|      return {"driverD2 #(",T::type_name,")"};
+//|    endfunction : type_name
 //|    virtual function string get_type_name();
-//|      return type_name;
+//|      return type_name();
 //|    endfunction
 //|
 //|  endclass
@@ -2015,7 +1976,7 @@ class uvm_default_factory: uvm_factory
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_object_wrapper
+// CLASS -- NODOCS -- uvm_object_wrapper
 //
 // The uvm_object_wrapper provides an abstract interface for creating object and
 // component proxies. Instances of these lightweight proxies, representing every
@@ -2026,37 +1987,41 @@ class uvm_default_factory: uvm_factory
 //
 //------------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 8.3.2.1
 abstract class uvm_object_wrapper
 {
-  // Function: create_object
+  // Function -- NODOCS -- create_object
   //
   // Creates a new object with the optional ~name~.
   // An object proxy (e.g., <uvm_object_registry #(T,Tname)>) implements this
   // method to create an object of a specific type, T.
 
+  // @uvm-ieee 1800.2-2017 auto 8.3.2.2.1
   uvm_object create_object(string name="") {
     return null;
   }
 
 
-  // Function: create_component
+  // Function -- NODOCS -- create_component
   //
   // Creates a new component, passing to its constructor the given ~name~ and
   // ~parent~. A component proxy (e.g. <uvm_component_registry #(T,Tname)>)
   // implements this method to create a component of a specific type, T.
 
+  // @uvm-ieee 1800.2-2017 auto 8.3.2.2.2
   uvm_component create_component(string name,
 				 uvm_component parent) {
     return null;
   }
 
 
-  // Function: get_type_name
+  // Function -- NODOCS -- get_type_name
   //
   // Derived classes implement this method to return the type name of the object
   // created by <create_component> or <create_object>. The factory uses this
   // name when matching against the requested type in name-based lookups.
 
+  // @uvm-ieee 1800.2-2017 auto 8.3.2.2.3
   abstract string get_type_name();
 
 }
