@@ -1,7 +1,10 @@
 //----------------------------------------------------------------------
-//   Copyright 2010      Mentor Graphics Corporation
-//   Copyright 2010-2011 Synopsys, Inc.
-//   Copyright 2016      Coverify Systems Technology
+// Copyright 2016-2019 Coverify Systems Technology
+// Copyright 2010-2012 Mentor Graphics Corporation
+// Copyright 2014 Semifore
+// Copyright 2010-2018 Synopsys, Inc.
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2013-2018 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -36,7 +39,7 @@ import uvm.base.uvm_recorder;
 import esdl.rand;
 import std.string: format;
 //----------------------------------------------------------------------
-// Title: TLM Generic Payload & Extensions
+// Title -- NODOCS -- TLM Generic Payload & Extensions
 //----------------------------------------------------------------------
 // The Generic Payload transaction represents a generic 
 // bus read/write access. It is used as the default transaction in
@@ -45,13 +48,13 @@ import std.string: format;
 
 
 //---------------
-// Group: Globals
+// Group -- NODOCS -- Globals
 //---------------
 //
 // Defines, Constants, enums.
 
 
-// Enum: uvm_tlm_command_e
+// Enum -- NODOCS -- uvm_tlm_command_e
 //
 // Command attribute type definition
 //
@@ -67,10 +70,10 @@ enum uvm_tlm_command_e
     UVM_TLM_WRITE_COMMAND,
     UVM_TLM_IGNORE_COMMAND
   }
-mixin(declareEnums!uvm_tlm_command_e);
+mixin (declareEnums!uvm_tlm_command_e);
 
 
-// Enum: uvm_tlm_response_status_e
+// Enum -- NODOCS -- uvm_tlm_response_status_e
 //
 // Response status attribute type definition
 //
@@ -99,29 +102,27 @@ enum uvm_tlm_response_status_e
     UVM_TLM_BURST_ERROR_RESPONSE = -4,
     UVM_TLM_BYTE_ENABLE_ERROR_RESPONSE = -5
   }
-mixin(declareEnums!uvm_tlm_response_status_e);
+mixin (declareEnums!uvm_tlm_response_status_e);
 
 
 // typedef class uvm_tlm_extension_base;
 
 
 //-----------------------
-// Group: Generic Payload
+// Group -- NODOCS -- Generic Payload
 //-----------------------
 
 //----------------------------------------------------------------------
-// Class: uvm_tlm_generic_payload
+// Class -- NODOCS -- uvm_tlm_generic_payload
 //
-// This class provides a transaction definition commonly used in
-// memory-mapped bus-based systems.  It's intended to be a general
-// purpose transaction class that lends itself to many applications. The
-// class is derived from uvm_sequence_item which enables it to be
-// generated in sequences and transported to drivers through sequencers.
+// Implementation of uvm_tlm_generic_payload, as described in
+// section 12.3.4.2.1 of 1800.2-2017.
 //----------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 12.3.4.2.1
 class uvm_tlm_generic_payload: uvm_sequence_item
 {
-  // Variable: m_address
+  // Variable -- NODOCS -- m_address
   //
   // Address for the bus operation.
   // Should be set or read using the <set_address> and <get_address>
@@ -140,10 +141,10 @@ class uvm_tlm_generic_payload: uvm_sequence_item
   // for example) it shall generate a standard error response. The
   // recommended response status is ~UVM_TLM_ADDRESS_ERROR_RESPONSE~.
   //
-   @rand ulong _m_address;
+  @rand ulong _m_address;
 
  
-  // Variable: m_command
+  // Variable -- NODOCS -- m_command
   //
   // Bus operation type.
   // Should be set using the <set_command>, <set_read> or <set_write> methods
@@ -166,7 +167,7 @@ class uvm_tlm_generic_payload: uvm_sequence_item
   @rand uvm_tlm_command_e _m_command;
 
    
-  // Variable: m_data
+  // Variable -- NODOCS -- m_data
   //
   // Data read or to be written.
   // Should be set and read using the <set_data> or <get_data> methods
@@ -202,7 +203,7 @@ class uvm_tlm_generic_payload: uvm_sequence_item
   @rand!32768 ubyte[] _m_data;
 
 
-  // Variable: m_length
+  // Variable -- NODOCS -- m_length
   //
   // The number of bytes to be copied to or from the <m_data> array,
   // inclusive of any bytes disabled by the <m_byte_enable> attribute.
@@ -217,7 +218,7 @@ class uvm_tlm_generic_payload: uvm_sequence_item
   @rand uint _m_length;
    
 
-  // Variable: m_response_status
+  // Variable -- NODOCS -- m_response_status
   //
   // Status of the bus operation.
   // Should be set using the <set_response_status> method
@@ -264,7 +265,7 @@ class uvm_tlm_generic_payload: uvm_sequence_item
   @rand uvm_tlm_response_status_e _m_response_status;
 
 
-  // Variable: m_dmi
+  // Variable -- NODOCS -- m_dmi
   //
   // DMI mode is not yet supported in the UVM TLM2 subset.
   // This variable is provided for completeness and interoperability
@@ -273,7 +274,7 @@ class uvm_tlm_generic_payload: uvm_sequence_item
   bool _m_dmi;
    
 
-  // Variable: m_byte_enable
+  // Variable -- NODOCS -- m_byte_enable
   //
   // Indicates valid <m_data> array elements.
   // Should be set and read using the <set_byte_enable> or <get_byte_enable> methods
@@ -314,7 +315,7 @@ class uvm_tlm_generic_payload: uvm_sequence_item
   @rand!32768 ubyte[] _m_byte_enable;
 
 
-  // Variable: m_byte_enable_length
+  // Variable -- NODOCS -- m_byte_enable_length
   //
   // The number of elements in the <m_byte_enable> array.
   //
@@ -324,7 +325,7 @@ class uvm_tlm_generic_payload: uvm_sequence_item
   @rand uint _m_byte_enable_length;
 
 
-  // Variable: m_streaming_width
+  // Variable -- NODOCS -- m_streaming_width
   //    
   // Number of bytes transferred on each beat.
   // Should be set and read using the <set_streaming_width> or
@@ -381,16 +382,17 @@ class uvm_tlm_generic_payload: uvm_sequence_item
   uvm_tlm_extension_base[] _m_rand_exts;
 
 
-  mixin uvm_object_utils;
+  mixin uvm_object_essentials;
 
 
-  // Function: new
+  // Function -- NODOCS -- new
   //
   // Create a new instance of the generic payload.  Initialize all the
   // members to their default values.
 
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.3
   this(string name="") {
-    synchronized(this) {
+    synchronized (this) {
       super(name);
       _m_address = 0;
       _m_command = UVM_TLM_IGNORE_COMMAND;
@@ -407,7 +409,7 @@ class uvm_tlm_generic_payload: uvm_sequence_item
   //
   override void do_print(uvm_printer printer) {
     import uvm.base.uvm_object_globals;
-    synchronized(this) {
+    synchronized (this) {
       ubyte be;
       super.do_print(printer);
       printer.print("address", _m_address, uvm_radix_enum.UVM_HEX);
@@ -416,8 +418,8 @@ class uvm_tlm_generic_payload: uvm_sequence_item
       printer.print("streaming_width", _m_streaming_width, uvm_radix_enum.UVM_HEX);
 
       printer.print_array_header("data", _m_length, "darray(byte)");
-      for(int i=0; i < _m_length && i < _m_data.length; ++i) {
-	if(_m_byte_enable_length) {
+      for (int i=0; i < _m_length && i < _m_data.length; ++i) {
+	if (_m_byte_enable_length) {
 	  be = _m_byte_enable[i % _m_byte_enable_length];
 	  printer.print_generic(format("[%0d]",i), "byte", 8,
 				format("'h%h%s", _m_data[i],
@@ -433,7 +435,7 @@ class uvm_tlm_generic_payload: uvm_sequence_item
       string name;
       printer.print_array_header("extensions", _m_extensions.length,
 				 "aa(obj,obj)");
-      foreach(ext_; _m_extensions) {
+      foreach (ext_; _m_extensions) {
 	name = "[" ~ ext_.get_name() ~ "]";
 	printer.print_object(name, ext_, '[');
       }
@@ -446,10 +448,10 @@ class uvm_tlm_generic_payload: uvm_sequence_item
   //
   override void do_copy(uvm_object rhs) {
     super.do_copy(rhs);
-    auto gp = cast(uvm_tlm_generic_payload) rhs;
-    assert(gp !is null);
-    synchronized(this) {
-      synchronized(rhs) {
+    auto gp = cast (uvm_tlm_generic_payload) rhs;
+    assert (gp !is null);
+    synchronized (this) {
+      synchronized (rhs) {
 	_m_address            = gp._m_address;
 	_m_command            = gp._m_command;
 	_m_data               = gp._m_data.dup;
@@ -461,88 +463,134 @@ class uvm_tlm_generic_payload: uvm_sequence_item
 	_m_byte_enable_length = gp._m_byte_enable_length;
 	// _m_extensions         = gp._m_extensions.dup;
 	_m_extensions = null;
-	foreach(key, val; gp._m_extensions) {
-	  _m_extensions[key] = cast(uvm_tlm_extension_base) val.clone;
+	foreach (key, val; gp._m_extensions) {
+	  _m_extensions[key] = cast (uvm_tlm_extension_base) val.clone;
 	}
       }
     }
   }
 
-  // Function- do_compare
+  void m_uvm_tlm_fast_compare_int(T)(T lhs, T rhs, uvm_radix_enum radix,
+				     string name, uvm_comparer comparer) {
+    if ((!comparer.get_threshold() ||
+	 comparer.get_result() < comparer.get_threshold()) &&
+	lhs != rhs) {
+      comparer.compare(name, lhs, rhs, radix);
+    }
+  }
+
+  void m_uvm_tlm_fast_compare_enum(T)(T lhs, T rhs, string name,
+				      uvm_comparer comparer) {
+    if ((!comparer.get_threshold() ||
+	 comparer.get_result() < comparer.get_threshold()) &&
+	lhs != rhs) {
+      comparer.compare(name, lhs, rhs);
+    }
+  }
+
+  // Function: do_compare
+  // Compares this generic payload to ~rhs~.
   //
+  // The <do_compare> method compares the fields of this instance to
+  // to those of ~rhs~.  All fields are compared, however if byte 
+  // enables are being used, then non-enabled bytes of data are
+  // skipped.
+  //
+  // @uvm-contrib This API is being considered for potential contribution to 1800.2
+
   override bool do_compare(uvm_object rhs, uvm_comparer comparer) {
     bool do_compare_;
     do_compare_ = super.do_compare(rhs, comparer);
-    auto gp = cast(uvm_tlm_generic_payload) rhs;
-    assert(gp !is null);
-    synchronized(this) {
-      synchronized(rhs) {
-	do_compare_ = (_m_address == gp._m_address &&
-		       _m_command == gp._m_command &&
-		       _m_length  == gp._m_length  &&
-		       _m_dmi     == gp._m_dmi &&
-		       _m_byte_enable_length == gp._m_byte_enable_length  &&
-		       _m_response_status    == gp._m_response_status &&
-		       _m_streaming_width    == gp._m_streaming_width );
-    
-	if (do_compare_ && _m_length == gp._m_length) {
-	  ubyte lhs_be, rhs_be;
-	  for(int i=0; do_compare_ && i < _m_length && i < _m_data.length; ++i) {
-	    if(_m_byte_enable_length) {
-	      lhs_be = _m_byte_enable[i % _m_byte_enable_length];
-	      rhs_be = gp._m_byte_enable[i % gp._m_byte_enable_length];
-	      do_compare_ = ((_m_data[i] & lhs_be) == (gp._m_data[i] & rhs_be));
+    auto gp = cast (uvm_tlm_generic_payload) rhs;
+    assert (gp !is null);
+    synchronized (this) {
+      synchronized (rhs) {
+	m_uvm_tlm_fast_compare_int(_m_address, gp._m_address,
+				   uvm_radix_enum.UVM_HEX, "m_address", comparer);
+	m_uvm_tlm_fast_compare_enum(_m_command, gp._m_command,
+				    "m_command", comparer);
+	m_uvm_tlm_fast_compare_int(_m_length, gp._m_length,
+				   uvm_radix_enum.UVM_UNSIGNED, "m_length", comparer);
+	m_uvm_tlm_fast_compare_int(_m_dmi, gp._m_dmi,
+				   uvm_radix_enum.UVM_BIN, "m_dmi", comparer);
+	m_uvm_tlm_fast_compare_int(_m_byte_enable_length, gp._m_byte_enable_length,
+				   uvm_radix_enum.UVM_UNSIGNED, "m_byte_enable_length", comparer);
+	m_uvm_tlm_fast_compare_enum(_m_response_status, gp._m_response_status,
+				    "m_response_status", comparer);
+	m_uvm_tlm_fast_compare_int(_m_streaming_width, gp._m_streaming_width,
+				   uvm_radix_enum.UVM_UNSIGNED, "m_streaming_width", comparer);
+   
+	if ((!comparer.get_threshold() ||
+	     (comparer.get_result() < comparer.get_threshold())) &&
+	    _m_length == gp._m_length ) {
+     
+	  ubyte be;
+	  for (int i=0; i < _m_length && i < _m_data.length; i++) {
+	    if (_m_byte_enable_length) {
+	      be = _m_byte_enable[i % _m_byte_enable_length];
 	    }
 	    else {
-	      do_compare_ = (_m_data[i] == gp._m_data[i]);
+	      be = 0xFF;
 	    }
+	    m_uvm_tlm_fast_compare_int(_m_data[i] & be, gp._m_data[i] & be,
+				       uvm_radix_enum.UVM_HEX,
+				       format("m_data[%0d] & %0x", i, be),
+				       comparer);
 	  }
 	}
 
-	if (do_compare_) {
-	  foreach (key, val; _m_extensions) {
-	    auto pval = key in gp._m_extensions;
-	    uvm_tlm_extension_base rhs_val =  (pval !is null) ? *pval : null;
-	    do_compare_ = comparer.compare_object(key.get_name(),
-						  val, rhs_val);
-	    if (!do_compare_) break;
+	if ( !comparer.get_threshold() || (comparer.get_result() < comparer.get_threshold()) )
+	  foreach (ext, lhs_ext; _m_extensions) {
+	    uvm_tlm_extension_base rhs_ext =
+	      ext in gp._m_extensions ? gp._m_extensions[ext] : null;
+
+	    comparer.compare(ext.get_name(),
+			     lhs_ext, rhs_ext);
+	 
+	    if (!comparer.get_threshold() ||
+		(comparer.get_result() < comparer.get_threshold()))
+	      break;
+	 
 	  }
+
+	if (comparer.get_result()) {
+	  string msg = format("GP miscompare between '%s' and '%s':\nlhs = %s\nrhs = %s",
+			      get_full_name(), gp.get_full_name(), 
+			      this.convert2string(), gp.convert2string());
+	  comparer.print_msg(msg);
 	}
 
-	if (do_compare_) {
-	  foreach (key, val; gp._m_extensions) {
-	    if (key !in gp._m_extensions) {
-	      do_compare_ = comparer.compare_object(key.get_name(),
-						    null, val);
-	      if (!do_compare_) break;
-	    }
-	  }
-	}
-      
-	if (!do_compare_ && comparer.show_max > 0) {
-	  string msg =
-	    format("GP miscompare between '%s' and '%s':\nlhs = %s\nrhs = %s",
-		   get_full_name(), gp.get_full_name(), this.convert2string(),
-		   gp.convert2string());
-	  switch (comparer.sev) {
-	  case uvm_severity.UVM_WARNING: uvm_warning("MISCMP", msg); break;
-	  case uvm_severity.UVM_ERROR:   uvm_error("MISCMP", msg); break;
-	  default:          uvm_info("MISCMP", msg, uvm_verbosity.UVM_LOW); break;
-	  }
-	}
-	return do_compare_;
+	return (comparer.get_result() == 0);
       }
     }
   }
    
 
-  // Function- do_pack
+  // Function: do_pack
+  // Packs the fields of the payload in ~packer~.
   //
-  // We only pack m_length bytes of the m_data array, even if m_data is larger
-  // than m_length. Same treatment for the byte-enable array. We do not pack
-  // the extensions, if any, as we will be unable to unpack them.
+  // Fields are packed in the following order:
+  // - <m_address>
+  // - <m_command>
+  // - <m_length>
+  // - <m_dmi>
+  // - <m_data> (if <m_length> is greater than 0)
+  // - <m_response_status>
+  // - <m_byte_enable_length>
+  // - <m_byte_enable> (if <m_byte_enable_length> is greater than 0)
+  // - <m_streaming_width>
+  //
+  // Only <m_length> bytes of the <m_data> array are packed,
+  // and a fatal message is generated if ~m_data.size()~ is less
+  // than <m_length>.  The same is true for <m_byte_enable_length>
+  // and <m_byte_enable>.
+  //
+  // Note: The extensions are not packed.
+  //
+  // @uvm-contrib This API is being considered for potential contribution to 1800.2
+
   override void do_pack(uvm_packer packer) {
-    synchronized(this) {
+    synchronized (this) {
       super.do_pack(packer);
       if (_m_length > _m_data.length) {
 	uvm_fatal("PACK_DATA_ARR",
@@ -558,6 +606,7 @@ class uvm_tlm_generic_payload: uvm_sequence_item
 	packer.pack(_m_address);
 	packer.pack(_m_command);
 	packer.pack(_m_length);
+	packer.pack(_m_dmi);
 	for (int i=0; i < _m_length; ++i) {
 	  packer.pack(_m_data[i]);
 	}
@@ -571,18 +620,23 @@ class uvm_tlm_generic_payload: uvm_sequence_item
     }
   }
 
-  // Function- do_unpack
+  // Function: do_unpack
+  // Unpacks the fields of the payload from ~packer~.
+  // 
+  // The <m_data>/<m_byte_enable> arrays are reallocated if the
+  // new size is greater than their current size; otherwise the
+  // existing array allocations are kept.
   //
-  // We only reallocate m_data/m_byte_enable if the new size
-  // is greater than their current size. We do not unpack extensions
-  // because we do not know what object types to allocate before we
-  // unpack into them. Extensions must be handled by user code.
+  // Note: The extensions are not unpacked.
+  //
+  // @uvm-contrib This API is being considered for potential contribution to 1800.2
   override void do_unpack(uvm_packer packer) {
-    synchronized(this) {
+    synchronized (this) {
       super.do_unpack(packer);
       packer.unpack(_m_address);
       packer.unpack(_m_command);
       packer.unpack(_m_length);
+      packer.unpack(_m_dmi);
       if (_m_data.length < _m_length) {
 	_m_data.length = _m_length;
       }
@@ -604,7 +658,7 @@ class uvm_tlm_generic_payload: uvm_sequence_item
   // Function- do_record
   //
   override void do_record(uvm_recorder recorder) {
-    synchronized(this) {
+    synchronized (this) {
       if (!is_recording_enabled()) {
 	return;
       }
@@ -633,11 +687,11 @@ class uvm_tlm_generic_payload: uvm_sequence_item
   // Function- convert2string
   //
   override string convert2string() {
-    synchronized(this) {
+    synchronized (this) {
       string msg = format("%s %s [0x%16x] =", super.convert2string(),
 			  _m_command, _m_address);
 
-      for(uint i = 0; i < _m_length; ++i) {
+      for (uint i = 0; i < _m_length; ++i) {
 	if (!_m_byte_enable_length ||
 	    (_m_byte_enable[i % _m_byte_enable_length] == 0xFF)) {
 	  msg ~= format(" %02x", _m_data[i]);
@@ -655,7 +709,7 @@ class uvm_tlm_generic_payload: uvm_sequence_item
 
 
   //--------------------------------------------------------------------
-  // Group: Accessors
+  // Group -- NODOCS -- Accessors
   //
   // The accessor functions let you set and get each of the members of the 
   // generic payload. All of the accessor methods are virtual. This implies 
@@ -666,265 +720,288 @@ class uvm_tlm_generic_payload: uvm_sequence_item
   // Thus in SystemC none of the accessors are virtual.
   //--------------------------------------------------------------------
 
-   // Function: get_command
-   //
-   // Get the value of the <m_command> variable
+  // Function -- NODOCS -- get_command
+  //
+  // Get the value of the <m_command> variable
 
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.13
   uvm_tlm_command_e get_command() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_command;
     }
   }
 
-   // Function: set_command
-   //
-   // Set the value of the <m_command> variable
+  // Function -- NODOCS -- set_command
+  //
+  // Set the value of the <m_command> variable
    
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.14
   void set_command(uvm_tlm_command_e command) {
-    synchronized(this) {
+    synchronized (this) {
       _m_command = command;
     }
   }
 
-   // Function: is_read
-   //
-   // Returns true if the current value of the <m_command> variable
-   // is ~UVM_TLM_READ_COMMAND~.
+  // Function -- NODOCS -- is_read
+  //
+  // Returns true if the current value of the <m_command> variable
+  // is ~UVM_TLM_READ_COMMAND~.
    
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.15
   bool is_read() {
-    synchronized(this) {
+    synchronized (this) {
       return (_m_command == UVM_TLM_READ_COMMAND);
     }
   }
  
-   // Function: set_read
-   //
-   // Set the current value of the <m_command> variable
-   // to ~UVM_TLM_READ_COMMAND~.
+  // Function -- NODOCS -- set_read
+  //
+  // Set the current value of the <m_command> variable
+  // to ~UVM_TLM_READ_COMMAND~.
    
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.16
   void set_read() {
     set_command(UVM_TLM_READ_COMMAND);
   }
 
-   // Function: is_write
-   //
-   // Returns true if the current value of the <m_command> variable
-   // is ~UVM_TLM_WRITE_COMMAND~.
+  // Function -- NODOCS -- is_write
+  //
+  // Returns true if the current value of the <m_command> variable
+  // is ~UVM_TLM_WRITE_COMMAND~.
  
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.17
   bool is_write() {
-    synchronized(this) {
+    synchronized (this) {
       return (_m_command == UVM_TLM_WRITE_COMMAND);
     }
   }
  
-   // Function: set_write
-   //
-   // Set the current value of the <m_command> variable
-   // to ~UVM_TLM_WRITE_COMMAND~.
+  // Function -- NODOCS -- set_write
+  //
+  // Set the current value of the <m_command> variable
+  // to ~UVM_TLM_WRITE_COMMAND~.
 
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.18
   void set_write() {
     set_command(UVM_TLM_WRITE_COMMAND);
   }
   
-   // Function: set_address
-   //
-   // Set the value of the <m_address> variable
+  // Function -- NODOCS -- set_address
+  //
+  // Set the value of the <m_address> variable
+
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.20
   void set_address(ulong addr) {
-    synchronized(this) {
+    synchronized (this) {
       _m_address = addr;
     }
   }
 
-   // Function: get_address
-   //
-   // Get the value of the <m_address> variable
+  // Function -- NODOCS -- get_address
+  //
+  // Get the value of the <m_address> variable
  
   ulong get_address() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_address;
     }
   }
 
-   // Function: get_data
-   //
-   // Return the value of the <m_data> array
+  // Function -- NODOCS -- get_data
+  //
+  // Return the value of the <m_data> array
  
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.21
   void get_data(out ubyte[] p) {
-    synchronized(this) {
+    synchronized (this) {
       p = _m_data.dup;
     }
   }
 
   ubyte[] get_data() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_data.dup;
     }
   }
 
-   // Function: set_data
-   //
-   // Set the value of the <m_data> array  
+  // Function -- NODOCS -- set_data
+  //
+  // Set the value of the <m_data> array  
 
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.22
   void set_data(ubyte[] p) {
-    synchronized(this) {
+    synchronized (this) {
       _m_data = p.dup;
     }
   }
   
-   // Function: get_data_length
-   //
-   // Return the current size of the <m_data> array
+  // Function -- NODOCS -- get_data_length
+  //
+  // Return the current size of the <m_data> array
    
   uint get_data_length() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_length;
     }
   }
 
-  // Function: set_data_length
+  // Function -- NODOCS -- set_data_length
   // Set the value of the <m_length>
    
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.24
   void set_data_length(uint length) {
-    synchronized(this) {
+    synchronized (this) {
       _m_length = length;
     }
   }
 
-   // Function: get_streaming_width
-   //
-   // Get the value of the <m_streaming_width> array
+  // Function -- NODOCS -- get_streaming_width
+  //
+  // Get the value of the <m_streaming_width> array
   
   uint get_streaming_width() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_streaming_width;
     }
   }
 
  
-   // Function: set_streaming_width
-   //
-   // Set the value of the <m_streaming_width> array
+  // Function -- NODOCS -- set_streaming_width
+  //
+  // Set the value of the <m_streaming_width> array
    
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.26
   void set_streaming_width(uint width) {
-    synchronized(this) {
+    synchronized (this) {
       _m_streaming_width = width;
     }
   }
 
-   // Function: get_byte_enable
-   //
-   // Return the value of the <m_byte_enable> array
+  // Function -- NODOCS -- get_byte_enable
+  //
+  // Return the value of the <m_byte_enable> array
+
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.27
   void get_byte_enable(out ubyte[] p) {
-    synchronized(this) {
+    synchronized (this) {
       p = _m_byte_enable.dup;
     }
   }
 
   ubyte[] get_byte_enable() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_byte_enable.dup;
     }
   }
 
-   // Function: set_byte_enable
-   //
-   // Set the value of the <m_byte_enable> array
+  // Function -- NODOCS -- set_byte_enable
+  //
+  // Set the value of the <m_byte_enable> array
    
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.28
   void set_byte_enable(ref ubyte[] p) {
-    synchronized(this) {
+    synchronized (this) {
       _m_byte_enable = p.dup;
     }
   }
 
-   // Function: get_byte_enable_length
-   //
-   // Return the current size of the <m_byte_enable> array
+  // Function -- NODOCS -- get_byte_enable_length
+  //
+  // Return the current size of the <m_byte_enable> array
    
   uint get_byte_enable_length() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_byte_enable_length;
     }
   }
 
-   // Function: set_byte_enable_length
-   //
-   // Set the size <m_byte_enable_length> of the <m_byte_enable> array
-   // i.e.  <m_byte_enable>.size()
+  // Function -- NODOCS -- set_byte_enable_length
+  //
+  // Set the size <m_byte_enable_length> of the <m_byte_enable> array
+  // i.e.  <m_byte_enable>.size()
    
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.30
   void set_byte_enable_length(uint length) {
-    synchronized(this) {
+    synchronized (this) {
       _m_byte_enable_length = length;
     }
   }
 
-   // Function: set_dmi_allowed
-   //
-   // DMI hint. Set the internal flag <m_dmi> to allow dmi access
+  // Function -- NODOCS -- set_dmi_allowed
+  //
+  // DMI hint. Set the internal flag <m_dmi> to allow dmi access
    
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.31
   void set_dmi_allowed(bool dmi) {
-    synchronized(this) {
+    synchronized (this) {
       _m_dmi = dmi;
     }
   }
    
-   // Function: is_dmi_allowed
-   //
-   // DMI hint. Query the internal flag <m_dmi> if allowed dmi access 
+  // Function -- NODOCS -- is_dmi_allowed
+  //
+  // DMI hint. Query the internal flag <m_dmi> if allowed dmi access 
 
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.32
   bool is_dmi_allowed() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_dmi;
     }
   }
 
-   // Function: get_response_status
-   //
-   // Return the current value of the <m_response_status> variable
+  // Function -- NODOCS -- get_response_status
+  //
+  // Return the current value of the <m_response_status> variable
    
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.33
   uvm_tlm_response_status_e get_response_status() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_response_status;
     }
   }
 
-   // Function: set_response_status
-   //
-   // Set the current value of the <m_response_status> variable
+  // Function -- NODOCS -- set_response_status
+  //
+  // Set the current value of the <m_response_status> variable
 
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.34
   void set_response_status(uvm_tlm_response_status_e status) {
-    synchronized(this) {
+    synchronized (this) {
       _m_response_status = status;
     }
   }
 
-   // Function: is_response_ok
-   //
-   // Return TRUE if the current value of the <m_response_status> variable
-   // is ~UVM_TLM_OK_RESPONSE~
+  // Function -- NODOCS -- is_response_ok
+  //
+  // Return TRUE if the current value of the <m_response_status> variable
+  // is ~UVM_TLM_OK_RESPONSE~
 
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.35
   bool is_response_ok() {
-    synchronized(this) {
+    synchronized (this) {
       return (_m_response_status > 0);
     }
   }
 
-   // Function: is_response_error
-   //
-   // Return TRUE if the current value of the <m_response_status> variable
-   // is not ~UVM_TLM_OK_RESPONSE~
+  // Function -- NODOCS -- is_response_error
+  //
+  // Return TRUE if the current value of the <m_response_status> variable
+  // is not ~UVM_TLM_OK_RESPONSE~
 
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.36
   bool is_response_error() {
     return !is_response_ok();
   }
 
-   // Function: get_response_string
-   //
-   // Return the current value of the <m_response_status> variable
-   // as a string
+  // Function -- NODOCS -- get_response_string
+  //
+  // Return the current value of the <m_response_status> variable
+  // as a string
 
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.37
   string get_response_string() {
-    synchronized(this) {
-      final switch(_m_response_status) {
+    synchronized (this) {
+      final switch (_m_response_status) {
       case UVM_TLM_OK_RESPONSE                : return "OK";
       case UVM_TLM_INCOMPLETE_RESPONSE        : return "INCOMPLETE";
       case UVM_TLM_GENERIC_ERROR_RESPONSE     : return "GENERIC_ERROR";
@@ -940,19 +1017,20 @@ class uvm_tlm_generic_payload: uvm_sequence_item
   }
 
   //--------------------------------------------------------------------
-  // Group: Extensions Mechanism
+  // Group -- NODOCS -- Extensions Mechanism
   //
   //--------------------------------------------------------------------
 
-  // Function: set_extension
+  // Function -- NODOCS -- set_extension
   //
   // Add an instance-specific extension. Only one instance of any given
   // extension type is allowed. If there is an existing extension
   // instance of the type of ~ext~, ~ext~ replaces it and its handle
   // is returned. Otherwise, ~null~ is returned.
    
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.41
   uvm_tlm_extension_base set_extension(uvm_tlm_extension_base ext) {
-    synchronized(this) {
+    synchronized (this) {
       uvm_tlm_extension_base set_extension_;
       uvm_tlm_extension_base ext_handle = ext.get_type_handle();
       auto pext = ext_handle in _m_extensions;
@@ -968,26 +1046,28 @@ class uvm_tlm_generic_payload: uvm_sequence_item
   }
 
 
-  // Function: get_num_extensions
+  // Function -- NODOCS -- get_num_extensions
   //
   // Return the current number of instance specific extensions.
    
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.39
   uint get_num_extensions() {
-    synchronized(this) {
-      return cast(uint) _m_extensions.length;
+    synchronized (this) {
+      return cast (uint) _m_extensions.length;
     }
   }
    
 
-  // Function: get_extension
+  // Function -- NODOCS -- get_extension
   //
   // Return the instance specific extension bound under the specified key.
   // If no extension is bound under that key, ~null~ is returned.
    
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.40
   uvm_tlm_extension_base get_extension(uvm_tlm_extension_base ext_handle) {
-    synchronized(this) {
+    synchronized (this) {
       auto pext = ext_handle in _m_extensions;
-      if(pext is null) {
+      if (pext is null) {
 	return null;
       }
       return *pext;
@@ -995,13 +1075,14 @@ class uvm_tlm_generic_payload: uvm_sequence_item
   }
    
 
-  // Function: clear_extension
+  // Function -- NODOCS -- clear_extension
   //
   // Remove the instance-specific extension bound under the specified key.
    
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.42
   void clear_extension(uvm_tlm_extension_base ext_handle) {
-    synchronized(this) {
-      if(ext_handle in _m_extensions) {
+    synchronized (this) {
+      if (ext_handle in _m_extensions) {
 	_m_extensions.remove(ext_handle);
       }
       else {
@@ -1012,22 +1093,23 @@ class uvm_tlm_generic_payload: uvm_sequence_item
   }
 
 
-  // Function: clear_extensions
+  // Function -- NODOCS -- clear_extensions
   //
   // Remove all instance-specific extensions
    
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.43
   void clear_extensions() {
-    synchronized(this) {
+    synchronized (this) {
       _m_extensions = null;
     }
   }
 
 
-  // Function: pre_randomize()
+  // Function -- NODOCS -- pre_randomize()
   // Prepare this class instance for randomization
   //
   void pre_randomize() {
-    synchronized(this) {
+    synchronized (this) {
       int i;
       _m_rand_exts = new uvm_tlm_extension_base[_m_extensions.length];
       foreach (ext; _m_extensions) {
@@ -1036,66 +1118,57 @@ class uvm_tlm_generic_payload: uvm_sequence_item
     }
   }
 
-  // Function: post_randomize()
+  // Function -- NODOCS -- post_randomize()
   // Clean-up this class instance after randomization
   //
   void post_randomize() {
-    synchronized(this) {
+    synchronized (this) {
       _m_rand_exts = null;
     }
   }
 }
 
 //----------------------------------------------------------------------
-// Class: uvm_tlm_gp
+// Class -- NODOCS -- uvm_tlm_gp
 //
 // This typedef provides a short, more convenient name for the
 // <uvm_tlm_generic_payload> type.
 //----------------------------------------------------------------------
 
-alias uvm_tlm_gp=uvm_tlm_generic_payload;
+alias uvm_tlm_gp = uvm_tlm_generic_payload;
 
 
-//----------------------------------------------------------------------
-// Class: uvm_tlm_extension_base
-//
-// The class uvm_tlm_extension_base is the non-parameterized base class for
-// all generic payload extensions.  It includes the utility do_copy()
-// and create().  The pure virtual function get_type_handle() allows you
-// to get a unique handle that represents the derived type.  This is
-// implemented in derived classes.
-//
-// This class is never used directly by users.
-// The <uvm_tlm_extension> class is used instead.
-//
+
+// @uvm-ieee 1800.2-2017 auto 12.3.4.4.1
 abstract class uvm_tlm_extension_base: uvm_object
 {
 
-  // Function: new
-  //
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.4.3
   this(string name = "") {
     super(name);
   }
 
-  // Function: get_type_handle
+  // Function -- NODOCS -- get_type_handle
   //
   // An interface to polymorphically retrieve a handle that uniquely
   // identifies the type of the sub-class
 
-  uvm_tlm_extension_base get_type_handle();
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.4.4
+  abstract uvm_tlm_extension_base get_type_handle();
 
-  // Function: get_type_handle_name
+  // Function -- NODOCS -- get_type_handle_name
   //
   // An interface to polymorphically retrieve the name that uniquely
   // identifies the type of the sub-class
 
-  string get_type_handle_name();
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.4.5
+  abstract string get_type_handle_name();
 
   override void do_copy(uvm_object rhs) {
     super.do_copy(rhs);
   }
 
-  // Function: create
+  // Function -- NODOCS -- create
   //
    
   override uvm_object create (string name="") {
@@ -1105,9 +1178,9 @@ abstract class uvm_tlm_extension_base: uvm_object
 
 
 //----------------------------------------------------------------------
-// Class: uvm_tlm_extension
+// Class -- NODOCS -- uvm_tlm_extension
 //
-// TLM extension class. The class is parameterized with arbitrary type
+// UVM TLM extension class. The class is parameterized with arbitrary type
 // which represents the type of the extension. An instance of the
 // generic payload can contain one extension object of each type; it
 // cannot contain two instances of the same extension type.
@@ -1133,6 +1206,7 @@ abstract class uvm_tlm_extension_base: uvm_object
 //| endclass
 //|
 
+// @uvm-ieee 1800.2-2017 auto 12.3.4.5.1
 class uvm_tlm_extension(T): uvm_tlm_extension_base
 {
 
@@ -1140,21 +1214,22 @@ class uvm_tlm_extension(T): uvm_tlm_extension_base
 
   static this_type m_my_tlm_ext_type;
 
-   // Function: new
-   //
-   // creates a new extension object.
+  // Function -- NODOCS -- new
+  //
+  // creates a new extension object.
 
+  // @uvm-ieee 1800.2-2017 auto 12.3.4.5.3
   this(string name="") {
     super(name);
   }
   
-   // Function: ID()
-   //
-   // Return the unique ID of this TLM extension type.
-   // This method is used to identify the type of the extension to retrieve
-   // from a <uvm_tlm_generic_payload> instance,
-   // using the <uvm_tlm_generic_payload::get_extension()> method.
-   //
+  // Function -- NODOCS -- ID()
+  //
+  // Return the unique ID of this UVM TLM extension type.
+  // This method is used to identify the type of the extension to retrieve
+  // from a <uvm_tlm_generic_payload> instance,
+  // using the <uvm_tlm_generic_payload::get_extension()> method.
+  //
   static this_type ID() {
     if (m_my_tlm_ext_type is null) {
       m_my_tlm_ext_type = new this_type();
@@ -1174,4 +1249,3 @@ class uvm_tlm_extension(T): uvm_tlm_extension_base
     return null;
   }
 }
-

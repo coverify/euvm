@@ -1,9 +1,6 @@
 //
 //------------------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2010 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2014 Coverify Systems Technology
+//   Copyright 2014-2019 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -23,13 +20,13 @@
 
 module uvm.comps.uvm_driver;
 import uvm.seq.uvm_sequence_item;
-import uvm.base.uvm_component;
+import uvm.base;
 import uvm.tlm1.uvm_analysis_port;
 import uvm.tlm1.uvm_sqr_connections;
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_driver #(REQ,RSP)
+// CLASS -- NODOCS -- uvm_driver #(REQ,RSP)
 //
 // The base class for drivers that initiate requests for new transactions via
 // a uvm_seq_item_pull_port. The ports are typically connected to the exports of
@@ -46,10 +43,13 @@ import uvm.tlm1.uvm_sqr_connections;
 //
 //------------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 13.7.1
 class uvm_driver(REQ=uvm_sequence_item, RSP=REQ): uvm_component
 {
 
-  // Port: seq_item_port
+  mixin uvm_component_essentials;
+
+  // Port -- NODOCS -- seq_item_port
   //
   // Derived driver classes should use this port to request items from the
   // sequencer. They may also use it to send responses back.
@@ -58,7 +58,7 @@ class uvm_driver(REQ=uvm_sequence_item, RSP=REQ): uvm_component
 
   uvm_seq_item_pull_port!(REQ, RSP) seq_item_prod_if; // alias
 
-  // Port: rsp_port
+  // Port -- NODOCS -- rsp_port
   //
   // This port provides an alternate way of sending responses back to the
   // originating sequencer. Which port to use depends on which export the
@@ -69,7 +69,7 @@ class uvm_driver(REQ=uvm_sequence_item, RSP=REQ): uvm_component
   REQ req;
   RSP rsp;
 
-  // Function: new
+  // Function -- NODOCS -- new
   //
   // Creates and initializes an instance of this class using the normal
   // constructor arguments for <uvm_component>: ~name~ is the name of the
@@ -84,9 +84,9 @@ class uvm_driver(REQ=uvm_sequence_item, RSP=REQ): uvm_component
     }
   }
 
-  enum string type_name = "uvm_driver!(REQ,RSP)";
-
-  override string get_type_name() {
-    return type_name;
+  override void end_of_elaboration_phase(uvm_phase phase) {
+    if(seq_item_port.size < 1)
+      uvm_warning("DRVCONNECT",
+		  "the driver is not connected to a sequencer via the standard mechanisms enabled by connect()");
   }
 }

@@ -3,7 +3,7 @@
 //   Copyright 2007-2010 Mentor Graphics Corporation
 //   Copyright 2007-2010 Cadence Design Systems, Inc.
 //   Copyright 2010      Synopsys, Inc.
-//   Copyright 2014-2016 Coverify Systems Technology
+//   Copyright 2014-2019 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -46,7 +46,7 @@ class uvm_array (T=int): uvm_object
 
   // // For this aliasing
   // @property ref auto get_array() {
-  //   synchronized(this) {
+  //   synchronized (this) {
   //     return _array;
   //   }
   // }
@@ -66,20 +66,20 @@ class uvm_array (T=int): uvm_object
 
 
   T opIndex(size_t index) {
-    synchronized(this) {
+    synchronized (this) {
       return _array[index];
     }
   }
 
   T opIndexAssign(T item, size_t index) {
-    synchronized(this) {
+    synchronized (this) {
       _array[index] = item;
       return item;
     }
   }
 
   int opApply(int delegate(ref T) dg) {
-    synchronized(this) {
+    synchronized (this) {
       int result = 0;
       for (size_t i = 0; i < _array.length; ++i) {
 	result = dg(_array[i]);
@@ -101,7 +101,7 @@ class uvm_array (T=int): uvm_object
   T get (ptrdiff_t index) {
     import uvm.base.uvm_globals: uvm_report_warning;
     import std.string: format;
-    synchronized(this) {
+    synchronized (this) {
       T default_value;
       if (index >= size() || index < 0) {
 	uvm_report_warning("ARRAYGET",
@@ -119,7 +119,7 @@ class uvm_array (T=int): uvm_object
   // Returns the number of items stored in the array.
 
   size_t length() {
-    synchronized(this) {
+    synchronized (this) {
       return _array.length;
     }
   }
@@ -133,7 +133,7 @@ class uvm_array (T=int): uvm_object
     import uvm.base.uvm_globals: uvm_report_warning;
     import std.string: format;
     import uvm.base.uvm_globals;
-    synchronized(this) {
+    synchronized (this) {
       if (index >= size() || index < 0) {
 	uvm_report_warning("ARRAYINS",
 			   format("insert: given index out of range for array of" ~
@@ -157,7 +157,7 @@ class uvm_array (T=int): uvm_object
   void remove (ptrdiff_t index=-1) {
     import uvm.base.uvm_globals: uvm_report_warning;
     import std.string: format;
-    synchronized(this) {
+    synchronized (this) {
       if (index >= size() || index < -1) {
 	uvm_report_warning("ARRAYDEL",
 			   format("remove: given index out of range for array of" ~
@@ -180,7 +180,7 @@ class uvm_array (T=int): uvm_object
   // or ~null~ if the array is empty.
 
   T pop_front() {
-    synchronized(this) {
+    synchronized (this) {
       auto pop = _array[0];
       _array = _array[1..$];
       return pop;
@@ -194,7 +194,7 @@ class uvm_array (T=int): uvm_object
   // or ~null~ if the array is empty.
 
   T pop_back() {
-    synchronized(this) {
+    synchronized (this) {
       auto pop = _array[$-1];
       _array = _array[0..$-1];
       return pop;
@@ -207,20 +207,20 @@ class uvm_array (T=int): uvm_object
   // Inserts the given ~item~ at the back of the array.
 
   void push_back(T item) {
-    synchronized(this) {
+    synchronized (this) {
       _array ~= item;
     }
   }
 
   void opOpAssign(string op, R)(R other)
-    if(op == "~" && is(R unused: T)) {
-      synchronized(this) {
+    if (op == "~" && is (R unused: T)) {
+      synchronized (this) {
 	_array ~= other;
       }
     }
 
   override uvm_object create (string name = "") {
-    synchronized(this) {
+    synchronized (this) {
       this_type v = new this_type (name);
       return v;
     }
@@ -228,19 +228,19 @@ class uvm_array (T=int): uvm_object
 
   override string get_type_name () {
     import std.conv: to;
-    synchronized(this) {
+    synchronized (this) {
       return to!string(typeid(this));
     }
   }
 
   override void do_copy (uvm_object rhs) {
-    synchronized(this) {
+    synchronized (this) {
       super.do_copy(rhs);
-      this_type p = cast(this_type) rhs;
+      this_type p = cast (this_type) rhs;
       if (rhs is null || p is null) {
 	return;
       }
-      synchronized(p) {
+      synchronized (p) {
 	_array = p._array.dup;
       }
     }
@@ -251,9 +251,9 @@ class uvm_array (T=int): uvm_object
     return to!string(this);
   }
 
-  string to(S)() if(is(S == string)) {
+  string to(S)() if (is (S == string)) {
     import std.conv: to;
-    synchronized(this) {
+    synchronized (this) {
       return std.conv.to!string(_array);
     }
   }

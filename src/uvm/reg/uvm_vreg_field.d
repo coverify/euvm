@@ -72,7 +72,7 @@ import std.string: format;
 class uvm_vreg_field: uvm_object
 {
 
-  mixin uvm_object_utils;
+  mixin uvm_object_essentials;
 
   // Moved to constructor
   // `uvm_register_cb(uvm_vreg_field, uvm_vreg_field_cbs)

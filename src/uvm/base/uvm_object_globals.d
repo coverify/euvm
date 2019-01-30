@@ -1,10 +1,14 @@
 //
 //------------------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2010 Cadence Design Systems, Inc.
-//   Copyright 2010-2013 Synopsys, Inc.
-//   Copyright 2013      NVIDIA Corporation
-//   Copyright 2012-2015 Coverify Systems Technology
+// Copyright 2012-2019 Coverify Systems Technology
+// Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2014 Semifore
+// Copyright 2010-2014 Synopsys, Inc.
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2013 Verilab
+// Copyright 2010-2012 AMD
+// Copyright 2013-2018 NVIDIA Corporation
+// Copyright 2012-2018 Cisco Systems, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -24,30 +28,26 @@
 
 module uvm.base.uvm_object_globals;
 
-import uvm.base.uvm_once;
 
 import esdl.data.bvec;
 import esdl.data.time;
 import uvm.meta.misc;
 import uvm.meta.mcd;
+import uvm.base.uvm_once;
 
-// version(UVM_NO_DEPRECATED) { }
+// version (UVM_NO_DEPRECATED) { }
 //  else {
 //    version = UVM_INCLUDE_DEPRECATED;
 //  }
 
-//This bit marks where filtering should occur to remove uvm stuff from a
-//scope
-// bool uvm_start_uvm_declarations = true;
-
 //------------------------------------------------------------------------------
 //
-// Section: Types and Enumerations
+// Section --NODOCS-- Types and Enumerations
 //
 //------------------------------------------------------------------------------
 
 //------------------------
-// Group: Field automation
+// Group --NODOCS-- Field automation
 //------------------------
 
 enum int UVM_MAX_STREAMBITS = 4096;
@@ -55,7 +55,7 @@ enum int UVM_STREAMBITS = UVM_MAX_STREAMBITS;
 
 
 
-// Type: uvm_bitstream_t
+// Type --NODOCS-- uvm_bitstream_t
 //
 // The bitstream type is used as a argument type for passing integral values
 // in such methods as <uvm_object::set_int_local>, <uvm_config_int>,
@@ -63,7 +63,7 @@ enum int UVM_STREAMBITS = UVM_MAX_STREAMBITS;
 // <uvm_packer::pack_field> and <uvm_packer::unpack_field>.
 alias uvm_bitstream_t = LogicVec!UVM_STREAMBITS;
 
-// Type: uvm_integral_t
+// Type --NODOCS-- uvm_integral_t
 //
 // The integral type is used as a argument type for passing integral values
 // of 64 bits or less in such methods as
@@ -74,7 +74,15 @@ alias uvm_integral_t = LogicVec!64;
 
 
 
-// Enum: uvm_radix_enum
+// The number of least significant bits of uvm_field_flag_t which are reserved for this
+// implementation.  Derived from the value of UVM_RADIX which uses the most significant subset.
+enum uint UVM_FIELD_FLAG_RESERVED_BITS = 28;
+
+// The type for storing flag values passed to the uvm_field_* macros.
+// typedef bit [`UVM_FIELD_FLAG_SIZE-1 : 0] uvm_field_flag_t;
+alias uvm_field_flag_t = uint;
+
+// Enum -- NODOCS -- uvm_radix_enum
 //
 // Specifies the radix to print or record in.
 //
@@ -93,7 +101,7 @@ alias uvm_integral_t = LogicVec!64;
 // UVM_REAL_DEC  - Selects real (%f) in decimal format
 // UVM_REAL_EXP  - Selects real (%e) in exponential format
 
-enum uvm_radix_enum: int
+enum uvm_radix_enum: uint
   {   UVM_BIN       = 0x1000000,
       UVM_DEC       = 0x2000000,
       UVM_UNSIGNED  = 0x3000000,
@@ -134,7 +142,7 @@ char uvm_radix_to_string(uvm_radix_enum radix) {
   }
 }
 
-// Enum: uvm_recursion_policy_enum
+// Enum --NODOCS-- uvm_recursion_policy_enum
 //
 // Specifies the policy for copying objects.
 //
@@ -142,15 +150,25 @@ char uvm_radix_to_string(uvm_radix_enum radix) {
 // UVM_SHALLOW   - Objects are shallow copied using default SV copy.
 // UVM_REFERENCE - Only object handles are copied.
 
-enum uvm_recursion_policy_enum: int
+enum uvm_recursion_policy_enum: uint
   {   UVM_DEFAULT_POLICY = 0,
-      UVM_DEEP           = 0x400,
-      UVM_SHALLOW        = 0x800,
-      UVM_REFERENCE      = 0x1000
+      UVM_DEEP           = (1<<16),
+      UVM_SHALLOW        = (1<<17),
+      UVM_REFERENCE      = (1<<18)
       }
 
+// UVM_RECURSION is a mask for uvm_recursion_policy_enum, similar to
+// UVM_RADIX for uvm_radix_enum.  Flags can be AND'd with the mask
+// before casting into the enum, a`la:
+// 
+//| uvm_recursion_policy_enum foo;
+//| foo = uvm_recursion_policy_enum'(flags&UVM_RECURSION);
+//
+enum uint UVM_RECURSION = (uvm_recursion_policy_enum.UVM_DEEP |
+			   uvm_recursion_policy_enum.UVM_SHALLOW |
+			   uvm_recursion_policy_enum.UVM_REFERENCE);
 
-// Enum: uvm_active_passive_enum
+// Enum --NODOCS-- uvm_active_passive_enum
 //
 // Convenience value to define whether a component, usually an agent,
 // is in "active" mode or "passive" mode.
@@ -159,11 +177,11 @@ enum uvm_recursion_policy_enum: int
 // UVM_ACTIVE  - "Active" mode
 
 enum uvm_active_passive_enum: bool
-  {   UVM_PASSIVE=false,
-      UVM_ACTIVE=true
+  {   UVM_PASSIVE = false,
+      UVM_ACTIVE = true
       }
 
-// Parameter: `uvm_field_* macro flags
+// Parameter --NODOCS-- `uvm_field_* macro flags
 //
 // Defines what operations a given field should be involved in.
 // Bitwise OR all that apply.
@@ -187,75 +205,75 @@ enum uvm_active_passive_enum: bool
 //
 // UVM_READONLY  - Object field will NOT be automatically configured.
 
-
+enum uint UVM_MACRO_NUMFLAGS    = 19;
 //A=ABSTRACT Y=PHYSICAL
 //F=REFERENCE, S=SHALLOW, D=DEEP
 //K=PACK, R=RECORD, P=PRINT, M=COMPARE, C=COPY
 //--------------------------- AYFSD K R P M C
 
-enum uvm_field_auto_enum: int
-  {   UVM_DEFAULT     = 0b000010101010101,
-      UVM_ALL_ON      = 0b000010101010101,
-      UVM_FLAGS_ON    = 0b000010101010101,
-      UVM_FLAGS_OFF   = 0,
+enum uvm_field_auto_enum: uint
+{   UVM_DEFAULT     = 0b000010101010101,
+    UVM_ALL_ON      = 0b000000101010101,
+    UVM_FLAGS_ON    = 0b000000101010101,
+    UVM_FLAGS_OFF   = 0,
 
-      //Values are OR'ed into a 32 bit value
-      //and externally
-      UVM_COPY         = (1 << 0),
-      UVM_NOCOPY       = (1 << 1),
-      UVM_COMPARE      = (1 << 2),
-      UVM_NOCOMPARE    = (1 << 3),
-      UVM_PRINT        = (1 << 4),
-      UVM_NOPRINT      = (1 << 5),
-      UVM_RECORD       = (1 << 6),
-      UVM_NORECORD     = (1 << 7),
-      UVM_PACK         = (1 << 8),
-      UVM_NOPACK       = (1 << 9),
-      //UVM_DEEP         = (1 << 10),
-      //UVM_SHALLOW      = (1 << 11),
-      //UVM_REFERENCE    = (1 << 12),
-      UVM_PHYSICAL     = (1 << 13),
-      UVM_ABSTRACT     = (1 << 14),
-      UVM_READONLY     = (1 << 15),
-      UVM_NODEFPRINT   = (1 << 16),
-      UVM_BUILD        = (1 << 17),
-      UVM_NOBUILD      = (1 << 18),
-      }
+    //Values are OR'ed into a 32 bit value
+    //and externally
+    UVM_COPY         = (1 << 0),
+    UVM_NOCOPY       = (1 << 1),
+    UVM_COMPARE      = (1 << 2),
+    UVM_NOCOMPARE    = (1 << 3),
+    UVM_PRINT        = (1 << 4),
+    UVM_NOPRINT      = (1 << 5),
+    UVM_RECORD       = (1 << 6),
+    UVM_NORECORD     = (1 << 7),
+    UVM_PACK         = (1 << 8),
+    UVM_NOPACK       = (1 << 9),
+    UVM_UNPACK       = (1 << 10),
+    UVM_NOUNPACK     = UVM_NOPACK,
+    UVM_SET          = (1 << 11),
+    UVM_NOSET        = (1 << 12),
+    UVM_NODEFPRINT   = (1 << 15),
+    UVM_BUILD        = (1 << 17),
+    UVM_NOBUILD      = (1 << 18),
+    }
 
-enum int UVM_MACRO_NUMFLAGS    = 19;
+//UVM_DEEP         = (1 << 10),
+//UVM_SHALLOW      = (1 << 11),
+//UVM_REFERENCE    = (1 << 12),
+
 //Extra values that are used for extra methods
 
-enum uvm_field_xtra_enum: int
+enum uvm_field_xtra_enum: uint
   {   UVM_MACRO_EXTRAS   = (1 << UVM_MACRO_NUMFLAGS),
       UVM_FLAGS          = UVM_MACRO_EXTRAS + 1,
-      UVM_UNPACK         = UVM_MACRO_EXTRAS + 2,
-      UVM_CHECK_FIELDS   = UVM_MACRO_EXTRAS + 3,
-      UVM_END_DATA_EXTRA = UVM_MACRO_EXTRAS + 4,
+      UVM_CHECK_FIELDS   = UVM_MACRO_EXTRAS + 2,
+      UVM_END_DATA_EXTRA = UVM_MACRO_EXTRAS + 3,
 
 
       //Get and set methods (in uvm_object). Used by the set/get* functions
       //to tell the object what operation to perform on the fields.
       UVM_START_FUNCS    = UVM_END_DATA_EXTRA + 1,
-      UVM_SET            = UVM_START_FUNCS + 1,
-      UVM_SETINT         = UVM_SET,
-      UVM_SETOBJ         = UVM_START_FUNCS + 2,
-      UVM_SETSTR         = UVM_START_FUNCS + 3,
+      // UVM_SET            = UVM_START_FUNCS + 1, // TBD
+      // UVM_SETINT         = UVM_SET,             // TBD
+      // UVM_SETOBJ         = UVM_START_FUNCS + 2, // TBD
+      // UVM_SETSTR         = UVM_START_FUNCS + 3, // TBD
       UVM_PARALLELIZE    = UVM_START_FUNCS + 4,
-      UVM_END_FUNCS      = UVM_PARALLELIZE
+      UVM_END_FUNCS      = UVM_START_FUNCS + 5
       }
 
 
-//Global string variables
+// Global string variables
 // declared in SV but never used
 // string uvm_aa_string_key;
 
 
 
 //-----------------
-// Group: Reporting
+// Group --NODOCS-- Reporting
 //-----------------
 
-// Enum: uvm_severity
+// Enum --NODOCS-- uvm_severity
 //
 // Defines all possible values for report severity.
 //
@@ -276,7 +294,7 @@ enum uvm_severity: byte
       }
 
 
-// Enum: uvm_action
+// Enum --NODOCS-- uvm_action
 //
 // Defines all possible values for report actions. Each report is configured
 // to execute one or more actions, determined by the bitwise OR of any or all
@@ -307,7 +325,7 @@ enum uvm_action_type: byte
       UVM_RM_RECORD = 0b1000000
       }
 
-// Enum: uvm_verbosity
+// Enum --NODOCS-- uvm_verbosity
 //
 // Defines standard verbosity levels for reports.
 //
@@ -331,14 +349,12 @@ enum uvm_verbosity: int
       UVM_DEBUG  = 500
       }
 
-alias UVM_FILE = MCD;
-
 
 //-----------------
-// Group: Port Type
+// Group --NODOCS-- Port Type
 //-----------------
 
-// Enum: uvm_port_type_e
+// Enum --NODOCS-- uvm_port_type_e
 //
 // Specifies the type of port
 //
@@ -358,10 +374,10 @@ enum uvm_port_type_e: byte
       }
 
 //-----------------
-// Group: Sequences
+// Group --NODOCS-- Sequences
 //-----------------
 
-// Enum: uvm_sequencer_arb_mode
+// Enum --NODOCS-- uvm_sequencer_arb_mode
 //
 // Specifies a sequencer's arbitration mode
 //
@@ -385,7 +401,7 @@ enum uvm_sequencer_arb_mode: byte
       }
 
 
-// Enum: uvm_sequence_state_enum
+// Enum --NODOCS-- uvm_sequence_state_enum
 //
 // Defines current sequence state
 //
@@ -393,15 +409,15 @@ enum uvm_sequencer_arb_mode: byte
 // UVM_PRE_START          - The sequence is started and the
 //                      <uvm_sequence_base::pre_start()> task is
 //                      being executed.
-// UVM_PRE_FRAME           - The sequence is started and the
+// UVM_PRE_BODY           - The sequence is started and the
 //                      <uvm_sequence_base::pre_frame()> task is
 //                      being executed.
-// UVM_FRAME               - The sequence is started and the
-//                      <uvm_sequence_base::frame()> task is
+// UVM_BODY               - The sequence is started and the
+//                      <uvm_sequence_base::body()> task is
 //                      being executed.
 // UVM_ENDED              - The sequence has completed the execution of the
-//                      <uvm_sequence_base::frame()> task.
-// UVM_POST_FRAME          - The sequence is started and the
+//                      <uvm_sequence_base::body()> task.
+// UVM_POST_BODY          - The sequence is started and the
 //                      <uvm_sequence_base::post_frame()> task is
 //                      being executed.
 // UVM_POST_START         - The sequence is started and the
@@ -414,9 +430,9 @@ enum uvm_sequencer_arb_mode: byte
 enum uvm_sequence_state: int
   {   UVM_CREATED    = 1,
       UVM_PRE_START  = 2,
-      UVM_PRE_FRAME  = 4,
-      UVM_FRAME      = 8,
-      UVM_POST_FRAME = 16,
+      UVM_PRE_BODY   = 4,
+      UVM_BODY       = 8,
+      UVM_POST_BODY  = 16,
       UVM_POST_START = 32,
       UVM_ENDED      = 64,
       UVM_STOPPED    = 128,
@@ -425,7 +441,7 @@ enum uvm_sequence_state: int
 
 
 
-// Enum: uvm_sequence_lib_mode
+// Enum --NODOCS-- uvm_sequence_lib_mode
 //
 // Specifies the random selection mode of a sequence library
 //
@@ -443,10 +459,10 @@ enum uvm_sequence_lib_mode: byte
 
 
 //---------------
-// Group: Phasing
+// Group --NODOCS-- Phasing
 //---------------
 
-// Enum: uvm_phase_type
+// Enum --NODOCS-- uvm_phase_type
 //
 // This is an attribute of a <uvm_phase> object which defines the phase
 // type.
@@ -488,7 +504,7 @@ enum  uvm_phase_type: byte
       }
 
 
-// Enum: uvm_phase_state
+// Enum --NODOCS-- uvm_phase_state
 // ---------------------
 //
 // The set of possible states of a phase. This is an attribute of a schedule
@@ -556,7 +572,7 @@ enum uvm_phase_state: int
       }
 
 
-// Enum: uvm_wait_op
+// Enum --NODOCS-- uvm_wait_op
 //
 // Specifies the operand when using methods like <uvm_phase::wait_for_state>.
 //
@@ -578,10 +594,10 @@ enum uvm_wait_op: byte
 
 
 //------------------
-// Group: Objections
+// Group --NODOCS-- Objections
 //------------------
 
-// Enum: uvm_objection_event
+// Enum --NODOCS-- uvm_objection_event
 //
 // Enumerated the possible objection events one could wait on. See
 // <uvm_objection::wait_for>.
@@ -596,100 +612,71 @@ enum uvm_objection_event: byte
     UVM_ALL_DROPPED = 0x04
     }
 
-//------------------------------
-// Group: Default Policy Classes
-//------------------------------
+alias UVM_FILE = MCD;
+
+enum UVM_FILE UVM_STDIN  = 0x8000_0000;
+enum UVM_FILE UVM_STDOUT = 0x8000_0001;
+enum UVM_FILE UVM_STDERR = 0x8000_0002;
+
+// Type: uvm_core_state
+// Implementation of the uvm_core_state enumeration, as defined
+// in section F.2.10 of 1800.2-2017.
 //
-// Policy classes copying, comparing, packing, unpacking, and recording
-// <uvm_object>-based objects.
+// *Note:* In addition to the states defined in section F.2.10,
+// this implementation includes the following additional states.
+//
+// UVM_CORE_PRE_INIT - The <uvm_init> method has been invoked at least
+//                     once, however the core service has yet to be
+//                     determined/assigned.  Additional calls to uvm_init
+//                     while in this state will result in a fatal message
+//                     being generated, as the library can not determine
+//                     the correct core service.
+//
+// UVM_CORE_INITIALIZING - The <uvm_init> method has been called at least
+//                         once, and the core service has been determined.
+//                         Once in this state, it is safe to query
+//                         <uvm_coreservice_t::get>.
+//
+// UVM_CORE_POST_INIT - Included for consistency, this is equivalent to
+//                      ~UVM_CORE_INITIALIZED~ in 1800.2-2017.
+//
+// @uvm-contrib Potential contribution to 1800.2
 
+// @uvm-ieee 1800.2-2017 manual F.2.10  
+enum uvm_core_state {
+	UVM_CORE_UNINITIALIZED,
+        UVM_CORE_PRE_INIT,
+        UVM_CORE_INITIALIZING,
+	UVM_CORE_INITIALIZED,
+	UVM_CORE_POST_INIT = UVM_CORE_INITIALIZED,
+	UVM_CORE_PRE_RUN,
+	UVM_CORE_RUNNING,
+	UVM_CORE_POST_RUN,
+	UVM_CORE_FINISHED,
+	UVM_CORE_PRE_ABORT,
+	UVM_CORE_ABORTED	
+}
 
-// typedef class uvm_printer;
-// typedef class uvm_table_printer;
-// typedef class uvm_tree_printer;
-// typedef class uvm_line_printer;
-// typedef class uvm_comparer;
-// typedef class uvm_packer;
-// typedef class uvm_recorder;
+class uvm_object_globals_once: uvm_once_base {
+  @uvm_none_sync
+  uvm_core_state _m_uvm_core_state = uvm_core_state.UVM_CORE_UNINITIALIZED;
+  // enum uvm_core_state UVM_CORE_POST_INIT = uvm_core_state.UVM_CORE_INITIALIZED;
+}
 
-mixin(uvm_once_sync_string!(uvm_once_object_globals,
-			    "uvm_object_globals"));
+mixin (uvm_once_sync_string!(uvm_object_globals_once));
 
-final class uvm_once_object_globals: uvm_once_base
-{
-  import uvm.base.uvm_printer: uvm_printer, uvm_table_printer,
-    uvm_tree_printer, uvm_line_printer;
-  import uvm.base.uvm_packer: uvm_packer;
-  import uvm.base.uvm_comparer: uvm_comparer;
-  import uvm.base.uvm_recorder: uvm_recorder;
-
-  ////// shared variables from uvm_object_globals
-  @uvm_immutable_sync
-  private uvm_table_printer _uvm_default_table_printer;
-
-  // Variable: uvm_default_tree_printer
-  //
-  // The tree printer is a global object that can be used with
-  // <uvm_object::do_print> to get multi-line tree style printing.
-
-  // uvm_tree_printer uvm_default_tree_printer  = new();
-
-  @uvm_immutable_sync
-  private uvm_tree_printer _uvm_default_tree_printer;
-  // Variable: uvm_default_line_printer
-  //
-  // The line printer is a global object that can be used with
-  // <uvm_object::do_print> to get single-line style printing.
-
-  // uvm_line_printer uvm_default_line_printer  = new();
-
-  @uvm_immutable_sync
-  private uvm_line_printer _uvm_default_line_printer;
-
-  // Variable: uvm_default_printer
-  //
-  // The default printer policy. Used when calls to <uvm_object::print>
-  // or <uvm_object::sprint> do not specify a printer policy.
-  //
-  // The default printer may be set to any legal <uvm_printer> derived type,
-  // including the global line, tree, and table printers described above.
-
-  // uvm_printer uvm_default_printer = uvm_default_table_printer;
-
-  @uvm_immutable_sync
-  private uvm_printer _uvm_default_printer;
-
-  // Variable: uvm_default_packer
-  //
-  // The default packer policy. Used when calls to <uvm_object::pack>
-  // and <uvm_object::unpack> do not specify a packer policy.
-
-  // uvm_packer uvm_default_packer = new();
-  @uvm_immutable_sync
-  private uvm_packer _uvm_default_packer;
-
-
-
-  // Variable: uvm_default_comparer
-  //
-  //
-  // The default compare policy. Used when calls to <uvm_object::compare>
-  // do not specify a comparer policy.
-
-  // uvm_comparer uvm_default_comparer = new(); // uvm_comparer::init();
-  @uvm_immutable_sync
-  private uvm_comparer _uvm_default_comparer;
-
-
-  this() {
-    synchronized(this) {
-      ////// shared variables from uvm_object_globals
-      _uvm_default_table_printer = new uvm_table_printer;
-      _uvm_default_tree_printer = new uvm_tree_printer;
-      _uvm_default_line_printer = new uvm_line_printer;
-      _uvm_default_printer = _uvm_default_table_printer;
-      _uvm_default_packer = new uvm_packer;
-      _uvm_default_comparer = new uvm_comparer;
-    }
+uvm_core_state m_uvm_core_state() {
+  synchronized (_uvm_once_inst) {
+    return _uvm_once_inst._m_uvm_core_state;
   }
 }
+
+void m_uvm_core_state(uvm_core_state state) {
+  synchronized (_uvm_once_inst) {
+    _uvm_once_inst._m_uvm_core_state = state;
+  }
+}
+
+// Vlang initializes all the once variables lazily by design
+// typedef class uvm_object_wrapper;
+// uvm_object_wrapper uvm_deferred_init[$];

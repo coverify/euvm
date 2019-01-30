@@ -1,9 +1,11 @@
 //
 //------------------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2010 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2014 Coverify Systems Technology
+// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2014 Semifore
+// Copyright 2010-2018 Synopsys, Inc.
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2014-2018 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -30,12 +32,13 @@ import uvm.tlm1.uvm_analysis_port;
 import uvm.base.uvm_component;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_object_defines;
+import uvm.base.uvm_component_defines;
 
 import uvm.meta.mailbox;
 
 //------------------------------------------------------------------------------
 //
-// Title: TLM FIFO Classes
+// Title -- NODOCS -- TLM FIFO Classes
 //
 // This section defines TLM-based FIFO classes.
 //
@@ -43,7 +46,7 @@ import uvm.meta.mailbox;
 
 //------------------------------------------------------------------------------
 //
-// Class: uvm_tlm_fifo
+// Class -- NODOCS -- uvm_tlm_fifo
 //
 // This class provides storage of transactions between two independently running
 // processes. Transactions are put into the FIFO via the ~put_export~.
@@ -57,8 +60,6 @@ import uvm.meta.mailbox;
 class uvm_tlm_fifo_common(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
 {
   mixin uvm_component_essentials;
-
-  enum string type_name = "uvm_tlm_fifo!(T)";
 
   // _m is effectively immutable
   private MailboxBase!T _m;
@@ -75,7 +76,7 @@ class uvm_tlm_fifo_common(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
   protected int m_pending_blocked_gets;
 
 
-  // Function: new
+  // Function -- NODOCS -- new
   //
   // The ~name~ and ~parent~ are the normal uvm_component constructor arguments.
   // The ~parent~ should be null if the <uvm_tlm_fifo> is going to be used in a
@@ -83,60 +84,55 @@ class uvm_tlm_fifo_common(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
   // maximum size of the FIFO; a value of zero indicates no upper bound.
 
   public this(string name=null, uvm_component parent = null, int size = 1) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, parent);
       // _m = new Mailbox!T(size);
       _m_size = size;
     }
   }
 
-  override public string get_type_name() {
-    return type_name;
-  }
-
-
-  // Function: size
+  // Function -- NODOCS -- size
   //
   // Returns the capacity of the FIFO-- that is, the number of entries
   // the FIFO is capable of holding. A return value of 0 indicates the
   // FIFO capacity has no limit.
 
   override public size_t size() {
-    synchronized(this) {
+    synchronized (this) {
       return m_size;
     }
   }
 
 
-  // Function: used
+  // Function -- NODOCS -- used
   //
   // Returns the number of entries put into the FIFO.
 
   override public size_t used() {
-    synchronized(this) {
+    synchronized (this) {
       return m.num();
     }
   }
 
 
-  // Function: is_empty
+  // Function -- NODOCS -- is_empty
   //
   // Returns 1 when there are no entries in the FIFO, 0 otherwise.
 
   override public bool is_empty() {
-    synchronized(this) {
+    synchronized (this) {
       return (m.num is 0);
     }
   }
 
 
-  // Function: is_full
+  // Function -- NODOCS -- is_full
   //
   // Returns 1 when the number of entries in the FIFO is equal to its <size>,
   // 0 otherwise.
 
   override public bool is_full() {
-    synchronized(this) {
+    synchronized (this) {
       return (m_size !is 0) && (m.num() is m_size);
     }
   }
@@ -149,11 +145,11 @@ class uvm_tlm_fifo_common(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
 
   // task
   override public void get(out T t) {
-    synchronized(this) {
+    synchronized (this) {
       m_pending_blocked_gets++;
     }
     m.get(t);
-    synchronized(this) {
+    synchronized (this) {
       m_pending_blocked_gets--;
     }
     get_ap.write(t);
@@ -165,7 +161,7 @@ class uvm_tlm_fifo_common(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
   }
 
   override public bool try_get(out T t) {
-    if(! m.try_get(t)) {
+    if (! m.try_get(t)) {
       return false;
     }
 
@@ -174,14 +170,14 @@ class uvm_tlm_fifo_common(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
   }
 
   override public bool try_peek(out T t) {
-    if(! m.try_peek(t)) {
+    if (! m.try_peek(t)) {
       return false;
     }
     return true;
   }
 
   override public bool try_put(T t) {
-    if(! m.try_put(t)) {
+    if (! m.try_put(t)) {
       return false;
     }
 
@@ -189,43 +185,43 @@ class uvm_tlm_fifo_common(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
     return true;
   }
 
-  // Should always be called under synchronized(this) lock
+  // Should always be called under synchronized (this) lock
   // else if some action is sought right after can_put on basis
   // of the result, the result may not hold for long in multicore
   // environment
   override public bool can_put() {
-    synchronized(this) {
+    synchronized (this) {
       return m_size is 0 || m.num() < m_size;
     }
   }
 
   override public bool can_get() {
-    synchronized(this) {
+    synchronized (this) {
       return m.num() > 0 && m_pending_blocked_gets == 0;
     }
   }
 
   override public bool can_peek() {
-    synchronized(this) {
+    synchronized (this) {
       return m.num() > 0;
     }
   }
 
 
-  // Function: flush
+  // Function -- NODOCS -- flush
   //
   // Removes all entries from the FIFO, after which <used> returns 0
   // and <is_empty> returns 1.
 
   override public void flush() {
-    synchronized(this) {
+    synchronized (this) {
       T t;
       bool r;
 
       r = true;
-      while(r) r = try_get(t) ;
+      while (r) r = try_get(t) ;
 
-      if(m.num() > 0 && m_pending_blocked_gets != 0) {
+      if (m.num() > 0 && m_pending_blocked_gets != 0) {
 	uvm_report_error("flush failed" ,
 			 "there are blocked gets preventing the flush",
 			 uvm_verbosity.UVM_NONE);
@@ -234,11 +230,14 @@ class uvm_tlm_fifo_common(T=int, size_t N=0): uvm_tlm_fifo_base!(T)
   }
 }
 
+// @uvm-ieee 1800.2-2017 auto 18.2.8.2
 class uvm_tlm_fifo(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
 {
   mixin uvm_component_essentials;
+  // mixin uvm_type_name_decl;
+
   public this(string name=null, uvm_component parent = null, int size = 1) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, parent, size);
       _m = new Mailbox!T(size);
     }
@@ -249,7 +248,7 @@ class uvm_tlm_async_pull_fifo(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
 {
   mixin uvm_component_essentials;
   public this(string name=null, uvm_component parent = null, int size = 1) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, parent, size);
       _m = new MailInbox!T(parent, size);
     }
@@ -260,7 +259,7 @@ class uvm_tlm_async_push_fifo(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
 {
   mixin uvm_component_essentials;
   public this(string name=null, uvm_component parent = null, int size = 1) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, parent, size);
       _m = new MailOutbox!T(parent, size);
     }
@@ -271,7 +270,7 @@ class uvm_tlm_async_fifo(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
 {
   mixin uvm_component_essentials;
   public this(string name=null, uvm_component parent = null, int size = 1) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, parent, size);
       _m = new MailInOutbox!T(parent, size);
     }
@@ -282,7 +281,7 @@ class uvm_tlm_vpi_pull_fifo(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
 {
   mixin uvm_component_essentials;
   public this(string name=null, uvm_component parent = null, int size = 1) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, parent, size);
       _m = new MailVpiInbox!T(parent, size);
     }
@@ -293,7 +292,7 @@ class uvm_tlm_vpi_push_fifo(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
 {
   mixin uvm_component_essentials;
   public this(string name=null, uvm_component parent = null, int size = 1) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, parent, size);
       _m = new MailVpiOutbox!T(parent, size);
     }
@@ -302,7 +301,7 @@ class uvm_tlm_vpi_push_fifo(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
 
 //------------------------------------------------------------------------------
 //
-// Class: uvm_tlm_analysis_fifo
+// Class -- NODOCS -- uvm_tlm_analysis_fifo
 //
 // An analysis_fifo is a <uvm_tlm_fifo> with an unbounded size and a write interface.
 // It can be used any place a <uvm_analysis_imp> is used. Typical usage is
@@ -314,7 +313,10 @@ class uvm_tlm_vpi_push_fifo(T=int, size_t N=0): uvm_tlm_fifo_common!(T, N)
 class uvm_tlm_analysis_fifo(T=int): uvm_tlm_fifo!T
 {
 
-  // Port: analysis_export #(T)
+  mixin uvm_component_essentials;
+  mixin uvm_type_name_decl;
+
+    // Port -- NODOCS -- analysis_export #(T)
   //
   // The analysis_export provides the write method to all connected analysis
   // ports and parent exports:
@@ -328,7 +330,7 @@ class uvm_tlm_analysis_fifo(T=int): uvm_tlm_fifo!T
   uvm_analysis_imp!(T, uvm_tlm_analysis_fifo!T) analysis_export;
 
 
-  // Function: new
+  // Function -- NODOCS -- new
   //
   // This is the standard uvm_component constructor. ~name~ is the local name
   // of this component. The ~parent~ should be left unspecified when this
@@ -336,16 +338,10 @@ class uvm_tlm_analysis_fifo(T=int): uvm_tlm_fifo!T
   // specified when this component is a child of another UVM component.
 
   public this(string name=null,  uvm_component parent = null) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, parent, 0); // analysis fifo must be unbounded
       analysis_export = new uvm_analysis_imp!(T, uvm_tlm_analysis_fifo!T)("analysis_export", this);
     }
-  }
-
-  enum string type_name = "uvm_tlm_analysis_fifo!T";
-
-  public string get_type_name() {
-    return type_name;
   }
 
   public void write(T t) {

@@ -1,8 +1,8 @@
 //----------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2010 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2014 Coverify Systems Technology
+// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2010 Synopsys, Inc.
+// Copyright 2007-2018 Cadence Design Systems, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -28,13 +28,14 @@ import uvm.tlm1.uvm_analysis_port;
 import uvm.base.uvm_component;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_object_defines;
+import uvm.base.uvm_component_defines;
 
 import uvm.meta.misc;
 
 class uvm_sequencer_analysis_fifo (RSP = uvm_sequence_item)
   : uvm_tlm_fifo!RSP
 {
-  mixin(uvm_sync_string);
+  mixin (uvm_sync_string);
 
   mixin uvm_component_essentials;
 
@@ -46,7 +47,7 @@ class uvm_sequencer_analysis_fifo (RSP = uvm_sequence_item)
     private uvm_sequencer_base _sequencer_ptr;
 
   this(string name, uvm_component parent = null) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, parent, 0);
       _analysis_export =
 	new uvm_analysis_imp!(RSP, uvm_sequencer_analysis_fifo!RSP)

@@ -424,7 +424,7 @@ class uvm_reg_read_only_cbs: uvm_reg_cbs
     super(name);
   }
 
-  mixin uvm_object_utils;
+  mixin uvm_object_essentials;
 
 
   // Function: pre_write
@@ -456,7 +456,7 @@ class uvm_reg_read_only_cbs: uvm_reg_cbs
   static class uvm_once: uvm_once_base
   {
     // @uvm_private_sync
-    @uvm_immutable_sync
+    // @uvm_immutable_sync
       private uvm_reg_read_only_cbs _m_me;
     this() {
       // SV version does lazy initialization
@@ -467,8 +467,13 @@ class uvm_reg_read_only_cbs: uvm_reg_cbs
       }
     }
   };
+  // mixin(uvm_once_sync_string);
+  // uvm_once uvm_once
+  static uvm_once _uvm_once_inst() {return uvm_once.get_instance!uvm_once;}
 
-  mixin(uvm_once_sync_string);
+  // uvm_once_immutable _m_me uvm_reg_read_only_cbs uvm_once
+  static public uvm_reg_read_only_cbs m_me()() {return _uvm_once_inst._m_me;}
+  static public void m_me(T)(T val) if(! is(T: uvm_reg_read_only_cbs)){_uvm_once_inst._m_me = val;}
 
   private static uvm_reg_read_only_cbs get() {
     // synchronized(once) {
@@ -486,7 +491,7 @@ class uvm_reg_read_only_cbs: uvm_reg_cbs
   // Add this callback to the specified register and its contained fields.
   //
   static void add(uvm_reg rg) {
-    synchronized(once) {
+    synchronized(_uvm_once_inst) {
       uvm_reg_cb.add(rg, get());
       uvm_reg_field[] flds;
       rg.get_fields(flds);
@@ -536,7 +541,7 @@ class uvm_reg_write_only_cbs: uvm_reg_cbs
     super(name);
   }
 
-  mixin uvm_object_utils;
+  mixin uvm_object_essentials;
 
   // Function: pre_read
   //
@@ -567,8 +572,8 @@ class uvm_reg_write_only_cbs: uvm_reg_cbs
   static class uvm_once: uvm_once_base
   {
     // @uvm_private_sync
-    @uvm_immutable_sync
-      private uvm_reg_write_only_cbs _m_me;
+    // @uvm_immutable_sync
+    private uvm_reg_write_only_cbs _m_me;
     this() {
       // SV version does lazy initialization
       // vlang takes another approach so that we can make this variable
@@ -577,9 +582,13 @@ class uvm_reg_write_only_cbs: uvm_reg_cbs
 	_m_me = new uvm_reg_write_only_cbs();
       }
     }
-  };
-
-  mixin(uvm_once_sync_string);
+  }
+  // mixin(uvm_once_sync_string);
+  // uvm_once uvm_once
+  static uvm_once _uvm_once_inst() {return uvm_once.get_instance!uvm_once;}
+  // uvm_once_immutable _m_me uvm_reg_write_only_cbs uvm_once
+  static public uvm_reg_write_only_cbs m_me()() {return _uvm_once_inst._m_me;}
+  static public void m_me(T)(T val) if(! is(T: uvm_reg_write_only_cbs)){_uvm_once_inst._m_me = val;}
 
   private static uvm_reg_write_only_cbs get() {
     // if (m_me == null) m_me = new;
@@ -594,7 +603,7 @@ class uvm_reg_write_only_cbs: uvm_reg_cbs
   // Add this callback to the specified register and its contained fields.
   //
   static void add(uvm_reg rg) {
-    synchronized(once) {
+    synchronized(_uvm_once_inst) {
       uvm_reg_cb.add(rg, get());
       uvm_reg_field[] flds;
       rg.get_fields(flds);

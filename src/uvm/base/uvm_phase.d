@@ -1,11 +1,13 @@
 //
 //----------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2010 Cadence Design Systems, Inc.
-//   Copyright 2010-2013 Synopsys, Inc.
-//   Copyright 2013      NVIDIA Corporation
-//   Copyright 2013      Cisco Systems, Inc.
-//   Copyright 2014-2016 Coverify Systems Technology
+// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2014 Semifore
+// Copyright 2010-2014 Synopsys, Inc.
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2011-2012 AMD
+// Copyright 2013-2018 NVIDIA Corporation
+// Copyright 2012-2017 Cisco Systems, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -23,7 +25,6 @@
 //   permissions and limitations under the License.
 //----------------------------------------------------------------------
 
-// typedef class uvm_test_done_objection;
 // typedef class uvm_sequencer_base;
 
 // typedef class uvm_domain;
@@ -32,16 +33,46 @@
 
 //------------------------------------------------------------------------------
 //
-// Section: Phasing Definition classes
+// Section -- NODOCS -- Phasing Definition classes
 //
 //------------------------------------------------------------------------------
 //
 // The following class are used to specify a phase and its implied functionality.
 //
   
+
+module uvm.base.uvm_phase;
+
+import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_objection: uvm_objection;
+import uvm.base.uvm_callback: uvm_callback, uvm_callbacks, uvm_register_cb;
+import uvm.base.uvm_object_globals: uvm_core_state, m_uvm_core_state;
+import uvm.base.uvm_domain: uvm_domain;
+import uvm.base.uvm_task_phase: uvm_task_phase;
+import uvm.base.uvm_object_defines;
+import uvm.base.uvm_once;
+
+import uvm.base.uvm_object_globals: uvm_phase_type, uvm_phase_state, uvm_wait_op, uvm_verbosity;
+
+import uvm.meta.misc;
+import uvm.meta.mailbox;
+import uvm.meta.mcd;
+
+import esdl.base.core: waitDelta, wait, Fork, abortForks, getRootEntity,
+  sleep, fork;
+import esdl.data.time;
+import esdl.data.sync;
+
+import std.string: format;
+import std.conv: to;
+import esdl.base.core: Process;
+import esdl.data.queue;
+
+
+
 //------------------------------------------------------------------------------
 //
-// Class: uvm_phase
+// Class -- NODOCS -- uvm_phase
 //
 //------------------------------------------------------------------------------
 //
@@ -129,40 +160,13 @@
 // used (eg. <uvm_run_phase::get()>) in APIs. For those APIs that need to look
 // up that phase in the graph, this is done automatically.
 
-module uvm.base.uvm_phase;
-
-import uvm.base.uvm_object: uvm_object;
-import uvm.base.uvm_objection: uvm_objection, uvm_test_done_objection;
-import uvm.base.uvm_callback: uvm_callback, uvm_callbacks, uvm_register_cb;
-import uvm.base.uvm_domain: uvm_domain;
-import uvm.base.uvm_task_phase: uvm_task_phase;
-import uvm.base.uvm_object_defines;
-import uvm.base.uvm_once;
-
-import uvm.base.uvm_object_globals: uvm_phase_type, uvm_phase_state, uvm_wait_op, uvm_verbosity;
-
-import uvm.meta.misc;
-import uvm.meta.mailbox;
-import uvm.meta.mcd;
-
-import esdl.base.core: waitDelta, wait, Fork, abortForks, getRootEntity,
-  sleep, fork;
-import esdl.data.time;
-import esdl.data.sync;
-
-import std.string: format;
-import std.conv: to;
-import esdl.base.core: Process;
-import esdl.data.queue;
-
-
-
+// @uvm-ieee 1800.2-2017 auto 9.3.1.2
 class uvm_phase: uvm_object
 {
   import uvm.base.uvm_component: uvm_component;
 
-  mixin(uvm_sync_string);
-  mixin(uvm_once_sync_string);
+  mixin (uvm_sync_string);
+  mixin (uvm_once_sync_string);
 
   static class uvm_once: uvm_once_base
   {
@@ -175,22 +179,26 @@ class uvm_phase: uvm_object
     private immutable bool _m_phase_trace;
     @uvm_immutable_sync
     private immutable bool _m_use_ovm_run_semantic;
+
+    @uvm_private_sync
+    private int            _m_default_max_ready_to_end_iters = 20;    // 20 is the initial value defined by 1800.2-2017 9.3.1.3.5
+
     this() {
       import uvm.base.uvm_cmdline_processor;
-      synchronized(this) {
+      synchronized (this) {
 	_m_phase_hopper = new Mailbox!uvm_phase();
 
 	uvm_cmdline_processor clp = uvm_cmdline_processor.get_inst();
 	string val;
 
-	if(clp.get_arg_value("+UVM_PHASE_TRACE", val)) {
+	if (clp.get_arg_value("+UVM_PHASE_TRACE", val)) {
 	  _m_phase_trace = true;	// once variable
 	}
 	else {
 	  _m_phase_trace = false;
 	}
 
-	if(clp.get_arg_value("+UVM_USE_OVM_RUN_SEMANTIC", val)) {
+	if (clp.get_arg_value("+UVM_USE_OVM_RUN_SEMANTIC", val)) {
 	  _m_use_ovm_run_semantic = true; // once variable
 	}
 	else {
@@ -202,19 +210,19 @@ class uvm_phase: uvm_object
   }
 
   void add_executing_phase(uvm_phase phase) {
-    synchronized(once) {
-      once._m_executing_phases[phase] = true;
+    synchronized (_uvm_once_inst) {
+      _uvm_once_inst._m_executing_phases[phase] = true;
     }
   }
   void rem_executing_phase(uvm_phase phase) {
-    synchronized(once) {
-      once._m_executing_phases.remove(phase);
+    synchronized (_uvm_once_inst) {
+      _uvm_once_inst._m_executing_phases.remove(phase);
     }
   }
   uvm_phase[] get_executing_phases() {
-    synchronized(once) {
+    synchronized (_uvm_once_inst) {
       import std.algorithm.sorting;
-      auto phases = once._m_executing_phases.keys;
+      auto phases = _uvm_once_inst._m_executing_phases.keys;
       sort(phases);
       return phases;
     }
@@ -227,20 +235,16 @@ class uvm_phase: uvm_object
   mixin uvm_register_cb!(uvm_phase_cb);
 
   //--------------------
-  // Group: Construction
+  // Group -- NODOCS -- Construction
   //--------------------
 
-  // Function: new
-  //
-  // Create a new phase node, with a name and a note of its type
-  //   name   - name of this phase
-  //   type   - a value in <uvm_phase_type>
-  //
+
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.3.1
   this(string name="uvm_phase",
        uvm_phase_type phase_type=uvm_phase_type.UVM_PHASE_SCHEDULE,
        uvm_phase parent=null) {
     import uvm.base.uvm_object_globals;
-    synchronized(this) {
+    synchronized (this) {
       super(name);
       _m_state = new WithEvent!uvm_phase_state("_m_state");
       _m_jump_fwd = new WithEvent!bool("_m_jump_fwd");
@@ -260,119 +264,127 @@ class uvm_phase: uvm_object
       _m_parent = parent;
 
 
-      if(parent is null && (phase_type is uvm_phase_type.UVM_PHASE_SCHEDULE ||
+      if (parent is null && (phase_type is uvm_phase_type.UVM_PHASE_SCHEDULE ||
 			    phase_type is uvm_phase_type.UVM_PHASE_DOMAIN )) {
 	//_m_parent = this;
 	_m_end_node = new uvm_phase(name ~ "_end", uvm_phase_type.UVM_PHASE_TERMINAL, this);
 	this.add_successor(_m_end_node);
 	_m_end_node.add_predecessor(this);
       }
+      _max_ready_to_end_iters = get_default_max_ready_to_end_iterations();
     }
   }
 
-  // Function: get_phase_type
-  //
-  // Returns the phase type as defined by <uvm_phase_type>
-  //
+
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.3.2
   final uvm_phase_type get_phase_type() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_phase_type;
     }
   }
 
 
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.3.3
+  void set_max_ready_to_end_iterations(int max) {
+    synchronized (this) {
+      _max_ready_to_end_iters = max;
+    }
+  }
+
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.3.4
+  int get_max_ready_to_end_iterations() {
+    synchronized (this) {
+      return _max_ready_to_end_iters;
+    }
+  }
+
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.3.5
+  static void set_default_max_ready_to_end_iterations(int max) {
+    synchronized (_uvm_once_inst) {
+      _uvm_once_inst._m_default_max_ready_to_end_iters = max;
+    }
+  }
+
+
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.3.6
+  static int get_default_max_ready_to_end_iterations() {
+    synchronized (_uvm_once_inst) {
+      return _uvm_once_inst._m_default_max_ready_to_end_iters;
+    }
+  }
+  
   //-------------
-  // Group: State
+  // Group -- NODOCS -- State
   //-------------
 
-  // Function: get_state
-  //
-  // Accessor to return current state of this phase
-  //
+
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.4.1
   final uvm_phase_state get_state() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_state;
     }
   }
 
 
-  // Function: get_run_count
-  //
-  // Accessor to return the integer number of times this phase has executed
-  //
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.4.2
   final int get_run_count() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_run_count;
     }
   }
 
 
-  // Function: find_by_name
-  //
-  // Locate a phase node with the specified ~name~ and return its handle.
-  // With ~stay_in_scope~ set, searches only within this phase's schedule or
-  // domain.
-  //
+
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.4.3
   final uvm_phase find_by_name(string name, bool stay_in_scope = true) {
     // TBD full search
     //$display({"\nFIND node named '", name,"' within ", get_name()," (scope ", m_phase_type.name(),")", (stay_in_scope) ? " staying within scope" : ""});
-    if(get_name() == name) {
+    if (get_name() == name) {
       return this;
     }
     uvm_phase find_by_name_ = m_find_predecessor_by_name(name, stay_in_scope, this);
-    if(find_by_name_ is null) {
+    if (find_by_name_ is null) {
       find_by_name_ = m_find_successor_by_name(name, stay_in_scope, this);
     }
     return find_by_name_;
   }
 
 
-  // Function: find
-  //
-  // Locate the phase node with the specified ~phase~ IMP and return its handle.
-  // With ~stay_in_scope~ set, searches only within this phase's schedule or
-  // domain.
-  //
+
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.4.4
   uvm_phase find(uvm_phase phase, bool stay_in_scope = true) {
     // TBD full search
     //$display({"\nFIND node '", phase.get_name(),"' within ", get_name()," (scope ", m_phase_type.name(),")", (stay_in_scope) ? " staying within scope" : ""});
-    synchronized(this) {
-      if(phase is _m_imp || phase is this) {
+    synchronized (this) {
+      if (phase is _m_imp || phase is this) {
 	return phase;
       }
     }
     uvm_phase find_ = m_find_predecessor(phase, stay_in_scope, this);
-    if(find_ is null) {
+    if (find_ is null) {
       find_ = m_find_successor(phase, stay_in_scope, this);
     }
     return find_;
   }
 
 
-
+  /////////////////////////////////////////////////////////////////
   // This function is named "is" in SV version, but since "is" is a
   // keyword in dlang, we name this function "is_same" here.
+  /////////////////////////////////////////////////////////////////
 
-  // Function: is_same
-  //
-  // returns true if the containing uvm_phase refers to the same phase
-  // as the phase argument, false otherwise
-  //
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.4.5
   final bool is_same(uvm_phase phase) {
-    synchronized(this) {
+    synchronized (this) {
       return (_m_imp is phase || this is phase);
     }
   }
 
 
 
-  // Function: is_before
-  //
-  // Returns 1 if the containing uvm_phase refers to a phase that is earlier
-  // than the phase argument, 0 otherwise
-  //
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.4.6
   final bool is_before(uvm_phase phase) {
-    synchronized(this) {
+    synchronized (this) {
       //$display("this=%s is before phase=%s?", get_name(), phase.get_name());
       // TODO: add support for 'stay_in_scope=1' functionality
       return (!is_same(phase) &&
@@ -380,13 +392,10 @@ class uvm_phase: uvm_object
     }
   }
 
-  // Function: is_after
-  //
-  // returns 1 if the containing uvm_phase refers to a phase that is later
-  // than the phase argument, 0 otherwise
-  //
+
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.4.7
   final bool is_after(uvm_phase phase) {
-    synchronized(this) {
+    synchronized (this) {
       //$display("this=%s is after phase=%s?", get_name(), phase.get_name());
       // TODO: add support for 'stay_in_scope=1' functionality
       return (!is_same(phase) &&
@@ -396,123 +405,147 @@ class uvm_phase: uvm_object
 
 
   //-----------------
-  // Group: Callbacks
+  // Group -- NODOCS -- Callbacks
   //-----------------
 
-  // Function: exec_func
-  //
-  // Implements the functor/delegate functionality for a function phase type
-  //   comp  - the component to execute the functionality upon
-  //   phase - the phase schedule that originated this phase call
-  //
+
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.5.1
   void exec_func(uvm_component comp, uvm_phase phase) { }
 
 
-  // Function: exec_task
-  //
-  // Implements the functor/delegate functionality for a task phase type
-  //   comp  - the component to execute the functionality upon
-  //   phase - the phase schedule that originated this phase call
-  //
-
   // task
+
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.5.2
   void exec_task(uvm_component comp, uvm_phase phase) { }
 
 
   //----------------
-  // Group: Schedule
+  // Group -- NODOCS -- Schedule
   //----------------
 
-  // Function: add
-  //
-  // Build up a schedule structure inserting phase by phase, specifying linkage
-  //
-  // Phases can be added anywhere, in series or parallel with existing nodes
-  //
-  //   phase        - handle of singleton derived imp containing actual functor.
-  //                  by default the new phase is appended to the schedule
-  //   with_phase   - specify to add the new phase in parallel with this one
-  //   after_phase  - specify to add the new phase as successor to this one
-  //   before_phase - specify to add the new phase as predecessor to this one
-  //
+
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.6.1
   final void add(uvm_phase phase,
 		 uvm_phase with_phase = null,
 		 uvm_phase after_phase = null,
-		 uvm_phase before_phase = null) {
+		 uvm_phase before_phase = null,
+		 uvm_phase start_with_phase = null,
+		 uvm_phase end_with_phase = null) {
     import uvm.base.uvm_globals;
     import uvm.base.uvm_object_globals;
 
     uvm_phase new_node, begin_node, end_node, tmp_node;
     uvm_phase_state_change state_chg;
-    if(phase is null) {
+    if (phase is null) {
       uvm_fatal("PH/NULL", "add: phase argument is null");
     }
 
-    if(with_phase !is null && with_phase.get_phase_type() == uvm_phase_type.UVM_PHASE_IMP) {
+    if (with_phase !is null && with_phase.get_phase_type() == uvm_phase_type.UVM_PHASE_IMP) {
       string nm = with_phase.get_name();
       with_phase = find(with_phase);
-      if(with_phase is null) {
+      if (with_phase is null) {
 	uvm_fatal("PH_BAD_ADD",
 		  "cannot find with_phase '" ~ nm ~ "' within node '" ~
 		  get_name() ~ "'");
       }
     }
 
-    if(before_phase !is null &&
+    if (before_phase !is null &&
        before_phase.get_phase_type() == uvm_phase_type.UVM_PHASE_IMP) {
       string nm = before_phase.get_name();
       before_phase = find(before_phase);
-      if(before_phase is null) {
+      if (before_phase is null) {
 	uvm_fatal("PH_BAD_ADD",
 		  "cannot find before_phase '" ~ nm ~ "' within node '" ~
 		  get_name() ~ "'");
       }
     }
 
-    if(after_phase !is null &&
+    if (after_phase !is null &&
        after_phase.get_phase_type() == uvm_phase_type.UVM_PHASE_IMP) {
       string nm = after_phase.get_name();
       after_phase = find(after_phase);
-      if(after_phase is null) {
+      if (after_phase is null) {
 	uvm_fatal("PH_BAD_ADD",
 		  "cannot find after_phase '" ~ nm ~ "' within node '" ~
 		  get_name() ~ "'");
       }
     }
 
-    if(with_phase !is null && (after_phase !is null ||
-			       before_phase !is null)) {
-      uvm_fatal("PH_BAD_ADD",
-		"cannot specify both 'with' and 'before/after' " ~
-		"phase relationships");
+    if (start_with_phase !is null &&
+	start_with_phase.get_phase_type() == uvm_phase_type.UVM_PHASE_IMP) {
+      string nm = start_with_phase.get_name();
+      start_with_phase = find(start_with_phase);
+      if (start_with_phase is null) {
+	uvm_fatal("PH_BAD_ADD",
+		  "cannot find start_with_phase '" ~ nm ~ "' within node '" ~
+		  get_name() ~ "'");
+      }
     }
 
-    if(before_phase is this || after_phase is m_end_node ||
-       with_phase is m_end_node) {
+    if (end_with_phase !is null &&
+	end_with_phase.get_phase_type() == uvm_phase_type.UVM_PHASE_IMP) {
+      string nm = end_with_phase.get_name();
+      end_with_phase = find(end_with_phase);
+      if (end_with_phase is null) {
+	uvm_fatal("PH_BAD_ADD",
+		  "cannot find end_with_phase '" ~ nm ~ "' within node '" ~
+		  get_name() ~ "'");
+      }
+    }
+
+    if (((with_phase is null ? 0 : 1) + (after_phase is null ? 0 : 1) +
+	 (start_with_phase is null ? 0 : 1)) > 1) {
       uvm_fatal("PH_BAD_ADD",
-		"cannot add before { node, after end node, or " ~
+		"only one of with_phase/after_phase/start_with_phase may be specified as they all specify predecessor");
+    }
+
+    if (((with_phase is null ? 0 : 1) + (before_phase is null ? 0 : 1) +
+	 (end_with_phase is null ? 0 : 1)) > 1) {
+      uvm_fatal("PH_BAD_ADD",
+		"only one of with_phase/before_phase/end_with_phase" ~
+		" may be specified as they all specify successor");
+    }
+
+    if (before_phase is this ||
+       after_phase is m_end_node ||
+       with_phase is m_end_node ||
+       start_with_phase is m_end_node ||
+       end_with_phase is m_end_node) {
+      uvm_fatal("PH_BAD_ADD",
+		"cannot add before begin node, after end node, or " ~
 		"with end nodes");
     }
 
+    if (before_phase !is null && after_phase !is null) {
+      if (! after_phase.is_before(before_phase)) {
+	uvm_fatal("PH_BAD_ADD", "Phase '" ~ before_phase.get_name() ~
+		  "' is not before phase '" ~ after_phase.get_name() ~ "'");
+      }
+    }
+
+    if (before_phase !is null && start_with_phase !is null) {
+      if (! start_with_phase.is_before(before_phase)) {
+	uvm_fatal("PH_BAD_ADD", "Phase '" ~ before_phase.get_name() ~
+		  "' is not before phase '" ~
+		  start_with_phase.get_name() ~ "'");
+      }
+    }
+
+    if (end_with_phase !is null && after_phase !is null) {
+      if (! after_phase.is_before(end_with_phase)) {
+	uvm_fatal("PH_BAD_ADD", "Phase '" ~ end_with_phase.get_name() ~
+		  "' is not before phase '" ~ after_phase.get_name() ~ "'");
+      }
+    }
+
     // If we are inserting a new "leaf node"
-    if(phase.get_phase_type() == uvm_phase_type.UVM_PHASE_IMP) {
+    if (phase.get_phase_type() == uvm_phase_type.UVM_PHASE_IMP) {
       new_node = new uvm_phase(phase.get_name(), uvm_phase_type.UVM_PHASE_NODE, this);
       new_node.m_imp = phase;
       begin_node = new_node;
       end_node = new_node;
 
-      // The phase_done objection is only required
-      // for task-based nodes
-      uvm_task_phase tp = cast(uvm_task_phase) phase;
-      if(tp !is null) {
-	if(new_node.get_name() == "run") {
-	  new_node.phase_done = uvm_test_done_objection.get();
-	}
-	else {
-	  new_node.phase_done =
-	    uvm_objection.type_id.create(phase.get_name() ~ "_objection");
-	}
-      }
     }
     // We are inserting an existing schedule
     else {
@@ -523,18 +556,20 @@ class uvm_phase: uvm_object
 
     // If 'with_phase' is us, then insert node in parallel
     /*
-      if(with_phase is this) {
+      if (with_phase is this) {
       after_phase = this;
       before_phase = m_end_node;
       }
     */
 
     // If no before/after/with specified, insert at end of this schedule
-    if(with_phase is null && after_phase is null && before_phase is null) {
+    if (with_phase is null && after_phase is null &&
+	before_phase is null && start_with_phase is null &&
+	end_with_phase is null) {
       before_phase = m_end_node;
     }
 
-    if(m_phase_trace) {
+    if (m_phase_trace) {
       uvm_phase_type typ = phase.get_phase_type();
       uvm_info("PH/TRC/ADD_PH",
 	       get_name() ~ " (" ~ m_phase_type.to!string ~
@@ -543,6 +578,10 @@ class uvm_phase: uvm_object
 	       format("%0d", phase.get_inst_id()) ~ ")" ~
 	       " with_phase=" ~   ((with_phase is null)   ? "null" :
 				   with_phase.get_name()) ~
+	       " start_with_phase=" ~ ((start_with_phase is null) ? "null" :
+				       start_with_phase.get_name()) ~ 
+	       " end_with_phase=" ~ ((end_with_phase is null) ? "null" :
+				     end_with_phase.get_name()) ~
 	       " after_phase=" ~  ((after_phase is null)  ? "null" :
 				   after_phase.get_name()) ~
 	       " before_phase=" ~ ((before_phase is null) ? "null" :
@@ -553,75 +592,105 @@ class uvm_phase: uvm_object
 	       " begin_node=" ~   ((begin_node is null)   ? "null" :
 				   begin_node.get_name())  ~
 	       " end_node=" ~     ((end_node is null)     ? "null" :
-				   end_node.get_name()), uvm_verbosity.UVM_DEBUG);
+				   end_node.get_name()),
+	       uvm_verbosity.UVM_DEBUG);
     }
 
 
+    // 
     // INSERT IN PARALLEL WITH 'WITH' PHASE
-    if(with_phase !is null) {
-      synchronized(begin_node) {
-	begin_node._m_predecessors = with_phase.dup_predecessors();
-      }
-      synchronized(end_node) {
-	end_node._m_successors = with_phase.dup_successors();
-      }
-      foreach(pred; with_phase.get_predecessors()) {
+    if (with_phase !is null) {
+      // all pre-existing predecessors to with_phase are predecessors to the new phase
+      begin_node.cpy_predecessors(with_phase);
+      foreach (pred; with_phase.get_predecessors()) {
 	pred.add_successor(begin_node);
       }
-      foreach(succ; with_phase.get_successors()) {
+      // all pre-existing successors to with_phase are successors to this phase
+      end_node.cpy_successors(with_phase);
+      foreach (succ; with_phase.get_successors()) {
 	succ.add_predecessor(end_node);
+      }
+    }
+
+    if (start_with_phase !is null) {
+      // all pre-existing predecessors to start_with_phase are predecessors to the new phase
+      begin_node.cpy_predecessors(start_with_phase);
+      foreach (pred; start_with_phase.get_predecessors()) {
+	pred.add_successor(begin_node);
+      }
+      // if not otherwise specified, successors for the new phase are the successors to the end of this schedule
+      if (before_phase is null && end_with_phase is null) {
+	end_node.cpy_successors(m_end_node);
+	foreach (succ; m_end_node.get_successors()) {
+	  succ.add_predecessor(end_node);
+	}
+      }
+    }
+
+    if (end_with_phase !is null) {
+      // all pre-existing successors to end_with_phase are successors to the new phase
+      end_node.cpy_successors(end_with_phase);
+      foreach (succ; end_with_phase.get_successors()) {
+	succ.add_predecessor(end_node);
+      }
+      // if not otherwise specified, predecessors for the new phase are the predecessors to the start of this schedule
+      if (after_phase is null && start_with_phase is null) {
+	begin_node.cpy_predecessors(this);
+	foreach (pred; this.get_predecessors()) {
+	  pred.add_successor(begin_node);
+	}
       }
     }
 
     // INSERT BEFORE PHASE
-    else if(before_phase !is null && after_phase is null) {
-      synchronized(begin_node) {
-	begin_node._m_predecessors = before_phase.dup_predecessors();
+    if (before_phase !is null) {
+      // unless predecessors to this phase are otherwise specified, 
+      // pre-existing predecessors to before_phase move to be predecessors to the new phase
+      if (after_phase is null && start_with_phase is null) {
+	foreach (pred; before_phase.get_predecessors()) {
+	  pred.rem_successor(before_phase);
+	  pred.add_successor(begin_node);
+	}
+	begin_node.cpy_predecessors(before_phase);
+	before_phase.clr_predecessors();
       }
-      end_node.add_successor(before_phase);
-      foreach(pred; before_phase.get_predecessors()) {
-	pred.rem_successor(before_phase);
-	pred.add_successor(begin_node);
+      // there is a special case if before and after used to be adjacent;
+      // the new phase goes in-between them
+      else if (before_phase.has_predecessor(after_phase)) {
+	before_phase.rem_predecessor(after_phase);
       }
-      synchronized(before_phase) {
-	before_phase._m_predecessors = null;
-	before_phase.add_predecessor(end_node);
-      }
-    }
 
+      // before_phase is now the sole successor of this phase
+      before_phase.add_predecessor(end_node);
+      end_node.clr_successors();
+      end_node.add_successor(before_phase);
+    }
 
     // INSERT AFTER PHASE
-    else if(before_phase is null && after_phase !is null) {
-      synchronized(end_node) {
-	end_node._m_successors = after_phase.dup_successors();
+    if (after_phase !is null) {
+      // unless successors to this phase are otherwise specified, 
+      // pre-existing successors to after_phase are now successors to this phase
+      if (before_phase is null && end_with_phase is null) {
+	foreach (succ; after_phase.get_successors()) {
+	  succ.rem_predecessor(after_phase);
+	  succ.add_predecessor(end_node);
+	}
+	end_node.cpy_successors(after_phase);
+	after_phase.clr_successors();
       }
-      begin_node.add_predecessor(after_phase);
-      foreach(succ; after_phase.get_successors()) {
-	succ.rem_predecessor(after_phase);
-	succ.add_predecessor(end_node);
-      }
-      synchronized(after_phase) {
-	after_phase._m_successors = null;
-	after_phase.add_successor(begin_node);
-      }
-    }
-
-    // IN BETWEEN 'BEFORE' and 'AFTER' PHASES
-    else if(before_phase !is null && after_phase !is null) {
-      if(!after_phase.is_before(before_phase)) {
-	uvm_fatal("PH_ADD_PHASE", "Phase '" ~ before_phase.get_name() ~
-		  "' is not before phase '" ~ after_phase.get_name() ~ "'");
-      }
-      // before and after? add 1 pred and 1 succ
-      begin_node.add_predecessor(after_phase);
-      end_node.add_successor(before_phase);
-      after_phase.add_successor(begin_node);
-      before_phase.add_predecessor(end_node);
-      if(after_phase.has_successor(before_phase)) {
+      // there is a special case if before and after used to be adjacent;
+      // the new phase goes in-between them
+      else if (after_phase.has_successor(before_phase)) {
 	after_phase.rem_successor(before_phase);
-	before_phase.rem_successor(after_phase);
       }
+
+      // after_phase is the sole predecessor of this phase 
+      after_phase.add_successor(begin_node);
+      begin_node.clr_predecessors();
+      begin_node.add_predecessor(after_phase);
     }
+  
+
     // Transition nodes to DORMANT state
     if (new_node is null) {
       tmp_node = phase;
@@ -638,36 +707,30 @@ class uvm_phase: uvm_object
     uvm_do_callbacks(cb => cb.phase_state_change(tmp_node, state_chg));
   }
 
-  // Function: get_parent
-  //
-  // Returns the parent schedule node, if any, for hierarchical graph traversal
-  //
+
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.6.2
   final uvm_phase get_parent() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_parent;
     }
   }
 
 
 
-  // Function: get_full_name
-  //
-  // Returns the full path from the enclosing domain down to this node.
-  // The singleton IMP phases have no hierarchy.
-  //
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.6.3
   override string get_full_name() {
     import uvm.base.uvm_object_globals;
-    synchronized(this) {
+    synchronized (this) {
       // string dom; -- redundant in SV implementation
-      if(m_phase_type == uvm_phase_type.UVM_PHASE_IMP) {
+      if (m_phase_type == uvm_phase_type.UVM_PHASE_IMP) {
 	return get_name();
       }
       string get_full_name_ = get_domain_name();
       string sch = get_schedule_name();
-      if(sch != "") {
+      if (sch != "") {
 	get_full_name_ ~= "." ~ sch;
       }
-      if(m_phase_type != uvm_phase_type.UVM_PHASE_DOMAIN &&
+      if (m_phase_type != uvm_phase_type.UVM_PHASE_DOMAIN &&
 	 m_phase_type != uvm_phase_type.UVM_PHASE_SCHEDULE) {
 	get_full_name_ ~= "." ~ get_name();
       }
@@ -676,25 +739,23 @@ class uvm_phase: uvm_object
   }
 
 
-  // Function: get_schedule
-  //
-  // Returns the topmost parent schedule node, if any, for hierarchical graph traversal
-  //
+
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.6.4
   final uvm_phase get_schedule(bool hier = false) {
     import uvm.base.uvm_object_globals;
     uvm_phase sched = this;
-    if(hier) {
-      while(sched.m_parent !is null &&
+    if (hier) {
+      while (sched.m_parent !is null &&
 	    (sched.m_parent.get_phase_type() == uvm_phase_type.UVM_PHASE_SCHEDULE)) {
 	sched = sched.m_parent;
       }
     }
-    if(sched.m_phase_type == uvm_phase_type.UVM_PHASE_SCHEDULE) {
+    if (sched.m_phase_type == uvm_phase_type.UVM_PHASE_SCHEDULE) {
       return sched;
     }
-    if(sched.m_phase_type == uvm_phase_type.UVM_PHASE_NODE) {
+    if (sched.m_phase_type == uvm_phase_type.UVM_PHASE_NODE) {
       auto parent = m_parent;
-      if(parent !is null && parent.m_phase_type != uvm_phase_type.UVM_PHASE_DOMAIN) {
+      if (parent !is null && parent.m_phase_type != uvm_phase_type.UVM_PHASE_DOMAIN) {
 	return parent;
       }
     }
@@ -702,18 +763,16 @@ class uvm_phase: uvm_object
   }
 
 
-  // Function: get_schedule_name
-  //
-  // Returns the schedule name associated with this phase node
-  //
+
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.6.5
   final string get_schedule_name(bool hier = 0) {
     import uvm.base.uvm_object_globals;
     uvm_phase sched = get_schedule(hier);
-    if(sched is null) {
+    if (sched is null) {
       return "";
     }
     string s = sched.get_name();
-    while(sched.m_parent !is null && sched.m_parent !is sched &&
+    while (sched.m_parent !is null && sched.m_parent !is sched &&
 	  (sched.m_parent.get_phase_type() == uvm_phase_type.UVM_PHASE_SCHEDULE)) {
       sched = sched.m_parent;
       s = sched.get_name() ~ (s.length > 0 ? "." : "")  ~ s;
@@ -722,22 +781,20 @@ class uvm_phase: uvm_object
   }
 
 
-  // Function: get_domain
-  //
-  // Returns the enclosing domain
-  //
+
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.6.6
   final uvm_domain get_domain() {
     import uvm.base.uvm_globals;
     import uvm.base.uvm_object_globals;
     uvm_phase phase = this;
-    while(phase !is null && phase.m_phase_type !is uvm_phase_type.UVM_PHASE_DOMAIN) {
+    while (phase !is null && phase.m_phase_type !is uvm_phase_type.UVM_PHASE_DOMAIN) {
       phase = phase.m_parent;
     }
-    if(phase is null) { // no parent domain
+    if (phase is null) { // no parent domain
       return null;
     }
-    auto get_domain_ = cast(uvm_domain) phase;
-    if(get_domain_ is null) {
+    auto get_domain_ = cast (uvm_domain) phase;
+    if (get_domain_ is null) {
       uvm_fatal("PH/INTERNAL", "get_domain: m_phase_type is DOMAIN but " ~
 		"$cast to uvm_domain fails");
     }
@@ -745,37 +802,26 @@ class uvm_phase: uvm_object
   }
 
 
-  // Function: get_imp
-  //
-  // Returns the phase implementation for this this node.
-  // Returns ~null~ if this phase type is not a UVM_PHASE_LEAF_NODE.
-  //
+
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.6.7
   final uvm_phase get_imp() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_imp;
     }
   }
 
-  // Function: get_domain_name
-  //
-  // Returns the domain name associated with this phase node
-  //
+
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.6.8
   final string get_domain_name() {
     uvm_domain domain = get_domain();
-    if(domain is null) {
+    if (domain is null) {
       return "unknown";
     }
     return domain.get_name();
   }
 
-  // Function: get_adjacent_predecessor_nodes
-  //
-  // Provides an array of nodes which are predecessors to
-  // ~this~ phase node.  A 'predecessor node' is defined
-  // as any phase node which lies prior to ~this~ node in
-  // the phase graph, with no nodes between ~this~ node and
-  // the predecessor node.
-  //
+
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.6.9
   final void get_adjacent_predecessor_nodes(out uvm_phase[] pred) {
     import uvm.base.uvm_object_globals;
 
@@ -783,7 +829,7 @@ class uvm_phase: uvm_object
     bool[uvm_phase] predecessors;
 
     // Get all predecessors (including TERMINALS, SCHEDULES, etc.)
-    foreach(p; get_predecessors()) {
+    foreach (p; get_predecessors()) {
       predecessors[p] = true;
     }
 
@@ -791,10 +837,10 @@ class uvm_phase: uvm_object
     // recursively.
     do {
       done = true;
-      foreach(p, unused; predecessors) {
+      foreach (p, unused; predecessors) {
 	if (p.get_phase_type() != uvm_phase_type.UVM_PHASE_NODE) {
 	  predecessors.remove(p);
-	  foreach(next_p; p.get_predecessors()) {
+	  foreach (next_p; p.get_predecessors()) {
 	    predecessors[next_p] = true;
 	  }
 	  done = false;
@@ -802,27 +848,21 @@ class uvm_phase: uvm_object
       }
     } while (done is false);
 
-    foreach(p, unused; predecessors) {
+    foreach (p, unused; predecessors) {
       pred ~= p;
     }
   }
 
 
-  // Function: get_adjacent_successor_nodes
-  //
-  // Provides an array of nodes which are successors to
-  // ~this~ phase node.  A 'successor's node' is defined
-  // as any phase node which comes after ~this~ node in
-  // the phase graph, with no nodes between ~this~ node
-  // and the successor node.
-  //
+
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.6.10
   final void get_adjacent_successor_nodes(out uvm_phase[] succ) {
     import uvm.base.uvm_object_globals;
     bool done;
     bool[uvm_phase] successors;
 
     // Get all successors (including TERMINALS, SCHEDULES, etc.)
-    foreach(s; get_successors()) {
+    foreach (s; get_successors()) {
       successors[s] = true;
     }
 
@@ -830,10 +870,10 @@ class uvm_phase: uvm_object
     // recursively.
     do {
       done = true;
-      foreach(s, unused; successors) {
+      foreach (s, unused; successors) {
 	if (s.get_phase_type() != uvm_phase_type.UVM_PHASE_NODE) {
 	  successors.remove(s);
-	  foreach(next_s; s.get_successors()) {
+	  foreach (next_s; s.get_successors()) {
 	    successors[next_s] = true;
 	  }
 	  done = false;
@@ -841,14 +881,14 @@ class uvm_phase: uvm_object
       }
     } while (done is false); 
 
-    foreach(s, unused; successors) {
+    foreach (s, unused; successors) {
       succ ~= s;
     }
   }
 
 
   //-----------------------
-  // Group: Phase Done Objection
+  // Group -- NODOCS -- Phase Done Objection
   //-----------------------
   //
   // Task-based phase nodes within the phasing graph provide a <uvm_objection>
@@ -867,8 +907,8 @@ class uvm_phase: uvm_object
     string m_obj_name = (obj is null) ? "uvm_top" : obj.get_full_name();
    
     string m_action;
-    if((action == "raise") || (action == "drop")) {
-      if(count != 1) {
+    if ((action == "raise") || (action == "drop")) {
+      if (count != 1) {
         m_action = format("%s %0d objections", action, count);
       }
       else {
@@ -896,33 +936,11 @@ class uvm_phase: uvm_object
   }
                         
    
-  // Function: get_objection
-  //
-  // Return the <uvm_objection> that gates the termination of the phase.
-  //
-  final uvm_objection get_objection() {
-    synchronized(this) {
-      return _phase_done;
-    }
-  }
-
-
-  // Function: raise_objection
-  //
-  // Raise an objection to ending this phase
-  // Provides components with greater control over the phase flow for
-  // processes which are not implicit objectors to the phase.
-  //
-  //|   while(1) {
-  //|     some_phase.raise_objection(this);
-  //|     ...
-  //|     some_phase.drop_objection(this);
-  //|   }
-  //|   ...
-  //
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.7.2
   final void raise_objection(uvm_object obj,
 			     string description="",
 			     int count=1) {
+    uvm_objection phase_done = get_objection();
     if (phase_done !is null) {
       phase_done.raise_objection(obj, description, count);
     }
@@ -932,15 +950,11 @@ class uvm_phase: uvm_object
   }
 
 
-  // Function: drop_objection
-  //
-  // Drop an objection to ending this phase
-  //
-  // The drop is expected to be matched with an earlier raise.
-  //
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.7.3
   final void drop_objection(uvm_object obj,
 			    string description="",
 			    int count=1) {
+    uvm_objection phase_done = get_objection();
     if (phase_done !is null) {
       phase_done.drop_objection(obj, description, count);
     }
@@ -950,11 +964,10 @@ class uvm_phase: uvm_object
   }
 
 
-  // Function: get_objection_count
-  //
-  // Returns the current number of objections to ending this phase raised by the given ~object~.
-  //
+
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.7.4
   int get_objection_count (uvm_object obj=null) {
+    uvm_objection phase_done = get_objection();
     if (phase_done !is null) {
       return phase_done.get_objection_count(obj);
     }
@@ -966,7 +979,7 @@ class uvm_phase: uvm_object
 
 
   //-----------------------
-  // Group: Synchronization
+  // Group -- NODOCS -- Synchronization
   //-----------------------
   // The functions 'sync' and 'unsync' add soft sync relationships between nodes
   //
@@ -996,50 +1009,42 @@ class uvm_phase: uvm_object
   // the one phase.
 
 
-  // Function: sync
-  //
-  // Synchronize two domains, fully or partially
-  //
-  //   target       - handle of target domain to synchronize this one to
-  //   phase        - optional single phase in this domain to synchronize,
-  //                  otherwise sync all
-  //   with_phase   - optional different target-domain phase to synchronize with,
-  //                  otherwise use ~phase~ in the target domain
-  //
+
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.8.1
   final void sync(uvm_domain target,
 		  uvm_phase phase = null,
 		  uvm_phase with_phase = null) {
     import uvm.base.uvm_globals;
-    if(!this.is_domain()) {
+    if (!this.is_domain()) {
       uvm_fatal("PH_BADSYNC","sync() called from a non-domain phase " ~
 		"schedule node");
     }
-    else if(target is null) {
+    else if (target is null) {
       uvm_fatal("PH_BADSYNC","sync() called with a null target domain");
     }
-    else if(!target.is_domain()) {
+    else if (!target.is_domain()) {
       uvm_fatal("PH_BADSYNC","sync() called with a non-domain phase " ~
 		"schedule node as target");
     }
-    else if(phase is null && with_phase !is null) {
+    else if (phase is null && with_phase !is null) {
       uvm_fatal("PH_BADSYNC","sync() called with null phase and non-null " ~
 		"with phase");
     }
-    else if(phase is null) {
+    else if (phase is null) {
       // whole domain sync - traverse this domain schedule from begin to end node and sync each node
       int[uvm_phase] visited;
       Queue!uvm_phase queue;
       queue.pushBack(this);
       visited[this] = true;
-      while(queue.length !is 0) {
+      while (queue.length !is 0) {
 	uvm_phase node;
 	node = queue.front();
 	queue.removeFront();
-	if(node.m_imp !is null) {
+	if (node.m_imp !is null) {
 	  sync(target, node.m_imp);
 	}
-	foreach(succ; node.get_successors()) {
-	  if(succ !in visited) {
+	foreach (succ; node.get_successors()) {
+	  if (succ !in visited) {
 	    queue.pushBack(succ);
 	    visited[succ] = true;
 	  }
@@ -1050,57 +1055,48 @@ class uvm_phase: uvm_object
       // single phase sync
       // this is a 2-way ('with') sync and we check first in case it
       // is already there
-      if(with_phase is null) with_phase = phase;
+      if (with_phase is null) with_phase = phase;
       uvm_phase from_node = find(phase);
       uvm_phase to_node = target.find(with_phase);
-      if(from_node is null || to_node is null) return;
+      if (from_node is null || to_node is null) return;
       from_node.add_sync(to_node);
       to_node.add_sync(from_node);
     }
   }
 
-  // Function: unsync
-  //
-  // Remove synchronization between two domains, fully or partially
-  //
-  //   target       - handle of target domain to remove synchronization from
-  //   phase        - optional single phase in this domain to un-synchronize,
-  //                  otherwise unsync all
-  //   with_phase   - optional different target-domain phase to un-synchronize with,
-  //                  otherwise use ~phase~ in the target domain
-  //
 
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.8.2
   final void unsync(uvm_domain target,
 		    uvm_phase phase = null,
 		    uvm_phase with_phase = null) {
     import uvm.base.uvm_globals;
-    if(!this.is_domain()) {
+    if (!this.is_domain()) {
       uvm_fatal("PH_BADSYNC","unsync() called from a non-domain phase " ~
 		"schedule node");
     }
-    else if(target is null) {
+    else if (target is null) {
       uvm_fatal("PH_BADSYNC","unsync() called with a null target domain");
     }
-    else if(!target.is_domain()) {
+    else if (!target.is_domain()) {
       uvm_fatal("PH_BADSYNC","unsync() called with a non-domain phase " ~
 		"schedule node as target");
     }
-    else if(phase is null && with_phase !is null) {
+    else if (phase is null && with_phase !is null) {
       uvm_fatal("PH_BADSYNC","unsync() called with null phase and non-null " ~
 		"with phase");
     }
-    else if(phase is null) {
+    else if (phase is null) {
       // whole domain unsync - traverse this domain schedule from begin to end node and unsync each node
       int[uvm_phase] visited;
       Queue!uvm_phase queue;
       queue.pushBack(this);
       visited[this] = true;
-      while(queue.length !is 0) {
+      while (queue.length !is 0) {
 	uvm_phase node = queue.front();
 	queue.removeFront();
-	if(node.m_imp !is null) unsync(target, node.m_imp);
-	foreach(succ; node.get_successors()) {
-	  if(succ !in visited) {
+	if (node.m_imp !is null) unsync(target, node.m_imp);
+	foreach (succ; node.get_successors()) {
+	  if (succ !in visited) {
 	    queue.pushBack(succ);
 	    visited[succ] = true;
 	  }
@@ -1110,12 +1106,12 @@ class uvm_phase: uvm_object
     else {
       // single phase unsync
       // this is a 2-way ('with') sync and we check first in case it is already there
-      if(with_phase is null) {
+      if (with_phase is null) {
 	with_phase = phase;
       }
       uvm_phase from_node = find(phase);
       uvm_phase to_node = target.find(with_phase);
-      if(from_node is null || to_node is null) {
+      if (from_node is null || to_node is null) {
 	return;
       }
       // m_sync is a Queue of uvm_phase
@@ -1124,57 +1120,42 @@ class uvm_phase: uvm_object
     }
   }
 
-  // Function: wait_for_state
-  //
-  // Wait until this phase compares with the given ~state~ and ~op~ operand.
-  // For <UVM_EQ> and <UVM_NE> operands, several <uvm_phase_states> can be
-  // supplied by ORing their enum constants, in which case the caller will
-  // wait until the phase state is any of (UVM_EQ) or none of (UVM_NE) the
-  // provided states.
-  //
-  // To wait for the phase to be at the started state or after
-  //
-  //| wait_for_state(UVM_PHASE_STARTED, UVM_GTE);
-  //
-  // To wait for the phase to be either started or executing
-  //
-  //| wait_for_state(UVM_PHASE_STARTED | UVM_PHASE_EXECUTING, UVM_EQ);
-  //
-
   // task
+
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.8.3
   final void wait_for_state(uvm_phase_state state,
 			    uvm_wait_op op = uvm_wait_op.UVM_EQ) {
     import uvm.base.uvm_object_globals;
-    final switch(op) {
+    final switch (op) {
       // wait((state & m_state) !is 0);
-    case uvm_wait_op.UVM_EQ:  while((m_state.get & state) is 0)
+    case uvm_wait_op.UVM_EQ:  while ((m_state.get & state) is 0)
 	m_state.getEvent.wait();
       break;
       // wait((state & m_state) is 0);
-    case uvm_wait_op.UVM_NE:  while((m_state.get & state) !is 0)
+    case uvm_wait_op.UVM_NE:  while ((m_state.get & state) !is 0)
 	m_state.getEvent.wait();
       break;
       // wait(m_state <  state);
-    case uvm_wait_op.UVM_LT:  while(m_state.get >= state)
+    case uvm_wait_op.UVM_LT:  while (m_state.get >= state)
 	m_state.getEvent.wait();
       break;
       // wait(m_state <=  state);
-    case uvm_wait_op.UVM_LTE: while(m_state.get > state)
+    case uvm_wait_op.UVM_LTE: while (m_state.get > state)
 	m_state.getEvent.wait();
       break;
       // wait(m_state >  state);
-    case uvm_wait_op.UVM_GT:  while(m_state.get <= state)
+    case uvm_wait_op.UVM_GT:  while (m_state.get <= state)
 	m_state.getEvent.wait();
       break;
       // wait(m_state >=  state);
-    case uvm_wait_op.UVM_GTE: while(m_state.get < state)
+    case uvm_wait_op.UVM_GTE: while (m_state.get < state)
 	m_state.getEvent.wait();
       break;
     }
   }
 
   //---------------
-  // Group: Jumping
+  // Group -- NODOCS -- Jumping
   //---------------
 
   // Force phases to jump forward or backward in a schedule
@@ -1198,43 +1179,20 @@ class uvm_phase: uvm_object
   // jump_all static function should be used. This function causes all schedules
   // that share a phase to jump to that phase.
 
-  // Function: jump
-  //
-  // Jump to a specified ~phase~. If the destination ~phase~ is within the current
-  // phase schedule, a simple local jump takes place. If the jump-to ~phase~ is
-  // outside of the current schedule then the jump affects other schedules which
-  // share the phase.
-  //
 
-  // jump
-  // ----
-  //
-  // Note that this function does not directly alter flow of control.
-  // That is, the new phase is not initiated in this function.
-  // Rather, flags are set which execute_phase() uses to determine
-  // that a jump has been requested and performs the jump.
-
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.9.1
   void jump(uvm_phase phase) {
     set_jump_phase(phase) ;
     end_prematurely();
   }
 
-  // Function: set_jump_phase
-  //
-  // Specify a phase to transition to when phase is complete.
-  // Note that this function is part of what jump() does; unlike jump()
-  // it does not set the flag to terminate the phase prematurely.
 
-  // set_jump_phase
-  // ----
-  //
-  // Specify a phase to transition to when phase is complete.
-
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.9.2
   void set_jump_phase(uvm_phase phase) {
     import uvm.base.uvm_object_globals;
     import uvm.base.uvm_globals;
 
-    if((m_state.get <  uvm_phase_state.UVM_PHASE_STARTED) ||
+    if ((m_state.get <  uvm_phase_state.UVM_PHASE_STARTED) ||
        (m_state.get >  uvm_phase_state.UVM_PHASE_ENDED) )
       {
 	uvm_error("JMPPHIDL", "Attempting to jump from phase \"" ~
@@ -1256,9 +1214,9 @@ class uvm_phase: uvm_object
     // make any sense.  And we don't have a valid phase to jump to.  So we're done.
 
     uvm_phase d = m_find_predecessor(phase, false);
-    if(d is null) {
+    if (d is null) {
       d = m_find_successor(phase, false);
-      if(d is null) {
+      if (d is null) {
 	uvm_fatal("PH_BADJUMP",
 		  format("phase %s is neither a predecessor or " ~
 			 "successor of phase %s or is non-existant, " ~
@@ -1281,19 +1239,10 @@ class uvm_phase: uvm_object
     m_jump_phase = d;
   }
   
-  // Function: end_prematurely
-  //
-  // Set a flag to cause the phase to end prematurely.  
-  // Note that this function is part of what jump() does; unlike jump()
-  // it does not set a jump_phase to go to after the phase ends.
 
-  // end_prematurely
-  // ----
-  //
-  // Set a flag to cause the phase to end prematurely.  
-
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.9.3
   void end_prematurely() {
-    synchronized(this) {
+    synchronized (this) {
       _m_premature_end = true;
     }
   }
@@ -1310,19 +1259,13 @@ class uvm_phase: uvm_object
 		"has been replaced by uvm_domain.jump_all");
   }
 
-  // Function: get_jump_target
-  //
-  // Return handle to the target phase of the current jump, or ~null~ if no jump
-  // is in progress. Valid for use during the phase_ended() callback
-  //
+
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.9.4
   final uvm_phase get_jump_target() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_jump_phase;
     }
   }
-
-  @uvm_public_sync
-  private uint _max_ready_to_end_iter = 20;
 
   //--------------------------
   // Internal - Implementation
@@ -1346,20 +1289,25 @@ class uvm_phase: uvm_object
   @uvm_immutable_sync
   private WithEvent!uvm_phase_state _m_state;
 
-  private int                       _m_run_count; // num times this phase has executed
   @uvm_private_sync
-  private Process                   _m_phase_proc;
+  private int                       _m_run_count; // num times this phase has executed
+
+  @uvm_private_sync
+  private Process                 _m_phase_proc;
+
+  @uvm_private_sync
+  private int                   _max_ready_to_end_iters;
 
   @uvm_public_sync
   private int                       _m_num_procs_not_yet_returned;
 
   final void inc_m_num_procs_not_yet_returned() {
-    synchronized(this) {
+    synchronized (this) {
       ++_m_num_procs_not_yet_returned;
     }
   }
   final void dec_m_num_procs_not_yet_returned() {
-    synchronized(this) {
+    synchronized (this) {
       --_m_num_procs_not_yet_returned;
     }
   }
@@ -1368,19 +1316,19 @@ class uvm_phase: uvm_object
 				     bool stay_in_scope = true,
 				     uvm_phase orig_phase = null) {
     //$display("  FIND PRED node '", phase.get_name(),"' (id=", $sformatf("%0d", phase.get_inst_id()),") - checking against ", get_name()," (", m_phase_type.name()," id=", $sformatf("%0d", get_inst_id()),(m_imp is null)?"":{"/", $sformatf("%0d", m_imp.get_inst_id())},")");
-    if(phase is null) {
+    if (phase is null) {
       return null ;
     }
-    if(phase is m_imp || phase is this) {
+    if (phase is m_imp || phase is this) {
       return this;
     }
-    foreach(pred; get_predecessors()) {
+    foreach (pred; get_predecessors()) {
       uvm_phase orig = (orig_phase is null) ? this : orig_phase;
-      if(!stay_in_scope ||
+      if (!stay_in_scope ||
 	 (pred.get_schedule() is orig.get_schedule()) ||
 	 (pred.get_domain() is orig.get_domain())) {
 	uvm_phase found = pred.m_find_predecessor(phase, stay_in_scope, orig);
-	if(found !is null) {
+	if (found !is null) {
 	  return found;
 	}
       }
@@ -1395,19 +1343,19 @@ class uvm_phase: uvm_object
 				   bool stay_in_scope = true,
 				   uvm_phase orig_phase = null) {
     //$display("  FIND SUCC node '", phase.get_name(),"' (id=", $sformatf("%0d", phase.get_inst_id()),") - checking against ", get_name()," (", m_phase_type.name()," id=", $sformatf("%0d", get_inst_id()),(m_imp is null)?"":{"/", $sformatf("%0d", m_imp.get_inst_id())},")");
-    if(phase is null) {
+    if (phase is null) {
       return null ;
     }
-    if(phase is m_imp || phase is this) {
+    if (phase is m_imp || phase is this) {
       return this;
     }
-    foreach(succ; get_successors()) {
+    foreach (succ; get_successors()) {
       uvm_phase orig = (orig_phase is null) ? this : orig_phase;
-      if(!stay_in_scope ||
+      if (!stay_in_scope ||
 	 (succ.get_schedule() is orig.get_schedule()) ||
 	 (succ.get_domain() is orig.get_domain())) {
 	uvm_phase found = succ.m_find_successor(phase, stay_in_scope, orig);
-	if(found !is null) {
+	if (found !is null) {
 	  return found;
 	}
       }
@@ -1422,17 +1370,17 @@ class uvm_phase: uvm_object
 					     bool stay_in_scope = true,
 					     uvm_phase orig_phase = null) {
     //$display("  FIND PRED node '", name,"' - checking against ", get_name()," (", m_phase_type.name()," id=", $sformatf("%0d", get_inst_id()),(m_imp is null)?"":{"/", $sformatf("%0d", m_imp.get_inst_id())},")");
-    if(get_name() == name) {
+    if (get_name() == name) {
       return this;
     }
-    foreach(pred; get_predecessors()) {
+    foreach (pred; get_predecessors()) {
       uvm_phase orig = (orig_phase is null) ? this : orig_phase;
-      if(!stay_in_scope ||
+      if (!stay_in_scope ||
 	 (pred.get_schedule() is orig.get_schedule()) ||
 	 (pred.get_domain() is orig.get_domain())) {
 	uvm_phase found =
 	  pred.m_find_predecessor_by_name(name, stay_in_scope, orig);
-	if(found !is null) {
+	if (found !is null) {
 	  return found;
 	}
       }
@@ -1449,17 +1397,17 @@ class uvm_phase: uvm_object
 					   bool stay_in_scope = true,
 					   uvm_phase orig_phase = null) {
     //$display("  FIND SUCC node '", name,"' - checking against ", get_name()," (", m_phase_type.name()," id=", $sformatf("%0d", get_inst_id()),(m_imp is null)?"":{"/", $sformatf("%0d", m_imp.get_inst_id())},")");
-    if(get_name() == name) {
+    if (get_name() == name) {
       return this;
     }
-    foreach(succ; get_successors()) {
+    foreach (succ; get_successors()) {
       uvm_phase orig = (orig_phase is null) ? this : orig_phase;
-      if(!stay_in_scope ||
+      if (!stay_in_scope ||
 	 (succ.get_schedule() is orig.get_schedule()) ||
 	 (succ.get_domain() is orig.get_domain())) {
 	uvm_phase found =
 	  succ.m_find_successor_by_name(name, stay_in_scope, orig);
-	if(found !is null) {
+	if (found !is null) {
 	  return found;
 	}
       }
@@ -1476,7 +1424,7 @@ class uvm_phase: uvm_object
     import uvm.base.uvm_globals;
     enum string spaces = "                                                 ";
     static int level;
-    if(m_phase_type is uvm_phase_type.UVM_PHASE_DOMAIN) {
+    if (m_phase_type is uvm_phase_type.UVM_PHASE_DOMAIN) {
       level = 0;
     }
     uvm_info("UVM/PHASE/SUCC",
@@ -1484,7 +1432,7 @@ class uvm_phase: uvm_object
 		    get_name(), m_phase_type, get_inst_id()),
 	     uvm_verbosity.UVM_NONE);
     ++level;
-    foreach(succ; get_successors()) {
+    foreach (succ; get_successors()) {
       succ.m_print_successors();
     }
     --level;
@@ -1507,8 +1455,8 @@ class uvm_phase: uvm_object
   //--------------------------
   private bool[uvm_phase] _m_predecessors;
   bool has_predecessors() {
-    synchronized(this) {
-      if(_m_predecessors.length > 0) {
+    synchronized (this) {
+      if (_m_predecessors.length > 0) {
 	return true;
       }
       else {
@@ -1517,8 +1465,8 @@ class uvm_phase: uvm_object
     }
   }
   bool has_predecessor(uvm_phase phase) {
-    synchronized(this) {
-      if(phase in _m_predecessors) {
+    synchronized (this) {
+      if (phase in _m_predecessors) {
 	return true;
       }
       else {
@@ -1527,17 +1475,27 @@ class uvm_phase: uvm_object
     }
   }
   void add_predecessor(uvm_phase phase) {
-    synchronized(this) {
+    synchronized (this) {
       _m_predecessors[phase] = true;
     }
   }
   void rem_predecessor(uvm_phase phase) {
-    synchronized(this) {
+    synchronized (this) {
       _m_predecessors.remove(phase);
     }
   }
+  void clr_predecessors() {
+    synchronized (this) {
+      _m_predecessors.clear();
+    }
+  }
+  void cpy_predecessors(uvm_phase from) {
+    synchronized (this) {
+      this._m_predecessors = from.dup_predecessors();
+    }
+  }
   uvm_phase[] get_predecessors() {
-    synchronized(this) {
+    synchronized (this) {
       import std.algorithm.sorting;
       auto phases = _m_predecessors.keys;
       sort(phases);
@@ -1545,15 +1503,15 @@ class uvm_phase: uvm_object
     }
   }
   auto dup_predecessors() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_predecessors.dup;
     }
   }
   
   private bool[uvm_phase] _m_successors;
   bool has_successors() {
-    synchronized(this) {
-      if(_m_successors.length > 0) {
+    synchronized (this) {
+      if (_m_successors.length > 0) {
 	return true;
       }
       else {
@@ -1562,8 +1520,8 @@ class uvm_phase: uvm_object
     }
   }
   bool has_successor(uvm_phase phase) {
-    synchronized(this) {
-      if(phase in _m_successors) {
+    synchronized (this) {
+      if (phase in _m_successors) {
 	return true;
       }
       else {
@@ -1572,17 +1530,27 @@ class uvm_phase: uvm_object
     }
   }
   void add_successor(uvm_phase phase) {
-    synchronized(this) {
+    synchronized (this) {
       _m_successors[phase] = true;
     }
   }
   void rem_successor(uvm_phase phase) {
-    synchronized(this) {
+    synchronized (this) {
       _m_successors.remove(phase);
     }
   }
+  void clr_successors() {
+    synchronized (this) {
+      _m_successors.clear();
+    }
+  }
+  void cpy_successors(uvm_phase from) {
+    synchronized (this) {
+      this._m_successors = from.dup_successors();
+    }
+  }
   uvm_phase[] get_successors() {
-    synchronized(this) {
+    synchronized (this) {
       import std.algorithm.sorting;
       auto phases = _m_successors.keys;
       sort(phases);
@@ -1590,7 +1558,7 @@ class uvm_phase: uvm_object
     }
   }
   auto dup_successors() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_successors.dup;
     }
   }
@@ -1599,14 +1567,14 @@ class uvm_phase: uvm_object
   private uvm_phase _m_end_node;
 
   final uvm_phase get_begin_node() {
-    synchronized(this) {
-      if(_m_imp !is null) return this;
+    synchronized (this) {
+      if (_m_imp !is null) return this;
       else return null;
     }
   }
 
   final uvm_phase get_end_node() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_end_node;
     }
   }
@@ -1616,28 +1584,28 @@ class uvm_phase: uvm_object
   @uvm_private_sync
   private Queue!uvm_phase _m_sync; // schedule instance to which we are synced
   private void rem_sync(uvm_phase phase) {
-    synchronized(this) {
+    synchronized (this) {
       import std.algorithm: countUntil;
       auto c = countUntil(_m_sync[], phase);
-      if(c !is -1) _m_sync.remove(c);
+      if (c !is -1) _m_sync.remove(c);
     }
   }
   private void add_sync(uvm_phase phase) {
-    synchronized(this) {
+    synchronized (this) {
       import std.algorithm: canFind;
       // m_sync is a Queue of uvm_phase
-      if(!canFind(_m_sync[], phase)) _m_sync.pushBack(phase);
+      if (!canFind(_m_sync[], phase)) _m_sync.pushBack(phase);
     }
   }
 
   @uvm_private_sync
-  private uvm_objection _phase_done; // phase done objection
+  private uvm_objection _phase_done;
 
   @uvm_private_sync
   private uint _m_ready_to_end_count;
 
   final uint get_ready_to_end_count() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_ready_to_end_count;
     }
   }
@@ -1648,7 +1616,7 @@ class uvm_phase: uvm_object
   get_predecessors_for_successors(out bool[uvm_phase] pred_of_succ) {
     import uvm.base.uvm_object_globals;
     // This synchronization guard results in deadlock
-    // synchronized(this) {
+    // synchronized (this) {
     bool done;
     uvm_phase[] successors;
 
@@ -1656,7 +1624,7 @@ class uvm_phase: uvm_object
 
     // get all predecessors to these successors
     foreach (successor; successors) {
-      foreach(pred; successor.get_predecessors()) {
+      foreach (pred; successor.get_predecessors()) {
 	pred_of_succ[pred] = true;
       }
     }
@@ -1666,16 +1634,16 @@ class uvm_phase: uvm_object
     do {
       done = true;
       import std.algorithm.sorting;
-      foreach(pred; sort(pred_of_succ.keys)) {
-	if(pred.get_phase_type() !is uvm_phase_type.UVM_PHASE_NODE) {
+      foreach (pred; sort(pred_of_succ.keys)) {
+	if (pred.get_phase_type() !is uvm_phase_type.UVM_PHASE_NODE) {
 	  pred_of_succ.remove(pred);
-	  foreach(next_pred; pred.get_predecessors()) {
+	  foreach (next_pred; pred.get_predecessors()) {
 	    pred_of_succ[next_pred] = true;
 	  }
 	  done = false;
 	}
       }
-    } while(!done);
+    } while (!done);
 
 
     // remove ourselves from the list
@@ -1714,10 +1682,10 @@ class uvm_phase: uvm_object
       }
     }
 
-    if(m_phase_trace) {
-      if(pred_of_succ.length !is 0) {
+    if (m_phase_trace) {
+      if (pred_of_succ.length !is 0) {
 	string s = "( ";
-	foreach(pred, unused; pred_of_succ) {
+	foreach (pred, unused; pred_of_succ) {
 	  s ~= pred.get_full_name() ~ " ";
 	}
 	s ~= ")";
@@ -1754,11 +1722,12 @@ class uvm_phase: uvm_object
   // -----
   // for internal graph maintenance after a forward jump
   final void clear(uvm_phase_state state = uvm_phase_state.UVM_PHASE_DORMANT) {
-    synchronized(this) {
+    uvm_objection phase_done = get_objection();
+    synchronized (this) {
       _m_state = state;
       _m_phase_proc = null;
     }
-    if(phase_done !is null) {
+    if (phase_done !is null) {
       phase_done.clear(this);
     }
   }
@@ -1772,11 +1741,11 @@ class uvm_phase: uvm_object
   // - do not clear the end phase or beyond
   final void clear_successors(uvm_phase_state state=uvm_phase_state.UVM_PHASE_DORMANT,
 			      uvm_phase end_state = null) {
-    if(this is end_state) {
+    if (this is end_state) {
       return;
     }
     clear(state);
-    foreach(succ; get_successors()) {
+    foreach (succ; get_successors()) {
       succ.clear_successors(state, end_state);
     }
   }
@@ -1803,7 +1772,9 @@ class uvm_phase: uvm_object
     uvm_phase ph = uvm_domain.get_common_domain();
     m_phase_hopper.try_put(ph);
 
-    for(;;) {
+    m_uvm_core_state = uvm_core_state.UVM_CORE_RUNNING;
+
+    for (;;) {
       uvm_phase phase_to_execute;
       m_phase_hopper.get(phase_to_execute);
       (uvm_phase phase) {
@@ -1836,14 +1807,14 @@ class uvm_phase: uvm_object
     // all its predecessor nodes to be marked DONE.
     // (the next conditional speeds this up)
     // Also, this helps us fast-forward through terminal (end) nodes
-    foreach(pred; get_predecessors()) {
-      while(pred.m_state.get != uvm_phase_state.UVM_PHASE_DONE) {
+    foreach (pred; get_predecessors()) {
+      while (pred.m_state.get != uvm_phase_state.UVM_PHASE_DONE) {
 	pred.m_state.getEvent.wait();
       }
     }
 
     // If DONE (by, say, a forward jump), return immed
-    if(m_state.get == uvm_phase_state.UVM_PHASE_DONE) {
+    if (m_state.get == uvm_phase_state.UVM_PHASE_DONE) {
       return;
     }
 
@@ -1862,26 +1833,26 @@ class uvm_phase: uvm_object
     m_state = uvm_phase_state.UVM_PHASE_SYNCING;
     uvm_do_callbacks(cb => cb.phase_state_change(this, state_chg));
     wait(0);
-    if(m_sync.length != 0) {
+    if (m_sync.length != 0) {
 
-      foreach(sync; m_sync[]) {
-	while(sync.m_state.get < uvm_phase_state.UVM_PHASE_SYNCING) {
+      foreach (sync; m_sync[]) {
+	while (sync.m_state.get < uvm_phase_state.UVM_PHASE_SYNCING) {
 	  sync.m_state.getEvent.wait();
 	}
       }
     }
 
-    synchronized(this) {
+    synchronized (this) {
       _m_run_count++;
 
 
-      if(m_phase_trace) {
+      if (m_phase_trace) {
 	UVM_PH_TRACE("PH/TRC/STRT","Starting phase", this, uvm_verbosity.UVM_LOW);
       }
     }
 
     // If we're a schedule or domain, then "fake" execution
-    if(m_phase_type !is uvm_phase_type.UVM_PHASE_NODE) {
+    if (m_phase_type !is uvm_phase_type.UVM_PHASE_NODE) {
       state_chg.m_prev_state = m_state;
       m_state = uvm_phase_state.UVM_PHASE_STARTED;
       uvm_do_callbacks(cb => cb.phase_state_change(this, state_chg));
@@ -1911,10 +1882,10 @@ class uvm_phase: uvm_object
       // #0; // LET ANY WAITERS WAKE UP
       wait(0);
 
-      task_phase = cast(uvm_task_phase) m_imp;
+      task_phase = cast (uvm_task_phase) m_imp;
 
-      //if(m_imp.get_phase_type() !is UVM_PHASE_TASK) {
-      if(task_phase is null) {
+      //if (m_imp.get_phase_type() !is UVM_PHASE_TASK) {
+      if (task_phase is null) {
 
 	//-----------
 	// EXECUTING: (function phases)
@@ -1951,16 +1922,16 @@ class uvm_phase: uvm_object
 	// Now wait for one of three criterion for end-of-phase.
 	// Fork guard = join({
 	Fork end_phase = fork!("uvm_phases/end_phase")({ // JUMP
-	    while(m_premature_end.get is false) {
+	    while (m_premature_end.get is false) {
 	      wait(m_premature_end.getEvent);
 	    }
 	    UVM_PH_TRACE("PH/TRC/EXE/JUMP","PHASE EXIT ON JUMP REQUEST",
 			 this, uvm_verbosity.UVM_DEBUG);
 	  },
 	  { // WAIT_FOR_ALL_DROPPED
-
+	    uvm_objection phase_done = get_objection();
 	    // OVM semantic: don't end until objection raised or stop request
-	    if(phase_done.get_objection_total(top) ||
+	    if (phase_done.get_objection_total(top) ||
 	       m_use_ovm_run_semantic && m_imp.get_name() == "run") {
 	      if (!phase_done.m_top_all_dropped) {
 		phase_done.wait_for(uvm_objection_event.UVM_ALL_DROPPED, top);
@@ -1982,20 +1953,20 @@ class uvm_phase: uvm_object
 	    //--------------
 
 	    bool do_ready_to_end = true; // bit used for ready_to_end iterations
-	    while(do_ready_to_end) {
+	    while (do_ready_to_end) {
 	      uvm_wait_for_nba_region(); // Let all siblings see no objections before traverse might raise another
 	      UVM_PH_TRACE("PH_READY_TO_END","PHASE READY TO END",
 			   this, uvm_verbosity.UVM_DEBUG);
-	      synchronized(this) {
+	      synchronized (this) {
 		++_m_ready_to_end_count;
-		if(m_phase_trace)
+		if (m_phase_trace)
 		  UVM_PH_TRACE("PH_READY_TO_END_CB","CALLING READY_TO_END CB",
 			       this, uvm_verbosity.UVM_HIGH);
 		state_chg.m_prev_state = _m_state;
 		_m_state = uvm_phase_state.UVM_PHASE_READY_TO_END;
 	      }
 	      uvm_do_callbacks(cb => cb.phase_state_change(this, state_chg));
-	      if(m_imp !is null) {
+	      if (m_imp !is null) {
 		m_imp.traverse(top, this, uvm_phase_state.UVM_PHASE_READY_TO_END);
 	      }
 
@@ -2003,20 +1974,20 @@ class uvm_phase: uvm_object
 
 	      wait_for_self_and_siblings_to_drop();
 
-	      synchronized(this) {
+	      synchronized (this) {
 		//when we don't wait in task above, we drop out of while loop
 		do_ready_to_end = (_m_state.get == uvm_phase_state.UVM_PHASE_EXECUTING) &&
-		  (_m_ready_to_end_count < _max_ready_to_end_iter);
+		  (_m_ready_to_end_count < get_max_ready_to_end_iterations());
 	      }
 	    }
 	  },
 	  { // TIMEOUT
-	    if(this.get_name() == "run") {
-	      while(top.phase_timeout.get == 0.sec()) {
+	    if (this.get_name() == "run") {
+	      while (top.phase_timeout.get == 0.sec()) {
 		wait(top.phase_timeout.getEvent);
 	      }
 
-	      if(m_phase_trace) {
+	      if (m_phase_trace) {
 		UVM_PH_TRACE("PH/TRC/TO_WAIT",
 			     format("STARTING PHASE TIMEOUT WATCHDOG" ~
 				    " (timeout == %s)", top.phase_timeout),
@@ -2030,20 +2001,21 @@ class uvm_phase: uvm_object
 	      auto root = cs.get_root();
 	      // TBD
 	      // if ($time == `UVM_DEFAULT_TIMEOUT) begin
-	      if(getRootEntity().getSimTime() == root.phase_sim_timeout) {
-		if(m_phase_trace) {
+	      if (getRootEntity().getSimTime() == root.phase_sim_timeout) {
+		if (m_phase_trace) {
 		  UVM_PH_TRACE("PH/TRC/TIMEOUT", "PHASE TIMEOUT WATCHDOG " ~
 			       "EXPIRED", this, uvm_verbosity.UVM_LOW);
 		}
-		foreach(p; get_executing_phases()) {
-		  if((p.phase_done !is null) &&
-		     (p.phase_done.get_objection_total() > 0)) {
-		    if(m_phase_trace)
+		foreach (p; get_executing_phases()) {
+		  uvm_objection p_phase_done = p.get_objection();
+		  if ((p_phase_done !is null) &&
+		     (p_phase_done.get_objection_total() > 0)) {
+		    if (m_phase_trace)
 		      UVM_PH_TRACE("PH/TRC/TIMEOUT/OBJCTN",
 				   format("Phase '%s' has outstanding " ~
 					  "objections:\n%s",
 					  p.get_full_name(),
-					  p.phase_done.convert2string()),
+					  p_phase_done.convert2string()),
 				   this, uvm_verbosity.UVM_LOW);
 		  }
 		}
@@ -2054,19 +2026,20 @@ class uvm_phase: uvm_object
 				 root.phase_sim_timeout));
 	      }
 	      else {
-		if(m_phase_trace) {
+		if (m_phase_trace) {
 		  UVM_PH_TRACE("PH/TRC/TIMEOUT", "PHASE TIMEOUT WATCHDOG " ~
 			       "EXPIRED", this, uvm_verbosity.UVM_LOW);
 		}
-		foreach(p; get_executing_phases()) {
-		  if((p.phase_done !is null) &&
-		     (p.phase_done.get_objection_total() > 0)) {
-		    if(m_phase_trace)
+		foreach (p; get_executing_phases()) {
+		  uvm_objection p_phase_done = p.get_objection();
+		  if ((p_phase_done !is null) &&
+		     (p_phase_done.get_objection_total() > 0)) {
+		    if (m_phase_trace)
 		      UVM_PH_TRACE("PH/TRC/TIMEOUT/OBJCTN",
 				   format("Phase '%s' has outstanding " ~
 					  "objections:\n%s",
 					  p.get_full_name(),
-					  p.phase_done.convert2string()),
+					  p_phase_done.convert2string()),
 				   this, uvm_verbosity.UVM_LOW);
 		  }
 		}
@@ -2076,7 +2049,7 @@ class uvm_phase: uvm_object
 				 "a probable testbench issue",
 				 top.phase_timeout));
 	      }
-	      if(m_phase_trace)
+	      if (m_phase_trace)
 		UVM_PH_TRACE("PH/TRC/EXE/3","PHASE EXIT TIMEOUT",
 			     this, uvm_verbosity.UVM_DEBUG);
 	    }
@@ -2107,10 +2080,10 @@ class uvm_phase: uvm_object
     // satisfied preventing deadlocks.
     // GSA TBD insert new jump support
 
-    if(get_phase_type == uvm_phase_type.UVM_PHASE_NODE) {
+    if (get_phase_type == uvm_phase_type.UVM_PHASE_NODE) {
 
-      if(m_premature_end.get) {
-	if(m_jump_phase !is null) {
+      if (m_premature_end.get) {
+	if (m_jump_phase !is null) {
 	  state_chg.m_jump_to = m_jump_phase;
 
 	  uvm_info("PH_JUMP",
@@ -2129,7 +2102,7 @@ class uvm_phase: uvm_object
 	}
 	wait(0); // #0; // LET ANY WAITERS ON READY_TO_END TO WAKE UP
 
-	if(m_phase_trace) {
+	if (m_phase_trace) {
 	  UVM_PH_TRACE("PH_END","ENDING PHASE PREMATURELY", this, uvm_verbosity.UVM_HIGH);
 	}
       }
@@ -2145,15 +2118,15 @@ class uvm_phase: uvm_object
       // ENDED:
       //-------
       // execute 'phase_ended' callbacks
-      synchronized(this) {
-	if(m_phase_trace) {
+      synchronized (this) {
+	if (m_phase_trace) {
 	  UVM_PH_TRACE("PH_END","ENDING PHASE",this,uvm_verbosity.UVM_HIGH);
 	}
 	state_chg.m_prev_state = _m_state;
 	_m_state = uvm_phase_state.UVM_PHASE_ENDED;
       }
       uvm_do_callbacks(cb => cb.phase_state_change(this, state_chg));
-      if(m_imp !is null) {
+      if (m_imp !is null) {
 	m_imp.traverse(top, this, uvm_phase_state.UVM_PHASE_ENDED);
       }
 
@@ -2163,9 +2136,9 @@ class uvm_phase: uvm_object
       // CLEANUP:
       //---------
       // kill this phase's threads
-      synchronized(this) {
+      synchronized (this) {
 	state_chg.m_prev_state = m_state;
-	if(m_premature_end.get) {
+	if (m_premature_end.get) {
 	  m_state = uvm_phase_state.UVM_PHASE_JUMPING;
 	}
 	else {
@@ -2175,16 +2148,17 @@ class uvm_phase: uvm_object
 	    
       uvm_do_callbacks(cb => cb.phase_state_change(this, state_chg));
 
-      synchronized(this) {
-	if(_m_phase_proc !is null) {
+      synchronized (this) {
+	if (_m_phase_proc !is null) {
 	  _m_phase_proc.abort();
 	  _m_phase_proc = null;
 	}
       }
 
       wait(0); // LET ANY WAITERS WAKE UP
-      if (phase_done !is null) {
-	phase_done.clear();
+      uvm_objection objection = get_objection();
+      if (objection !is null) {
+	objection.clear();
       }
     }
 
@@ -2192,9 +2166,9 @@ class uvm_phase: uvm_object
     // DONE:
     //------
     m_premature_end = false;
-    if(m_jump_fwd.get || m_jump_bkwd.get) {
+    if (m_jump_fwd.get || m_jump_bkwd.get) {
 
-      if(m_jump_fwd.get) {
+      if (m_jump_fwd.get) {
 	clear_successors(uvm_phase_state.UVM_PHASE_DONE, m_jump_phase);
       }
 
@@ -2209,7 +2183,7 @@ class uvm_phase: uvm_object
       state_chg.m_prev_state = m_state;
       m_state = uvm_phase_state.UVM_PHASE_DONE;
       uvm_do_callbacks(cb => cb.phase_state_change(this, state_chg));
-      synchronized(this) {
+      synchronized (this) {
 	_m_phase_proc = null;
       }
       wait(0); // LET ANY WAITERS WAKE UP
@@ -2217,14 +2191,15 @@ class uvm_phase: uvm_object
 
     wait(0); // LET ANY WAITERS WAKE UP
 
-    if (phase_done !is null) {
-      phase_done.clear();
+    uvm_objection objection = get_objection();
+    if (objection !is null) {
+      objection.clear();
     }
 
     //-----------
     // SCHEDULED:
     //-----------
-    if(m_jump_fwd.get || m_jump_bkwd.get) {
+    if (m_jump_fwd.get || m_jump_bkwd.get) {
       m_phase_hopper.try_put(m_jump_phase);
       m_jump_phase = null;
       m_jump_fwd = false;
@@ -2233,21 +2208,21 @@ class uvm_phase: uvm_object
     }
 
     // If more successors, schedule them to run now
-    else if(! has_successors()) {
+    else if (! has_successors()) {
       top.m_phase_all_done = true;
     }
     else {
       // execute all the successors
-      foreach(succ; get_successors()) {
-	if(succ.m_state.get < uvm_phase_state.UVM_PHASE_SCHEDULED) {
+      foreach (succ; get_successors()) {
+	if (succ.m_state.get < uvm_phase_state.UVM_PHASE_SCHEDULED) {
 	  state_chg.m_prev_state = succ.m_state;
 	  state_chg.m_phase = succ;
 	  succ.m_state = uvm_phase_state.UVM_PHASE_SCHEDULED;
 	  uvm_do_callbacks(cb => cb.phase_state_change(succ, state_chg));
 	  wait(0); // LET ANY WAITERS WAKE UP
-	  synchronized(this) {
+	  synchronized (this) {
 	    m_phase_hopper.try_put(succ);
-	    if(m_phase_trace) {
+	    if (m_phase_trace) {
 	      UVM_PH_TRACE("PH/TRC/SCHEDULED", "Scheduled from phase " ~
 			   get_full_name(), succ, uvm_verbosity.UVM_LOW);
 	    }
@@ -2261,9 +2236,10 @@ class uvm_phase: uvm_object
   // ---------------
 
   void m_terminate_phase() {
-    synchronized(this) {
-      if(_phase_done !is null) {
-	_phase_done.clear(this);
+    synchronized (this) {
+      uvm_objection phase_done = get_objection();
+      if (phase_done !is null) {
+	phase_done.clear(this);
       }
     }
   }
@@ -2277,10 +2253,11 @@ class uvm_phase: uvm_object
     import uvm.base.uvm_coreservice;
     import uvm.base.uvm_object_globals;
     import uvm.base.uvm_globals;
-    synchronized(this) {
+    synchronized (this) {
       uvm_coreservice_t cs = uvm_coreservice_t.get();
       uvm_root top = cs.get_root();
-      if(phase_done !is null) {
+      uvm_objection phase_done = get_objection();
+      if (phase_done !is null) {
 	uvm_info("PH_TERMSTATE",
 		 format("phase %s outstanding objections = %0d",
 			get_name(), phase_done.get_objection_total(top)),
@@ -2309,15 +2286,16 @@ class uvm_phase: uvm_object
 
     get_predecessors_for_successors(siblings);
 
-    foreach(s; m_sync[]) {
+    foreach (s; m_sync[]) {
       siblings[s] = true;
     }
 
-    while(need_to_check_all) {
+    while (need_to_check_all) {
+      uvm_objection phase_done = get_objection();
       need_to_check_all = false ; //if all are dropped, we won't need to do this again
 
       // wait for own objections to drop
-      if((phase_done !is null) &&
+      if ((phase_done !is null) &&
 	 (phase_done.get_objection_total(top) != 0)) {
 	m_state = uvm_phase_state.UVM_PHASE_EXECUTING;
 	phase_done.wait_for(uvm_objection_event.UVM_ALL_DROPPED, top);
@@ -2325,12 +2303,13 @@ class uvm_phase: uvm_object
       }
 
       // now wait for siblings to drop
-      foreach(sib, unused; siblings) {
+      foreach (sib, unused; siblings) {
+	uvm_objection sib_phase_done = sib.get_objection();
 	sib.wait_for_state(uvm_phase_state.UVM_PHASE_EXECUTING, uvm_wait_op.UVM_GTE); // sibling must be at least executing
-	if((sib.phase_done !is null) &&
-	   (sib.phase_done.get_objection_total(top) != 0)) {
+	if ((sib_phase_done !is null) &&
+	   (sib_phase_done.get_objection_total(top) != 0)) {
 	  m_state = uvm_phase_state.UVM_PHASE_EXECUTING;
-	  sib.phase_done.wait_for(uvm_objection_event.UVM_ALL_DROPPED, top); // sibling must drop any objection
+	  sib_phase_done.wait_for(uvm_objection_event.UVM_ALL_DROPPED, top); // sibling must drop any objection
 	  need_to_check_all = true;
 	}
       }
@@ -2343,10 +2322,10 @@ class uvm_phase: uvm_object
   final void kill() {
     import uvm.base.uvm_globals;
     import uvm.base.uvm_object_globals;
-    synchronized(this) {
+    synchronized (this) {
       uvm_info("PH_KILL", "killing phase '" ~ get_name() ~ "'", uvm_verbosity.UVM_DEBUG);
 
-      if(_m_phase_proc !is null) {
+      if (_m_phase_proc !is null) {
 	_m_phase_proc.abort();
 	_m_phase_proc = null;
       }
@@ -2361,7 +2340,7 @@ class uvm_phase: uvm_object
   // Using a depth-first traversal, kill all the successor phases of the
   // current phase.
   final void kill_successors() {
-    foreach(succ; get_successors())
+    foreach (succ; get_successors())
       succ.kill_successors();
     kill();
   }
@@ -2371,7 +2350,7 @@ class uvm_phase: uvm_object
   //---------------------------------
 
   override  string convert2string() {
-    synchronized(this) {
+    synchronized (this) {
       //return $sformatf("PHASE %s = %p", get_name(), this);
       string s = format("phase: %s parent=%s  pred=%s  succ=%s", get_name(),
 			(_m_parent is null) ? "null" : get_schedule_name(),
@@ -2384,7 +2363,7 @@ class uvm_phase: uvm_object
   final private string m_aa2string(uvm_phase[] aa) { // TBD tidy
     int i;
     string s = "'{ ";
-    foreach(ph; aa) {
+    foreach (ph; aa) {
       uvm_phase n = ph;
       s ~=  (n is null) ? "null" : n.get_name() ~
 	(i is aa.length-1) ? "" : " ~  ";
@@ -2396,14 +2375,14 @@ class uvm_phase: uvm_object
 
   final bool is_domain() {
     import uvm.base.uvm_object_globals;
-    synchronized(this) {
-      return(m_phase_type == uvm_phase_type.UVM_PHASE_DOMAIN);
+    synchronized (this) {
+      return (m_phase_type == uvm_phase_type.UVM_PHASE_DOMAIN);
     }
   }
 
   void m_get_transitive_children(ref Queue!uvm_phase phases) {
-    synchronized(this) {
-      foreach(succ; get_successors()) {
+    synchronized (this) {
+      foreach (succ; get_successors()) {
 	phases.pushBack(succ);
 	succ.m_get_transitive_children(phases);
       }
@@ -2411,8 +2390,8 @@ class uvm_phase: uvm_object
   }
 
   void m_get_transitive_children(ref uvm_phase[] phases) {
-    synchronized(this) {
-      foreach(succ; get_successors()) {
+    synchronized (this) {
+      foreach (succ; get_successors()) {
 	phases ~= succ;
 	succ.m_get_transitive_children(phases);
       }
@@ -2421,7 +2400,7 @@ class uvm_phase: uvm_object
 
   final uvm_phase[] m_get_transitive_children() {
     uvm_phase[] phases;
-    foreach(succ; get_successors()) {
+    foreach (succ; get_successors()) {
       phases ~= succ;
       phases ~= succ.m_get_transitive_children();
     }
@@ -2433,11 +2412,33 @@ class uvm_phase: uvm_object
     else if (get_name() < other.get_name()) return -1;
     else return 0;
   }
+
+  
+  
+  // @uvm-ieee 1800.2-2017 auto 9.3.1.7.1
+  uvm_objection get_objection() {
+    synchronized (this) {
+      uvm_phase imp = get_imp();
+      uvm_task_phase tp = cast (uvm_task_phase) imp;
+      // Only nodes with a non-null uvm_task_phase imp have objections
+      if ((get_phase_type() != uvm_phase_type.UVM_PHASE_NODE) ||
+	  (imp is null) || (tp is null)) {
+	return null;
+      }
+      if (phase_done is null) {
+	phase_done =
+	  uvm_objection.type_id.create(get_name() ~ "_objection");
+      }
+      return phase_done;
+    }
+  }
+
+  
 }
 
 //------------------------------------------------------------------------------
 //
-// Class: uvm_phase_state_change
+// Class -- NODOCS -- uvm_phase_state_change
 //
 //------------------------------------------------------------------------------
 //
@@ -2446,10 +2447,11 @@ class uvm_phase: uvm_object
 // <uvm_phase_cb::phase_state_changed()> callback to be invoked.
 //
 
+// @uvm-ieee 1800.2-2017 auto 9.3.2.1
 class uvm_phase_state_change: uvm_object
 {
 
-  mixin(uvm_sync_string);
+  mixin (uvm_sync_string);
 
   mixin uvm_object_essentials;
 
@@ -2466,35 +2468,25 @@ class uvm_phase_state_change: uvm_object
   }
 
 
-  // Function: get_state()
-  //
-  // Returns the state the phase just transitioned to.
-  // Functionally equivalent to <uvm_phase::get_state()>.
-  //
+  // @uvm-ieee 1800.2-2017 auto 9.3.2.2.1
   uvm_phase_state get_state() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_phase.get_state();
     }
   }
   
-  // Function: get_prev_state()
-  //
-  // Returns the state the phase just transitioned from.
-  //
+
+  // @uvm-ieee 1800.2-2017 auto 9.3.2.2.2
   uvm_phase_state get_prev_state() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_prev_state;
     }
   }
 
-  // Function: jump_to()
-  //
-  // If the current state is ~UVM_PHASE_ENDED~ or ~UVM_PHASE_JUMPING~ because of
-  // a phase jump, returns the phase that is the target of jump.
-  // Returns ~null~ otherwise.
-  //
+
+  // @uvm-ieee 1800.2-2017 auto 9.3.2.2.3
   uvm_phase jump_to() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_jump_to;
     }
   }
@@ -2503,7 +2495,7 @@ class uvm_phase_state_change: uvm_object
 
 //------------------------------------------------------------------------------
 //
-// Class: uvm_phase_cb
+// Class -- NODOCS -- uvm_phase_cb
 //
 //------------------------------------------------------------------------------
 //
@@ -2513,42 +2505,32 @@ class uvm_phase_state_change: uvm_object
 // are not natively phase-aware with the UVM phasing.
 //
 
+// @uvm-ieee 1800.2-2017 auto 9.3.3.1
 class uvm_phase_cb: uvm_callback
 {
 
-  // Function: new
-  // Constructor
+
+  // @uvm-ieee 1800.2-2017 auto 9.3.3.2.1
   this(string name="unnamed-uvm_phase_cb") {
     super(name);
   }
    
-  // Function: phase_state_change
-  //
-  // Called whenever a ~phase~ changes state.
-  // The ~change~ descriptor describes the transition that was just completed.
-  // The callback method is invoked immediately after the phase state has changed,
-  // but before the phase implementation is executed.
-  //
-  // An extension may interact with the phase,
-  // such as raising the phase objection to prolong the phase,
-  // in a manner that is consistent with the current phase state.
-  //
-  // By default, the callback method does nothing.
-  // Unless otherwise specified, modifying the  phase transition descriptor has
-  // no effect on the phasing schedule or execution.
-  //
+
+  // @uvm-ieee 1800.2-2017 auto 9.3.3.2.2
   void phase_state_change(uvm_phase phase,
 			  uvm_phase_state_change change) {}
 }
 
 //------------------------------------------------------------------------------
 //
-// Class: uvm_phase_cb_pool
+// Class -- NODOCS -- uvm_phase_cb_pool
 //
 //------------------------------------------------------------------------------
 //
 // Convenience type for the uvm_callbacks#(uvm_phase, uvm_phase_cb) class.
 //
+
+// @uvm-ieee 1800.2-2017 auto D.4.1
 alias uvm_phase_cb_pool = uvm_callbacks!(uvm_phase, uvm_phase_cb);
 
 

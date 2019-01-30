@@ -40,15 +40,7 @@
 
 module uvm.reg.uvm_mem;
 
-import uvm.base.uvm_callback;
-import uvm.base.uvm_object;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_pool;
-import uvm.base.uvm_queue;
-import uvm.base.uvm_printer;
-import uvm.base.uvm_comparer;
-import uvm.base.uvm_packer;
-import uvm.base.uvm_globals;
+import uvm.base;
 
 import uvm.seq.uvm_sequence_base;
 
@@ -76,39 +68,102 @@ class uvm_mem: uvm_object
   // init_e is not used anywhere 
   // enum init_e: byte {UNKNOWNS, ZEROES, ONES, ADDRESS, VALUE, INCR, DECR}
 
-  mixin(uvm_sync_string);
-  @uvm_private_sync
+  // mixin(uvm_sync_string);
+  // @uvm_private_sync
   private bool               _m_locked;
-  @uvm_private_sync
+  // uvm_sync_private _m_locked bool
+  final private bool m_locked() {synchronized(this) return this._m_locked;}
+  final private void m_locked(bool val) {synchronized(this) this._m_locked = val;}
+
+  // @uvm_private_sync
   private bool               _m_read_in_progress;
-  @uvm_private_sync
+  // uvm_sync_private _m_read_in_progress bool
+  final private bool m_read_in_progress() {synchronized(this) return this._m_read_in_progress;}
+  final private void m_read_in_progress(bool val) {synchronized(this) this._m_read_in_progress = val;}
+
+  // @uvm_private_sync
   private bool               _m_write_in_progress;
-  @uvm_private_sync
+  // uvm_sync_private _m_write_in_progress bool
+  final private bool m_write_in_progress() {synchronized(this) return this._m_write_in_progress;}
+  final private void m_write_in_progress(bool val) {synchronized(this) this._m_write_in_progress = val;}
+
+  // @uvm_private_sync
   private string             _m_access;
-  @uvm_private_sync
+  // uvm_sync_private _m_access string
+  final private string m_access() {synchronized(this) return this._m_access;}
+  final private void m_access(string val) {synchronized(this) this._m_access = val;}
+
+  // @uvm_private_sync
   private ulong              _m_size;
-  @uvm_private_sync
+  // uvm_sync_private _m_size ulong
+  final private ulong m_size() {synchronized(this) return this._m_size;}
+  final private void m_size(ulong val) {synchronized(this) this._m_size = val;}
+
+  // @uvm_private_sync
   private uvm_reg_block      _m_parent;
-  @uvm_private_sync
+  // uvm_sync_private _m_parent uvm_reg_block
+  final private uvm_reg_block m_parent() {synchronized(this) return this._m_parent;}
+  final private void m_parent(uvm_reg_block val) {synchronized(this) this._m_parent = val;}
+
+  // @uvm_private_sync
   private bool[uvm_reg_map]  _m_maps;
-  @uvm_private_sync
+  // uvm_sync_private _m_maps bool[uvm_reg_map]
+  final private bool[uvm_reg_map] m_maps() {synchronized(this) return this._m_maps;}
+  final private void m_maps(bool[uvm_reg_map] val) {synchronized(this) this._m_maps = val;}
+
+  // @uvm_private_sync
   private uint               _m_n_bits;
-  @uvm_private_sync
+  // uvm_sync_private _m_n_bits uint
+  final private uint m_n_bits() {synchronized(this) return this._m_n_bits;}
+  final private void m_n_bits(uint val) {synchronized(this) this._m_n_bits = val;}
+
+  // @uvm_private_sync
   private uvm_reg_backdoor   _m_backdoor;
-  @uvm_private_sync
+  // uvm_sync_private _m_backdoor uvm_reg_backdoor
+  final private uvm_reg_backdoor m_backdoor() {synchronized(this) return this._m_backdoor;}
+  final private void m_backdoor(uvm_reg_backdoor val) {synchronized(this) this._m_backdoor = val;}
+
+  // @uvm_private_sync
   private bool               _m_is_powered_down;
-  @uvm_private_sync
+  // uvm_sync_private _m_is_powered_down bool
+  final private bool m_is_powered_down() {synchronized(this) return this._m_is_powered_down;}
+  final private void m_is_powered_down(bool val) {synchronized(this) this._m_is_powered_down = val;}
+
+  // @uvm_private_sync
   private int                _m_has_cover;
-  @uvm_private_sync
+  // uvm_sync_private _m_has_cover int
+  final private int m_has_cover() {synchronized(this) return this._m_has_cover;}
+  final private void m_has_cover(int val) {synchronized(this) this._m_has_cover = val;}
+
+  // @uvm_private_sync
   private int                _m_cover_on;
-  @uvm_private_sync
+  // uvm_sync_private _m_cover_on int
+  final private int m_cover_on() {synchronized(this) return this._m_cover_on;}
+  final private void m_cover_on(int val) {synchronized(this) this._m_cover_on = val;}
+
+  // @uvm_private_sync
   private string             _m_fname;
-  @uvm_private_sync
+  // uvm_sync_private _m_fname string
+  final private string m_fname() {synchronized(this) return this._m_fname;}
+  final private void m_fname(string val) {synchronized(this) this._m_fname = val;}
+
+  // @uvm_private_sync
   private int                _m_lineno;
-  @uvm_private_sync
+  // uvm_sync_private _m_lineno int
+  final private int m_lineno() {synchronized(this) return this._m_lineno;}
+  final private void m_lineno(int val) {synchronized(this) this._m_lineno = val;}
+
+  // @uvm_private_sync
   private bool[uvm_vreg]     _m_vregs;
-  @uvm_private_sync
+  // uvm_sync_private _m_vregs bool[uvm_vreg]
+  final private bool[uvm_vreg] m_vregs() {synchronized(this) return this._m_vregs;}
+  final private void m_vregs(bool[uvm_vreg] val) {synchronized(this) this._m_vregs = val;}
+
+  // @uvm_private_sync
   private uvm_object_string_pool!(uvm_queue!(uvm_hdl_path_concat)) _m_hdl_paths_pool;
+  // uvm_sync_private _m_hdl_paths_pool uvm_object_string_pool!(uvm_queue!(uvm_hdl_path_concat))
+  final private uvm_object_string_pool!(uvm_queue!(uvm_hdl_path_concat)) m_hdl_paths_pool() {synchronized(this) return this._m_hdl_paths_pool;}
+  final private void m_hdl_paths_pool(uvm_object_string_pool!(uvm_queue!(uvm_hdl_path_concat)) val) {synchronized(this) this._m_hdl_paths_pool = val;}
 
   // FIXME -- my assumption is that the next field is required only
   //  for the reason that SV does not have full blown generic programming
@@ -328,9 +383,11 @@ class uvm_mem: uvm_object
   // specific sizes, such as DMA buffers,
   // or to locate virtual register array.
   //
-  @uvm_public_sync
-  uvm_mem_mam _mam;
-
+  // @uvm_public_sync
+  private uvm_mem_mam _mam;
+  // uvm_sync_public _mam uvm_mem_mam
+  final public uvm_mem_mam mam() {synchronized(this) return this._mam;}
+  final public void mam(uvm_mem_mam val) {synchronized(this) this._mam = val;}
 
   //---------------------
   // Group: Introspection
@@ -2429,8 +2486,8 @@ class uvm_mem: uvm_object
     import uvm.base.uvm_object_globals;
     super.do_print(printer);
     //printer.print_generic(" ", " ", -1, convert2string());
-    printer.print_int("n_bits", get_n_bits(), 32, uvm_radix_enum.UVM_UNSIGNED);
-    printer.print_int("size", get_size(), 32, uvm_radix_enum.UVM_UNSIGNED);
+    printer.print_field("n_bits", get_n_bits(), 32, uvm_radix_enum.UVM_UNSIGNED);
+    printer.print_field("size", get_size(), 32, uvm_radix_enum.UVM_UNSIGNED);
   }
 
 

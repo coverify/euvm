@@ -1,7 +1,9 @@
 //----------------------------------------------------------------------
-//   Copyright 2010 Mentor Graphics Corporation
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2016 Coverify Systems Technology
+// Copyright 2016-2019 Coverify Systems Technology
+// Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2010-2018 Synopsys, Inc.
+// Copyright 2011-2018 Cadence Design Systems, Inc.
+// Copyright 2015-2018 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -22,7 +24,7 @@
 module uvm.tlm2.uvm_tlm2_sockets_base;
 
 //----------------------------------------------------------------------
-// Title: TLM Socket Base Classes
+// Title -- NODOCS -- UVM TLM Socket Base Classes
 //
 // A collection of base classes, one for each socket type.  The reason
 // for having a base class for each socket is that all the socket (base)
@@ -31,7 +33,7 @@ module uvm.tlm2.uvm_tlm2_sockets_base;
 // visible.
 //
 // Termination Sockets - A termination socket must be the terminus
-// of every TLM path.  A transaction originates with an initiator socket
+// of every UVM TLM path.  A transaction originates with an initiator socket
 // and ultimately ends up in a target socket.  There may be zero or more
 // pass-through sockets between initiator and target.
 //
@@ -42,233 +44,232 @@ module uvm.tlm2.uvm_tlm2_sockets_base;
 
 
 //----------------------------------------------------------------------
-// Class: uvm_tlm_b_target_socket_base
+// Class -- NODOCS -- uvm_tlm_b_target_socket_base
 //
 // IS-A forward imp; has no backward path except via the payload
 // contents.
 //----------------------------------------------------------------------
-class uvm_tlm_b_target_socket_base(T=uvm_tlm_generic_payload)
+abstract class uvm_tlm_b_target_socket_base(T=uvm_tlm_generic_payload)
   : uvm_port_base!(uvm_tlm_if!(T))
-  {
-    this(string name, uvm_component parent) {
-      synchronized(this) {
-	super(name, parent, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
-	m_if_mask = UVM_TLM_B_MASK;
-      }
-    }
-    // `UVM_TLM_GET_TYPE_NAME("uvm_tlm_b_target_socket")
-    string get_type_name() {
-      return qualifiedTypeName(typeof(this));
+{
+  this(string name, uvm_component parent) {
+    synchronized (this) {
+      super(name, parent, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
+      m_if_mask = UVM_TLM_B_MASK;
     }
   }
+  // `UVM_TLM_GET_TYPE_NAME("uvm_tlm_b_target_socket")
+  string get_type_name() {
+    return qualifiedTypeName(typeof(this));
+  }
+}
 
 //----------------------------------------------------------------------
-// Class: uvm_tlm_b_initiator_socket_base
+// Class -- NODOCS -- uvm_tlm_b_initiator_socket_base
 //
 // IS-A forward port; has no backward path except via the payload
 // contents
 //----------------------------------------------------------------------
-class uvm_tlm_b_initiator_socket_base(T=uvm_tlm_generic_payload)
+abstract class uvm_tlm_b_initiator_socket_base(T=uvm_tlm_generic_payload)
   : uvm_port_base!(uvm_tlm_if!(T))
-  {
-    // `UVM_PORT_COMMON(`UVM_TLM_B_MASK, "uvm_tlm_b_initiator_socket")
-    this(string name, uvm_component parent,
-	 int min_size=1, int max_size=1) {
-      synchronized(this) {
-	super(name, parent, uvm_port_type_e.UVM_PORT, min_size, max_size);
-	m_if_mask = UVM_TLM_B_MASK;
-      }
-    }
-    string get_type_name() {
-      return qualifiedTypeName(typeof(this));
-    }
-    // `UVM_TLM_B_TRANSPORT_IMP(this.m_if, T, t, delay)
-    // task
-    void b_transport(T t, uvm_tlm_time delay) {
-      if(delay is null) {
-	uvm_error("UVM/TLM/NULLDELAY", get_full_name() ~
-		  ".b_transport() called with 'null' delay");
-	return;
-      }
-      this.mf_if.b_transport(t, delay);
+{
+  // `UVM_PORT_COMMON(`UVM_TLM_B_MASK, "uvm_tlm_b_initiator_socket")
+  this(string name, uvm_component parent,
+       int min_size=1, int max_size=1) {
+    synchronized (this) {
+      super(name, parent, uvm_port_type_e.UVM_PORT, min_size, max_size);
+      m_if_mask = UVM_TLM_B_MASK;
     }
   }
+  string get_type_name() {
+    return qualifiedTypeName(typeof(this));
+  }
+  // `UVM_TLM_B_TRANSPORT_IMP(this.m_if, T, t, delay)
+  // task
+  void b_transport(T t, uvm_tlm_time delay) {
+    if (delay is null) {
+      uvm_error("UVM/TLM/NULLDELAY", get_full_name() ~
+		".b_transport() called with 'null' delay");
+      return;
+    }
+    this.mf_if.b_transport(t, delay);
+  }
+}
 
 //----------------------------------------------------------------------
-// Class: uvm_tlm_nb_target_socket_base
+// Class -- NODOCS -- uvm_tlm_nb_target_socket_base
 //
 // IS-A forward imp; HAS-A backward port
 //----------------------------------------------------------------------
-class uvm_tlm_nb_target_socket_base(T=uvm_tlm_generic_payload,
-				    P=uvm_tlm_phase_e)
+abstract class uvm_tlm_nb_target_socket_base(T=uvm_tlm_generic_payload,
+					     P=uvm_tlm_phase_e)
   : uvm_port_base!(uvm_tlm_if!(T,P))
-  {
+{
 
-    uvm_tlm_nb_transport_bw_port!(T,P) bw_port;
+  uvm_tlm_nb_transport_bw_port!(T,P) bw_port;
 
-    this(string name, uvm_component parent) {
-      synchronized(this) {
-	super (name, parent, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
-	m_if_mask = UVM_TLM_NB_FW_MASK;
-      }
-    }
-
-    // `UVM_TLM_GET_TYPE_NAME("uvm_tlm_nb_target_socket")
-    string get_type_name() {
-      return qualifiedTypeName(typeof(this));
-    }
-
-    // `UVM_TLM_NB_TRANSPORT_BW_IMP(bw_port, T, P, t, p, delay)
-    uvm_tlm_sync_e nb_transport_bw(T t, ref P p, in uvm_tlm_time delay) {
-      if (delay is null) {
-	uvm_error("UVM/TLM/NULLDELAY", get_full_name(),
-		  ".nb_transport_bw() called with 'null' delay");
-	return UVM_TLM_COMPLETED;
-      }
-      return bw_port.nb_transport_bw(t, p, delay);
+  this(string name, uvm_component parent) {
+    synchronized (this) {
+      super (name, parent, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
+      m_if_mask = UVM_TLM_NB_FW_MASK;
     }
   }
 
+  // `UVM_TLM_GET_TYPE_NAME("uvm_tlm_nb_target_socket")
+  string get_type_name() {
+    return qualifiedTypeName(typeof(this));
+  }
+
+  // `UVM_TLM_NB_TRANSPORT_BW_IMP(bw_port, T, P, t, p, delay)
+  uvm_tlm_sync_e nb_transport_bw(T t, ref P p, in uvm_tlm_time delay) {
+    if (delay is null) {
+      uvm_error("UVM/TLM/NULLDELAY", get_full_name(),
+		".nb_transport_bw() called with 'null' delay");
+      return UVM_TLM_COMPLETED;
+    }
+    return bw_port.nb_transport_bw(t, p, delay);
+  }
+}
+
 //----------------------------------------------------------------------
-// Class: uvm_tlm_nb_initiator_socket_base
+// Class -- NODOCS -- uvm_tlm_nb_initiator_socket_base
 //
 // IS-A forward port; HAS-A backward imp
 //----------------------------------------------------------------------
-class uvm_tlm_nb_initiator_socket_base(T=uvm_tlm_generic_payload,
-				       P=uvm_tlm_phase_e)
+abstract class uvm_tlm_nb_initiator_socket_base(T=uvm_tlm_generic_payload,
+						P=uvm_tlm_phase_e)
   : uvm_port_base!(uvm_tlm_if!(T,P))
-  {
-    this(string name, uvm_component parent) {
-      synchronized(this) {
-	super (name, parent, uvm_port_type_e.UVM_PORT, 1, 1);
-	m_if_mask = UVM_TLM_NB_FW_MASK;
-      }
-    }
-
-    // `UVM_TLM_GET_TYPE_NAME("uvm_tlm_nb_initiator_socket")
-    string get_type_name() {
-      return qualifiedTypeName(typeof(this));
-    }
-
-    // `UVM_TLM_NB_TRANSPORT_FW_IMP(this.m_if, T, P, t, p, delay)
-    uvm_tlm_sync_e nb_transport_fw(T t, ref P p, in uvm_tlm_time delay) {
-      if (delay is null) {
-	uvm_error("UVM/TLM/NULLDELAY", get_full_name() ~
-		  ".nb_transport_fw() called with 'null' delay");
-	return UVM_TLM_COMPLETED;
-      }
-      return this.mf_if.nb_transport_fw(t, p, delay);
+{
+  this(string name, uvm_component parent) {
+    synchronized (this) {
+      super (name, parent, uvm_port_type_e.UVM_PORT, 1, 1);
+      m_if_mask = UVM_TLM_NB_FW_MASK;
     }
   }
 
+  // `UVM_TLM_GET_TYPE_NAME("uvm_tlm_nb_initiator_socket")
+  string get_type_name() {
+    return qualifiedTypeName(typeof(this));
+  }
+
+  // `UVM_TLM_NB_TRANSPORT_FW_IMP(this.m_if, T, P, t, p, delay)
+  uvm_tlm_sync_e nb_transport_fw(T t, ref P p, in uvm_tlm_time delay) {
+    if (delay is null) {
+      uvm_error("UVM/TLM/NULLDELAY", get_full_name() ~
+		".nb_transport_fw() called with 'null' delay");
+      return UVM_TLM_COMPLETED;
+    }
+    return this.mf_if.nb_transport_fw(t, p, delay);
+  }
+}
+
 
 //----------------------------------------------------------------------
-// Class: uvm_tlm_nb_passthrough_initiator_socket_base
+// Class -- NODOCS -- uvm_tlm_nb_passthrough_initiator_socket_base
 //
 // IS-A forward port; HAS-A backward export
 //----------------------------------------------------------------------
-class uvm_tlm_nb_passthrough_initiator_socket_base(T=uvm_tlm_generic_payload,
-						   P=uvm_tlm_phase_e)
+abstract class uvm_tlm_nb_passthrough_initiator_socket_base(T=uvm_tlm_generic_payload,
+							    P=uvm_tlm_phase_e)
   : uvm_port_base!(uvm_tlm_if!(T,P))
-  {
+{
     
-    uvm_tlm_nb_transport_bw_export!(T,P) bw_export;
+  uvm_tlm_nb_transport_bw_export!(T,P) bw_export;
 
-    this(string name, uvm_component parent,
-	 int min_size=1, int max_size=1) {
-      synchronized(this) {
-	super(name, parent, uvm_port_type_e.UVM_PORT, min_size, max_size);
-	m_if_mask = UVM_TLM_NB_FW_MASK;
-	bw_export = new uvm_tlm_nb_transport_bw_export!(T,P)("bw_export",
-							     get_comp());
-      }
+  this(string name, uvm_component parent,
+       int min_size=1, int max_size=1) {
+    synchronized (this) {
+      super(name, parent, uvm_port_type_e.UVM_PORT, min_size, max_size);
+      m_if_mask = UVM_TLM_NB_FW_MASK;
+      bw_export = new uvm_tlm_nb_transport_bw_export!(T,P)("bw_export",
+							   get_comp());
     }
-
-    // `UVM_TLM_GET_TYPE_NAME("uvm_tlm_nb_passthrough_initiator_socket")
-    string get_type_name() {
-      return qualifiedTypeName(typeof(this));
-    }
-
-    // `UVM_TLM_NB_TRANSPORT_FW_IMP(this.m_if, T, P, t, p, delay)
-    mixin UVM_TLM_NB_TRANSPORT_FW_IMP!(this.m_if, T, P);
-    // `UVM_TLM_NB_TRANSPORT_BW_IMP(bw_export, T, P, t, p, delay)
-    mixin UVM_TLM_NB_TRANSPORT_BW_IMP!(bw_export, T, P);
   }
 
+  // `UVM_TLM_GET_TYPE_NAME("uvm_tlm_nb_passthrough_initiator_socket")
+  string get_type_name() {
+    return qualifiedTypeName(typeof(this));
+  }
+
+  // `UVM_TLM_NB_TRANSPORT_FW_IMP(this.m_if, T, P, t, p, delay)
+  mixin UVM_TLM_NB_TRANSPORT_FW_IMP!(this.m_if, T, P);
+  // `UVM_TLM_NB_TRANSPORT_BW_IMP(bw_export, T, P, t, p, delay)
+  mixin UVM_TLM_NB_TRANSPORT_BW_IMP!(bw_export, T, P);
+}
+
 //----------------------------------------------------------------------
-// Class: uvm_tlm_nb_passthrough_target_socket_base
+// Class -- NODOCS -- uvm_tlm_nb_passthrough_target_socket_base
 //
 // IS-A forward export; HAS-A backward port
 //----------------------------------------------------------------------
-class uvm_tlm_nb_passthrough_target_socket_base(T=uvm_tlm_generic_payload,
-						P=uvm_tlm_phase_e)
+abstract class uvm_tlm_nb_passthrough_target_socket_base(T=uvm_tlm_generic_payload,
+							 P=uvm_tlm_phase_e)
   : uvm_port_base!(uvm_tlm_if!(T,P))
-  {
+{
 
-    uvm_tlm_nb_transport_bw_port!(T,P) bw_port;
+  uvm_tlm_nb_transport_bw_port!(T,P) bw_port;
 
-    this(string name, uvm_component parent,
-	 int min_size=1, int max_size=1) {
-      super (name, parent, uvm_port_type_e.UVM_EXPORT, min_size, max_size);
-      m_if_mask = UVM_TLM_NB_FW_MASK;
-      bw_port = new uvm_tlm_nb_transport_bw_port!(T,P)("bw_port", get_comp());
-    }
-
-    string get_type_name() {
-      return qualifiedTypeName(typeof(this));
-    }
-
-    // `UVM_TLM_NB_TRANSPORT_FW_IMP(this.m_if, T, P, t, p, delay)
-    mixin UVM_TLM_NB_TRANSPORT_FW_IMP!(this.m_if, T, P);
-    // `UVM_TLM_NB_TRANSPORT_BW_IMP(bw_port, T, P, t, p, delay)
-    mixin UVM_TLM_NB_TRANSPORT_BW_IMP!(bw_port, T, P);
+  this(string name, uvm_component parent,
+       int min_size=1, int max_size=1) {
+    super (name, parent, uvm_port_type_e.UVM_EXPORT, min_size, max_size);
+    m_if_mask = UVM_TLM_NB_FW_MASK;
+    bw_port = new uvm_tlm_nb_transport_bw_port!(T,P)("bw_port", get_comp());
   }
 
+  string get_type_name() {
+    return qualifiedTypeName(typeof(this));
+  }
+
+  // `UVM_TLM_NB_TRANSPORT_FW_IMP(this.m_if, T, P, t, p, delay)
+  mixin UVM_TLM_NB_TRANSPORT_FW_IMP!(this.m_if, T, P);
+  // `UVM_TLM_NB_TRANSPORT_BW_IMP(bw_port, T, P, t, p, delay)
+  mixin UVM_TLM_NB_TRANSPORT_BW_IMP!(bw_port, T, P);
+}
+
 //----------------------------------------------------------------------
-// Class: uvm_tlm_b_passthrough_initiator_socket_base
+// Class -- NODOCS -- uvm_tlm_b_passthrough_initiator_socket_base
 //
 // IS-A forward port
 //----------------------------------------------------------------------
-class uvm_tlm_b_passthrough_initiator_socket_base(T=uvm_tlm_generic_payload)
+abstract class uvm_tlm_b_passthrough_initiator_socket_base(T=uvm_tlm_generic_payload)
   : uvm_port_base!(uvm_tlm_if!(T))
-  {
+{
 
-    // `UVM_PORT_COMMON(`UVM_TLM_B_MASK, "uvm_tlm_b_passthrough_initiator_socket")
-    this(string name, uvm_component parent,
-	 int min_size=1, int max_size=1) {
-      synchronized(this) {
-	super (name, parent, uvm_port_type_e.UVM_PORT, min_size, max_size);
-	m_if_mask = UVM_TLM_B_MASK;
-      }
-    }
-    string get_type_name() {
-      return qualifiedTypeName(typeof(this));
-    }
-    // `UVM_TLM_B_TRANSPORT_IMP(this.m_if, T, t, delay)
-    // task
-    void b_transport(T t, uvm_tlm_time delay) {
-      if (delay is null) {
-	uvm_error("UVM/TLM/NULLDELAY", get_full_name() ~
-		  ".b_transport() called with 'null' delay");
-       return;
-      }
-      this.m_if.b_transport(t, delay);
+  // `UVM_PORT_COMMON(`UVM_TLM_B_MASK, "uvm_tlm_b_passthrough_initiator_socket")
+  this(string name, uvm_component parent,
+       int min_size=1, int max_size=1) {
+    synchronized (this) {
+      super (name, parent, uvm_port_type_e.UVM_PORT, min_size, max_size);
+      m_if_mask = UVM_TLM_B_MASK;
     }
   }
+  string get_type_name() {
+    return qualifiedTypeName(typeof(this));
+  }
+  // `UVM_TLM_B_TRANSPORT_IMP(this.m_if, T, t, delay)
+  // task
+  void b_transport(T t, uvm_tlm_time delay) {
+    if (delay is null) {
+      uvm_error("UVM/TLM/NULLDELAY", get_full_name() ~
+		".b_transport() called with 'null' delay");
+      return;
+    }
+    this.m_if.b_transport(t, delay);
+  }
+}
 
 //----------------------------------------------------------------------
-// Class: uvm_tlm_b_passthrough_target_socket_base
+// Class -- NODOCS -- uvm_tlm_b_passthrough_target_socket_base
 //
 // IS-A forward export
 //----------------------------------------------------------------------
-class uvm_tlm_b_passthrough_target_socket_base(T=uvm_tlm_generic_payload)
+abstract class uvm_tlm_b_passthrough_target_socket_base(T=uvm_tlm_generic_payload)
   : uvm_port_base!(uvm_tlm_if!(T))
-  {
+{
 
-    // `UVM_EXPORT_COMMON(`UVM_TLM_B_MASK, "uvm_tlm_b_passthrough_target_socket")
-    mixin UVM_EXPORT_COMMON!(UVM_TLM_B_MASK);
-    // `UVM_TLM_B_TRANSPORT_IMP(this.m_if, T, t, delay)
-    //  task
-    mixin UVM_TLM_B_TRANSPORT_IMP!(this.m_if, T);
-  }
-
+  // `UVM_EXPORT_COMMON(`UVM_TLM_B_MASK, "uvm_tlm_b_passthrough_target_socket")
+  mixin UVM_EXPORT_COMMON!(UVM_TLM_B_MASK);
+  // `UVM_TLM_B_TRANSPORT_IMP(this.m_if, T, t, delay)
+  //  task
+  mixin UVM_TLM_B_TRANSPORT_IMP!(this.m_if, T);
+}

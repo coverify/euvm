@@ -68,17 +68,19 @@ import std.string: format;
 class uvm_reg_item: uvm_sequence_item
 {
   import esdl.rand;
-  mixin uvm_object_utils;
+  mixin uvm_object_essentials;
 
-  mixin(uvm_sync_string);
+  // mixin(uvm_sync_string);
 
   // Variable: element_kind
   //
   // Kind of element being accessed: REG, MEM, or FIELD. See <uvm_elem_kind_e>.
   //
-  @uvm_public_sync
-  uvm_elem_kind_e _element_kind;
-
+  // @uvm_public_sync
+  private uvm_elem_kind_e _element_kind;
+  // uvm_sync_public _element_kind uvm_elem_kind_e
+  final public uvm_elem_kind_e element_kind() {synchronized(this) return this._element_kind;}
+  final public void element_kind(uvm_elem_kind_e val) {synchronized(this) this._element_kind = val;}
 
   // Variable: element
   //
@@ -86,16 +88,21 @@ class uvm_reg_item: uvm_sequence_item
   // Use <element_kind> to determine the type to cast  to: <uvm_reg>,
   // <uvm_mem>, or <uvm_reg_field>.
   //
-  @uvm_public_sync
-  uvm_object _element;
-
+  // @uvm_public_sync
+  private uvm_object _element;
+  // uvm_sync_public _element uvm_object
+  final public uvm_object element() {synchronized(this) return this._element;}
+  final public void element(uvm_object val) {synchronized(this) this._element = val;}
 
   // Variable: kind
   //
   // Kind of access: READ or WRITE.
   //
-  @uvm_public_sync
-  @rand uvm_access_e _kind;
+  // @uvm_public_sync
+  private @rand uvm_access_e _kind;
+  // uvm_sync_public _kind uvm_access_e
+  final public uvm_access_e kind() {synchronized(this) return this._kind;}
+  final public void kind(uvm_access_e val) {synchronized(this) this._kind = val;}
 
 
   // Variable: value
@@ -148,23 +155,27 @@ class uvm_reg_item: uvm_sequence_item
     _value.length > 0 && _value.length < 1000;
   } max_values;
 
-    // Variable: offset
-    //
-    // For memory accesses, the offset address. For bursts,
-    // the ~starting~ offset address.
-    //
-  @uvm_public_sync
-  @rand uvm_reg_addr_t _offset;
-
+  // Variable: offset
+  //
+  // For memory accesses, the offset address. For bursts,
+  // the ~starting~ offset address.
+  //
+  // @uvm_public_sync
+  private @rand uvm_reg_addr_t _offset;
+  // uvm_sync_public _offset uvm_reg_addr_t
+  final public uvm_reg_addr_t offset() {synchronized(this) return this._offset;}
+  final public void offset(uvm_reg_addr_t val) {synchronized(this) this._offset = val;}
 
   // Variable: status
   //
   // The result of the transaction: IS_OK, HAS_X, or ERROR.
   // See <uvm_status_e>.
   //
-  @uvm_public_sync
-  uvm_status_e _status;
-
+  // @uvm_public_sync
+  private uvm_status_e _status;
+  // uvm_sync_public _status uvm_status_e
+  final public uvm_status_e status() {synchronized(this) return this._status;}
+  final public void status(uvm_status_e val) {synchronized(this) this._status = val;}
 
   // Variable: local_map
   //
@@ -174,9 +185,11 @@ class uvm_reg_item: uvm_sequence_item
   // then calling <uvm_reg_map::get_sequencer> and
   // <uvm_reg_map::get_adapter>.
   //
-  @uvm_public_sync
-  uvm_reg_map _local_map;
-
+  // @uvm_public_sync
+  private uvm_reg_map _local_map;
+  // uvm_sync_public _local_map uvm_reg_map
+  final public uvm_reg_map local_map() {synchronized(this) return this._local_map;}
+  final public void local_map(uvm_reg_map val) {synchronized(this) this._local_map = val;}
 
   // Variable: map
   //
@@ -184,70 +197,86 @@ class uvm_reg_item: uvm_sequence_item
   // used may differ when a test or sequence written at the block
   // level is reused at the system level.
   //
-  @uvm_public_sync
-  uvm_reg_map _map;
-
+  // @uvm_public_sync
+  private uvm_reg_map _map;
+  // uvm_sync_public _map uvm_reg_map
+  final public uvm_reg_map map() {synchronized(this) return this._map;}
+  final public void map(uvm_reg_map val) {synchronized(this) this._map = val;}
 
   // Variable: path
   //
   // The path being used: <UVM_FRONTDOOR> or <UVM_BACKDOOR>.
   //
-  @uvm_public_sync
-  uvm_path_e _path;
-
+  // @uvm_public_sync
+  private uvm_path_e _path;
+  // uvm_sync_public _path uvm_path_e
+  final public uvm_path_e path() {synchronized(this) return this._path;}
+  final public void path(uvm_path_e val) {synchronized(this) this._path = val;}
 
   // Variable: parent
   //
   // The sequence from which the operation originated.
   //
-  @uvm_public_sync
-  @rand uvm_sequence_base _parent;
-
+  // @uvm_public_sync
+  private @rand uvm_sequence_base _parent;
+  // uvm_sync_public _parent uvm_sequence_base
+  final public uvm_sequence_base parent() {synchronized(this) return this._parent;}
+  final public void parent(uvm_sequence_base val) {synchronized(this) this._parent = val;}
 
   // Variable: prior
   //
   // The priority requested of this transfer, as defined by
   // <uvm_sequence_base::start_item>.
   //
-  @uvm_public_sync
-  int _prior = -1;
-
+  // @uvm_public_sync
+  private int _prior = -1;
+  // uvm_sync_public _prior int
+  final public int prior() {synchronized(this) return this._prior;}
+  final public void prior(int val) {synchronized(this) this._prior = val;}
 
   // Variable: extension
   //
   // Handle to optional user data, as conveyed in the call to
   // write(), read(), mirror(), or update() used to trigger the operation.
   //
-  @uvm_public_sync
-  @rand uvm_object _extension;
-
+  // @uvm_public_sync
+  private @rand uvm_object _extension;
+  // uvm_sync_public _extension uvm_object
+  final public uvm_object extension() {synchronized(this) return this._extension;}
+  final public void extension(uvm_object val) {synchronized(this) this._extension = val;}
 
   // Variable: bd_kind
   //
   // If path is UVM_BACKDOOR, this member specifies the abstraction
   // kind for the backdoor access, e.g. "RTL" or "GATES".
   //
-  @uvm_public_sync
-  string _bd_kind;
-
+  // @uvm_public_sync
+  private string _bd_kind;
+  // uvm_sync_public _bd_kind string
+  final public string bd_kind() {synchronized(this) return this._bd_kind;}
+  final public void bd_kind(string val) {synchronized(this) this._bd_kind = val;}
 
   // Variable: fname
   //
   // The file name from where this transaction originated, if provided
   // at the call site.
   //
-  @uvm_public_sync
-  string _fname;
-
+  // @uvm_public_sync
+  private string _fname;
+  // uvm_sync_public _fname string
+  final public string fname() {synchronized(this) return this._fname;}
+  final public void fname(string val) {synchronized(this) this._fname = val;}
 
   // Variable: lineno
   //
   // The file name from where this transaction originated, if provided
   // at the call site.
   //
-  @uvm_public_sync
-  int _lineno;
-
+  // @uvm_public_sync
+  private int _lineno;
+  // uvm_sync_public _lineno int
+  final public int lineno() {synchronized(this) return this._lineno;}
+  final public void lineno(int val) {synchronized(this) this._lineno = val;}
 
   // Function: new
   //

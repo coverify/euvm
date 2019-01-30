@@ -1,9 +1,9 @@
 //
 //------------------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2011 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2014 Coverify Systems Technology
+// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2015-2018 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -21,7 +21,7 @@
 //   permissions and limitations under the License.
 //------------------------------------------------------------------------------
 module uvm.comps.uvm_push_driver;
-import uvm.base.uvm_component;
+import uvm.base;
 import uvm.seq.uvm_sequence_item;
 // import uvm.base.uvm_globals; // uvm_report_fatal
 import uvm.tlm1.uvm_imps;
@@ -31,7 +31,7 @@ import std.string;
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_push_driver #(REQ,RSP)
+// CLASS -- NODOCS -- uvm_push_driver #(REQ,RSP)
 //
 // Base class for a driver that passively receives transactions, i.e. does not
 // initiate requests transactions. Also known as ~push~ mode. Its ports are
@@ -45,10 +45,14 @@ import std.string;
 //
 //------------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 13.8.1
 class uvm_push_driver(REQ=uvm_sequence_item,
 		      RSP=REQ): uvm_component
 {
-  // Port: req_export
+  mixin uvm_component_essentials;
+  mixin uvm_type_name_decl;
+
+  // Port -- NODOCS -- req_export
   //
   // This export provides the blocking put interface whose default
   // implementation produces an error. Derived drivers must override ~put~
@@ -58,7 +62,7 @@ class uvm_push_driver(REQ=uvm_sequence_item,
   // Effectively immutable
   uvm_blocking_put_imp!(REQ, uvm_push_driver!(REQ,RSP)) req_export;
 
-  // Port: rsp_port
+  // Port -- NODOCS -- rsp_port
   //
   // This analysis port is used to send response transactions back to the
   // originating sequencer.
@@ -69,7 +73,7 @@ class uvm_push_driver(REQ=uvm_sequence_item,
   REQ req;
   RSP rsp;
 
-  // Function: new
+  // Function -- NODOCS -- new
   //
   // Creates and initializes an instance of this class using the normal
   // constructor arguments for <uvm_component>: ~name~ is the name of the
@@ -99,11 +103,5 @@ class uvm_push_driver(REQ=uvm_sequence_item,
   // task
   void put(REQ item) {
     uvm_report_fatal("UVM_PUSH_DRIVER", "Put task for push driver is not implemented", uvm_verbosity.UVM_NONE);
-  }
-
-  enum string type_name = "uvm_push_driver!(REQ,RSP)";
-
-  string get_type_name () {
-    return type_name;
   }
 }

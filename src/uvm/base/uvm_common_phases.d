@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2010 Cadence Design Systems, Inc.
-//   Copyright 2010      Synopsys, Inc.
-//   Copyright 2014-2016 Coverify Systems Technology
+// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2011 AMD
+// Copyright 2014-2018 NVIDIA Corporation
+// Copyright 2013 Cisco Systems, Inc.
+// Copyright 2012 Accellera Systems Initiative
+// Copyright 2018 Synopsys, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -20,7 +24,7 @@
 //   permissions and limitations under the License.
 //----------------------------------------------------------------------
 
-// Title: UVM Common Phases
+// Title -- NODOCS -- UVM Common Phases
 //
 // The common phases are the set of function and task phases that all
 // <uvm_component>s execute together.
@@ -41,7 +45,7 @@
 // The common phases are executed in the sequence they are specified below.
 //
 //
-// Class: uvm_build_phase
+// Class -- NODOCS -- uvm_build_phase
 //
 // Create and configure of testbench structure
 //
@@ -63,6 +67,8 @@
 
 module uvm.base.uvm_common_phases;
 
+import uvm.base.uvm_object_defines;
+
 import uvm.base.uvm_phase: uvm_phase;
 import uvm.base.uvm_bottomup_phase: uvm_bottomup_phase;
 import uvm.base.uvm_topdown_phase: uvm_topdown_phase;
@@ -74,6 +80,7 @@ import uvm.base.uvm_once;
 import uvm.meta.misc;
 import uvm.meta.meta;
 
+// @uvm-ieee 1800.2-2017 auto 9.8.1.1
 final class uvm_build_phase: uvm_topdown_phase
 {
   static class uvm_once: uvm_once_base
@@ -81,13 +88,13 @@ final class uvm_build_phase: uvm_topdown_phase
     @uvm_immutable_sync
     private uvm_build_phase _m_inst;
     this() {
-      synchronized(this) {
+      synchronized (this) {
 	_m_inst = new uvm_build_phase();
       }
     }
-  };
+  }
 
-  mixin(uvm_once_sync_string);
+  mixin (uvm_once_sync_string);
   
   final override void exec_func(uvm_component comp, uvm_phase phase) {
     comp.build_phase(phase);
@@ -99,9 +106,9 @@ final class uvm_build_phase: uvm_topdown_phase
     comp.uvm__auto_build();
   }
 
-  enum string type_name = qualifiedTypeName!(typeof(this));
+  mixin uvm_type_name_decl;
 
-  // Function: get
+  // Function -- NODOCS -- get
   // Returns the singleton phase handle
   //
   static uvm_build_phase get() {
@@ -112,12 +119,9 @@ final class uvm_build_phase: uvm_topdown_phase
     super(name);
   }
 
-  final override string get_type_name() {
-    return type_name;
-  }
 }
 
-// Class: uvm_connect_phase
+// Class -- NODOCS -- uvm_connect_phase
 //
 // Establish cross-component connections.
 //
@@ -130,8 +134,8 @@ final class uvm_build_phase: uvm_topdown_phase
 //   but some "delta cycles" may have occurred.
 //
 // Typical Uses:
-// - Connect TLM ports and exports.
-// - Connect TLM initiator sockets and target sockets.
+// - Connect UVM TLM ports and exports.
+// - Connect UVM TLM initiator sockets and target sockets.
 // - Connect register model to adapter components.
 // - Setup explicit phase domains.
 //
@@ -140,6 +144,7 @@ final class uvm_build_phase: uvm_topdown_phase
 // - All independent phase domains are set.
 //
 
+// @uvm-ieee 1800.2-2017 auto 9.8.1.2
 final class uvm_connect_phase: uvm_bottomup_phase
 {
   static class uvm_once: uvm_once_base
@@ -147,20 +152,20 @@ final class uvm_connect_phase: uvm_bottomup_phase
     @uvm_immutable_sync
     uvm_connect_phase _m_inst;
     this() {
-      synchronized(this) {
+      synchronized (this) {
 	_m_inst = new uvm_connect_phase();
       }
     }
-  };
+  }
 
-  mixin(uvm_once_sync_string);
+  mixin (uvm_once_sync_string);
   final override void exec_func(uvm_component comp, uvm_phase phase) {
     comp.connect_phase(phase);
   }
 
-  enum string type_name = qualifiedTypeName!(typeof(this));
+  mixin uvm_type_name_decl;
 
-  // Function: get
+  // Function -- NODOCS -- get
   // Returns the singleton phase handle
   static uvm_connect_phase get() {
     return m_inst;
@@ -170,9 +175,6 @@ final class uvm_connect_phase: uvm_bottomup_phase
     super(name);
   }
 
-  final override string get_type_name() {
-    return type_name;
-  }
 }
 
 final class uvm_setup_phase: uvm_topdown_phase
@@ -182,13 +184,13 @@ final class uvm_setup_phase: uvm_topdown_phase
     @uvm_immutable_sync
     uvm_setup_phase _m_inst;
     this() {
-      synchronized(this) {
+      synchronized (this) {
 	_m_inst = new uvm_setup_phase();
       }
     }
-  };
+  }
 
-  mixin(uvm_once_sync_string);
+  mixin (uvm_once_sync_string);
   
   final override void exec_func(uvm_component comp, uvm_phase phase) {
     comp.setup_phase(phase);
@@ -200,9 +202,9 @@ final class uvm_setup_phase: uvm_topdown_phase
     comp.uvm__parallelize();
   }
 
-  enum string type_name = qualifiedTypeName!(typeof(this));
+  mixin uvm_type_name_decl;
 
-  // Function: get
+  // Function -- NODOCS -- get
   // Returns the singleton phase handle
   static uvm_setup_phase get() {
     return m_inst;
@@ -212,12 +214,9 @@ final class uvm_setup_phase: uvm_topdown_phase
     super(name);
   }
 
-  final override string get_type_name() {
-    return type_name;
-  }
 }
 
-// Class: uvm_end_of_elaboration_phase
+// Class -- NODOCS -- uvm_end_of_elaboration_phase
 //
 // Fine-tune the testbench.
 //
@@ -237,6 +236,7 @@ final class uvm_setup_phase: uvm_topdown_phase
 // Exit Criteria:
 // - None.
 
+// @uvm-ieee 1800.2-2017 auto 9.8.1.3
 final class uvm_end_of_elaboration_phase: uvm_bottomup_phase
 {
   static class uvm_once: uvm_once_base
@@ -244,21 +244,21 @@ final class uvm_end_of_elaboration_phase: uvm_bottomup_phase
     @uvm_immutable_sync
     uvm_end_of_elaboration_phase _m_inst;
     this() {
-      synchronized(this) {
+      synchronized (this) {
 	_m_inst = new uvm_end_of_elaboration_phase();
       }
     }
-  };
+  }
 
-  mixin(uvm_once_sync_string);
+  mixin (uvm_once_sync_string);
 
   final override void exec_func(uvm_component comp, uvm_phase phase) {
     comp.end_of_elaboration_phase(phase);
   }
 
-  enum string type_name = qualifiedTypeName!(typeof(this));
+  mixin uvm_type_name_decl;
 
-  // Function: get
+  // Function -- NODOCS -- get
   // Returns the singleton phase handle
   static uvm_end_of_elaboration_phase get() {
     return m_inst;
@@ -268,12 +268,9 @@ final class uvm_end_of_elaboration_phase: uvm_bottomup_phase
     super(name);
   }
 
-  final override string get_type_name() {
-    return type_name;
-  }
 }
 
-// Class: uvm_start_of_simulation_phase
+// Class -- NODOCS -- uvm_start_of_simulation_phase
 //
 // Get ready for DUT to be simulated.
 //
@@ -297,6 +294,7 @@ final class uvm_end_of_elaboration_phase: uvm_bottomup_phase
 // - None.
 
 
+// @uvm-ieee 1800.2-2017 auto 9.8.1.4
 final class uvm_start_of_simulation_phase: uvm_bottomup_phase
 {
   static class uvm_once: uvm_once_base
@@ -304,21 +302,21 @@ final class uvm_start_of_simulation_phase: uvm_bottomup_phase
     @uvm_immutable_sync
     uvm_start_of_simulation_phase _m_inst;
     this() {
-      synchronized(this) {
+      synchronized (this) {
 	_m_inst = new uvm_start_of_simulation_phase();
       }
     }
-  };
+  }
 
-  mixin(uvm_once_sync_string);
+  mixin (uvm_once_sync_string);
 
   final override void exec_func(uvm_component comp, uvm_phase phase) {
     comp.start_of_simulation_phase(phase);
   }
 
-  enum string type_name = qualifiedTypeName!(typeof(this));
+  mixin uvm_type_name_decl;
 
-  // Function: get
+  // Function -- NODOCS -- get
   // Returns the singleton phase handle
   static uvm_start_of_simulation_phase get() {
     return m_inst;
@@ -328,58 +326,10 @@ final class uvm_start_of_simulation_phase: uvm_bottomup_phase
     super(name);
   }
 
-  final override string get_type_name() {
-    return type_name;
-  }
 }
 
-// Class: uvm_run_phase
-//
-// Stimulate the DUT.
-//
-// This <uvm_task_phase> calls the
-// <uvm_component::run_phase> virtual method. This phase runs in
-// parallel to the runtime phases, <uvm_pre_reset_phase> through
-// <uvm_post_shutdown_phase>. All components in the testbench
-// are synchronized with respect to the run phase regardless of
-// the phase domain they belong to.
-//
-// Upon Entry:
-// - Indicates that power has been applied.
-// - There should not have been any active clock edges before entry
-//   into this phase (e.g. x->1 transitions via initial blocks).
-// - Current simulation time is still equal to 0
-//   but some "delta cycles" may have occurred.
-//
-// Typical Uses:
-// - Components implement behavior that is exhibited for the entire
-//   run-time, across the various run-time phases.
-// - Backward compatibility with OVM.
-//
-// Exit Criteria:
-// - The DUT no longer needs to be simulated, and
-// - The <uvm_post_shutdown_phase> is ready to end
-//
-// The run phase terminates in one of two ways.
-//
-// 1. All run_phase objections are dropped:
-//
-//   When all objections on the run_phase objection have been dropped,
-//   the phase ends and all of its threads are killed.
-//   If no component raises a run_phase objection immediately upon
-//   entering the phase, the phase ends immediately.
-//
-//
-// 2. Timeout:
-//
-//   The phase ends if the timeout expires before all objections are dropped.
-//   By default, the timeout is set to 9200 seconds.
-//   You may override this via <uvm_root::set_timeout>.
-//
-//   If a timeout occurs in your simulation, or if simulation never
-//   ends despite completion of your test stimulus, then it usually indicates
-//   that a component continues to object to the end of a phase.
-//
+
+// @uvm-ieee 1800.2-2017 auto 9.8.1.5
 final class uvm_run_phase: uvm_task_phase
 {
   static class uvm_once: uvm_once_base
@@ -387,21 +337,21 @@ final class uvm_run_phase: uvm_task_phase
     @uvm_immutable_sync
     uvm_run_phase _m_inst;
     this() {
-      synchronized(this) {
+      synchronized (this) {
 	_m_inst = new uvm_run_phase();
       }
     }
-  };
+  }
 
-  mixin(uvm_once_sync_string);
+  mixin (uvm_once_sync_string);
   
   final override void exec_task(uvm_component comp, uvm_phase phase) {
     comp.run_phase(phase);
   }
 
-  enum string type_name = qualifiedTypeName!(typeof(this));
+  mixin uvm_type_name_decl;
 
-  // Function: get
+  // Function -- NODOCS -- get
   // Returns the singleton phase handle
   static uvm_run_phase get() {
     return m_inst;
@@ -411,35 +361,11 @@ final class uvm_run_phase: uvm_task_phase
     super(name);
   }
 
-  final override string get_type_name() {
-    return type_name;
-  }
 }
 
 
-// Class: uvm_extract_phase
-//
-// Extract data from different points of the verification environment.
-//
-// <uvm_bottomup_phase> that calls the
-// <uvm_component::extract_phase> method.
-//
-// Upon Entry:
-// - The DUT no longer needs to be simulated.
-// - Simulation time will no longer advance.
-//
-// Typical Uses:
-// - Extract any remaining data and final state information
-//   from scoreboard and testbench components
-// - Probe the DUT (via zero-time hierarchical references
-//   and/or backdoor accesses) for final state information.
-// - Compute statistics and summaries.
-// - Display final state information
-// - Close files.
-//
-// Exit Criteria:
-// - All data has been collected and summarized.
-//
+
+// @uvm-ieee 1800.2-2017 auto 9.8.1.6
 final class uvm_extract_phase: uvm_bottomup_phase
 {
   static class uvm_once: uvm_once_base
@@ -447,21 +373,21 @@ final class uvm_extract_phase: uvm_bottomup_phase
     @uvm_immutable_sync
     uvm_extract_phase _m_inst;
     this() {
-      synchronized(this) {
+      synchronized (this) {
 	_m_inst = new uvm_extract_phase();
       }
     }
-  };
+  }
 
-  mixin(uvm_once_sync_string);
+  mixin (uvm_once_sync_string);
 
   final override void exec_func(uvm_component comp, uvm_phase phase) {
     comp.extract_phase(phase);
   }
 
-  enum string type_name = qualifiedTypeName!(typeof(this));
+  mixin uvm_type_name_decl;
 
-  // Function: get
+  // Function -- NODOCS -- get
   // Returns the singleton phase handle
   static uvm_extract_phase get() {
     return m_inst;
@@ -471,27 +397,10 @@ final class uvm_extract_phase: uvm_bottomup_phase
     super(name);
   }
 
-  final override string get_type_name() {
-    return type_name;
-  }
 }
 
-// Class: uvm_check_phase
-//
-// Check for any unexpected conditions in the verification environment.
-//
-// <uvm_bottomup_phase> that calls the
-// <uvm_component::check_phase> method.
-//
-// Upon Entry:
-// - All data has been collected.
-//
-// Typical Uses:
-// - Check that no unaccounted-for data remain.
-//
-// Exit Criteria:
-// - Test is known to have passed or failed.
-//
+
+// @uvm-ieee 1800.2-2017 auto 9.8.1.7
 final class uvm_check_phase: uvm_bottomup_phase
 {
   static class uvm_once: uvm_once_base
@@ -499,21 +408,21 @@ final class uvm_check_phase: uvm_bottomup_phase
     @uvm_immutable_sync
     uvm_check_phase _m_inst;
     this() {
-      synchronized(this) {
+      synchronized (this) {
 	_m_inst = new uvm_check_phase();
       }
     }
-  };
+  }
 
-  mixin(uvm_once_sync_string);
+  mixin (uvm_once_sync_string);
 
   final override void exec_func(uvm_component comp, uvm_phase phase) {
     comp.check_phase(phase);
   }
 
-  enum string type_name = qualifiedTypeName!(typeof(this));
+  mixin uvm_type_name_decl;
 
-  // Function: get
+  // Function -- NODOCS -- get
   // Returns the singleton phase handle
   static uvm_check_phase get() {
     return m_inst;
@@ -523,28 +432,10 @@ final class uvm_check_phase: uvm_bottomup_phase
     super(name);
   }
 
-  final override string get_type_name() {
-    return type_name;
-  }
 }
 
-// Class: uvm_report_phase
-//
-// Report results of the test.
-//
-// <uvm_bottomup_phase> that calls the
-// <uvm_component::report_phase> method.
-//
-// Upon Entry:
-// - Test is known to have passed or failed.
-//
-// Typical Uses:
-// - Report test results.
-// - Write results to file.
-//
-// Exit Criteria:
-// - End of test.
-//
+
+// @uvm-ieee 1800.2-2017 auto 9.8.1.8
 final class uvm_report_phase: uvm_bottomup_phase
 {
   static class uvm_once: uvm_once_base
@@ -552,21 +443,21 @@ final class uvm_report_phase: uvm_bottomup_phase
     @uvm_immutable_sync
     uvm_report_phase _m_inst;
     this() {
-      synchronized(this) {
+      synchronized (this) {
 	_m_inst = new uvm_report_phase();
       }
     }
-  };
+  }
 
-  mixin(uvm_once_sync_string);
+  mixin (uvm_once_sync_string);
 
   final override void exec_func(uvm_component comp, uvm_phase phase) {
     comp.report_phase(phase);
   }
 
-  enum string type_name = qualifiedTypeName!(typeof(this));
+  mixin uvm_type_name_decl;
 
-  // Function: get
+  // Function -- NODOCS -- get
   // Returns the singleton phase handle
   static uvm_report_phase get() {
     return m_inst;
@@ -576,13 +467,10 @@ final class uvm_report_phase: uvm_bottomup_phase
     super(name);
   }
 
-  final override string get_type_name() {
-    return type_name;
-  }
 }
 
 
-// Class: uvm_final_phase
+// Class -- NODOCS -- uvm_final_phase
 //
 // Tie up loose ends.
 //
@@ -600,6 +488,7 @@ final class uvm_report_phase: uvm_bottomup_phase
 // - Ready to exit simulator.
 //
 
+// @uvm-ieee 1800.2-2017 auto 9.8.1.9
 final class uvm_final_phase: uvm_topdown_phase
 {
   static class uvm_once: uvm_once_base
@@ -607,21 +496,21 @@ final class uvm_final_phase: uvm_topdown_phase
     @uvm_immutable_sync
     uvm_final_phase _m_inst;
     this() {
-      synchronized(this) {
+      synchronized (this) {
 	_m_inst = new uvm_final_phase();
       }
     }
-  };
+  }
 
-  mixin(uvm_once_sync_string);
+  mixin (uvm_once_sync_string);
 
   final override void exec_func(uvm_component comp, uvm_phase phase) {
     comp.final_phase(phase);
   }
 
-  enum string type_name = qualifiedTypeName!(typeof(this));
+  mixin uvm_type_name_decl;
 
-  // Function: get
+  // Function -- NODOCS -- get
   // Returns the singleton phase handle
   static uvm_final_phase get() {
     return m_inst;
@@ -631,7 +520,4 @@ final class uvm_final_phase: uvm_topdown_phase
     super(name);
   }
 
-  final override string get_type_name() {
-    return type_name;
-  }
 }

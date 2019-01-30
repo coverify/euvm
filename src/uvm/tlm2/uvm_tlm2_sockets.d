@@ -1,7 +1,9 @@
 //----------------------------------------------------------------------
-//   Copyright 2010 Mentor Graphics Corporation
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2016 Coverify Systems Technology
+// Copyright 2016-2019 Coverify Systems Technology
+// Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2010-2018 Synopsys, Inc.
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2015-2018 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -20,7 +22,7 @@
 //----------------------------------------------------------------------
 
 //----------------------------------------------------------------------
-// Title: TLM Sockets
+// Title -- NODOCS -- UVM TLM Sockets
 //
 // Each uvm_tlm_*_socket class is derived from a corresponding
 // uvm_tlm_*_socket_base class.  The base class contains most of the
@@ -50,44 +52,42 @@ module uvm.tlm2.uvm_tlm2_sockets;
 
 
 //----------------------------------------------------------------------
-// Class: uvm_tlm_b_initiator_socket
+// Class -- NODOCS -- uvm_tlm_b_initiator_socket
 //
 // IS-A forward port; has no backward path except via the payload
 // contents
 //----------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 12.3.5.2.1
 class uvm_tlm_b_initiator_socket(T=uvm_tlm_generic_payload)
   : uvm_tlm_b_initiator_socket_base!T
-  {
+{
 
-    // Function: new
-    // Construct a new instance of this socket
-    this(string name, uvm_component parent) {
-      super(name, parent);
-    }
-   
-   // Function: Connect
-   //
-   // Connect this socket to the specified <uvm_tlm_b_target_socket>
-    override void connect(this_type provider) {
-
-      super.connect(provider);
-
-      if(cast(uvm_tlm_b_passthrough_initiator_socket_base!(T)) provider  ||
-	 cast(uvm_tlm_b_passthrough_target_socket_base!(T)) provider     ||
-	 cast(uvm_tlm_b_target_socket_base!(T)) provider) {
-	return;
-      }
-
-      uvm_component c = get_comp();
-      uvm_error_context(get_type_name(),
-			"type mismatch in connect -- connection cannot " ~
-			"be completed", c);
-    }
+  // @uvm-ieee 1800.2-2017 auto 12.3.5.2.3
+  this(string name, uvm_component parent) {
+    super(name, parent);
   }
+   
+  // @uvm-ieee 1800.2-2017 auto 12.3.5.2.4
+  override void connect(this_type provider) {
+
+    super.connect(provider);
+
+    if (cast (uvm_tlm_b_passthrough_initiator_socket_base!(T)) provider  ||
+       cast (uvm_tlm_b_passthrough_target_socket_base!(T)) provider     ||
+       cast (uvm_tlm_b_target_socket_base!(T)) provider) {
+      return;
+    }
+
+    uvm_component c = get_comp();
+    uvm_error_context(get_type_name(),
+		      "type mismatch in connect -- connection cannot " ~
+		      "be completed", c);
+  }
+}
 
 //----------------------------------------------------------------------
-// Class: uvm_tlm_b_target_socket
+// Class -- NODOCS -- uvm_tlm_b_target_socket
 //
 // IS-A forward imp; has no backward path except via the payload
 // contents.
@@ -99,61 +99,58 @@ class uvm_tlm_b_initiator_socket(T=uvm_tlm_generic_payload)
 //
 //----------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 12.3.5.1.1
 class uvm_tlm_b_target_socket(IMP=int,
 			      T=uvm_tlm_generic_payload)
   : uvm_tlm_b_target_socket_base!T
-  {
+{
 
-    IMP m_imp;
+  IMP m_imp;
 
-    // Function: new
-    // Construct a new instance of this socket
-    // ~imp~ is a reference to the class implementing the
-    // b_transport() method.
-    // If not specified, it is assume to be the same as ~parent~.
-    this (string name, uvm_component parent, IMP imp = null) {
-      synchronized(this) {
-	super(name, parent);
-	if (imp is null) {
-	  m_imp = cast(IMP) parent;
-	}
-	else {
-	  m_imp = imp;
-	}
-	if (m_imp is null) {
-	  uvm_error("UVM/TLM2/NOIMP", "b_target socket " ~ name ~
-		    " has no implementation");
-	}
+
+  // @uvm-ieee 1800.2-2017 auto 12.3.5.1.3
+  this (string name, uvm_component parent, IMP imp = null) {
+    synchronized (this) {
+      super(name, parent);
+      if (imp is null) {
+	m_imp = cast (IMP) parent;
       }
-    }
-
-    // Function: Connect
-    //
-    // Connect this socket to the specified <uvm_tlm_b_initiator_socket>
-    void connect(this_type provider) {
-
-      super.connect(provider);
-
-      uvm_component c = get_comp();
-      uvm_error_context(get_type_name(),
-			"You cannot call connect() on a target "
-			~ "termination socket", c);
-    }
-
-    // `UVM_TLM_B_TRANSPORT_IMP(m_imp, T, t, delay)
-    // task
-    void b_transport(T t, uvm_tlm_time delay) {
-      if (delay is null) {
-	uvm_error("UVM/TLM/NULLDELAY", get_full_name(),
-		  ".b_transport() called with 'null' delay");
-	return;
+      else {
+	m_imp = imp;
       }
-      this.m_imp.b_transport(t, delay);
+      if (m_imp is null) {
+	uvm_error("UVM/TLM2/NOIMP", "b_target socket " ~ name ~
+		  " has no implementation");
+      }
     }
   }
 
+
+  // @uvm-ieee 1800.2-2017 auto 12.3.5.1.4
+  void connect(this_type provider) {
+
+    super.connect(provider);
+
+    uvm_component c = get_comp();
+    uvm_error_context(get_type_name(),
+		      "You cannot call connect() on a target "
+		      ~ "termination socket", c);
+  }
+
+  // `UVM_TLM_B_TRANSPORT_IMP(m_imp, T, t, delay)
+  // task
+  void b_transport(T t, uvm_tlm_time delay) {
+    if (delay is null) {
+      uvm_error("UVM/TLM/NULLDELAY", get_full_name(),
+		".b_transport() called with 'null' delay");
+      return;
+    }
+    this.m_imp.b_transport(t, delay);
+  }
+}
+
 //----------------------------------------------------------------------
-// Class: uvm_tlm_nb_initiator_socket
+// Class -- NODOCS -- uvm_tlm_nb_initiator_socket
 //
 // IS-A forward port; HAS-A backward imp
 //
@@ -164,62 +161,59 @@ class uvm_tlm_b_target_socket(IMP=int,
 //
 //----------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 12.3.5.4.1
 class uvm_tlm_nb_initiator_socket(IMP=int,
 				  T=uvm_tlm_generic_payload,
 				  P=uvm_tlm_phase_e)
   : uvm_tlm_nb_initiator_socket_base!(T,P)
-  {
+{
 
-    uvm_tlm_nb_transport_bw_imp!(T,P,IMP) bw_imp;
+  uvm_tlm_nb_transport_bw_imp!(T,P,IMP) bw_imp;
 
-    // Function: new
-    // Construct a new instance of this socket
-    // ~imp~ is a reference to the class implementing the
-    // nb_transport_bw() method.
-    // If not specified, it is assume to be the same as ~parent~.
-    this(string name, uvm_component parent, IMP imp = null) {
-      synchronized(this) {
-	super (name, parent);
-	if (imp is null) imp = cast(IMP) parent;
-	if (imp is null) {
-	  uvm_error("UVM/TLM2/NOIMP", "nb_initiator socket " ~ name ~
-		    " has no implementation");
-	}
-	bw_imp = new uvm_tlm_nb_transport_bw_imp!(T,P,IMP)("bw_imp", imp);
+
+  // @uvm-ieee 1800.2-2017 auto 12.3.5.4.3
+  this(string name, uvm_component parent, IMP imp = null) {
+    synchronized (this) {
+      super (name, parent);
+      if (imp is null) imp = cast (IMP) parent;
+      if (imp is null) {
+	uvm_error("UVM/TLM2/NOIMP", "nb_initiator socket " ~ name ~
+		  " has no implementation");
       }
-    }
-
-    // Function: Connect
-    //
-    // Connect this socket to the specified <uvm_tlm_nb_target_socket>
-    void connect(this_type provider) {
-
-      super.connect(provider);
-
-      if(cast(uvm_tlm_nb_passthrough_initiator_socket_base!(T,P)) provider) {
-	initiator_pt_socket.bw_export.connect(bw_imp);
-	return;
-      }
-      if(cast(uvm_tlm_nb_passthrough_target_socket_base!(T,P)) provider) {
-	target_pt_socket.bw_port.connect(bw_imp);
-	return;
-      }
-
-      if(cast(uvm_tlm_nb_target_socket_base!(T,P)) provider) {
-	target_socket.bw_port.connect(bw_imp);
-	return;
-      }
-    
-      uvm_component c = get_comp();
-      uvm_error_context(get_type_name(),
-			"type mismatch in connect -- connection cannot " ~
-			"be completed", c);
+      bw_imp = new uvm_tlm_nb_transport_bw_imp!(T,P,IMP)("bw_imp", imp);
     }
   }
 
 
+  // @uvm-ieee 1800.2-2017 auto 12.3.5.4.4
+  void connect(this_type provider) {
+
+    super.connect(provider);
+
+    if (cast (uvm_tlm_nb_passthrough_initiator_socket_base!(T,P)) provider) {
+      initiator_pt_socket.bw_export.connect(bw_imp);
+      return;
+    }
+    if (cast (uvm_tlm_nb_passthrough_target_socket_base!(T,P)) provider) {
+      target_pt_socket.bw_port.connect(bw_imp);
+      return;
+    }
+
+    if (cast (uvm_tlm_nb_target_socket_base!(T,P)) provider) {
+      target_socket.bw_port.connect(bw_imp);
+      return;
+    }
+    
+    uvm_component c = get_comp();
+    uvm_error_context(get_type_name(),
+		      "type mismatch in connect -- connection cannot " ~
+		      "be completed", c);
+  }
+}
+
+
 //----------------------------------------------------------------------
-// Class: uvm_tlm_nb_target_socket
+// Class -- NODOCS -- uvm_tlm_nb_target_socket
 //
 // IS-A forward imp; HAS-A backward port
 //
@@ -230,210 +224,204 @@ class uvm_tlm_nb_initiator_socket(IMP=int,
 //
 //----------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 12.3.5.3.1
 class uvm_tlm_nb_target_socket(IMP=int,
 			       T=uvm_tlm_generic_payload,
 			       P=uvm_tlm_phase_e)
   : uvm_tlm_nb_target_socket_base!(T,P)
-  {
+{
 
-    IMP m_imp;
+  IMP m_imp;
 
-    // Function: new
-    // Construct a new instance of this socket
-    // ~imp~ is a reference to the class implementing the
-    // nb_transport_fw() method.
-    // If not specified, it is assume to be the same as ~parent~.
-    this(string name, uvm_component parent, IMP imp = null) {
-      synchronized(this) {
-	super (name, parent);
-	if (imp is null) {
-	  m_imp = cast(IMP) parent;
-	}
-	else {
-	  m_imp = imp;
-	}
-	bw_port = new uvm_tlm_nb_transport_bw_port!(T,P)("bw_port", get_comp());
-	if (m_imp is null) {
-	  uvm_error("UVM/TLM2/NOIMP", "nb_target socket " ~ name ~
-		    " has no implementation");
-	}
+
+  // @uvm-ieee 1800.2-2017 auto 12.3.5.3.3
+  this(string name, uvm_component parent, IMP imp = null) {
+    synchronized (this) {
+      super (name, parent);
+      if (imp is null) {
+	m_imp = cast (IMP) parent;
       }
-    }
-
-    // Function: connect
-    //
-    // Connect this socket to the specified <uvm_tlm_nb_initiator_socket>
-    void connect(this_type provider) {
-
-      super.connect(provider);
-
-      uvm_component c = get_comp();
-      uvm_error_context(get_type_name(),
-			"You cannot call connect() on a target " ~
-			"termination socket", c);
-    }
-
-    // `UVM_TLM_NB_TRANSPORT_FW_IMP(m_imp, T, P, t, p, delay)
-    uvm_tlm_sync_e nb_transport_fw(T t, ref P p, in uvm_tlm_time delay) {
-      if (delay is null) {
-	uvm_error("UVM/TLM/NULLDELAY", get_full_name() ~
-		  ".nb_transport_fw() called with 'null' delay");
-	return UVM_TLM_COMPLETED;
+      else {
+	m_imp = imp;
       }
-      return m_imp.nb_transport_fw(t, p, delay);
+      bw_port = new uvm_tlm_nb_transport_bw_port!(T,P)("bw_port", get_comp());
+      if (m_imp is null) {
+	uvm_error("UVM/TLM2/NOIMP", "nb_target socket " ~ name ~
+		  " has no implementation");
+      }
     }
   }
 
+
+  // @uvm-ieee 1800.2-2017 auto 12.3.5.3.4
+  void connect(this_type provider) {
+
+    super.connect(provider);
+
+    uvm_component c = get_comp();
+    uvm_error_context(get_type_name(),
+		      "You cannot call connect() on a target " ~
+		      "termination socket", c);
+  }
+
+  // `UVM_TLM_NB_TRANSPORT_FW_IMP(m_imp, T, P, t, p, delay)
+  uvm_tlm_sync_e nb_transport_fw(T t, ref P p, in uvm_tlm_time delay) {
+    if (delay is null) {
+      uvm_error("UVM/TLM/NULLDELAY", get_full_name() ~
+		".nb_transport_fw() called with 'null' delay");
+      return UVM_TLM_COMPLETED;
+    }
+    return m_imp.nb_transport_fw(t, p, delay);
+  }
+}
+
 //----------------------------------------------------------------------
-// Class: uvm_tlm_b_passthrough_initiator_socket
+// Class -- NODOCS -- uvm_tlm_b_passthrough_initiator_socket
 //
 // IS-A forward port;
 //----------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 12.3.5.7
 class uvm_tlm_b_passthrough_initiator_socket(T=uvm_tlm_generic_payload)
   : uvm_tlm_b_passthrough_initiator_socket_base!T
-  {
+{
 
-    this(string name, uvm_component parent) {
-      super(name, parent);
-    }
-
-    // Function : connect
-    //
-    // Connect this socket to the specified <uvm_tlm_b_target_socket>
-    void connect(this_type provider) {
-
-
-      super.connect(provider);
-
-      if(cast(uvm_tlm_b_passthrough_initiator_socket_base!(T)) provider ||
-	 cast(uvm_tlm_b_passthrough_target_socket_base!(T)) provider    ||
-	 cast(uvm_tlm_b_target_socket_base!(T)) provider) {
-	return;
-      }
-
-      uvm_component c = get_comp();
-      uvm_error_context(get_type_name(), "type mismatch in connect -- connection cannot be completed", c);
-    }
+  this(string name, uvm_component parent) {
+    super(name, parent);
   }
 
-//----------------------------------------------------------------------
-// Class: uvm_tlm_b_passthrough_target_socket
-//
-// IS-A forward export;
-//----------------------------------------------------------------------
+  // Function  -- NODOCS -- connect
+  //
+  // Connect this socket to the specified <uvm_tlm_b_target_socket>
+  void connect(this_type provider) {
+
+
+    super.connect(provider);
+
+    if (cast (uvm_tlm_b_passthrough_initiator_socket_base!(T)) provider ||
+       cast (uvm_tlm_b_passthrough_target_socket_base!(T)) provider    ||
+       cast (uvm_tlm_b_target_socket_base!(T)) provider) {
+      return;
+    }
+
+    uvm_component c = get_comp();
+    uvm_error_context(get_type_name(), "type mismatch in connect -- connection cannot be completed", c);
+  }
+}
+
+
+// @uvm-ieee 1800.2-2017 auto 12.3.5.8
 class uvm_tlm_b_passthrough_target_socket(T=uvm_tlm_generic_payload)
   : uvm_tlm_b_passthrough_target_socket_base!(T)
-  {
+{
 
-    this(string name, uvm_component parent) {
-      super(name, parent);
-    }
-   
-    // Function : connect
-    //
-    // Connect this socket to the specified <uvm_tlm_b_initiator_socket>
-    void connect(this_type provider) {
-
-      super.connect(provider);
-
-      if(cast(uvm_tlm_b_passthrough_target_socket_base!(T)) provider    ||
-	 cast(uvm_tlm_b_target_socket_base!(T)) provider) {
-	return;
-      }
-
-      uvm_component c = get_comp();
-      uvm_error_context(get_type_name(),
-			"type mismatch in connect -- connection cannot"
-			~ " be completed", c);
-    }
+  this(string name, uvm_component parent) {
+    super(name, parent);
   }
+   
+  // Function  -- NODOCS -- connect
+  //
+  // Connect this socket to the specified <uvm_tlm_b_initiator_socket>
+  void connect(this_type provider) {
+
+    super.connect(provider);
+
+    if (cast (uvm_tlm_b_passthrough_target_socket_base!(T)) provider    ||
+       cast (uvm_tlm_b_target_socket_base!(T)) provider) {
+      return;
+    }
+
+    uvm_component c = get_comp();
+    uvm_error_context(get_type_name(),
+		      "type mismatch in connect -- connection cannot"
+		      ~ " be completed", c);
+  }
+}
 
 
 
 //----------------------------------------------------------------------
-// Class: uvm_tlm_nb_passthrough_initiator_socket
+// Class -- NODOCS -- uvm_tlm_nb_passthrough_initiator_socket
 //
 // IS-A forward port; HAS-A backward export
 //----------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 12.3.5.5
 class uvm_tlm_nb_passthrough_initiator_socket(T=uvm_tlm_generic_payload,
 					      P=uvm_tlm_phase_e)
   : uvm_tlm_nb_passthrough_initiator_socket_base!(T,P)
-  {
+{
 
-    this(string name, uvm_component parent) {
-      super(name, parent);
-    }
-
-   // Function : connect
-   //
-   // Connect this socket to the specified <uvm_tlm_nb_target_socket>
-    void connect(this_type provider) {
-
-
-      super.connect(provider);
-
-      if(cast(uvm_tlm_nb_passthrough_initiator_socket_base!(T,P)) provider) {
-	bw_export.connect(initiator_pt_socket.bw_export);
-	return;
-      }
-
-      if(cast(uvm_tlm_nb_passthrough_target_socket_base!(T,P)) provider) {
-	target_pt_socket.bw_port.connect(bw_export);
-	return;
-      }
-
-      if(cast(uvm_tlm_nb_target_socket_base!(T,P)) provider) {
-	target_socket.bw_port.connect(bw_export);
-	return;
-      }
-
-      uvm_component c = get_comp();
-      uvm_error_context(get_type_name(),
-			"type mismatch in connect -- connection " ~
-			"cannot be completed", c);
-
-    }
+  this(string name, uvm_component parent) {
+    super(name, parent);
   }
 
+  // Function  -- NODOCS -- connect
+  //
+  // Connect this socket to the specified <uvm_tlm_nb_target_socket>
+  void connect(this_type provider) {
+
+
+    super.connect(provider);
+
+    if (cast (uvm_tlm_nb_passthrough_initiator_socket_base!(T,P)) provider) {
+      bw_export.connect(initiator_pt_socket.bw_export);
+      return;
+    }
+
+    if (cast (uvm_tlm_nb_passthrough_target_socket_base!(T,P)) provider) {
+      target_pt_socket.bw_port.connect(bw_export);
+      return;
+    }
+
+    if (cast (uvm_tlm_nb_target_socket_base!(T,P)) provider) {
+      target_socket.bw_port.connect(bw_export);
+      return;
+    }
+
+    uvm_component c = get_comp();
+    uvm_error_context(get_type_name(),
+		      "type mismatch in connect -- connection " ~
+		      "cannot be completed", c);
+
+  }
+}
+
 //----------------------------------------------------------------------
-// Class: uvm_tlm_nb_passthrough_target_socket
+// Class -- NODOCS -- uvm_tlm_nb_passthrough_target_socket
 //
 // IS-A forward export; HAS-A backward port
 //----------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 12.3.5.6.1
 class uvm_tlm_nb_passthrough_target_socket(T=uvm_tlm_generic_payload,
                                            P=uvm_tlm_phase_e)
   : uvm_tlm_nb_passthrough_target_socket_base!(T,P)
-  {
+{
 
-    this(string name, uvm_component parent) {
-      super(name, parent);
-    }
-
-   // Function: connect
-   //
-   // Connect this socket to the specified <uvm_tlm_nb_initiator_socket>
-    void connect(this_type provider) {
-
-      super.connect(provider);
-
-      if(cast(uvm_tlm_nb_passthrough_target_socket_base!(T,P)) provider) {
-	target_pt_socket.bw_port.connect(bw_port);
-	return;
-      }
-
-      if(cast(uvm_tlm_nb_target_socket_base!(T,P)) provider) {
-	target_socket.bw_port.connect(bw_port);
-	return;
-      }
-
-      uvm_component c = get_comp();
-      uvm_error_context(get_type_name(),
-			"type mismatch in connect -- connection cannot " ~
-			"be completed", c);
-    }
+  this(string name, uvm_component parent) {
+    super(name, parent);
   }
 
-//----------------------------------------------------------------------
+
+  // @uvm-ieee 1800.2-2017 auto 12.3.5.6.2
+  void connect(this_type provider) {
+
+    super.connect(provider);
+
+    if (cast (uvm_tlm_nb_passthrough_target_socket_base!(T,P)) provider) {
+      target_pt_socket.bw_port.connect(bw_port);
+      return;
+    }
+
+    if (cast (uvm_tlm_nb_target_socket_base!(T,P)) provider) {
+      target_socket.bw_port.connect(bw_port);
+      return;
+    }
+
+    uvm_component c = get_comp();
+    uvm_error_context(get_type_name(),
+		      "type mismatch in connect -- connection cannot " ~
+		      "be completed", c);
+  }
+}

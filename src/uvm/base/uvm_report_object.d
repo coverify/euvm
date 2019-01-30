@@ -1,9 +1,14 @@
 //
 //------------------------------------------------------------------------------
-//   Copyright 2007-2010 Mentor Graphics Corporation
-//   Copyright 2007-2011 Cadence Design Systems, Inc.
-//   Copyright 2010      Synopsys, Inc.
-//   Copyright 2012-2016 Coverify Systems Technology
+// Copyright 2012-2019 Coverify Systems Technology
+// Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2014 Semifore
+// Copyright 2010-2014 Synopsys, Inc.
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2010-2012 AMD
+// Copyright 2013-2018 NVIDIA Corporation
+// Copyright 2013 Cisco Systems, Inc.
+// Copyright 2017 Verific
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -30,9 +35,28 @@ module uvm.base.uvm_report_object;
 // typedef class uvm_env;
 // typedef class uvm_root;
 
+import uvm.meta.misc;
+
+import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_report_handler: uvm_report_handler;
+import uvm.base.uvm_report_server: uvm_report_server;
+import uvm.base.uvm_report_catcher: uvm_report_catcher;
+import uvm.base.uvm_report_message: uvm_report_message;
+import uvm.base.uvm_callback: uvm_register_cb;
+
+import uvm.base.uvm_object_globals: uvm_severity, uvm_action, uvm_verbosity, uvm_action_type, UVM_FILE;
+import uvm.base.uvm_globals: uvm_report_intf;
+
+import esdl.base.core: finish;
+
+// version (UVM_NO_DEPRECATED) { }
+//  else {
+//    version = UVM_INCLUDE_DEPRECATED;
+//  }
+
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_report_object
+// CLASS -- NODOCS -- uvm_report_object
 //
 //------------------------------------------------------------------------------
 //
@@ -81,74 +105,80 @@ module uvm.base.uvm_report_object;
 //
 //------------------------------------------------------------------------------
 
-import uvm.meta.misc;
-
-import uvm.base.uvm_object: uvm_object;
-import uvm.base.uvm_report_handler: uvm_report_handler;
-import uvm.base.uvm_report_server: uvm_report_server;
-import uvm.base.uvm_report_catcher: uvm_report_catcher;
-import uvm.base.uvm_report_message: uvm_report_message;
-import uvm.base.uvm_callback: uvm_register_cb;
-
-import uvm.base.uvm_object_globals: uvm_severity, uvm_action, uvm_verbosity, uvm_action_type, UVM_FILE;
-import uvm.base.uvm_globals: uvm_report_intf;
-
-import esdl.base.core: finish;
-
-// version(UVM_NO_DEPRECATED) { }
-//  else {
-//    version = UVM_INCLUDE_DEPRECATED;
-//  }
-
+// @uvm-ieee 1800.2-2017 auto 6.3.1
 class uvm_report_object: /*extends*/ uvm_object, uvm_report_intf
 {
-  mixin(uvm_sync_string);
+  mixin (uvm_sync_string);
 
   // In SV this callback is part of the uvm_report_catcher.sv file
   mixin uvm_register_cb!(uvm_report_catcher);
 
-  @uvm_public_sync
   private uvm_report_handler _m_rh;
 
-  // Function: new
+  public uvm_report_handler m_rh() {
+    m_rh_init();
+    synchronized (this) {
+      return _m_rh;
+    }
+  }
+
+  public void m_rh(uvm_report_handler rh) {
+    assert (rh !is null);
+    synchronized (this) {
+      _m_rh = rh;
+      _m_rh_set = true;
+    }
+  }
+
+  private bool _m_rh_set;
+  private void m_rh_init() {
+    synchronized (this) {
+      if (! _m_rh_set) {
+	set_report_handler(uvm_report_handler.type_id.create(get_name()));
+      }
+    }
+  }
+
+  // Function -- NODOCS -- new
   //
   // Creates a new report object with the given name. This method also creates
   // a new <uvm_report_handler> object to which most tasks are delegated.
 
+  // @uvm-ieee 1800.2-2017 auto 6.3.2
   this(string name = "") {
-    synchronized(this) {
+    synchronized (this) {
       super(name);
-      _m_rh = uvm_report_handler.type_id.create(name);
     }
   }
 
   override void set_name(string name) {
-    synchronized(this) {
+    synchronized (this) {
       super.set_name(name);
-      _m_rh.set_name(name);
+      m_rh.set_name(name);
     }
   }
   //----------------------------------------------------------------------------
-  // Group: Reporting
+  // Group -- NODOCS -- Reporting
   //----------------------------------------------------------------------------
 
   // import uvm.base.uvm_message_defines: uvm_report_mixin_string;
   // // mixin uvm_report_mixin;
-  // mixin(uvm_report_mixin_string());
+  // mixin (uvm_report_mixin_string());
   
 
-  // Function: uvm_get_report_object
+  // Function -- NODOCS -- uvm_get_report_object
   //
   // Returns the nearest uvm_report_object when called.  From inside a
   // uvm_component, the method simply returns ~this~.
   //
   // See also the global version of <uvm_get_report_object>.
 
+  // @uvm-ieee 1800.2-2017 auto 6.3.3.1
   uvm_report_object uvm_get_report_object() {
     return this;
   }
 
-  // Function: uvm_report_enabled
+  // Function -- NODOCS -- uvm_report_enabled
   //
   // Returns 1 if the configured verbosity for this severity/id is greater than
   // or equal to ~verbosity~ else returns 0.
@@ -156,6 +186,7 @@ class uvm_report_object: /*extends*/ uvm_object, uvm_report_intf
   // See also <get_report_verbosity_level> and the global version of
   // <uvm_report_enabled>.
 
+  // @uvm-ieee 1800.2-2017 auto 6.3.3.2
   final bool uvm_report_enabled(int verbosity,
 				uvm_severity severity=uvm_severity.UVM_INFO,
 				string id="") {
@@ -166,8 +197,9 @@ class uvm_report_object: /*extends*/ uvm_object, uvm_report_intf
   }
 
 
-  // Function: uvm_report
+  // Function -- NODOCS -- uvm_report
 
+  // @uvm-ieee 1800.2-2017 auto 6.3.3.3
   void uvm_report(string file=__FILE__,
 		  size_t line=__LINE__)(uvm_severity severity,
 					string id,
@@ -175,7 +207,7 @@ class uvm_report_object: /*extends*/ uvm_object, uvm_report_intf
 					int verbosity = -1,
 					string context_name = "",
 					bool report_enabled_checked = false) {
-    if(verbosity == -1) {
+    if (verbosity == -1) {
       verbosity = (severity == uvm_severity.UVM_ERROR) ? uvm_action_type.UVM_LOG :
 	(severity == uvm_severity.UVM_FATAL) ? uvm_verbosity.UVM_NONE : uvm_verbosity.UVM_MEDIUM;
     }
@@ -192,7 +224,8 @@ class uvm_report_object: /*extends*/ uvm_object, uvm_report_intf
 		  string context_name = "",
 		  bool report_enabled_checked = false) {
     uvm_report_message l_report_message;
-    if(report_enabled_checked is false) {
+    if ((severity == uvm_severity.UVM_INFO) &&
+	(report_enabled_checked is false)) {
       if (!uvm_report_enabled(verbosity, severity, id)) {
 	return;
       }
@@ -203,8 +236,9 @@ class uvm_report_object: /*extends*/ uvm_object, uvm_report_intf
     uvm_process_report_message(l_report_message);
   }
 
-  // Function: uvm_report_info
+  // Function -- NODOCS -- uvm_report_info
 
+  // @uvm-ieee 1800.2-2017 auto 6.3.3.3
   void uvm_report_info(string file=__FILE__,
 		       size_t line=__LINE__)(string id,
 					     string message,
@@ -228,8 +262,9 @@ class uvm_report_object: /*extends*/ uvm_object, uvm_report_intf
   	       filename, line, context_name, report_enabled_checked);
   }
 
-  // Function: uvm_report_warning
+  // Function -- NODOCS -- uvm_report_warning
 
+  // @uvm-ieee 1800.2-2017 auto 6.3.3.3
   void uvm_report_warning(string file=__FILE__,
 			  size_t line=__LINE__)(string id,
 						string message,
@@ -252,12 +287,13 @@ class uvm_report_object: /*extends*/ uvm_object, uvm_report_intf
 		filename, line, context_name, report_enabled_checked);
   }
 
-  // Function: uvm_report_error
+  // Function -- NODOCS -- uvm_report_error
 
+  // @uvm-ieee 1800.2-2017 auto 6.3.3.3
   void uvm_report_error(string file=__FILE__,
 			size_t line=__LINE__)(string id,
 					      string message,
-					      int verbosity=uvm_verbosity.UVM_LOW,
+					      int verbosity=uvm_verbosity.UVM_NONE,
 					      string context_name = "",
 					      bool report_enabled_checked = false) {
     uvm_report_error(id, message, verbosity, file, line,
@@ -275,7 +311,7 @@ class uvm_report_object: /*extends*/ uvm_object, uvm_report_intf
 	       filename, line, context_name, report_enabled_checked);
   }
 
-  // Function: uvm_report_fatal
+  // Function -- NODOCS -- uvm_report_fatal
   //
   // These are the primary reporting methods in the UVM. Using these instead
   // of ~$display~ and other ad hoc approaches ensures consistent output and
@@ -314,6 +350,7 @@ class uvm_report_object: /*extends*/ uvm_object, uvm_report_intf
   //               the message should be processed. If it hasn't been checked,
   //               it will be checked inside the uvm_report function.
 
+  // @uvm-ieee 1800.2-2017 auto 6.3.3.3
   void uvm_report_fatal(string file=__FILE__,
 			size_t line=__LINE__)(string id,
 					      string message,
@@ -336,63 +373,74 @@ class uvm_report_object: /*extends*/ uvm_object, uvm_report_intf
 		filename, line, context_name, report_enabled_checked);
   }
 
-  // Function: uvm_process_report_message
+  // Function -- NODOCS -- uvm_process_report_message
   //
   // This method takes a preformed uvm_report_message, populates it with
   // the report object and passes it to the report handler for processing.
   // It is expected to be checked for verbosity and populated.
 
+  // @uvm-ieee 1800.2-2017 auto 6.3.3.4
   void uvm_process_report_message(uvm_report_message report_message) {
+    m_rh_init();
     report_message.set_report_object(this);
     m_rh.process_report_message(report_message);
   }
 
   //----------------------------------------------------------------------------
-  // Group: Verbosity Configuration
+  // Group -- NODOCS -- Verbosity Configuration
   //----------------------------------------------------------------------------
 
 
-  // Function: get_report_verbosity_level
+  // Function -- NODOCS -- get_report_verbosity_level
   //
   // Gets the verbosity level in effect for this object. Reports issued
   // with verbosity greater than this will be filtered out. The severity
   // and tag arguments check if the verbosity level has been modified for
   // specific severity/tag combinations.
 
+  // @uvm-ieee 1800.2-2017 auto 6.3.4.1
   final int get_report_verbosity_level(uvm_severity severity=uvm_severity.UVM_INFO,
 				       string id="") {
+    m_rh_init();
     return m_rh.get_verbosity_level(severity, id);
   }
 
 
-  // Function: get_report_max_verbosity_level
+  // Function -- NODOCS -- get_report_max_verbosity_level
   //
   // Gets the maximum verbosity level in effect for this report object.
   // Any report from this component whose verbosity exceeds this maximum will
   // be ignored.
 
+  // @uvm-ieee 1800.2-2017 auto 6.3.4.2
   final int get_report_max_verbosity_level() {
+    m_rh_init();
     return m_rh.m_max_verbosity_level;
   }
 
 
-  // Function: set_report_verbosity_level
+  // Function -- NODOCS -- set_report_verbosity_level
   //
   // This method sets the maximum verbosity level for reports for this component.
   // Any report from this component whose verbosity exceeds this maximum will
   // be ignored.
 
+  // @uvm-ieee 1800.2-2017 auto 6.3.4.3
   final void set_report_verbosity_level (int verbosity_level) {
+    m_rh_init();
     m_rh.set_verbosity_level(verbosity_level);
   }
 
-  // Function: set_report_id_verbosity
+  // Function -- NODOCS -- set_report_id_verbosity
   //
+
+  // @uvm-ieee 1800.2-2017 auto 6.3.4.4
   final void set_report_id_verbosity (string id, int verbosity) {
+    m_rh_init();
     m_rh.set_id_verbosity(id, verbosity);
   }
 
-  // Function: set_report_severity_id_verbosity
+  // Function -- NODOCS -- set_report_severity_id_verbosity
   //
   // These methods associate the specified verbosity threshold with reports of the
   // given ~severity~, ~id~, or ~severity-id~ pair. This threshold is compared with
@@ -405,41 +453,51 @@ class uvm_report_object: /*extends*/ uvm_object, uvm_report_intf
   // predefined <uvm_verbosity> value, <UVM_NONE>, <UVM_LOW>, <UVM_MEDIUM>,
   // <UVM_HIGH>, <UVM_FULL>.
 
+  // @uvm-ieee 1800.2-2017 auto 6.3.4.4
   final void set_report_severity_id_verbosity (uvm_severity severity,
 					       string id, int verbosity) {
+    m_rh_init();
     m_rh.set_severity_id_verbosity(severity, id, verbosity);
   }
 
 
   //----------------------------------------------------------------------------
-  // Group: Action Configuration
+  // Group -- NODOCS -- Action Configuration
   //----------------------------------------------------------------------------
 
 
-  // Function: get_report_action
+  // Function -- NODOCS -- get_report_action
   //
   // Gets the action associated with reports having the given ~severity~
   // and ~id~.
 
+  // @uvm-ieee 1800.2-2017 auto 6.3.5.1
   final int get_report_action(uvm_severity severity, string id) {
+    m_rh_init();
     return m_rh.get_action(severity, id);
   }
 
 
-  // Function: set_report_severity_action
+  // Function -- NODOCS -- set_report_severity_action
   //
+
+  // @uvm-ieee 1800.2-2017 auto 6.3.5.2
   final void set_report_severity_action (uvm_severity severity,
 					 uvm_action action) {
+    m_rh_init();
     m_rh.set_severity_action(severity, action);
   }
 
-  // Function: set_report_id_action
+  // Function -- NODOCS -- set_report_id_action
   //
+
+  // @uvm-ieee 1800.2-2017 auto 6.3.5.2
   final void set_report_id_action (string id, uvm_action action) {
+    m_rh_init();
     m_rh.set_id_action(id, action);
   }
 
-  // Function: set_report_severity_id_action
+  // Function -- NODOCS -- set_report_severity_id_action
   //
   // These methods associate the specified action or actions with reports of the
   // given ~severity~, ~id~, or ~severity-id~ pair. An action associated with a
@@ -450,46 +508,57 @@ class uvm_report_object: /*extends*/ uvm_object, uvm_report_intf
   // bitwise OR of any combination of <UVM_DISPLAY>, <UVM_LOG>, <UVM_COUNT>,
   // <UVM_STOP>, <UVM_EXIT>, and <UVM_CALL_HOOK>.
 
+  // @uvm-ieee 1800.2-2017 auto 6.3.5.2
   final void set_report_severity_id_action (uvm_severity severity,
 					    string id, uvm_action action) {
+    m_rh_init();
     m_rh.set_severity_id_action(severity, id, action);
   }
 
 
   //----------------------------------------------------------------------------
-  // Group: File Configuration
+  // Group -- NODOCS -- File Configuration
   //----------------------------------------------------------------------------
 
 
-  // Function: get_report_file_handle
+  // Function -- NODOCS -- get_report_file_handle
   //
   // Gets the file descriptor associated with reports having the given
   // ~severity~ and ~id~.
 
+  // @uvm-ieee 1800.2-2017 auto 6.3.6.1
   final size_t get_report_file_handle(uvm_severity severity, string id) {
+    m_rh_init();
     return m_rh.get_file_handle(severity,id);
   }
 
 
-  // Function: set_report_default_file
+  // Function -- NODOCS -- set_report_default_file
 
+  // @uvm-ieee 1800.2-2017 auto 6.3.6.2
   final void set_report_default_file ( UVM_FILE file) {
+    m_rh_init();
     m_rh.set_default_file(file);
   }
 
-  // Function: set_report_id_file
+  // Function -- NODOCS -- set_report_id_file
 
+  // @uvm-ieee 1800.2-2017 auto 6.3.6.2
   final void set_report_id_file (string id, UVM_FILE file) {
+    m_rh_init();
     m_rh.set_id_file(id, file);
   }
 
-  // Function: set_report_severity_file
+  // Function -- NODOCS -- set_report_severity_file
   //
+
+  // @uvm-ieee 1800.2-2017 auto 6.3.6.2
   final void set_report_severity_file (uvm_severity severity, UVM_FILE file) {
+    m_rh_init();
     m_rh.set_severity_file(severity, file);
   }
 
-  // Function: set_report_severity_id_file
+  // Function -- NODOCS -- set_report_severity_id_file
   //
   // These methods configure the report handler to direct some or all of its
   // output to the given file descriptor. The ~file~ argument must be a
@@ -505,249 +574,82 @@ class uvm_report_object: /*extends*/ uvm_object, uvm_report_intf
   // set, the report will be sent to its associated FILE descriptor.
   // The user is responsible for opening and closing these files.
 
+  // @uvm-ieee 1800.2-2017 auto 6.3.6.2
   final void set_report_severity_id_file (uvm_severity severity,
 					  string id, UVM_FILE file) {
+    m_rh_init();
     m_rh.set_severity_id_file(severity, id, file);
   }
 
 
   //----------------------------------------------------------------------------
-  // Group: Override Configuration
+  // Group -- NODOCS -- Override Configuration
   //----------------------------------------------------------------------------
 
 
-  // Function: set_report_severity_override
+  // Function -- NODOCS -- set_report_severity_override
   //
+
+  // @uvm-ieee 1800.2-2017 auto 6.3.7
   final void set_report_severity_override(uvm_severity cur_severity,
 					  uvm_severity new_severity) {
+    m_rh_init();
     m_rh.set_severity_override(cur_severity, new_severity);
   }
-  // Function: set_report_severity_id_override
-  //
-  // These methods provide the ability to upgrade or downgrade a message in
-  // terms of severity given ~severity~ and ~id~.  An upgrade or downgrade for
-  // a specific ~id~ takes precedence over an upgrade or downgrade associated
-  // with a ~severity~.
+
+  
+  // @uvm-ieee 1800.2-2017 auto 6.3.7
   final void set_report_severity_id_override(uvm_severity cur_severity,
 					     string id,
 					     uvm_severity new_severity) {
+    m_rh_init();
     m_rh.set_severity_id_override(cur_severity, id, new_severity);
   }
 
 
   //----------------------------------------------------------------------------
-  // Group: Report Handler Configuration
+  // Group -- NODOCS -- Report Handler Configuration
   //----------------------------------------------------------------------------
 
-  // Function: set_report_handler
+  // Function -- NODOCS -- set_report_handler
   //
   // Sets the report handler, overwriting the default instance. This allows
   // more than one component to share the same report handler.
 
+  // @uvm-ieee 1800.2-2017 auto 6.3.8.2
   final void set_report_handler(uvm_report_handler handler) {
-    synchronized(this) {
+    synchronized (this) {
       _m_rh = handler;
+      _m_rh_set = true;
     }
   }
 
 
-  // Function: get_report_handler
+  // Function -- NODOCS -- get_report_handler
   //
   // Returns the underlying report handler to which most reporting tasks
   // are delegated.
 
+  // @uvm-ieee 1800.2-2017 auto 6.3.8.1
   final uvm_report_handler get_report_handler() {
-    synchronized(this) {
+    m_rh_init();
+    synchronized (this) {
       return _m_rh;
     }
   }
 
 
-  // Function: reset_report_handler
+  // Function -- NODOCS -- reset_report_handler
   //
   // Resets the underlying report handler to its default settings. This clears
   // any settings made with the set_report_* methods (see below).
 
+  // @uvm-ieee 1800.2-2017 auto 6.3.8.3
   final void reset_report_handler() {
+    m_rh_init();
     m_rh.initialize;
   }
 
-  version(UVM_INCLUDE_DEPRECATED) {
-
-
-    //----------------------------------------------------------------------------
-    // Group: Callbacks
-    //----------------------------------------------------------------------------
-
-
-    // Function: report_info_hook
-    //
-    //
-
-    bool report_info_hook(string id, string message,
-  			  int verbosity, string filename, size_t line) {
-      return true;
-    }
-
-    // Function: report_error_hook
-    //
-    //
-
-    bool report_error_hook(string id, string message,
-  			   int verbosity, string filename, size_t line) {
-      return true;
-    }
-
-    // Function: report_warning_hook
-    //
-    //
-
-    bool report_warning_hook(string id, string message,
-  			     int verbosity, string filename, size_t line) {
-      return true;
-    }
-
-    // Function: report_fatal_hook
-    //
-    //
-
-    bool report_fatal_hook(string id, string message,
-  			   int verbosity, string filename, size_t line) {
-      return true;
-    }
-
-    // Function: report_hook
-    //
-    // These hook methods can be defined in derived classes to perform additional
-    // actions when reports are issued. They are called only if the <UVM_CALL_HOOK>
-    // bit is specified in the action associated with the report. The default
-    // implementations return 1, which allows the report to be processed. If an
-    // override returns 0, then the report is not processed.
-    //
-    // First, the report_hook method is called, followed by the severity
-    // severity specific hook (report_info_hook, etc.). If either hook method
-    // returns 0 then the report is not processed further.
-
-    bool report_hook(string id, string message,
-  		     int verbosity, string filename, size_t line) {
-      return true;
-    }
-
-
-    // Function- report_header
-    //
-    // Prints version and copyright information. This information is sent to the
-    // command line if ~file~ is 0, or to the file descriptor ~file~ if it is not 0.
-    // The <uvm_root::run_test> task calls this method just before it component
-    // phasing begins.
-    //
-    // Use <uvm_root::report_header()>
-
-    void report_header(UVM_FILE file = UVM_FILE.init) {
-      import uvm.base.uvm_root;
-      import uvm.base.uvm_coreservice;
-      uvm_coreservice_t cs = uvm_coreservice_t.get();
-      uvm_root l_root = cs.get_root();
-      l_root.report_header(file);
-    }
-
-
-    // Function- report_summarize
-    //
-    // Outputs statistical information on the reports issued by the central report
-    // server. This information will be sent to the command line if ~file~ is 0, or
-    // to the file descriptor ~file~ if it is not 0.
-    //
-    // The <run_test> method in uvm_top calls this method.
-    //
-    // Use:
-    // uvm_report_server rs =uvm_report_server::get_server();
-    // rs.report_summarize();
-
-    void report_summarize(UVM_FILE file = UVM_FILE.init) {
-      uvm_report_server l_rs = uvm_report_server.get_server();
-      l_rs.report_summarize(file);
-    }
-
-
-    // Function- die
-    //
-    // This method is called by the report server if a report reaches the maximum
-    // quit count or has a UVM_EXIT action associated with it, e.g., as with
-    // fatal errors.
-    //
-    // Calls the <uvm_component::pre_abort()> method
-    // on the entire <uvm_component> hierarchy in a bottom-up fashion.
-    // It then call calls <report_summarize> and terminates the simulation
-    // with ~$finish~.
-    //
-    // Use:
-    // uvm_report_server rs =uvm_report_server::get_server();
-    // rs.die()
-
-    void die() {
-      import uvm.base.uvm_root;
-      import uvm.base.uvm_coreservice;
-      uvm_coreservice_t cs = uvm_coreservice_t.get();
-      uvm_root l_root = cs.get_root();
-      l_root.die();
-    }
-
-    // Function- set_report_max_quit_count
-    //
-    // Sets the maximum quit count in the report handler to ~max_count~. When the
-    // number of UVM_COUNT actions reaches ~max_count~, the <die> method is called.
-    //
-    // The default value of 0 indicates that there is no upper limit to the number
-    // of UVM_COUNT reports.
-    //
-    // Use:
-    // uvm_report_server rs =uvm_report_server::get_server();
-    // rs.set_max_quit_count()
-
-    final void set_report_max_quit_count(int max_count) {
-      uvm_report_server l_rs = uvm_report_server.get_server();
-      l_rs.set_max_quit_count(max_count);
-    }
-
-
-    // Function- get_report_server
-    //
-    // Returns the <uvm_report_server> instance associated with this report object.
-    //
-    // Use <uvm_report_server::get_server()>
-
-    final uvm_report_server get_report_server() {
-      uvm_report_server l_rs = uvm_report_server.get_server();
-      return l_rs;
-    }
-
-
-    // Function- dump_report_state
-    //
-    // This method dumps the internal state of the report handler. This includes
-    // information about the maximum quit count, the maximum verbosity, and the
-    // action and files associated with severities, ids, and (severity, id) pairs.
-    //
-    // Use:
-    // uvm_report_handler rh =get_report_handler();
-    // rh.print().
-
-    void dump_report_state() {
-      m_rh.dump_state();
-    }
-
-
-    //----------------------------------------------------------------------------
-    //                     PRIVATE or PSUEDO-PRIVATE members
-    //                      *** Do not call directly ***
-    //         Implementation and even existence are subject to change.
-    //----------------------------------------------------------------------------
-
-    protected override uvm_report_object m_get_report_object() {
-      return this;
-    }
-  }
 
 } // endclass
 
@@ -791,7 +693,7 @@ enum int UVM_NUM_LINES=120;
 
 //------------------------------------------------------------------------------
 //
-// Title: Report Macros
+// Title -- NODOCS -- Report Macros
 //
 // This set of macros provides wrappers around the uvm_report_* <Reporting>
 // functions. The macros serve two essential purposes:

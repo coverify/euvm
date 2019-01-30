@@ -1,10 +1,11 @@
 //
 //-----------------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2011 Cadence Design Systems, Inc.
-//   Copyright 2010      Synopsys, Inc.
-//   Copyright 2013      NVIDIA Corporation
-//   Copyright 2016      Coverify Systems Technology
+// Copyright 2016-2019 Coverify Systems Technology
+// Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2015 Analog Devices, Inc.
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2013-2015 NVIDIA Corporation
+// Copyright 2017 Cisco Systems, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -24,7 +25,7 @@
 
 module uvm.base.uvm_tr_stream;
 
-import uvm.base.uvm_tr_database: uvm_tr_database, uvm_text_tr_database;
+import uvm.base.uvm_tr_database: uvm_tr_database;
 import uvm.base.uvm_object: uvm_object;
 import uvm.base.uvm_recorder: uvm_recorder, uvm_text_recorder;
 import uvm.base.uvm_once;
@@ -39,7 +40,7 @@ import esdl.base.core: SimTime, getRootEntity, Process;
 import std.random;
 
 //------------------------------------------------------------------------------
-// File: Transaction Recording Streams
+// File -- NODOCS -- Transaction Recording Streams
 //
 
 // class- m_uvm_tr_stream_cfg
@@ -47,69 +48,26 @@ import std.random;
 // initialization values.
 class m_uvm_tr_stream_cfg
 {
-  mixin(uvm_sync_string);
+  mixin (uvm_sync_string);
 
   @uvm_private_sync
-  uvm_tr_database _db;
+  private uvm_tr_database _db;
   @uvm_private_sync
-  string _hscope;
+  private string _hscope;
   @uvm_private_sync
-  string _stream_type_name;
-
-  // uvm_tr_database db() {
-  //   synchronized(this) {
-  //     return _db;
-  //   }
-  // }
-  // void db(uvm_tr_database v) {
-  //   synchronized(this) {
-  //     _db = v;
-  //   }
-  // }
-  // string hscope() {
-  //   synchronized(this) {
-  //     return _hscope;
-  //   }
-  // }
-  // void hscope(string v) {
-  //   synchronized(this) {
-  //     _hscope = v;
-  //   }
-  // }
-  // string stream_type_name() {
-  //   synchronized(this) {
-  //     return _stream_type_name;
-  //   }
-  // }
-  // void stream_type_name(string v) {
-  //   synchronized(this) {
-  //     _stream_type_name = v;
-  //   }
-  // }
+  private string _stream_type_name;
 }
 
 
-//------------------------------------------------------------------------------
-//
-// CLASS: uvm_tr_stream
-//
-// The ~uvm_tr_stream~ base class is a representation of a stream of records
-// within a <uvm_tr_database>.
-//
-// The record stream is intended to hide the underlying database implementation
-// from the end user, as these details are often vendor or tool-specific.
-//
-// The ~uvm_tr_stream~ class is pure virtual, and must be extended with an
-// implementation.  A default text-based implementation is provided via the
-// <uvm_text_tr_stream> class.
-//
+
+// @uvm-ieee 1800.2-2017 auto 7.2.1
 abstract class uvm_tr_stream: uvm_object
 {
 
   static class uvm_once: uvm_once_base
   {
     // Variable- m_ids_by_stream
-    // An associative array of integers, indexed by uvm_tr_streams.  This
+    // An associative array of int, indexed by uvm_tr_streams.  This
     // provides a unique 'id' or 'handle' for each stream, which can be
     // used to identify the stream.
     //
@@ -128,7 +86,7 @@ abstract class uvm_tr_stream: uvm_object
     
   }
 
-  mixin(uvm_once_sync_string);
+  mixin (uvm_once_sync_string);
 
   // Variable- m_cfg_dap
   // Data access protected reference to the DB
@@ -152,34 +110,26 @@ abstract class uvm_tr_stream: uvm_object
 
   // !m_is_opened && !m_is_closed == m_is_freed
 
-  // Function: new
-  // Constructor
-  //
-  // Parameters:
-  // name - Stream instance name
+  // @uvm-ieee 1800.2-2017 auto 7.2.2
   this(string name="unnamed-uvm_tr_stream") {
-    synchronized(this) {
+    synchronized (this) {
       super(name);
       _m_cfg_dap = new uvm_set_before_get_dap!m_uvm_tr_stream_cfg("cfg_dap");
     }
   }
 
 
-  // Group: Configuration API
+  // Group -- NODOCS -- Configuration API
 
-  // Function: get_db
-  // Returns a reference to the database which contains this
-  // stream.
-  //
-  // A warning will be asserted if get_db is called prior to
-  // the stream being initialized via <do_open>.
+
+  // @uvm-ieee 1800.2-2017 auto 7.2.3.1
   uvm_tr_database get_db() {
     import uvm.base.uvm_globals;
     import std.string: format;
-    synchronized(this) {
+    synchronized (this) {
       m_uvm_tr_stream_cfg m_cfg;
-      if(!_m_cfg_dap.try_get(m_cfg)) {
-	if(_m_warn_null_cfg is true) {
+      if (!_m_cfg_dap.try_get(m_cfg)) {
+	if (_m_warn_null_cfg is true) {
 	  uvm_warning("UVM/REC_STR/NO_CFG",
 		      format("attempt to retrieve DB from '%s' before it was set!",
 			     get_name()));
@@ -192,18 +142,14 @@ abstract class uvm_tr_stream: uvm_object
   }
 
 
-  // Function: get_scope
-  // Returns the ~scope~ supplied when opening this stream.
-  //
-  // A warning will be asserted if get_scope is called prior to
-  // the stream being initialized via <do_open>.
+  // @uvm-ieee 1800.2-2017 auto 7.2.3.2
   string get_scope() {
     import uvm.base.uvm_globals;
     import std.string: format;
-    synchronized(this) {
+    synchronized (this) {
       m_uvm_tr_stream_cfg m_cfg;
-      if(!_m_cfg_dap.try_get(m_cfg)) {
-	if(_m_warn_null_cfg is true) {
+      if (!_m_cfg_dap.try_get(m_cfg)) {
+	if (_m_warn_null_cfg is true) {
 	  uvm_warning("UVM/REC_STR/NO_CFG",
 		      format("attempt to retrieve scope from '%s' before it was set!",
 			     get_name()));
@@ -215,19 +161,15 @@ abstract class uvm_tr_stream: uvm_object
     }
   }
 
-  // Function: get_stream_type_name
-  // Returns a reference to the database which contains this
-  // stream.
-  //
-  // A warning will be asserted if get_stream_type_name is called prior to
-  // the stream being initialized via <do_open>.
+
+  // @uvm-ieee 1800.2-2017 auto 7.2.3.3
   string get_stream_type_name() {
     import uvm.base.uvm_globals;
     import std.string: format;
-    synchronized(this) {
+    synchronized (this) {
       m_uvm_tr_stream_cfg m_cfg;
-      if(!_m_cfg_dap.try_get(m_cfg)) {
-	if(_m_warn_null_cfg is true) {
+      if (!_m_cfg_dap.try_get(m_cfg)) {
+	if (_m_warn_null_cfg is true) {
 	  uvm_warning("UVM/REC_STR/NO_CFG",
 		      format("attempt to retrieve STREAM_TYPE_NAME from '%s' before it was set!",
 			     get_name()));
@@ -239,7 +181,7 @@ abstract class uvm_tr_stream: uvm_object
     }
   }
 
-  // Group: Stream API
+  // Group -- NODOCS -- Stream API
   //
   // Once a stream has been opened via <uvm_tr_database::open_stream>, the user
   // can ~close~ the stream.
@@ -251,17 +193,11 @@ abstract class uvm_tr_stream: uvm_object
   // "Free", however it is illegal to establish a link after "Freeing" the stream.
   //
 
-  // Function: close
-  // Closes this stream.
-  //
-  // Closing a stream closes all open recorders in the stream.
-  //
-  // This method will trigger a <do_close> call, followed by
-  // <uvm_recorder::close> on all open recorders within the
-  // stream.
+
+  // @uvm-ieee 1800.2-2017 auto 7.2.4.1
   void close() {
-    synchronized(this) {
-      if(!is_open()) {
+    synchronized (this) {
+      if (!is_open()) {
 	return;
       }
 
@@ -278,17 +214,10 @@ abstract class uvm_tr_stream: uvm_object
     }
   }
 
-  // Function: free
-  // Frees this stream.
-  //
-  // Freeing a stream indicates that the database can free any
-  // references to the stream (including references to records
-  // within the stream).
-  //
-  // This method will trigger a <do_free> call, followed by
-  // <uvm_recorder::free> on all recorders within the stream.
+
+  // @uvm-ieee 1800.2-2017 auto 7.2.4.2
   void free() {
-    synchronized(this) {
+    synchronized (this) {
       uvm_tr_database db;
       if (!is_open() && !is_closed()) {
 	return;
@@ -300,28 +229,33 @@ abstract class uvm_tr_stream: uvm_object
 
       do_free();
 
-      foreach(idx, unused; _m_records) {
+      foreach (idx, unused; _m_records) {
 	idx.free();
       }
 
       // Clear out internal state
       db = get_db();
       _m_is_closed = false;
-      Process p = Process.self();
-      Random s;
-      if(p !is null) {
-	p.getRandState(s);
+
+      version (PRESERVE_RANDSTATE) {
+	Process p = Process.self();
+	Random s;
+	if (p !is null)
+	  p.getRandState(s);
       }
+
       _m_cfg_dap =  new uvm_set_before_get_dap!m_uvm_tr_stream_cfg("cfg_dap");
 
-      if(p !is null) {
-	p.setRandState(s);
+      version (PRESERVE_RANDSTATE) {
+	if (p !is null)
+	  p.setRandState(s);
       }
+
       _m_warn_null_cfg = true;
 
-      synchronized(once) {
-	auto pid = this in once._m_ids_by_stream;
-	if(pid !is null) {
+      synchronized (_uvm_once_inst) {
+	auto pid = this in _uvm_once_inst._m_ids_by_stream;
+	if (pid !is null) {
 	  m_free_id(*pid);
 	}
       }
@@ -352,17 +286,17 @@ abstract class uvm_tr_stream: uvm_object
 		 string stream_type_name="") {
     import uvm.base.uvm_globals;
     import std.string: format;
-    synchronized(this) {
+    synchronized (this) {
       m_uvm_tr_stream_cfg m_cfg;
       uvm_tr_database m_db;
-      if(db is null) {
+      if (db is null) {
 	uvm_error("UVM/REC_STR/NULL_DB",
 		  format("Illegal attempt to set DB for '%s' to '<null>'",
 			 this.get_full_name()));
 	return;
       }
 
-      if(_m_cfg_dap.try_get(m_cfg)) {
+      if (_m_cfg_dap.try_get(m_cfg)) {
 	uvm_error("UVM/REC_STR/RE_CFG",
 		  format("Illegal attempt to re-open '%s'",
 			 this.get_full_name()));
@@ -381,27 +315,23 @@ abstract class uvm_tr_stream: uvm_object
     }
   }
 
-  // Function: is_open
-  // Returns true if this ~uvm_tr_stream~ was opened on the database,
-  // but has not yet been closed.
-  //
+
+  // @uvm-ieee 1800.2-2017 auto 7.2.4.3
   bool is_open() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_is_opened;
     }
   }
 
-  // Function: is_closed
-  // Returns true if this ~uvm_tr_stream~ was closed on the database,
-  // but has not yet been freed.
-  //
+
+  // @uvm-ieee 1800.2-2017 auto 7.2.4.4
   bool is_closed() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_is_closed;
     }
   }
 
-  // Group: Transaction Recorder API
+  // Group -- NODOCS -- Transaction Recorder API
   //
   // New recorders can be opened prior to the stream being ~closed~.
   //
@@ -409,7 +339,7 @@ abstract class uvm_tr_stream: uvm_object
   // will be ignored (<open_recorder> will return ~null~).
   //
 
-  // Function: open_recorder
+  // Function -- NODOCS -- open_recorder
   // Marks the opening of a new transaction recorder on the stream.
   //
   // Parameters:
@@ -427,10 +357,13 @@ abstract class uvm_tr_stream: uvm_object
   // Transaction recorders can only be opened if the stream is
   // ~open~ on the database (per <is_open>).  Otherwise the
   // request will be ignored, and ~null~ will be returned.
+
+
+  // @uvm-ieee 1800.2-2017 auto 7.2.5.1
   uvm_recorder open_recorder(string name,
 			     SimTime open_time = 0,
 			     string type_name="") {
-    synchronized(this) {
+    synchronized (this) {
       uvm_recorder result;
       SimTime m_time = (open_time == 0) ? getRootEntity.getSimTime : open_time;
 
@@ -439,11 +372,12 @@ abstract class uvm_tr_stream: uvm_object
 	return null;
       }
       else {
-	Process p = Process.self;
-	Random s;
 
-	if (p !is null) {
-	  p.getRandState(s);
+	version (PRESERVE_RANDSTATE) {
+	  Process p = Process.self;
+	  Random s;
+	  if (p !is null)
+	    p.getRandState(s);
 	}
 
 	result = do_open_recorder(name, m_time, type_name);
@@ -452,8 +386,10 @@ abstract class uvm_tr_stream: uvm_object
 	  _m_records[result] = true;
 	  result.m_do_open(this, m_time, type_name);
 	}
-	if (p !is null) {
-	  p.setRandState(s);
+
+	version (PRESERVE_RANDSTATE) {
+	  if (p !is null)
+	    p.setRandState(s);
 	}
       }
       return result;
@@ -463,29 +399,17 @@ abstract class uvm_tr_stream: uvm_object
   // Function- m_free_recorder
   // Removes recorder from the internal array
   void m_free_recorder(uvm_recorder recorder) {
-    synchronized(this) {
-      if(recorder in _m_records) {
+    synchronized (this) {
+      if (recorder in _m_records) {
 	_m_records.remove(recorder);
       }
     }
   }
 
-  // Function: get_recorders
-  // Provides a queue of all transactions within the stream.
-  //
-  // Parameters:
-  // q - A reference to the queue of <uvm_recorder>s
-  //
-  // The <get_recorders> method returns the size of the queue,
-  // such that the user can conditionally process the elements.
-  //
-  // | uvm_recorder tr_q[$];
-  // | if (my_stream.get_recorders(tr_q)) begin
-  // |   // Process the queue...
-  // | end
-  //
+
+  // @uvm-ieee 1800.2-2017 auto 7.2.5.2
   uint get_recorders(/*ref*/ out uvm_recorder[] q) {
-    synchronized(this) {
+    synchronized (this) {
       // Clear out the queue first...
       // q.delete();
       // Fill in the values
@@ -493,23 +417,25 @@ abstract class uvm_tr_stream: uvm_object
 	q ~= idx;
       }
       // Finally return the size of the queue
-      return cast(uint) q.length;
+      return cast (uint) q.length;
     }
   }
 
-  // Group: Handles
+  // Group -- NODOCS -- Handles
 
 
-  // Function: get_handle
+  // Function -- NODOCS -- get_handle
   // Returns a unique ID for this stream.
   //
   // A value of ~0~ indicates that the recorder has been ~freed~,
   // and no longer has a valid ID.
   //
+
+  // @uvm-ieee 1800.2-2017 auto 7.2.6.1
   int get_handle() {
     int handle;
-    synchronized(this) {
-      if(!is_open() && !is_closed()) {
+    synchronized (this) {
+      if (!is_open() && !is_closed()) {
 	return 0;
       }
       else {
@@ -518,44 +444,28 @@ abstract class uvm_tr_stream: uvm_object
     }
 
     // Check for the weird case where our handle changed.
-    synchronized(once) {
-      auto phandle = this in once._m_ids_by_stream;
+    synchronized (_uvm_once_inst) {
+      auto phandle = this in _uvm_once_inst._m_ids_by_stream;
       if (phandle !is null && *phandle !is handle) {
-    	once._m_streams_by_id.remove(*phandle);
+    	_uvm_once_inst._m_streams_by_id.remove(*phandle);
       }
 
-      once._m_streams_by_id[handle] = this;
-      once._m_ids_by_stream[this] = handle;
+      _uvm_once_inst._m_streams_by_id[handle] = this;
+      _uvm_once_inst._m_ids_by_stream[this] = handle;
 
     }
 
     return handle;
   }
 
-  // Function- m_get_handle
-  // Provided to allow implementation-specific handles which are not
-  // identical to the built-in handles.
-  //
-  // This is an implementation detail of the UVM library, which allows
-  // for vendors to (optionally) put vendor-specific methods into the library.
-  int m_get_handle() {
-    return get_handle();
-  }
-
-  // Function: get_stream_from_handle
-  // Static accessor, returns a stream reference for a given unique id.
-  //
-  // If no stream exists with the given ~id~, or if the
-  // stream with that ~id~ has been freed, then ~null~ is
-  // returned.
-  //
+  // @uvm-ieee 1800.2-2017 auto 7.2.6.2
   static uvm_tr_stream get_stream_from_handle(int id) {
-    if(id == 0) {
+    if (id == 0) {
       return null;
     }
-    synchronized(once) {
-      auto pstream = id in once._m_streams_by_id;
-      if(// $isunknown(id) ||
+    synchronized (_uvm_once_inst) {
+      auto pstream = id in _uvm_once_inst._m_streams_by_id;
+      if (// $isunknown(id) ||
     	 pstream is null) {
     	return null;
       }
@@ -568,163 +478,43 @@ abstract class uvm_tr_stream: uvm_object
   // Frees the id/stream link (memory cleanup)
   //
   static void m_free_id(int id) {
-    synchronized(once) {
+    synchronized (_uvm_once_inst) {
       uvm_tr_stream stream;
-      auto pstream = id in once._m_streams_by_id;
-      if(// !$isunknown(id) &&
+      auto pstream = id in _uvm_once_inst._m_streams_by_id;
+      if (// !$isunknown(id) &&
     	 pstream !is null) {
     	stream = *pstream;
       }
 
       if (stream !is null) {
-    	once._m_streams_by_id.remove(id);
-    	once._m_ids_by_stream.remove(stream);
+    	_uvm_once_inst._m_streams_by_id.remove(id);
+    	_uvm_once_inst._m_ids_by_stream.remove(stream);
       }
     }
   }
 
-  // Group: Implementation Agnostic API
+  // Group -- NODOCS -- Implementation Agnostic API
   //
 
-  // Function: do_open
-  // Callback triggered via <uvm_tr_database::open_stream>.
-  //
-  // Parameters:
-  // db - Database which the stream belongs to
-  // hscope - Optional scope
-  // stream_type_name - Optional type name for the stream
-  //
-  // The ~do_open~ callback can be used to initialize any internal
-  // state within the stream, as well as providing a location to
-  // record any initial information about the stream.
+
+  // @uvm-ieee 1800.2-2017 auto 7.2.7.1
   protected void do_open(uvm_tr_database db,
 			 string hscope,
-			 string stream_type_name) {}
+			 string stream_type_name) { }
 
-  // Function: do_close
-  // Callback triggered via <close>.
-  //
-  // The ~do_close~ callback can be used to set internal state
-  // within the stream, as well as providing a location to
-  // record any closing information.
-  protected void do_close() {}
 
-  // Function: do_free
-  // Callback triggered via <free>.
-  //
-  // The ~do_free~ callback can be used to release the internal
-  // state within the stream, as well as providing a location
-  // to record any "freeing" information.
-  protected void do_free() {}
+  // @uvm-ieee 1800.2-2017 auto 7.2.7.2
+  protected void do_close() { }
 
-  // Function: do_open_recorder
-  // Marks the beginning of a new record in the stream.
-  //
-  // Backend implementation of <open_recorder>
+
+  // @uvm-ieee 1800.2-2017 auto 7.2.7.3
+  protected void do_free() { }
+
+
+  // @uvm-ieee 1800.2-2017 auto 7.2.7.4
   protected uvm_recorder do_open_recorder(string name,
 					  SimTime open_time,
 					  string type_name) {
     return null;
-  }
-}
-
-//------------------------------------------------------------------------------
-//
-// CLASS: uvm_text_tr_stream
-//
-// The ~uvm_text_tr_stream~ is the default stream implementation for the
-// <uvm_text_tr_database>.
-//
-//
-
-class uvm_text_tr_stream: uvm_tr_stream
-{
-
-  // Variable- m_text_db
-  // Internal reference to the text-based backend
-  private uvm_text_tr_database _m_text_db;
-
-  mixin uvm_object_essentials;
-
-  // Function: new
-  // Constructor
-  //
-  // Parameters:
-  // name - Instance name
-  this(string name="unnamed-uvm_text_tr_stream") {
-    super(name);
-  }
-
-  // Group: Implementation Agnostic API
-
-  // Function: do_open
-  // Callback triggered via <uvm_tr_database::open_stream>.
-  //
-  override protected void do_open(uvm_tr_database db,
-			 string hscope,
-			 string stream_type_name) {
-    synchronized(this) {
-      _m_text_db = cast(uvm_text_tr_database) db;
-      assert(_m_text_db !is null);
-      if(_m_text_db.open_db()) {
-	vfdisplay(_m_text_db.m_file,
-		  "  CREATE_STREAM @%s {NAME:%s T:%s SCOPE:%s STREAM:%s}",
-		  getRootEntity.getSimTime,
-		  this.get_name(),
-		  stream_type_name,
-		  hscope,
-		  this.get_handle());
-      }
-    }
-  }
-
-  // Function: do_close
-  // Callback triggered via <uvm_tr_stream::close>.
-  override protected void do_close() {
-    synchronized(this) {
-      if (_m_text_db.open_db()) {
-	vfdisplay(_m_text_db.m_file,
-		  "  CLOSE_STREAM @%s {NAME:%s T:%s SCOPE:%s STREAM:%s}",
-		  getRootEntity.getSimTime,
-		  this.get_name(),
-		  this.get_stream_type_name(),
-		  this.get_scope(),
-		  this.get_handle());
-      }
-    }
-  }
-
-  // Function: do_free
-  // Callback triggered via <uvm_tr_stream::free>.
-  //
-  override protected void do_free() {
-    synchronized(this) {
-      if (_m_text_db.open_db()) {
-	vfdisplay(_m_text_db.m_file,
-		  "  FREE_STREAM @%s {NAME:%s T:%s SCOPE:%s STREAM:%s}",
-		  getRootEntity.getSimTime,
-		  this.get_name(),
-		  this.get_stream_type_name(),
-		  this.get_scope(),
-		  this.get_handle());
-      }
-      _m_text_db = null;
-      return;
-    }
-  }
-
-  // Function: do_open_recorder
-  // Marks the beginning of a new record in the stream
-  //
-  // Text-backend specific implementation.
-  override protected uvm_recorder do_open_recorder(string name,
-						   SimTime open_time,
-						   string type_name) {
-    synchronized(this) {
-      if(_m_text_db.open_db()) {
-	return uvm_text_recorder.type_id.create(name);
-      }
-      return null;
-    }
   }
 }

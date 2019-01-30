@@ -1,6 +1,9 @@
 //----------------------------------------------------------------------
-//   Copyright 2010      Mentor Graphics Corporation
-//   Copyright 2014-2016 Coverify Systems Technology
+// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2018 NVIDIA Corporation
+// Copyright 2017 Verific
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -44,7 +47,8 @@
 // specialized resource (i.e. resource subtype).
 
 module uvm.base.uvm_resource_specializations;
-import uvm.base.uvm_resource: uvm_resource, uvm_resource_base;
+import uvm.base.uvm_resource: uvm_resource, uvm_resource_pool;
+import uvm.base.uvm_resource_base: uvm_resource_base;
 import uvm.base.uvm_object: uvm_object;
 import std.string: format;
 
@@ -55,20 +59,20 @@ mixin template UVM_RESOURCE_GET_FCNS(base_type)
     import uvm.base.uvm_globals;
     uvm_resource_base b =
       uvm_resource!base_type.get_by_name(rscope, name, rpterr);
-    this_subtype t = cast(this_subtype) b;
-    if(t is null) {
+    this_subtype t = cast (this_subtype) b;
+    if (t is null) {
       uvm_fatal("BADCAST", "cannot cast resource to resource subtype");
     }
     return t;
   }
 
   static this_subtype get_by_type(string rscope = "",
-				  TypeInfo type_handle = null) {
+				  uvm_resource_base type_handle = null) {
     import uvm.base.uvm_globals;
     uvm_resource_base b =
       uvm_resource!base_type.get_by_type(rscope, type_handle);
-    this_subtype t = cast(this_subtype) b;
-    if(t is null) {
+    this_subtype t = cast (this_subtype) b;
+    if (t is null) {
       uvm_fatal("BADCAST", "cannot cast resource to resource subtype");
     }
     return t;
@@ -84,13 +88,14 @@ mixin template UVM_RESOURCE_GET_FCNS(base_type)
 class uvm_int_rsrc: uvm_resource!int
 {
   alias this_subtype = uvm_int_rsrc;
+
   this(string name, string s = "*") {
-    super(name, s);
+    super(name);
+    uvm_resource_pool rp = uvm_resource_pool.get();
+    rp.set_scope(this, s);
   }
 
-  string to(T)() if(is(T == string)) {
-    // read is defined in the base class -- uvm_resource!int
-    // Since read is guarded not need for synchronization guards here
+  string to(T)() if (is (T == string)) {
     return format("%0d", read());
   }
 
@@ -98,7 +103,6 @@ class uvm_int_rsrc: uvm_resource!int
     return this.to!string;
   }
 
-  mixin UVM_RESOURCE_GET_FCNS!int;
 }
 
 //----------------------------------------------------------------------
@@ -111,12 +115,12 @@ class uvm_string_rsrc: uvm_resource!string
   alias uvm_string_rsrc this_subtype;
 
   this(string name, string s = "*") {
-    super(name, s);
+    super(name);
+    uvm_resource_pool rp = uvm_resource_pool.get();
+    rp.set_scope(this, s);
   }
 
-  string to(T)() if(is(T == string)) {
-    // read is defined in the base class -- uvm_resource!int
-    // Since read is guarded not need for synchronization guards here
+  string to(T)() if (is (T == string)) {
     return read();
   }
 
@@ -124,7 +128,6 @@ class uvm_string_rsrc: uvm_resource!string
     return this.to!string;
   }
 
-  mixin UVM_RESOURCE_GET_FCNS!string;
 }
 
 //----------------------------------------------------------------------
@@ -137,10 +140,11 @@ class uvm_obj_rsrc: uvm_resource!uvm_object
   alias uvm_obj_rsrc this_subtype;
 
   this(string name, string s = "*") {
-    super(name, s);
+    super(name);
+    uvm_resource_pool rp = uvm_resource_pool.get();
+    rp.set_scope(this, s);
   }
 
-  mixin UVM_RESOURCE_GET_FCNS!uvm_object;
 }
 
 //----------------------------------------------------------------------
@@ -153,12 +157,12 @@ class uvm_bit_rsrc(size_t N=1): uvm_resource!(UBit!N)
   alias uvm_bit_rsrc!N this_subtype;
 
   this(string name, string s = "*") {
-    super(name, s);
+    super(name);
+    uvm_resource_pool rp = uvm_resource_pool.get();
+    rp.set_scope(this, s);
   }
 
-  string to(T)() if(is(T == string)) {
-    // read is defined in the base class -- uvm_resource!int
-    // Since read is guarded not need for synchronization guards here
+  string to(T)() if (is (T == string)) {
     return format("%0b", read());
   }
 
@@ -166,7 +170,6 @@ class uvm_bit_rsrc(size_t N=1): uvm_resource!(UBit!N)
     return this.to!string;
   }
 
-  mixin UVM_RESOURCE_GET_FCNS!(UBit!N);
 }
 
 // This class is not used anywhere else in UVM baseclasses.
@@ -177,12 +180,15 @@ class uvm_bit_rsrc(size_t N=1): uvm_resource!(UBit!N)
 // //
 // // specialization of uvm_resource #T() for T = vector of bytes
 // //----------------------------------------------------------------------
-// class uvm_byte_rsrc(uint N=1): uvm_resource #(bit[7:0][N-1:0]);
+// class uvm_byte_rsrc #(int unsigned N=1) extends uvm_resource #(bit[7:0][N-1:0]);
 
 //   typedef uvm_byte_rsrc#(N) this_subtype;
 
 //   function new(string name, string s = "*");
-//     super.new(name, s);
+//     uvm_resource_pool rp;
+//     super.new(name);
+//     rp = uvm_resource_pool::get();
+//     rp.set_scope(this, s);
 //   endfunction
 
 //   function string convert2string();
@@ -191,6 +197,5 @@ class uvm_bit_rsrc(size_t N=1): uvm_resource!(UBit!N)
 //     return s;
 //   endfunction
 
-//   `UVM_RESOURCE_GET_FCNS(bit[7:0][N-1:0])
 
 // endclass

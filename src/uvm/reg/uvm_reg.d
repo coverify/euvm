@@ -74,7 +74,7 @@ import std.string: format;
 //-----------------------------------------------------------------
 abstract class uvm_reg: uvm_object
 {
-  mixin(uvm_sync_string);
+  // mixin(uvm_sync_string);
   private bool              _m_locked;
   private uvm_reg_block     _m_parent;
   private uvm_reg_file      _m_regfile_parent;
@@ -84,21 +84,37 @@ abstract class uvm_reg: uvm_object
   protected uvm_reg_field[] _m_fields;   // Fields in LSB to MSB order
   private int               _m_has_cover;
   private int               _m_cover_on;
-  @uvm_immutable_sync
+  // @uvm_immutable_sync
   private SemaphoreObj      _m_atomic;
-  @uvm_public_sync
+  // uvm_sync_immutable _m_atomic SemaphoreObj
+  public SemaphoreObj m_atomic()() {return this._m_atomic;}
+  public void m_atomic(T)(T val) if(! is(T: SemaphoreObj)){this._m_atomic = val;}
+
+  // @uvm_public_sync
   private Process           _m_process;
+  // uvm_sync_public _m_process Process
+  final public Process m_process() {synchronized(this) return this._m_process;}
+  final public void m_process(Process val) {synchronized(this) this._m_process = val;}
+
   private string            _m_fname;
   private int               _m_lineno;
   private bool              _m_read_in_progress;
   private bool              _m_write_in_progress; 
   protected bool            _m_update_in_progress;
   /*private*/
-  @uvm_public_sync
-  bool                      _m_is_busy;
+  // @uvm_public_sync
+  private bool                      _m_is_busy;
+  // uvm_sync_public _m_is_busy bool
+  final public bool m_is_busy() {synchronized(this) return this._m_is_busy;}
+  final public void m_is_busy(bool val) {synchronized(this) this._m_is_busy = val;}
+
   /*private*/
-  @uvm_public_sync
-  bool                      _m_is_locked_by_field;
+  // @uvm_public_sync
+  private bool                      _m_is_locked_by_field;
+  // uvm_sync_public _m_is_locked_by_field bool
+  final public bool m_is_locked_by_field() {synchronized(this) return this._m_is_locked_by_field;}
+  final public void m_is_locked_by_field(bool val) {synchronized(this) this._m_is_locked_by_field = val;}
+
   private uvm_reg_backdoor  _m_backdoor;
 
   private static uint       _m_max_size;

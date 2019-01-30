@@ -1,9 +1,11 @@
 //
 //----------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2011 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2014 Coverify Systems Technology
+// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2014 Semifore
+// Copyright 2010-2018 Synopsys, Inc.
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2014-2018 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -23,14 +25,14 @@
 
 
 //------------------------------------------------------------------------------
-// Title: TLM Channel Classes
+// Title -- NODOCS -- UVM TLM Channel Classes
 //------------------------------------------------------------------------------
-// This section defines built-in TLM channel classes.
+// This section defines built-in UVM TLM channel classes.
 //------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_tlm_req_rsp_channel #(REQ,RSP)
+// CLASS -- NODOCS -- uvm_tlm_req_rsp_channel #(REQ,RSP)
 //
 // The uvm_tlm_req_rsp_channel contains a request FIFO of type ~REQ~ and a response
 // FIFO of type ~RSP~. These FIFOs can be of any size. This channel is
@@ -46,13 +48,14 @@
 
 module uvm.tlm1.uvm_tlm_req_rsp;
 
+// @uvm-ieee 1800.2-2017 auto 12.2.9.1.1
 class uvm_tlm_req_rsp_channel(REQ=int, RSP=REQ): uvm_component
 {
-  alias uvm_tlm_req_rsp_channel!(REQ, RSP) this_type;
+  alias this_type = uvm_tlm_req_rsp_channel!(REQ, RSP);
+  
+  mixin uvm_component_essentials;
 
-  enum string type_name = "uvm_tlm_req_rsp_channel!(REQ,RSP)";
-
-  // Port: put_request_export
+  // Port -- NODOCS -- put_request_export
   //
   // The put_export provides both the blocking and non-blocking put interface
   // methods to the request FIFO:
@@ -67,7 +70,7 @@ class uvm_tlm_req_rsp_channel(REQ=int, RSP=REQ): uvm_component
   uvm_put_export!(REQ) put_request_export;
 
 
-  // Port: get_peek_response_export
+  // Port -- NODOCS -- get_peek_response_export
   //
   // The get_peek_response_export provides all the blocking and non-blocking get
   // and peek interface methods to the response FIFO:
@@ -85,7 +88,7 @@ class uvm_tlm_req_rsp_channel(REQ=int, RSP=REQ): uvm_component
   uvm_get_peek_export!(RSP) get_peek_response_export;
 
 
-  // Port: get_peek_request_export
+  // Port -- NODOCS -- get_peek_request_export
   //
   // The get_peek_export provides all the blocking and non-blocking get and peek
   // interface methods to the response FIFO:
@@ -104,7 +107,7 @@ class uvm_tlm_req_rsp_channel(REQ=int, RSP=REQ): uvm_component
   uvm_get_peek_export!(REQ) get_peek_request_export;
 
 
-  // Port: put_response_export
+  // Port -- NODOCS -- put_response_export
   //
   // The put_export provides both the blocking and non-blocking put interface
   // methods to the response FIFO:
@@ -119,7 +122,7 @@ class uvm_tlm_req_rsp_channel(REQ=int, RSP=REQ): uvm_component
   uvm_put_export!(RSP) put_response_export;
 
 
-  // Port: request_ap
+  // Port -- NODOCS -- request_ap
   //
   // Transactions passed via ~put~ or ~try_put~ (via any port connected to the
   // put_request_export) are sent out this port via its write method.
@@ -131,7 +134,7 @@ class uvm_tlm_req_rsp_channel(REQ=int, RSP=REQ): uvm_component
   uvm_analysis_port!(REQ) request_ap;
 
 
-  // Port: response_ap
+  // Port -- NODOCS -- response_ap
   //
   // Transactions passed via ~put~ or ~try_put~ (via any port connected to the
   // put_response_export) are sent out this port via its write method.
@@ -143,7 +146,7 @@ class uvm_tlm_req_rsp_channel(REQ=int, RSP=REQ): uvm_component
   uvm_analysis_port!(RSP) response_ap;
 
 
-  // Port: master_export
+  // Port -- NODOCS -- master_export
   //
   // Exports a single interface that allows a master to put requests and get or
   // peek responses. It is a combination of the put_request_export and
@@ -153,7 +156,7 @@ class uvm_tlm_req_rsp_channel(REQ=int, RSP=REQ): uvm_component
 		  uvm_tlm_fifo!REQ, uvm_tlm_fifo!RSP) master_export;
 
 
-  // Port: slave_export
+  // Port -- NODOCS -- slave_export
   //
   // Exports a single interface that allows a slave to get or peek requests and
   // to put responses. It is a combination of the get_peek_request_export
@@ -190,7 +193,7 @@ class uvm_tlm_req_rsp_channel(REQ=int, RSP=REQ): uvm_component
   protected uvm_tlm_fifo!(RSP) m_response_fifo;
 
 
-  // Function: new
+  // Function -- NODOCS -- new
   //
   // The ~name~ and ~parent~ are the standard <uvm_component> constructor arguments.
   // The ~parent~ must be null if this component is defined within a static
@@ -198,10 +201,11 @@ class uvm_tlm_req_rsp_channel(REQ=int, RSP=REQ): uvm_component
   // arguments specify the request and response FIFO sizes, which have default
   // values of 1.
 
+  // @uvm-ieee 1800.2-2017 auto 12.2.9.1.11
   public this(string name=null, uvm_component parent=null,
 	      int request_fifo_size=1,
 	      int response_fifo_size=1) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, parent);
 
       m_request_fifo  = new uvm_tlm_fifo!(REQ)
@@ -244,7 +248,7 @@ class uvm_tlm_req_rsp_channel(REQ=int, RSP=REQ): uvm_component
   }
 
   public void connect_phase(uvm_phase phase) {
-    synchronized(this) {
+    synchronized (this) {
       put_request_export.connect       (m_request_fifo.put_export);
       get_peek_request_export.connect  (m_request_fifo.get_peek_export);
       m_request_fifo.put_ap.connect    (request_ap);
@@ -255,7 +259,7 @@ class uvm_tlm_req_rsp_channel(REQ=int, RSP=REQ): uvm_component
   }
 
   public void create_aliased_exports() {
-    synchronized(this) {
+    synchronized (this) {
       // request
       blocking_put_request_export         = put_request_export;
       nonblocking_put_request_export      = put_request_export;
@@ -287,31 +291,11 @@ class uvm_tlm_req_rsp_channel(REQ=int, RSP=REQ): uvm_component
       nonblocking_slave_export  = slave_export;
     }
   }
-
-  // get_type_name
-  // -------------
-
-  public string get_type_name () {
-    return type_name;
-  }
-
-
-  // create
-  // ------
-
-  public uvm_object create (string name="") {
-    synchronized(this) {
-      this_type v;
-      v = new this_type(name);
-      return v;
-    }
-  }
-
 }
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_tlm_transport_channel #(REQ,RSP)
+// CLASS -- NODOCS -- uvm_tlm_transport_channel #(REQ,RSP)
 //
 // A uvm_tlm_transport_channel is a <uvm_tlm_req_rsp_channel #(REQ,RSP)> that implements
 // the transport interface. It is useful when modeling a non-pipelined bus at
@@ -321,13 +305,16 @@ class uvm_tlm_req_rsp_channel(REQ=int, RSP=REQ): uvm_component
 //
 //------------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 12.2.9.2.1
 class uvm_tlm_transport_channel(REQ=int, RSP=REQ):
   uvm_tlm_req_rsp_channel!(REQ, RSP)
 {
 
-  alias uvm_tlm_transport_channel!(REQ, RSP) this_type;
+  alias this_type = uvm_tlm_transport_channel!(REQ, RSP);
+  
+  mixin uvm_component_essentials;
 
-  // Port: transport_export
+  // Port -- NODOCS -- transport_export
   //
   // The put_export provides both the blocking and non-blocking transport
   // interface methods to the response FIFO:
@@ -342,15 +329,16 @@ class uvm_tlm_transport_channel(REQ=int, RSP=REQ):
   uvm_transport_imp!(REQ, RSP, this_type) transport_export;
 
 
-  // Function: new
+  // Function -- NODOCS -- new
   //
   // The ~name~ and ~parent~ are the standard <uvm_component> constructor
   // arguments. The ~parent~ must be null if this component is defined within a
   // statically elaborated construct such as a module, program block, or
   // interface.
 
-  public this (string name=null, uvm_component parent=null) {
-    synchronized(this) {
+  // @uvm-ieee 1800.2-2017 auto 12.2.9.2.3
+  public this(string name=null, uvm_component parent=null) {
+    synchronized (this) {
       super(name, parent, 1, 1);
       transport_export = new uvm_transport_imp!(REQ, RSP, this_type)
 	 ("transport_export", this);
@@ -358,10 +346,11 @@ class uvm_tlm_transport_channel(REQ=int, RSP=REQ):
   }
 
   // task
-  public void transport (REQ request, out RSP response) {
+  // @uvm-ieee 1800.2-2017 auto 12.2.9.2.2
+  public void transport(REQ request, out RSP response) {
     uvm_tlm_fifo!(REQ) req_fifo;
     uvm_tlm_fifo!(RSP) rsp_fifo;
-    synchronized(this) {
+    synchronized (this) {
       req_fifo = this.m_request_fifo;
       rsp_fifo = this.m_response_fifo;
     }
@@ -369,9 +358,10 @@ class uvm_tlm_transport_channel(REQ=int, RSP=REQ):
     rsp_fifo.get( response );
   }
 
-  public bool nb_transport (REQ req, out RSP rsp) {
-    synchronized(this) {
-      if(this.m_request_fifo.try_put(req)) {
+  // @uvm-ieee 1800.2-2017 auto 12.2.9.2.2
+  public bool nb_transport(REQ req, out RSP rsp) {
+    synchronized (this) {
+      if (this.m_request_fifo.try_put(req)) {
 	 return this.m_response_fifo.try_get(rsp);
       }
       else {
@@ -379,5 +369,4 @@ class uvm_tlm_transport_channel(REQ=int, RSP=REQ):
       }
     }
   }
-
 }

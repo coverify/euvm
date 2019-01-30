@@ -1,6 +1,14 @@
 //----------------------------------------------------------------------
-//   Copyright 2013 Cadence Design Inc
-//   Copyright 2016 Coverify Systems Technology
+// Copyright 2016-2019 Coverify Systems Technology
+// Copyright 2014-2018 Mentor Graphics Corporation
+// Copyright 2015 Analog Devices, Inc.
+// Copyright 2014 Semifore
+// Copyright 2018 Intel Corporation
+// Copyright 2018 Synopsys, Inc.
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2013-2018 NVIDIA Corporation
+// Copyright 2014-2017 Cisco Systems, Inc.
+// Copyright 2017 Verific
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -23,13 +31,17 @@ module uvm.base.uvm_coreservice;
 import uvm.base.uvm_factory: uvm_factory, uvm_default_factory;
 import uvm.base.uvm_report_server: uvm_report_server, uvm_default_report_server;
 import uvm.base.uvm_traversal: uvm_visitor, uvm_component_name_check_visitor;
-import uvm.base.uvm_tr_database: uvm_tr_database, uvm_text_tr_database;
+import uvm.base.uvm_tr_database: uvm_tr_database;
+import uvm.base.uvm_text_tr_database: uvm_text_tr_database;
 import uvm.base.uvm_root: uvm_root;
 import uvm.base.uvm_component: uvm_component;
+import uvm.base.uvm_packer: uvm_packer;
+import uvm.base.uvm_resource: uvm_resource_pool;
+import uvm.base.uvm_copier: uvm_copier;
+import uvm.base.uvm_entity: uvm_entity_base;
 import uvm.base.uvm_once;
 
 import uvm.meta.misc;
-
 
 //----------------------------------------------------------------------
 // Class: uvm_coreservice_t
@@ -45,81 +57,135 @@ import uvm.meta.misc;
 
 abstract class uvm_coreservice_t
 {
+  import uvm.base.uvm_printer: uvm_printer, uvm_table_printer;
+  import uvm.base.uvm_comparer: uvm_comparer;
   static class uvm_once: uvm_once_base
   {
     @uvm_immutable_sync
     private uvm_coreservice_t _inst;
+    
+    @uvm_immutable_sync
+    private uint _m_uvm_global_seed;
+
     this() {
-      synchronized(this) {
+      synchronized (this) {
 	_inst = new uvm_default_coreservice_t;
+	_m_uvm_global_seed = uvm_entity_base.get().get_seed;
       }
     }
   }
 
-  mixin(uvm_once_sync_string);
+  mixin (uvm_once_sync_string);
 
-  // Function: get_factory
-  //
-  // intended to return the currently enabled uvm factory,
+  // @uvm-ieee 1800.2-2017 auto F.4.1.4.2
   abstract uvm_factory get_factory();
 
-  // Function: set_factory
-  //
-  // intended to set the current uvm factory
+  // @uvm-ieee 1800.2-2017 auto F.4.1.4.3
   abstract void set_factory(uvm_factory f);
 
-  // Function: get_report_server
-  // intended to return the current global report_server
+  // @uvm-ieee 1800.2-2017 auto F.4.1.4.4
   abstract uvm_report_server get_report_server();
 
-  // Function: set_report_server
-  // intended to set the central report server to ~server~
+  // @uvm-ieee 1800.2-2017 auto F.4.1.4.5
   abstract void set_report_server(uvm_report_server server);
 
-  // Function: get_default_tr_database
-  // intended to return the current default record database
+  // @uvm-ieee 1800.2-2017 auto F.4.1.4.6
   abstract uvm_tr_database get_default_tr_database();
 
-  // Function: set_default_tr_database
-  // intended to set the current default record database to ~db~
-  //
+  // @uvm-ieee 1800.2-2017 auto F.4.1.4.7
   abstract void set_default_tr_database(uvm_tr_database db);
 
-  // Function: set_component_visitor
-  // intended to set the component visitor to ~v~
-  // (this visitor is being used for the traversal at end_of_elaboration_phase
-  // for instance for name checking)
+  // @uvm-ieee 1800.2-2017 auto F.4.1.4.9
   abstract void set_component_visitor(uvm_visitor!(uvm_component) v);
 
-  // Function: get_component_visitor
-  // intended to retrieve the current component visitor
-  // see <set_component_visitor>
   abstract uvm_visitor!(uvm_component) get_component_visitor();
 
-  // Function: get_root
-  //
-  // returns the uvm_root instance
+  // @uvm-ieee 1800.2-2017 auto F.4.1.4.1
   abstract uvm_root get_root();
+
+  // @uvm-ieee 1800.2-2017 auto F.4.1.4.10
+  abstract void set_phase_max_ready_to_end(int max);
+
+  // @uvm-ieee 1800.2-2017 auto F.4.1.4.11
+  abstract int get_phase_max_ready_to_end();
+
+  // @uvm-ieee 1800.2-2017 auto F.4.1.4.12
+  abstract void set_default_printer(uvm_printer printer);
+    
+  // @uvm-ieee 1800.2-2017 auto F.4.1.4.13
+  abstract uvm_printer get_default_printer();
+
+  // @uvm-ieee 1800.2-2017 auto F.4.1.4.14
+  abstract void set_default_packer(uvm_packer packer);
+
+  // @uvm-ieee 1800.2-2017 auto F.4.1.4.15
+  abstract uvm_packer get_default_packer();
+
+  // @uvm-ieee 1800.2-2017 auto F.4.1.4.16
+  abstract void set_default_comparer(uvm_comparer comparer);
+
+  // @uvm-ieee 1800.2-2017 auto F.4.1.4.17
+  abstract uvm_comparer get_default_comparer();
+
+  abstract uint get_global_seed();
+
+
+  // @uvm-ieee 1800.2-2017 auto F.4.1.4.18
+  abstract void set_default_copier(uvm_copier copier);
+
+  // @uvm-ieee 1800.2-2017 auto F.4.1.4.19
+  abstract uvm_copier get_default_copier();
+
+  // Function: get_uvm_seeding
+  // Returns the current UVM seeding ~enable~ value, as set by
+  // <set_uvm_seeding>.
+  //
+  // This pure virtual method provides access to the
+  // <uvm_default_coreservice_t::get_uvm_seeding> method as described
+  // by F.4.3.
+  //
+  // It was omitted from the P1800.2 LRM, and is being tracked
+  // in Mantis 6417
+  //
+  // @uvm-contrib This API is being considered for potential contribution to 1800.2
+  abstract bool get_uvm_seeding();
+
+  // Function: set_uvm_seeding
+  // Sets the current UVM seeding ~enable~ value, as retrieved by
+  // <get_uvm_seeding>.
+  //
+  // This pure virtual method provides access to the
+  // <uvm_default_coreservice_t::set_uvm_seeding> method as described
+  // by F.4.4.
+  //
+  // It was omitted from the P1800.2 LRM, and is being tracked
+  // in Mantis 6417
+  //
+  // @uvm-contrib This API is being considered for potential contribution to 1800.2
+  abstract void set_uvm_seeding(bool enable);
+   
+  // @uvm-ieee 1800.2-2017 auto F.4.1.4.21
+  abstract void set_resource_pool (uvm_resource_pool pool);
+
+  // @uvm-ieee 1800.2-2017 auto F.4.1.4.22
+  abstract uvm_resource_pool get_resource_pool();
+
+  // @uvm-ieee 1800.2-2017 auto F.4.1.4.23
+  abstract void set_resource_pool_default_precedence(uint precedence);
+
+  abstract uint get_resource_pool_default_precedence();
 
   // moved to once
   // local static `UVM_CORESERVICE_TYPE inst;
 
-  // Function: get
-  //
-  // Returns an instance providing the uvm_coreservice_t interface.
-  // The actual type of the instance is determined by the define `UVM_CORESERVICE_TYPE.
-  //
-  //| `define UVM_CORESERVICE_TYPE uvm_blocking_coreservice
-  //| class uvm_blocking_coreservice extends uvm_default_coreservice_t;
-  //|    virtual function void set_factory(uvm_factory f);
-  //|       `uvm_error("FACTORY","you are not allowed to override the factory")
-  //|    endfunction
-  //| endclass
-  //|
+  // @uvm-ieee 1800.2-2017 auto F.4.1.3
   static uvm_coreservice_t get() {
     return inst;
   }
 
+  // static void set(uvm_coreservice_t cs) {
+  //   m_inst = cs;
+  // }
 }
 
 //----------------------------------------------------------------------
@@ -131,8 +197,10 @@ abstract class uvm_coreservice_t
 //----------------------------------------------------------------------
 class uvm_default_coreservice_t: uvm_coreservice_t
 {
+  import uvm.base.uvm_printer: uvm_printer, uvm_table_printer;
+  import uvm.base.uvm_comparer: uvm_comparer;
   // this() {
-  //   synchronized(this) {
+  //   synchronized (this) {
   //     _factory = new uvm_default_factory();
   //   }
   // }
@@ -144,8 +212,8 @@ class uvm_default_coreservice_t: uvm_coreservice_t
   // Returns the currently enabled uvm factory.
   // When no factory has been set before, instantiates a uvm_default_factory
   override uvm_factory get_factory() {
-    synchronized(this) {
-      if(_factory is null) {
+    synchronized (this) {
+      if (_factory is null) {
 	_factory = new uvm_default_factory();
       }
       return _factory;
@@ -157,7 +225,7 @@ class uvm_default_coreservice_t: uvm_coreservice_t
   // Sets the current uvm factory.
   // Please note: it is up to the user to preserve the contents of the original factory or delegate calls to the original factory
   override void set_factory(uvm_factory f) {
-    synchronized(this) {
+    synchronized (this) {
       _factory = f;
     }
   }
@@ -171,16 +239,21 @@ class uvm_default_coreservice_t: uvm_coreservice_t
   override uvm_tr_database get_default_tr_database() {
     import esdl.base.core: Process;
     import std.random: Random;
-    synchronized(this) {
+    synchronized (this) {
       if (_tr_database is null) {
-	Process p = Process.self();
-	Random s;
-	if(p !is null) {
-	  p.getRandState(s);
+
+	version (PRESERVE_RANDSTATE) {
+	  Process p = Process.self();
+	  Random s;
+	  if (p !is null)
+	    p.getRandState(s);
 	}
+	
 	_tr_database = new uvm_text_tr_database("default_tr_database");
-	if(p !is null) {
-	  p.setRandState(s);
+
+	version (PRESERVE_RANDSTATE) {
+	  if (p !is null)
+	    p.setRandState(s);
 	}
       }
       return _tr_database;
@@ -190,7 +263,7 @@ class uvm_default_coreservice_t: uvm_coreservice_t
   // Function: set_default_tr_database
   // Sets the current default record database to ~db~
   override void set_default_tr_database(uvm_tr_database db) {
-    synchronized(this) {
+    synchronized (this) {
       _tr_database = db;
     }
   }
@@ -201,8 +274,8 @@ class uvm_default_coreservice_t: uvm_coreservice_t
   // if no report server has been set before, returns an instance of
   // uvm_default_report_server
   override uvm_report_server get_report_server() {
-    synchronized(this) {
-      if(_report_server is null) {
+    synchronized (this) {
+      if (_report_server is null) {
 	_report_server = new uvm_default_report_server();
       }
       return _report_server;
@@ -212,7 +285,7 @@ class uvm_default_coreservice_t: uvm_coreservice_t
   // Function: set_report_server
   // sets the central report server to ~server~
   override void set_report_server(uvm_report_server server) {
-    synchronized(this) {
+    synchronized (this) {
       _report_server = server;
     }
   }
@@ -227,7 +300,7 @@ class uvm_default_coreservice_t: uvm_coreservice_t
   // (this visitor is being used for the traversal at end_of_elaboration_phase
   // for instance for name checking)
   override void set_component_visitor(uvm_visitor!(uvm_component) v) {
-    synchronized(this) {
+    synchronized (this) {
       _visitor = v;
     }
   }
@@ -236,11 +309,143 @@ class uvm_default_coreservice_t: uvm_coreservice_t
   // retrieves the current component visitor
   // if unset(or ~null~) returns a <uvm_component_name_check_visitor> instance
   override uvm_visitor!(uvm_component) get_component_visitor() {
-    synchronized(this) {
-      if(_visitor is null) {
+    synchronized (this) {
+      if (_visitor is null) {
 	_visitor = new uvm_component_name_check_visitor("name-check-visitor");
       }
       return _visitor;
+    }
+  }
+
+  private uvm_printer _m_printer ;
+
+  override void set_default_printer(uvm_printer printer) {
+    synchronized (this) {
+      _m_printer = printer;
+    }
+  }
+
+  override uvm_printer get_default_printer() {
+    synchronized (this) {
+      if (_m_printer is null) {
+	_m_printer =  uvm_table_printer.get_default() ;
+      }
+      return _m_printer;
+    }
+  }
+
+  @uvm_public_sync
+  private uvm_packer _m_packer;
+
+  override void set_default_packer(uvm_packer packer) {
+    synchronized (this) {
+      _m_packer = packer;
+    }
+  }
+
+  override uvm_packer get_default_packer() {
+    synchronized (this) {
+      if (_m_packer is null) {
+	_m_packer =  new uvm_packer("uvm_default_packer") ;
+      }
+      return _m_packer;
+    }
+  }
+
+  @uvm_public_sync
+  private uvm_comparer _m_comparer;
+  override void set_default_comparer(uvm_comparer comparer) {
+    synchronized (this) {
+      _m_comparer = comparer;
+    }
+  }
+
+  override uvm_comparer get_default_comparer() {
+    synchronized (this) {
+      if (_m_comparer is null) {
+	_m_comparer =  new uvm_comparer("uvm_default_comparer") ;
+      }
+      return _m_comparer ;
+    }
+  }
+
+  @uvm_private_sync
+  private int _m_default_max_ready_to_end_iters = 20;
+  override void set_phase_max_ready_to_end(int max) {
+    synchronized (this) {
+      _m_default_max_ready_to_end_iters = max;
+    }
+  }
+
+  override int get_phase_max_ready_to_end() {
+    synchronized (this) {
+      return _m_default_max_ready_to_end_iters;
+    }
+  }
+
+  @uvm_public_sync
+  private uvm_resource_pool _m_rp;
+  override void set_resource_pool (uvm_resource_pool pool) {
+    synchronized (this) {
+      _m_rp = pool;
+    }
+  }
+
+  override uvm_resource_pool get_resource_pool() {
+    synchronized (this) {
+      if (_m_rp is null)
+	_m_rp = new uvm_resource_pool();
+      return _m_rp;
+    }
+  }
+
+  private uint _m_default_precedence = 1000;
+  override void set_resource_pool_default_precedence(uint precedence) {
+    synchronized (this) {
+      _m_default_precedence = precedence;
+    }
+  }
+
+  override uint get_resource_pool_default_precedence() {
+    synchronized (this) {
+      return _m_default_precedence;
+    }
+  }
+
+  override uint get_global_seed() {
+    return m_uvm_global_seed;
+  }
+
+  bool _m_use_uvm_seeding = true;
+
+  // @uvm-ieee 1800.2-2017 auto F.4.3
+  override bool get_uvm_seeding() {
+    synchronized (this) {
+      return _m_use_uvm_seeding;
+    }
+  }
+
+   // @uvm-ieee 1800.2-2017 auto F.4.4
+  override void set_uvm_seeding(bool enable) {
+    synchronized (this) {
+      _m_use_uvm_seeding = enable;
+    }
+  }
+
+  private uvm_copier _m_copier ;
+
+  override void set_default_copier(uvm_copier copier) {
+    synchronized (this) {
+      _m_copier = copier ;
+    }
+  }
+
+  override uvm_copier get_default_copier() {
+    synchronized (this) {
+      if (_m_copier is null) {
+	_m_copier =  new uvm_copier("uvm_default_copier");
+      }
+      return _m_copier ;
     }
   }
 }

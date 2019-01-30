@@ -1,9 +1,10 @@
 //
 //----------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2010 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2014 Coverify Systems Technology
+// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2011 AMD
+// Copyright 2015 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -21,9 +22,14 @@
 //   permissions and limitations under the License.
 //----------------------------------------------------------------------
 
+module uvm.base.uvm_topdown_phase;
+
+import uvm.base.uvm_phase: uvm_phase;
+import uvm.base.uvm_object_globals: uvm_phase_state, uvm_phase_type, uvm_verbosity;
+
 //------------------------------------------------------------------------------
 //
-// Class: uvm_topdown_phase
+// Class -- NODOCS -- uvm_topdown_phase
 //
 //------------------------------------------------------------------------------
 // Virtual base class for function phases that operate top-down.
@@ -33,28 +39,18 @@
 // has been called and returned on all applicable components
 // in the hierarchy.
 
-module uvm.base.uvm_topdown_phase;
-
-import uvm.base.uvm_phase: uvm_phase;
-import uvm.base.uvm_object_globals: uvm_phase_state, uvm_phase_type, uvm_verbosity;
-
+// @uvm-ieee 1800.2-2017 auto 9.7.1
 abstract class uvm_topdown_phase: uvm_phase
 {
   import uvm.base.uvm_component: uvm_component;
-  // Function: new
-  //
-  // Create a new instance of a top-down phase
-  //
+
+  // @uvm-ieee 1800.2-2017 auto 9.7.2.1
   this(string name) {
     super(name, uvm_phase_type.UVM_PHASE_IMP);
   }
 
 
-  // Function: traverse
-  //
-  // Traverses the component tree in top-down order, calling <execute> for
-  // each component.
-  //
+  // @uvm-ieee 1800.2-2017 auto 9.7.2.2
   override void traverse(uvm_component comp,
 			 uvm_phase phase,
 			 uvm_phase_state state) {
@@ -65,7 +61,7 @@ abstract class uvm_topdown_phase: uvm_phase
     uvm_domain phase_domain = phase.get_domain();
     uvm_domain comp_domain = comp.get_domain();
 
-    synchronized(this) {
+    synchronized (this) {
       if (m_phase_trace) {
 	uvm_info("PH_TRACE", format("topdown-phase phase=%s state=%s comp=%s " ~
 				    "comp.domain=%s phase.domain=%s",
@@ -89,7 +85,7 @@ abstract class uvm_topdown_phase: uvm_phase
 	    comp.inc_phasing_active();
 	    auto pphase = this in comp.m_phase_imps;
 	    if (pphase !is null) {
-	      ph = cast(uvm_phase) *pphase;
+	      ph = cast (uvm_phase) *pphase;
 	    }
 	    ph.execute(comp, phase);
 	    comp.dec_phasing_active();
@@ -108,16 +104,13 @@ abstract class uvm_topdown_phase: uvm_phase
       }
     }
 
-    foreach(child; comp.get_children) {
+    foreach (child; comp.get_children) {
       traverse(child, phase, state);
     }
   }
 
 
-  // Function: execute
-  //
-  // Executes the top-down phase ~phase~ for the component ~comp~.
-  //
+  // @uvm-ieee 1800.2-2017 auto 9.7.2.3
   override void execute(uvm_component comp,
 			uvm_phase phase) {
     import esdl.base.core: Process;

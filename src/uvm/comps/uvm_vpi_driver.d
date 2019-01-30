@@ -1,6 +1,6 @@
 //
 //------------------------------------------------------------------------------
-//   Copyright 2016 Coverify Systems Technology
+//   Copyright 2016-2019 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -20,11 +20,7 @@
 
 module uvm.comps.uvm_vpi_driver;
 
-import uvm.base.uvm_phase;
-import uvm.base.uvm_component;
-import uvm.base.uvm_globals;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_async_lock;
+import uvm.base;
 import uvm.comps.uvm_driver;
 import uvm.tlm1.uvm_tlm_fifos;
 import uvm.tlm1.uvm_ports;
@@ -34,6 +30,8 @@ import esdl.base.core: SimTerminatedException, AsyncLockDisabledException;
 
 class uvm_vpi_driver(REQ, string VPI_PREFIX): uvm_driver!REQ
 {
+  mixin uvm_component_essentials;
+  
   alias DRIVER = typeof(this);
   uvm_tlm_vpi_push_fifo!(REQ) req_fifo;
 
@@ -42,8 +40,6 @@ class uvm_vpi_driver(REQ, string VPI_PREFIX): uvm_driver!REQ
 
   uvm_async_event item_done_event;
   
-  enum string type_name = "uvm_vpi_driver!(REQ, RSP)";
-
   int vpi_fifo_depth = 1;	// can be configured via uvm_config_db
 
   string vpi_task_prefix;		// can be configured vio uvm_config_db
@@ -200,10 +196,6 @@ class uvm_vpi_driver(REQ, string VPI_PREFIX): uvm_driver!REQ
     }
   }
   
-  override string get_type_name() {
-    return type_name;
-  }
-
   this(string name, uvm_component parent) {
     synchronized(this) {
       super(name, parent);

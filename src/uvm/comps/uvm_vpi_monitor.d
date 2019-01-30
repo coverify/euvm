@@ -1,6 +1,6 @@
 //
 //------------------------------------------------------------------------------
-//   Copyright 2016 Coverify Systems Technology
+//   Copyright 2016-2019 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -20,10 +20,7 @@
 
 module uvm.comps.uvm_vpi_monitor;
 
-import uvm.base.uvm_phase;
-import uvm.base.uvm_component;
-// import uvm.base.uvm_globals;
-import uvm.base.uvm_object_globals;
+import uvm.base;
 import uvm.comps.uvm_monitor;
 import uvm.tlm1.uvm_tlm_fifos;
 import uvm.tlm1.uvm_ports;
@@ -35,6 +32,8 @@ import esdl.base.core: SimTerminatedException, AsyncLockDisabledException;
 
 class uvm_vpi_monitor(RSP, string VPI_PREFIX): uvm_monitor
 {
+  mixin uvm_component_essentials;
+
   alias MONITOR = typeof(this);
   uvm_tlm_gen_rsp_vpi_channel!(RSP) rsp_fifo;
 
@@ -44,8 +43,6 @@ class uvm_vpi_monitor(RSP, string VPI_PREFIX): uvm_monitor
 
   public uvm_analysis_port!(RSP) rsp_port;
   
-  enum string type_name = "uvm_vpi_monitor!(RSP)";
-
   string vpi_task_prefix;		// can be configured vio uvm_config_db
 
   string vpi_monitor_task() {
@@ -139,10 +136,6 @@ class uvm_vpi_monitor(RSP, string VPI_PREFIX): uvm_monitor
     
   }
   
-  override string get_type_name() {
-    return type_name;
-  }
-
   this(string name, uvm_component parent) {
     super(name, parent);
     _vpi_iter = new uvm_vpi_iter();

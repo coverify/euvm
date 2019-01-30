@@ -1,10 +1,9 @@
 //
 //------------------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2011 Cadence Design Systems, Inc.
-//   Copyright 2010-2011 Synopsys, Inc.
-//   Copyright 2013      NVIDIA Corporation
-//   Copyright 2016      Coverify Systems Technology
+// Copyright 2016-2018 Coverify Systems Technology
+// Copyright 2007-2009 Mentor Graphics Corporation
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2013-2015 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -26,7 +25,7 @@ module uvm.dap.uvm_set_get_dap_base;
 
 import uvm.base.uvm_object: uvm_object;
 
-// Class: uvm_set_get_dap_base
+// Class -- NODOCS -- uvm_set_get_dap_base
 // Provides the 'set' and 'get' interface for Data Access Policies (DAPs)
 //
 // The 'Set/Get' base class simply provides a common interface for
@@ -39,27 +38,27 @@ abstract class uvm_set_get_dap_base(T=int): uvm_object
   // Used for self references
   alias this_type = uvm_set_get_dap_base!T;
 
-  // Function: new
+  // Function -- NODOCS -- new
   // Constructor
   this(string name="unnamed-uvm_set_get_dap_base!T") {
     super(name);
   }
 
-  // Group: Set/Get Interface
+  // Group -- NODOCS -- Set/Get Interface
   //
   // All implementations of the ~uvm_set_get_dap_base~ class must
   // provide an implementation of the four basic "Set and Get"
   // accessors.
   //
 
-  // Function: set
+  // Function -- NODOCS -- set
   // Sets the value contained within the resource.
   //
   // Depending on the DAP policies, an error may be reported if
   // it is illegal to 'set' the value at this time.
   abstract void set(T value);
 
-  // Function: try_set
+  // Function -- NODOCS -- try_set
   // Attempts to set the value contained within the resource.
   //
   // If the DAP policies forbid setting at this time, then
@@ -68,14 +67,14 @@ abstract class uvm_set_get_dap_base(T=int): uvm_object
   // will be treated like a standard <set> call.
   abstract bool try_set(T value);
 
-  // Function: get
+  // Function -- NODOCS -- get
   // Retrieves the value contained within the resource.
   //
   // Depending on the DAP policies, an error may be reported
   // if it is illegal to 'get' the value at this time.
   abstract T get();
 
-  // Function: try_get
+  // Function -- NODOCS -- try_get
   // Attempts to retrieve the value contained within the resource.
   //
   // If the DAP policies forbid retrieving at this time, then

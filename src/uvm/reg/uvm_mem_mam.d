@@ -116,28 +116,51 @@ class uvm_mem_mam
   };
   mixin(declareEnums!locality_e);
 
+  // mixin(uvm_sync_string);
+
   // Variable: default_alloc
   //
   // Region allocation policy
   //
   // This object is repeatedly randomized when allocating new regions.
-  @uvm_private_sync
-  uvm_mem_mam_policy _default_alloc;
+  // @uvm_private_sync
+  private uvm_mem_mam_policy _default_alloc;
+  // uvm_sync_private _default_alloc uvm_mem_mam_policy
+  final private uvm_mem_mam_policy default_alloc() {synchronized(this) return this._default_alloc;}
+  final private void default_alloc(uvm_mem_mam_policy val) {synchronized(this) this._default_alloc = val;}
 
-  mixin(uvm_sync_string);
   
-  @uvm_private_sync
+  // @uvm_private_sync
   private uvm_mem _memory;
-  @uvm_private_sync
-  private uvm_mem_mam_cfg _cfg;
-  private uvm_mem_region[] _in_use;
-  @uvm_private_sync
-  private int _for_each_idx = -1;
-  @uvm_private_sync
-  private string _fname;
-  @uvm_private_sync
-  private int _lineno;
+  // uvm_sync_private _memory uvm_mem
+  final private uvm_mem memory() {synchronized(this) return this._memory;}
+  final private void memory(uvm_mem val) {synchronized(this) this._memory = val;}
 
+  // @uvm_private_sync
+  private uvm_mem_mam_cfg _cfg;
+  // uvm_sync_private _cfg uvm_mem_mam_cfg
+  final private uvm_mem_mam_cfg cfg() {synchronized(this) return this._cfg;}
+  final private void cfg(uvm_mem_mam_cfg val) {synchronized(this) this._cfg = val;}
+
+  private uvm_mem_region[] _in_use;
+
+  // @uvm_private_sync
+  private int _for_each_idx = -1;
+  // uvm_sync_private _for_each_idx int
+  final private int for_each_idx() {synchronized(this) return this._for_each_idx;}
+  final private void for_each_idx(int val) {synchronized(this) this._for_each_idx = val;}
+
+  // @uvm_private_sync
+  private string _fname;
+  // uvm_sync_private _fname string
+  final private string fname() {synchronized(this) return this._fname;}
+  final private void fname(string val) {synchronized(this) this._fname = val;}
+
+  // @uvm_private_sync
+  private int _lineno;
+  // uvm_sync_private _lineno int
+  final private int lineno() {synchronized(this) return this._lineno;}
+  final private void lineno(int val) {synchronized(this) this._lineno = val;}
 
   // Function: new
   //
@@ -502,25 +525,54 @@ class uvm_mem_mam
 class uvm_mem_region
 {
 
-  mixin(uvm_sync_string);
-  @uvm_private_sync
+  // mixin(uvm_sync_string);
+  // @uvm_private_sync
   private ulong _Xstart_offsetX;  // Can't be local since function
-  @uvm_private_sync
+  // uvm_sync_private _Xstart_offsetX ulong
+  final private ulong Xstart_offsetX() {synchronized(this) return this._Xstart_offsetX;}
+  final private void Xstart_offsetX(ulong val) {synchronized(this) this._Xstart_offsetX = val;}
+
+  // @uvm_private_sync
   private ulong _Xend_offsetX;    // calls not supported in constraints
+  // uvm_sync_private _Xend_offsetX ulong
+  final private ulong Xend_offsetX() {synchronized(this) return this._Xend_offsetX;}
+  final private void Xend_offsetX(ulong val) {synchronized(this) this._Xend_offsetX = val;}
 
-  @uvm_private_sync
+  // @uvm_private_sync
   private uint         _len;
-  @uvm_private_sync
-  private uint         _n_bytes;
-  @uvm_private_sync
-  private uvm_mem_mam  _parent;
-  @uvm_private_sync
-  private string       _fname;
-  @uvm_private_sync
-  private int          _lineno;
+  // uvm_sync_private _len uint
+  final private uint len() {synchronized(this) return this._len;}
+  final private void len(uint val) {synchronized(this) this._len = val;}
 
-  @uvm_private_sync
+  // @uvm_private_sync
+  private uint         _n_bytes;
+  // uvm_sync_private _n_bytes uint
+  final private uint n_bytes() {synchronized(this) return this._n_bytes;}
+  final private void n_bytes(uint val) {synchronized(this) this._n_bytes = val;}
+
+  // @uvm_private_sync
+  private uvm_mem_mam  _parent;
+  // uvm_sync_private _parent uvm_mem_mam
+  final private uvm_mem_mam parent() {synchronized(this) return this._parent;}
+  final private void parent(uvm_mem_mam val) {synchronized(this) this._parent = val;}
+
+  // @uvm_private_sync
+  private string       _fname;
+  // uvm_sync_private _fname string
+  final private string fname() {synchronized(this) return this._fname;}
+  final private void fname(string val) {synchronized(this) this._fname = val;}
+
+  // @uvm_private_sync
+  private int          _lineno;
+  // uvm_sync_private _lineno int
+  final private int lineno() {synchronized(this) return this._lineno;}
+  final private void lineno(int val) {synchronized(this) this._lineno = val;}
+
+  // @uvm_private_sync
   /*local*/ private uvm_vreg _XvregX;
+  // uvm_sync_private _XvregX uvm_vreg
+  final private uvm_vreg XvregX() {synchronized(this) return this._XvregX;}
+  final private void XvregX(uvm_vreg val) {synchronized(this) this._XvregX = val;}
 
 
   // extern /*local*/ function new(bit [63:0]   start_offset,
@@ -1049,32 +1101,47 @@ class uvm_mem_region
 
 class uvm_mem_mam_policy
 {
-  mixin(uvm_sync_string);
+  // mixin(uvm_sync_string);
   mixin Randomization;
   // variable: len
   // Number of addresses required
-  @uvm_private_sync
+  // @uvm_private_sync
   private uint _len;
+  // uvm_sync_private _len uint
+  final private uint len() {synchronized(this) return this._len;}
+  final private void len(uint val) {synchronized(this) this._len = val;}
 
   // variable: start_offset
   // The starting offset of the region
-  @uvm_private_sync
+  // @uvm_private_sync
   @rand private ulong _start_offset;
+  // uvm_sync_private _start_offset ulong
+  final private ulong start_offset() {synchronized(this) return this._start_offset;}
+  final private void start_offset(ulong val) {synchronized(this) this._start_offset = val;}
 
   // variable: min_offset
   // Minimum address offset in the managed address space
-  @uvm_private_sync
+  // @uvm_private_sync
   private ulong _min_offset;
+  // uvm_sync_private _min_offset ulong
+  final private ulong min_offset() {synchronized(this) return this._min_offset;}
+  final private void min_offset(ulong val) {synchronized(this) this._min_offset = val;}
 
   // variable: max_offset
   // Maximum address offset in the managed address space
-  @uvm_private_sync
+  // @uvm_private_sync
   private ulong _max_offset;
+  // uvm_sync_private _max_offset ulong
+  final private ulong max_offset() {synchronized(this) return this._max_offset;}
+  final private void max_offset(ulong val) {synchronized(this) this._max_offset = val;}
 
   // variable: in_use
   // Regions already allocated in the managed address space
-  @uvm_private_sync
+  // @uvm_private_sync
   private uvm_mem_region[] _in_use;
+  // uvm_sync_private _in_use uvm_mem_region[]
+  final private uvm_mem_region[] in_use() {synchronized(this) return this._in_use;}
+  final private void in_use(uvm_mem_region[] val) {synchronized(this) this._in_use = val;}
 
   Constraint!q{
     _start_offset >= _min_offset;
@@ -1102,33 +1169,49 @@ class uvm_mem_mam_policy
 //
 class uvm_mem_mam_cfg
 {
-  mixin(uvm_sync_string);
+  // mixin(uvm_sync_string);
+
   // variable: n_bytes
   // Number of bytes in each memory location
 
-  @uvm_public_sync
+  // @uvm_public_sync
   @rand private uint _n_bytes;
+  // uvm_sync_public _n_bytes uint
+  final public uint n_bytes() {synchronized(this) return this._n_bytes;}
+  final public void n_bytes(uint val) {synchronized(this) this._n_bytes = val;}
 
   // FIXME start_offset and end_offset should be "longint unsigned" to match the memory addr types
   // variable: start_offset
   // Lowest address of managed space
-  @uvm_public_sync
+  // @uvm_public_sync
   @rand private ulong _start_offset;
+  // uvm_sync_public _start_offset ulong
+  final public ulong start_offset() {synchronized(this) return this._start_offset;}
+  final public void start_offset(ulong val) {synchronized(this) this._start_offset = val;}
 
   // variable: end_offset
   // Last address of managed space
-  @uvm_public_sync
+  // @uvm_public_sync
   @rand private ulong _end_offset;
+  // uvm_sync_public _end_offset ulong
+  final public ulong end_offset() {synchronized(this) return this._end_offset;}
+  final public void end_offset(ulong val) {synchronized(this) this._end_offset = val;}
 
   // variable: mode
   // Region allocation mode
-  @uvm_public_sync
+  // @uvm_public_sync
   @rand private uvm_mem_mam.alloc_mode_e _mode;
+  // uvm_sync_public _mode uvm_mem_mam.alloc_mode_e
+  final public uvm_mem_mam.alloc_mode_e mode() {synchronized(this) return this._mode;}
+  final public void mode(uvm_mem_mam.alloc_mode_e val) {synchronized(this) this._mode = val;}
 
   // variable: locality
   // Region location mode
-  @uvm_public_sync
+  // @uvm_public_sync
   @rand private uvm_mem_mam.locality_e _locality;
+  // uvm_sync_public _locality uvm_mem_mam.locality_e
+  final public uvm_mem_mam.locality_e locality() {synchronized(this) return this._locality;}
+  final public void locality(uvm_mem_mam.locality_e val) {synchronized(this) this._locality = val;}
 
   Constraint!q{
     _end_offset > _start_offset;

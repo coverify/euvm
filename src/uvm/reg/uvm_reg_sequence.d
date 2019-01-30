@@ -79,7 +79,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
 {
   import esdl.rand;
   
-  mixin uvm_object_utils;
+  mixin uvm_object_essentials;
 
   // Parameter: BASE
   //
@@ -153,7 +153,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
   //
 
   // task
-  override void frame() {
+  override void body() {
     if (m_sequencer is null) {
       uvm_fatal("NO_SEQR",
 		"Sequence executing as translation sequence, but is not" ~
@@ -578,20 +578,26 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
 //
 abstract class uvm_reg_frontdoor: uvm_reg_sequence!(uvm_sequence!(uvm_sequence_item))
 {
-  mixin(uvm_sync_string);
+  // mixin(uvm_sync_string);
   // Variable: rw_info
   //
   // Holds information about the register being read or written
   //
-  @uvm_public_sync
-  uvm_reg_item _rw_info;
+  // @uvm_public_sync
+  private uvm_reg_item _rw_info;
+  // uvm_sync_public _rw_info uvm_reg_item
+  final public uvm_reg_item rw_info() {synchronized(this) return this._rw_info;}
+  final public void rw_info(uvm_reg_item val) {synchronized(this) this._rw_info = val;}
 
   // Variable: sequencer
   //
   // Sequencer executing the operation
   //
-  @uvm_public_sync
-  uvm_sequencer_base _sequencer;
+  // @uvm_public_sync
+  private uvm_sequencer_base _sequencer;
+  // uvm_sync_public _sequencer uvm_sequencer_base
+  final public uvm_sequencer_base sequencer() {synchronized(this) return this._sequencer;}
+  final public void sequencer(uvm_sequencer_base val) {synchronized(this) this._sequencer = val;}
 
   // Function: new
   //
@@ -601,9 +607,17 @@ abstract class uvm_reg_frontdoor: uvm_reg_sequence!(uvm_sequence!(uvm_sequence_i
     super(name);
   }
 
-  @uvm_public_sync
-  string _fname;
-  @uvm_public_sync
-  int _lineno;
+  // @uvm_public_sync
+  private string _fname;
+  // uvm_sync_public _fname string
+  final public string fname() {synchronized(this) return this._fname;}
+  final public void fname(string val) {synchronized(this) this._fname = val;}
+
+  // @uvm_public_sync
+  private int _lineno;
+  // uvm_sync_public _lineno int
+  final public int lineno() {synchronized(this) return this._lineno;}
+  final public void lineno(int val) {synchronized(this) this._lineno = val;}
+
 }
 

@@ -8,4 +8,4 @@ public import uvm.tlm2.uvm_tlm2_imps;
 public import uvm.tlm2.uvm_tlm2_ports;
 public import uvm.tlm2.uvm_tlm2_sockets_base;
 public import uvm.tlm2.uvm_tlm2_sockets;
-public import uvm.tlm2.uvm_tlm2_time;
+public import uvm.tlm2.uvm_tlm_time;

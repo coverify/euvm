@@ -23,16 +23,9 @@
 //
 module uvm.reg.uvm_reg_field;
 
-import uvm.base.uvm_object;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_object_defines;
-import uvm.base.uvm_callback;
-import uvm.base.uvm_comparer;
-import uvm.base.uvm_globals;
-import uvm.base.uvm_packer;
-import uvm.base.uvm_printer;
-import uvm.base.uvm_resource_db;
+import uvm.base;
 import uvm.meta.misc;
+
 import uvm.reg.uvm_reg;
 import uvm.reg.uvm_reg_adapter;
 import uvm.reg.uvm_reg_block;
@@ -60,7 +53,7 @@ import std.conv: to;
 //-----------------------------------------------------------------
 class uvm_reg_field: uvm_object
 {
-  mixin(uvm_sync_string);
+  // mixin(uvm_sync_string);
   // Variable: value
   // Mirrored field value.
   // This value can be sampled in a functional coverage model
@@ -70,16 +63,24 @@ class uvm_reg_field: uvm_object
   private uvm_reg_data_t          _m_mirrored; // What we think is in the HW
   private uvm_reg_data_t          _m_desired;  // Mirrored after set()
   private string                  _m_access;
-  @uvm_private_sync
+  // @uvm_private_sync
   private uvm_reg                 _m_parent;
+  // uvm_sync_private _m_parent uvm_reg
+  final private uvm_reg m_parent() {synchronized(this) return this._m_parent;}
+  final private void m_parent(uvm_reg val) {synchronized(this) this._m_parent = val;}
+
   private uint                    _m_lsb;
   private uint                    _m_size;
   private bool                    _m_volatile;
   private uvm_reg_data_t[string]  _m_reset;
   private bool                    _m_written;
   private bool                    _m_read_in_progress;
-  @uvm_private_sync
+  // @uvm_private_sync
   private bool                    _m_write_in_progress;
+  // uvm_sync_private _m_write_in_progress bool
+  final private bool m_write_in_progress() {synchronized(this) return this._m_write_in_progress;}
+  final private void m_write_in_progress(bool val) {synchronized(this) this._m_write_in_progress = val;}
+
   private string                  _m_fname;
   private int                     _m_lineno;
   private int                     _m_cover_on;

@@ -1,9 +1,10 @@
 //
 //------------------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2011 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2014 Coverify Systems Technology
+// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2010-2012 Synopsys, Inc.
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2014-2018 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -23,7 +24,7 @@
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_agent
+// CLASS -- NODOCS -- uvm_agent
 //
 // The uvm_agent virtual class should be used as the base class for the user-
 // defined agents. Deriving from uvm_agent will allow you to distinguish agents
@@ -44,13 +45,17 @@ import uvm.base.uvm_component;
 import uvm.base.uvm_config_db;
 import uvm.base.uvm_phase;
 import uvm.base.uvm_resource;
+import uvm.base.uvm_resource_base;
 import uvm.base.uvm_globals;
+import uvm.base.uvm_component_defines;
 
 abstract class uvm_agent: uvm_component
 {
   uvm_active_passive_enum is_active = uvm_active_passive_enum.UVM_ACTIVE;
+  
+  mixin uvm_abstract_component_essentials;
 
-  // Function: new
+  // Function -- NODOCS -- new
   //
   // Creates and initializes an instance of this class using the normal
   // constructor arguments for <uvm_component>: ~name~ is the name of the
@@ -62,6 +67,7 @@ abstract class uvm_agent: uvm_component
   //
   //| set_config_int("<path_to_agent>", "is_active", UVM_ACTIVE);
 
+  // @uvm-ieee 1800.2-2017 auto 13.4.2.1
   this(string name=null, uvm_component parent=null) {
     super(name, parent);
   }
@@ -69,6 +75,8 @@ abstract class uvm_agent: uvm_component
   override void build_phase(uvm_phase phase) {
     synchronized(this) {
       int active;
+      bool found;
+
       super.build_phase(phase);
       // is_active is treated as if it were declared via `uvm_field_enum,
       // which means it matches against uvm_active_passive_enum, int,
@@ -77,59 +85,14 @@ abstract class uvm_agent: uvm_component
       uvm_resource_types.rsrc_q_t rq =
 	rp.lookup_name(get_full_name(), "is_active", null, false);
       uvm_resource_pool.sort_by_precedence(rq);
-      for(int i = 0; i < rq.size(); i++) {
-	uvm_resource_base rsrc = rq.get(i);
-	auto rap = cast(uvm_resource!(uvm_active_passive_enum)) rsrc;
-	if (rap !is null) {
-	  is_active = rap.read(this);
-	  break;
-	}
-	else {
-	  auto rit = cast(uvm_resource!(uvm_integral_t)) rsrc;
-	  if (rit !is null) {
-	    is_active = cast(uvm_active_passive_enum) rit.read(this);
-	    break;
-	  }
-	  else {
-	    auto rbs = cast(uvm_resource!(uvm_bitstream_t)) rsrc;
-	    if (rbs !is null) {
-	      is_active = cast(uvm_active_passive_enum) (rbs.read(this));
-	      break;
-	    }
-	    else {
-	      auto ri = cast(uvm_resource!(int)) rsrc;
-	      if (ri !is null) {
-		is_active = cast(uvm_active_passive_enum) ri.read(this);
-		break;
-	      }
-	      else {
-		auto riu = cast(uvm_resource!(uint)) rsrc;
-		if (riu !is null) {
-		  is_active = cast(uvm_active_passive_enum) riu.read(this);
-		  break;
-		}
-		else {
-		  auto rs = cast(uvm_resource!(string)) rsrc;
-		  if (rs !is null) {
-		    uvm_enum_wrapper!(uvm_active_passive_enum).from_name(rs.read(this), is_active);
-		    break;
-		  }
-		} // else: !if($cast(riu, rsrc))
-	      } // else: !if($cast(ri, rsrc))
-	    } // else: !if($cast(rbs, rsrc))
-	  } // else: !if($cast(rit, rsrc))
-	} // else: !if($cast(rap, rsrc))
-      } // for (int i = 0; found == 0 && i < rq.size(); i++)
+      for(int i = 0; i < rq.size() && !found; i++) {
+        uvm_resource_base rsrc = rq.get(i);
+	rsrc.uvm_resource_read(found, is_active, this);
+      }
     }
   }
 
-  enum string type_name = "uvm_agent";
-
-  override string get_type_name () {
-    return type_name;
-  }
-
-  // Function: get_is_active
+  // Function -- NODOCS -- get_is_active
   //
   // Returns UVM_ACTIVE is the agent is acting as an active agent and
   // UVM_PASSIVE if it is acting as a passive agent. The default implementation
@@ -137,6 +100,7 @@ abstract class uvm_agent: uvm_component
   // override this behavior if a more complex algorithm is needed to determine
   // the active/passive nature of the agent.
 
+  // @uvm-ieee 1800.2-2017 auto 13.4.2.2
   uvm_active_passive_enum get_is_active() {
     synchronized(this) {
       return is_active;

@@ -1,9 +1,12 @@
 //
 //-----------------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2010 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2014 Coverify Systems Technology
+// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2010-2013 Synopsys, Inc.
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2011 AMD
+// Copyright 2015-2018 NVIDIA Corporation
+// Copyright 2012 Accellera Systems Initiative
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -50,7 +53,7 @@ mixin template UVM_SEQ_ITEM_PULL_IMP(alias IMP, REQ, RSP)
 }
 
 //-----------------------------------------------------------------------------
-// Title: Sequence Item Pull Ports
+// Title -- NODOCS -- Sequence Item Pull Ports
 //
 // This section defines the port, export, and imp port classes for
 // communicating sequence items between <uvm_sequencer #(REQ,RSP)> and
@@ -59,7 +62,7 @@ mixin template UVM_SEQ_ITEM_PULL_IMP(alias IMP, REQ, RSP)
 
 //-----------------------------------------------------------------------------
 //
-// Class: uvm_seq_item_pull_port #(REQ,RSP)
+// Class -- NODOCS -- uvm_seq_item_pull_port #(REQ,RSP)
 //
 // UVM provides a port, export, and imp connector for use in sequencer-driver
 // communication. All have standard port connector constructors, except that
@@ -68,12 +71,13 @@ mixin template UVM_SEQ_ITEM_PULL_IMP(alias IMP, REQ, RSP)
 //
 //-----------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 15.2.2.1
 class uvm_seq_item_pull_port(REQ=int, RSP=REQ):
   uvm_port_base!(uvm_sqr_if_base!(REQ, RSP))
 {
   public this(string name=null, uvm_component parent=null,
 	      int min_size=0, int max_size=1) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, parent, uvm_port_type_e.UVM_PORT, min_size, max_size);
       m_if_mask = UVM_SEQ_ITEM_PULL_MASK;
     }
@@ -90,19 +94,20 @@ class uvm_seq_item_pull_port(REQ=int, RSP=REQ):
 
 //-----------------------------------------------------------------------------
 //
-// Class: uvm_seq_item_pull_export #(REQ,RSP)
+// Class -- NODOCS -- uvm_seq_item_pull_export #(REQ,RSP)
 //
 // This export type is used in sequencer-driver communication. It has the
 // standard constructor for exports.
 //
 //-----------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 15.2.2.2
 class uvm_seq_item_pull_export(REQ=int, RSP=REQ):
   uvm_port_base!(uvm_sqr_if_base!(REQ, RSP))
 {
   public this(string name, uvm_component parent,
 	      int min_size=1, int max_size=1) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, parent, uvm_port_type_e.UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_SEQ_ITEM_PULL_MASK;
     }
@@ -118,19 +123,20 @@ class uvm_seq_item_pull_export(REQ=int, RSP=REQ):
 
 //-----------------------------------------------------------------------------
 //
-// Class: uvm_seq_item_pull_imp #(REQ,RSP,IMP)
+// Class -- NODOCS -- uvm_seq_item_pull_imp #(REQ,RSP,IMP)
 //
 // This imp type is used in sequencer-driver communication. It has the
 // standard constructor for imp-type ports.
 //
 //-----------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 15.2.2.3
 class uvm_seq_item_pull_imp(REQ=int, RSP=REQ, IMP=int):
   uvm_port_base!(uvm_sqr_if_base!(REQ, RSP))
 {
   private IMP m_imp;
   public this(string name, IMP imp) {
-    synchronized(this) {
+    synchronized (this) {
       super (name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
       m_if_mask = UVM_SEQ_ITEM_PULL_MASK;

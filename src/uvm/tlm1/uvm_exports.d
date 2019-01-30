@@ -1,9 +1,10 @@
 //
 //------------------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2010 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2014 Coverify Systems Technology
+// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2010-2018 Synopsys, Inc.
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2015-2018 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -22,15 +23,15 @@
 //------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
-// Title: TLM Export Classes
+// Title -- NODOCS -- UVM TLM Export Classes
 //------------------------------------------------------------------------------
-// The following classes define the TLM export classes.
+// The following classes define the UVM TLM export classes.
 //------------------------------------------------------------------------------
 
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_*_export #(T)
+// CLASS -- NODOCS -- uvm_*_export #(T)
 //
 // The unidirectional uvm_*_export is a port that ~forwards~ or ~promotes~
 // an interface implementation from a child component to its parent.
@@ -66,7 +67,7 @@
 //------------------------------------------------------------------------------
 
 
-// Function: new
+// Function -- NODOCS -- new
 //
 // The ~name~ and ~parent~ are the standard <uvm_component> constructor arguments.
 // The ~min_size~ and ~max_size~ specify the minimum and maximum number of
@@ -91,7 +92,7 @@ class uvm_blocking_put_export(T=int): uvm_port_base!(uvm_tlm_if_base!(T,T))
   // `UVM_BLOCKING_PUT_IMP (this.m_if, T, t)
   this(string name=null, uvm_component parent=null,
        int min_size=1, int max_size=1) {
-    synchronized(this) {
+    synchronized (this) {
       super (name, parent, uvm_port_type_e.UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_BLOCKING_PUT_MASK;
     }
@@ -113,7 +114,7 @@ uvm_port_base!(uvm_tlm_if_base!(T,T))
   // `UVM_NONBLOCKING_PUT_IMP (this.m_if, T, t)
   this(string name=null, uvm_component parent=null,
        int min_size=1, int max_size=1) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, parent, uvm_port_type_e.UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_NONBLOCKING_PUT_MASK;
     }
@@ -139,7 +140,7 @@ uvm_port_base!(uvm_tlm_if_base!(T,T))
   // `UVM_PUT_IMP (this.m_if, T, t)
   this(string name=null, uvm_component parent=null,
        int min_size=1, int max_size=1) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, parent, uvm_port_type_e.UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_PUT_MASK;
     }
@@ -215,7 +216,7 @@ uvm_port_base!(uvm_tlm_if_base!(T,T))
   // `UVM_GET_IMP (this.m_if, T, t)
   this(string name=null, uvm_component parent=null,
        int min_size=1, int max_size=1) {
-    synchronized(this) {
+    synchronized (this) {
       super (name, parent, uvm_port_type_e.UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_GET_MASK;
     }
@@ -246,7 +247,7 @@ uvm_port_base!(uvm_tlm_if_base!(T,T))
   // `UVM_BLOCKING_PEEK_IMP (this.m_if, T, t)
   this(string name=null, uvm_component parent=null,
        int min_size=1, int max_size=1) {
-    synchronized(this) {
+    synchronized (this) {
       super (name, parent, uvm_port_type_e.UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_BLOCKING_PEEK_MASK;
     }
@@ -269,7 +270,7 @@ uvm_port_base!(uvm_tlm_if_base!(T,T))
   // `UVM_NONBLOCKING_PEEK_IMP (this.m_if, T, t)
   this(string name=null, uvm_component parent=null,
        int min_size=1, int max_size=1) {
-    synchronized(this) {
+    synchronized (this) {
       super (name, parent, uvm_port_type_e.UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_NONBLOCKING_PEEK_MASK;
     }
@@ -295,7 +296,7 @@ uvm_port_base!(uvm_tlm_if_base!(T,T))
   // `UVM_PEEK_IMP (this.m_if, T, t)
   this(string name=null, uvm_component parent=null,
        int min_size=1, int max_size=1) {
-    synchronized(this) {
+    synchronized (this) {
       super (name, parent, uvm_port_type_e.UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_PEEK_MASK;
     }
@@ -327,7 +328,7 @@ uvm_port_base!(uvm_tlm_if_base!(T,T))
   // `UVM_BLOCKING_GET_PEEK_IMP (this.m_if, T, t)
   this(string name=null, uvm_component parent=null,
        int min_size=1, int max_size=1) {
-    synchronized(this) {
+    synchronized (this) {
       super (name, parent, uvm_port_type_e.UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_BLOCKING_GET_PEEK_MASK;
     }
@@ -356,7 +357,7 @@ uvm_port_base!(uvm_tlm_if_base!(T,T))
   // `UVM_NONBLOCKING_GET_PEEK_IMP (this.m_if, T, t)
   this(string name=null, uvm_component parent=null,
        int min_size=1, int max_size=1) {
-    synchronized(this) {
+    synchronized (this) {
       super (name, parent, uvm_port_type_e.UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_NONBLOCKING_GET_PEEK_MASK;
     }
@@ -391,7 +392,7 @@ uvm_port_base!(uvm_tlm_if_base!(T,T))
   // `UVM_GET_PEEK_IMP (this.m_if, T, t)
   this(string name=null, uvm_component parent=null,
        int min_size=1, int max_size=1) {
-    synchronized(this) {
+    synchronized (this) {
       super (name, parent, uvm_port_type_e.UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_GET_PEEK_MASK;
     }
@@ -431,7 +432,7 @@ uvm_port_base!(uvm_tlm_if_base!(T,T))
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_*_export #(REQ,RSP)
+// CLASS -- NODOCS -- uvm_*_export #(REQ,RSP)
 //
 // The bidirectional uvm_*_export is a port that ~forwards~ or ~promotes~
 // an interface implementation from a child component to its parent.
@@ -465,7 +466,7 @@ uvm_port_base!(uvm_tlm_if_base!(T,T))
 //
 //------------------------------------------------------------------------------
 
-// Function: new
+// Function -- NODOCS -- new
 //
 // The ~name~ and ~parent~ are the standard <uvm_component> constructor arguments.
 // The ~min_size~ and ~max_size~ specify the minimum and maximum number of
@@ -485,7 +486,7 @@ uvm_port_base !(uvm_tlm_if_base !(REQ, RSP))
   // `UVM_BLOCKING_GET_PEEK_IMP (this.m_if, RSP, t)
   this (string name=null, uvm_component parent=null,
 	int min_size=1, int max_size=1) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, parent, uvm_port_type_e.UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_BLOCKING_MASTER_MASK;
     }
@@ -519,7 +520,7 @@ uvm_port_base !(uvm_tlm_if_base !(REQ, RSP))
   // `UVM_NONBLOCKING_GET_PEEK_IMP (this.m_if, RSP, t)
   this (string name=null, uvm_component parent=null,
 	int min_size=1, int max_size=1) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, parent, uvm_port_type_e.UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_NONBLOCKING_MASTER_MASK;
     }
@@ -562,7 +563,7 @@ uvm_port_base !(uvm_tlm_if_base !(REQ, RSP))
   // `UVM_GET_PEEK_IMP (this.m_if, RSP, t)
   this (string name=null, uvm_component parent=null,
 	int min_size=1, int max_size=1) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, parent, uvm_port_type_e.UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_MASTER_MASK;
     }
@@ -620,7 +621,7 @@ uvm_port_base !(uvm_tlm_if_base !(RSP, REQ))
   // `UVM_BLOCKING_GET_PEEK_IMP (this.m_if, REQ, t)
   this (string name=null, uvm_component parent=null,
 	int min_size=1, int max_size=1) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, parent, uvm_port_type_e.UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_BLOCKING_SLAVE_MASK;
     }
@@ -654,7 +655,7 @@ uvm_port_base !(uvm_tlm_if_base !(RSP, REQ))
   // `UVM_NONBLOCKING_GET_PEEK_IMP (this.m_if, REQ, t)
   this (string name=null, uvm_component parent=null,
 	int min_size=1, int max_size=1) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, parent, uvm_port_type_e.UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_NONBLOCKING_SLAVE_MASK;
     }
@@ -698,7 +699,7 @@ uvm_port_base !(uvm_tlm_if_base !(RSP, REQ))
   // `UVM_GET_PEEK_IMP (this.m_if, REQ, t)
   this (string name=null, uvm_component parent=null,
 	int min_size=1, int max_size=1) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, parent, uvm_port_type_e.UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_SLAVE_MASK;
     }
@@ -756,7 +757,7 @@ uvm_port_base!(uvm_tlm_if_base !(REQ, RSP))
   // `UVM_BLOCKING_TRANSPORT_IMP (this.m_if, REQ, RSP, req, rsp)
   this (string name=null, uvm_component parent=null,
 	int min_size=1, int max_size=1) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, parent, uvm_port_type_e.UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_BLOCKING_TRANSPORT_MASK;
     }
@@ -779,7 +780,7 @@ uvm_port_base !(uvm_tlm_if_base !(REQ, RSP))
   // `UVM_NONBLOCKING_TRANSPORT_IMP (this.m_if, REQ, RSP, req, rsp)
   this (string name=null, uvm_component parent=null,
 	int min_size=1, int max_size=1) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, parent, uvm_port_type_e.UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_NONBLOCKING_TRANSPORT_MASK;
     }
@@ -801,7 +802,7 @@ uvm_port_base !(uvm_tlm_if_base !(REQ, RSP))
   // `UVM_TRANSPORT_IMP (this.m_if, REQ, RSP, req, rsp)
   this (string name=null, uvm_component parent=null,
 	int min_size=1, int max_size=1) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, parent, uvm_port_type_e.UVM_EXPORT, min_size, max_size);
       m_if_mask = UVM_TLM_TRANSPORT_MASK;
     }
@@ -819,5 +820,4 @@ uvm_port_base !(uvm_tlm_if_base !(REQ, RSP))
   bool nb_transport (REQ req, out RSP rsp) {
     return m_if.nb_transport(req, rsp);
   }
-
 }

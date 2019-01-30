@@ -31,7 +31,7 @@ class sha3_sequence: uvm_sequence!sha3_seq_item
     super(name);
   }
 
-  override void frame() {
+  override void body() {
     req = REQ.type_id.create("req");
     for (size_t i=0; i!=1; ++i) {
       if (phrase == "") {
@@ -100,7 +100,7 @@ class axi_seq_item(int DW, int AW): uvm_sequence_item
   override void do_vpi_get(uvm_vpi_iter iter) {
     iter.get_values(addr, wstrb, data, resp);
   }
-};
+}
 
 class sha3_axi_sequence(int DW, int AW): uvm_sequence!(axi_seq_item!(DW, AW))
 {
@@ -112,7 +112,7 @@ class sha3_axi_sequence(int DW, int AW): uvm_sequence!(axi_seq_item!(DW, AW))
     super(name);
   }
 
-  override void frame() {
+  override void body() {
     sequencer.sha3_get_port.get(sha3_item);
     // sha3_item.print();
     // reset
@@ -171,7 +171,7 @@ class axi_sequence(int DW, int AW): uvm_sequence!(axi_seq_item!(DW, AW))
     req = REQ.type_id.create("req");
   }
 
-  override void frame() {
+  override void body() {
     for (size_t i=0; i!=16; i++) {
       req.addr = toBit!0;
       REQ tr = cast(REQ) req.clone;

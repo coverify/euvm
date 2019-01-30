@@ -1,7 +1,10 @@
 //----------------------------------------------------------------------
-//   Copyright 2010-2011 Mentor Graphics Corporation
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2016 Coverify Systems Technology
+// Copyright 2016-2019 Coverify Systems Technology
+// Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2014 Semifore
+// Copyright 2010-2018 Synopsys, Inc.
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2014-2018 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -20,13 +23,13 @@
 //----------------------------------------------------------------------
 module uvm.tlm2.uvm_tlm2_ifs;
 //----------------------------------------------------------------------
-// Title: tlm interfaces
+// Title -- NODOCS -- tlm interfaces
 //----------------------------------------------------------------------
 
-// Group: Globals
+// Group -- NODOCS -- Globals
 // Global macro's & enums
 
-// Enum: uvm_tlm_phase_e 
+// Enum -- NODOCS -- uvm_tlm_phase_e 
 //
 // Nonblocking transport synchronization state values between
 // an initiator and a target.
@@ -48,9 +51,9 @@ enum uvm_tlm_phase_e
     END_RESP
   }
 
-mixin(declareEnums!uvm_tlm_phase_e());
+mixin (declareEnums!uvm_tlm_phase_e());
 
-// Enum: uvm_tlm_sync_e
+// Enum -- NODOCS -- uvm_tlm_sync_e
 //
 // Pre-defined phase state values for the nonblocking transport
 // Base Protocol between an initiator and a target.
@@ -66,28 +69,28 @@ enum  uvm_tlm_sync_e
     UVM_TLM_COMPLETED
   }
 
-mixin(declareEnums!uvm_tlm_sync_e());
+mixin (declareEnums!uvm_tlm_sync_e());
 
-// MACRO: `UVM_TLM_TASK_ERROR
+// MACRO -- NODOCS -- `UVM_TLM_TASK_ERROR
 //
-// Defines Not-Yet-Implemented TLM tasks
+// Defines Not-Yet-Implemented UVM TLM tasks
 
 // `define UVM_TLM_TASK_ERROR "TLM-2 interface task not implemented"
 enum string UVM_TLM_TASK_ERROR =
   "TLM-2 interface task not implemented";
 
-// MACRO: `UVM_TLM_FUNCTION_ERROR
+// MACRO -- NODOCS -- `UVM_TLM_FUNCTION_ERROR
 //
-// Defines Not-Yet-Implemented TLM functions
-// `define UVM_TLM_FUNCTION_ERROR "TLM-2 interface function not implemented"
+// Defines Not-Yet-Implemented UVM TLM functions
+// `define UVM_TLM_FUNCTION_ERROR "UVM TLM-2 interface function not implemented"
 enum string UVM_TLM_FUNCTION_ERROR  =
   "TLM-2 interface function not implemented";
 
-// Group:  TLM IF Class
+// Group -- NODOCS --  TLM IF Class
 // Base class type to define the transport functions.
 
 //
-// Class: uvm_tlm_if
+// Class -- NODOCS -- uvm_tlm_if
 //
 // Base class type to define the transport functions.
 //
@@ -98,12 +101,12 @@ enum string UVM_TLM_FUNCTION_ERROR  =
 //  - <b_transport>
 //
 
-// FIXME uvm_tlm_if is actually an interface
+// @uvm-ieee 1800.2-2017 auto 12.3.2.1
 class uvm_tlm_if (T = uvm_tlm_generic_payload,
 		  P = uvm_tlm_phase_e)
 {
   //----------------------------------------------------------------------
-  // Group: tlm transport methods
+  // Group -- NODOCS -- tlm transport methods
   //
   // Each of the interface methods take a handle to the transaction to be 
   // transported and a reference argument for the delay. In addition, the 
@@ -111,7 +114,7 @@ class uvm_tlm_if (T = uvm_tlm_generic_payload,
   //
    
   //----------------------------------------------------------------------
-  // Function: nb_transport_fw
+  // Function -- NODOCS -- nb_transport_fw
   //
   // Forward path call.
   // The first call to this method for a transaction marks the initial timing point.
@@ -128,13 +131,15 @@ class uvm_tlm_if (T = uvm_tlm_generic_payload,
    
   // virtual function uvm_tlm_sync_e nb_transport_fw(T t, ref P p, input uvm_tlm_time delay);
 
+  // @uvm-ieee 1800.2-2017 auto 12.3.2.2.1
+  // @uvm-ieee 1800.2-2017 auto 12.3.5.3
   public uvm_tlm_sync_e nb_transport_fw(T t, ref P p,
 					in uvm_tlm_time delay) {
     uvm_error("nb_transport_fw", UVM_TLM_FUNCTION_ERROR);
     return UVM_TLM_ACCEPTED;
   }
 
-  // Function: nb_transport_bw
+  // Function -- NODOCS -- nb_transport_bw
   //
   // Implementation of the backward path.
   // This function MUST be implemented in the INITIATOR component class.
@@ -173,13 +178,14 @@ class uvm_tlm_if (T = uvm_tlm_generic_payload,
    
   // virtual function uvm_tlm_sync_e nb_transport_bw(T t, ref P p, input uvm_tlm_time delay);
   
+  // @uvm-ieee 1800.2-2017 auto 12.3.2.2.2
   public uvm_tlm_sync_e nb_transport_bw(T t, ref P p,
 					in uvm_tlm_time delay) {
     uvm_error("nb_transport_bw", UVM_TLM_FUNCTION_ERROR);
     return UVM_TLM_ACCEPTED;
   }
 
-  // Function: b_transport
+  // Function -- NODOCS -- b_transport
   //
   // Execute a blocking transaction. Once this method returns,
   // the transaction is assumed to have been executed. Whether
@@ -197,10 +203,9 @@ class uvm_tlm_if (T = uvm_tlm_generic_payload,
   // allows the timing points to be offset from the simulation times
   // at which the task call and return are executed.
    
-  // virtual task b_transport(T t, uvm_tlm_time delay);
   // task
+  // @uvm-ieee 1800.2-2017 auto 12.3.2.2.3
   public void b_transport(T t, uvm_tlm_time delay) {
     uvm_error("b_transport", UVM_TLM_TASK_ERROR);
   }
-} // uvm_tlm_if
-
+}

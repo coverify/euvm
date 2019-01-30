@@ -1,10 +1,10 @@
 //
 //------------------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2011 Cadence Design Systems, Inc.
-//   Copyright 2010-2011 Synopsys, Inc.
-//   Copyright 2013      NVIDIA Corporation
-//   Copyright 2016      Coverify Systems Technology
+// Copyright 2016-2018 Coverify Systems Technology
+// Copyright 2007-2009 Mentor Graphics Corporation
+// Copyright 2014 Intel Corporation
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2013-2015 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -28,8 +28,9 @@ import uvm.dap.uvm_set_get_dap_base: uvm_set_get_dap_base;
 import uvm.base.uvm_printer: uvm_printer;
 import uvm.base.uvm_packer: uvm_packer;
 import uvm.base.uvm_object_defines;
+import uvm.base.uvm_object: uvm_object;
 
-// Class: uvm_set_before_get_dap
+// Class -- NODOCS -- uvm_set_before_get_dap
 // Provides a 'Set Before Get' Data Access Policy.
 //
 // The 'Set Before Get' Data Access Policy enforces that the value must
@@ -89,7 +90,7 @@ class uvm_set_before_get_dap(T=int): uvm_set_get_dap_base!T
   // Set state
   private bool _m_set;
 
-  // Function: new
+  // Function -- NODOCS -- new
   // Constructor
   this(string name="unnamed-uvm_set_before_get_dap!T") {
     synchronized(this) {
@@ -98,9 +99,9 @@ class uvm_set_before_get_dap(T=int): uvm_set_get_dap_base!T
     }
   }
 
-  // Group: Set/Get Interface
+  // Group -- NODOCS -- Set/Get Interface
 
-  // Function: set
+  // Function -- NODOCS -- set
   // Updates the value stored within the DAP.
   //
   override void set(T value) {
@@ -110,7 +111,7 @@ class uvm_set_before_get_dap(T=int): uvm_set_get_dap_base!T
     }
   }
 
-  // Function: try_set
+  // Function -- NODOCS -- try_set
   // Attempts to update the value stored within the DAP.
   //
   // ~try_set~ will always return a 1.
@@ -121,7 +122,7 @@ class uvm_set_before_get_dap(T=int): uvm_set_get_dap_base!T
     }
   }
 
-  // Function: get
+  // Function -- NODOCS -- get
   // Returns the current value stored within the DAP.
   //
   // If 'get' is called before a call to <set> or <try_set>, then
@@ -140,7 +141,7 @@ class uvm_set_before_get_dap(T=int): uvm_set_get_dap_base!T
     }
   }
 
-  // Function: try_get
+  // Function -- NODOCS -- try_get
   // Attempts to retrieve the current value stored within the DAP
   //
   // If the value has not been 'set', then try_get will return a 0,
@@ -158,7 +159,7 @@ class uvm_set_before_get_dap(T=int): uvm_set_get_dap_base!T
     }
   }
 
-  // Group: Introspection
+  // Group -- NODOCS -- Introspection
   //
   // The ~uvm_set_before_get_dap~ cannot support the standard UVM
   // instrumentation methods (~copy~, ~clone~, ~pack~ and
@@ -205,7 +206,7 @@ class uvm_set_before_get_dap(T=int): uvm_set_get_dap_base!T
     import std.string: format;
     synchronized(this) {
       super.do_print(printer);
-      printer.print_int("set_state", _m_set);
+      printer.print_field("set_state", _m_set);
       printer.print_generic("value", T.stringof, 0,
 			    format("%s", _m_value));
     }

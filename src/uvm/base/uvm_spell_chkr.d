@@ -1,9 +1,10 @@
 //
 //------------------------------------------------------------------------------
-//   Copyright 2011 Mentor Graphics Corporation
-//   Copyright 2011 Cadence Design Systems, Inc.
-//   Copyright 2011 Synopsys, Inc.
-//   Copyright 2012-2014 Coverify Systems Technology
+// Copyright 2012-2019 Coverify Systems Technology
+// Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2013 Verilab
+// Copyright 2014 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -85,17 +86,17 @@ class uvm_spell_chkr(T=int)
     // SV version uses a queue, but a dynamic array would be fine too
     // string min_key[$];
     string[] min_key;
-    if(s in strtab)  return true;
+    if (s in strtab)  return true;
     uint min = max;
 
-    foreach(key, val; strtab) {
+    foreach (key, val; strtab) {
       int distance = levenshtein_distance(key, s);
 
       // A distance < 0 means either key, s, or both are empty.  This
       // should never happen here but we check for that condition just
       // in case.
-      if(distance < 0) continue;
-      if(distance < min) {
+      if (distance < 0) continue;
+      if (distance < min) {
 	// set a new minimum.  Clean out the queue since previous
 	// alternatives are now invalidated.
 	min = distance;
@@ -103,14 +104,14 @@ class uvm_spell_chkr(T=int)
 	min_key ~= key;
 	continue;
       }
-      if(distance is min) {
+      if (distance is min) {
 	min_key ~= key;
       }
     }
 
 
     // if (min is max) then the string table is empty
-    if(min == max) {
+    if (min == max) {
       uvm_info("UVM/CONFIGDB/SPELLCHK",
 	       format("%s not located, no alternatives to suggest", s),
 	       uvm_verbosity.UVM_NONE);
@@ -119,11 +120,11 @@ class uvm_spell_chkr(T=int)
       // dump all the alternatives with the minimum distance
       string q;
 	    
-      foreach(key; min_key) {
+      foreach (key; min_key) {
 	q ~= key;
 	q ~= "|";
       }
-      if(q.length) {
+      if (q.length) {
 	q = q[0..$-1];
       }
 	   		
@@ -154,26 +155,26 @@ class uvm_spell_chkr(T=int)
   static private int levenshtein_distance(string s, string t) {
     import std.algorithm: min;
     //Step 1
-    int n = cast(int) s.length + 1;
-    int m = cast(int) t.length + 1;
+    int n = cast (int) s.length + 1;
+    int m = cast (int) t.length + 1;
 
     //a negative return value means that one or both strings are empty.
-    if(n is 1 || m is 1) return -1;
+    if (n is 1 || m is 1) return -1;
 
     int[] d = new int[m*n];
 
     //Step 2
-    for(int k = 0; k < n; ++k) {
+    for (int k = 0; k < n; ++k) {
       d[k] = k;
     }
 
-    for(int k = 0; k < m; ++k) {
+    for (int k = 0; k < m; ++k) {
       d[k*n] = k;
     }
 
     //Steps 3 and 4
-    for(size_t i = 1; i < n; ++i) {
-      for(size_t j = 1; j < m; ++j) {
+    for (size_t i = 1; i < n; ++i) {
+      for (size_t j = 1; j < m; ++j) {
 
 	//Step 5
 	int cost = !(s[i-1] is t[j-1]);
@@ -197,9 +198,9 @@ class uvm_spell_chkr(T=int)
 
   //   int min = a;
 
-  //   if(b < min)
+  //   if (b < min)
   //     min = b;
-  //   if(c < min)
+  //   if (c < min)
   //     min = c;
 
   //   return min;

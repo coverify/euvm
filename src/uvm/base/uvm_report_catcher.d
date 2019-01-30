@@ -1,9 +1,14 @@
 // $Id: uvm_report_catcher.svh,v 1.1.2.10 2010/04/09 15:03:25 janick Exp $
 //------------------------------------------------------------------------------
-//   Copyright 2007-2010 Mentor Graphics Corporation
-//   Copyright 2007-2009 Cadence Design Systems, Inc.
-//   Copyright 2010      Synopsys, Inc.
-//   Copyright 2014-2016 Coverify Systems Technology
+// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2007-2018 Mentor Graphics Corporation
+// Copyright 2014 Semifore
+// Copyright 2018 Intel Corporation
+// Copyright 2010-2013 Synopsys, Inc.
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2010-2012 AMD
+// Copyright 2013-2018 NVIDIA Corporation
+// Copyright 2014 Cisco Systems, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -46,6 +51,7 @@ import esdl.data.bvec: isBitVector;
 import esdl.base.core: Process;
 
 alias uvm_report_cb = uvm_callbacks!(uvm_report_object, uvm_report_catcher);
+// @uvm-ieee 1800.2-2017 auto D.4.5
 alias uvm_report_cb_iter = uvm_callback_iter!(uvm_report_object, uvm_report_catcher);
 
 // Redundant -- not used anywhere in UVM
@@ -58,73 +64,19 @@ alias uvm_report_cb_iter = uvm_callback_iter!(uvm_report_object, uvm_report_catc
 //   bool is_on ;
 // }
 
+// TITLE: Report Catcher
+//
+// Contains debug methods in the Accellera UVM implementation not documented
+// in the IEEE 1800.2-2017 LRM
+
+
 //------------------------------------------------------------------------------
 //
 // CLASS: uvm_report_catcher
 //
-// The uvm_report_catcher is used to catch messages issued by the uvm report
-// server. Catchers are
-// uvm_callbacks#(<uvm_report_object>,uvm_report_catcher) objects,
-// so all facilities in the <uvm_callback> and <uvm_callbacks#(T,CB)>
-// classes are available for registering catchers and controlling catcher
-// state.
-// The uvm_callbacks#(<uvm_report_object>,uvm_report_catcher) class is
-// aliased to ~uvm_report_cb~ to make it easier to use.
-// Multiple report catchers can be
-// registered with a report object. The catchers can be registered as default
-// catchers which catch all reports on all <uvm_report_object> reporters,
-// or catchers can be attached to specific report objects (i.e. components).
-//
-// User extensions of <uvm_report_catcher> must implement the <catch> method in
-// which the action to be taken on catching the report is specified. The catch
-// method can return ~CAUGHT~, in which case further processing of the report is
-// immediately stopped, or return ~THROW~ in which case the (possibly modified) report
-// is passed on to other registered catchers. The catchers are processed in the order
-// in which they are registered.
-//
-// On catching a report, the <catch> method can modify the severity, id, action,
-// verbosity or the report string itself before the report is finally issued by
-// the report server. The report can be immediately issued from within the catcher
-// class by calling the <issue> method.
-//
-// The catcher maintains a count of all reports with FATAL,ERROR or WARNING severity
-// and a count of all reports with FATAL, ERROR or WARNING severity whose severity
-// was lowered. These statistics are reported in the summary of the <uvm_report_server>.
-//
-// This example shows the basic concept of creating a report catching
-// callback and attaching it to all messages that get emitted:
-//
-//| class my_error_demoter extends uvm_report_catcher;
-//|   function new(string name="my_error_demoter");
-//|     super.new(name);
-//|   endfunction
-//|   //This example demotes "MY_ID" errors to an info message
-//|   function action_e catch();
-//|     if(get_severity() is UVM_ERROR && get_id() == "MY_ID")
-//|       set_severity(UVM_INFO);
-//|     return THROW;
-//|   endfunction
-//| endclass
-//|
-//| my_error_demoter demoter = new;
-//| initial begin
-//|  // Catchers are callbacks on report objects (components are report
-//|  // objects, so catchers can be attached to components).
-//|
-//|  // To affect all reporters, use ~null~ for the object
-//|  uvm_report_cb::add(null, demoter);
-//|
-//|  // To affect some specific object use the specific reporter
-//|  uvm_report_cb::add(mytest.myenv.myagent.mydriver, demoter);
-//|
-//|  // To affect some set of components (any "*driver" under mytest.myenv)
-//|  // using the component name
-//|  uvm_report_cb::add_by_name("*driver", demoter, mytest.myenv);
-//| end
-//
-//
-//------------------------------------------------------------------------------
 
+
+// @uvm-ieee 1800.2-2017 auto 6.6.1
 abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
 {
   // Keep the message specific variables static (thread local)
@@ -154,9 +106,15 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
     private int _m_debug_flags;
     @uvm_private_sync
     private bool _do_report;
+
+    this() {
+      synchronized (this) {
+	_do_report = true;
+      }
+    }
   }
 
-  mixin(uvm_once_sync_string);
+  mixin (uvm_once_sync_string);
 
   // Flag counts
   enum int DO_NOT_CATCH = 1;
@@ -172,50 +130,50 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
 	};
 
   
-  // Function: new
+  // Function -- NODOCS -- new
   //
   // Create a new report catcher. The name argument is optional, but
   // should generally be provided to aid in debugging.
 
+  // @uvm-ieee 1800.2-2017 auto 6.6.2
   this(string name = "uvm_report_catcher") {
-    synchronized(this) {
+    synchronized (this) {
       super(name);
     }
-    // do_report is a static variable and still it is being
-    // initialized in the constructor. We inherit this functionality
-    // from the SV version of UVM
-    _do_report = true;
   }
 
-  // Group: Current Message State
+  // Group -- NODOCS -- Current Message State
 
-  // Function: get_client
+  // Function -- NODOCS -- get_client
   //
   // Returns the <uvm_report_object> that has generated the message that
   // is currently being processed.
 
+  // @uvm-ieee 1800.2-2017 auto 6.6.3.1
   static uvm_report_object get_client() {
     return _m_modified_report_message.get_report_object();
   }
 
-  // Function: get_severity
+  // Function -- NODOCS -- get_severity
   //
   // Returns the <uvm_severity> of the message that is currently being
   // processed. If the severity was modified by a previously executed
   // catcher object (which re-threw the message), then the returned
   // severity is the modified value.
 
+  // @uvm-ieee 1800.2-2017 auto 6.6.3.2
   static uvm_severity get_severity() {
     return _m_modified_report_message.get_severity();
   }
 
-  // Function: get_context
+  // Function -- NODOCS -- get_context
   //
   // Returns the context name of the message that is currently being
   // processed. This is typically the full hierarchical name of the component
   // that issued the message. However, if user-defined context is set from
   // a uvm_report_message, the user-defined context will be returned.
 
+  // @uvm-ieee 1800.2-2017 auto 6.6.3.3
   static string get_context() {
     import uvm.base.uvm_report_handler;
     string context_str = _m_modified_report_message.get_context();
@@ -227,67 +185,73 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
     return context_str;
   }
 
-  // Function: get_verbosity
+  // Function -- NODOCS -- get_verbosity
   //
   // Returns the verbosity of the message that is currently being
   // processed. If the verbosity was modified by a previously executed
   // catcher (which re-threw the message), then the returned
   // verbosity is the modified value.
 
+  // @uvm-ieee 1800.2-2017 auto 6.6.3.4
   static int get_verbosity() {
     return _m_modified_report_message.get_verbosity();
   }
 
-  // Function: get_id
+  // Function -- NODOCS -- get_id
   //
   // Returns the string id of the message that is currently being
   // processed. If the id was modified by a previously executed
   // catcher (which re-threw the message), then the returned
   // id is the modified value.
 
+  // @uvm-ieee 1800.2-2017 auto 6.6.3.5
   static string get_id() {
     return _m_modified_report_message.get_id();
   }
 
-  // Function: get_message
+  // Function -- NODOCS -- get_message
   //
   // Returns the string message of the message that is currently being
   // processed. If the message was modified by a previously executed
   // catcher (which re-threw the message), then the returned
   // message is the modified value.
 
+  // @uvm-ieee 1800.2-2017 auto 6.6.3.6
   static string get_message() {
     return _m_modified_report_message.get_message();
   }
 
-  // Function: get_action
+  // Function -- NODOCS -- get_action
   //
   // Returns the <uvm_action> of the message that is currently being
   // processed. If the action was modified by a previously executed
   // catcher (which re-threw the message), then the returned
   // action is the modified value.
 
+  // @uvm-ieee 1800.2-2017 auto 6.6.3.7
   static uvm_action get_action() {
     return _m_modified_report_message.get_action();
   }
 
-  // Function: get_fname
+  // Function -- NODOCS -- get_fname
   //
   // Returns the file name of the message.
 
+  // @uvm-ieee 1800.2-2017 auto 6.6.3.8
   static string get_fname() {
     return _m_modified_report_message.get_filename();
   }
 
-  // Function: get_line
+  // Function -- NODOCS -- get_line
   //
   // Returns the line number of the message.
 
+  // @uvm-ieee 1800.2-2017 auto 6.6.3.9
   static size_t get_line() {
     return _m_modified_report_message.get_line();
   }
 
-  // Function: get_element_container
+  // Function -- NODOCS -- get_element_container
   //
   // Returns the element container of the message.
 
@@ -295,65 +259,71 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
     return _m_modified_report_message.get_element_container();
   }
 
-  // Group: Change Message State
+  // Group -- NODOCS -- Change Message State
 
-  // Function: set_severity
+  // Function -- NODOCS -- set_severity
   //
   // Change the severity of the message to ~severity~. Any other
   // report catchers will see the modified value.
 
+  // @uvm-ieee 1800.2-2017 auto 6.6.4.1
   static protected void set_severity(uvm_severity severity) {
     _m_modified_report_message.set_severity(severity);
   }
 
-  // Function: set_verbosity
+  // Function -- NODOCS -- set_verbosity
   //
   // Change the verbosity of the message to ~verbosity~. Any other
   // report catchers will see the modified value.
 
+  // @uvm-ieee 1800.2-2017 auto 6.6.4.2
   static protected void set_verbosity(int verbosity) {
     _m_modified_report_message.set_verbosity(verbosity);
   }
 
-  // Function: set_id
+  // Function -- NODOCS -- set_id
   //
   // Change the id of the message to ~id~. Any other
   // report catchers will see the modified value.
 
+  // @uvm-ieee 1800.2-2017 auto 6.6.4.3
   static protected void set_id(string id) {
     _m_modified_report_message.set_id(id);
   }
 
-  // Function: set_message
+  // Function -- NODOCS -- set_message
   //
   // Change the text of the message to ~message~. Any other
   // report catchers will see the modified value.
 
+  // @uvm-ieee 1800.2-2017 auto 6.6.4.4
   static protected void set_message(string message) {
     _m_modified_report_message.set_message(message);
   }
 
-  // Function: set_action
+  // Function -- NODOCS -- set_action
   //
   // Change the action of the message to ~action~. Any other
   // report catchers will see the modified value.
 
+  // @uvm-ieee 1800.2-2017 auto 6.6.4.5
   static protected void set_action(uvm_action action) {
     _m_modified_report_message.set_action(action);
     _m_set_action_called = true;
   }
 
 
-  // Function: set_context
+  // Function -- NODOCS -- set_context
   //
   // Change the context of the message to ~context_str~. Any other
   // report catchers will see the modified value.
 
+  // @uvm-ieee 1800.2-2017 auto 6.6.4.6
   static protected void set_context(string context_str) {
     _m_modified_report_message.set_context(context_str);
   }
 
-  // Function: add_int
+  // Function -- NODOCS -- add_int
   //
   // Add an integral type of the name ~name~ and value ~value~ to
   // the message.  The required ~size~ field indicates the size of ~value~.
@@ -367,7 +337,7 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
 			       uvm_radix_enum radix,
 			       uvm_action action =
 			       (uvm_action_type.UVM_LOG|uvm_action_type.UVM_RM_RECORD))
-    if(isBitVector!T || isIntegral!T) {
+    if (isBitVector!T || isIntegral!T) {
       _m_modified_report_message.add(name, value, radix, action);
     }
 
@@ -381,7 +351,7 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
     _m_modified_report_message.add_int(name, value, size, radix, action);
   }
 
-  // Function: add_string
+  // Function -- NODOCS -- add_string
   //
   // Adds a string of the name ~name~ and value ~value~ to the
   // message. Any other report catchers will see the newly
@@ -393,12 +363,12 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
 			       uvm_action action =
 			       (uvm_action_type.UVM_LOG |
 				uvm_action_type.UVM_RM_RECORD))
-    if(is(T == string)) {
+    if (is (T == string)) {
       _m_modified_report_message.add(name, value, action);
     }
 
   alias add_string = add!string;
-  // Function: add_object
+  // Function -- NODOCS -- add_object
   //
   // Adds a uvm_object of the name ~name~ and reference ~obj~ to
   // the message. Any other report catchers will see the newly
@@ -410,45 +380,29 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
 			       uvm_action action =
 			       (uvm_action_type.UVM_LOG |
 				uvm_action_type.UVM_RM_RECORD))
-    if(is(T: uvm_object)) {
+    if (is (T: uvm_object)) {
       _m_modified_report_message.add(name, obj, action);
     }
 
   alias add_object = add!(uvm_object);
 
-  // Group: Debug
-
-  // Function: get_report_catcher
+  // Function -- NODOCS -- print_catcher
   //
-  // Returns the first report catcher that has ~name~.
-
-  static uvm_report_catcher get_report_catcher(string name) {
-    // static uvm_report_cb_iter iter = new uvm_report_cb_iter(null);
-    foreach(catcher; uvm_report_cb.get_all_enabled(null)) {
-      if(catcher.get_name() == name) {
-	return catcher;
-      }
-    }
-    return null;
-  }
-
-
-  // Function: print_catcher
+  // Prints debug information about all of the typewide report catchers that are 
+  // registered.
   //
-  // Prints information about all of the report catchers that are
-  // registered. For finer grained detail, the <uvm_callbacks #(T,CB)::display>
-  // method can be used by calling uvm_report_cb::display(<uvm_report_object>).
+  // @uvm-accellera The details of this API are specific to the Accellera implementation, and are not being considered for contribution to 1800.2
 
   static void print_catcher(UVM_FILE file=0) {
-    import uvm.base.uvm_root: uvm_top;
+    import uvm.base.uvm_root: uvm_root;
     string enabled;
     // static uvm_report_cb_iter iter = new(null);
     string q;
     q ~= "-------------UVM REPORT CATCHERS----------------------------\n";
 
-    foreach(catcher; uvm_report_cb.get_all(null)) {
-      while(catcher !is null) {
-	if(catcher.callback_mode()) {
+    foreach (catcher; uvm_report_cb.get_all(null)) {
+      while (catcher !is null) {
+	if (catcher.callback_mode()) {
 	  enabled = "ON";
 	}
 	else {
@@ -458,24 +412,26 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
       q ~= format("%20s : %s\n", catcher.get_name(), enabled);
     }
     q ~= "--------------------------------------------------------------\n";
-    uvm_info_context("UVM/REPORT/CATCHER", q, uvm_verbosity.UVM_LOW, uvm_top);
+    uvm_info_context("UVM/REPORT/CATCHER", q, uvm_verbosity.UVM_LOW, uvm_root.get());
 
   }
 
   // Funciton: debug_report_catcher
   //
-  // Turn on report catching debug information. ~what~ is a bitwise AND of
-  // * DO_NOT_CATCH  -- forces catch to be ignored so that all catchers see the
+  // Turn on report catching debug information. bits[1:0] of ~what~ enable debug features
+  // * bit 0 - when set to 1 -- forces catch to be ignored so that all catchers see the
   //   the reports.
-  // * DO_NOT_MODIFY -- forces the message to remain unchanged
-
+  // * bit 1 - when set to 1 -- forces the message to remain unchanged
+  //
+  // @uvm-accellera The details of this API are specific to the Accellera implementation, and are not being considered for contribution to 1800.2
+  
   static void debug_report_catcher(int what= 0) {
-    _m_debug_flags = what;
+    m_debug_flags = what;
   }
 
-  // Group: Callback Interface
+  // Group -- NODOCS -- Callback Interface
 
-  // Function: catch
+  // Function -- NODOCS -- catch
   //
   // This is the method that is called for each registered report catcher.
   // There are no arguments to this function. The <Current Message State>
@@ -483,17 +439,18 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
   // current message being processed.
 
   // catch is a keyword in Dlang
+  // @uvm-ieee 1800.2-2017 auto 6.6.5
   abstract action_e do_catch();
 
 
-  // Group: Reporting
+  // Group -- NODOCS -- Reporting
 
   // import uvm.base.uvm_message_defines: uvm_report_mixin_string;
 
   // mixin uvm_report_mixin;
-  // mixin(uvm_report_mixin_string());
+  // mixin (uvm_report_mixin_string());
 
-  // Function: uvm_report_fatal
+  // Function -- NODOCS -- uvm_report_fatal
   //
   // Issues a fatal message using the current message's report object.
   // This message will bypass any message catching callbacks.
@@ -510,7 +467,7 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
   }
 
 
-  // Function: uvm_report_error
+  // Function -- NODOCS -- uvm_report_error
   //
   // Issues an error message using the current message's report object.
   // This message will bypass any message catching callbacks.
@@ -528,7 +485,7 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
 		    context_name, report_enabled_checked);
   }
 
-  // Function: uvm_report_warning
+  // Function -- NODOCS -- uvm_report_warning
   //
   // Issues a warning message using the current message's report object.
   // This message will bypass any message catching callbacks.
@@ -544,7 +501,7 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
 		    context_name, report_enabled_checked);
   }
 
-  // Function: uvm_report_info
+  // Function -- NODOCS -- uvm_report_info
   //
   // Issues a info message using the current message's report object.
   // This message will bypass any message catching callbacks.
@@ -560,7 +517,7 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
 		    context_name, report_enabled_checked);
   }
 
-  // Function: uvm_report
+  // Function -- NODOCS -- uvm_report
   //
   // Issues a message using the current message's report object.
   // This message will bypass any message catching callbacks.
@@ -590,7 +547,7 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
     import uvm.base.uvm_report_server;
     uvm_report_object ro = _m_modified_report_message.get_report_object();
     uvm_action a = ro.get_report_action(msg.get_severity(), msg.get_id());
-    if(a) {
+    if (a) {
       string composed_message;
       uvm_report_server rs = _m_modified_report_message.get_report_server();
 
@@ -607,7 +564,7 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
     }
   }
 
-  // Function: issue
+  // Function -- NODOCS -- issue
   // Immediately issues the message which is currently being processed. This
   // is useful if the message is being ~CAUGHT~ but should still be emitted.
   //
@@ -619,10 +576,10 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
     string composed_message;
     uvm_report_server rs = _m_modified_report_message.get_report_server();
 
-    if(cast(uvm_action_type) (_m_modified_report_message.get_action()) !=
+    if (cast (uvm_action_type) (_m_modified_report_message.get_action()) !=
        uvm_action_type.UVM_NO_ACTION) {
       // no need to compose when neither UVM_DISPLAY nor UVM_LOG is set
-      if(_m_modified_report_message.get_action() & (uvm_action_type.UVM_LOG|uvm_action_type.UVM_DISPLAY)) {
+      if (_m_modified_report_message.get_action() & (uvm_action_type.UVM_LOG|uvm_action_type.UVM_DISPLAY)) {
 	composed_message = rs.compose_report_message(_m_modified_report_message);
       }
       rs.execute_report_message(_m_modified_report_message, composed_message);
@@ -634,98 +591,105 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
   //
 
   static bool process_all_report_catchers(uvm_report_message rm) {
-    bool thrown = true;
-    uvm_severity orig_severity;
+    synchronized (_uvm_once_inst) {
+      bool thrown = true;
+      uvm_severity orig_severity;
 
-    uvm_report_object l_report_object = rm.get_report_object();
+      uvm_report_object l_report_object = rm.get_report_object();
 
-    static bool in_catcher;
-    if(in_catcher) {
-      return true;
-    }
-    in_catcher = true;
-
-    uvm_callbacks_base.m_tracing = false;  //turn off cb tracing so catcher stuff doesn't print
-
-    orig_severity = cast(uvm_severity) rm.get_severity();
-    _m_modified_report_message = rm;
-
-    auto catchers = uvm_report_cb.get_all_enabled(l_report_object);
-    if(catchers.length > 0) {
-      if(_m_debug_flags & DO_NOT_MODIFY) {
-	Process p = Process.self(); // Keep random stability
-	Random randstate;
-	if (p !is null) {
-	  p.getRandState(randstate);
-	}
-	_m_orig_report_message = cast(uvm_report_message) rm.clone();
-	assert(_m_orig_report_message !is null);
-	if (p !is null) {
-	  p.setRandState(randstate);
-	}
+      static bool in_catcher;
+      if (in_catcher) {
+	return true;
       }
+      in_catcher = true;
 
-      foreach(catcher; catchers) {
-	uvm_severity prev_sev;
+      uvm_callbacks_base.m_tracing = false;  //turn off cb tracing so catcher stuff doesn't print
 
-	// no need to check for callback_mode
-	// get_all_enabled already does that
+      orig_severity = cast (uvm_severity) rm.get_severity();
+      _m_modified_report_message = rm;
 
-	prev_sev = _m_modified_report_message.get_severity();
-	_m_set_action_called = false;
-	thrown = catcher.process_report_catcher();
+      auto catchers = uvm_report_cb.get_all_enabled(l_report_object);
+      if (catchers.length > 0) {
+	if (m_debug_flags & DO_NOT_MODIFY) {
 
-	// Set the action to the default action for the new severity
-	// if it is still at the default for the previous severity,
-	// unless it was explicitly set.
-	if (!_m_set_action_called &&
-	    _m_modified_report_message.get_severity() != prev_sev &&
-	    _m_modified_report_message.get_action() ==
-	    l_report_object.get_report_action(prev_sev, "*@&*^*^*#")) {
-	  _m_modified_report_message.set_action
-	    (l_report_object.get_report_action
-	     (_m_modified_report_message.get_severity(), "*@&*^*^*#"));
-	}
-
-	if(thrown is false) {
-	  // bool break_loop = true;
-	  final switch(orig_severity) {
-	  case uvm_severity.UVM_FATAL:   _m_caught_fatal++; break;
-	  case uvm_severity.UVM_ERROR:   _m_caught_error++; break;
-	  case uvm_severity.UVM_WARNING: _m_caught_warning++; break;
-	  case uvm_severity.UVM_INFO:    // break_loop = false;
-	    break;
+	  version (PRESERVE_RANDSTATE) {
+	    Process p = Process.self(); // Keep random stability
+	    Random randstate;
+	    if (p !is null)
+	      p.getRandState(randstate);
 	  }
-	  // if(break_loop) {
+
+	  _m_orig_report_message = cast (uvm_report_message) rm.clone();
+	  assert (_m_orig_report_message !is null);
+
+	  version (PRESERVE_RANDSTATE) {
+	    if (p !is null)
+	      p.setRandState(randstate);
+	  }
+	}
+
+	foreach (catcher; catchers) {
+	  uvm_severity prev_sev;
+
+	  // no need to check for callback_mode
+	  // get_all_enabled already does that
+
+	  prev_sev = _m_modified_report_message.get_severity();
+	  _m_set_action_called = false;
+	  thrown = catcher.process_report_catcher();
+
+	  // Set the action to the default action for the new severity
+	  // if it is still at the default for the previous severity,
+	  // unless it was explicitly set.
+	  if (!_m_set_action_called &&
+	      _m_modified_report_message.get_severity() != prev_sev &&
+	      _m_modified_report_message.get_action() ==
+	      l_report_object.get_report_action(prev_sev, "*@&*^*^*#")) {
+	    _m_modified_report_message.set_action
+	      (l_report_object.get_report_action
+	       (_m_modified_report_message.get_severity(), "*@&*^*^*#"));
+	  }
+
+	  if (thrown is false) {
+	    // bool break_loop = true;
+	    final switch (orig_severity) {
+	    case uvm_severity.UVM_FATAL:   _uvm_once_inst._m_caught_fatal++; break;
+	    case uvm_severity.UVM_ERROR:   _uvm_once_inst._m_caught_error++; break;
+	    case uvm_severity.UVM_WARNING: _uvm_once_inst._m_caught_warning++; break;
+	    case uvm_severity.UVM_INFO:    // break_loop = false;
+	      break;
+	    }
+	    // if (break_loop) {
+	    break;
+	    // }
+	  }
+	}
+
+	//update counters if message was returned with demoted severity
+	switch (orig_severity) {
+	case uvm_severity.UVM_FATAL:
+	  if (_m_modified_report_message.get_severity() < orig_severity) {
+	    _uvm_once_inst._m_demoted_fatal++;
+	  }
 	  break;
-	  // }
+	case uvm_severity.UVM_ERROR:
+	  if (_m_modified_report_message.get_severity() < orig_severity) {
+	    _uvm_once_inst._m_demoted_error++;
+	  }
+	  break;
+	case uvm_severity.UVM_WARNING:
+	  if (_m_modified_report_message.get_severity() < orig_severity) {
+	    _uvm_once_inst._m_demoted_warning++;
+	  }
+	  break;
+	default: break;
 	}
       }
+      in_catcher = false;
+      uvm_callbacks_base.m_tracing = true;  //turn tracing stuff back on
 
-      //update counters if message was returned with demoted severity
-      switch(orig_severity) {
-      case uvm_severity.UVM_FATAL:
-	if(_m_modified_report_message.get_severity() < orig_severity) {
-	  _m_demoted_fatal++;
-	}
-	break;
-      case uvm_severity.UVM_ERROR:
-	if(_m_modified_report_message.get_severity() < orig_severity) {
-	  _m_demoted_error++;
-	}
-	break;
-      case uvm_severity.UVM_WARNING:
-	if(_m_modified_report_message.get_severity() < orig_severity) {
-	  _m_demoted_warning++;
-	}
-	break;
-      default: break;
-      }
+      return thrown;
     }
-    in_catcher = false;
-    uvm_callbacks_base.m_tracing = true;  //turn tracing stuff back on
-
-    return thrown;
   }
 
 
@@ -739,49 +703,51 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
     // catch is a keyword in Dlang
     action_e act = this.do_catch();
 
-    if(act == action_e.UNKNOWN_ACTION) {
+    if (act == action_e.UNKNOWN_ACTION) {
       this.uvm_report_error("RPTCTHR",
 			    "uvm_report_this.catch() in catcher instance " ~
 			    this.get_name() ~ " must return THROW or CAUGHT",
 			    uvm_verbosity.UVM_NONE, __FILE__, __LINE__);
     }
 
-    if(_m_debug_flags & DO_NOT_MODIFY) {
+    if (m_debug_flags & DO_NOT_MODIFY) {
       _m_modified_report_message.copy(_m_orig_report_message);
     }
 
-    if(act is action_e.CAUGHT  && !(_m_debug_flags & DO_NOT_CATCH)) {
+    if (act is action_e.CAUGHT  && !(m_debug_flags & DO_NOT_CATCH)) {
       return false;
     }
     return true;
   }
 
 
-  // Function: summarize
+  // Function -- NODOCS -- summarize
   //
   // This function is called automatically by <uvm_report_server::report_summarize()>.
   // It prints the statistics for the active catchers.
 
   static void summarize() {
-    import uvm.base.uvm_root: uvm_top;
-    string s;
-    string q;
-    if(_do_report) {
-      q ~= "\n--- UVM Report catcher Summary ---\n\n\n";
-      q ~= format("Number of demoted UVM_FATAL reports  :%5d\n",
-		  _m_demoted_fatal);
-      q ~= format("Number of demoted UVM_ERROR reports  :%5d\n",
-		  _m_demoted_error);
-      q ~= format("Number of demoted UVM_WARNING reports:%5d\n",
-		  _m_demoted_warning);
-      q ~= format("Number of caught UVM_FATAL reports   :%5d\n",
-		  _m_caught_fatal);
-      q ~= format("Number of caught UVM_ERROR reports   :%5d\n",
-		  _m_caught_error);
-      q ~= format("Number of caught UVM_WARNING reports :%5d\n",
-		  _m_caught_warning);
+    synchronized (_uvm_once_inst) {
+      import uvm.base.uvm_root: uvm_root;
+      string s;
+      string q;
+      if (_uvm_once_inst._do_report) {
+	q ~= "\n--- UVM Report catcher Summary ---\n\n\n";
+	q ~= format("Number of demoted UVM_FATAL reports  :%5d\n",
+		    _uvm_once_inst._m_demoted_fatal);
+	q ~= format("Number of demoted UVM_ERROR reports  :%5d\n",
+		    _uvm_once_inst._m_demoted_error);
+	q ~= format("Number of demoted UVM_WARNING reports:%5d\n",
+		    _uvm_once_inst._m_demoted_warning);
+	q ~= format("Number of caught UVM_FATAL reports   :%5d\n",
+		    _uvm_once_inst._m_caught_fatal);
+	q ~= format("Number of caught UVM_ERROR reports   :%5d\n",
+		    _uvm_once_inst._m_caught_error);
+	q ~= format("Number of caught UVM_WARNING reports :%5d\n",
+		    _uvm_once_inst._m_caught_warning);
 
-      uvm_info_context("UVM/REPORT/CATCHER", q, uvm_verbosity.UVM_LOW, uvm_top);
+	uvm_info_context("UVM/REPORT/CATCHER", q, uvm_verbosity.UVM_LOW, uvm_root.get());
+      }
     }
   }
 }

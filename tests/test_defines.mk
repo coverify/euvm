@@ -22,7 +22,7 @@ DFLAGS = -m$(MODEL) -g -fPIC -w -O # -version=UVM_NO_DEPRECATED
 ESDLDIR = ${HOME}/code/vlang
 VLANGDIR = ${HOME}/code/vlang-uvm
 
-DMDDIR = /home/puneet/release/vlang-dev-1.9
+DMDDIR = /home/puneet/release/vlang-dev-1.0-beta1
 DMD = $(DMDDIR)/bin/ldmd2
 
 DMDLIBDIR = $(DMDDIR)/lib

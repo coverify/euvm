@@ -1,9 +1,10 @@
 //
 //------------------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2010 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2014 Coverify Systems Technology
+// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2010-2018 Synopsys, Inc.
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2015-2018 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -22,9 +23,9 @@
 //-------------.----------------------------------------------------------------
 
 //------------------------------------------------------------------------------
-// Title: uvm_*_imp ports
+// Title -- NODOCS -- uvm_*_imp ports
 //
-// The following defines the TLM implementation (imp) classes.
+// The following defines the UVM TLM implementation (imp) classes.
 //------------------------------------------------------------------------------
 module uvm.tlm1.uvm_imps;
 
@@ -36,7 +37,7 @@ import uvm.base.uvm_object_globals;
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_*_imp #(T,IMP)
+// CLASS -- NODOCS -- uvm_*_imp #(T,IMP)
 //
 // Unidirectional implementation (imp) port classes--An imp port provides access
 // to an implementation of the associated interface to all connected ~ports~ and
@@ -76,7 +77,7 @@ import uvm.base.uvm_object_globals;
 //------------------------------------------------------------------------------
 
 
-// Function: new
+// Function -- NODOCS -- new
 //
 // Creates a new unidirectional imp port with the given ~name~ and ~parent~.
 // The ~parent~ must implement the interface associated with this port.
@@ -91,7 +92,7 @@ class uvm_blocking_put_imp(T=int, IMP=int): uvm_port_base!(uvm_tlm_if_base!(T,T)
   private IMP m_imp;
 
   this(string name, IMP imp) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
       m_if_mask = UVM_TLM_BLOCKING_PUT_MASK;
@@ -115,7 +116,7 @@ class uvm_nonblocking_put_imp(T=int, IMP=int): uvm_port_base!(uvm_tlm_if_base!(T
   private IMP m_imp;
 
   this(string name, IMP imp) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
       m_if_mask = UVM_TLM_NONBLOCKING_PUT_MASK;
@@ -142,7 +143,7 @@ class uvm_put_imp(T=int, IMP=int): uvm_port_base!(uvm_tlm_if_base!(T,T))
   private IMP m_imp;
 
   this(string name, IMP imp) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
       m_if_mask = UVM_TLM_PUT_MASK;
@@ -175,7 +176,7 @@ class uvm_blocking_get_imp(T=int, IMP=int):
   private IMP m_imp;
 
   this(string name, IMP imp) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
       m_if_mask = UVM_TLM_BLOCKING_GET_MASK;
@@ -200,7 +201,7 @@ class uvm_nonblocking_get_imp(T=int, IMP=int):
   private IMP m_imp;
 
   this(string name, IMP imp) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
       m_if_mask = UVM_TLM_NONBLOCKING_GET_MASK;
@@ -228,7 +229,7 @@ class uvm_get_imp(T=int, IMP=int):
   private IMP m_imp;
 
   this(string name, IMP imp) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
       m_if_mask = UVM_TLM_GET_MASK;
@@ -260,7 +261,7 @@ class uvm_blocking_peek_imp(T=int, IMP=int):
   private IMP m_imp;
 
   this(string name, IMP imp) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
       m_if_mask = UVM_TLM_BLOCKING_PEEK_MASK;
@@ -284,7 +285,7 @@ class uvm_nonblocking_peek_imp(T=int, IMP=int):
   private IMP m_imp;
 
   this(string name, IMP imp) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
       m_if_mask = UVM_TLM_NONBLOCKING_PEEK_MASK;
@@ -312,7 +313,7 @@ class uvm_peek_imp(T=int, IMP=int):
   private IMP m_imp;
 
   this(string name, IMP imp) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
       m_if_mask = UVM_TLM_PEEK_MASK;
@@ -345,7 +346,7 @@ class uvm_blocking_get_peek_imp(T=int, IMP=int):
   private IMP m_imp;
 
   this(string name, IMP imp) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
       m_if_mask = UVM_TLM_BLOCKING_GET_PEEK_MASK;
@@ -373,7 +374,7 @@ class uvm_nonblocking_get_peek_imp(T=int, IMP=int):
   private IMP m_imp;
 
   this(string name, IMP imp) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
       m_if_mask = UVM_TLM_NONBLOCKING_GET_PEEK_MASK;
@@ -408,7 +409,7 @@ class uvm_get_peek_imp(T=int, IMP=int): uvm_port_base!(uvm_tlm_if_base!(T,T))
   private IMP m_imp;
 
   this(string name, IMP imp) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
       m_if_mask = UVM_TLM_GET_PEEK_MASK;
@@ -448,7 +449,7 @@ class uvm_get_peek_imp(T=int, IMP=int): uvm_port_base!(uvm_tlm_if_base!(T,T))
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_*_imp #(REQ, RSP, IMP, REQ_IMP, RSP_IMP)
+// CLASS -- NODOCS -- uvm_*_imp #(REQ, RSP, IMP, REQ_IMP, RSP_IMP)
 //
 // Bidirectional implementation (imp) port classes--An imp port provides access
 // to an implementation of the associated interface to all connected ~ports~ and
@@ -504,7 +505,7 @@ class uvm_get_peek_imp(T=int, IMP=int): uvm_port_base!(uvm_tlm_if_base!(T,T))
 //------------------------------------------------------------------------------
 
 
-// Function: new
+// Function -- NODOCS -- new
 //
 // Creates a new bidirectional imp port with the given ~name~ and ~parent~.
 // The ~parent~, whose type is specified by ~IMP~ type parameter,
@@ -537,13 +538,13 @@ class uvm_blocking_master_imp(REQ=int, RSP=REQ, IMP=int,
   private this_rsp_type m_rsp_imp;
 
   this(string name, this_imp_type imp, this_req_type req_imp = null, this_rsp_type rsp_imp = null) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
-      if(req_imp is null) {
-	req_imp = cast(this_req_type) imp;
+      if (req_imp is null) {
+	req_imp = cast (this_req_type) imp;
       }
-      if(rsp_imp is null) {
-	rsp_imp = cast(this_rsp_type) imp;
+      if (rsp_imp is null) {
+	rsp_imp = cast (this_rsp_type) imp;
       }
       m_req_imp = req_imp;
       m_rsp_imp = rsp_imp;
@@ -583,13 +584,13 @@ class uvm_nonblocking_master_imp(REQ=int, RSP=REQ, IMP=int,
   private this_req_type m_req_imp;
   private this_rsp_type m_rsp_imp;
   this(string name, this_imp_type imp, this_req_type req_imp = null, this_rsp_type rsp_imp = null) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
-      if(req_imp is null) {
-	req_imp = cast(this_req_type) imp;
+      if (req_imp is null) {
+	req_imp = cast (this_req_type) imp;
       }
-      if(rsp_imp is null) {
-	rsp_imp = cast(this_rsp_type) imp;
+      if (rsp_imp is null) {
+	rsp_imp = cast (this_rsp_type) imp;
       }
       m_req_imp = req_imp;
       m_rsp_imp = rsp_imp;
@@ -636,13 +637,13 @@ class uvm_master_imp(REQ=int, RSP=REQ, IMP=int,
   private this_req_type m_req_imp;
   private this_rsp_type m_rsp_imp;
   this(string name, this_imp_type imp, this_req_type req_imp = null, this_rsp_type rsp_imp = null) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
-      if(req_imp is null) {
-	req_imp = cast(this_req_type) imp;
+      if (req_imp is null) {
+	req_imp = cast (this_req_type) imp;
       }
-      if(rsp_imp is null) {
-	rsp_imp = cast(this_rsp_type) imp;
+      if (rsp_imp is null) {
+	rsp_imp = cast (this_rsp_type) imp;
       }
       m_req_imp = req_imp;
       m_rsp_imp = rsp_imp;
@@ -700,13 +701,13 @@ class uvm_blocking_slave_imp(REQ=int, RSP=REQ, IMP=int,
   private this_req_type m_req_imp;
   private this_rsp_type m_rsp_imp;
   this(string name, this_imp_type imp, this_req_type req_imp = null, this_rsp_type rsp_imp = null) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
-      if(req_imp is null) {
-	req_imp = cast(this_req_type) imp;
+      if (req_imp is null) {
+	req_imp = cast (this_req_type) imp;
       }
-      if(rsp_imp is null) {
-	rsp_imp = cast(this_rsp_type) imp;
+      if (rsp_imp is null) {
+	rsp_imp = cast (this_rsp_type) imp;
       }
       m_req_imp = req_imp;
       m_rsp_imp = rsp_imp;
@@ -746,13 +747,13 @@ class uvm_nonblocking_slave_imp(REQ=int, RSP=REQ, IMP=int,
   private this_req_type m_req_imp;
   private this_rsp_type m_rsp_imp;
   this(string name, this_imp_type imp, this_req_type req_imp = null, this_rsp_type rsp_imp = null) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
-      if(req_imp is null) {
-	req_imp = cast(this_req_type) imp;
+      if (req_imp is null) {
+	req_imp = cast (this_req_type) imp;
       }
-      if(rsp_imp is null) {
-	rsp_imp = cast(this_rsp_type) imp;
+      if (rsp_imp is null) {
+	rsp_imp = cast (this_rsp_type) imp;
       }
       m_req_imp = req_imp;
       m_rsp_imp = rsp_imp;
@@ -798,13 +799,13 @@ class uvm_slave_imp(REQ=int, RSP=REQ, IMP=int,
   private this_req_type m_req_imp;
   private this_rsp_type m_rsp_imp;
   this(string name, this_imp_type imp, this_req_type req_imp = null, this_rsp_type rsp_imp = null) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
-      if(req_imp is null) {
-	req_imp = cast(this_req_type) imp;
+      if (req_imp is null) {
+	req_imp = cast (this_req_type) imp;
       }
-      if(rsp_imp is null) {
-	rsp_imp = cast(this_rsp_type) imp;
+      if (rsp_imp is null) {
+	rsp_imp = cast (this_rsp_type) imp;
       }
       m_req_imp = req_imp;
       m_rsp_imp = rsp_imp;
@@ -857,7 +858,7 @@ class uvm_blocking_transport_imp(REQ=int, RSP=REQ, IMP=int): uvm_port_base!(uvm_
   private IMP m_imp;
 
   this(string name, IMP imp) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
       m_if_mask = UVM_TLM_BLOCKING_TRANSPORT_MASK;
@@ -882,7 +883,7 @@ class uvm_nonblocking_transport_imp(REQ=int, RSP=REQ, IMP=int): uvm_port_base!(u
   private IMP m_imp;
 
   this(string name, IMP imp) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
       m_if_mask = UVM_TLM_NONBLOCKING_TRANSPORT_MASK;
@@ -907,7 +908,7 @@ class uvm_transport_imp(REQ=int, RSP=REQ, IMP=int): uvm_port_base!(uvm_tlm_if_ba
   private IMP m_imp;
 
   this(string name, IMP imp) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
       m_if_mask = UVM_TLM_TRANSPORT_MASK;

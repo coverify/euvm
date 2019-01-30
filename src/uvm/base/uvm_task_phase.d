@@ -1,10 +1,10 @@
 //
 //----------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2010 Cadence Design Systems, Inc.
-//   Copyright 2010      Synopsys, Inc.
-//   Copyright 2013      NVIDIA Corporation
-//   Copyright 2014-2016 Coverify Systems Technology
+// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2011 AMD
+// Copyright 2013-2015 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -22,9 +22,15 @@
 //   permissions and limitations under the License.
 //----------------------------------------------------------------------
 
+
+module uvm.base.uvm_task_phase;
+
+import uvm.base.uvm_phase: uvm_phase;
+import uvm.base.uvm_object_globals: uvm_phase_state, uvm_phase_type, uvm_verbosity;
+
 //------------------------------------------------------------------------------
 //
-// Class: uvm_task_phase
+// Class -- NODOCS -- uvm_task_phase
 //
 //------------------------------------------------------------------------------
 // Base class for all task phases.
@@ -56,31 +62,19 @@
 // of a task phase without any participants in the phase raising an objection.
 //
 
-module uvm.base.uvm_task_phase;
-
-import uvm.base.uvm_phase: uvm_phase;
-import uvm.base.uvm_object_globals: uvm_phase_state, uvm_phase_type, uvm_verbosity;
-
+// @uvm-ieee 1800.2-2017 auto 9.6.1
 abstract class uvm_task_phase: uvm_phase
 {
   import uvm.base.uvm_component: uvm_component;
 
-  // Function: new
-  //
-  // Create a new instance of a task-based phase
-  //
+
+  // @uvm-ieee 1800.2-2017 auto 9.6.2.1
   this(string name) {
     super(name, uvm_phase_type.UVM_PHASE_IMP);
   }
 
 
-  // Function: traverse
-  //
-  // Traverses the component tree in bottom-up order, calling <execute> for
-  // each component. The actual order for task-based phases doesn't really
-  // matter, as each component task is executed in a separate process whose
-  // starting order is not deterministic.
-  //
+  // @uvm-ieee 1800.2-2017 auto 9.6.2.2
   override void traverse(uvm_component comp,
 			 uvm_phase phase,
 			 uvm_phase_state state) {
@@ -98,11 +92,11 @@ abstract class uvm_task_phase: uvm_phase
     uvm_domain phase_domain = phase.get_domain();
     uvm_domain comp_domain = comp.get_domain();
 
-    foreach(child; comp.get_children) {
+    foreach (child; comp.get_children) {
       m_traverse(child, phase, state);
     }
 
-    synchronized(this) {
+    synchronized (this) {
       if (m_phase_trace) {
 	uvm_info("PH_TRACE",format("topdown-phase phase=%s state=%s comp=%s " ~
 				   "comp.domain=%s phase.domain=%s",
@@ -119,7 +113,7 @@ abstract class uvm_task_phase: uvm_phase
 	  comp.m_current_phase = phase;
 	  comp.m_apply_verbosity_settings(phase);
 	  comp.phase_started(phase);
-	  auto seqr = cast(uvm_sequencer_base) comp;
+	  auto seqr = cast (uvm_sequencer_base) comp;
           if (seqr !is null) {
             seqr.start_phase_sequence(phase);
 	  }
@@ -128,7 +122,7 @@ abstract class uvm_task_phase: uvm_phase
 	  uvm_phase ph = this;
 	  auto pphase = this in comp.m_phase_imps;
 	  if (pphase !is null) {
-	    ph = cast(uvm_phase) *pphase;
+	    ph = cast (uvm_phase) *pphase;
 	  }
 	  ph.execute(comp, phase);
 	  break;
@@ -136,7 +130,7 @@ abstract class uvm_task_phase: uvm_phase
 	  comp.phase_ready_to_end(phase);
 	  break;
 	case uvm_phase_state.UVM_PHASE_ENDED:
-	  auto seqr = cast(uvm_sequencer_base) comp;
+	  auto seqr = cast (uvm_sequencer_base) comp;
           if (seqr !is null) {
             seqr.stop_phase_sequence(phase);
 	  }
@@ -151,10 +145,8 @@ abstract class uvm_task_phase: uvm_phase
     }
   }
 
-  // Function: execute
-  //
-  // Fork the task-based phase ~phase~ for the component ~comp~.
-  //
+
+  // @uvm-ieee 1800.2-2017 auto 9.6.2.3
   override void execute(uvm_component comp,
 			uvm_phase phase) {
     import uvm.base.uvm_misc;
