@@ -44,7 +44,8 @@ import uvm.base.uvm_misc: uvm_bitvec_to_string, uvm_leaf_scope;
 import uvm.base.uvm_object: uvm_object;
 import uvm.base.uvm_policy: uvm_policy;
 import uvm.base.uvm_object_globals: uvm_radix_enum, UVM_FILE,
-  uvm_recursion_policy_enum, uvm_field_auto_enum, uvm_field_flag_t, UVM_RADIX;
+  uvm_recursion_policy_enum, uvm_field_auto_enum, uvm_field_flag_t,
+  UVM_RADIX, UVM_RECURSION;
 import uvm.base.uvm_object_defines;
 import uvm.base.uvm_traversal: uvm_structure_proxy;
 import uvm.base.uvm_once: uvm_once_base;
@@ -762,7 +763,8 @@ abstract class uvm_printer: uvm_policy
       import uvm.base.uvm_misc: UVM_ELEMENT_TYPE;
       alias EE = UVM_ELEMENT_TYPE!E;
       static if (is (EE: uvm_object)) {
-	auto policy = UVM_RECURSION && flags;
+	uvm_recursion_policy_enum policy =
+	  cast (uvm_recursion_policy_enum) (UVM_RECURSION && flags);
 	if ((policy != uvm_recursion_policy_enum.UVM_DEFAULT_POLICY) &&
 	    (policy != this.get_recursion_policy())) {
 	  uvm_recursion_policy_enum prev_policy  = this.get_recursion_policy();

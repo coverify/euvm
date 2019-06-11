@@ -41,7 +41,7 @@ import uvm.base.uvm_object: uvm_object;
 
 import uvm.base.uvm_object_globals: uvm_recursion_policy_enum, uvm_severity,
   uvm_integral_t, uvm_radix_enum, uvm_bitstream_t, uvm_verbosity,
-  uvm_field_flag_t, UVM_RADIX;
+  uvm_field_flag_t, UVM_RADIX, UVM_RECURSION;
 import uvm.base.uvm_globals: uvm_warning, uvm_report_debug;
 import uvm.base.uvm_policy: uvm_policy;
 import uvm.base.uvm_field_op: uvm_field_op;
@@ -1020,7 +1020,8 @@ class uvm_comparer: uvm_policy
       import uvm.base.uvm_misc: UVM_ELEMENT_TYPE;
       alias EE = UVM_ELEMENT_TYPE!E;
       static if (is (EE: uvm_object)) {
-	auto policy = UVM_RECURSION && flags;
+	uvm_recursion_policy_enum policy =
+	  cast (uvm_recursion_policy_enum) (UVM_RECURSION && flags);
 	if ((policy != uvm_recursion_policy_enum.UVM_DEFAULT_POLICY) &&
 	    (policy != this.get_recursion_policy())) {
 	  uvm_recursion_policy_enum prev_policy  = this.get_recursion_policy();
@@ -1055,7 +1056,16 @@ class uvm_comparer: uvm_policy
     }
     else static if (is (E: uvm_object)) {
       auto policy = cast (uvm_recursion_policy_enum) (UVM_RECURSION && flags);
-      m_uvm_compare_object(name, lhs, rhs, policy);
+	if ((policy != uvm_recursion_policy_enum.UVM_DEFAULT_POLICY) &&
+	    (policy != this.get_recursion_policy())) {
+	  uvm_recursion_policy_enum prev_policy  = this.get_recursion_policy();
+	  this.set_recursion_policy(policy);
+	  m_uvm_compare_object(name, lhs, rhs);
+	  this.set_recursion_policy(prev_policy);
+	}
+	else {
+	  m_uvm_compare_object(name, lhs, rhs);
+	}
     }
     else static if (isBitVector!E || isIntegral!E || isBoolean!E) {
       compare(name, lhs, rhs, cast (uvm_radix_enum) (flags & UVM_RADIX));

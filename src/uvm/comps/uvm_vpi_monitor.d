@@ -46,7 +46,7 @@ class uvm_vpi_monitor(RSP, string VPI_PREFIX): uvm_monitor
   string vpi_task_prefix;		// can be configured vio uvm_config_db
 
   string vpi_monitor_task() {
-    return "$" ~ vpi_task_prefix ~ "_put_rsp";
+    return "$" ~ vpi_task_prefix ~ "_put";
   }
 
   override void build_phase(uvm_phase phase) {

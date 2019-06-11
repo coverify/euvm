@@ -46,10 +46,11 @@ import uvm.base.uvm_object: uvm_object;
 import uvm.base.uvm_policy: uvm_policy;
 import uvm.base.uvm_factory: uvm_factory;
 import uvm.base.uvm_field_op: uvm_field_op;
+import uvm.base.uvm_globals: uvm_error, uvm_fatal, uvm_warning;
 import uvm.base.uvm_object_defines;
 import uvm.base.uvm_coreservice: uvm_coreservice_t;
 import uvm.base.uvm_object_globals: uvm_bitstream_t, uvm_integral_t,
-  uvm_recursion_policy_enum, uvm_field_flag_t;
+  uvm_recursion_policy_enum, uvm_field_flag_t, UVM_RECURSION;
 
 import uvm.meta.misc;
 

@@ -26,11 +26,11 @@ module uvm.base.uvm_copier;
 import uvm.base.uvm_policy: uvm_policy;
 import uvm.base.uvm_object_globals: uvm_radix_enum, UVM_FILE,
   uvm_bitstream_t, uvm_integral_t, uvm_recursion_policy_enum,
-  uvm_field_auto_enum, uvm_field_flag_t;
+  uvm_field_auto_enum, uvm_field_flag_t, UVM_RECURSION;
 
 import uvm.base.uvm_object_defines;
 import uvm.base.uvm_field_op: uvm_field_op;
-import uvm.base.uvm_globals: uvm_error;
+import uvm.base.uvm_globals: uvm_error, uvm_fatal, uvm_warning;
 import uvm.base.uvm_coreservice: uvm_coreservice_t;
 import std.traits: isIntegral, isBoolean, isArray, isDynamicArray, isStaticArray;
 import uvm.base.uvm_once;
@@ -265,7 +265,8 @@ class uvm_copier: uvm_policy
       import uvm.base.uvm_misc: UVM_ELEMENT_TYPE;
       alias EE = UVM_ELEMENT_TYPE!E;
       static if (is (EE: uvm_object)) {
-	auto policy = UVM_RECURSION && flags;
+	uvm_recursion_policy_enum policy =
+	  cast (uvm_recursion_policy_enum) (UVM_RECURSION & flags);
 	if ((policy != uvm_recursion_policy_enum.UVM_DEFAULT_POLICY) &&
 	    (policy != this.get_recursion_policy())) {
 	  uvm_recursion_policy_enum prev_policy  = this.get_recursion_policy();
@@ -330,9 +331,9 @@ class uvm_copier: uvm_policy
 	      lhs = cast (T) rhs.create(rhs.get_name());
 	      if (lhs is null) {
 		uvm_fatal("UVM/COPY/NULL_CREATE",
-			  "Could not create '", rhs.get_full_name(),
-			  "' of type '", rhs.get_type_name(),
-			  "', into '", name, "'.");
+			  "Could not create '" ~ rhs.get_full_name() ~
+			  "' of type '" ~ rhs.get_type_name() ~
+			  "' ~ into '" ~ name ~ "'.");
 	      }
 	      else {
 		this.copy_object(lhs, rhs);
@@ -342,10 +343,10 @@ class uvm_copier: uvm_policy
 	      if (this.object_copied(lhs, rhs, curr_policy) ==
 		  recursion_state_e.STARTED) {
 		uvm_warning("UVM/COPY/LOOP",
-			    "Loop detected in copy operation (LHS:'",
-			    lhs.get_full_name(),
-			    "', RHS:'",
-			    rhs.get_full_name(),
+			    "Loop detected in copy operation (LHS:'" ~
+			    lhs.get_full_name() ~
+			    "' ~ RHS:'" ~
+			    rhs.get_full_name() ~
 			    "')");
 	      }
 	      else {

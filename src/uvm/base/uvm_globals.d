@@ -41,7 +41,8 @@
 
 module uvm.base.uvm_globals;
 import uvm.base.uvm_report_object: uvm_report_object;
-import uvm.base.uvm_report_message: uvm_report_message;
+import uvm.base.uvm_report_message: uvm_report_message,
+  uvm_report_message_element_base;
 import uvm.base.uvm_object_globals: uvm_severity, uvm_verbosity,
   uvm_action, uvm_action_type, uvm_core_state, m_uvm_core_state;
 import uvm.base.uvm_root: uvm_root;
