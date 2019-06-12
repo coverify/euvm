@@ -44,8 +44,8 @@ class uvm_vpi_driver(REQ, string VPI_PREFIX): uvm_driver!REQ
 
   string vpi_task_prefix;		// can be configured vio uvm_config_db
 
-  string vpi_get_next_item_task() {
-    return "$" ~ vpi_task_prefix ~ "_get_next_item";
+  string vpi_try_next_item_task() {
+    return "$" ~ vpi_task_prefix ~ "_try_next_item";
   }
 
   string vpi_item_done_task() {
@@ -75,7 +75,7 @@ class uvm_vpi_driver(REQ, string VPI_PREFIX): uvm_driver!REQ
     drive_vpi_port.put(req);
   }
 
-  // The functions vpi_get_next_item_task and vpi_item_done_task are
+  // The functions vpi_try_next_item_task and vpi_item_done_task are
   // static functions because these is directly called by Verilog VPI.
   // But when you look at the user_data argument of these function,
   // the argument carries a pointer to an instance of vpi_driver
@@ -90,7 +90,7 @@ class uvm_vpi_driver(REQ, string VPI_PREFIX): uvm_driver!REQ
   private uvm_vpi_iter _vpi_iter;
   private REQ _vpi_req;
   
-  static int vpi_get_next_item_calltf(char* user_data) {
+  static int vpi_try_next_item_calltf(char* user_data) {
     try {
       DRIVER drv = cast(DRIVER) user_data;
       assert(drv !is null);
@@ -100,10 +100,16 @@ class uvm_vpi_driver(REQ, string VPI_PREFIX): uvm_driver!REQ
 	assert(drv._vpi_systf_handle !is null);
 	drv._vpi_arg_iterator = vpi_iterate(vpiArgument, drv._vpi_systf_handle);
 	assert(drv._vpi_arg_iterator !is null);
-	drv._vpi_iter.assign(drv._vpi_arg_iterator, drv.vpi_get_next_item_task);
+	drv._vpi_iter.assign(drv._vpi_arg_iterator, drv.vpi_try_next_item_task);
 	drv._vpi_req.do_vpi_put(drv._vpi_iter);
 	vpiReturnVal(VpiStatus.SUCCESS);
 	return 0;
+      }
+      import esdl.base.core: RootEntityIntf;
+      static RootEntityIntf root;
+      if (root is null) root = drv.get_root_entity();
+      if (root.isTerminated()) {
+	throw (new SimTerminatedException());
       }
       vpiReturnVal(VpiStatus.FAILURE);
       return 0;
@@ -169,13 +175,13 @@ class uvm_vpi_driver(REQ, string VPI_PREFIX): uvm_driver!REQ
     {
       s_vpi_systf_data tf_data;
       uvm_info("VPIREG", "Registering vpi system task: " ~
-	       vpi_get_next_item_task, uvm_verbosity.UVM_NONE);
+	       vpi_try_next_item_task, uvm_verbosity.UVM_NONE);
       tf_data.type = vpiSysFunc;
       tf_data.sysfunctype = vpiIntFunc;
       tf_data.compiletf   = null;
       tf_data.sizetf      = null;
-      tf_data.tfname = cast(char*) vpi_get_next_item_task.toStringz;
-      tf_data.calltf = &vpi_get_next_item_calltf;
+      tf_data.tfname = cast(char*) vpi_try_next_item_task.toStringz;
+      tf_data.calltf = &vpi_try_next_item_calltf;
       // tf_data.compiletf = &pull_avmm_compiletf;
       tf_data.user_data = cast(char*) this;
       vpi_register_systf(&tf_data);
