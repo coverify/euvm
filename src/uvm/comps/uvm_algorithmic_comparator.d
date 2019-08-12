@@ -1,9 +1,12 @@
 //
 //------------------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2011 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2014 Coverify Systems Technology
+// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2015 Analog Devices, Inc.
+// Copyright 2014 Semifore
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2014-2018 NVIDIA Corporation
+// Copyright 2017 Cisco Systems, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -21,13 +24,13 @@
 //   permissions and limitations under the License.
 //------------------------------------------------------------------------------
 
-// Group: Comparators
+// File --NODOCS-- Algorithmic Comparator
 //
 // A common function of testbenches is to compare streams of transactions for
 // equivalence. For example, a testbench may compare a stream of transactions
 // from a DUT with expected results.
 //
-// The UVM library provides a base class called
+// The UVM library provides a base class called 
 // <uvm_in_order_comparator #(T,comp_type,convert,pair_type)> and two
 // derived classes, which are <uvm_in_order_built_in_comparator #(T)> for comparing
 // streams of built-in types and <uvm_in_order_class_comparator #(T)> for comparing
@@ -41,7 +44,7 @@
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_algorithmic_comparator #(BEFORE,AFTER,TRANSFORMER)
+// CLASS --NODOCS-- uvm_algorithmic_comparator #(BEFORE,AFTER,TRANSFORMER)
 //
 // Compares two streams of data objects of different types, ~BEFORE~ and ~AFTER~.
 //
@@ -72,16 +75,12 @@ class uvm_algorithmic_comparator(BEFORE=int,
 				 TRANSFORMER=int): uvm_component
 {
 
-  enum string type_name =
-    "uvm_algorithmic_comparator #(BEFORE,AFTER,TRANSFORMER)";
+  alias this_type =
+    uvm_algorithmic_comparator !(BEFORE, AFTER, TRANSFORMER);
 
-  alias uvm_algorithmic_comparator !(BEFORE ,
-				     AFTER ,
-				     TRANSFORMER) this_type;
-
-  // `uvm_component_param_utils(this_type)
-
-
+  mixin uvm_component_essentials;
+  mixin uvm_type_name_decl;
+  
   // Port: before_export
   //
   // The export to which a data stream of type BEFORE is sent via a connected
@@ -104,7 +103,7 @@ class uvm_algorithmic_comparator(BEFORE=int,
   private uvm_in_order_class_comparator!(AFTER) comp;
   private TRANSFORMER m_transformer;
 
-  // Function: new
+  // Function --NODOCS-- new
   //
   // Creates an instance of a specialization of this class.
   // In addition to the standard uvm_component constructor arguments, ~name~
@@ -123,10 +122,6 @@ class uvm_algorithmic_comparator(BEFORE=int,
       before_export = new uvm_analysis_imp!(BEFORE, this_type)("before_analysis_export" , this );
       after_export = new uvm_analysis_export!(AFTER)("after_analysis_export" , this );
     }
-  }
-
-  string get_type_name() {
-    return type_name;
   }
 
   void connect_phase(uvm_phase phase) {

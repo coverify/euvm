@@ -9,7 +9,6 @@ public import uvm.comps.uvm_monitor;
 public import uvm.comps.uvm_pair;
 public import uvm.comps.uvm_policies;
 public import uvm.comps.uvm_push_driver;
-public import uvm.comps.uvm_random_stimulus;
 public import uvm.comps.uvm_scoreboard;
 public import uvm.comps.uvm_subscriber;
 public import uvm.comps.uvm_test;

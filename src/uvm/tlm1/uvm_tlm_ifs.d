@@ -1,9 +1,10 @@
 //
 //-----------------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2010 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2014 Coverify Systems Technology
+// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2014-2018 Synopsys, Inc.
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2015-2018 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -28,13 +29,13 @@ import uvm.base.uvm_globals;
 
 //-----------------------------------------------------------------------------
 //
-// CLASS: uvm_tlm_if_base #(T1,T2)
+// CLASS -- NODOCS -- uvm_tlm_if_base #(T1,T2)
 //
-// This class declares all of the methods of the TLM API.
+// This class declares all of the methods of the UVM TLM API.
 //
 // Various subsets of these methods are combined to form primitive TLM
 // interfaces, which are then paired in various ways to form more abstract
-// "combination" TLM interfaces. Components that require a particular interface
+// "combination" UVM TLM interfaces. Components that require a particular interface
 // use ports to convey that requirement. Components that provide a particular
 // interface use exports to convey its availability.
 //
@@ -43,19 +44,20 @@ import uvm.base.uvm_globals;
 // compatible input ports. The difference is that UVM ports and exports bind
 // interfaces (groups of methods), not signals and wires. The methods of the
 // interfaces so bound pass data as whole transactions (e.g. objects).
-// The set of primitve and combination TLM interfaces afford many choices for
+// The set of primitve and combination UVM TLM interfaces afford many choices for
 // designing components that communicate at the transaction level.
 //
 //-----------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 12.2.4.1
 abstract class uvm_tlm_if_base(T1=int, T2=int)
 {
 
-  enum string UVM_TASK_ERROR="TLM interface task not implemented";
-  enum string UVM_FUNCTION_ERROR="TLM interface function not implemented";
-  // Group: Blocking put
+  enum string UVM_TASK_ERROR = "UVM TLM interface task not implemented";
+  enum string UVM_FUNCTION_ERROR = "UVM TLM interface function not implemented";
+  // Group -- NODOCS -- Blocking put
 
-  // Task: put
+  // Task -- NODOCS -- put
   //
   // Sends a user-defined transaction of type T.
   //
@@ -63,13 +65,14 @@ abstract class uvm_tlm_if_base(T1=int, T2=int)
   // it cannot immediately accept delivery of the transaction.
 
   // task
+  // @uvm-ieee 1800.2-2017 auto 12.2.4.2.1
   public void put(T1 t) {
     uvm_report_error("put", UVM_TASK_ERROR, uvm_verbosity.UVM_NONE);
   }
 
-  // Group: Blocking get
+  // Group -- NODOCS -- Blocking get
 
-  // Task: get
+  // Task -- NODOCS -- get
   //
   // Provides a new transaction of type T.
   //
@@ -81,14 +84,15 @@ abstract class uvm_tlm_if_base(T1=int, T2=int)
   // Subsequent calls to get must return a different transaction instance.
 
   // task
+  // @uvm-ieee 1800.2-2017 auto 12.2.4.2.2
   public void get(out T2 t) {
     uvm_report_error("get", UVM_TASK_ERROR, uvm_verbosity.UVM_NONE);
   }
 
 
-  // Group: Blocking peek
+  // Group -- NODOCS -- Blocking peek
 
-  // Task: peek
+  // Task -- NODOCS -- peek
   //
   // Obtain a new transaction without consuming it.
   //
@@ -100,39 +104,42 @@ abstract class uvm_tlm_if_base(T1=int, T2=int)
   // return the same transaction.
 
   // task
+  // @uvm-ieee 1800.2-2017 auto 12.2.4.2.3
   public void peek(out T2 t) {
     uvm_report_error("peek", UVM_TASK_ERROR, uvm_verbosity.UVM_NONE);
   }
 
 
-  // Group: Non-blocking put
+  // Group -- NODOCS -- Non-blocking put
 
-  // Function: try_put
+  // Function -- NODOCS -- try_put
   //
   // Sends a transaction of type T, if possible.
   //
   // If the component is ready to accept the transaction argument, then it does
   // so and returns 1, otherwise it returns 0.
 
+  // @uvm-ieee 1800.2-2017 auto 12.2.4.2.4
   public bool try_put(T1 t) {
     uvm_report_error("try_put", UVM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return false;
   }
 
 
-  // Function: can_put
+  // Function -- NODOCS -- can_put
   //
   // Returns 1 if the component is ready to accept the transaction; 0 otherwise.
 
+  // @uvm-ieee 1800.2-2017 auto 12.2.4.2.5
   public bool can_put() {
     uvm_report_error("can_put", UVM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return false;
   }
 
 
-  // Group: Non-blocking get
+  // Group -- NODOCS -- Non-blocking get
 
-  // Function: try_get
+  // Function -- NODOCS -- try_get
   //
   // Provides a new transaction of type T.
   //
@@ -140,26 +147,28 @@ abstract class uvm_tlm_if_base(T1=int, T2=int)
   // argument and 1 is returned. Otherwise, the output argument is not modified
   // and 0 is returned.
 
+  // @uvm-ieee 1800.2-2017 auto 12.2.4.2.6
   public bool try_get(out T2 t) {
     uvm_report_error("try_get", UVM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return false;
   }
 
 
-  // Function: can_get
+  // Function -- NODOCS -- can_get
   //
   // Returns 1 if a new transaction can be provided immediately upon request,
   // 0 otherwise.
 
+  // @uvm-ieee 1800.2-2017 auto 12.2.4.2.7
   public bool can_get() {
     uvm_report_error("can_get", UVM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return false;
   }
 
 
-  // Group: Non-blocking peek
+  // Group -- NODOCS -- Non-blocking peek
 
-  // Function: try_peek
+  // Function -- NODOCS -- try_peek
   //
   // Provides a new transaction without consuming it.
   //
@@ -168,38 +177,41 @@ abstract class uvm_tlm_if_base(T1=int, T2=int)
   // transaction is not available, then the argument is unmodified and 0 is
   // returned.
 
+  // @uvm-ieee 1800.2-2017 auto 12.2.4.2.8
   public bool try_peek(out T2 t) {
     uvm_report_error("try_peek", UVM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return false;
   }
 
 
-  // Function: can_peek
+  // Function -- NODOCS -- can_peek
   //
   // Returns 1 if a new transaction is available; 0 otherwise.
 
+  // @uvm-ieee 1800.2-2017 auto 12.2.4.2.9
   public bool can_peek() {
     uvm_report_error("can_ppeek", UVM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return false;
   }
 
 
-  // Group: Blocking transport
+  // Group -- NODOCS -- Blocking transport
 
-  // Task: transport
+  // Task -- NODOCS -- transport
   //
   // Executes the given request and returns the response in the given output
   // argument. The calling thread may block until the operation is complete.
 
   // task
+  // @uvm-ieee 1800.2-2017 auto 12.2.4.2.10
   public void transport(T1 req , out T2 rsp) {
     uvm_report_error("transport", UVM_TASK_ERROR, uvm_verbosity.UVM_NONE);
   }
 
 
-  // Group: Non-blocking transport
+  // Group -- NODOCS -- Non-blocking transport
 
-  // Task: nb_transport
+  // Task -- NODOCS -- nb_transport
   //
   // Executes the given request and returns the response in the given output
   // argument. Completion of this operation must occur without blocking.
@@ -207,21 +219,22 @@ abstract class uvm_tlm_if_base(T1=int, T2=int)
   // If for any reason the operation could not be executed immediately, then
   // a 0 must be returned; otherwise 1.
 
+  // @uvm-ieee 1800.2-2017 auto 12.2.4.2.11
   public bool nb_transport(T1 req, out T2 rsp) {
     uvm_report_error("nb_transport", UVM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return false;
   }
 
 
-  // Group: Analysis
+  // Group -- NODOCS -- Analysis
 
-  // Function: write
+  // Function -- NODOCS -- write
   //
   // Broadcasts a user-defined transaction of type T to any number of listeners.
   // The operation must complete without blocking.
 
+  // @uvm-ieee 1800.2-2017 auto 12.2.4.2.12
   public void write(T1 t) {
     uvm_report_error("write", UVM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
   }
-
 }

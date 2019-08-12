@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //   Copyright 2014 Synopsys, Inc.
-//   Copyright 2016 Coverify Systems Technology
+//   Copyright 2016-2019 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the

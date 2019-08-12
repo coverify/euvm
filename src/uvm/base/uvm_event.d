@@ -1,10 +1,12 @@
 //
 //------------------------------------------------------------------------------
-//   Copyright 2007-2010 Mentor Graphics Corporation
-//   Copyright 2007-2011 Cadence Design Systems, Inc.
-//   Copyright 2010      Synopsys, Inc.
-//   Copyright 2014      NVIDIA Corportation
-//   Copyright 2012-2016 Coverify Systems Technology
+// Copyright 2012-2019 Coverify Systems Technology
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2011 Synopsys, Inc.
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2011 AMD
+// Copyright 2013-2018 NVIDIA Corporation
+// Copyright 2014 Cisco Systems, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -26,7 +28,7 @@ module uvm.base.uvm_event;
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_event_base
+// CLASS -- NODOCS -- uvm_event_base
 //
 // The uvm_event_base class is an abstract wrapper class around the SystemVerilog event
 // construct.  It provides some additional services such as setting callbacks
@@ -35,8 +37,11 @@ module uvm.base.uvm_event;
 //------------------------------------------------------------------------------
 
 import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_object_defines;
 import uvm.base.uvm_event_callback: uvm_event_callback;
 import uvm.base.uvm_printer: uvm_printer;
+import uvm.base.uvm_misc: uvm_apprepend;
+import uvm.base.uvm_callback: uvm_callback, uvm_callbacks;
 
 import uvm.meta.misc;
 import uvm.meta.meta;
@@ -47,11 +52,13 @@ import esdl.data.queue;
 
 import std.string: format;
 
+// @uvm-ieee 1800.2-2017 auto 10.1.1.1
 abstract class uvm_event_base: uvm_object
 {
-  mixin(uvm_sync_string);
+  mixin (uvm_sync_string);
 
-  enum string type_name = "uvm_event_base";
+
+  mixin uvm_abstract_object_essentials;
 
   // m_event is an effectively immutable object
   @uvm_immutable_sync
@@ -73,21 +80,14 @@ abstract class uvm_event_base: uvm_object
   @uvm_protected_sync
   private SimTime _trigger_time = 0;
 
-  // private state variable, make sure that all read-writes are guarded
-  private Queue!(uvm_event_callback!(uvm_object)) _callbacks;
 
-  Queue!(uvm_event_callback!(uvm_object)) get_callbacks() {
-    synchronized(this) {
-      return _callbacks.dup;
-    }
-  }
-
-  // Function: new
+  // Function -- NODOCS -- new
   //
   // Creates a new event object.
 
+  // @uvm-ieee 1800.2-2017 auto 10.1.1.2.1
   this (string name="") {
-    synchronized(this) {
+    synchronized (this) {
       super(name);
       _m_event.initialize("_m_event");
       _on_event.initialize("_on_event");
@@ -98,7 +98,7 @@ abstract class uvm_event_base: uvm_object
   // waiting //
   //---------//
 
-  // Task: wait_on
+  // Task -- NODOCS -- wait_on
   //
   // Waits for the event to be activated for the first time.
   //
@@ -110,6 +110,7 @@ abstract class uvm_event_base: uvm_object
   // Once an event has been triggered, it will be remain "on" until the event
   // is <reset>.
 
+  // @uvm-ieee 1800.2-2017 auto 10.1.1.2.2
   // task
   void wait_on (bool delta=false) {
     if (delta) {
@@ -118,7 +119,7 @@ abstract class uvm_event_base: uvm_object
       }
       return;
     }
-    synchronized(this) {
+    synchronized (this) {
       _num_waiters++;
     }
     // on_event is effectively immutable
@@ -126,7 +127,7 @@ abstract class uvm_event_base: uvm_object
   }
 
 
-  // Task: wait_off
+  // Task -- NODOCS -- wait_off
   //
   // If the event has already triggered and is "on", this task waits for the
   // event to be turned "off" via a call to <reset>.
@@ -136,6 +137,7 @@ abstract class uvm_event_base: uvm_object
   // before returning. This prevents the caller from returning before
   // previously waiting processes have had a chance to resume.
 
+  // @uvm-ieee 1800.2-2017 auto 10.1.1.2.3
   // task
   void wait_off (bool delta=false) {
     if (delta) {
@@ -144,14 +146,14 @@ abstract class uvm_event_base: uvm_object
       }
       return;
     }
-    synchronized(this) {
+    synchronized (this) {
       _num_waiters++;
     }
     wait(on_event);
   }
 
 
-  // Task: wait_trigger
+  // Task -- NODOCS -- wait_trigger
   //
   // Waits for the event to be triggered.
   //
@@ -161,25 +163,27 @@ abstract class uvm_event_base: uvm_object
   // occurs after the trigger, this method will not return until the next
   // trigger, which may never occur and thus cause deadlock.
 
+  // @uvm-ieee 1800.2-2017 auto 10.1.1.2.4
   // task
   void wait_trigger () {
-    synchronized(this) {
+    synchronized (this) {
       _num_waiters++;
     }
     wait(m_event);
   }
 
 
-  // Task: wait_ptrigger
+  // Task -- NODOCS -- wait_ptrigger
   //
   // Waits for a persistent trigger of the event. Unlike <wait_trigger>, this
   // views the trigger as persistent within a given time-slice and thus avoids
   // certain race conditions. If this method is called after the trigger but
   // within the same time-slice, the caller returns immediately.
 
+  // @uvm-ieee 1800.2-2017 auto 10.1.1.2.5
   // task
   void wait_ptrigger () {
-    synchronized(this) {
+    synchronized (this) {
       if (m_event.triggered) {
 	return;
       }
@@ -188,13 +192,14 @@ abstract class uvm_event_base: uvm_object
     wait(m_event);
   }
 
-  // Function: get_trigger_time
+  // Function -- NODOCS -- get_trigger_time
   //
   // Gets the time that this event was last triggered. If the event has not been
   // triggered, or the event has been reset, then the trigger time will be 0.
 
+  // @uvm-ieee 1800.2-2017 auto 10.1.1.2.6
   SimTime get_trigger_time () {
-    synchronized(this) {
+    synchronized (this) {
       return _trigger_time;
     }
   }
@@ -203,45 +208,47 @@ abstract class uvm_event_base: uvm_object
   // state //
   //-------//
 
-  // Function: is_on
+  // Function -- NODOCS -- is_on
   //
   // Indicates whether the event has been triggered since it was last reset.
   //
   // A return of 1 indicates that the event has triggered.
 
+  // @uvm-ieee 1800.2-2017 auto 10.1.1.2.7
   bool is_on () {
-    synchronized(this) {
+    synchronized (this) {
       return _on;
     }
   }
 
-  // Function: is_off
+  // Function -- NODOCS -- is_off
   //
   // Indicates whether the event has been triggered or been reset.
   //
   // A return of 1 indicates that the event has not been triggered.
 
   bool is_off () {
-    synchronized(this) {
+    synchronized (this) {
       return !_on;
     }
   }
 
-  // Function: reset
+  // Function -- NODOCS -- reset
   //
   // Resets the event to its off state. If ~wakeup~ is set, then all processes
   // currently waiting for the event are activated before the reset.
   //
   // No callbacks are called during a reset.
 
+  // @uvm-ieee 1800.2-2017 auto 10.1.1.2.8
   void reset (bool wakeup = false) {
-    synchronized(this) {
+    synchronized (this) {
       if (wakeup) {
 	m_event.notify();
       }
       m_event.reset();
       _num_waiters = 0;
-      if(_on !is false) {
+      if (_on !is false) {
 	_on = false;
 	_on_event.notify();	// value of on has changed
       }
@@ -254,72 +261,64 @@ abstract class uvm_event_base: uvm_object
   // waiters list //
   //--------------//
 
-  // Function: cancel
+  // Function -- NODOCS -- cancel
   //
   // Decrements the number of waiters on the event.
   //
   // This is used if a process that is waiting on an event is disabled or
   // activated by some other means.
 
+  // @uvm-ieee 1800.2-2017 auto 10.1.1.2.9
   void cancel () {
-    synchronized(this) {
+    synchronized (this) {
       if (_num_waiters > 0) {
 	--_num_waiters;
       }
     }
   }
 
-  // Function: get_num_waiters
+  // Function -- NODOCS -- get_num_waiters
   //
   // Returns the number of processes waiting on the event.
 
+  // @uvm-ieee 1800.2-2017 auto 10.1.1.2.10
   int get_num_waiters () {
-    synchronized(this) {
+    synchronized (this) {
       return _num_waiters;
     }
   }
 
-  override string get_type_name() {
-    return qualifiedTypeName!(typeof(this));
-  }
-
   override void do_print (uvm_printer printer) {
     import uvm.base.uvm_object_globals;
-    synchronized(this) {
+    synchronized (this) {
       printer.print("num_waiters", _num_waiters, uvm_radix_enum.UVM_DEC, '.', "int");
       printer.print("on", _on, uvm_radix_enum.UVM_BIN, '.', "bit");
       printer.print("trigger_time", _trigger_time);
-      printer.m_scope.down("callbacks");
-      foreach(size_t e, ref c; _callbacks) {
-	printer.print(format("[%0d]",e), c, '[');
-      }
-      printer.m_scope.up();
     }
   }
 
 
   override void do_copy (uvm_object rhs) {
-    synchronized(this) {
+    synchronized (this) {
       super.do_copy(rhs);
-      auto e = cast(uvm_event_base) rhs;
+      auto e = cast (uvm_event_base) rhs;
       if (e is null) {
 	return;
       }
-      synchronized(e) {
+      synchronized (e) {
 	// m_event = e.m_event;	// crazy??
 	_num_waiters  = e.get_num_waiters();
 	_on           = e.is_on();
 	_trigger_time = e.get_trigger_time();
-	_callbacks    = e.get_callbacks();
       }
     }
   }
-} //endclass : uvm_event
+} //endclass  -- NODOCS -- uvm_event
 
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_event#(T)
+// CLASS -- NODOCS -- uvm_event#(T)
 //
 // The uvm_event class is an extension of the abstract uvm_event_base class.
 //
@@ -329,43 +328,75 @@ abstract class uvm_event_base: uvm_object
 
 class uvm_event(T=uvm_object): uvm_event_base
 {
-  mixin(uvm_sync_string);
+  alias this_type = uvm_event!(T);
+  alias cb_type = uvm_event_callback!(T);
+  alias cbs_type = uvm_callbacks!(this_type, cb_type);
+   
+  // Not using `uvm_register_cb(this_type, cb_type)
+  // so as to try and get ~slightly~ better debug
+  // output for names.
+  // static private bool m_register_cb() {
+  //   return
+  //     uvm_callbacks!(this_type,cb_type).m_register_pair("uvm_pkg.uvm_event!(T)",
+  // 							"uvm_pkg.uvm_event_callback!(T)"
+  // 							);
+  // }
+
+  // static local bit m_cb_registered = m_register_cb();
+   
+  mixin uvm_object_essentials;
+
+  mixin (uvm_sync_string);
 
   enum string type_name = "uvm_event";
 
   // private state object, make sure that all read-writes are guarded
   @uvm_private_sync
   private T _trigger_data;
+  @uvm_private_sync
+  private T _default_data;
 
-  // Function: new
+  // Function -- NODOCS -- new
   //
   // Creates a new event object.
 
+  // @uvm-ieee 1800.2-2017 auto 10.1.2.2.1
   this(string name="") {
     super(name);
   }
 
 
-  // Task: wait_trigger_data
+  // private state variable, make sure that all read-writes are guarded
+  private Queue!(uvm_event_callback!T) _callbacks;
+
+  Queue!(uvm_event_callback!T) get_callbacks() {
+    synchronized (this) {
+      return _callbacks.dup;
+    }
+  }
+
+  // Task -- NODOCS -- wait_trigger_data
   //
   // This method calls <wait_trigger> followed by <get_trigger_data>.
 
+  // @uvm-ieee 1800.2-2017 auto 10.1.2.2.2
   // task
   void wait_trigger_data (out T data) {
     wait_trigger();
-    synchronized(this) {
+    synchronized (this) {
       data = get_trigger_data();
     }
   }
 
-  // Task: wait_ptrigger_data
+  // Task -- NODOCS -- wait_ptrigger_data
   //
   // This method calls <wait_ptrigger> followed by <get_trigger_data>.
 
+  // @uvm-ieee 1800.2-2017 auto 10.1.2.2.3
   // task
   void wait_ptrigger_data (out T data) {
     wait_ptrigger();
-    synchronized(this) {
+    synchronized (this) {
       data = get_trigger_data();
     }
   }
@@ -375,30 +406,28 @@ class uvm_event(T=uvm_object): uvm_event_base
   // triggering //
   //------------//
 
-  // Function: trigger
+  // Function -- NODOCS -- trigger
   //
   // Triggers the event, resuming all waiting processes.
   //
   // An optional ~data~ argument can be supplied with the enable to provide
   // trigger-specific information.
 
+  // @uvm-ieee 1800.2-2017 auto 10.1.2.2.4
   void trigger(T data=null) {
-    synchronized(this) {
+    synchronized (this) {
       bool skip = false;
-      if (_callbacks.length != 0) {
-	foreach (cb; _callbacks[]) {
-	  skip = skip || cb.pre_trigger(this, data);
-	}
+      cb_type[] cb_q;
+      foreach (cb; cb_q) {
+	skip = skip || cb.pre_trigger(this, data);
       }
       if (skip is false) {
 	m_event.notify();
-	if (_callbacks.length != 0) {
-	  foreach (cb; _callbacks[]) {
-	    cb.post_trigger(this, data);
-	  }
+	foreach (cb; cb_q) {
+	  cb.post_trigger(this, data);
 	}
 	_num_waiters = 0;
-	if(_on !is true) {
+	if (_on !is true) {
 	  _on = true;
 	  _on_event.notify();
 	}
@@ -408,93 +437,31 @@ class uvm_event(T=uvm_object): uvm_event_base
     }
   }
 
-  // Function: get_trigger_data
+  // Function -- NODOCS -- get_trigger_data
   //
   // Gets the data, if any, provided by the last call to <trigger>.
 
+  // @uvm-ieee 1800.2-2017 auto 10.1.2.2.5
   T get_trigger_data () {
-    synchronized(this) {
+    synchronized (this) {
       return _trigger_data;
     }
   }
 
-  override string get_type_name() {
-    return qualifiedTypeName!(typeof(this));
-  }
+  // Function -- NODOCS -- default data
 
-  //-----------//
-  // callbacks //
-  //-----------//
-
-  //-----------//
-  // callbacks //
-  //-----------//
-
-  // Function: add_callback
-  //
-  // Registers a callback object, ~cb~, with this event. The callback object
-  // may include pre_trigger and post_trigger functionality. If ~append~ is set
-  // to 1, the default, ~cb~ is added to the back of the callback list. Otherwise,
-  // ~cb~ is placed at the front of the callback list.
-
-
-  void add_callback (uvm_event_callback!T cb, bool append = true) {
-    import uvm.base.uvm_globals;
-    import uvm.base.uvm_object_globals;
-    import std.algorithm;
-    synchronized(this) {
-      if(countUntil(_callbacks[], cb) != -1) {
-	uvm_report_warning("CBRGED","add_callback: Callback already registered. Ignoring.", uvm_verbosity.UVM_NONE);
-	return;
-      }
-      if (append) {
-	_callbacks.pushBack(cb);
-      }
-      else {
-	_callbacks.pushFront(cb);
-      }
+  // @uvm-ieee 1800.2-2017 auto 10.1.2.2.6
+  T get_default_data() {
+    synchronized (this) {
+      return _default_data;
     }
   }
 
-  // Function: delete_callback
-  //
-  // Unregisters the given callback, ~cb~, from this event.
-
-  void delete_callback (uvm_event_callback!T cb) {
-    import uvm.base.uvm_globals;
-    import uvm.base.uvm_object_globals;
-    import std.algorithm;
-    synchronized(this) {
-      auto r = countUntil(_callbacks[], cb);
-      if(r !is -1) {
-	_callbacks.remove(r);
-      }
-      else {
-	uvm_report_warning("CBNTFD", "delete_callback: Callback not found. Ignoring delete request.", uvm_verbosity.UVM_NONE);
-      }
+  // @uvm-ieee 1800.2-2017 auto 10.1.2.2.6
+  void set_default_data(T data) {
+    synchronized (this) {
+      _default_data = data;
     }
-  }
-
-
-  override void do_print(uvm_printer printer) {
-    synchronized(this) {
-      super.do_print(printer);
-      printer.print("trigger_data", _trigger_data);
-    }
-  }
-
-  override void do_copy (uvm_object rhs) {
-    synchronized(this) {
-      super.do_copy(rhs);
-      auto e = cast(uvm_event!T) rhs;
-      if(e is null) return;
-      _trigger_data = e.trigger_data;
-    }
-  } // do_copy
-
-  static uvm_object create(string name="") {
-    auto v = new uvm_event!T(name);
-    return v;
   }
 
 }

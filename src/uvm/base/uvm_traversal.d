@@ -1,6 +1,7 @@
 //----------------------------------------------------------------------
-//   Copyright 2013 Cadence Design Systems, Inc.
-//   Copyright 2016 Coverify Systems Technology
+// Copyright 2016-2019 Coverify Systems Technology
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2014-2018 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -18,16 +19,6 @@
 //   permissions and limitations under the License.
 //----------------------------------------------------------------------
 
-//------------------------------------------------------------------------------
-//
-// CLASS: uvm_visitor #(NODE)
-//
-// The uvm_visitor class provides an abstract base class for a visitor. The visitor 
-// visits instances of type NODE. For general information regarding the visitor pattern
-// see http://en.wikipedia.org/wiki/Visitor_pattern
-// 
-//------------------------------------------------------------------------------
-
 module uvm.base.uvm_traversal;
 
 import uvm.base.uvm_object: uvm_object;
@@ -35,44 +26,44 @@ import uvm.base.uvm_component: uvm_component;
 
 import std.regex;
 
+//------------------------------------------------------------------------------
+//
+// CLASS -- NODOCS -- uvm_visitor #(NODE)
+//
+// The uvm_visitor class provides an abstract base class for a visitor. The visitor 
+// visits instances of type NODE. For general information regarding the visitor pattern
+// see http://en.wikipedia.org/wiki/Visitor_pattern
+// 
+//------------------------------------------------------------------------------
+
+// @uvm-ieee 1800.2-2017 auto F.5.1.1
 abstract class uvm_visitor(NODE=uvm_component): uvm_object
 {
   this(string name = "") {
     super(name);
   }
 
-  // Function: begin_v
+  // Function -- NODOCS -- begin_v
   //
   // This method will be invoked by the visitor before the first NODE is visited
 	
+  // @uvm-ieee 1800.2-2017 auto F.5.1.2.1
   void begin_v() { }
 	
-  // Function: end_v
+  // Function -- NODOCS -- end_v
   //
   // This method will be invoked by the visitor after the last NODE is visited
 		
+  // @uvm-ieee 1800.2-2017 auto F.5.1.2.2
   void end_v() { }
 
-  // Function: visit
-  //
-  // This method will be invoked by the visitor for every visited ~node~ of the provided structure.
-  // The user is expected to provide the own functionality in this function.
-  //
-  //| class count_nodes_visitor#(type T=uvm_component) extends uvm_visitor#(T); 
-  //| 	function new (string name = "");
-  //|	       super.new(name);
-  //|     endfunction 
-  //| 	local int cnt;
-  //|     virtual function void begin_v(); cnt = 0; endfunction
-  //| 	virtual function void end_v(); `uvm_info("TEXT",$sformatf("%d elements",cnt),UVM_NONE) endfunction
-  //| 	virtual function void visit(T node); cnt++; endfunction
-  //|	endclass
+  // @uvm-ieee 1800.2-2017 auto F.5.1.2.3
   abstract void visit(NODE node);
 };
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_structure_proxy #(STRUCTURE)
+// CLASS -- NODOCS -- uvm_structure_proxy #(STRUCTURE)
 //
 // The uvm_structure_proxy is a wrapper and provides a set of elements 
 // of the STRUCTURE to the caller on demand. This is to decouple the retrieval of 
@@ -80,40 +71,47 @@ abstract class uvm_visitor(NODE=uvm_component): uvm_object
 // 
 //------------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto F.5.2.1
 abstract class uvm_structure_proxy(STRUCTURE=uvm_component): uvm_object
 {
+  // @uvm-ieee 1800.2-2017 auto F.5.2.2.1
   this(string name = "") {
     super(name);
   }
-  // Function: get_immediate_children
+
+  // Function -- NODOCS -- get_immediate_children
   //
   // This method will be return in ~children~ a set of the direct subelements of ~s~
 		
+  // @uvm-ieee 1800.2-2017 auto F.5.2.2.2
   abstract void get_immediate_children(STRUCTURE s, STRUCTURE[] children);
 };
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_visitor_adapter #(STRUCTURE,uvm_visitor#(STRUCTURE))
+// CLASS -- NODOCS -- uvm_visitor_adapter #(STRUCTURE,uvm_visitor#(STRUCTURE))
 //
 // The visitor adaptor traverses all nodes of the STRUCTURE and will invoke visitor.visit() on every node.
 // 
 //------------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto F.5.3.1
 abstract class uvm_visitor_adapter(STRUCTURE=uvm_component,
 				   VISITOR=uvm_visitor!STRUCTURE): uvm_object
 {
-  // Function: accept()
+  // Function -- NODOCS -- accept()
   //
   // Calling this function will traverse through ~s~ (and every subnode of ~s~). For each node found 
   // ~v~.visit(node) will be invoked. The children of ~s~ are recursively determined 
   // by invoking ~p~.get_immediate_children().~invoke_begin_end~ determines whether the visitors begin/end functions 
   // should be invoked prior to traversal.
 	
+  // @uvm-ieee 1800.2-2017 auto F.5.3.2.2
   abstract void accept(STRUCTURE s, VISITOR v,
 		       uvm_structure_proxy!STRUCTURE p,
 		       bool invoke_begin_end=true);
 
+  // @uvm-ieee 1800.2-2017 auto F.5.3.2.1
   this (string name = "") {
     super(name);
   }
@@ -121,17 +119,20 @@ abstract class uvm_visitor_adapter(STRUCTURE=uvm_component,
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_top_down_visitor_adapter
+// CLASS -- NODOCS -- uvm_top_down_visitor_adapter
 //
 // This uvm_top_down_visitor_adapter traverses the STRUCTURE ~s~ (and will invoke the visitor) in a hierarchical fashion.
 // During traversal ~s~ will be visited before all subnodes of ~s~ will be visited.
 // 
 //------------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto F.5.4.1
 class uvm_top_down_visitor_adapter(STRUCTURE=uvm_component,
 				   VISITOR=uvm_visitor!STRUCTURE):
   uvm_visitor_adapter!(STRUCTURE,VISITOR)
 {
+
+  // @uvm-ieee 1800.2-2017 auto F.5.4.2
   this(string name = "") {
     super(name);
   }      
@@ -140,37 +141,40 @@ class uvm_top_down_visitor_adapter(STRUCTURE=uvm_component,
 	      bool invoke_begin_end=true) {
 
     STRUCTURE[] c;
-    if(invoke_begin_end) {
+    if (invoke_begin_end) {
       v.begin_v();
     }
 
     v.visit(s);
     p.get_immediate_children(s, c);
 
-    foreach(x; c) {
+    foreach (x; c) {
       accept(x, v, p, false);
     }
 
-    if(invoke_begin_end) {
+    if (invoke_begin_end) {
       v.end_v();
     }
 
   }
-};
+}
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_bottom_up_visitor_adapter
+// CLASS -- NODOCS -- uvm_bottom_up_visitor_adapter
 //
 // This uvm_bottom_up_visitor_adapter traverses the STRUCTURE ~s~ (and will invoke the visitor) in a hierarchical fashion.
 // During traversal all children of node ~s~ will be visited ~s~ will be visited.
 // 
 //------------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto F.5.5.1
 class uvm_bottom_up_visitor_adapter(STRUCTURE=uvm_component,
 				    VISITOR=uvm_visitor!STRUCTURE):
   uvm_visitor_adapter!(STRUCTURE,VISITOR)
 {
+
+  // @uvm-ieee 1800.2-2017 auto F.5.5.2
   this(string name = "") {
     super(name);
   }
@@ -179,18 +183,18 @@ class uvm_bottom_up_visitor_adapter(STRUCTURE=uvm_component,
 	      bool invoke_begin_end=true) {
     STRUCTURE[] c;
 
-    if(invoke_begin_end) {
+    if (invoke_begin_end) {
       v.begin_v();
     }
 
     p.get_immediate_children(s, c);
-    foreach(x; c) {
+    foreach (x; c) {
       accept(x, v, p, false);
     }
 
     v.visit(s);
 
-    if(invoke_begin_end) {
+    if (invoke_begin_end) {
       v.end_v();
     }
 
@@ -199,16 +203,19 @@ class uvm_bottom_up_visitor_adapter(STRUCTURE=uvm_component,
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_by_level_visitor_adapter
+// CLASS -- NODOCS -- uvm_by_level_visitor_adapter
 //
 // This uvm_by_level_visitor_adapter traverses the STRUCTURE ~s~ (and will invoke the visitor) in a hierarchical fashion.
 // During traversal will visit all direct children of ~s~ before all grand-children are visited. 
 //------------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto F.5.6.1
 class uvm_by_level_visitor_adapter(STRUCTURE=uvm_component,
 				   VISITOR=uvm_visitor!STRUCTURE):
   uvm_visitor_adapter!(STRUCTURE,VISITOR)
 {
+
+  // @uvm-ieee 1800.2-2017 auto F.5.6.2
   this(string name = "") {
     super(name);
   }
@@ -218,14 +225,14 @@ class uvm_by_level_visitor_adapter(STRUCTURE=uvm_component,
     STRUCTURE[] c;
     c ~= s;
 
-    if(invoke_begin_end) {
+    if (invoke_begin_end) {
       v.begin_v();
     }
 
-    while(c.length > 0) {
+    while (c.length > 0) {
       STRUCTURE[] q;
 
-      foreach(x; c) {
+      foreach (x; c) {
 	STRUCTURE[] t; 
 
 	v.visit(x);
@@ -236,7 +243,7 @@ class uvm_by_level_visitor_adapter(STRUCTURE=uvm_component,
       c = q;
     }
 
-    if(invoke_begin_end) {
+    if (invoke_begin_end) {
       v.end_v();
     }
   }
@@ -244,11 +251,12 @@ class uvm_by_level_visitor_adapter(STRUCTURE=uvm_component,
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_component_proxy
+// CLASS -- NODOCS -- uvm_component_proxy
 //
 // The class is providing the proxy to extract the direct subcomponents of ~s~ 
 //------------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto F.5.7.1
 class uvm_component_proxy: uvm_structure_proxy!uvm_component
 {
   override void get_immediate_children(uvm_component s,
@@ -256,6 +264,7 @@ class uvm_component_proxy: uvm_structure_proxy!uvm_component
     s.get_children(children);
   }
 
+  // @uvm-ieee 1800.2-2017 auto F.5.7.2
   this(string name = "") {
     super(name);
   }
@@ -263,7 +272,7 @@ class uvm_component_proxy: uvm_structure_proxy!uvm_component
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_component_name_check_visitor 
+// CLASS -- NODOCS -- uvm_component_name_check_visitor 
 //
 // This specialized visitor analyze the naming of the current component. The established rule set
 // ensures that a component.get_full_name() is parsable, unique, printable to order to avoid any ambiguities 
@@ -287,7 +296,7 @@ class uvm_component_name_check_visitor: uvm_visitor!uvm_component
 
   static Regex!char _compiled_regex;
 
-  // Function: get_name_constraint
+  // Function -- NODOCS -- get_name_constraint
   //
   // This method should return a regex for what is being considered a valid/good component name.
   // The visitor will check all component names using this regex and report failing names
@@ -300,16 +309,16 @@ class uvm_component_name_check_visitor: uvm_visitor!uvm_component
   override void visit(uvm_component node) {
     import uvm.base.uvm_globals;
     import std.string: format;
-    synchronized(this) {
-      if(_compiled_regex == (Regex!char).init) {
+    synchronized (this) {
+      if (_compiled_regex == (Regex!char).init) {
 	_compiled_regex = regex(get_name_constraint());
       }
 		
-      assert(_compiled_regex != (Regex!char).init);
+      assert (_compiled_regex != (Regex!char).init);
 		
       // dont check the root component
-      if(_root !is node)
-	if(matchFirst(node.get_name(), _compiled_regex).empty()) {
+      if (_root !is node)
+	if (matchFirst(node.get_name(), _compiled_regex).empty()) {
 	  uvm_warning("UVM/COMP/NAME",
 		      format("the name \"%s\" of the component \"%s\" violates the uvm component name constraints",
 			     node.get_name(), node.get_full_name()));
@@ -323,14 +332,14 @@ class uvm_component_name_check_visitor: uvm_visitor!uvm_component
 
   override void begin_v() {
     import uvm.base.uvm_coreservice;
-    synchronized(this) {
+    synchronized (this) {
       uvm_coreservice_t cs = uvm_coreservice_t.get();
       _root =  cs.get_root();
     }
   }
 
   override void end_v() {
-    synchronized(this) {
+    synchronized (this) {
       _compiled_regex = (Regex!char).init;
     }
   }

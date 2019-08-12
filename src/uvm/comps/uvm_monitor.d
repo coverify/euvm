@@ -1,9 +1,9 @@
 //
 //-----------------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2010 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2014 Coverify Systems Technology
+// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2015-2018 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -21,10 +21,10 @@
 //   permissions and limitations under the License.
 //-----------------------------------------------------------------------------
 module uvm.comps.uvm_monitor;
-import uvm.base.uvm_component;
+import uvm.base;
 
 //-----------------------------------------------------------------------------
-// CLASS: uvm_monitor
+// CLASS -- NODOCS -- uvm_monitor
 //
 // This class should be used as the base class for user-defined monitors.
 //
@@ -34,21 +34,20 @@ import uvm.base.uvm_component;
 //
 //-----------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 13.5.1
 abstract class uvm_monitor: uvm_component
 {
-  // Function: new
+  mixin uvm_abstract_component_essentials;
+
+  // Function -- NODOCS -- new
   //
   // Creates and initializes an instance of this class using the normal
   // constructor arguments for <uvm_component>: ~name~ is the name of the
   // instance, and ~parent~ is the handle to the hierarchical parent, if any.
 
+  // @uvm-ieee 1800.2-2017 auto 13.5.2
   this(string name, uvm_component parent) {
     super(name, parent);
   }
 
-  enum string type_name = "uvm_monitor";
-
-  override string get_type_name () {
-    return type_name;
-  }
 }

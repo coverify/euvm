@@ -62,8 +62,12 @@ alias uvm_bitstream_to_string = uvm_bitvec_to_string!uvm_bitstream_t;
 alias uvm_integral_to_string  = uvm_bitvec_to_string!uvm_integral_t;
 
 // from: uvm_pool
+
+// @uvm-ieee 1800.2-2017 auto 10.4.2.1
 alias uvm_object_string_pool!(uvm_barrier) uvm_barrier_pool;
+// @uvm-ieee 1800.2-2017 auto 10.4.1.1
 alias uvm_object_string_pool!(uvm_event!(uvm_object)) uvm_event_pool;
+
 alias uvm_queue_string_pool = uvm_object_string_pool!(uvm_queue!string);
 alias uvm_string_object_resource_pool =
   uvm_pool!(string, uvm_resource!(uvm_object));;

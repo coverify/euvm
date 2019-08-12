@@ -47,7 +47,7 @@ class test: uvm_test
   
 int main(string[] argv) {
   TestBench tb = new TestBench;
-  tb.multiCore(0, 0);
+  tb.multicore(0, 0);
   tb.elaborate("tb", argv);
   return tb.simulate();
 }

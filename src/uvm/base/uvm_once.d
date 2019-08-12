@@ -1,6 +1,6 @@
 //
 //------------------------------------------------------------------------------
-//   Copyright 2012-2016 Coverify Systems Technology
+//   Copyright 2012-2019 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -35,8 +35,7 @@ class uvm_once_base
 
 class uvm_root_once
 {
-  // uvm_once_base[string] once_pool;
-  uvm_once_base[ClassInfo] once_pool;
+  uvm_once_base[ClassInfo] _uvm_once_pool;
   
   static string get_instance_name(T)() {
     char[] name = (fullyQualifiedName!T).dup;
@@ -46,13 +45,13 @@ class uvm_root_once
       }
     }
     name ~= "_";
-    return cast(string) name;
+    return cast (string) name;
   }
   
   static T get_once(T)() {
-    import uvm.base.uvm_entity;
+    import uvm.base.uvm_entity: uvm_entity_base;
     uvm_root_once once = uvm_entity_base.get().root_once();
-    synchronized(once) {
+    synchronized (once) {
       T instance;
       enum string instName = get_instance_name!T;
       static if (__traits(hasMember, uvm_root_once, instName)) {
@@ -61,22 +60,22 @@ class uvm_root_once
 	  __traits(getMember, once, instName) = instance;
 	}
 	else {
-	  instance = cast(T) inst;
-	  assert(instance !is null);
+	  instance = cast (T) inst;
+	  assert (instance !is null);
 	}
       }
       else {
-	// auto lookup = instName in once.once_pool;
+	// auto lookup = instName in once._uvm_once_pool;
 	auto tid = typeid(T);
-	auto lookup = tid in once.once_pool;
+	auto lookup = tid in once._uvm_once_pool;
 	if (lookup !is null) {
-	  instance = cast(T) *lookup;
-	  assert(instance !is null);
+	  instance = cast (T) *lookup;
+	  assert (instance !is null);
 	}
 	else {
 	  instance = new T();
-	  // once.once_pool[instName] = instance;
-	  once.once_pool[tid] = instance;
+	  // once._uvm_once_pool[instName] = instance;
+	  once._uvm_once_pool[tid] = instance;
 	}
       }
       return instance;

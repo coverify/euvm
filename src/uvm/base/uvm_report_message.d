@@ -1,9 +1,12 @@
 //
 //------------------------------------------------------------------------------
-//   Copyright 2007-2010 Mentor Graphics Corporation
-//   Copyright 2007-2011 Cadence Design Systems, Inc.
-//   Copyright 2010      Synopsys, Inc.
-//   Copyright 2016      Coverify Systems Technology
+// Copyright 2016-2019 Coverify Systems Technology
+// Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2013 Synopsys, Inc.
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2012 AMD
+// Copyright 2013-2018 NVIDIA Corporation
+// Copyright 2014-2018 Cisco Systems, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -45,7 +48,7 @@ import std.conv: to;
 uvm_report_message_element_base
 uvm_message_add(alias VAR, string LABEL="",
 		uvm_action ACTION=(uvm_action_type.UVM_LOG|uvm_action_type.UVM_RM_RECORD))()
-  if (is(typeof(VAR) == string) || is(typeof(VAR): uvm_object)) {
+  if (is (typeof(VAR) == string) || is (typeof(VAR): uvm_object)) {
     static if (is (typeof(VAR): string)) {
       alias V = string;
     }
@@ -54,7 +57,7 @@ uvm_message_add(alias VAR, string LABEL="",
     }
     static if (VAR.stringof[0] == '"' &&
 	       VAR.stringof[$-1] == '"') { // add_tag
-      static assert(LABEL != "", "Must supply label for uvm_message_add!");
+      static assert (LABEL != "", "Must supply label for uvm_message_add!");
       return new uvm_report_message_element!V(VAR.stringof[1..$-1], LABEL, ACTION);
     }
     else static if (LABEL == "") {
@@ -67,7 +70,7 @@ uvm_message_add(alias VAR, string LABEL="",
 
 uvm_report_message_element_base
 uvm_message_add(alias VAR, uvm_action ACTION)()
-  if (is(typeof(VAR) == string) || is(typeof(VAR): uvm_object)) {
+  if (is (typeof(VAR) == string) || is (typeof(VAR): uvm_object)) {
     string LABEL = "";
     static if (is (typeof(VAR): string)) {
       alias V = string;
@@ -77,7 +80,7 @@ uvm_message_add(alias VAR, uvm_action ACTION)()
     }
     static if (VAR.stringof[0] == '"' &&
 	       VAR.stringof[$-1] == '"') { // add_tag
-      static assert(LABEL != "", "Must supply label for uvm_message_add!");
+      static assert (LABEL != "", "Must supply label for uvm_message_add!");
       return new uvm_report_message_element!V(VAR.stringof[1..$-1], LABEL, ACTION);
     }
     else if (LABEL == "") {
@@ -146,7 +149,7 @@ uvm_report_message_create(T...)(uvm_severity severity,
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_report_message_element_base
+// CLASS -- NODOCS -- uvm_report_message_element_base
 //
 // Base class for report message element. Defines common interface.
 //
@@ -154,7 +157,7 @@ uvm_report_message_create(T...)(uvm_severity severity,
 
 abstract class uvm_report_message_element_base
 {
-  mixin(uvm_sync_string);
+  mixin (uvm_sync_string);
 
   @uvm_protected_sync
   private uvm_action _action;
@@ -164,55 +167,55 @@ abstract class uvm_report_message_element_base
 
   this(string name="", uvm_action action=(uvm_action_type.UVM_LOG |
 					  uvm_action_type.UVM_RM_RECORD)) {
-    synchronized(this) {
+    synchronized (this) {
       _name = name;
       _action = action;
     }
   }
   
-  // Function: get_name
+  // Function -- NODOCS -- get_name
   //
 
   string get_name() {
-    synchronized(this) {
+    synchronized (this) {
       return _name;
     }
   }
 
-  // Function: set_name
+  // Function -- NODOCS -- set_name
   //
   // Get or set the name of the element
   //
 
   void set_name(string name) {
-    synchronized(this) {
+    synchronized (this) {
       _name = name;
     }
   }
 
 
-  // Function: get_action
+  // Function -- NODOCS -- get_action
   //
 
   uvm_action get_action() {
-    synchronized(this) {
+    synchronized (this) {
       return _action;
     }
   }
 
-  // Function: set_action
+  // Function -- NODOCS -- set_action
   //
   // Get or set the authorized action for the element
   //
 
   void set_action(uvm_action action) {
-    synchronized(this) {
+    synchronized (this) {
       _action = action;
     }
   }
 
   void print(uvm_printer printer) {
-    synchronized(this) {
+    synchronized (this) {
       if (_action & (uvm_action_type.UVM_LOG | uvm_action_type.UVM_DISPLAY)) {
 	do_print(printer);
       }
@@ -220,7 +223,7 @@ abstract class uvm_report_message_element_base
   }
 
   void record(uvm_recorder recorder) {
-    synchronized(this) {
+    synchronized (this) {
       if (_action & uvm_action_type.UVM_RM_RECORD) {
 	do_record(recorder);
       }
@@ -244,16 +247,16 @@ abstract class uvm_report_message_element_base
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_report_message_int_element
+// CLASS -- NODOCS -- uvm_report_message_int_element
 //
 // Message element class for integral type
 //
 //------------------------------------------------------------------------------
 
-class uvm_report_message_element(T) if(isIntegral!T || isBitVector!T):
+class uvm_report_message_element(T) if (isIntegral!T || isBitVector!T):
   uvm_report_message_element_base
 {
-  mixin(uvm_sync_string);
+  mixin (uvm_sync_string);
 
   alias this_type = uvm_report_message_element!T;
 
@@ -264,30 +267,30 @@ class uvm_report_message_element(T) if(isIntegral!T || isBitVector!T):
 
   this(string name="", T value=T.init, uvm_action action=(uvm_action_type.UVM_LOG|uvm_action_type.UVM_RM_RECORD),
        uvm_radix_enum radix=uvm_radix_enum.UVM_NORADIX) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, action);
       _val = value;
       _radix = radix;
     }
   }
 
-  // Function: get_value
+  // Function -- NODOCS -- get_value
   //
 
   T get_value(out uvm_radix_enum radix) {
-    synchronized(this) {
+    synchronized (this) {
       radix = _radix;
       return _val;
     }
   }
 
-  // Function: set_value
+  // Function -- NODOCS -- set_value
   //
   // Get or set the value (integral type) of the element, with size and radix
   //
 
   void set_value(T value, uvm_radix_enum radix) {
-    synchronized(this) {
+    synchronized (this) {
       _radix = radix;
       _val = value;
     }
@@ -295,21 +298,21 @@ class uvm_report_message_element(T) if(isIntegral!T || isBitVector!T):
 
 
   override void do_print(uvm_printer printer) {
-    synchronized(this) {
+    synchronized (this) {
       printer.print(_name, _val, _radix);
     }
   }
 
   override void do_record(uvm_recorder recorder) {
-    synchronized(this) {
+    synchronized (this) {
       recorder.record(_name, _val, _radix);
     }
   }
 
   override void do_copy(uvm_report_message_element_base rhs) {
-    synchronized(this) {
-      this_type _rhs = cast(this_type) rhs;
-      assert(_rhs !is null);
+    synchronized (this) {
+      this_type _rhs = cast (this_type) rhs;
+      assert (_rhs !is null);
       _name = _rhs.name;
       _val = _rhs.val;
       _radix = _rhs.radix;
@@ -318,7 +321,7 @@ class uvm_report_message_element(T) if(isIntegral!T || isBitVector!T):
   }
 
   override uvm_report_message_element_base do_clone() {
-    synchronized(this) {
+    synchronized (this) {
       this_type tmp = new this_type;
       tmp.copy(this);
       return tmp;
@@ -329,16 +332,16 @@ class uvm_report_message_element(T) if(isIntegral!T || isBitVector!T):
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_report_message_int_element
+// CLASS -- NODOCS -- uvm_report_message_int_element
 //
 // Message element class for integral type
 //
 //------------------------------------------------------------------------------
 
-class uvm_report_message_int_element(T) if(isIntegral!T || isBitVector!T):
+class uvm_report_message_int_element(T) if (isIntegral!T || isBitVector!T):
   uvm_report_message_element_base
 {
-  mixin(uvm_sync_string);
+  mixin (uvm_sync_string);
 
   alias this_type = uvm_report_message_int_element!T;
 
@@ -349,24 +352,24 @@ class uvm_report_message_int_element(T) if(isIntegral!T || isBitVector!T):
   @uvm_protected_sync
   private uvm_radix_enum  _radix;
 
-  // Function: get_value
+  // Function -- NODOCS -- get_value
   //
 
   T get_value(out size_t size, out uvm_radix_enum radix) {
-    synchronized(this) {
+    synchronized (this) {
       size = _size;
       radix = _radix;
       return _val;
     }
   }
 
-  // Function: set_value
+  // Function -- NODOCS -- set_value
   //
   // Get or set the value (integral type) of the element, with size and radix
   //
 
   void set_value(T value, size_t size, uvm_radix_enum radix) {
-    synchronized(this) {
+    synchronized (this) {
       _size = size;
       _radix = radix;
       _val = value;
@@ -375,21 +378,21 @@ class uvm_report_message_int_element(T) if(isIntegral!T || isBitVector!T):
 
 
   override void do_print(uvm_printer printer) {
-    synchronized(this) {
-      printer.print_int(_name, _val, _size, _radix);
+    synchronized (this) {
+      printer.print_field(_name, _val, _size, _radix);
     }
   }
 
   override void do_record(uvm_recorder recorder) {
-    synchronized(this) {
-      recorder.record(_name, _val, _size, _radix);
+    synchronized (this) {
+      recorder.record_field(_name, _val, _size, _radix);
     }
   }
 
   override void do_copy(uvm_report_message_element_base rhs) {
-    synchronized(this) {
-      this_type _rhs = cast(this_type) rhs;
-      assert(_rhs !is null);
+    synchronized (this) {
+      this_type _rhs = cast (this_type) rhs;
+      assert (_rhs !is null);
       _name = _rhs.name;
       _val = _rhs.val;
       _size = _rhs.size;
@@ -399,7 +402,7 @@ class uvm_report_message_int_element(T) if(isIntegral!T || isBitVector!T):
   }
 
   override uvm_report_message_element_base do_clone() {
-    synchronized(this) {
+    synchronized (this) {
       this_type tmp = new this_type;
       tmp.copy(this);
       return tmp;
@@ -410,13 +413,13 @@ class uvm_report_message_int_element(T) if(isIntegral!T || isBitVector!T):
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_report_message_string_element
+// CLASS -- NODOCS -- uvm_report_message_string_element
 //
 // Message element class for string type
 //
 //------------------------------------------------------------------------------
 
-class uvm_report_message_element(T) if(is(T == string))
+class uvm_report_message_element(T) if (is (T == string))
   : uvm_report_message_element_base
 {
   alias  this_type = uvm_report_message_string_element;
@@ -426,55 +429,55 @@ class uvm_report_message_element(T) if(is(T == string))
   this(string name="", T value=T.init,
        uvm_action action=(uvm_action_type.UVM_LOG |
 			  uvm_action_type.UVM_RM_RECORD)) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, action);
       _val = value;
     }
   }
 
-  // Function: get_value
+  // Function -- NODOCS -- get_value
   //
 
   string get_value() {
-    synchronized(this) {
+    synchronized (this) {
       return _val;
     }
   }
 
-  // Function: set_value
+  // Function -- NODOCS -- set_value
   //
   // Get or set the value (string type) of the element
   //
 
   void set_value(string value) {
-    synchronized(this) {
+    synchronized (this) {
       _val = value;
     }
   }
 
 
   override void do_print(uvm_printer printer) {
-    synchronized(this) {
+    synchronized (this) {
       printer.print_string(_name, _val);
     }
   }
 
   override void do_record(uvm_recorder recorder) {
-    synchronized(this) {
+    synchronized (this) {
       recorder.record_string(_name, _val);
     }
   }
 
   override void do_copy(uvm_report_message_element_base rhs) {
-    this_type rhs_ = cast(this_type) rhs;
-    assert(rhs_ !is null);
+    this_type rhs_ = cast (this_type) rhs;
+    assert (rhs_ !is null);
     set_name   = rhs_.get_name;
     set_value  = rhs_.get_value;
     set_action = rhs_.get_action;
   }
 
   override uvm_report_message_element_base do_clone() {
-    synchronized(this) {
+    synchronized (this) {
       this_type tmp = new this_type;
       tmp.copy(this);
       return tmp;
@@ -487,13 +490,13 @@ alias uvm_report_message_string_element = uvm_report_message_element!string;
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_report_message_object_element
+// CLASS -- NODOCS -- uvm_report_message_object_element
 //
 // Message element class for object type
 //
 //------------------------------------------------------------------------------
 
-class uvm_report_message_element(T) if(is(T: uvm_object))
+class uvm_report_message_element(T) if (is (T: uvm_object))
   : uvm_report_message_element_base
 {
   alias this_type = uvm_report_message_element!T;
@@ -503,49 +506,49 @@ class uvm_report_message_element(T) if(is(T: uvm_object))
   this(string name="", T value=T.init,
        uvm_action action=(uvm_action_type.UVM_LOG |
 			  uvm_action_type.UVM_RM_RECORD)) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, action);
       _val = value;
     }
   }
 
-  // Function: get_value
+  // Function -- NODOCS -- get_value
   //
   // Get the value (object reference) of the element
   //
 
   T get_value() {
-    synchronized(this) {
+    synchronized (this) {
       return _val;
     }
   }
 
-  // Function: set_value
+  // Function -- NODOCS -- set_value
   //
   // Get or set the value (object reference) of the element
   //
 
   void set_value(T value) {
-    synchronized(this) {
+    synchronized (this) {
       _val = value;
     }
   }
 
   override void do_print(uvm_printer printer) {
-    synchronized(this) {
+    synchronized (this) {
       printer.print(_name, _val);
     }
   }
 
   override void do_record(uvm_recorder recorder) {
-    synchronized(this) {
+    synchronized (this) {
       recorder.record(_name, _val);
     }
   }
 
   override void do_copy(uvm_report_message_element_base rhs) {
-    this_type rhs_ = cast(this_type) rhs;
-    assert(rhs_ !is null);
+    this_type rhs_ = cast (this_type) rhs;
+    assert (rhs_ !is null);
     set_name   = rhs_.get_name;
     set_value  = rhs_.get_value;
     set_action = rhs_.get_action;
@@ -562,7 +565,7 @@ alias uvm_report_message_object_element = uvm_report_message_element!(uvm_object
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_report_message_element_container
+// CLASS -- NODOCS -- uvm_report_message_element_container
 //
 // A container used by report message to contain the dynamically added elements,
 // with APIs to add and delete the elements.
@@ -577,7 +580,7 @@ class uvm_report_message_element_container: uvm_object
   mixin uvm_object_essentials;
   // `uvm_object_utils(uvm_report_message_element_container)
 
-  // Function: new
+  // Function -- NODOCS -- new
   //
   // Create a new uvm_report_message_element_container object
   //
@@ -587,54 +590,54 @@ class uvm_report_message_element_container: uvm_object
   }
 
 
-  // Function: size
+  // Function -- NODOCS -- size
   //
   // Returns the size of the container, i.e. the number of elements
   //
 
   int size() {
-    synchronized(this) {
-      return cast(int) _elements.length;
+    synchronized (this) {
+      return cast (int) _elements.length;
     }
   }
 
   alias length = size;
-  // Function: delete
+  // Function -- NODOCS -- delete
   //
   // Delete the ~index~-th element in the container
   //
 
   void remove(size_t index) {
-    synchronized(this) {
+    synchronized (this) {
       _elements = _elements[0..index] ~ _elements[index+1..$];
     }
   }
 
 
-  // Function: delete_elements
+  // Function -- NODOCS -- delete_elements
   //
   // Delete all the elements in the container
   //
 
   void remove_elements() {
-    synchronized(this) {
+    synchronized (this) {
       _elements.length = 0;
     }
   }
 
   alias clear = remove_elements;
-  // Function: get_elements
+  // Function -- NODOCS -- get_elements
   //
   // Get all the elements from the container and put them in a queue
   //
 
   uvm_report_message_element_base[] get_elements() {
-    synchronized(this) {
+    synchronized (this) {
       return _elements.dup;
     }
   }
 
-  // Function: add_int
+  // Function -- NODOCS -- add_int
   //
   // This method adds an integral type of the name ~name~ and value ~value~ to
   // the container.  The required ~size~ field indicates the size of ~value~.
@@ -646,20 +649,25 @@ class uvm_report_message_element_container: uvm_object
   void add_int(T)(string name, T value,
 		  size_t size, uvm_radix_enum radix,
 		  uvm_action action = (uvm_action_type.UVM_LOG|uvm_action_type.UVM_RM_RECORD))
-    if(isIntegral!T || isBitVector!T) {
-      synchronized(this) {
+    if (isIntegral!T || isBitVector!T) {
+      synchronized (this) {
 	uvm_report_message_int_element!T urme;
 	// TBD
 	// FIXME Vlang does not change the rand_state when creating a
 	// non-rand class object
-	Process p = Process.self();
-	Random rand_state;
-	if (p !is null) {
-	  p.getRandState(rand_state);
+
+	version (PRESERVE_RANDSTATE) {
+	  Process p = Process.self();
+	  Random rand_state;
+	  if (p !is null)
+	    p.getRandState(rand_state);
 	}
+
 	urme = new uvm_report_message_int_element!T();
-	if (p !is null) {
-	  p.setRandState(rand_state);
+
+	version (PRESERVE_RANDSTATE) {
+	  if (p !is null)
+	    p.setRandState(rand_state);
 	}
 
 	urme.set_name(name);
@@ -672,20 +680,24 @@ class uvm_report_message_element_container: uvm_object
   void add(T)(string name, T value,
 	      uvm_radix_enum radix,
 	      uvm_action action = (uvm_action_type.UVM_LOG|uvm_action_type.UVM_RM_RECORD))
-    if(isIntegral!T || isBitVector!T) {
-      synchronized(this) {
+    if (isIntegral!T || isBitVector!T) {
+      synchronized (this) {
 	uvm_report_message_int_element!T urme;
 
-	Process p = Process.self();
-	Random rand_state;
-	if (p !is null) {
-	  p.getRandState(rand_state);
-	}
-	urme = new uvm_report_message_element!T();
-	if (p !is null) {
-	  p.setRandState(rand_state);
+	version (PRESERVE_RANDSTATE) {
+	  Process p = Process.self();
+	  Random rand_state;
+	  if (p !is null)
+	    p.getRandState(rand_state);
 	}
 
+	urme = new uvm_report_message_element!T();
+
+	version (PRESERVE_RANDSTATE) {
+	  if (p !is null)
+	    p.setRandState(rand_state);
+	}
+	
 	urme.set_name(name);
 	urme.set_value(value, radix);
 	urme.set_action(action);
@@ -694,7 +706,7 @@ class uvm_report_message_element_container: uvm_object
     }
 
 
-  // Function: add_string
+  // Function -- NODOCS -- add_string
   //
   // This method adds a string of the name ~name~ and value ~value~ to the
   // message. The optional print/record bit is to specify whether
@@ -704,19 +716,22 @@ class uvm_report_message_element_container: uvm_object
   void add(T)(string name, T value,
 	      uvm_action action = (uvm_action_type.UVM_LOG |
 				   uvm_action_type.UVM_RM_RECORD))
-    if(is(T == string)) {
-      synchronized(this) {
-	Random rand_state;
+    if (is (T == string)) {
+      synchronized (this) {
 	uvm_report_message_string_element urme;
 
-	Process p = Process.self();
-	if (p !is null) {
-	  p.getRandState(rand_state);
+	version (PRESERVE_RANDSTATE) {
+	  Random rand_state;
+	  Process p = Process.self();
+	  if (p !is null)
+	    p.getRandState(rand_state);
 	}
 
 	urme = new uvm_report_message_element!T();
-	if (p !is null) {
-	  p.setRandState(rand_state);
+
+	version (PRESERVE_RANDSTATE) {
+	  if (p !is null)
+	    p.setRandState(rand_state);
 	}
 
 	urme.set_name(name);
@@ -728,7 +743,7 @@ class uvm_report_message_element_container: uvm_object
 
   alias add_string = add!string;
 
-  // Function: add_object
+  // Function -- NODOCS -- add_object
   //
   // This method adds a uvm_object of the name ~name~ and reference ~obj~ to
   // the message. The optional print/record bit is to specify whether
@@ -737,20 +752,24 @@ class uvm_report_message_element_container: uvm_object
 
   void add(T)(string name, T obj,
 	      uvm_action action = (uvm_action_type.UVM_LOG|uvm_action_type.UVM_RM_RECORD))
-    if(is(T: uvm_object)) {
-      synchronized(this) {
-	Random rand_state;
+    if (is (T: uvm_object)) {
+      synchronized (this) {
 	uvm_report_message_object_element urme;
 
-	Process p = Process.self();
-	if (p !is null) {
-	  p.getRandState(rand_state);
-	}
-	urme = new uvm_report_message_element!T();
-	if (p !is null) {
-	  p.setRandState(rand_state);
+	version (PRESERVE_RANDSTATE) {
+	  Random rand_state;
+	  Process p = Process.self();
+	  if (p !is null)
+	    p.getRandState(rand_state);
 	}
 
+	urme = new uvm_report_message_element!T();
+
+	version (PRESERVE_RANDSTATE) {
+	  if (p !is null)
+	    p.setRandState(rand_state);
+	}
+	
 	urme.set_name(name);
 	urme.set_value(obj);
 	urme.set_action(action);
@@ -759,9 +778,9 @@ class uvm_report_message_element_container: uvm_object
     }
 
   void add(E...)(E urme)
-    if (E.length == 0 || is(E[0]: uvm_report_message_element_base)) {
+    if (E.length == 0 || is (E[0]: uvm_report_message_element_base)) {
     static if (E.length > 0) {
-      synchronized(this) {
+      synchronized (this) {
 	_elements ~= urme[0];
 	this.add(urme[1..$]);
       }
@@ -771,7 +790,7 @@ class uvm_report_message_element_container: uvm_object
   uvm_report_message_element_container
   opOpAssign(string op)(uvm_report_message_element_base urme)
     if (op == "~") {
-    synchronized(this) {
+    synchronized (this) {
       _elements ~= urme;
     }
     return this;
@@ -780,19 +799,23 @@ class uvm_report_message_element_container: uvm_object
   void add_object(string name, uvm_object obj,
 		  uvm_action action = (uvm_action_type.UVM_LOG |
 				       uvm_action_type.UVM_RM_RECORD)) {
-    synchronized(this) {
-      Random rand_state;
+    synchronized (this) {
       uvm_report_message_object_element urme;
 
-      Process p = Process.self();
-      if (p !is null) {
-	p.getRandState(rand_state);
-      }
-      urme = new uvm_report_message_object_element();
-      if (p !is null) {
-	p.setRandState(rand_state);
+      version (PRESERVE_RANDSTATE) {
+	Random rand_state;
+	Process p = Process.self();
+	if (p !is null)
+	  p.getRandState(rand_state);
       }
 
+      urme = new uvm_report_message_object_element();
+
+      version (PRESERVE_RANDSTATE) {
+	if (p !is null)
+	  p.setRandState(rand_state);
+      }
+      
       urme.set_name(name);
       urme.set_value(obj);
       urme.set_action(action);
@@ -801,32 +824,32 @@ class uvm_report_message_element_container: uvm_object
   }
 
   override void do_print(uvm_printer printer) {
-    synchronized(this) {
+    synchronized (this) {
       super.do_print(printer);
-      for(int i = 0; i < _elements.length; i++) {
+      for (int i = 0; i < _elements.length; i++) {
 	_elements[i].print(printer);
       }
     }
   }
 
   override void do_record(uvm_recorder recorder) {
-    synchronized(this) {
+    synchronized (this) {
       super.do_record(recorder);
-      for(int i = 0; i < _elements.length; i++) {
+      for (int i = 0; i < _elements.length; i++) {
 	_elements[i].record(recorder);
       }
     }
   }
 
   override void do_copy(uvm_object rhs) {
-    auto urme_container = cast(uvm_report_message_element_container) rhs;
+    auto urme_container = cast (uvm_report_message_element_container) rhs;
     super.do_copy(rhs);
-    if(urme_container is null) {
+    if (urme_container is null) {
       return;
     }
     remove_elements();
     
-    synchronized(this) {
+    synchronized (this) {
       foreach (element; urme_container.get_elements) {
 	_elements ~= element.clone();
       }
@@ -837,7 +860,7 @@ class uvm_report_message_element_container: uvm_object
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_report_message
+// CLASS -- NODOCS -- uvm_report_message
 //
 // The uvm_report_message is the basic UVM object message class.  It provides
 // the fields that are common to all messages.  It also has a message element
@@ -851,6 +874,8 @@ class uvm_report_message_element_container: uvm_object
 //
 //------------------------------------------------------------------------------
 
+
+// @uvm-ieee 1800.2-2017 auto 6.2.1
 class uvm_report_message: uvm_object
 {
 
@@ -872,13 +897,14 @@ class uvm_report_message: uvm_object
   // Effectively Immutable
   private uvm_report_message_element_container _report_message_element_container;
 
-  // Function: new
+  // Function -- NODOCS -- new
   //
   // Creates a new uvm_report_message object.
   //
 
+  // @uvm-ieee 1800.2-2017 auto 6.2.2.1
   this(string name = "uvm_report_message") {
-    synchronized(this) {
+    synchronized (this) {
       super(name);
       _report_message_element_container =
 	new uvm_report_message_element_container();
@@ -886,32 +912,36 @@ class uvm_report_message: uvm_object
   }
 
 
-  // Function: new_report_message
+  // Function -- NODOCS -- new_report_message
   //
   // Creates a new uvm_report_message object.
   // This function is the same as new(), but keeps the random stability.
   //
 
+  // @uvm-ieee 1800.2-2017 auto 6.2.2.2
   static uvm_report_message
   new_report_message(string name = "uvm_report_message") {
     uvm_report_message result;
-    Random rand_state;
 
-    Process p = Process.self();
-
-    if (p !is null) {
-      p.getRandState(rand_state);
+    version (PRESERVE_RANDSTATE) {
+      Random rand_state;
+      Process p = Process.self();
+      if (p !is null)
+	p.getRandState(rand_state);
     }
-
+    
     result = new uvm_report_message(name);
-    if (p !is null) {
-      p.setRandState(rand_state);
+
+    version (PRESERVE_RANDSTATE) {
+      if (p !is null)
+	p.setRandState(rand_state);
     }
+
     return result;
   }
 
 
-  // Function: print
+  // Function -- NODOCS -- print
   //
   // The uvm_report_message implements <uvm_object::do_print()> such that
   // ~print~ method provides UVM printer formatted output
@@ -936,8 +966,9 @@ class uvm_report_message: uvm_object
   //|     bar             string              8     hi there
 
 
+  // @uvm-ieee 1800.2-2017 auto 6.2.2.3
   override void do_print(uvm_printer printer) {
-    synchronized(this) {
+    synchronized (this) {
 
       super.do_print(printer);
 
@@ -945,11 +976,11 @@ class uvm_report_message: uvm_object
 			    _severity.sizeof * 8, _severity.to!string);
       printer.print_string("id", _id);
       printer.print_string("message", _message);
-      uvm_verbosity l_verbosity = cast(uvm_verbosity) _verbosity;
+      uvm_verbosity l_verbosity = cast (uvm_verbosity) _verbosity;
 
       // if (l_verbosity !is null) {
-      printer.print_generic("verbosity", "uvm_verbosity",
-			    l_verbosity.sizeof * 8, l_verbosity.to!string);
+      printer.print_field("verbosity", l_verbosity, l_verbosity.sizeof * 8,
+			  uvm_radix_enum.UVM_HEX);
       // }
       // else {
       //	printer.print_int("verbosity", _verbosity, uvm_radix_enum.UVM_HEX);
@@ -960,7 +991,11 @@ class uvm_report_message: uvm_object
       printer.print("context_name", _context_name);
 
       if (_report_message_element_container.size != 0) {
-	_report_message_element_container.print(printer);
+	uvm_report_message_element_base[] elements =
+	  _report_message_element_container.get_elements();
+	foreach (element; elements) {
+	  element.print(printer);
+	}
       }
     }
   }
@@ -978,11 +1013,11 @@ class uvm_report_message: uvm_object
   override void do_copy (uvm_object rhs) {
     super.do_copy(rhs);
 
-    uvm_report_message report_message = cast(uvm_report_message) rhs;
-    if(report_message is null) {
+    uvm_report_message report_message = cast (uvm_report_message) rhs;
+    if (report_message is null) {
       return;
     }
-    synchronized(this) {
+    synchronized (this) {
       _report_object = report_message.get_report_object();
       _report_handler = report_message.get_report_handler();
       _report_server = report_message.get_report_server();
@@ -1001,262 +1036,286 @@ class uvm_report_message: uvm_object
   }
 
   //----------------------------------------------------------------------------
-  // Group:  Infrastructure References
+  // Group -- NODOCS --  Infrastructure References
   //----------------------------------------------------------------------------
 
 
-  // Function: get_report_object
+  // Function -- NODOCS -- get_report_object
 
+  // @uvm-ieee 1800.2-2017 auto 6.2.3.1
   uvm_report_object get_report_object() {
-    synchronized(this) {
+    synchronized (this) {
       return _report_object;
     }
   }
 
-  // Function: set_report_object
+  // Function -- NODOCS -- set_report_object
   //
   // Get or set the uvm_report_object that originated the message.
 
+  // @uvm-ieee 1800.2-2017 auto 6.2.3.1
   void set_report_object(uvm_report_object ro) {
-    synchronized(this) {
+    synchronized (this) {
       _report_object = ro;
     }
   }
 
 
-  // Function: get_report_handler
+  // Function -- NODOCS -- get_report_handler
 
+  // @uvm-ieee 1800.2-2017 auto 6.2.3.2
   uvm_report_handler get_report_handler() {
-    synchronized(this) {
+    synchronized (this) {
       return _report_handler;
     }
   }
 
 
-  // Function: set_report_handler
+  // Function -- NODOCS -- set_report_handler
   //
   // Get or set the uvm_report_handler that is responsible for checking
   // whether the message is enabled, should be upgraded/downgraded, etc.
 
+  // @uvm-ieee 1800.2-2017 auto 6.2.3.2
   void set_report_handler(uvm_report_handler rh) {
-    synchronized(this) {
+    synchronized (this) {
       _report_handler = rh;
     }
   }
 
 
-  // Function: get_report_server
+  // Function -- NODOCS -- get_report_server
 
+  // @uvm-ieee 1800.2-2017 auto 6.2.3.3
   uvm_report_server get_report_server() {
-    synchronized(this) {
+    synchronized (this) {
       return _report_server;
     }
   }
 
 
-  // Function: set_report_server
+  // Function -- NODOCS -- set_report_server
   //
   // Get or set the uvm_report_server that is responsible for servicing
   // the message's actions.
 
+  // @uvm-ieee 1800.2-2017 auto 6.2.3.3
   void set_report_server(uvm_report_server rs) {
-    synchronized(this) {
+    synchronized (this) {
       _report_server = rs;
     }
   }
 
 
   //----------------------------------------------------------------------------
-  // Group:  Message Fields
+  // Group -- NODOCS --  Message Fields
   //----------------------------------------------------------------------------
 
 
-  // Function: get_severity
+  // Function -- NODOCS -- get_severity
 
+  // @uvm-ieee 1800.2-2017 auto 6.2.4.1
   uvm_severity get_severity() {
-    synchronized(this) {
+    synchronized (this) {
       return _severity;
     }
   }
 
-  // Function: set_severity
+  // Function -- NODOCS -- set_severity
   //
   // Get or set the severity (UVM_INFO, UVM_WARNING, UVM_ERROR or
   // UVM_FATAL) of the message.  The value of this field is determined via
   // the API used (`uvm_info(), `uvm_waring(), etc.) and populated for the user.
 
+  // @uvm-ieee 1800.2-2017 auto 6.2.4.1
   void set_severity(uvm_severity sev) {
-    synchronized(this) {
+    synchronized (this) {
       _severity = sev;
     }
   }
 
 
-  // Function: get_id
+  // Function -- NODOCS -- get_id
 
+  // @uvm-ieee 1800.2-2017 auto 6.2.4.2
   string get_id() {
-    synchronized(this) {
+    synchronized (this) {
       return _id;
     }
   }
 
-  // Function: set_id
+  // Function -- NODOCS -- set_id
   //
   // Get or set the id of the message.  The value of this field is
   // completely under user discretion.  Users are recommended to follow a
   // consistent convention.  Settings in the uvm_report_handler allow various
   // messaging controls based on this field.  See <uvm_report_handler>.
 
+  // @uvm-ieee 1800.2-2017 auto 6.2.4.2
   void set_id(string id) {
-    synchronized(this) {
+    synchronized (this) {
       _id = id;
     }
   }
 
 
-  // Function: get_message
+  // Function -- NODOCS -- get_message
 
+  // @uvm-ieee 1800.2-2017 auto 6.2.4.3
   string get_message() {
-    synchronized(this) {
+    synchronized (this) {
       return _message;
     }
   }
 
-  // Function: set_message
+  // Function -- NODOCS -- set_message
   //
   // Get or set the user message content string.
 
+  // @uvm-ieee 1800.2-2017 auto 6.2.4.3
   void set_message(string msg) {
-    synchronized(this) {
+    synchronized (this) {
       _message = msg;
     }
   }
 
 
-  // Function: get_verbosity
+  // Function -- NODOCS -- get_verbosity
 
+  // @uvm-ieee 1800.2-2017 auto 6.2.4.4
   int get_verbosity() {
-    synchronized(this) {
+    synchronized (this) {
       return _verbosity;
     }
   }
 
-  // Function: set_verbosity
+  // Function -- NODOCS -- set_verbosity
   //
   // Get or set the message threshold value.  This value is compared
   // against settings in the <uvm_report_handler> to determine whether this
   // message should be executed.
 
+  // @uvm-ieee 1800.2-2017 auto 6.2.4.4
   void set_verbosity(int ver) {
-    synchronized(this) {
+    synchronized (this) {
       _verbosity = ver;
     }
   }
 
 
-  // Function: get_filename
+  // Function -- NODOCS -- get_filename
 
+  // @uvm-ieee 1800.2-2017 auto 6.2.4.5
   string get_filename() {
-    synchronized(this) {
+    synchronized (this) {
       return _filename;
     }
   }
 
-  // Function: set_filename
+  // Function -- NODOCS -- set_filename
   //
   // Get or set the file from which the message originates.  This value
   // is automatically populated by the messaging macros.
 
+  // @uvm-ieee 1800.2-2017 auto 6.2.4.5
   void set_filename(string fname) {
-    synchronized(this) {
+    synchronized (this) {
       _filename = fname;
     }
   }
 
 
-  // Function: get_line
+  // Function -- NODOCS -- get_line
 
+  // @uvm-ieee 1800.2-2017 auto 6.2.4.6
   size_t get_line() {
-    synchronized(this) {
+    synchronized (this) {
       return _line;
     }
   }
 
-  // Function: set_line
+  // Function -- NODOCS -- set_line
   //
   // Get or set the line in the ~file~ from which the message originates.
   // This value is automatically populate by the messaging macros.
 
+  // @uvm-ieee 1800.2-2017 auto 6.2.4.6
   void set_line(size_t ln) {
-    synchronized(this) {
+    synchronized (this) {
       _line = ln;
     }
   }
 
 
-  // Function: get_context
+  // Function -- NODOCS -- get_context
 
+  // @uvm-ieee 1800.2-2017 auto 6.2.4.7
   string get_context() {
-    synchronized(this) {
+    synchronized (this) {
       return _context_name;
     }
   }
 
-  // Function: set_context
+  // Function -- NODOCS -- set_context
   //
   // Get or set the optional user-supplied string that is meant to convey
   // the context of the message.  It can be useful in scopes that are not
   // inherently UVM like modules, interfaces, etc.
 
+  // @uvm-ieee 1800.2-2017 auto 6.2.4.7
   void set_context(string cn) {
-    synchronized(this) {
+    synchronized (this) {
       _context_name = cn;
     }
   }
 
 
-  // Function: get_action
+  // Function -- NODOCS -- get_action
 
+  // @uvm-ieee 1800.2-2017 auto 6.2.4.8
   uvm_action get_action() {
-    synchronized(this) {
+    synchronized (this) {
       return _action;
     }
   }
 
-  // Function: set_action
+  // Function -- NODOCS -- set_action
   //
   // Get or set the action(s) that the uvm_report_server should perform
   // for this message.  This field is populated by the uvm_report_handler during
   // message execution flow.
 
+  // @uvm-ieee 1800.2-2017 auto 6.2.4.8
   void set_action(uvm_action act) {
-    synchronized(this) {
+    synchronized (this) {
       _action = act;
     }
   }
 
 
-  // Function: get_file
+  // Function -- NODOCS -- get_file
 
+  // @uvm-ieee 1800.2-2017 auto 6.2.4.9
   UVM_FILE get_file() {
-    synchronized(this) {
+    synchronized (this) {
       return _file;
     }
   }
 
-  // Function: set_file
+  // Function -- NODOCS -- set_file
   //
   // Get or set the file that the message is to be written to when the
   // message's action is UVM_LOG.  This field is populated by the
   // uvm_report_handler during message execution flow.
 
+  // @uvm-ieee 1800.2-2017 auto 6.2.4.9
   void set_file(UVM_FILE fl) {
-    synchronized(this) {
+    synchronized (this) {
       _file = fl;
     }
   }
 
-  // Function: get_element_container
+  // Function -- NODOCS -- get_element_container
   //
   // Get the element_container of the message
 
@@ -1266,11 +1325,12 @@ class uvm_report_message: uvm_object
   }
 
 
-  // Function: set_report_message
+  // Function -- NODOCS -- set_report_message
   //
   // Set all the common fields of the report message in one shot.
   //
 
+  // @uvm-ieee 1800.2-2017 auto 6.2.4.10
   void set_report_message(uvm_severity severity,
 			  string id,
 			  string message,
@@ -1278,7 +1338,7 @@ class uvm_report_message: uvm_object
 			  string filename,
 			  size_t line,
 			  string context_name = "") {
-    synchronized(this) {
+    synchronized (this) {
       if (context_name != "") {
 	_context_name = context_name;
       }
@@ -1298,7 +1358,7 @@ class uvm_report_message: uvm_object
 
   // Not documented.
   void m_record_message(uvm_recorder recorder) {
-    synchronized(this) {
+    synchronized (this) {
       recorder.record_string("message", _message);
     }
   }
@@ -1306,7 +1366,7 @@ class uvm_report_message: uvm_object
 
   // Not documented.
   void m_record_core_properties(uvm_recorder recorder) {
-    synchronized(this) {
+    synchronized (this) {
 
       if (_context_name != "") {
 	recorder.record_string("context_name", _context_name);
@@ -1314,7 +1374,7 @@ class uvm_report_message: uvm_object
       recorder.record_string("filename", _filename);
       recorder.record_field("line", _line, uvm_radix_enum.UVM_UNSIGNED);
       recorder.record_string("severity", _severity.to!string);
-      uvm_verbosity l_verbosity = cast(uvm_verbosity) _verbosity;
+      uvm_verbosity l_verbosity = cast (uvm_verbosity) _verbosity;
       // if (l_verbosity !is null) {
       recorder.record_string("verbosity", l_verbosity.to!string);
       // }
@@ -1328,7 +1388,7 @@ class uvm_report_message: uvm_object
 
   // Not documented.
   override void do_record(uvm_recorder recorder) {
-    synchronized(this) {
+    synchronized (this) {
       super.do_record(recorder);
 
       m_record_core_properties(recorder);
@@ -1338,11 +1398,11 @@ class uvm_report_message: uvm_object
 
 
   //----------------------------------------------------------------------------
-  // Group:  Message Element APIs
+  // Group -- NODOCS --  Message Element APIs
   //----------------------------------------------------------------------------
 
 
-  // Function: add_int
+  // Function -- NODOCS -- add_int
   //
   // This method adds an integral type of the name ~name~ and value ~value~ to
   // the message.  The required ~size~ field indicates the size of ~value~.
@@ -1354,8 +1414,8 @@ class uvm_report_message: uvm_object
   void add(T)(string name, T value,
 	      uvm_radix_enum radix,
 	      uvm_action action = (uvm_action_type.UVM_LOG|uvm_action_type.UVM_RM_RECORD))
-    if(isIntegral!T || isBitVector!T) {
-      // synchronized(this) {
+    if (isIntegral!T || isBitVector!T) {
+      // synchronized (this) {
       _report_message_element_container.add(name, value, radix, action);
       // }
     }
@@ -1364,14 +1424,14 @@ class uvm_report_message: uvm_object
 		  size_t size,
 		  uvm_radix_enum radix,
 		  uvm_action action = (uvm_action_type.UVM_LOG|uvm_action_type.UVM_RM_RECORD))
-    if(isIntegral!T || isBitVector!T) {
-      // synchronized(this) {
+    if (isIntegral!T || isBitVector!T) {
+      // synchronized (this) {
       _report_message_element_container.add_int(name, value, size, radix, action);
       // }
     }
 
 
-  // Function: add_string
+  // Function -- NODOCS -- add_string
   //
   // This method adds a string of the name ~name~ and value ~value~ to the
   // message. The optional print/record bit is to specify whether
@@ -1381,15 +1441,15 @@ class uvm_report_message: uvm_object
   void add(T)(string name, T value,
 	      uvm_action action = (uvm_action_type.UVM_LOG |
 				   uvm_action_type.UVM_RM_RECORD))
-    if(is(T == string)) {
-      // synchronized(this) {
+    if (is (T == string)) {
+      // synchronized (this) {
       _report_message_element_container.add_string(name, value, action);
       // }
     }
 
   alias add_string = add!string;
 
-  // Function: add_object
+  // Function -- NODOCS -- add_object
   //
   // This method adds a uvm_object of the name ~name~ and reference ~obj~ to
   // the message. The optional print/record bit is to specify whether
@@ -1399,8 +1459,8 @@ class uvm_report_message: uvm_object
   void add(T)(string name, T obj,
 	      uvm_action action = (uvm_action_type.UVM_LOG |
 				   uvm_action_type.UVM_RM_RECORD))
-    if(is(T: uvm_object)) {
-      // synchronized(this) {
+    if (is (T: uvm_object)) {
+      // synchronized (this) {
       _report_message_element_container.add_object(name, obj, action);
       // }
     }
@@ -1408,9 +1468,9 @@ class uvm_report_message: uvm_object
   alias add_object = add!uvm_object;
 
   void add(E...)(E urme)
-    if (E.length == 0 || is(E[0]: uvm_report_message_element_base)) {
+    if (E.length == 0 || is (E[0]: uvm_report_message_element_base)) {
     static if (E.length > 0) {
-      synchronized(this) {
+      synchronized (this) {
 	_report_message_element_container ~= urme[0];
 	this.add(urme[1..$]);
       }

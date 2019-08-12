@@ -1,9 +1,9 @@
 //
 //------------------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2010 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2014 Coverify Systems Technology
+// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2015 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -22,12 +22,12 @@
 //------------------------------------------------------------------------------
 module uvm.comps.uvm_subscriber;
 
-import uvm.base.uvm_component;
+import uvm.base;
 import uvm.tlm1.uvm_analysis_port;
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_subscriber
+// CLASS -- NODOCS -- uvm_subscriber
 //
 // This class provides an analysis export for receiving transactions from a
 // connected analysis export. Making such a connection "subscribes" this
@@ -38,11 +38,12 @@ import uvm.tlm1.uvm_analysis_port;
 // collector that attaches to a monitor.
 //------------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 13.9.1
 abstract class uvm_subscriber(T=int): uvm_component
 {
   alias uvm_subscriber!T this_type;
 
-  // Port: analysis_export
+  // Port -- NODOCS -- analysis_export
   //
   // This export provides access to the write method, which derived subscribers
   // must implement.
@@ -50,7 +51,7 @@ abstract class uvm_subscriber(T=int): uvm_component
   // effectively immutable
   uvm_analysis_imp!(T, this_type) analysis_export;
 
-  // Function: new
+  // Function -- NODOCS -- new
   //
   // Creates and initializes an instance of this class using the normal
   // constructor arguments for <uvm_component>: ~name~ is the name of the
@@ -63,11 +64,12 @@ abstract class uvm_subscriber(T=int): uvm_component
     }
   }
 
-  // Function: write
+  // Function -- NODOCS -- write
   //
   // A pure virtual method that must be defined in each subclass. Access
   // to this method by outside components should be done via the
   // analysis_export.
 
+  // @uvm-ieee 1800.2-2017 auto 13.9.3.2
   abstract void write(T t);
 }

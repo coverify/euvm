@@ -1,9 +1,14 @@
 //
 //------------------------------------------------------------------------------
-//   Copyright 2007-2010 Mentor Graphics Corporation
-//   Copyright 2007-2010 Cadence Design Systems, Inc.
-//   Copyright 2010      Synopsys, Inc.
-//   Copyright 2014-2016 Coverify Systems Technology
+// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2018 Qualcomm, Inc.
+// Copyright 2014 Intel Corporation
+// Copyright 2011-2014 Synopsys, Inc.
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2011 AMD
+// Copyright 2014-2018 NVIDIA Corporation
+// Copyright 2018 Cisco Systems, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -26,7 +31,6 @@ import uvm.base.uvm_once;
 import uvm.meta.misc;
 
 import uvm.base.uvm_object: uvm_object;
-import uvm.base.uvm_component: uvm_component;
 import uvm.base.uvm_factory: uvm_object_wrapper;
 
 // `ifndef UVM_REGISTRY_SVH
@@ -35,376 +39,741 @@ import uvm.base.uvm_factory: uvm_object_wrapper;
 //------------------------------------------------------------------------------
 // Title: Factory Component and Object Wrappers
 //
-// Topic: Intro
-//
 // This section defines the proxy component and object classes used by the
-// factory. To avoid the overhead of creating an instance of every component
-// and object that get registered, the factory holds lightweight wrappers,
-// or proxies. When a request for a new object is made, the factory calls upon
-// the proxy to create the object it represents.
+// factory.
 //------------------------------------------------------------------------------
 
-//------------------------------------------------------------------------------
-//
-// CLASS: uvm_component_registry #(T,Tname)
-//
-// The uvm_component_registry serves as a lightweight proxy for a component of
-// type ~T~ and type name ~Tname~, a string. The proxy enables efficient
-// registration with the <uvm_factory>. Without it, registration would
-// require an instance of the component itself.
-//
-// See <Usage> section below for information on using uvm_component_registry.
-//
-//------------------------------------------------------------------------------
 
-class uvm_component_registry(T=uvm_component, string Tname="<unknown>"):
-  uvm_object_wrapper if(is(T: uvm_component))
+
+// Class: uvm_component_registry#(T,Tname)
+// Implementation of uvm_component_registry#(T,Tname), as defined by section
+// 8.2.3.1 of 1800.2-2017.
+  
+// @uvm-ieee 1800.2-2017 auto 8.2.3.1
+class uvm_component_registry(T, string Tname="<unknown>"): uvm_object_wrapper
+{
+  import uvm.base.uvm_component: uvm_component;
+  alias this_type = uvm_component_registry !(T,Tname);
+  alias common_type =
+    uvm_registry_common!(this_type, uvm_registry_component_creator, T, Tname);
+
+  // Function -- NODOCS -- create_component
+  //
+  // Creates a component of type T having the provided ~name~ and ~parent~.
+  // This is an override of the method in <uvm_object_wrapper>. It is
+  // called by the factory after determining the type of object to create.
+  // You should not call this method directly. Call <create> instead.
+
+  // @uvm-ieee 1800.2-2017 auto 8.2.3.2.1
+  override uvm_component create_component (string name,
+				  uvm_component parent) {
+    T obj = new T(name, parent);
+    return obj;
+  }
+
+  static string type_name() {
+    return common_type.type_name();
+  }
+
+  // Function -- NODOCS -- get_type_name
+  //
+  // Returns the value given by the string parameter, ~Tname~. This method
+  // overrides the method in <uvm_object_wrapper>.
+
+  // @uvm-ieee 1800.2-2017 auto 8.2.3.2.2
+  override string get_type_name() {
+    common_type common = common_type.get();
+    return common.get_type_name();
+  }
+
+  static class uvm_once: uvm_once_base
   {
-    alias this_type = uvm_component_registry!(T,Tname);
-
-    // Function: create_component
-    //
-    // Creates a component of type T having the provided ~name~ and ~parent~.
-    // This is an override of the method in <uvm_object_wrapper>. It is
-    // called by the factory after determining the type of object to create.
-    // You should not call this method directly. Call <create> instead.
-
-    // Do not make this static since this needs to be a virtual function
-    override uvm_component create_component (string name,
-					     uvm_component parent) {
-      T obj = new T(name, parent);
-      return obj;
-    }
-
-
-    enum string type_name = Tname;
-
-    // Function: get_type_name
-    //
-    // Returns the value given by the string parameter, ~Tname~. This method
-    // overrides the method in <uvm_object_wrapper>.
-
-    override string get_type_name() {
-      return type_name;
-    }
-
-    static class uvm_once: uvm_once_base
-    {
-      @uvm_immutable_sync
-      this_type _me;
-      this() {
-	synchronized(this) {
-	  _me = new this_type();
-	}
-      }
-    }
+    @uvm_public_sync
+    this_type _m_inst;
+  }
     
-    mixin(uvm_once_sync_string);
-    
-    // private __gshared this_type[uvm_root] _me_pool; //  = get();
-    // private static this_type _me; //  = get();
-
-    // Function: get
-    //
-    // Returns the singleton instance of this type. Type-based factory operation
-    // depends on there being a single proxy instance for each registered type.
-
-    static this_type get() {
-      // import uvm.base.uvm_coreservice;
-      // synchronized(typeid(this_type)) {
-      // 	if(_me is null) {
-      // 	  uvm_coreservice_t cs = uvm_coreservice_t.get();
-      // 	  uvm_root top = cs.get_root();
-      // 	  auto pme = top in _me_pool;
-      // 	  if (pme is null) {
-      // 	    _me = new this_type;
-      // 	    _me_pool[top] = _me;
-      // 	    cs.get_factory().register(_me);
-      // 	  }
-      // 	  else {
-      // 	    _me = *pme;
-      // 	  }
-      // 	}
-      // 	return _me;
-      // }
-      return me;
-    }
-
-
-    // Function: create
-    //
-    // Returns an instance of the component type, ~T~, represented by this proxy,
-    // subject to any factory overrides based on the context provided by the
-    // ~parent~'s full name. The ~contxt~ argument, if supplied, supersedes the
-    // ~parent~'s context. The new instance will have the given leaf ~name~
-    // and ~parent~.
-
-    static T create(string name = "", uvm_component parent = null,
-		    string contxt = "") {
-      import uvm.base.uvm_coreservice;
-      import uvm.base.uvm_factory;
-      import uvm.base.uvm_globals;
-      import uvm.base.uvm_object_globals;
-      uvm_coreservice_t cs = uvm_coreservice_t.get();
-      uvm_factory factory = cs.get_factory();
-      if (contxt == "" && parent !is null) {
-	contxt = parent.get_full_name();
+  mixin (uvm_once_sync_string);
+  
+  static this_type get() {
+    synchronized (_uvm_once_inst) {
+      if (_uvm_once_inst._m_inst is null) {
+	_uvm_once_inst._m_inst = new this_type();
       }
-      uvm_object obj =
-	factory.create_component_by_type(get(), contxt, name, parent);
-      T create_ = cast(T) obj;
-      if (create_ is null) {
-	string msg = "Factory did not return a component of type '" ~
-	  type_name ~ "'. A component of type '" ~
-	  (obj is null ? "null" : obj.get_type_name()) ~
-	  "' was returned instead. Name=" ~ name ~ " Parent=" ~
-	  (parent is null ? "null" : parent.get_type_name()) ~
-	  " contxt=" ~ contxt;
-	uvm_report_fatal("FCTTYP", msg, uvm_verbosity.UVM_NONE);
-      }
-      return create_;
+      return _uvm_once_inst._m_inst;
     }
+  }
+
+  // @uvm-ieee 1800.2-2017 auto 8.2.3.2.7
+  override void initialize() {
+    common_type common = common_type.get();
+    common.initialize();
+  }
+
+  // Function -- NODOCS -- create
+  //
+  // Returns an instance of the component type, ~T~, represented by this proxy,
+  // subject to any factory overrides based on the context provided by the
+  // ~parent~'s full name. The ~contxt~ argument, if supplied, supersedes the
+  // ~parent~'s context. The new instance will have the given leaf ~name~
+  // and ~parent~.
+
+  // @uvm-ieee 1800.2-2017 auto 8.2.3.2.4
+  static T create(string name, uvm_component parent, string contxt="") {
+    return common_type.create(name, parent, contxt);
+  }
 
 
-    // Function: set_type_override
-    //
-    // Configures the factory to create an object of the type represented by
-    // ~override_type~ whenever a request is made to create an object of the type,
-    // ~T~, represented by this proxy, provided no instance override applies. The
-    // original type, ~T~, is typically a super class of the override type.
+  // Function -- NODOCS -- set_type_override
+  //
+  // Configures the factory to create an object of the type represented by
+  // ~override_type~ whenever a request is made to create an object of the type,
+  // ~T~, represented by this proxy, provided no instance override applies. The
+  // original type, ~T~, is typically a super class of the override type.
 
-    static void set_type_override (uvm_object_wrapper override_type,
-				   bool replace=true) {
-      import uvm.base.uvm_coreservice;
-      import uvm.base.uvm_factory;
-      uvm_coreservice_t cs = uvm_coreservice_t.get();
-      uvm_factory factory = cs.get_factory();
-      factory.set_type_override_by_type(get(), override_type, replace);
-    }
+  // @uvm-ieee 1800.2-2017 auto 8.2.3.2.5
+  static void set_type_override (uvm_object_wrapper override_type,
+				 bool replace=1) {
+    common_type.set_type_override(override_type, replace);
+  }
 
 
-    // Function: set_inst_override
-    //
-    // Configures the factory to create a component of the type represented by
-    // ~override_type~ whenever a request is made to create an object of the type,
-    // ~T~, represented by this proxy,  with matching instance paths. The original
-    // type, ~T~, is typically a super class of the override type.
-    //
-    // If ~parent~ is not specified, ~inst_path~ is interpreted as an absolute
-    // instance path, which enables instance overrides to be set from outside
-    // component classes. If ~parent~ is specified, ~inst_path~ is interpreted
-    // as being relative to the ~parent~'s hierarchical instance path, i.e.
-    // ~{parent.get_full_name(),".",inst_path}~ is the instance path that is
-    // registered with the override. The ~inst_path~ may contain wildcards for
-    // matching against multiple contexts.
+  // Function -- NODOCS -- set_inst_override
+  //
+  // Configures the factory to create a component of the type represented by
+  // ~override_type~ whenever a request is made to create an object of the type,
+  // ~T~, represented by this proxy,  with matching instance paths. The original
+  // type, ~T~, is typically a super class of the override type.
+  //
+  // If ~parent~ is not specified, ~inst_path~ is interpreted as an absolute
+  // instance path, which enables instance overrides to be set from outside
+  // component classes. If ~parent~ is specified, ~inst_path~ is interpreted
+  // as being relative to the ~parent~'s hierarchical instance path, i.e.
+  // ~{parent.get_full_name(),".",inst_path}~ is the instance path that is
+  // registered with the override. The ~inst_path~ may contain wildcards for
+  // matching against multiple contexts.
 
-    static void set_inst_override(uvm_object_wrapper override_type,
-				  string inst_path,
-				  uvm_component parent=null) {
-      import uvm.base.uvm_coreservice;
-      import uvm.base.uvm_factory;
-      string full_inst_path;
-      if (parent !is null) {
-	if (inst_path == "") {
-	  inst_path = parent.get_full_name();
-	}
-	else {
-	  inst_path = parent.get_full_name() ~ "." ~ inst_path;
-	}
-      }
-      uvm_coreservice_t cs = uvm_coreservice_t.get();
-      uvm_factory factory = cs.get_factory();
-      factory.set_inst_override_by_type(get(), override_type, inst_path);
-    }
+  // @uvm-ieee 1800.2-2017 auto 8.2.3.2.6
+  static void set_inst_override(uvm_object_wrapper override_type,
+				string inst_path,
+				uvm_component parent=null) {
+    common_type.set_inst_override(override_type, inst_path, parent);
+  }
 
-};
+  // Function: set_type_alias
+  // Sets a type alias for this wrapper in the default factory.
+  //
+  // If this wrapper is not yet registered with a factory (see <uvm_factory::register>),
+  // then the alias is deferred until registration occurs.
+  //
+  // @uvm-contrib This API is being considered for potential contribution to 1800.2
+  static bool set_type_alias(string alias_name) {
+    common_type.set_type_alias(alias_name);
+    return true;
+  }
+
+}
 
 
-//------------------------------------------------------------------------------
-//
-// CLASS: uvm_object_registry #(T,Tname)
-//
-// The uvm_object_registry serves as a lightweight proxy for a <uvm_object> of
-// type ~T~ and type name ~Tname~, a string. The proxy enables efficient
-// registration with the <uvm_factory>. Without it, registration would
-// require an instance of the object itself.
-//
-// See <Usage> section below for information on using uvm_component_registry.
-//
-//------------------------------------------------------------------------------
+// Class: uvm_object_registry#(T,Tname)
+// Implementation of uvm_object_registry#(T,Tname), as defined by section
+// 8.2.4.1 of 1800.2-2017.
 
-class uvm_object_registry (T = uvm_object, string Tname = "<unknown>"):
-  uvm_object_wrapper if(is(T: uvm_object))
+// @uvm-ieee 1800.2-2017 auto 8.2.4.1
+class uvm_object_registry(T, string Tname="<unknown>"): uvm_object_wrapper
+{
+  import uvm.base.uvm_component: uvm_component;
+  alias this_type = uvm_object_registry!(T,Tname);
+  alias common_type =
+    uvm_registry_common!(this_type, uvm_registry_object_creator, T, Tname);
+
+  // Function -- NODOCS -- create_object
+  //
+  // Creates an object of type ~T~ and returns it as a handle to a
+  // <uvm_object>. This is an override of the method in <uvm_object_wrapper>.
+  // It is called by the factory after determining the type of object to create.
+  // You should not call this method directly. Call <create> instead.
+
+  // @uvm-ieee 1800.2-2017 auto 8.2.4.2.1
+  override uvm_object create_object(string name="") {
+    T obj;
+    if (name == "") obj = new T();
+    else obj = new T(name);
+    return obj;
+  }
+
+  static string type_name() {
+    return common_type.type_name();
+  }
+
+  // Function -- NODOCS -- get_type_name
+  //
+  // Returns the value given by the string parameter, ~Tname~. This method
+  // overrides the method in <uvm_object_wrapper>.
+
+  // @uvm-ieee 1800.2-2017 auto 8.2.4.2.2
+  override string get_type_name() {
+    common_type common = common_type.get();
+    return common.get_type_name();
+  }
+
+  //
+  // Returns the singleton instance of this type. Type-based factory operation
+  // depends on there being a single proxy instance for each registered type.
+
+  static class uvm_once: uvm_once_base
   {
-    alias this_type = uvm_object_registry!(T, Tname);
+    @uvm_public_sync
+    this_type _m_inst;
+  }
+    
+  mixin (uvm_once_sync_string);
+  
+  static this_type get() {
+    synchronized (_uvm_once_inst) {
+      if (_uvm_once_inst._m_inst is null) {
+	_uvm_once_inst._m_inst = new this_type();
+      }
+      return _uvm_once_inst._m_inst;
+    }
+  }
 
-    // Function: create_object
-    //
-    // Creates an object of type ~T~ and returns it as a handle to a
-    // <uvm_object>. This is an override of the method in <uvm_object_wrapper>.
-    // It is called by the factory after determining the type of object to create.
-    // You should not call this method directly. Call <create> instead.
 
-    // non-static since this is overridable virtual function
-    override uvm_object create_object(string name="") {
-      T obj;
-      version(UVM_OBJECT_DO_NOT_NEED_CONSTRUCTOR) {
-	obj = new T();
-	if (name != "") {
-	  obj.set_name(name);
-	}
+  // Function -- NODOCS -- create
+  //
+  // Returns an instance of the object type, ~T~, represented by this proxy,
+  // subject to any factory overrides based on the context provided by the
+  // ~parent~'s full name. The ~contxt~ argument, if supplied, supersedes the
+  // ~parent~'s context. The new instance will have the given leaf ~name~,
+  // if provided.
+
+  // @uvm-ieee 1800.2-2017 auto 8.2.4.2.4
+  static T create(string name="", uvm_component parent=null,
+		  string contxt="") {
+    return common_type.create(name, parent, contxt);
+  }
+
+
+  // Function -- NODOCS -- set_type_override
+  //
+  // Configures the factory to create an object of the type represented by
+  // ~override_type~ whenever a request is made to create an object of the type
+  // represented by this proxy, provided no instance override applies. The
+  // original type, ~T~, is typically a super class of the override type.
+
+  // @uvm-ieee 1800.2-2017 auto 8.2.4.2.5
+  static void set_type_override(uvm_object_wrapper override_type,
+				bool replace=true) {
+    common_type.set_type_override(override_type, replace);
+  }
+
+
+  // Function -- NODOCS -- set_inst_override
+  //
+  // Configures the factory to create an object of the type represented by
+  // ~override_type~ whenever a request is made to create an object of the type
+  // represented by this proxy, with matching instance paths. The original
+  // type, ~T~, is typically a super class of the override type.
+  //
+  // If ~parent~ is not specified, ~inst_path~ is interpreted as an absolute
+  // instance path, which enables instance overrides to be set from outside
+  // component classes. If ~parent~ is specified, ~inst_path~ is interpreted
+  // as being relative to the ~parent~'s hierarchical instance path, i.e.
+  // ~{parent.get_full_name(),".",inst_path}~ is the instance path that is
+  // registered with the override. The ~inst_path~ may contain wildcards for
+  // matching against multiple contexts.
+
+  // @uvm-ieee 1800.2-2017 auto 8.2.4.2.6
+  static void set_inst_override(uvm_object_wrapper override_type,
+				string inst_path,
+				uvm_component parent=null) {
+    common_type.set_inst_override(override_type, inst_path, parent);
+  }
+
+  // Function: set_type_alias
+  // Sets a type alias for this wrapper in the default factory.
+  //
+  // If this wrapper is not yet registered with a factory (see <uvm_factory::register>),
+  // then the alias is deferred until registration occurs.
+  //
+  // @uvm-contrib This API is being considered for potential contribution to 1800.2
+  static bool set_type_alias(string alias_name) {
+    common_type.set_type_alias(alias_name);
+    return true;
+  }
+
+  // @uvm-ieee 1800.2-2017 auto 8.2.4.2.7
+  override void initialize() {
+    common_type common = common_type.get();
+    common.initialize();
+  }
+}
+
+// Class: uvm_abstract_component_registry#(T,Tname)
+// Implementation of uvm_abstract_component_registry#(T,Tname), as defined by section
+// 8.2.5.1.1 of 1800.2-2017.
+
+// @uvm-ieee 1800.2-2017 auto 8.2.5.1.1
+class uvm_abstract_component_registry(T, string Tname="<unknown>"):
+  uvm_object_wrapper
+{
+  import uvm.base.uvm_component: uvm_component;
+  alias this_type = uvm_abstract_component_registry!(T, Tname);
+  alias common_type =
+    uvm_registry_common!(this_type, uvm_registry_component_creator, T, Tname);
+
+  // Function -- NODOCS -- create_component
+  //
+  // Creates a component of type T having the provided ~name~ and ~parent~.
+  // This is an override of the method in <uvm_object_wrapper>. It is
+  // called by the factory after determining the type of object to create.
+  // You should not call this method directly. Call <create> instead.
+
+  // @uvm-ieee 1800.2-2017 auto 8.2.5.1.2
+  override uvm_component create_component (string name,
+					   uvm_component parent) {
+    import std.string: format;
+    import uvm.base.uvm_globals: uvm_error;
+    uvm_error("UVM/ABST_RGTRY/CREATE_ABSTRACT_CMPNT",
+	      format("Cannot create an instance of abstract class %s" ~
+		     " (with name %s and parent %s). Check for missing" ~
+		     " factory overrides for %s.", this.get_type_name(),
+		     name, parent.get_full_name(), this.get_type_name()));
+    return null;
+  }
+
+  static string type_name() {
+    return common_type.type_name();
+  }
+
+  // Function -- NODOCS -- get_type_name
+  //
+  // Returns the value given by the string parameter, ~Tname~. This method
+  // overrides the method in <uvm_object_wrapper>.
+
+  override string get_type_name() {
+    common_type common = common_type.get();
+    return common.get_type_name();
+  }
+
+
+  // Function -- NODOCS -- get
+  //
+  // Returns the singleton instance of this type. Type-based factory operation
+  // depends on there being a single proxy instance for each registered type.
+
+  static class uvm_once: uvm_once_base
+  {
+    @uvm_public_sync
+    this_type _m_inst;
+  }
+    
+  mixin (uvm_once_sync_string);
+  
+  static this_type get() {
+    synchronized (_uvm_once_inst) {
+      if (_uvm_once_inst._m_inst is null) {
+	_uvm_once_inst._m_inst = new this_type();
+      }
+      return _uvm_once_inst._m_inst;
+    }
+  }
+
+  // Function -- NODOCS -- create
+  //
+  // Returns an instance of the component type, ~T~, represented by this proxy,
+  // subject to any factory overrides based on the context provided by the
+  // ~parent~'s full name. The ~contxt~ argument, if supplied, supersedes the
+  // ~parent~'s context. The new instance will have the given leaf ~name~
+  // and ~parent~.
+
+  static T create(string name, uvm_component parent, string contxt="") {
+    return common_type.create(name, parent, contxt);
+  }
+
+
+  // Function -- NODOCS -- set_type_override
+  //
+  // Configures the factory to create an object of the type represented by
+  // ~override_type~ whenever a request is made to create an object of the type,
+  // ~T~, represented by this proxy, provided no instance override applies. The
+  // original type, ~T~, is typically a super class of the override type.
+
+  static void set_type_override(uvm_object_wrapper override_type,
+				bool replace=true) {
+    common_type.set_type_override(override_type, replace);
+  }
+
+
+  // Function -- NODOCS -- set_inst_override
+  //
+  // Configures the factory to create a component of the type represented by
+  // ~override_type~ whenever a request is made to create an object of the type,
+  // ~T~, represented by this proxy,  with matching instance paths. The original
+  // type, ~T~, is typically a super class of the override type.
+  //
+  // If ~parent~ is not specified, ~inst_path~ is interpreted as an absolute
+  // instance path, which enables instance overrides to be set from outside
+  // component classes. If ~parent~ is specified, ~inst_path~ is interpreted
+  // as being relative to the ~parent~'s hierarchical instance path, i.e.
+  // ~{parent.get_full_name(),".",inst_path}~ is the instance path that is
+  // registered with the override. The ~inst_path~ may contain wildcards for
+  // matching against multiple contexts.
+
+  static void set_inst_override(uvm_object_wrapper override_type,
+				string inst_path,
+				uvm_component parent=null) {
+    common_type.set_inst_override(override_type, inst_path, parent);
+  }
+
+  // Function: set_type_alias
+  // Sets a type alias for this wrapper in the default factory.
+  //
+  // If this wrapper is not yet registered with a factory (see <uvm_factory.register>),
+  // then the alias is deferred until registration occurs.
+  //
+  // @uvm-contrib This API is being considered for potential contribution to 1800.2
+  static bool set_type_alias(string alias_name) {
+    common_type.set_type_alias(alias_name);
+    return true;
+  }
+
+  override void initialize() {
+    common_type common = common_type.get();
+    common.initialize();
+  }
+}
+
+
+// Class: uvm_abstract_object_registry#(T,Tname)
+// Implementation of uvm_abstract_object_registry#(T,Tname), as defined by section
+// 8.2.5.2.1 of 1800.2-2017.
+
+// @uvm-ieee 1800.2-2017 auto 8.2.5.2.1
+class uvm_abstract_object_registry(T, string Tname="<unknown>"):
+  uvm_object_wrapper
+{
+  import uvm.base.uvm_component: uvm_component;
+  alias this_type = uvm_abstract_object_registry!(T, Tname);
+  alias common_type =
+    uvm_registry_common!(this_type, uvm_registry_object_creator, T, Tname);
+
+  // Function -- NODOCS -- create_object
+  //
+  // Creates an object of type ~T~ and returns it as a handle to a
+  // <uvm_object>. This is an override of the method in <uvm_object_wrapper>.
+  // It is called by the factory after determining the type of object to create.
+  // You should not call this method directly. Call <create> instead.
+
+  // @uvm-ieee 1800.2-2017 auto 8.2.5.2.2
+  override uvm_object create_object(string name="") {
+    import std.string: format;
+    import uvm.base.uvm_globals: uvm_error;
+    uvm_error("UVM/ABST_RGTRY/CREATE_ABSTRACT_OBJ",
+      format("Cannot create an instance of abstract class %s" ~
+	     " (with name %s). Check for missing factory overrides" ~
+	     " for %s.", this.get_type_name(), name, this.get_type_name()));
+    return null;
+  }
+
+  static string type_name() {
+    return common_type.type_name();
+  }
+
+  // Function -- NODOCS -- get_type_name
+  //
+  // Returns the value given by the string parameter, ~Tname~. This method
+  // overrides the method in <uvm_object_wrapper>.
+
+  override string get_type_name() {
+    common_type common = common_type.get();
+    return common.get_type_name();
+  }
+
+  // Function -- NODOCS -- get
+  //
+  // Returns the singleton instance of this type. Type-based factory operation
+  // depends on there being a single proxy instance for each registered type.
+
+  static class uvm_once: uvm_once_base
+  {
+    @uvm_public_sync
+    this_type _m_inst;
+  }
+    
+  mixin (uvm_once_sync_string);
+  
+  static this_type get() {
+    synchronized (_uvm_once_inst) {
+      if (_uvm_once_inst._m_inst is null) {
+	_uvm_once_inst._m_inst = new this_type();
+      }
+      return _uvm_once_inst._m_inst;
+    }
+  }
+
+
+  // Function -- NODOCS -- create
+  //
+  // Returns an instance of the object type, ~T~, represented by this proxy,
+  // subject to any factory overrides based on the context provided by the
+  // ~parent~'s full name. The ~contxt~ argument, if supplied, supersedes the
+  // ~parent~'s context. The new instance will have the given leaf ~name~,
+  // if provided.
+
+  static T create(string name = "", uvm_component parent = null,
+		  string contxt = "") {
+    return common_type.create(name, parent, contxt);
+  }
+
+
+  // Function -- NODOCS -- set_type_override
+  //
+  // Configures the factory to create an object of the type represented by
+  // ~override_type~ whenever a request is made to create an object of the type
+  // represented by this proxy, provided no instance override applies. The
+  // original type, ~T~, is typically a super class of the override type.
+
+  static void set_type_override(uvm_object_wrapper override_type,
+				bool replace = true) {
+    common_type.set_type_override(override_type, replace);
+  }
+
+
+  // Function -- NODOCS -- set_inst_override
+  //
+  // Configures the factory to create an object of the type represented by
+  // ~override_type~ whenever a request is made to create an object of the type
+  // represented by this proxy, with matching instance paths. The original
+  // type, ~T~, is typically a super class of the override type.
+  //
+  // If ~parent~ is not specified, ~inst_path~ is interpreted as an absolute
+  // instance path, which enables instance overrides to be set from outside
+  // component classes. If ~parent~ is specified, ~inst_path~ is interpreted
+  // as being relative to the ~parent~'s hierarchical instance path, i.e.
+  // ~{parent.get_full_name(),".",inst_path}~ is the instance path that is
+  // registered with the override. The ~inst_path~ may contain wildcards for
+  // matching against multiple contexts.
+
+  static void set_inst_override(uvm_object_wrapper override_type,
+				string inst_path,
+				uvm_component parent=null) {
+    common_type.set_inst_override(override_type, inst_path, parent);
+  }
+
+  // Function: set_type_alias
+  // Sets a type alias for this wrapper in the default factory.
+  //
+  // If this wrapper is not yet registered with a factory (see <uvm_factory::register>),
+  // then the alias is deferred until registration occurs.
+  //
+  // @uvm-contrib This API is being considered for potential contribution to 1800.2
+  static bool set_type_alias(string alias_name) {
+    common_type.set_type_alias( alias_name );
+    return true;
+  }
+
+  override void initialize() {
+    common_type common = common_type.get();
+    common.initialize();
+  }
+}
+
+
+//------------------------------------------------------------------------------
+//
+// CLASS -- NODOCS -- uvm_registry_common #(T,Tname)
+//
+// This is a helper class which implements the functioanlity that is identical
+// between uvm_component_registry and uvm_abstract_component_registry.
+//
+//------------------------------------------------------------------------------
+
+class uvm_registry_common(Tregistry, Tcreator, Tcreated,
+			  string Tname="<unknown>")
+{
+  import uvm.base.uvm_component: uvm_component;
+  alias this_type = uvm_registry_common!(Tregistry,Tcreator,Tcreated,Tname);
+
+  static class uvm_once: uvm_once_base
+  {
+    @uvm_private_sync
+    string[] _m__type_aliases;
+    @uvm_public_sync
+    this_type _m_inst;
+  }
+    
+  mixin (uvm_once_sync_string);
+  
+  static string type_name() {
+    synchronized (_uvm_once_inst) {
+      if ((Tname == "<unknown>") &&
+	  (_uvm_once_inst._m__type_aliases.length != 0)) {
+        return _uvm_once_inst._m__type_aliases[0];
+      }
+      return Tname;
+    }
+  }
+
+  string get_type_name() {
+    return type_name();
+  }
+
+  static this_type get() {
+    synchronized (_uvm_once_inst) {
+      if (_uvm_once_inst._m_inst is null) {
+	_uvm_once_inst._m_inst = new this_type();
+      }
+     return _uvm_once_inst._m_inst;
+    }
+  }
+
+  static Tcreated create(string name, uvm_component parent, string contxt) {
+    import uvm.base.uvm_globals: uvm_report_fatal;
+    import uvm.base.uvm_object_globals: uvm_verbosity;
+    uvm_object obj;
+    if (contxt == "" && parent !is null) {
+      contxt = parent.get_full_name();
+    }
+    obj = Tcreator.create_by_type(Tregistry.get(), contxt, name, parent);
+    Tcreated tobj = cast (Tcreated) obj;
+    if (tobj is null) {
+      string msg = "Factory did not return a " ~ Tcreator.base_type_name() ~
+	" of type '" ~ Tregistry.type_name ~
+        "'. A component of type '" ~
+	(obj is null ? "null" : obj.get_type_name()) ~
+        "' was returned instead. Name=" ~ name ~ " Parent=" ~
+        (parent is null ? "null" : parent.get_type_name()) ~
+	" contxt=" ~ contxt;
+      uvm_report_fatal("FCTTYP", msg, uvm_verbosity.UVM_NONE);
+    }
+    return tobj;
+  }
+
+  static void set_type_override(uvm_object_wrapper override_type,
+				bool replace) {
+    import uvm.base.uvm_factory: uvm_factory;
+    uvm_factory factory = uvm_factory.get();
+    factory.set_type_override_by_type(Tregistry.get(), override_type,
+				      replace);
+  }
+
+  static void set_inst_override(uvm_object_wrapper override_type,
+				string inst_path,
+				uvm_component parent) {
+    // string full_inst_path;
+    import uvm.base.uvm_factory: uvm_factory;
+    uvm_factory factory = uvm_factory.get();
+
+    if (parent !is null) {
+      if (inst_path == "") {
+        inst_path = parent.get_full_name();
       }
       else {
-	if (name == "") {
-	  obj = new T();
-	}
-	else {
-	  obj = new T(name);
-	}
-      }
-      return obj;
-    }
-
-    enum string type_name = Tname;
-
-    // Function: get_type_name
-    //
-    // Returns the value given by the string parameter, ~Tname~. This method
-    // overrides the method in <uvm_object_wrapper>.
-
-    override string get_type_name() {
-      return type_name;
-    }
-
-    static class uvm_once: uvm_once_base
-    {
-      @uvm_immutable_sync
-      this_type _me;
-      this() {
-	synchronized(this) {
-	  _me = new this_type();
-	}
+        inst_path = parent.get_full_name() ~ "." ~ inst_path;
       }
     }
-    
-    mixin(uvm_once_sync_string);
-    
-    // private __gshared this_type[uvm_root] _me_pool; //  = get();
-    // private static this_type _me; //  = get();
+    factory.set_inst_override_by_type(Tregistry.get(),
+				      override_type, inst_path);
+  }
 
-    // Function: get
-    //
-    // Returns the singleton instance of this type. Type-based factory operation
-    // depends on there being a single proxy instance for each registered type.
-
-    static this_type get() {
-      // synchronized(typeid(this_type)) {
-      // 	if(_me is null) {
-      // 	  uvm_coreservice_t cs = uvm_coreservice_t.get();
-      // 	  uvm_root top = cs.get_root();
-      // 	  auto pme = top in _me_pool;
-      // 	  if (pme is null) {
-      // 	    _me = new this_type;
-      // 	    _me_pool[top] = _me;
-      // 	    cs.get_factory().register(_me);
-      // 	  }
-      // 	  else {
-      // 	    _me = *pme;
-      // 	  }
-      // 	}
-      // 	return _me;
+  static void set_type_alias(string alias_name) {
+    import std.algorithm.sorting;
+    import uvm.base.uvm_factory: uvm_factory;
+    synchronized (_uvm_once_inst) {
+      _uvm_once_inst._m__type_aliases ~= alias_name;
+      _uvm_once_inst._m__type_aliases.sort();
+      // if (uvm_pkg.get_core_state() != UVM_CORE_UNINITIALIZED) {
+      uvm_factory factory = uvm_factory.get();
+      Tregistry rgtry = Tregistry.get();
+      if (factory.is_type_registered(rgtry)) {
+	factory.set_type_alias(alias_name, rgtry);
+      }
       // }
-      return me;
     }
+  }
 
+  // static function bit __deferred_init();
+  //    Tregistry rgtry = Tregistry::get();
+  //    // If the core is uninitialized, we defer initialization
+  //    if (uvm_pkg::get_core_state() == UVM_CORE_UNINITIALIZED) begin
+  // 	     uvm_pkg::uvm_deferred_init.push_back(rgtry);
+  //    end
+  //    // If the core is initialized, then we're static racing,
+  //    // initialize immediately
+  //    else begin
+  // 	     rgtry.initialize();
+  //    end
+  //    return 1;
+  // endfunction
+  // local static bit m__initialized=__deferred_init();
 
-    // Function: create
-    //
-    // Returns an instance of the object type, ~T~, represented by this proxy,
-    // subject to any factory overrides based on the context provided by the
-    // ~parent~'s full name. The ~contxt~ argument, if supplied, supersedes the
-    // ~parent~'s context. The new instance will have the given leaf ~name~,
-    // if provided.
-
-    static T create(string name="", uvm_component parent=null,
-		    string contxt="") {
-      import uvm.base.uvm_coreservice;
-      import uvm.base.uvm_factory;
-      import uvm.base.uvm_globals;
-      import uvm.base.uvm_object_globals;
-      uvm_object obj;
-      if (contxt == "" && parent !is null) {
-	contxt = parent.get_full_name();
+  void initialize() {
+    synchronized (_uvm_once_inst) {
+      import uvm.base.uvm_factory: uvm_factory;
+      uvm_factory factory = uvm_factory.get();
+      Tregistry rgtry = Tregistry.get();
+      factory.register(rgtry);
+      // add aliases that were set before
+      // the wrapper was registered with the factory
+      foreach (type_alias; _uvm_once_inst._m__type_aliases) {
+	factory.set_type_alias(type_alias, rgtry);
       }
-      uvm_coreservice_t cs = uvm_coreservice_t.get();
-      uvm_factory factory = cs.get_factory();
-      obj = factory.create_object_by_type(get(), contxt, name);
-      T retval = cast(T) obj;
-      if (retval is null) {
-	string msg = "Factory did not return an object of type '" ~ type_name ~
-	  "'. A component of type '" ~ (obj is null ? "null" : obj.get_type_name()) ~
-	  "' was returned instead. Name=" ~ name ~ " Parent=" ~
-	  (parent is null ? "null" : parent.get_type_name()) ~ " contxt=" ~ contxt;
-	uvm_report_fatal("FCTTYP", msg, uvm_verbosity.UVM_NONE);
-      }
-      return retval;
     }
+  }
+}
 
 
-    // Function: set_type_override
-    //
-    // Configures the factory to create an object of the type represented by
-    // ~override_type~ whenever a request is made to create an object of the type
-    // represented by this proxy, provided no instance override applies. The
-    // original type, ~T~, is typically a super class of the override type.
+//------------------------------------------------------------------------------
+//
+// The next two classes are helper classes passed as type parameters to
+// uvm_registry_common.  They abstract away the function calls
+// uvm_factory::create_component_by_type  and
+// uvm_factory::create_object_by_type.  Choosing between the two is handled at
+// compile time..
+//
+//------------------------------------------------------------------------------
 
-    static void set_type_override (uvm_object_wrapper override_type,
-				   bool replace=1) {
-      import uvm.base.uvm_coreservice;
-      import uvm.base.uvm_factory;
-      uvm_coreservice_t cs = uvm_coreservice_t.get();
-      uvm_factory factory = cs.get_factory();
-      factory.set_type_override_by_type(get(), override_type, replace);
-    }
+abstract class uvm_registry_component_creator
+{
+  import uvm.base.uvm_component: uvm_component;
+  static uvm_component create_by_type(uvm_object_wrapper obj_wrpr,
+				      string contxt,
+				      string name,
+				      uvm_component parent) {
+    import uvm.base.uvm_coreservice;
+    import uvm.base.uvm_factory;
+    uvm_coreservice_t cs = uvm_coreservice_t.get();
+    uvm_factory factory = cs.get_factory();
+    return factory.create_component_by_type(obj_wrpr, contxt, name, parent);
+  }
 
+  static string base_type_name() {
+    return "component";
+  }
+}
 
-    // Function: set_inst_override
-    //
-    // Configures the factory to create an object of the type represented by
-    // ~override_type~ whenever a request is made to create an object of the type
-    // represented by this proxy, with matching instance paths. The original
-    // type, ~T~, is typically a super class of the override type.
-    //
-    // If ~parent~ is not specified, ~inst_path~ is interpreted as an absolute
-    // instance path, which enables instance overrides to be set from outside
-    // component classes. If ~parent~ is specified, ~inst_path~ is interpreted
-    // as being relative to the ~parent~'s hierarchical instance path, i.e.
-    // ~{parent.get_full_name(),".",inst_path}~ is the instance path that is
-    // registered with the override. The ~inst_path~ may contain wildcards for
-    // matching against multiple contexts.
+abstract class uvm_registry_object_creator
+{
+  static uvm_object create_by_type(uvm_object_wrapper obj_wrpr,
+				   string contxt,
+				   string name,
+				   uvm_object unused) {
+    import uvm.base.uvm_coreservice;
+    import uvm.base.uvm_factory;
+    uvm_coreservice_t cs = uvm_coreservice_t.get();
+    uvm_factory factory = cs.get_factory();
+    // unused = unused;  // ... to keep linters happy.
+    return factory.create_object_by_type(obj_wrpr, contxt, name);
+  }
 
-    static void set_inst_override(uvm_object_wrapper override_type,
-				  string inst_path,
-				  uvm_component parent=null) {
-      import uvm.base.uvm_coreservice;
-      import uvm.base.uvm_factory;
-      string full_inst_path;
-      if (parent !is null) {
-	if (inst_path == "") {
-	  inst_path = parent.get_full_name();
-	}
-	else {
-	  inst_path = parent.get_full_name() ~ "." ~ inst_path;
-	}
-      }
-      uvm_coreservice_t cs = uvm_coreservice_t.get();
-      uvm_factory factory = cs.get_factory();
-      factory.set_inst_override_by_type(get(), override_type, inst_path);
-    }
-};
+  static string base_type_name() {
+    return "object";
+  }
+}
 
 
-// Group: Usage
+
+// Group -- NODOCS -- Usage
 //
 // This section describes usage for the uvm_*_registry classes.
 //
@@ -416,7 +785,7 @@ class uvm_object_registry (T = uvm_object, string Tname = "<unknown>"):
 //
 // For example, to register a UVM component of type ~mycomp~
 //
-//|  class mycomp : uvm_component;
+//|  class mycomp extends uvm_component;
 //|    typedef uvm_component_registry #(mycomp,"mycomp") type_id;
 //|  endclass
 //
@@ -425,8 +794,8 @@ class uvm_object_registry (T = uvm_object, string Tname = "<unknown>"):
 // register a UVM component of type ~mycomp~ in a vendor-independent way, you
 // would write instead:
 //
-//|  class mycomp : uvm_component;
-//|    `uvm_component_utils(mycomp);
+//|  class mycomp extends uvm_component;
+//|    `uvm_component_utils(mycomp)
 //|    ...
 //|  endclass
 //
@@ -447,8 +816,8 @@ class uvm_object_registry (T = uvm_object, string Tname = "<unknown>"):
 // For example, to register a UVM component of type driver #(T), you
 // would write:
 //
-//|  class driver #(type T=int) : uvm_component;
-//|    `uvm_component_param_utils(driver #(T));
+//|  class driver #(type T=int) extends uvm_component;
+//|    `uvm_component_param_utils(driver #(T))
 //|    ...
 //|  endclass
 //
@@ -464,4 +833,3 @@ class uvm_object_registry (T = uvm_object, string Tname = "<unknown>"):
 // of errors associated with string-based factory usage. Thus, use of name-based
 // lookup in <uvm_factory> is no longer recommended.
 
-// `endif // UVM_REGISTRY_SVH

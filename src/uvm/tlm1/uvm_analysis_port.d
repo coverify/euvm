@@ -1,9 +1,10 @@
 //
 //----------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2011 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2014 Coverify Systems Technology
+// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2010 Synopsys, Inc.
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2015 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -23,7 +24,7 @@
 
 
 //------------------------------------------------------------------------------
-// Title: Analysis Ports
+// Title -- NODOCS -- Analysis Ports
 //------------------------------------------------------------------------------
 //
 // This section defines the port, export, and imp classes used for transaction
@@ -33,7 +34,7 @@
 
 
 //------------------------------------------------------------------------------
-// Class: uvm_analysis_port
+// Class -- NODOCS -- uvm_analysis_port
 //
 // Broadcasts a value to all subscribers implementing a <uvm_analysis_imp>.
 //
@@ -65,11 +66,14 @@ import uvm.base.uvm_object_globals;
 import uvm.tlm1.uvm_tlm_ifs;
 import uvm.tlm1.uvm_tlm_defines;
 
+private alias Identity(alias A) = A;
+private alias parentOf(alias sym) = Identity!(__traits(parent, sym));
 
+// @uvm-ieee 1800.2-2017 auto 12.2.10.1.1
 class uvm_analysis_port(T): uvm_port_base!(uvm_tlm_if_base!(T,T))
 {
   public this(string name=null, uvm_component parent=null) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, parent, uvm_port_type_e.UVM_PORT, 0, UVM_UNBOUNDED_CONNECTIONS);
       m_if_mask = UVM_TLM_ANALYSIS_MASK;
     }
@@ -79,10 +83,9 @@ class uvm_analysis_port(T): uvm_port_base!(uvm_tlm_if_base!(T,T))
     return "uvm_analysis_port";
   }
 
-  // Method: write
-  // Send specified value to all connected interface
+  // @uvm-ieee 1800.2-2017 auto 12.2.10.1.2
   override public void write (T t) {
-    synchronized(this) {
+    synchronized (this) {
       uvm_tlm_if_base!(T, T) tif;
       for (size_t i = 0; i < this.size(); ++i) {
 	tif = this.get_if (i);
@@ -101,7 +104,7 @@ class uvm_analysis_port(T): uvm_port_base!(uvm_tlm_if_base!(T,T))
 
 
 //------------------------------------------------------------------------------
-// Class: uvm_analysis_imp
+// Class -- NODOCS -- uvm_analysis_imp
 //
 // Receives all transactions broadcasted by a <uvm_analysis_port>. It serves as
 // the termination point of an analysis port/export/imp connection. The component
@@ -126,13 +129,14 @@ class uvm_analysis_port(T): uvm_port_base!(uvm_tlm_if_base!(T,T))
 //| endclass
 //------------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 12.2.10.2
 class uvm_analysis_imp(T, IMP, string F=""): uvm_port_base!(uvm_tlm_if_base !(T,T))
-if (is(IMP: uvm_component))
+if (is (IMP: uvm_component))
 {
   // `UVM_IMP_COMMON(`UVM_TLM_ANALYSIS_MASK,"uvm_analysis_imp",IMP)
   private IMP m_imp;
   public this (string name, IMP imp) {
-    synchronized(this) {
+    synchronized (this) {
       super (name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
       m_if_mask = UVM_TLM_ANALYSIS_MASK;
@@ -144,22 +148,22 @@ if (is(IMP: uvm_component))
   }
 
   override public void write (T t) {
-    static if(F == "") {
+    static if (F == "") {
       m_imp.write(t);
     }
     else {
-      mixin("m_imp." ~ F ~ "(t);");
+      mixin ("m_imp." ~ F ~ "(t);");
     }
   }
 }
 
 class uvm_analysis_imp(T, IMP, alias F): uvm_port_base!(uvm_tlm_if_base !(T,T))
-if (is(IMP: uvm_component))
+if (is (IMP: uvm_component))
 {
   // `UVM_IMP_COMMON(`UVM_TLM_ANALYSIS_MASK,"uvm_analysis_imp",IMP)
   private IMP m_imp;
   public this (string name, IMP imp) {
-    synchronized(this) {
+    synchronized (this) {
       super (name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
       m_imp = imp;
       m_if_mask = UVM_TLM_ANALYSIS_MASK;
@@ -177,19 +181,19 @@ if (is(IMP: uvm_component))
 }
 
 template uvm_analysis_imp(IMP, alias F = IMP.write)
-if (is(IMP: uvm_component))
+if (is (IMP: uvm_component))
 {
   // `UVM_IMP_COMMON(`UVM_TLM_ANALYSIS_MASK,"uvm_analysis_imp",IMP)
   import std.traits: ParameterTypeTuple;
   alias TT = ParameterTypeTuple!F;
-  static assert(TT.length == 1);
+  static assert (TT.length == 1);
   alias T = TT[0];
 
   class uvm_analysis_imp: uvm_port_base!(uvm_tlm_if_base !(T,T))
   {
     private IMP m_imp;
     public this (string name, IMP imp) {
-      synchronized(this) {
+      synchronized (this) {
 	super (name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
 	m_imp = imp;
 	m_if_mask = UVM_TLM_ANALYSIS_MASK;
@@ -209,7 +213,6 @@ if (is(IMP: uvm_component))
 
 template uvm_analysis_imp(alias F)
 {
-  import std.traits: parentOf;
   alias uvm_analysis_imp = uvm_analysis_imp!(parentOf!F, F);
 }
 
@@ -220,23 +223,24 @@ private auto recreateDelegate(alias F, T)(T _entity)
   alias DG = typeof(toDelegate(&F));
   DG dg;
   dg.funcptr = &F;
-  dg.ptr = *(cast(void **) (&_entity));
+  dg.ptr = *(cast (void **) (&_entity));
   return dg;
 }
 
 
 //------------------------------------------------------------------------------
-// Class: uvm_analysis_export
+// Class -- NODOCS -- uvm_analysis_export
 //
 // Exports a lower-level <uvm_analysis_imp> to its parent.
 //------------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 12.2.10.3.1
 class uvm_analysis_export(T): uvm_port_base!(uvm_tlm_if_base!(T,T))
 {
-  // Function: new
-  // Instantiate the export.
+
+  // @uvm-ieee 1800.2-2017 auto 12.2.10.3.2
   public this(string name=null, uvm_component parent = null) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, parent, uvm_port_type_e.UVM_EXPORT, 1, UVM_UNBOUNDED_CONNECTIONS);
       m_if_mask = UVM_TLM_ANALYSIS_MASK;
     }
@@ -251,7 +255,7 @@ class uvm_analysis_export(T): uvm_port_base!(uvm_tlm_if_base!(T,T))
   // to all connected interfaces. Ports only send to the interface
   // at the index specified in a call to set_if (0 by default).
   override public void write (T t) {
-    synchronized(this) {
+    synchronized (this) {
       uvm_tlm_if_base!(T, T) tif;
       for (int i = 0; i < this.size(); i++) {
 	tif = this.get_if (i);
@@ -264,5 +268,4 @@ class uvm_analysis_export(T): uvm_port_base!(uvm_tlm_if_base!(T,T))
       }
     }
   }
-
 }

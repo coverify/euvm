@@ -1,9 +1,12 @@
 //----------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2011 Cadence Design Systems, Inc.
-//   Copyright 2010      Synopsys, Inc.
-//   Copyright 2014      NVIDIA Corporation
-//   Copyright 2014-2016 Coverify Systems Technology
+// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2010-2014 Synopsys, Inc.
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2010-2011 AMD
+// Copyright 2014-2018 NVIDIA Corporation
+// Copyright 2014 Cisco Systems, Inc.
+// Copyright 2017 Verific
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -33,22 +36,25 @@ import uvm.base.uvm_component;
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_port_base;
 import uvm.base.uvm_object_defines;
+import uvm.base.uvm_component_defines;
 
 import uvm.tlm1.uvm_sqr_connections;
+import uvm.tlm1.uvm_sqr_ifs;
 
 import uvm.meta.misc;
 import uvm.meta.meta;
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_sequencer #(REQ,RSP)
+// CLASS -- NODOCS -- uvm_sequencer #(REQ,RSP)
 //
 //------------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 15.5.1
 class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   uvm_sequencer_param_base!(REQ, RSP)
 {
-  mixin(uvm_sync_string);
+  mixin (uvm_sync_string);
 
   alias this_type = uvm_sequencer!(REQ , RSP);
 
@@ -60,13 +66,9 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   mixin uvm_component_essentials;
 
 
-  // Function: new
-  //
-  // Standard component constructor that creates an instance of this class
-  // using the given ~name~ and ~parent~, if any.
-  //
+  // @uvm-ieee 1800.2-2017 auto 15.5.2.2
   this(string name, uvm_component parent = null) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, parent);
       _seq_item_export =
 	new uvm_seq_item_pull_imp!(REQ, RSP, this_type)("seq_item_export", this);
@@ -74,7 +76,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   }
   
 
-  // Function: stop_sequences
+  // Function -- NODOCS -- stop_sequences
   //
   // Tells the sequencer to kill all sequences and child sequences currently
   // operating on the sequencer, and remove all requests, locks and responses
@@ -83,7 +85,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   //
 
   override void stop_sequences() {
-    synchronized(this) {
+    synchronized (this) {
       REQ t;
       super.stop_sequences();
       _sequence_item_requested  = false;
@@ -92,7 +94,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
       if (m_req_fifo.used()) {
 	uvm_report_info(get_full_name(), "Sequences stopped.  Removing" ~
 			" request from sequencer fifo");
-	while (m_req_fifo.try_get(t)) {}
+	m_req_fifo.flush();
       }
     }
   }
@@ -101,7 +103,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
     return qualifiedTypeName!(typeof(this));
   }
 
-  // Group: Sequencer Interface
+  // Group -- NODOCS -- Sequencer Interface
   // This is an interface for communicating with sequencers.
   //
   // The interface is defined as:
@@ -119,7 +121,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   //
   // See <uvm_sqr_if_base #(REQ,RSP)> for information about this interface.
    
-  // Variable: seq_item_export
+  // Variable -- NODOCS -- seq_item_export
   //
   // This export provides access to this sequencer's implementation of the
   // sequencer interface.
@@ -128,7 +130,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   @uvm_immutable_sync
     private uvm_seq_item_pull_imp!(REQ, RSP, this_type) _seq_item_export;
 
-  // Task: get_next_item
+  // Task -- NODOCS -- get_next_item
   // Retrieves the next available item from a sequence.
   //
   // task
@@ -151,7 +153,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
 
     // Set flag indicating that the item has been requested to ensure that item_done or get
     // is called between requests
-    synchronized(this) {
+    synchronized (this) {
       _sequence_item_requested = true;
       _get_next_item_called = true;
     }
@@ -159,7 +161,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   }
 
 
-  // Task: try_next_item
+  // Task -- NODOCS -- try_next_item
   // Retrieves the next available item from a sequence if one is available.
   //
 
@@ -179,7 +181,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
     wait_for_sequences();
 
     uvm_sequence_base seq;
-    synchronized(this) {
+    synchronized (this) {
       // choose the sequence based on relevancy
       int selected_sequence = m_choose_next_request();
 
@@ -215,12 +217,12 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   }
 
 
-  // Function: item_done
+  // Function -- NODOCS -- item_done
   // Indicates that the request is completed.
   //
 
   void item_done(RSP item = null) {
-    synchronized(this) {
+    synchronized (this) {
 
       // Set flag to allow next get_next_item or peek to get a new sequence_item
       _sequence_item_requested = false;
@@ -228,7 +230,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
 
       REQ t;
       if (m_req_fifo.try_get(t) is false) {
-	uvm_report_fatal(get_full_name(), "Item_done() called with no" ~
+	uvm_report_fatal("SQRBADITMDN", "Item_done() called with no" ~
 			 " outstanding requests. Each call to item_done()" ~
 			 " must be paired with a previous call to" ~
 			 " get_next_item().");
@@ -248,7 +250,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   }
 
 
-  // Task: put
+  // Task -- NODOCS -- put
   // Sends a response back to the sequence that issued the request.
   //
 
@@ -257,7 +259,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
     put_response(t);
   }
 
-  // Task: get
+  // Task -- NODOCS -- get
   // Retrieves the next available item from a sequence.
   //
 
@@ -279,7 +281,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   }
 
 
-  // Task: peek
+  // Task -- NODOCS -- peek
   // Returns the current request item if one is in the FIFO.
   //
 
@@ -303,11 +305,11 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
 
   /// Documented here for clarity, implemented in uvm_sequencer_base
 
-  // Task: wait_for_sequences
+  // Task -- NODOCS -- wait_for_sequences
   // Waits for a sequence to have a new item available.
   //
 
-  // Function: has_do_available
+  // Function -- NODOCS -- has_do_available
   // Returns 1 if any sequence running on this sequencer is ready to supply
   // a transaction, 0 otherwise.
   //
@@ -337,11 +339,10 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   // have the correct value
 
   override protected size_t m_find_number_driver_connections() {
-    uvm_port_component_base[string] provided_to_port_list;
+    uvm_port_base!(uvm_sqr_if_base!(REQ, RSP))[string] provided_to_port_list;
 
     // Check that the seq_item_pull_port is connected
-    uvm_port_component_base seq_port_base = seq_item_export.get_comp();
-    seq_port_base.get_provided_to(provided_to_port_list);
+    seq_item_export.get_provided_to(provided_to_port_list);
     return provided_to_port_list.length;
   }
 

@@ -25,11 +25,11 @@ all: run_test
 clean:
 	rm -f test
 
-libs:
-	(cd $(LIBDIR); make libs;)
+# libs:
+# 	(cd $(LIBDIR); make libs;)
 
-test: test.d libs
-	$(DMD) -m$(MODEL) -g -I$(VLANGDIR)/src -I$(ESDLDIR)/src $(DFLAGS)  -of$@ -L-l$(PHOBOS) -L-R$(DMDLIBDIR) -L-l$(ESDLLIB) -L-l$(UVMLIB) -L-L$(LIBDIR) -L-R$(LIBDIR) $<
+test: test.d # libs
+	$(DMD) -m$(MODEL) -g -I$(VLANGDIR)/src -I$(ESDLDIR)/src $(DFLAGS)  -of$@ -L-l$(PHOBOS)  -of$@ -L-l$(DRUNTIME) -L-R$(DMDLIBDIR) -L-l$(ESDLLIB) -L-l$(UVMLIB) -L-L$(LIBDIR) -L-R$(LIBDIR) $<
 
 run_test: test
 	./test +UVM_TESTNAME=test.test

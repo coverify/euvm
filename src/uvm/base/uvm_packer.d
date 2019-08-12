@@ -1,10 +1,14 @@
 //
 //------------------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2011 Cadence Design Systems, Inc.
-//   Copyright 2010      Synopsys, Inc.
-//   Copyright 2013      NVIDIA Corporation
-//   Copyright 2012-2016 Coverify Systems Technology
+// Copyright 2012-2019 Coverify Systems Technology
+// Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2014 Semifore
+// Copyright 2018 Qualcomm, Inc.
+// Copyright 2014 Intel Corporation
+// Copyright 2018 Synopsys, Inc.
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2013-2018 NVIDIA Corporation
+// Copyright 2017-2018 Cisco Systems, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -27,7 +31,7 @@ module uvm.base.uvm_packer;
 
 
 //------------------------------------------------------------------------------
-// CLASS: uvm_packer
+// CLASS -- NODOCS -- uvm_packer
 //
 // The uvm_packer class provides a policy object for packing and unpacking
 // uvm_objects. The policies determine how packing and unpacking should be done.
@@ -38,182 +42,285 @@ module uvm.base.uvm_packer;
 //
 //-------------------------------------------------------------------------------
 
-import uvm.base.uvm_misc: uvm_scope_stack;
 import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_policy: uvm_policy;
+import uvm.base.uvm_factory: uvm_factory;
+import uvm.base.uvm_field_op: uvm_field_op;
+import uvm.base.uvm_globals: uvm_error, uvm_fatal, uvm_warning;
+import uvm.base.uvm_object_defines;
+import uvm.base.uvm_coreservice: uvm_coreservice_t;
 import uvm.base.uvm_object_globals: uvm_bitstream_t, uvm_integral_t,
-  uvm_recursion_policy_enum;
+  uvm_recursion_policy_enum, uvm_field_flag_t, UVM_RECURSION;
 
 import uvm.meta.misc;
 
-import esdl.data.packer;
-import esdl.data.bstr;
+import esdl.data.packer: Packer;
 import esdl.data.bvec;
 import esdl.base.core: SimTime;
 import esdl.data.time;
 import std.string: format;
 import std.traits;
 
-class uvm_packer
+// Class: uvm_packer
+// Implementation of uvm_packer, as defined in section
+// 16.5.1 of 1800.2-2017
+
+// @uvm-ieee 1800.2-2017 auto 16.5.1
+class uvm_packer: uvm_policy
 {
-  this() {
-    synchronized(this) {
-      _scope_stack = new uvm_scope_stack();
+
+  // @uvm-ieee 1800.2-2017 auto 16.5.2.3
+  mixin uvm_object_essentials;
+  mixin (uvm_sync_string);
+
+  @uvm_public_sync
+  private uvm_factory _m_factory;
+
+  @uvm_private_sync
+  private uvm_object[int] _m_object_references;
+   
+
+  // Function: set_packed_*
+  // Implementation of P1800.2 16.5.3.1
+  //
+  // The LRM specifies the set_packed_* methods as being
+  // signed, whereas the <uvm_object::unpack> methods are specified
+  // as unsigned.  This is being tracked in Mantis 6423.
+  //
+  // The reference implementation has implemented these methods
+  // as unsigned so as to remain consistent.
+  //
+  //| virtual function void set_packed_bits( ref bit unsigned stream[] );
+  //| virtual function void set_packed_bytes( ref byte unsigned stream[] );
+  //| virtual function void set_packed_ints( ref int unsigned stream[] );
+  //| virtual function void set_packed_longints( ref longint unsigned stream[] );
+  //
+  // @uvm-contrib This API is being considered for potential contribution to 1800.2
+   
+  void set_packed(T)(ref T[] stream) {
+    synchronized (this) {
+      _m_bits.setPacked(stream);
     }
   }
 
-  // alias BitVec!(UVM_PACKER_MAX_BYTES*8) uvm_pack_bitstream_t;
+  // @uvm-ieee 1800.2-2017 auto 16.5.3.1
+  void set_packed_bits(ref bool[] stream) {
+    synchronized (this) {
+      _m_bits.setPacked(stream);
+    }
+  }
 
+  // @uvm-ieee 1800.2-2017 auto 16.5.3.1
+  void set_packed_bytes(ref ubyte[] stream) {
+    synchronized (this) {
+      _m_bits.setPacked(stream);
+    }
+  }
+
+  // @uvm-ieee 1800.2-2017 auto 16.5.3.1
+  void set_packed_ints(ref uint[] stream) {
+    synchronized (this) {
+      _m_bits.setPacked(stream);
+    }
+  }
+
+  // @uvm-ieee 1800.2-2017 auto 16.5.3.1
+  void set_packed_longints(ref ulong[] stream) {
+    synchronized (this) {
+      _m_bits.setPacked(stream);
+    }
+  }
+   
+  // Function: get_packed_*
+  // Implementation of P1800.2 16.5.3.2
+  //
+  // The LRM specifies the get_packed_* methods as being
+  // signed, whereas the <uvm_object::pack> methods are specified
+  // as unsigned.  This is being tracked in Mantis 6423.
+  //
+  // The reference implementation has implemented these methods
+  // as unsigned so as to remain consistent.
+  //
+  //| virtual function void get_packed_bits( ref bit unsigned stream[] );
+  //| virtual function void get_packed_bytes( ref byte unsigned stream[] );
+  //| virtual function void get_packed_ints( ref int unsigned stream[] );
+  //| virtual function void get_packed_longints( ref longint unsigned stream[] );
+  //
+  // @uvm-contrib This API is being considered for potential contribution to 1800.2
+   
+  void get_packed(T)(ref T[] stream) {
+    synchronized (this) {
+      _m_bits.getPacked!T(stream);
+    }
+  }
+  
+  // @uvm-ieee 1800.2-2017 auto 16.5.3.2
+  void get_packed_bits(ref bool[] stream) {
+    synchronized (this) {
+      _m_bits.getPacked(stream);
+    }
+  }
+
+  // @uvm-ieee 1800.2-2017 auto 16.5.3.2
+  void get_packed_bytes(ref ubyte[] stream) {
+    synchronized (this) {
+      _m_bits.getPacked(stream);
+    }
+  }
+
+  // @uvm-ieee 1800.2-2017 auto 16.5.3.2
+  void get_packed_ints(ref uint[] stream) {
+    synchronized (this) {
+      _m_bits.getPacked(stream);
+    }
+  }
+
+  // @uvm-ieee 1800.2-2017 auto 16.5.3.2
+  void get_packed_longints(ref ulong[] stream) {
+    synchronized (this) {
+      _m_bits.getPacked(stream);
+    }
+  }
+   
   //----------------//
-  // Group: Packing //
+  // Group -- NODOCS -- Packing //
   //----------------//
 
-  void pack(T)(T value)
-    if(isBitVector!T || isIntegral!T || isFloatingPoint!T ||
-       is(T == SimTime) || is(T == Time) || is(T == bool)) {
-      synchronized(this) {
-	_m_bits.pack(value, _big_endian);
+  // @uvm-ieee 1800.2-2017 auto 16.5.2.4
+  static void set_default(uvm_packer packer) {
+    uvm_coreservice_t coreservice = uvm_coreservice_t.get();
+    coreservice.set_default_packer(packer);
+  }
+
+  // @uvm-ieee 1800.2-2017 auto 16.5.2.5
+  static uvm_packer get_default() {
+    uvm_coreservice_t coreservice = uvm_coreservice_t.get();
+    return coreservice.get_default_packer();
+  }
+
+  
+  // @uvm-ieee 1800.2-2017 auto 16.5.2.2
+  override void flush() {
+    synchronized (this) {
+      // The iterators are spaced 64b from the beginning, enough to store
+      // the iterators during get_packed_* and retrieve them during
+      // set_packed_*.  Without this, set_packed_[byte|int|longint] will
+      // move the iterators too far.
+      // m_pack_iter = 64;
+      // m_unpack_iter = 64;
+      // m_bits       = 0;
+      _m_bits.clear();
+      _m_object_references.clear();
+      _m_object_references[0] = null;
+      _m_factory = null;
+      super.flush();
+    }
+  }
+    
+
+  
+  //----------------//
+  // Group -- NODOCS -- Packing //
+  //----------------//
+
+  void pack(T)(T value, size_t size=-1)
+    if (isBitVector!T || isIntegral!T || isBoolean!T) {
+      synchronized (this) {
+	_m_bits.pack(value, size);
+      }
+    }
+
+  void pack(T)(T value, size_t size=-1)
+    if (isFloatingPoint!T ||
+	is (T == SimTime) || is (T == Time)) {
+      synchronized (this) {
+	_m_bits.pack(value);
       }
     }
 
   void pack(T)(T value)
-    if(is(T == string)) {
-      synchronized(this) {
-	foreach (c; value) {
-	  auto b = cast(ubyte) c;
-	  _m_bits.pack(b, _big_endian);
-	}
-	if(_use_metadata is true) {
-	  _m_bits.pack(cast(byte) 0);
-	}
+    if (is (T == string)) {
+      synchronized (this) {
+	_m_bits.pack(value);
+	_m_bits.pack(cast (byte) 0);
       }
     }
 
   void pack(T)(T value)
-    if(is(T: uvm_object)) {
+    if (is (T: uvm_object)) {
       import uvm.base.uvm_object_globals;
       import uvm.base.uvm_globals;
-      synchronized(this) {
-	if(value.m_uvm_status_container.check_cycle(value)) {
-	  uvm_report_warning("CYCFND",
-			     format("Cycle detected for object @%0d" ~
-				    " during pack", value.get_inst_id()),
-			     uvm_verbosity.UVM_NONE);
-	  return;
+      synchronized (this) {
+	uvm_field_op field_op;
+	if (value is null ) {
+	  _m_bits.pack(0, 4);
+	  return ;
 	}
-	value.m_uvm_status_container.add_cycle_check(value);
-
-	if((policy != uvm_recursion_policy_enum.UVM_REFERENCE) && (value !is null) ) {
-	  if(use_metadata is true) {
-	    _m_bits.pack(cast(UBitVec!4) 1);
-	  }
-	  scope_stack.down(value.get_name());
-	  value.m_uvm_object_automation(null, uvm_field_auto_enum.UVM_PACK, "");
+	else {
+	  _m_bits.pack(0xF, 4);
+	}
+	push_active_object(value);
+	field_op = uvm_field_op.m_get_available_op();
+	field_op.set(uvm_field_auto_enum.UVM_PACK, this, value);
+	value.do_execute_op(field_op);
+	if (field_op.user_hook_enabled()) {
 	  value.do_pack(this);
-	  scope_stack.up();
 	}
-	else if(use_metadata is true) {
-	  synchronized(this) {
-	    _m_bits.pack(cast(UBitVec!4) 0);
-	  }
-	}
-	value.m_uvm_status_container.remove_cycle_check(value);
+	field_op.m_recycle();
+	pop_active_object();
       }
     }
 
 
 
-  // Function: pack_field
+  // Function -- NODOCS -- pack_field
   //
   // Packs an integral value (less than or equal to 4096 bits) into the
   // packed array. ~size~ is the number of bits of ~value~ to pack.
 
-  void pack_field (uvm_bitstream_t value, size_t size) {
-    synchronized(this) {
-      for (size_t i = 0; i != size; ++i) {
-	if(_big_endian is true) {
-	  _m_bits.pack(value[size-1-i]);
-	}
-	else {
-	  _m_bits.pack(value[i]);
-	}
+  // @uvm-ieee 1800.2-2017 auto 16.5.4.8
+  void pack_field(uvm_bitstream_t value, size_t size) {
+    synchronized (this) {
+      bool bit;
+      for (size_t i=0; i != size; ++i) {
+	_m_bits.pack(bit);
+	value[i] = bit;
       }
     }
   }
 
 
-  // Function: pack_field_int
+  // @uvm-ieee 1800.2-2017 auto 16.5.2.1
+  this(string name="") {
+    synchronized (this) {
+      super(name);
+      flush();
+    }
+  }
+
+  // Function -- NODOCS -- pack_field_int
   //
   // Packs the integral value (less than or equal to 64 bits) into the
   // pack array.  The ~size~ is the number of bits to pack, usually obtained by
   // ~$bits~. This optimized version of <pack_field> is useful for sizes up
   // to 64 bits.
 
+  // @uvm-ieee 1800.2-2017 auto 16.5.4.9
   void pack_field_int (uvm_integral_t value, size_t size) {
-    synchronized(this) {
+    synchronized (this) {
       for (size_t i = 0; i != size; ++i) {
-	if(_big_endian is true) {
-	  _m_bits.pack(value[size-1-i]);
-	}
-	else {
-	  _m_bits.pack(value[i]);
-	}
+	_m_bits.pack(value[i]);
       }
     }
   }
 
 
-  // Function: pack_bits
-  //
-  // Packs bits from upacked array of bits into the pack array.
-  //
-  // See <pack_ints> for additional information.
-  // extern virtual function void pack_bits(ref bit value[], input int size = -1);
-
-
-  // pack_bits
-  // -----------------
-
-  void pack_bits(bool[] value, int size = -1) {
-    import uvm.base.uvm_globals;
-    synchronized(this) {
-      if (size < 0) {
-	size = cast(int) value.length;
-      }
-
-      if (size > value.length) {
-	uvm_error("UVM/BASE/PACKER/BAD_SIZE",
-		  format("pack_bits called with size '%0d', which" ~
-			 " exceeds value.size() of '%0d'",
-			 size,
-			 value.length));
-	return;
-      }
-
-      for(int i=0; i < size; i++) {
-	if (_big_endian is true) {
-	  _m_bits.pack(value[size-1-i]);
-	}
-	else {
-	  _m_bits.pack(value[i]);
-	}
-      }
-    }
-  }
-
-  // Function: pack_bytes
-  //
-  // Packs bits from an upacked array of bytes into the pack array.
-  //
-  // See <pack_ints> for additional information.
-  // extern virtual function void pack_bytes(ref byte value[], input int size = -1);
-
-  // pack_bytes
-  // -----------------
-
-  void pack_integrals(T)(T[] value, in int size = -1)
-    if(isIntegral!T) {
-      synchronized(this) {
-	int max_size = value.length * T.sizeof * 8;
+  void pack(T)(T value, in int size = -1)
+    if (isArray!T) {
+      enum E = ElementType!T;
+      static assert (isIntegral!E || isBoolean!E || isBitVector!E);
+      synchronized (this) {
+	int max_size = value.length * BitCount!E;
 
 	if (size < 0) {
 	  size = max_size;
@@ -223,66 +330,30 @@ class uvm_packer
 	  uvm_error("UVM/BASE/PACKER/BAD_SIZE",
 		    format("pack_%ss called with size '%0d', which" ~
 			   " exceeds value size of '%0d'",
-			   T.stringof,
+			   E.stringof,
 			   size,
 			   max_size));
 	  return;
 	}
 	else {
-	  size_t maxi = size/(T.sizeof * 8);
-	  size_t rem_bits = size % (T.sizeof * 8);
-	  if(big_endian is true) {
-	    _m_bits.pack(value[maxi], big_endian, rem_bits);
-	  }
-	  for (int i=0; i < maxi; i++) {
-	    if (big_endian is true) {
-	      _m_bits.pack(value[maxi-i-1], big_endian);
-	    }
-	    else {
-	      _m_bits.pack(value[i], big_endian);
-	    }
-	  }
-	  if(big_endian is false) {
-	    _m_bits.pack(value[maxi], big_endian, rem_bits);
-	  }
+	  _m_bits.pack(value);
 	}
       }
     }
 
-  alias pack_bytes = pack_integrals;
+  // @uvm-ieee 1800.2-2017 auto 16.5.4.1
+  alias pack_bits = pack;
+  
+  // @uvm-ieee 1800.2-2017 auto 16.5.4.10
+  alias pack_bytes = pack;
 
-  // Function: pack_ints
-  //
-  // Packs bits from an unpacked array of ints into the pack array.
-  //
-  // The bits are appended to the internal pack array.
-  // This method allows for fields of arbitrary length to be
-  // passed in, using the SystemVerilog ~stream~ operator.
-  //
-  // For example
-  // | bit[511:0] my_field;
-  // | begin
-  // |   int my_stream[];
-  // |   { << int {my_stream}} = my_field;
-  // |   packer.pack_ints(my_stream);
-  // | end
-  //
-  // When appending the stream to the internal pack array, the packer will obey
-  // the value of <big_endian> (appending the array from MSB to LSB if set).
-  //
-  // An optional ~size~ parameter is provided, which defaults to '-1'.  If set
-  // to any value greater than '-1' (including 0), then the packer will use
-  // the size as the number of bits to pack, otherwise the packer will simply
-  // pack the entire stream.
-  //
-  // An error will be asserted if the ~size~ has been specified, and exceeds the
-  // size of the source array.
-  //
-  // extern virtual function void pack_ints(ref int value[], input int size = -1);
+  // @uvm-ieee 1800.2-2017 auto 16.5.4.11
+  alias pack_ints = pack;
 
-  alias pack_ints = pack_integrals;
+  // recursion functions
 
-  // Function: pack_string
+
+  // Function -- NODOCS -- pack_string
   //
   // Packs a string value into the pack array.
   //
@@ -292,33 +363,37 @@ class uvm_packer
   // This is useful for mixed language communication where unpacking may occur
   // outside of SystemVerilog UVM.
 
+  // @uvm-ieee 1800.2-2017 auto 16.5.4.5
   void pack_string (string value) {
     this.pack(value);
+    this.pack(0, 8);
   }
 
 
-  // Function: pack_time
+  // Function -- NODOCS -- pack_time
   //
   // Packs a time ~value~ as 64 bits into the pack array.
 
+  // @uvm-ieee 1800.2-2017 auto 16.5.4.6
   void pack_time (SimTime value) {
     this.pack(value);
   }
 
 
-  // Function: pack_real
+  // Function -- NODOCS -- pack_real
   //
   // Packs a real ~value~ as 64 bits into the pack array.
   //
   // The real ~value~ is converted to a 6-bit scalar value using the function
   // $real2bits before it is packed into the array.
 
+  // @uvm-ieee 1800.2-2017 auto 16.5.4.7
   void pack_real (real value) {
     this.pack(value);
   }
 
 
-  // Function: pack_object
+  // Function -- NODOCS -- pack_object
   //
   // Packs an object value into the pack array.
   //
@@ -329,16 +404,45 @@ class uvm_packer
   // This is useful for mixed-language communication where unpacking may occur
   // outside of SystemVerilog UVM.
 
+  // @uvm-ieee 1800.2-2017 auto 16.5.4.2
   void pack_object (uvm_object value) {
     this.pack(value);
   }
+  
+  void pack_object_with_meta (uvm_object value) {
+    synchronized (this) {
+      foreach (i, reference; _m_object_references) {
+	if (reference is value) {
+	  pack(cast (uint) i);
+	  return;
+	}
+      }
+  
+      // Size will always be >0 because 0 is the null
+      uint reference_id = cast (uint) _m_object_references.length;
+      pack(reference_id);
+      _m_object_references[reference_id] = value;
+      pack_object_wrapper(value.get_object_type());
 
+      pack_object(value); 
+    }
+  }
+  
+  
+  void pack_object_wrapper (uvm_object_wrapper value) {
+    synchronized (this) {
+      // string type_name;
+      if (value !is null) {
+	pack(value.get_type_name());
+      }
+    }
+  }
 
   //------------------//
-  // Group: Unpacking //
+  // Group -- NODOCS -- Unpacking //
   //------------------//
 
-  // Function: is_null
+  // Function -- NODOCS -- is_null
   //
   // This method is used during unpack operations to peek at the next 4-bit
   // chunk of the pack data and determine if it is 0.
@@ -349,96 +453,116 @@ class uvm_packer
   // This is useful when unpacking objects, to decide whether a new object
   // needs to be allocated or not.
 
+  // @uvm-ieee 1800.2-2017 auto 16.5.4.3
   bool is_null () {
-    synchronized(this) {
-      UBitVec!4 val;
-      // do not use unpack since we do not want to increment unpackIndex here
-      _m_bits.getFront(val, _m_bits.unpackIndex);
-      return (val == 0);
+    synchronized (this) {
+      return (_m_bits.read!int(4) == 0);
     }
   }
 
+  bool is_object_wrapper() {
+    synchronized (this) {
+      return (_m_bits.read!int(4) == 1);
+    }
+  }
 
   void unpack(T)(out T value)
-    if(isBitVector!T || isIntegral!T || isFloatingPoint!T ||
-       is(T == SimTime) || is(T == Time) || is(T == bool)) {
-      synchronized(this) {
-	if (enough_bits(T.sizeof*8,"integral")) {
-	  _m_bits.unpack(value, _big_endian);
+    if (isBitVector!T || isIntegral!T || isFloatingPoint!T ||
+       is (T == SimTime) || is (T == Time) || isBoolean!T) {
+      synchronized (this) {
+	if (enough_bits(T.sizeof*8, "integral")) {
+	  _m_bits.unpack(value);
+	}
+      }
+    }
+
+  T unpack(T)()
+    if (isBitVector!T || isIntegral!T || isFloatingPoint!T ||
+       is (T == SimTime) || is (T == Time) || isBoolean!T) {
+      synchronized (this) {
+	if (enough_bits(T.sizeof*8, "integral")) {
+	  T value;
+	  _m_bits.unpack(value);
+	  return value;
 	}
       }
     }
 
   void unpack(T)(out T value, ptrdiff_t num_chars = -1)
-    if(is(T == string)) {
-      synchronized(this) {
+    if (is (T == string)) {
+      synchronized (this) {
 	ubyte c;
 	bool is_null_term = false;
-	if(num_chars == -1) is_null_term = true;
+	if (num_chars == -1) is_null_term = true;
 	char[] retval;
 	for (size_t i=0; i != num_chars; ++i) {
-	  if(enough_bits(8,"string")) {
-	    _m_bits.unpack(c, _big_endian);
-	    if(is_null_term && c == 0) break;
-	    retval ~= cast(char) c;
+	  if (enough_bits(8,"string")) {
+	    _m_bits.unpack(c);
+	    if (is_null_term && c == 0) break;
+	    retval ~= cast (char) c;
 	  }
 	}
-	value = cast(string) retval;
+	value = cast (string) retval;
       }
     }
 
-  void unpack(T)(T value) if(is(T: uvm_object)) {
-    import uvm.base.uvm_object_globals;
-    import uvm.base.uvm_globals;
-    synchronized(this) {
-      byte is_non_null = 1;
-      if(value.m_uvm_status_container.check_cycle(value)) {
-	uvm_report_warning("CYCFND",
-			   format("Cycle detected for object @%0d" ~
-				  " during unpack", value.get_inst_id()),
-			   uvm_verbosity.UVM_NONE);
-	return;
-      }
-      value.m_uvm_status_container.add_cycle_check(value);
-
-      if(_use_metadata is true) {
-	UBitVec!4 v;
-	_m_bits.unpack(v);
-	is_non_null = v;
-      }
-
-      // NOTE- policy is a ~pack~ policy, not unpack policy;
-      //       and you can't pack an object by REFERENCE
-      if (value !is null) {
-	if (is_non_null > 0) {
-	  _scope_stack.down(value.get_name());
-	  value.m_uvm_object_automation(null, uvm_field_xtra_enum.UVM_UNPACK, "");
-	  value.do_unpack(this);
-	  _scope_stack.up();
+  void unpack(T)(T value)
+    if (is (T: uvm_object)) {
+      import uvm.base.uvm_object_globals;
+      import uvm.base.uvm_globals;
+      synchronized (this) {
+	if (is_null()) {
+	  if (value !is null) {
+	    uvm_error("UVM/BASE/PACKER/UNPACK/N2NN",
+		      "attempt to unpack a null object into a not-null object!");
+	    return;
+	  }
+	  _m_bits.skip(4); // advance past the null
+	  return;
 	}
 	else {
-	  // TODO: help do_unpack know whether unpacked result would be null
-	  //       to avoid new'ing unnecessarily;
-	  //       this does not nullify argument; need to pass obj by ref
+	  if (value is null) {
+	    uvm_error("UVM/BASE/PACKER/UNPACK/NN2N",
+		      "attempt to unpack a non-null object into a null object!");
+	    return;
+	  }
+	  _m_bits.skip(4); // advance past the !null
+	  push_active_object(value);
+	  uvm_field_op field_op = uvm_field_op.m_get_available_op();
+	  field_op.set(uvm_field_auto_enum.UVM_UNPACK, this, value);
+	  value.do_execute_op(field_op);
+	  if (field_op.user_hook_enabled()) {
+	    value.do_unpack(this);
+	  }
+	  field_op.m_recycle();
+	  pop_active_object();
 	}
       }
-      else if ((is_non_null != 0) && (value is null)) {
-	uvm_report_error("UNPOBJ",
-			 "cannot unpack into null object", uvm_verbosity.UVM_NONE);
-      }
-      value.m_uvm_status_container.remove_cycle_check(value);
     }
-  }
 
 
-  // Function: unpack_field
+  // Function -- NODOCS -- unpack_field
   //
   // Unpacks bits from the pack array and returns the bit-stream that was
   // unpacked. ~size~ is the number of bits to unpack; the maximum is 4096 bits.
 
-  uvm_bitstream_t unpack_field (int size);
+  // @uvm-ieee 1800.2-2017 auto 16.5.4.16
+  uvm_bitstream_t unpack_field (int size) {
+    synchronized (this) {
+      uvm_bitstream_t retval;
+      if (enough_bits(size, "integral")) {
+	for (size_t i=0; i != size; ++i) {
+	  bool b;
+	  _m_bits.unpack(b);
+	  retval[size-i-1] = b;
+	}
+      }
+      return retval;
+    }
+  }
 
-  // Function: unpack_field_int
+
+  // Function -- NODOCS -- unpack_field_int
   //
   // Unpacks bits from the pack array and returns the bit-stream that was
   // unpacked.
@@ -447,19 +571,15 @@ class uvm_packer
   // This is a more efficient variant than unpack_field when unpacking into
   // smaller vectors.
 
+  // @uvm-ieee 1800.2-2017 auto 16.5.4.17
   uvm_integral_t unpack_field_int (int size) {
-    synchronized(this) {
-      LogicVec!64 retval = 0;
-      if (enough_bits(size,"integral")) {
+    synchronized (this) {
+      uvm_integral_t retval;
+      if (enough_bits(size, "integral")) {
 	for (size_t i=0; i != size; ++i) {
 	  bool b;
 	  _m_bits.unpack(b);
-	  if(_big_endian is true) {
-	    retval[i] = b;
-	  }
-	  else {
-	    retval[size-i-1] = b;
-	  }
+	  retval[size-i-1] = b;
 	}
       }
       return retval;
@@ -467,32 +587,29 @@ class uvm_packer
   }
 
 
-  // Function: unpack_field
-  //
-  // Unpacks bits from the pack array and returns the bit-stream that was
-  // unpacked. ~size~ is the number of bits to unpack; the maximum is 4096 bits.
+  void unpack(T)(ref T value, size_t size = -1) if (isArray!T) {
+    import uvm.base.uvm_globals;
+    synchronized (this) {
+      size_t max_size = value.length * BitCount!T;
+      if (size == -1)
+	size = max_size;
 
-  uvm_bitstream_t unpack_field (int size) {
-    synchronized(this) {
-      uvm_bitstream_t retval;
-      if (enough_bits(size,"integral")) {
-	for (size_t i=0; i != size; ++i) {
-	  bool b;
-	  _m_bits.unpack(b);
-	  if(_big_endian is true) {
-	    retval[i] = b;
-	  }
-	  else {
-	    retval[size-i-1] = b;
-	  }
-	}
+      if (size > max_size) {
+	uvm_error("UVM/BASE/PACKER/BAD_SIZE",
+		  format("unpack_bits called with size '%0d'," ~
+			 " which exceeds value.size() of '%0d'",
+			 size,
+			 max_size));
+	return;
       }
-      return retval;
+
+      if (enough_bits(size, "integral")) {
+	_m_bits.unpack(value, size);
+      }
     }
   }
 
-
-  // Function: unpack_bits
+  // Function -- NODOCS -- unpack_bits
   //
   // Unpacks bits from the pack array into an unpacked array of bits.
   //
@@ -500,138 +617,53 @@ class uvm_packer
   // unpack_bits
   // -------------------
 
-  void unpack_bits(bool[] value, int size = -1) {
-    import uvm.base.uvm_globals;
-    synchronized(this) {
-      if (size < 0) {
-	size = cast(int) value.length;
-      }
+  // @uvm-ieee 1800.2-2017 auto 16.5.4.18
+  alias unpack_bits = unpack;
 
-      if(size > value.length) {
-	uvm_error("UVM/BASE/PACKER/BAD_SIZE",
-		  format("unpack_bits called with size '%0d', which exceeds value.size() of '%0d'",
-			 size,
-			 value.length));
-	return;
-      }
-
-      if(enough_bits(size, "integral")) {
-	for(int i=0; i<size; i++) {
-	  if (big_endian is true) {
-	    _m_bits.unpack(value[size-i-1]);
-	  }
-	  else {
-	    _m_bits.unpack(value[i]);
-	  }
-	}
-      }
-    }
-  }
-
-
-  // Function: unpack_bytes
+  // Function -- NODOCS -- unpack_bytes
   //
   // Unpacks bits from the pack array into an unpacked array of bytes.
   //
   // extern virtual function void unpack_bytes(ref byte value[], input int size = -1);
+  // @uvm-ieee 1800.2-2017 auto 16.5.4.19
 
-  // unpack_bytes
-  // -------------------
-
-  void unpack_integrals(T)(T[] value, int size = -1) {
-    import uvm.base.uvm_object_globals;
-    import uvm.base.uvm_globals;
-    synchronized(this) {
-      int max_size = cast(int) (value.length * T.sizeof * 8);
-
-      if (size < 0) {
-	size = max_size;
-      }
+  alias unpack_bytes = unpack;
 
 
-      if (size > max_size) {
-	uvm_error("UVM/BASE/PACKER/BAD_SIZE",
-		  format("unpack_%ss called with size '%0d'," ~
-			 " which exceeds value size of '%0d'",
-			 T.stringof,
-			 size,
-			 max_size));
-	return;
-      }
-      else {
-	if (enough_bits(size, "integral")) {
-	  size_t maxi = size/(T.sizeof * 8);
-	  size_t rem_bits = size % (T.sizeof * 8);
-	  if(big_endian is true) {
-	    _m_bits.unpack(value[maxi], big_endian, rem_bits);
-	  }
-	  for (int i=0; i < maxi; i++) {
-	    if (big_endian is true) {
-	      _m_bits.unpack(value[maxi-i-1], big_endian);
-	    }
-	    else {
-	      _m_bits.unpack(value[i], big_endian);
-	    }
-	  }
-	  if(big_endian is false) {
-	    _m_bits.unpack(value[maxi], big_endian, rem_bits);
-	  }
-	}
-      }
-    }
-  }
+  // @uvm-ieee 1800.2-2017 auto 16.5.4.12
+  alias unpack_ints = unpack;
 
-  alias unpack_bytes = unpack_integrals!byte;
-
-  // Function: unpack_ints
-  //
-  // Unpacks bits from the pack array into an unpacked array of ints.
-  //
-  // The unpacked array is unpacked from the internal pack array.
-  // This method allows for fields of arbitrary length to be
-  // passed in without expanding into a pre-defined integral type first.
-  //
-  // For example
-  // | bit[511:0] my_field;
-  // | begin
-  // |   int my_stream[] = new[16]; // 512/32 = 16
-  // |   packer.unpack_ints(my_stream);
-  // |   my_field = {<<{my_stream}};
-  // | end
-  //
-  // When unpacking the stream from the internal pack array, the packer will obey
-  // the value of <big_endian> (unpacking the array from MSB to LSB if set).
-  //
-  // An optional ~size~ parameter is provided, which defaults to '-1'.  If set
-  // to any value greater than '-1' (including 0), then the packer will use
-  // the size as the number of bits to unpack, otherwise the packer will simply
-  // unpack the entire stream.
-  //
-  // An error will be asserted if the ~size~ has been specified, and
-  // exceeds the size of the target array.
-  //
-  // extern virtual function void unpack_ints(ref int value[], input int size = -1);
-
-  alias unpack_bytes = unpack_integrals!int;
-  // Function: unpack_string
+  // Function -- NODOCS -- unpack_string
   //
   // Unpacks a string.
   //
   // num_chars bytes are unpacked into a string. If num_chars is -1 then
   // unpacking stops on at the first ~null~ character that is encountered.
 
-  string unpack_string (ptrdiff_t num_chars = -1) {
-    string str;
-    unpack(str, num_chars);
-    return str;
+  // @uvm-ieee 1800.2-2017 auto 16.5.4.13
+  string unpack_string () {
+    synchronized (this) {
+      char[] unpack_string_;
+      char unpack_char;
+      while (enough_bits(8, "string") && 
+	     (_m_bits.read!int(8) != 0)) {
+	// silly, because cannot append byte/char to string
+	_m_bits.unpack(unpack_char);
+	unpack_string_ ~= unpack_char;
+      }
+      if (enough_bits(8,"string"))
+	_m_bits.skip(8);
+      return cast (string) unpack_string_;
+    }
   }
 
 
-  // Function: unpack_time
+  // Function -- NODOCS -- unpack_time
   //
   // Unpacks the next 64 bits of the pack array and places them into a
   // time variable.
 
+  // @uvm-ieee 1800.2-2017 auto 16.5.4.14
   SimTime unpack_time () {
     SimTime t;
     this.unpack(t);
@@ -639,7 +671,7 @@ class uvm_packer
   }
 
 
-  // Function: unpack_real
+  // Function -- NODOCS -- unpack_real
   //
   // Unpacks the next 64 bits of the pack array and places them into a
   // real variable.
@@ -647,13 +679,14 @@ class uvm_packer
   // The 64 bits of packed data are converted to a real using the $bits2real
   // system function.
 
+  // @uvm-ieee 1800.2-2017 auto 16.5.4.15
   double unpack_real () {
     double f;
     this.unpack(f);
     return f;
   }
 
-  // Function: unpack_object
+  // Function -- NODOCS -- unpack_object
   //
   // Unpacks an object and stores the result into ~value~.
   //
@@ -664,300 +697,185 @@ class uvm_packer
   // The <is_null> function can be used to peek at the next four bits in
   // the pack array before calling this method.
 
+  // @uvm-ieee 1800.2-2017 auto 16.5.4.4
   void unpack_object (uvm_object obj) {
     this.unpack(obj);
   }
 
-
-  // Function: get_packed_size
-  //
-  // Returns the number of bits that were packed.
-
-  size_t get_packed_size() {
-    synchronized(this) {
-      return _m_bits.length;
+  
+  void unpack_object_with_meta(ref uvm_object value) {
+    synchronized (this) {
+      int reference_id; 
+      reference_id = cast (int) unpack_field_int(32);
+      if (reference_id in _m_object_references) {
+	value = _m_object_references[reference_id];
+	return;
+      }
+      else {
+	uvm_object_wrapper _wrapper = unpack_object_wrapper();
+	if ((_wrapper !is null) && 
+	    ((value is null) || (value.get_object_type() !is _wrapper))) { 
+	  value = _wrapper.create_object("");
+	  if (value is null) {
+	    value = _wrapper.create_component("", null);
+	  }
+	} 
+      }
+      _m_object_references[reference_id] = value;
+      unpack_object(value);
     }
   }
 
-  mixin(uvm_sync_string);
+  uvm_object_wrapper unpack_object_wrapper() {
+    synchronized (this) {
+      string type_name = unpack_string();
+      if (_m_factory is null)
+	_m_factory = uvm_factory.get();
+      if (_m_factory.is_type_name_registered(type_name)) {
+	return _m_factory.find_wrapper_by_name(type_name);
+      }
+      return null;
+    }
+  }
+
+  // Function -- NODOCS -- get_packed_size
+  //
+  // Returns the number of bits that were packed.
+
+  // @uvm-ieee 1800.2-2017 auto 16.5.3.3
+  size_t get_packed_size() {
+    synchronized (this) {
+      return _m_bits.packIter - _m_bits.unpackIter;
+    }
+  }
 
   //------------------//
-  // Group: Variables //
+  // Group -- NODOCS -- Variables //
   //------------------//
-
-  // Variable: physical
-  //
-  // This bit provides a filtering mechanism for fields.
-  //
-  // The <is_abstract> and physical settings allow an object to distinguish between
-  // two different classes of fields. It is up to you, in the
-  // <uvm_object::do_pack> and <uvm_object::do_unpack> methods, to test the
-  // setting of this field if you want to use it as a filter.
-
-  // FIXME -- physical seems redundant, though present in the SV version
-  // private bool _physical = true;
-
-
-  // Variable: is_abstract
-  //
-  // This bit provides a filtering mechanism for fields.
-  //
-  // The is_abstract and physical settings allow an object to distinguish between
-  // two different classes of fields. It is up to you, in the
-  // <uvm_object::do_pack> and <uvm_object::do_unpack> routines, to test the
-  // setting of this field if you want to use it as a filter.
-
-  // FIXME -- is_abstract seems redundant, though present in the SV version
-  // bool _is_abstract;
-
-
-  // Variable: use_metadata
-  //
-  // This flag indicates whether to encode metadata when packing dynamic data,
-  // or to decode metadata when unpacking.  Implementations of <uvm_object::do_pack>
-  // and <uvm_object::do_unpack> should regard this bit when performing their
-  // respective operation. When set, metadata should be encoded as follows:
-  //
-  // - For strings, pack an additional ~null~ byte after the string is packed.
-  //
-  // - For objects, pack 4 bits prior to packing the object itself. Use 4'b0000
-  //   to indicate the object being packed is ~null~, otherwise pack 4'b0001 (the
-  //   remaining 3 bits are reserved).
-  //
-  // - For queues, dynamic arrays, and associative arrays, pack 32 bits
-  //   indicating the size of the array prior to packing individual elements.
-
-  @uvm_public_sync private bool _use_metadata = false;
-
-
-  // Variable: big_endian
-  //
-  // This bit determines the order that integral data is packed (using
-  // <pack_field>, <pack_field_int>, <pack_time>, or <pack_real>) and how the
-  // data is unpacked from the pack array (using <unpack_field>,
-  // <unpack_field_int>, <unpack_time>, or <unpack_real>). When the bit is set,
-  // data is associated msb to lsb; otherwise, it is associated lsb to msb.
-  //
-  // The following code illustrates how data can be associated msb to lsb and
-  // lsb to msb:
-  //
-  //|  class mydata extends uvm_object;
-  //|
-  //|    logic[15:0] value = 'h1234;
-  //|
-  //|    function void do_pack (uvm_packer packer);
-  //|      packer.pack_field_int(value, 16);
-  //|    endfunction
-  //|
-  //|    function void do_unpack (uvm_packer packer);
-  //|      value = packer.unpack_field_int(16);
-  //|    endfunction
-  //|  endclass
-  //|
-  //|  mydata d = new;
-  //|  bit bits[];
-  //|
-  //|  initial begin
-  //|    d.pack(bits);  // 'b0001001000110100
-  //|    uvm_default_packer.big_endian = 0;
-  //|    d.pack(bits);  // 'b0010110001001000
-  //|  end
-
-  @uvm_public_sync private bool _big_endian = true;
-
 
   // variables and methods primarily for internal use
 
   // static bool bitstream[];   // local bits for (un)pack_bytes
   // static bool fabitstream[]; // field automation bits for (un)pack_bytes
 
-  // not required with bstr
-  // int count;                // used to count the number of packed bits
-  @uvm_immutable_sync private  uvm_scope_stack _scope_stack; // = new;
+  
+  // encapsulated in esdl.data.packer
+  // int        _m_pack_iter; // Used to track the bit of the next pack
+  // int        _m_unpack_iter; // Used to track the bit of the next unpack
 
-  // bool  reverse_order;      //flip the bit order around
-  // byte  byte_size     = 8;  //set up bytesize for endianess
-  // int   word_size     = 16; //set up worksize for endianess
-  // bool  nopack;             //only count packable bits
+  bool  _reverse_order;      //flip the bit order around
+  byte  _byte_size     = 8;  //set up bytesize for endianess
+  int   _word_size     = 16; //set up worksize for endianess
+  bool  _nopack;             //only count packable bits
 
-  @uvm_public_sync private uvm_recursion_policy_enum _policy =
-    uvm_recursion_policy_enum.UVM_DEFAULT_POLICY;
 
   // uvm_pack_bitstream_t _m_bits;
-  private packer _m_bits;			// esdl.data.packer
-  // size_t m_packed_size;
+  private Packer _m_bits;			// esdl.data.packer
 
-  void unpack_object_ext  (uvm_object value) {
-    unpack_object(value);
-  }
-
-  bstr get_packed_bits () {
-    synchronized(this) {
-      return _m_bits;
-    }
-  }
-
-  Bit!1 get_bit (uint index) {
-    synchronized(this) {
-      if (index >= _m_bits.length) {
-	index_error(index, "Bit!1", 1);
-      }
-      bool val;
-      _m_bits.getFront(val, index);
-      return cast(Bit!1) val;
-    }
-  }
-
-  ubyte get_byte (uint index) {
-    synchronized(this) {
-      if (index >= ((_m_bits.length)+7)/8) {
-	index_error(index, "byte",8);
-      }
-      ubyte retval;
-      _m_bits.getFront(retval, index*8);
-      return retval;
-    }
-  }
-
-  uint get_int (uint index) {
-    synchronized(this) {
-      if (index >= (_m_bits.length+31)/32) {
-	index_error(index, "int",32);
-      }
-      uint retval;
-      _m_bits.getFront(retval, index*32);
-      return retval;
-    }
-  }
-
-  void get_bits (ref Bit!1[] bits) {
-    synchronized(this) {
-      _m_bits.toArray(bits);
-    }
-  }
-
-  Bit!1[] get_bits () {
-    synchronized(this) {
-      Bit!1[] bits;
-      _m_bits.toArray(bits);
-      return bits;
-    }
-  }
-
-  void get_bits (ref bool[] bits) {
-    synchronized(this) {
-      _m_bits.toArray(bits);
-    }
-  }
-
-  bool[] get_bits () {
-    synchronized(this) {
-      bool[] bits;
-      _m_bits.toArray(bits);
-      return bits;
-    }
-  }
-
-  void get_bytes (ref ubyte[] bytes) {
-    synchronized(this) {
-      _m_bits.toArray(bytes);
-    }
-  }
-
-  ubyte[] get_bytes() {
-    synchronized(this) {
-      ubyte[] bytes;
-      _m_bits.toArray(bytes);
-      return bytes;
-    }
-  }
-
-  void get_ints (ref uint[] ints) {
-    synchronized(this) {
-      _m_bits.toArray(ints);
-    }
-  }
-
-  uint[] get_ints () {
-    synchronized(this) {
-      uint[] ints;
-      _m_bits.toArray(ints);
-      return ints;
-    }
-  }
-
-  void put_bits (bool[] bits) {
-    synchronized(this) {
-      _m_bits.fromArray(bits);
-      _m_bits.unpackReset();
-    }
-  }
-
-  void put_bits (Bit!1[] bits) {
-    synchronized(this) {
-      _m_bits.fromArray(bits);
-      _m_bits.unpackReset();
-    }
-  }
-
-  void put_bytes(ubyte[] bytes) {
-    synchronized(this) {
-      _m_bits.fromArray(bytes);
-      _m_bits.unpackReset();
-    }
-  }
-
-  void put_ints (uint[] ints) {
-    synchronized(this) {
-      _m_bits.fromArray(ints);
-      _m_bits.unpackReset();
-    }
-  }
-
-  // This function does not do anything in the vlang version of UVM
-  // The functionality is taken care if inside the esdl.data.packer
-  void set_packed_size() {
-    // void
-  }
-
-  final void index_error(int index, string id, int sz) {
+  final void index_error(size_t index, string id, int sz) {
     import uvm.base.uvm_object_globals;
     import uvm.base.uvm_globals;
-    uvm_report_error("PCKIDX",
-		     format("index %0d for get_%0s too large; valid index range is 0-%0d.",
-			    index,id,((_m_bits.length+sz-1)/sz)-1), uvm_verbosity.UVM_NONE);
+    synchronized (this) {
+      uvm_report_error("PCKIDX",
+		       format("index %0d for get_%0s too large; valid index range is 0-%0d.",
+			      index, id, ((_m_bits.packIter+sz-1)/sz)-1),
+		       uvm_verbosity.UVM_NONE);
+    }
   }
 
   final bool enough_bits(size_t needed, string id) {
     import uvm.base.uvm_object_globals;
     import uvm.base.uvm_globals;
-    synchronized(this) {
-      if ((_m_bits.length - _m_bits.unpackIndex) < needed) {
+    synchronized (this) {
+      if ((_m_bits.packIter - _m_bits.unpackIter) < needed) {
 	uvm_report_error("PCKSZ",
 			 format("%0d bits needed to unpack %0s, yet only %0d available.",
-				needed, id, (_m_bits.length - _m_bits.unpackIndex)), uvm_verbosity.UVM_NONE);
+				needed, id, (_m_bits.packIter - _m_bits.unpackIter)),
+			 uvm_verbosity.UVM_NONE);
 	return false;
       }
       return true;
     }
   }
 
-  final void reset() {
-    synchronized(this) {
-      this.packReset();
-      this.unpackReset();
-    }
-  }
-
   final void packReset() {
-    synchronized(this) {
+    synchronized (this) {
       _m_bits.packReset();
     }
   }
 
   final void unpackReset() {
-    synchronized(this) {
+    synchronized (this) {
       _m_bits.unpackReset();
+    }
+  }
+  
+  void uvm_pack_element(E)(string name, ref E elem,
+			   uvm_field_flag_t flags) {
+    synchronized (this) {
+      m_uvm_pack_element!E(name, elem, flags);
+    }
+  }
+  
+  void m_uvm_pack_element(E)(string name, ref E elem,
+			     uvm_field_flag_t flags) {
+    static if (isArray!E && !is (E == string)) {
+      static if (isDynamicArray!E) {
+	pack(elem.length, 32);
+      }
+      foreach (index, ref ee; elem) {
+	m_uvm_pack_element(name, ee, flags);
+      }
+    }
+    else static if (is (E: uvm_object)) {
+      auto recursion =
+	cast (uvm_recursion_policy_enum) (flags & UVM_RECURSION);
+      if (recursion == uvm_recursion_policy_enum.UVM_REFERENCE) {
+	this.pack_object_with_meta(elem);
+      }
+    }
+    else {
+      pack(elem);
+    }
+  }
+  
+  void uvm_unpack_element(E)(string name, ref E elem,
+			     uvm_field_flag_t flags) {
+    synchronized (this) {
+      m_uvm_unpack_element!E(name, elem, flags);
+    }
+  }
+  
+  void m_uvm_unpack_element(E)(string name, ref E elem,
+			       uvm_field_flag_t flags) {
+    static if (isArray!E && !is (E == string)) {
+      static if (isDynamicArray!E) {
+	uint size;
+	unpack(size);
+	elem.length = size;
+      }
+      foreach (index, ref ee; elem) {
+	m_uvm_unpack_element(name, ee, flags);
+      }
+    }
+    else static if (is (E: uvm_object)) {
+      auto recursion =
+	cast (uvm_recursion_policy_enum) (flags & UVM_RECURSION);
+      if (recursion == uvm_recursion_policy_enum.UVM_REFERENCE) {
+	uvm_object obj = elem;
+	this.unpack_object_with_meta(obj);
+	if (obj !is elem) {
+	  elem = cast (E) obj;
+	  if (elem is null) {
+	    uvm_fatal("UVM/UNPACK_EXT/OBJ_CAST_FAILED",
+		      "Could not cast object of type '" ~
+		      obj.get_type_name() ~ "' into '" ~ name);
+	  }
+	}
+      }
+    }
+    else {
+      unpack(elem);
     }
   }
 }

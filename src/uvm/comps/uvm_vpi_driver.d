@@ -1,6 +1,6 @@
 //
 //------------------------------------------------------------------------------
-//   Copyright 2016 Coverify Systems Technology
+//   Copyright 2016-2019 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -20,11 +20,7 @@
 
 module uvm.comps.uvm_vpi_driver;
 
-import uvm.base.uvm_phase;
-import uvm.base.uvm_component;
-import uvm.base.uvm_globals;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_async_lock;
+import uvm.base;
 import uvm.comps.uvm_driver;
 import uvm.tlm1.uvm_tlm_fifos;
 import uvm.tlm1.uvm_ports;
@@ -34,6 +30,8 @@ import esdl.base.core: SimTerminatedException, AsyncLockDisabledException;
 
 class uvm_vpi_driver(REQ, string VPI_PREFIX): uvm_driver!REQ
 {
+  mixin uvm_component_essentials;
+  
   alias DRIVER = typeof(this);
   uvm_tlm_vpi_push_fifo!(REQ) req_fifo;
 
@@ -42,14 +40,12 @@ class uvm_vpi_driver(REQ, string VPI_PREFIX): uvm_driver!REQ
 
   uvm_async_event item_done_event;
   
-  enum string type_name = "uvm_vpi_driver!(REQ,RSP)";
-
   int vpi_fifo_depth = 1;	// can be configured via uvm_config_db
 
   string vpi_task_prefix;		// can be configured vio uvm_config_db
 
-  string vpi_get_next_item_task() {
-    return "$" ~ vpi_task_prefix ~ "_get_next_item";
+  string vpi_try_next_item_task() {
+    return "$" ~ vpi_task_prefix ~ "_try_next_item";
   }
 
   string vpi_item_done_task() {
@@ -79,22 +75,41 @@ class uvm_vpi_driver(REQ, string VPI_PREFIX): uvm_driver!REQ
     drive_vpi_port.put(req);
   }
 
-  static int vpi_get_next_item_calltf(char* user_data) {
+  // The functions vpi_try_next_item_task and vpi_item_done_task are
+  // static functions because these is directly called by Verilog VPI.
+  // But when you look at the user_data argument of these function,
+  // the argument carries a pointer to an instance of vpi_driver
+  // itself. So the function actually behaves like a OOP class method
+  // only. It is therefor good to keep variables of the function as
+  // non-static object data inside the class. We try to minimize
+  // number of variable declarations on the stack since some EDA tools
+  // provide for a very limited stack size
+
+  private vpiHandle _vpi_systf_handle;
+  private vpiHandle _vpi_arg_iterator;
+  private uvm_vpi_iter _vpi_iter;
+  private REQ _vpi_req;
+  
+  static int vpi_try_next_item_calltf(char* user_data) {
     try {
-      vpiHandle systf_handle =
-	vpi_handle(vpiSysTfCall, null);
-      assert(systf_handle !is null);
       DRIVER drv = cast(DRIVER) user_data;
-      REQ req;
-      auto retval = drv.get_req_port.try_peek(req);
-      if (retval && req !is null) {
-	vpiHandle arg_iterator =
-	  vpi_iterate(vpiArgument, systf_handle);
-	assert(arg_iterator !is null);
-	req.do_vpi_put(uvm_vpi_iter(arg_iterator,
-				    drv.vpi_get_next_item_task));
+      assert(drv !is null);
+      assert(drv._vpi_iter !is null);
+      if (drv.get_req_port.try_peek(drv._vpi_req) && drv._vpi_req !is null) {
+	drv._vpi_systf_handle = vpi_handle(vpiSysTfCall, null);
+	assert(drv._vpi_systf_handle !is null);
+	drv._vpi_arg_iterator = vpi_iterate(vpiArgument, drv._vpi_systf_handle);
+	assert(drv._vpi_arg_iterator !is null);
+	drv._vpi_iter.assign(drv._vpi_arg_iterator, drv.vpi_try_next_item_task);
+	drv._vpi_req.do_vpi_put(drv._vpi_iter);
 	vpiReturnVal(VpiStatus.SUCCESS);
 	return 0;
+      }
+      import esdl.base.core: RootEntityIntf;
+      static RootEntityIntf root;
+      if (root is null) root = drv.get_root_entity();
+      if (root.isTerminated()) {
+	throw (new SimTerminatedException());
       }
       vpiReturnVal(VpiStatus.FAILURE);
       return 0;
@@ -123,12 +138,11 @@ class uvm_vpi_driver(REQ, string VPI_PREFIX): uvm_driver!REQ
 
   static int vpi_item_done_calltf(char* user_data) {
     try {
-      vpiHandle systf_handle =
-	vpi_handle(vpiSysTfCall, null);
-      assert(systf_handle !is null);
       DRIVER drv = cast(DRIVER) user_data;
-      REQ req;
-      drv.get_req_port.get(req);
+      assert(drv !is null);
+      drv._vpi_systf_handle = vpi_handle(vpiSysTfCall, null);
+      assert(drv._vpi_systf_handle !is null);
+      drv.get_req_port.get(drv._vpi_req);
       drv.item_done_event.schedule(Vpi.getTime());
       vpiReturnVal(VpiStatus.SUCCESS);
       return 0;
@@ -161,10 +175,13 @@ class uvm_vpi_driver(REQ, string VPI_PREFIX): uvm_driver!REQ
     {
       s_vpi_systf_data tf_data;
       uvm_info("VPIREG", "Registering vpi system task: " ~
-	       vpi_get_next_item_task, uvm_verbosity.UVM_NONE);
+	       vpi_try_next_item_task, uvm_verbosity.UVM_NONE);
       tf_data.type = vpiSysFunc;
-      tf_data.tfname = cast(char*) vpi_get_next_item_task.toStringz;
-      tf_data.calltf = &vpi_get_next_item_calltf;
+      tf_data.sysfunctype = vpiIntFunc;
+      tf_data.compiletf   = null;
+      tf_data.sizetf      = null;
+      tf_data.tfname = cast(char*) vpi_try_next_item_task.toStringz;
+      tf_data.calltf = &vpi_try_next_item_calltf;
       // tf_data.compiletf = &pull_avmm_compiletf;
       tf_data.user_data = cast(char*) this;
       vpi_register_systf(&tf_data);
@@ -174,6 +191,9 @@ class uvm_vpi_driver(REQ, string VPI_PREFIX): uvm_driver!REQ
       uvm_info("VPIREG", "Registering vpi system task: " ~
     	       vpi_item_done_task, uvm_verbosity.UVM_NONE);
       tf_data.type = vpiSysFunc;
+      tf_data.sysfunctype = vpiIntFunc;
+      tf_data.compiletf   = null;
+      tf_data.sizetf      = null;
       tf_data.tfname = cast(char*) vpi_item_done_task.toStringz;
       tf_data.calltf = &vpi_item_done_calltf;
       // tf_data.compiletf = &pull_avmm_compiletf;
@@ -182,14 +202,11 @@ class uvm_vpi_driver(REQ, string VPI_PREFIX): uvm_driver!REQ
     }
   }
   
-  override string get_type_name() {
-    return type_name;
-  }
-
   this(string name, uvm_component parent) {
     synchronized(this) {
       super(name, parent);
       item_done_event = new uvm_async_event("item_done_event", this);
+      _vpi_iter = new uvm_vpi_iter();
       if (vpi_task_prefix == "") {
 	if (VPI_PREFIX == "") {
 	  vpi_task_prefix = REQ.stringof;

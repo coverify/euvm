@@ -1,8 +1,12 @@
 //------------------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2011 Cadence Design Systems, Inc.
-//   Copyright 2010-2011 Synopsys, Inc.
-//   Copyright 2014-2016 Coverify Systems Technology
+// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2014 Semifore
+// Copyright 2010-2014 Synopsys, Inc.
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2013-2018 NVIDIA Corporation
+// Copyright 2012 Accellera Systems Initiative
+// Copyright 2017 Verific
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -47,17 +51,17 @@ import std.string: format;
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_sequencer_param_base #(REQ,RSP)
+// CLASS -- NODOCS -- uvm_sequencer_param_base #(REQ,RSP)
 //
 // Extends <uvm_sequencer_base> with an API depending on specific
 // request (REQ) and response (RSP) types.
 //------------------------------------------------------------------------------
 
-class uvm_sequencer_param_base (REQ = uvm_sequence_item,
-				RSP = REQ): uvm_sequencer_base
-if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
+abstract class uvm_sequencer_param_base (REQ = uvm_sequence_item,
+					 RSP = REQ): uvm_sequencer_base
+  if (is (REQ: uvm_sequence_item) && is (RSP: uvm_sequence_item))
 {
-  mixin(uvm_sync_string);
+  mixin (uvm_sync_string);
 
   alias this_type = uvm_sequencer_param_base !(REQ , RSP);
   alias req_type = REQ;
@@ -81,7 +85,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
     private uvm_sequencer_analysis_fifo!RSP _sqr_rsp_analysis_fifo;
 
 
-  // Function: new
+  // Function -- NODOCS -- new
   //
   // Creates and initializes an instance of this class using the normal
   // constructor arguments for uvm_component: name is the name of the instance,
@@ -92,7 +96,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // ---
 
   this(string name, uvm_component parent) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, parent);
       _rsp_export = new uvm_analysis_export!RSP ("rsp_export", this);
       _sqr_rsp_analysis_fifo =
@@ -105,7 +109,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
 
 
 
-  // Function: send_request
+  // Function -- NODOCS -- send_request
   //
   // The send_request function may only be called after a wait_for_grant call.
   // This call will send the request item, t,  to the sequencer pointed to by
@@ -119,7 +123,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   override void send_request(uvm_sequence_base sequence_ptr,
 			     uvm_sequence_item t,
 			     bool rerandomize = false) {
-    synchronized(this) {
+    synchronized (this) {
       if (sequence_ptr is null) {
 	uvm_report_fatal("SNDREQ", "Send request sequence_ptr" ~
 			 " is null", uvm_verbosity.UVM_NONE);
@@ -130,7 +134,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
       }
       sequence_ptr.dec_wait_for_grant_semaphore();
 
-      REQ param_t = cast(REQ) t;
+      REQ param_t = cast (REQ) t;
       if (param_t !is null) {
 	if (rerandomize is true) {
 	  version(UVM_NO_RAND) {}
@@ -150,14 +154,14 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
 	m_last_req_push_front(param_t);
       }
       else {
-	uvm_report_fatal(get_name(), format("send_request failed to cast" ~
-					    " sequence item"), uvm_verbosity.UVM_NONE);
+	uvm_report_fatal("SQRSNDREQCAST", format("send_request failed to cast" ~
+						 " sequence item"), uvm_verbosity.UVM_NONE);
       }
       param_t.set_sequence_id(sequence_ptr.m_get_sqr_sequence_id(m_sequencer_id,
 								 true));
       t.set_sequencer(this);
       if (_m_req_fifo.try_put(param_t) is false) {
-	uvm_report_fatal(get_full_name(),
+	uvm_report_fatal("SQRSNDREQCAST",
 			 format("Concurrent calls to send_request() not" ~
 				" supported. Check your driver for concurrent" ~
 				" calls to get_next_item()"), uvm_verbosity.UVM_NONE);
@@ -168,7 +172,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
     }
   }
 
-  // Function: get_current_item
+  // Function -- NODOCS -- get_current_item
   //
   // Returns the request_item currently being executed by the sequencer. If the
   // sequencer is not currently executing an item, this method will return ~null~.
@@ -180,7 +184,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // since the item is completed at the same time as it is requested.
   //
   final REQ get_current_item() {
-    synchronized(this) {
+    synchronized (this) {
       REQ t;
       if (_m_req_fifo.try_peek(t) is false) {
 	return null;
@@ -191,10 +195,10 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
 
 
   //----------------
-  // Group: Requests
+  // Group -- NODOCS -- Requests
   //----------------
 
-  // Function: get_num_reqs_sent
+  // Function -- NODOCS -- get_num_reqs_sent
   //
   // Returns the number of requests that have been sent by this sequencer.
   //
@@ -203,14 +207,14 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // -----------------
 
   final int get_num_reqs_sent() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_num_reqs_sent;
     }
   }
 
 
 
-  // Function: set_num_last_reqs
+  // Function -- NODOCS -- set_num_last_reqs
   //
   // Sets the size of the last_requests buffer.  Note that the maximum buffer
   // size is 1024.  If max is greater than 1024, a warning is issued, and the
@@ -221,8 +225,8 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // -----------------
 
   final void set_num_last_reqs(uint max) {
-    synchronized(this) {
-      if(max > 1024) {
+    synchronized (this) {
+      if (max > 1024) {
 	uvm_report_warning("HSTOB",
 			   format("Invalid last size; 1024 is the maximum" ~
 				  " and will be used"));
@@ -230,7 +234,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
       }
 
       //shrink the buffer if necessary
-      while((_m_last_req_buffer.length !is 0) &&
+      while ((_m_last_req_buffer.length !is 0) &&
 	    (_m_last_req_buffer.length > max)) {
 	_m_last_req_buffer.removeBack();
       }
@@ -242,7 +246,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
 
 
 
-  // Function: get_num_last_reqs
+  // Function -- NODOCS -- get_num_last_reqs
   //
   // Returns the size of the last requests buffer, as set by set_num_last_reqs.
 
@@ -250,26 +254,26 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // -----------------
 
   final uint get_num_last_reqs() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_num_last_reqs;
     }
   }
 
-  // Function: last_req
+  // Function -- NODOCS -- last_req
   //
   // Returns the last request item by default.  If n is not 0, then it will get
   // the n�th before last request item.  If n is greater than the last request
   // buffer size, the function will return ~null~.
   //
   final REQ last_req(uint n = 0) {
-    synchronized(this) {
-      if(n > _m_num_last_reqs) {
+    synchronized (this) {
+      if (n > _m_num_last_reqs) {
 	uvm_report_warning("HSTOB",
 			   format("Invalid last access (%0d), the max" ~
 				  " history is %0d", n, _m_num_last_reqs));
 	return null;
       }
-      if(n == _m_last_req_buffer.length) {
+      if (n == _m_last_req_buffer.length) {
 	return null;
       }
 
@@ -280,10 +284,10 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
 
 
   //-----------------
-  // Group: Responses
+  // Group -- NODOCS -- Responses
   //-----------------
 
-  // Port: rsp_export
+  // Port -- NODOCS -- rsp_export
   //
   // Drivers or monitors can connect to this port to send responses
   // to the sequencer.  Alternatively, a driver can send responses
@@ -301,7 +305,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
     private uvm_analysis_export!RSP _rsp_export;
 
 
-  // Function: get_num_rsps_received
+  // Function -- NODOCS -- get_num_rsps_received
   //
   // Returns the number of responses received thus far by this sequencer.
 
@@ -309,14 +313,14 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // ---------------------
 
   final int get_num_rsps_received() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_num_rsps_received;
     }
   }
 
 
 
-  // Function: set_num_last_rsps
+  // Function -- NODOCS -- set_num_last_rsps
   //
   // Sets the size of the last_responses buffer.  The maximum buffer size is
   // 1024. If max is greater than 1024, a warning is issued, and the buffer is
@@ -327,15 +331,15 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // -----------------
 
   final void set_num_last_rsps(uint max) {
-    synchronized(this) {
-      if(max > 1024) {
+    synchronized (this) {
+      if (max > 1024) {
 	uvm_report_warning("HSTOB",
 			   format("Invalid last size; 1024 is the maximum" ~
 				  " and will be used"));
 	max = 1024;
       }
       //shrink the buffer
-      while((_m_last_rsp_buffer.length != 0)
+      while ((_m_last_rsp_buffer.length != 0)
 	    && (_m_last_rsp_buffer.length > max)) {
 	_m_last_rsp_buffer.removeBack();
       }
@@ -346,7 +350,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
 
 
 
-  // Function: get_num_last_rsps
+  // Function -- NODOCS -- get_num_last_rsps
   //
   // Returns the max size of the last responses buffer, as set by
   // set_num_last_rsps.
@@ -356,26 +360,26 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // -----------------
 
   final uint get_num_last_rsps() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_num_last_rsps;
     }
   }
 
-  // Function: last_rsp
+  // Function -- NODOCS -- last_rsp
   //
   // Returns the last response item by default.  If n is not 0, then it will
   // get the nth-before-last response item.  If n is greater than the last
   // response buffer size, the function will return ~null~.
   //
   final RSP last_rsp(uint n = 0) {
-    synchronized(this) {
-      if(n > _m_num_last_rsps) {
+    synchronized (this) {
+      if (n > _m_num_last_rsps) {
 	uvm_report_warning("HSTOB",
 			   format("Invalid last access (%0d), the max" ~
 				  " history is %0d", n, _m_num_last_rsps));
 	return null;
       }
-      if(n == _m_last_rsp_buffer.length) {
+      if (n == _m_last_rsp_buffer.length) {
 	return null;
       }
 
@@ -389,12 +393,12 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // ---------------------
 
   final void m_last_rsp_push_front(RSP item) {
-    synchronized(this) {
-      if(!_m_num_last_rsps) {
+    synchronized (this) {
+      if (!_m_num_last_rsps) {
 	return;
       }
 
-      if(_m_last_rsp_buffer.length == _m_num_last_rsps) {
+      if (_m_last_rsp_buffer.length == _m_num_last_rsps) {
 	_m_last_rsp_buffer.removeBack();
       }
 
@@ -407,7 +411,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // ------------
 
   final void put_response (RSP t) {
-    synchronized(this) {
+    synchronized (this) {
 
       uvm_sequence_base sequence_ptr;
 
@@ -441,10 +445,10 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
 	sequence_ptr.put_response(t);
       }
       else {
-	uvm_report_info("Sequencer",
-			format("Dropping response for sequence %0d, sequence" ~
-			       " not found.  Probable cause: sequence exited" ~
-			       " or has been killed", t.get_sequence_id()));
+	uvm_report_warning("Sequencer",
+			   format("Dropping response for sequence %0d, sequence" ~
+				  " not found.  Probable cause: sequence exited" ~
+				  " or has been killed", t.get_sequence_id()));
       }
     }
   }
@@ -454,7 +458,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // -----------
 
   override void build_phase(uvm_phase phase) {
-    synchronized(this) {
+    synchronized (this) {
       super.build_phase(phase);
       sqr_rsp_analysis_fifo.sequencer_ptr = this;
     }
@@ -466,7 +470,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // -------------
 
   override void connect_phase(uvm_phase phase) {
-    synchronized(this) {
+    synchronized (this) {
       super.connect_phase(phase);
       rsp_export.connect(sqr_rsp_analysis_fifo.analysis_export);
     }
@@ -478,7 +482,7 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // --------
 
   override void do_print (uvm_printer printer) {
-    synchronized(this) {
+    synchronized (this) {
       super.do_print(printer);
       printer.print("num_last_reqs", _m_num_last_reqs, uvm_radix_enum.UVM_DEC);
       printer.print("num_last_rsps", _m_num_last_rsps, uvm_radix_enum.UVM_DEC);
@@ -490,8 +494,8 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // --------------
 
   override void analysis_write(uvm_sequence_item t) {
-    synchronized(this) {
-      RSP response = cast(RSP) t;
+    synchronized (this) {
+      RSP response = cast (RSP) t;
 
       if (response is null) {
 	uvm_report_fatal("ANALWRT", "Failure to cast analysis port write item",
@@ -506,12 +510,12 @@ if(is(REQ: uvm_sequence_item) && is(RSP: uvm_sequence_item))
   // ---------------------
 
   final void m_last_req_push_front(REQ item) {
-    synchronized(this) {
-      if(!_m_num_last_reqs) {
+    synchronized (this) {
+      if (!_m_num_last_reqs) {
 	return;
       }
 
-      if(_m_last_req_buffer.length == _m_num_last_reqs) {
+      if (_m_last_req_buffer.length == _m_num_last_reqs) {
 	_m_last_req_buffer.removeBack();
       }
 

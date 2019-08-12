@@ -1,6 +1,6 @@
 //
 //------------------------------------------------------------------------------
-//   Copyright 2012-2016 Coverify Systems Technology
+//   Copyright 2012-2019 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -21,6 +21,8 @@
 module uvm.base.uvm_entity;
 
 import uvm.base.uvm_root: uvm_root;
+import uvm.base.uvm_globals: uvm_init;
+import uvm.base.uvm_object_globals: uvm_core_state, m_uvm_core_state;
 import uvm.base.uvm_once;
 
 import uvm.meta.misc;
@@ -52,7 +54,7 @@ class uvm_harness: RootEntity
   void start_bg() {
     super.forkSim();
     foreach (child; getChildComps()) {
-      auto entity = cast(uvm_entity_base) child;
+      auto entity = cast (uvm_entity_base) child;
       if (entity !is null) {
 	entity.wait_for_end_of_elaboration();
       }
@@ -85,13 +87,14 @@ class uvm_testbench(ROOT) if (is (ROOT: uvm_root)) : uvm_harness
 
 abstract class uvm_entity_base: Entity
 {
-  mixin(uvm_sync_string);
+  mixin (uvm_sync_string);
   this() {
-    synchronized(this) {
+    synchronized (this) {
       _uvm_root_init_semaphore = new Semaphore(); // count 0
       // uvm_once has some events etc that need to know the context for init
       set_thread_context();
       _root_once = new uvm_root_once();
+      m_uvm_core_state = uvm_core_state.UVM_CORE_PRE_INIT;
     }
   }
 
@@ -99,6 +102,7 @@ abstract class uvm_entity_base: Entity
   private Semaphore _uvm_root_init_semaphore;
 
   // effectively immutable
+  // @uvm_immutable_sync
   private uvm_root_once _root_once;
   
   uvm_root_once root_once() {
@@ -107,9 +111,9 @@ abstract class uvm_entity_base: Entity
 
   static uvm_entity_base get() {
     auto context = EntityIntf.getContextEntity();
-    if(context !is null) {
-      auto entity = cast(uvm_entity_base) context;
-      assert(entity !is null);
+    if (context !is null) {
+      auto entity = cast (uvm_entity_base) context;
+      assert (entity !is null);
       return entity;
     }
     return null;
@@ -118,6 +122,8 @@ abstract class uvm_entity_base: Entity
   abstract void wait_for_end_of_elaboration();
   abstract uvm_root _get_uvm_root();
   abstract uvm_root get_root();
+  abstract uint get_seed();
+  abstract void set_seed(uint seed);
   // The randomization seed passed from the top.
   // alias _get_uvm_root this;
 
@@ -126,23 +132,23 @@ abstract class uvm_entity_base: Entity
   // within the same thread in order to switch context
   void set_thread_context() {
     auto proc = Process.self();
-    if(proc !is null) {
-      auto _entity = cast(uvm_entity_base) proc.getParentEntity();
-      assert(_entity is null, "Default context already set to: " ~
+    if (proc !is null) {
+      auto _entity = cast (uvm_entity_base) proc.getParentEntity();
+      assert (_entity is null, "Default context already set to: " ~
 	     _entity.getFullName());
     }
     this.setThreadContext();
   }
 }
 
-class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
+class uvm_entity(T): uvm_entity_base if (is (T: uvm_root))
 {
-  mixin(uvm_sync_string);
+  mixin (uvm_sync_string);
     
   // alias _get_uvm_root this;
 
   @uvm_private_sync
-    bool _uvm_root_initialized;
+    private bool _uvm_root_initialized;
 
   // The uvm_root instance corresponding to this RootEntity.
   // effectively immutable
@@ -151,7 +157,7 @@ class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
 
   this() {
     import std.random;		// uniform
-    synchronized(this) {
+    synchronized (this) {
       super();
       /* Now handled in initial block
       // set static variable that would later be used by uvm_root
@@ -180,13 +186,9 @@ class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
   // Make the uvm_root available only after the simulaion has
   // started and the uvm_root is ready to use
   override T get_root() {
-    while (uvm_root_initialized is false) {
-      uvm_root_init_semaphore.wait();
-      uvm_root_init_semaphore.notify();
-    }
     // expose the root_instance to the external world only after
     // elaboration is done
-    uvm_root_instance.wait_for_end_of_elaboration();
+    this.wait_for_end_of_elaboration();
     return uvm_root_instance;
   }
 
@@ -202,10 +204,17 @@ class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
     import uvm.base.uvm_misc: uvm_seed_map;
     lockStage();
     fileCaveat();
+
+    m_uvm_core_state = uvm_core_state.UVM_CORE_INITIALIZING;
+
+    // we do not set the uvm_root name as "__top__" because
+    // we can have multiple uvm_root instances with different names
     _uvm_root_instance = new T();
     _uvm_root_instance.set_name(getFullName() ~ ".(" ~
 				qualifiedTypeName!T ~ ")");
     _uvm_root_instance.initialize(this);
+
+    uvm_init();
 
     // initialize parallelism for the uvm_root_instance
     configure_parallelism();
@@ -221,17 +230,23 @@ class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
 
   uint _seed;
 
-  void set_seed(uint seed) {
+  override final void set_seed(uint seed) {
     import uvm.base.uvm_globals;
     import uvm.base.uvm_object_globals;
-    synchronized(this) {
-      if(_uvm_root_initialized) {
+    synchronized (this) {
+      if (_uvm_root_initialized) {
 	uvm_report_fatal("SEED",
 			 "Method set_seed can not be called after" ~
 			 " the simulation has started",
 			 uvm_verbosity.UVM_NONE);
       }
       _seed = seed;
+    }
+  }
+  
+  override final uint get_seed() {
+    synchronized(this) {
+      return _seed;
     }
   }
 
@@ -241,7 +256,7 @@ class uvm_entity(T): uvm_entity_base if(is(T: uvm_root))
     // attributes to uvm_root
     auto linfo = _esdl__uda!(_esdl__Multicore, T);
     auto pconf = this._esdl__getMulticoreConfig();
-    assert(pconf !is null);
+    assert (pconf !is null);
     auto config = linfo.makeCfg(pconf);
     uvm_root_instance._uvm__configure_parallelism(config);
   }

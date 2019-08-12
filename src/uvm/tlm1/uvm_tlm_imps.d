@@ -1,9 +1,10 @@
 //
 //----------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2010 Cadence Design Systems, Inc.
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2016      Coverify Systems Technology
+// Copyright 2016-2019 Coverify Systems Technology
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2018 Synopsys, Inc.
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2018 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -95,7 +96,7 @@ module uvm.tlm1.uvm_tlm_imps;
 */
 
 //-----------------------------------------------------------------------
-// TLM IMP implementations
+// UVM TLM imp implementations
 
 // *define UVM_BLOCKING_PUT_IMP(IMP, TYPE, arg)	\
 //   task put (TYPE arg); \
@@ -382,7 +383,7 @@ mixin template UVM_EXPORT_COMMON(uint MASK) {
 mixin template UVM_IMP_COMMON(uint MASK, string TYPE_NAME, IMP) {
   private IMP _m_imp;
   this(string name, IMP imp) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
       _m_imp = IMP;
       m_if_mask = MASK;
@@ -394,7 +395,7 @@ mixin template UVM_IMP_COMMON(uint MASK, string TYPE_NAME, IMP) {
 mixin template UVM_IMP_COMMON(uint MASK, IMP) {
   private IMP _m_imp;
   this(string name, IMP imp) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, imp, uvm_port_type_e.UVM_IMPLEMENTATION, 1, 1);
       _m_imp = IMP;
       m_if_mask = MASK;
@@ -409,8 +410,8 @@ mixin template UVM_IMP_COMMON(uint MASK, IMP) {
 /*   function new (string name, this_imp_type IMP, \ */
 /*                 this_req_type req_imp = null, this_rsp_type rsp_imp = null); \ */
 /*     super.new (name, IMP, UVM_IMPLEMENTATION, 1, 1); \ */
-/*     if(req_imp==null) $cast(req_imp, IMP); \ */
-/*     if(rsp_imp==null) $cast(rsp_imp, IMP); \ */
+/*     if (req_imp==null) $cast(req_imp, IMP); \ */
+/*     if (rsp_imp==null) $cast(rsp_imp, IMP); \ */
 /*     m_req_imp = req_imp; \ */
 /*     m_rsp_imp = rsp_imp; \ */
 /*     m_if_mask = MASK; \ */
@@ -422,10 +423,10 @@ mixin template UVM_MS_IMP_COMMON(uint MASK, string TYPE_NAME) {
   private this_rsp_type _m_rsp_imp;
   this(string name, this_imp_type imp,
        this_req_type req_imp = null, this_rsp_type rsp_imp = null) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, imp, UVM_impLEMENTATION, 1, 1);
-      if(req_imp is null) req_imp = cast(this_req_type) imp;
-      if(rsp_imp is null) rsp_imp = cast(this_rsp_type) imp;
+      if (req_imp is null) req_imp = cast (this_req_type) imp;
+      if (rsp_imp is null) rsp_imp = cast (this_rsp_type) imp;
       _m_req_imp = req_imp;
       _m_rsp_imp = rsp_imp;
       m_if_mask = MASK;
@@ -439,10 +440,10 @@ mixin template UVM_MS_IMP_COMMON(uint MASK) {
   private this_rsp_type _m_rsp_imp;
   this(string name, this_imp_type imp,
        this_req_type req_imp = null, this_rsp_type rsp_imp = null) {
-    synchronized(this) {
+    synchronized (this) {
       super(name, imp, UVM_impLEMENTATION, 1, 1);
-      if(req_imp is null) req_imp = cast(this_req_type) imp;
-      if(rsp_imp is null) rsp_imp = cast(this_rsp_type) imp;
+      if (req_imp is null) req_imp = cast (this_req_type) imp;
+      if (rsp_imp is null) rsp_imp = cast (this_rsp_type) imp;
       _m_req_imp = req_imp;
       _m_rsp_imp = rsp_imp;
       m_if_mask = MASK;

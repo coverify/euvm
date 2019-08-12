@@ -1,9 +1,11 @@
 //
 //----------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2010 Cadence Design Systems, Inc.
-//   Copyright 2010      Synopsys, Inc.
-//   Copyright 2012-2016 Coverify Systems Technology
+// Copyright 2012-2019 Coverify Systems Technology
+// Copyright 2007-2018 Mentor Graphics Corporation
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2011 AMD
+// Copyright 2015-2018 NVIDIA Corporation
+// Copyright 2012 Accellera Systems Initiative
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -30,22 +32,31 @@ import uvm.meta.misc;
 
 final class uvm_once_domain_globals: uvm_once_base
 {
-  @uvm_public_sync uvm_phase _build_ph;
-  @uvm_public_sync uvm_phase _connect_ph;
-  @uvm_public_sync uvm_phase _setup_ph;
-  @uvm_public_sync uvm_phase _end_of_elaboration_ph;
-  @uvm_public_sync uvm_phase _start_of_simulation_ph;
-  @uvm_public_sync uvm_phase _run_ph;
-  @uvm_public_sync uvm_phase _extract_ph;
-  @uvm_public_sync uvm_phase _check_ph;
-  @uvm_public_sync uvm_phase _report_ph;
+  @uvm_public_sync
+  private uvm_phase _build_ph;
+  @uvm_public_sync
+  private uvm_phase _connect_ph;
+  @uvm_public_sync
+  private uvm_phase _setup_ph;
+  @uvm_public_sync
+  private uvm_phase _end_of_elaboration_ph;
+  @uvm_public_sync
+  private uvm_phase _start_of_simulation_ph;
+  @uvm_public_sync
+  private uvm_phase _run_ph;
+  @uvm_public_sync
+  private uvm_phase _extract_ph;
+  @uvm_public_sync
+  private uvm_phase _check_ph;
+  @uvm_public_sync
+  private uvm_phase _report_ph;
 }
 
-mixin(uvm_once_sync_string!(uvm_once_domain_globals, "uvm_domain_globals"));
+mixin (uvm_once_sync_string!(uvm_once_domain_globals, "uvm_once_domain_globals"));
 
 //------------------------------------------------------------------------------
 //
-// Class: uvm_domain
+// Class -- NODOCS -- uvm_domain
 //
 //------------------------------------------------------------------------------
 //
@@ -53,6 +64,7 @@ mixin(uvm_once_sync_string!(uvm_once_domain_globals, "uvm_domain_globals"));
 // Handle used to assign domains to components or hierarchies in the testbench
 //
 
+// @uvm-ieee 1800.2-2017 auto 9.4.1
 class uvm_domain: uvm_phase
 {
   import std.string: format;
@@ -60,46 +72,41 @@ class uvm_domain: uvm_phase
   static class uvm_once: uvm_once_base
   {
     @uvm_private_sync
-    private uvm_domain         _m_common_domain;
-    @uvm_private_sync
     private uvm_domain         _m_uvm_domain; // run-time phases
     private uvm_domain[string] _m_domains;
     @uvm_private_sync
     private uvm_phase          _m_uvm_schedule;
   };
 
-  mixin(uvm_once_sync_string);
+  mixin (uvm_once_sync_string);
 
-  // Function: get_domains
-  //
-  // Provides a list of all domains in the provided ~domains~ argument.
-  //
+  // @uvm-ieee 1800.2-2017 auto 9.4.2.2
   static void get_domains(out uvm_domain[string] domains) {
-    synchronized(once) {
-      domains = once._m_domains.dup;
+    synchronized (_uvm_once_inst) {
+      domains = _uvm_once_inst._m_domains.dup;
     }
   }
 
   static const(uvm_domain[string]) get_domains() {
-    synchronized(once) {
-      return once._m_domains.dup;
+    synchronized (_uvm_once_inst) {
+      return _uvm_once_inst._m_domains.dup;
     }
   }
 
-  // Function: get_uvm_schedule
+  // Function -- NODOCS -- get_uvm_schedule
   //
   // Get the "UVM" schedule, which consists of the run-time phases that
   // all components execute when participating in the "UVM" domain.
   //
   static uvm_phase get_uvm_schedule() {
     get_uvm_domain();
-    synchronized(once) {
+    synchronized (_uvm_once_inst) {
       return m_uvm_schedule;
     }
   }
 
 
-  // Function: get_common_domain
+  // Function -- NODOCS -- get_common_domain
   //
   // Get the "common" domain, which consists of the common phases that
   // all components execute in sync with each other. Phases in the "common"
@@ -111,12 +118,18 @@ class uvm_domain: uvm_phase
     import uvm.base.uvm_common_phases;
     // defined in SV version but not used anywhere
     // uvm_phase schedule;
-    synchronized(once) {
-      if (m_common_domain !is null) {
-	return m_common_domain;
+    synchronized (_uvm_once_inst) {
+      uvm_domain domain;
+
+      if ("common" in _uvm_once_inst._m_domains) {
+	domain = _uvm_once_inst._m_domains["common"];
       }
 
-      uvm_domain domain = new uvm_domain("common");
+      if (domain !is null) {
+	return domain;
+      }
+
+      domain = new uvm_domain("common");
       domain.add(uvm_build_phase.get());
       domain.add(uvm_connect_phase.get());
       domain.add(uvm_setup_phase.get());
@@ -128,7 +141,7 @@ class uvm_domain: uvm_phase
       domain.add(uvm_report_phase.get());
       domain.add(uvm_final_phase.get());
 
-      once._m_domains["common"] = domain;
+      _uvm_once_inst._m_domains["common"] = domain;
 
       // for backward compatibility, make common phases visible;
       // same as uvm_<name>_phase.get().
@@ -142,11 +155,11 @@ class uvm_domain: uvm_phase
       check_ph               = domain.find(uvm_check_phase.get());
       report_ph              = domain.find(uvm_report_phase.get());
 
-      m_common_domain = domain;
       domain = get_uvm_domain();
-      m_common_domain.add(domain, m_common_domain.find(uvm_run_phase.get()));
+      _uvm_once_inst._m_domains["common"].add(domain,
+				    _uvm_once_inst._m_domains["common"].find(uvm_run_phase.get()));
 
-      return m_common_domain;
+      return _uvm_once_inst._m_domains["common"];
     }
   }
 
@@ -156,8 +169,8 @@ class uvm_domain: uvm_phase
   //
   static void add_uvm_phases(uvm_phase schedule) {
     import uvm.base.uvm_runtime_phases;
-    assert(schedule !is null);
-    synchronized(schedule) {
+    assert (schedule !is null);
+    synchronized (schedule) {
       schedule.add(uvm_pre_reset_phase.get());
       schedule.add(uvm_reset_phase.get());
       schedule.add(uvm_post_reset_phase.get());
@@ -179,7 +192,7 @@ class uvm_domain: uvm_phase
   //
   static uvm_domain get_uvm_domain() {
     import uvm.base.uvm_object_globals;
-    synchronized(once) {
+    synchronized (_uvm_once_inst) {
       if (m_uvm_domain is null) {
 	m_uvm_domain = new uvm_domain("uvm");
 	m_uvm_schedule = new uvm_phase("uvm_sched", uvm_phase_type.UVM_PHASE_SCHEDULE);
@@ -197,12 +210,12 @@ class uvm_domain: uvm_phase
     import uvm.base.uvm_globals;
     import uvm.base.uvm_object_globals;
     super(name, uvm_phase_type.UVM_PHASE_DOMAIN);
-    synchronized(once) {
-      if (name in once._m_domains) {
+    synchronized (_uvm_once_inst) {
+      if (name in _uvm_once_inst._m_domains) {
 	uvm_error("UNIQDOMNAM",
 		  format("Domain created with non-unique name '%s'", name));
       }
-      once._m_domains[name] = this;
+      _uvm_once_inst._m_domains[name] = this;
     }
   }
 
@@ -213,14 +226,14 @@ class uvm_domain: uvm_phase
   override void jump(uvm_phase phase) {
     import uvm.base.uvm_object_globals;
     import std.algorithm;	// filter
-    // synchronized(this) {
+    // synchronized (this) {
     uvm_phase[] phases = m_get_transitive_children();
-    foreach(ph;
+    foreach (ph;
 	    filter!((uvm_phase p) {
 		return (p.get_state >= uvm_phase_state.UVM_PHASE_STARTED &&
 			p.get_state <= uvm_phase_state.UVM_PHASE_CLEANUP);
 	      }) (phases)) {
-      if(ph.is_before(phase) || ph.is_after(phase))
+      if (ph.is_before(phase) || ph.is_after(phase))
 	ph.jump(phase);
     }
     // }
@@ -231,8 +244,8 @@ class uvm_domain: uvm_phase
   static void jump_all(uvm_phase phase) {
     auto domains = get_domains();
     // get_domains(domains);
-    foreach(domain; domains) {
-      (cast(uvm_domain) domain).jump(phase);
+    foreach (domain; domains) {
+      (cast (uvm_domain) domain).jump(phase);
     }
   }
 

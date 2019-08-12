@@ -1,10 +1,11 @@
 //
 //------------------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2011 Cadence Design Systems, Inc.
-//   Copyright 2010-2011 Synopsys, Inc.
-//   Copyright 2013      NVIDIA Corporation
-//   Copyright 2016      Coverify Systems Technology
+// Copyright 2016-2018 Coverify Systems Technology
+// Copyright 2007-2009 Mentor Graphics Corporation
+// Copyright 2014 Intel Corporation
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2013-2015 NVIDIA Corporation
+// Copyright 2017 Cisco Systems, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -30,7 +31,7 @@ import uvm.base.uvm_printer: uvm_printer;
 import uvm.base.uvm_packer: uvm_packer;
 import uvm.base.uvm_object_defines; // uvm_object_essentials
 
-// Class: uvm_simple_lock_dap
+// Class -- NODOCS -- uvm_simple_lock_dap
 // Provides a 'Simple Lock' Data Access Policy.
 //
 // The 'Simple Lock' Data Access Policy allows for any number of 'sets',
@@ -57,7 +58,7 @@ class uvm_simple_lock_dap(T=int): uvm_set_get_dap_base!T
   // Lock state
   private bool _m_locked;
 
-  // Function: new
+  // Function -- NODOCS -- new
   // Constructor
   this(string name="unnamed-uvm_simple_lock_dap!T") {
     synchronized(this) {
@@ -66,9 +67,9 @@ class uvm_simple_lock_dap(T=int): uvm_set_get_dap_base!T
     }
   }
 
-  // Group: Set/Get Interface
+  // Group -- NODOCS -- Set/Get Interface
 
-  // Function: set
+  // Function -- NODOCS -- set
   // Updates the value stored within the DAP.
   //
   // ~set~ will result in an error if the DAP has
@@ -89,7 +90,7 @@ class uvm_simple_lock_dap(T=int): uvm_set_get_dap_base!T
     }
   }
 
-  // Function: try_set
+  // Function -- NODOCS -- try_set
   // Attempts to update the value stored within the DAP.
   //
   // ~try_set~ will return a 1 if the value was successfully
@@ -108,7 +109,7 @@ class uvm_simple_lock_dap(T=int): uvm_set_get_dap_base!T
     }
   }
 
-  // Function: get
+  // Function -- NODOCS -- get
   // Returns the current value stored within the DAP
   //
   override T get() {
@@ -117,7 +118,7 @@ class uvm_simple_lock_dap(T=int): uvm_set_get_dap_base!T
     }
   }
 
-  // Function: try_get
+  // Function -- NODOCS -- try_get
   // Retrieves the current value stored within the DAP
   //
   // ~try_get~ will always return 1.
@@ -126,9 +127,9 @@ class uvm_simple_lock_dap(T=int): uvm_set_get_dap_base!T
     return true;
   }
 
-  // Group: Locking
+  // Group -- NODOCS -- Locking
 
-  // Function: lock
+  // Function -- NODOCS -- lock
   // Locks the data value
   //
   // The data value cannot be updated via <set> or <try_set> while locked.
@@ -138,7 +139,7 @@ class uvm_simple_lock_dap(T=int): uvm_set_get_dap_base!T
     }
   }
 
-  // Function: unlock
+  // Function -- NODOCS -- unlock
   // Unlocks the data value
   //
   void unlock() {
@@ -147,7 +148,7 @@ class uvm_simple_lock_dap(T=int): uvm_set_get_dap_base!T
     }
   }
 
-  // Function: is_locked
+  // Function -- NODOCS -- is_locked
   // Returns the state of the lock.
   //
   // Returns:
@@ -159,7 +160,7 @@ class uvm_simple_lock_dap(T=int): uvm_set_get_dap_base!T
     }
   }
 
-  // Group: Introspection
+  // Group -- NODOCS -- Introspection
   //
   // The ~uvm_simple_lock_dap~ cannot support the standard UVM
   // instrumentation methods (~copy~, ~clone~, ~pack~ and
@@ -186,9 +187,9 @@ class uvm_simple_lock_dap(T=int): uvm_set_get_dap_base!T
 	      "'unpack()' is not supported for 'uvm_simple_lock_dap!T'");
   }
 
-  // Group- Reporting
+  // Group -- NODOCS -- Reporting
 
-  // Function- convert2string
+  // Function -- NODOCS -- convert2string
   override string convert2string() {
     import std.string: format;
     synchronized(this) {
@@ -201,12 +202,12 @@ class uvm_simple_lock_dap(T=int): uvm_set_get_dap_base!T
     }
   }
 
-  // Function- do_print
+  // Function -- NODOCS -- do_print
   override void do_print(uvm_printer printer) {
     import std.string: format;
     synchronized(this) {
       super.do_print(printer);
-      printer.print_int("lock_state", _m_locked);
+      printer.print_field("lock_state", _m_locked);
       printer.print_generic("value", T.stringof,
 			    0, format("%s", _m_value));
     }

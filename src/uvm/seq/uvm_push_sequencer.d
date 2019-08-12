@@ -1,8 +1,9 @@
 //------------------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2011 Cadence Design Systems, Inc.
-//   Copyright 2010      Synopsys, Inc.
-//   Copyright 2014-2016 Coverify Systems Technology
+// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2018 Synopsys, Inc.
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2014-2018 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -31,10 +32,11 @@ import uvm.tlm1.uvm_ports;
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_push_sequencer #(REQ,RSP)
+// CLASS -- NODOCS -- uvm_push_sequencer #(REQ,RSP)
 //
 //------------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 15.6.1
 class uvm_push_sequencer(REQ=uvm_sequence_item, RSP=REQ):
   uvm_sequencer_param_base!(REQ, RSP)
 {
@@ -42,7 +44,7 @@ class uvm_push_sequencer(REQ=uvm_sequence_item, RSP=REQ):
 
   alias this_type = uvm_push_sequencer!(REQ , RSP);
 
-  // Port: req_port
+  // Port -- NODOCS -- req_port
   //
   // The push sequencer requires access to a blocking put interface.
   // A continuous stream of sequence items are sent out this port, based on
@@ -52,11 +54,7 @@ class uvm_push_sequencer(REQ=uvm_sequence_item, RSP=REQ):
     private uvm_blocking_put_port!REQ _req_port;
 
 
-  // Function: new
-  //
-  // Standard component constructor that creates an instance of this class
-  // using the given ~name~ and ~parent~, if any.
-  //
+  // @uvm-ieee 1800.2-2017 auto 15.6.3.2
   this(string name, uvm_component parent = null) {
     synchronized(this) {
       super(name, parent);
@@ -64,7 +62,7 @@ class uvm_push_sequencer(REQ=uvm_sequence_item, RSP=REQ):
     }
   }
 
-  // Task: run_phase
+  // Task -- NODOCS -- run_phase
   //
   // The push sequencer continuously selects from its list of available
   // sequences and sends the next item from the selected sequence out its

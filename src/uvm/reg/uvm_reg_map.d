@@ -1,8 +1,14 @@
 // -------------------------------------------------------------
-//    Copyright 2004-2011 Synopsys, Inc.
-//    Copyright 2010-2011 Mentor Graphics Corporation
-//    Copyright 2010-2011 Cadence Design Systems, Inc.
-//    Copyright 2016      Coverify Systems Technology
+// Copyright 2016-2019 Coverify Systems Technology
+// Copyright 2010-2018 Mentor Graphics Corporation
+// Copyright 2014 Semifore
+// Copyright 2014-2017 Intel Corporation
+// Copyright 2004-2018 Synopsys, Inc.
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2010 AMD
+// Copyright 2014-2018 NVIDIA Corporation
+// Copyright 2017 Cisco Systems, Inc.
+// Copyright 2012 Accellera Systems Initiative
 //    All Rights Reserved Worldwide
 //
 //    Licensed under the Apache License, Version 2.0 (the
@@ -23,11 +29,7 @@
 
 module uvm.reg.uvm_reg_map;
 
-import uvm.base.uvm_object;
-import uvm.base.uvm_printer;
-import uvm.base.uvm_globals;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_object_defines;
+import uvm.base;
 
 import uvm.seq.uvm_sequence_item;
 import uvm.seq.uvm_sequence_base;
@@ -54,29 +56,61 @@ import std.conv: to;
 
 class uvm_reg_map_info
 {
-  mixin(uvm_sync_string);
+  mixin (uvm_sync_string);
   @uvm_public_sync
-    uvm_reg_addr_t         _offset;
+  private uvm_reg_addr_t         _offset;
   @uvm_public_sync
-    string                 _rights;
+  private string                 _rights;
   @uvm_public_sync
-    bool                   _unmapped;
+  private bool                   _unmapped;
   @uvm_public_sync
-    uvm_reg_addr_t[]       _addr;
+  private uvm_reg_addr_t[]       _addr;
   @uvm_public_sync
-    uvm_reg_frontdoor      _frontdoor;
+  private uvm_reg_frontdoor      _frontdoor;
   @uvm_public_sync
-    uvm_reg_map_addr_range _mem_range; 
+  private uvm_reg_map_addr_range _mem_range;
    
   // if set marks the uvm_reg_map_info as initialized, prevents using an uninitialized map (for instance if the model 
   // has not been locked accidently and the maps have not been computed before)
   @uvm_public_sync
-    bool                  _is_initialized;
+  private bool                  _is_initialized;
+
+}
+
+
+// Class -- NODOCS -- uvm_reg_transaction_order_policy
+abstract class uvm_reg_transaction_order_policy: uvm_object
+{
+  this(string name = "policy") {
+    super(name);
+  }
+    
+  // Function -- NODOCS -- order
+  // the order() function may reorder the sequence of bus transactions
+  // produced by a single uvm_reg transaction (read/write).
+  // This can be used in scenarios when the register width differs from 
+  // the bus width and one register access results in a series of bus transactions.
+  // the first item (0) of the queue will be the first bus transaction (the last($) 
+  // will be the final transaction
+  abstract void order(ref uvm_reg_bus_op[] q);
+}
+
+// Extends virtual class uvm_sequence_base so that it can be constructed:
+class uvm_reg_seq_base: uvm_sequence_base
+{
+ 
+  mixin uvm_object_essentials;
+
+
+  this(string name = "uvm_reg_seq_base") {
+    super(name);
+  }
+
 }
 
 //------------------------------------------------------------------------------
 //
-// Class: uvm_reg_map
+// Class -- NODOCS -- uvm_reg_map
 //
 // :Address map abstraction class
 //
@@ -89,73 +123,82 @@ class uvm_reg_map_info
 // method.
 //------------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 18.2.1
 class uvm_reg_map: uvm_object
 {
   mixin uvm_object_essentials;
    
   // info that is valid only if top-level map
   @uvm_private_sync
-    private uvm_reg_addr_t                  _m_base_addr;
+  private uvm_reg_addr_t                  _m_base_addr;
   @uvm_private_sync
-    private uint                            _m_n_bytes;
+  private uint                            _m_n_bytes;
   @uvm_private_sync
-    private uvm_endianness_e                _m_endian;
+  private uvm_endianness_e                _m_endian;
   @uvm_private_sync
-    private bool                            _m_byte_addressing;
+  private bool                            _m_byte_addressing;
   @uvm_private_sync
-    private uvm_object_wrapper              _m_sequence_wrapper;
+  private uvm_object_wrapper              _m_sequence_wrapper;
   @uvm_private_sync
-    private uvm_reg_adapter                 _m_adapter;
+  private uvm_reg_adapter                 _m_adapter;
   @uvm_private_sync
-    private uvm_sequencer_base              _m_sequencer;
+  private uvm_sequencer_base              _m_sequencer;
   @uvm_private_sync
-    private bool                            _m_auto_predict;
+  private bool                            _m_auto_predict;
   @uvm_private_sync
-    private bool                            _m_check_on_read;
-
+  private bool                            _m_check_on_read;
   @uvm_private_sync
-    private uvm_reg_block                   _m_parent;
-
+  private uvm_reg_block                   _m_parent;
   @uvm_private_sync
-    private uint                            _m_system_n_bytes;
-
+  private uint                            _m_system_n_bytes;
   @uvm_private_sync
-    private uvm_reg_map                     _m_parent_map;
+  private uvm_reg_map                     _m_parent_map;
   @uvm_private_sync
-    private uvm_reg_addr_t[uvm_reg_map]     _m_parent_maps;   // value=offset of this map at parent level
+  private uvm_reg_addr_t[uvm_reg_map]     _m_parent_maps;   // value=offset of this map at parent level
   @uvm_private_sync
-    private uvm_reg_addr_t[uvm_reg_map]     _m_submaps;       // value=offset of submap at this level
+  private uvm_reg_addr_t[uvm_reg_map]     _m_submaps;       // value=offset of submap at this level
   @uvm_private_sync
-    private string[uvm_reg_map]             _m_submap_rights; // value=rights of submap at this level
-
+  private string[uvm_reg_map]             _m_submap_rights; // value=rights of submap at this level
   @uvm_private_sync
-    private uvm_reg_map_info[uvm_reg]       _m_regs_info;
+  private uvm_reg_map_info[uvm_reg]       _m_regs_info;
   @uvm_private_sync
-    private uvm_reg_map_info[uvm_mem]       _m_mems_info;
-
+  private uvm_reg_map_info[uvm_mem]       _m_mems_info;
   @uvm_private_sync
-    private uvm_reg[uvm_reg_addr_t]         _m_regs_by_offset;
+  private uvm_reg[uvm_reg_addr_t]         _m_regs_by_offset;
   // Use only in addition to above if a RO and a WO
   // register share the same address.
   @uvm_private_sync
-    private uvm_reg[uvm_reg_addr_t]         _m_regs_by_offset_wo; 
+  private uvm_reg[uvm_reg_addr_t]         _m_regs_by_offset_wo;
   @uvm_private_sync
-    private uvm_mem[uvm_reg_map_addr_range] _m_mems_by_offset;
+  private uvm_mem[uvm_reg_map_addr_range] _m_mems_by_offset;
 
-  // extern /*private*/ function void Xinit_address_mapX();
+  @uvm_private_sync
+  private uvm_reg_transaction_order_policy _policy;
+  
+  static class uvm_once: uvm_once_base
+  {
+    @uvm_private_sync
+    private uvm_reg_map   _m_backdoor;
+    this() {
+      _m_backdoor = new uvm_reg_map("Backdoor");
+    }
+  }
+
+  mixin (uvm_sync_string);
+  mixin (uvm_once_sync_string);
 
   // Xinit_address_mapX
 
   public void Xinit_address_mapX() {
-    synchronized(this) {
+    synchronized (this) {
       uint bus_width;
 
       uvm_reg_map top_map = get_root_map();
 
       if (this is top_map) {
-	top_map._m_regs_by_offset = null; // .remove();
-	top_map._m_regs_by_offset_wo = null; // .remove();
-	top_map._m_mems_by_offset = null; // .remove();
+	top_map._m_regs_by_offset.clear();
+	top_map._m_regs_by_offset_wo.clear();
+	top_map._m_mems_by_offset.clear();
       }
 
       foreach (l, submap; _m_submaps) {
@@ -165,7 +208,7 @@ class uvm_reg_map: uvm_object
 
       foreach (rg_, reg_info; _m_regs_info) {
 	uvm_reg rg = rg_;
-	reg_info.is_initialized=1;
+	reg_info.is_initialized = true;
 	if (!reg_info.unmapped) {
 	  string rg_acc = rg.Xget_fields_accessX(this);
 	  uvm_reg_addr_t[] addrs;
@@ -174,9 +217,8 @@ class uvm_reg_map: uvm_object
 					     rg.get_n_bytes(), addrs);
         
 	  foreach (i, addr; addrs) {
-	    // uvm_reg_addr_t addr = addrs[i];
-
-	    if (addr in top_map._m_regs_by_offset) {
+	    if (addr in top_map._m_regs_by_offset &&
+			  top_map._m_regs_by_offset[addr] !is rg) {
 
 	      uvm_reg rg2 = top_map._m_regs_by_offset[addr];
 	      string rg2_acc = rg2.Xget_fields_accessX(this);
@@ -195,8 +237,7 @@ class uvm_reg_map: uvm_object
 		uvm_reg_read_only_cbs.add(rg2);
 	      }
 	      else {
-		string a;
-		a = format("%0h",addr);
+		string a = format("%0h",addr);
 		uvm_warning("RegModel", "In map '" ~ get_full_name() ~ "' register '" ~ 
 			    rg.get_full_name() ~  "' maps to same address as register '" ~ 
 			    top_map._m_regs_by_offset[addr].get_full_name() ~ "': 'h" ~ a);
@@ -207,9 +248,8 @@ class uvm_reg_map: uvm_object
           
 	    foreach (range, mem_by_offset; top_map._m_mems_by_offset) {
 	      if (addr >= range.min && addr <= range.max) {
-		string a,b;
-		a = format("%0h",addr);
-		b = format("[%0h:%0h]",range.min,range.max);
+		string a = format("%0h",addr);
+		string b = format("[%0h:%0h]",range.min,range.max);
 		uvm_warning("RegModel", "In map '" ~ get_full_name() ~ "' register '" ~ 
 			    rg.get_full_name() ~  "' with address " ~ a ~ 
 			    "maps to same address as memory '" ~ 
@@ -229,94 +269,124 @@ class uvm_reg_map: uvm_object
 	  uvm_reg_addr_t[] addrs, addrs_max;
 	  uvm_reg_addr_t min, max, min2, max2;
 	  uint stride;
-
-	  bus_width = get_physical_addresses(mem_info.offset,0,mem.get_n_bytes(),addrs);
+	  uint bo;
+	  
+	  bus_width = get_physical_addresses_to_map(mem_info.offset, 0, mem.get_n_bytes(),
+						    addrs, null, bo, mem);
 	  min = (addrs[0] < addrs[addrs.length-1]) ? addrs[0] : addrs[addrs.length-1];
-	  min2 = addrs[0];
 
-	  get_physical_addresses(mem_info.offset,(mem.get_size()-1),mem.get_n_bytes(),addrs_max);
-	  max = (addrs_max[0] > addrs_max[addrs_max.length-1]) ? addrs_max[0] : addrs_max[addrs_max.length-1];
-	  max2 = addrs_max[0];
-	  // address interval between consecutive mem offsets
-	  stride = cast(uint) ((max2 - min2)/(mem.get_size()-1));
+	  // foreach(addrs[idx])
+	  //   `uvm_info("UVM/REG/ADDR",$sformatf("idx%0d addr=%0x",idx,addrs[idx]),UVM_DEBUG)
 
-	  foreach (reg_addr, reg_by_offset; top_map._m_regs_by_offset) {
+
+	  get_physical_addresses_to_map(mem_info.offset, (mem.get_size()-1),
+					mem.get_n_bytes(), addrs_max, null, bo, mem);
+	  max = (addrs_max[0] > addrs_max[addrs_max.length-1]) ?
+	    addrs_max[0] : addrs_max[addrs_max.length-1];
+
+	  stride = mem.get_n_bytes()/get_addr_unit_bytes(); 
+	    
+	  // foreach(addrs_max[idx])
+	  //   `uvm_info("UVM/REG/ADDR",$sformatf("idx%0d addr=%0x",idx,addrs_max[idx]),UVM_DEBUG)
+	          
+	  // `uvm_info("UVM/REG/ADDR",$sformatf("mem %0d x %0d in map aub(bytes)=%0d n_bytes=%0d",mem.get_size(),mem.get_n_bits(),
+	  //   get_addr_unit_bytes(),get_n_bytes(UVM_NO_HIER)),UVM_DEBUG)
+ 
+	  /*
+	    if (uvm_report_enabled(UVM_DEBUG, UVM_INFO,"UVM/REG/ADDR")) begin
+	    uvm_reg_addr_t ad[];
+	    for(int idx=0;idx<mem.get_size();idx++) begin
+	    void'(get_physical_addresses_to_map(m_mems_info[mem].offset,idx,1,ad,null,bo,mem));
+		   
+	    `uvm_info("UVM/REG/ADDR",$sformatf("idx%d addr=%x",idx,ad[0]),UVM_DEBUG)
+	    end	
+	    end   
+	  */
+
+	  if (mem.get_n_bytes()<get_addr_unit_bytes())
+	    uvm_warning("UVM/REG/ADDR",
+			format("this version of UVM does not properly support memories with \
+a smaller word width than the enclosing map. map %s has n_bytes=%0d aub=%0d while the mem has get_n_bytes %0d. \
+multiple memory words fall into one bus address. if that happens memory addressing will be unpacked.",
+			       get_full_name(), get_n_bytes(uvm_hier_e.UVM_NO_HIER),
+			       get_addr_unit_bytes(), mem.get_n_bytes()));
+
+	  if (mem.get_n_bytes() > get_addr_unit_bytes())
+	    if (mem.get_n_bytes() % get_addr_unit_bytes())  {
+	      uvm_warning("UVM/REG/ADDR",
+			  format("memory %s is not matching the word width of the enclosing map %s  \
+(one memory word not fitting into k map addresses)",
+				 mem.get_full_name(), get_full_name()));
+	    }
+
+	  if (mem.get_n_bytes() < get_addr_unit_bytes())
+	    if (get_addr_unit_bytes() % mem.get_n_bytes()) 
+	      uvm_warning("UVM/REG/ADDR",
+			  format("the memory %s is not matching the word width of the enclosing map %s  \
+(one map address doesnt cover k memory words)",
+				 mem.get_full_name(), get_full_name()));
+
+	  if (mem.get_n_bits() % 8)
+	    uvm_warning("UVM/REG/ADDR",
+			format("this implementation of UVM requires memory words to be k*8 bits (mem %s \
+has %0d bit words)",
+			       mem.get_full_name(), mem.get_n_bits()));
+		
+	  foreach (reg_addr, reg_by_offset; top_map.m_regs_by_offset) {
 	    if (reg_addr >= min && reg_addr <= max) {
-	      string a;
-	      a = format("%0h",reg_addr);
-	      uvm_warning("RegModel", "In map '" ~ get_full_name() ~ "' memory '" ~ 
-			  mem.get_full_name() ~  "' maps to same address as register '" ~ 
+	      string a = format("%0h", reg_addr);
+	      uvm_warning("RegModel", "In map '" ~ get_full_name() ~ "' memory '" ~
+			  mem.get_full_name() ~ "' maps to same address as register '" ~
 			  reg_by_offset.get_full_name() ~ "': 'h" ~ a);
 	    }
 	  }
 
-	  foreach (range, mem_by_offset; top_map._m_mems_by_offset) {
+	  foreach (range, mem_by_offset; top_map.m_mems_by_offset) {
 	    if (min <= range.max && max >= range.max ||
 		min <= range.min && max >= range.min ||
-		min >= range.min && max <= range.max) {
-	      string a;
-	      a = format("[%0h:%0h]",min,max);
-	      uvm_warning("RegModel", "In map '" ~ get_full_name() ~ "' memory '" ~ 
-			  mem.get_full_name() ~  "' overlaps with address range of memory '" ~ 
-			  top_map._m_mems_by_offset[range].get_full_name() ~ "': 'h" ~ a);
-	    }
+		min >= range.min && max <= range.max) 
+	      if (m_mems_by_offset !is mem) // do not warn if the same mem is located at the same address via different paths
+		{
+		  string a = format("[%0h:%0h]", min, max);
+		  uvm_warning("RegModel", "In map '" ~ get_full_name() ~ "' memory '" ~
+			      mem.get_full_name() ~ "' overlaps with address range of memory '" ~
+			      mem_by_offset.get_full_name() ~ "': 'h" ~ a);
+		}
 	  }
 
-	  {
-	    uvm_reg_map_addr_range range =
-	      uvm_reg_map_addr_range(min, max, stride);
-	    top_map._m_mems_by_offset[range] = mem;
-	    mem_info.addr  = addrs;
-	    mem_info.mem_range = range;
-	  }
+	  // {
+	  uvm_reg_map_addr_range range = uvm_reg_map_addr_range(min, max, stride);
+	  top_map.m_mems_by_offset[range] = mem;
+	  m_mems_info[mem].addr  = addrs;
+	  m_mems_info[mem].mem_range = range;
+	  // }
 	}
       }
 
       // If the block has no registers or memories,
       // bus_width won't be set
-      if (bus_width == 0) bus_width = _m_n_bytes;
+      if (bus_width == 0) bus_width = m_n_bytes;
 
-      _m_system_n_bytes = bus_width;
+      m_system_n_bytes = bus_width;
+    }
+  }
+
+  // @uvm-ieee 1800.2-2017 auto 18.2.2
+  public static uvm_reg_map backdoor() {
+    synchronized (_uvm_once_inst) {
+      return _m_backdoor;
     }
   }
 
 
-  
-
-  static private uvm_reg_map   _m_backdoor;
-
-  // Function: backdoor
-  // Return the backdoor pseudo-map singleton
-  //
-  // This pseudo-map is used to specify or configure the backdoor
-  // instead of a real address map.
-  //
-  public static uvm_reg_map backdoor() {
-    if (_m_backdoor is null)
-      _m_backdoor = new uvm_reg_map("Backdoor");
-    return _m_backdoor;
-  }
-
-
   //----------------------
-  // Group: Initialization
+  // Group -- NODOCS -- Initialization
   //----------------------
 
 
-  //---------------
-  // Initialization
-  //---------------
-
-  // Function: new
-  //
-  // Create a new instance
-  //
-  // extern function new(string name="uvm_reg_map");
-
-  // new
-
+  // @uvm-ieee 1800.2-2017 auto 18.2.3.1
   this(string name = "uvm_reg_map") {
-    synchronized(this) {
+    synchronized (this) {
       super((name == "") ? "default_map" : name);
       _m_auto_predict = 0;
       _m_check_on_read = 0;
@@ -324,41 +394,13 @@ class uvm_reg_map: uvm_object
   }
 
 
-  // Function: configure
-  //
-  // Instance-specific configuration
-  //
-  // Configures this map with the following properties.
-  //
-  // parent    - the block in which this map is created and applied
-  //
-  // base_addr - the base address for this map. All registers, memories,
-  //             and sub-blocks will be at offsets to this address
-  //
-  // n_bytes   - the byte-width of the bus on which this map is used 
-  //
-  // endian    - the endian format. See <uvm_endianness_e> for possible
-  //             values
-  //
-  // byte_addressing - specifies whether the address increment is on a
-  //             per-byte basis. For example, consecutive memory locations
-  //             with ~n_bytes~=4 (32-bit bus) are 4 apart: 0, 4, 8, and
-  //             so on. Default is TRUE.
-  //
-  // extern function void configure(uvm_reg_block     parent,
-  // 				 uvm_reg_addr_t    base_addr,
-  // 				 uint      n_bytes,
-  // 				 uvm_endianness_e  endian,
-  // 				 bool byte_addressing = 1);
-
-  // configure
-
+  // @uvm-ieee 1800.2-2017 auto 18.2.3.2
   public void configure(uvm_reg_block    parent,
 			uvm_reg_addr_t   base_addr,
 			uint             n_bytes,
 			uvm_endianness_e endian,
 			bool             byte_addressing=true) {
-    synchronized(this) {
+    synchronized (this) {
       _m_parent     = parent;
       _m_n_bytes    = n_bytes;
       _m_endian     = endian;
@@ -367,48 +409,14 @@ class uvm_reg_map: uvm_object
     }
   }
 
-  // Function: add_reg
-  //
-  // Add a register
-  //
-  // Add the specified register instance ~rg~ to this address map.
-  //
-  // The register is located at the specified address ~offset~ from
-  // this maps configured base address.
-  //
-  // The ~rights~ specify the register's accessibility via this map.
-  // Valid values are "RW", "RO", and "WO". Whether a register field
-  // can be read or written depends on both the field's configured access
-  // policy (see <uvm_reg_field::configure> and the register's rights in
-  // the map being used to access the field. 
-  //
-  // The number of consecutive physical addresses occupied by the register
-  // depends on the width of the register and the number of bytes in the
-  // physical interface corresponding to this address map.
-  //
-  // If ~unmapped~ is TRUE, the register does not occupy any
-  // physical addresses and the base address is ignored.
-  // Unmapped registers require a user-defined ~frontdoor~ to be specified.
-  //
-  // A register may be added to multiple address maps
-  // if it is accessible from multiple physical interfaces.
-  // A register may only be added to an address map whose parent block
-  // is the same as the register's parent block.
-  //
-  // extern virtual function void add_reg (uvm_reg           rg,
-  // 					uvm_reg_addr_t    offset,
-  // 					string            rights = "RW",
-  // 					bool              unmapped=0,
-  // 					uvm_reg_frontdoor frontdoor=null);
 
-  // add_reg
-
+  // @uvm-ieee 1800.2-2017 auto 18.2.3.3
   public void add_reg(T)(uvm_reg rg, 
 			 T offset,
 			 string rights = "RW",
 			 bool unmapped=false,
 			 uvm_reg_frontdoor frontdoor=null) {
-    synchronized(this) {
+    synchronized (this) {
 
       if (rg in _m_regs_info) {
 	uvm_error("RegModel", "Register '" ~ rg.get_name() ~ 
@@ -425,55 +433,27 @@ class uvm_reg_map: uvm_object
    
       rg.add_map(this);
 
-      {
-	uvm_reg_map_info info = new uvm_reg_map_info();
-	synchronized(info) {
-	  info._offset   = offset;
-	  info._rights   = rights;
-	  info._unmapped = unmapped;
-	  info._frontdoor = frontdoor;
-	}
-	_m_regs_info[rg] = info;
+      uvm_reg_map_info info = new uvm_reg_map_info();
+      synchronized (info) {
+	info._offset   = offset;
+	info._rights   = rights;
+	info._unmapped = unmapped;
+	info._frontdoor = frontdoor;
+	info._is_initialized = false;
       }
+      _m_regs_info[rg] = info;
     }
   }
 
 
 
-  // Function: add_mem
-  //
-  // Add a memory
-  //
-  // Add the specified memory instance to this address map.
-  // The memory is located at the specified base address and has the
-  // specified access rights ("RW", "RO" or "WO").
-  // The number of consecutive physical addresses occupied by the memory
-  // depends on the width and size of the memory and the number of bytes in the
-  // physical interface corresponding to this address map.
-  //
-  // If ~unmapped~ is TRUE, the memory does not occupy any
-  // physical addresses and the base address is ignored.
-  // Unmapped memorys require a user-defined ~frontdoor~ to be specified.
-  //
-  // A memory may be added to multiple address maps
-  // if it is accessible from multiple physical interfaces.
-  // A memory may only be added to an address map whose parent block
-  // is the same as the memory's parent block.
-  //
-  // extern virtual function void add_mem (uvm_mem        mem,
-  // 					uvm_reg_addr_t offset,
-  // 					string         rights = "RW",
-  // 					bool           unmapped=0,
-  // 					uvm_reg_frontdoor frontdoor=null);
-
-  // add_mem
-
+  // @uvm-ieee 1800.2-2017 auto 18.2.3.4
   public void add_mem(uvm_mem mem,
 		      uvm_reg_addr_t offset,
 		      string rights = "RW",
 		      bool unmapped=false,
 		      uvm_reg_frontdoor frontdoor=null) {
-    synchronized(this) {
+    synchronized (this) {
       if (mem in _m_mems_info) {
 	uvm_error("RegModel",  "Memory '" ~ mem.get_name() ~ 
 		  "' has already been added to map '" ~ get_name() ~ "'");
@@ -489,45 +469,27 @@ class uvm_reg_map: uvm_object
    
       mem.add_map(this);
 
-      {
-	uvm_reg_map_info info = new uvm_reg_map_info();
-	synchronized(info) {
-	  info.offset   = offset;
-	  info.rights   = rights;
-	  info.unmapped = unmapped;
-	  info.frontdoor = frontdoor;
-	}
-	_m_mems_info[mem] = info;
+      uvm_reg_map_info info = new uvm_reg_map_info();
+      synchronized (info) {
+	info.offset   = offset;
+	info.rights   = rights;
+	info.unmapped = unmapped;
+	info.frontdoor = frontdoor;
       }
+      _m_mems_info[mem] = info;
     }
   }
    
-  // Function: add_submap
-  //
-  // Add an address map
-  //
-  // Add the specified address map instance to this address map.
-  // The address map is located at the specified base address.
-  // The number of consecutive physical addresses occupied by the submap
-  // depends on the number of bytes in the physical interface
-  // that corresponds to the submap,
-  // the number of addresses used in the submap and
-  // the number of bytes in the
-  // physical interface corresponding to this address map.
-  //
-  // An address map may be added to multiple address maps
-  // if it is accessible from multiple physical interfaces.
-  // An address map may only be added to an address map
-  // in the grand-parent block of the address submap.
-  //
-  // extern virtual function void add_submap (uvm_reg_map    child_map,
-  // 					   uvm_reg_addr_t offset);
 
-  // add_submap
-
+  // NOTE THIS isnt really true because one can add a map only to another map if the 
+  // map parent blocks are either the same or the maps parent is an ancestor of the submaps parent
+  // also AddressUnitBits needs to match which means essentially that within a block there can only be one 
+  // AddressUnitBits
+   
+  // @uvm-ieee 1800.2-2017 auto 18.2.3.5
   public void add_submap (uvm_reg_map child_map,
 			  uvm_reg_addr_t offset) {
-    synchronized(this) {
+    synchronized (this) {
       uvm_reg_map parent_map;
 
       if (child_map is null) {
@@ -548,28 +510,12 @@ class uvm_reg_map: uvm_object
 	return;
       }
 
-      { // parent_block_check
-	uvm_reg_block child_blk = child_map.get_parent();
-	if (child_blk is null) {
-	  uvm_error("RegModel", "Cannot add submap '" ~ child_map.get_full_name() ~ 
-		    "' because it does not have a parent block");
-	  return;
-	}
-	if (get_parent() !is child_blk.get_parent()) {
-	  uvm_error("RegModel",
-		    "Submap '" ~ child_map.get_full_name() ~ "' may not be added to this " ~ 
-		    "address map ~  '" ~  get_full_name() ~ "' ~  as the submap's parent block ~  '" ~ 
-		    child_blk.get_full_name() ~ "' ~  is not a child of this map's parent block ~  '" ~ 
-		    _m_parent.get_full_name() ~ "'");
-	  return;
-	}
-      }
-   
+      // this check means that n_bytes cannot change in a map hierarchy, that should work with 5446
       { // n_bytes_match_check
-	if (_m_n_bytes > child_map.get_n_bytes(UVM_NO_HIER)) {
+	if (_m_n_bytes > child_map.get_n_bytes(uvm_hier_e.UVM_NO_HIER)) {
 	  uvm_warning("RegModel",
 		      format("Adding %0d-byte submap '%s' to %0d-byte parent map '%s'",
-			     child_map.get_n_bytes(UVM_NO_HIER), child_map.get_full_name(),
+			     child_map.get_n_bytes(uvm_hier_e.UVM_NO_HIER), child_map.get_full_name(),
 			     _m_n_bytes, get_full_name()));
 	}
       }
@@ -580,19 +526,16 @@ class uvm_reg_map: uvm_object
     }
   }
 
-  // Function: set_sequencer
+
+  // Function -- NODOCS -- set_sequencer
   //
   // Set the sequencer and adapter associated with this map. This method
   // ~must~ be called before starting any sequences based on uvm_reg_sequence.
 
-  // extern virtual function void set_sequencer (uvm_sequencer_base sequencer,
-  //                                             uvm_reg_adapter    adapter=null);
-
-  // set_sequencer
-
+  // @uvm-ieee 1800.2-2017 auto 18.2.3.6
   public void set_sequencer(uvm_sequencer_base sequencer,
 			    uvm_reg_adapter adapter=null) {
-    synchronized(this) {
+    synchronized (this) {
       if (sequencer is null) {
 	uvm_error("REG_NULL_SQR", "Null reference specified for bus sequencer");
 	return;
@@ -612,17 +555,13 @@ class uvm_reg_map: uvm_object
   }
 
 
-  // Function: set_submap_offset
+  // Function -- NODOCS -- set_submap_offset
   //
   // Set the offset of the given ~submap~ to ~offset~.
 
-  // extern virtual function void set_submap_offset (uvm_reg_map submap,
-  //                                                 uvm_reg_addr_t offset);
-
-  // set_submap_offset
-
+  // @uvm-ieee 1800.2-2017 auto 18.2.3.8
   public void set_submap_offset(uvm_reg_map submap, uvm_reg_addr_t offset) {
-    synchronized(this) {
+    synchronized (this) {
       if (submap is null) {
 	uvm_error("REG/NULL","set_submap_offset: submap handle is null");
 	return;
@@ -636,16 +575,13 @@ class uvm_reg_map: uvm_object
   }
 
 
-  // Function: get_submap_offset
+  // Function -- NODOCS -- get_submap_offset
   //
   // Return the offset of the given ~submap~.
 
-  // extern virtual function uvm_reg_addr_t get_submap_offset (uvm_reg_map submap);
-
-  // get_submap_offset
-
+  // @uvm-ieee 1800.2-2017 auto 18.2.3.7
   public uvm_reg_addr_t get_submap_offset(uvm_reg_map submap) {
-    synchronized(this) {
+    synchronized (this) {
       if (submap is null) {
 	uvm_error("REG/NULL","set_submap_offset: submap handle is null");
 	return uvm_reg_addr_t(-1);
@@ -660,16 +596,13 @@ class uvm_reg_map: uvm_object
   }
 
 
-  // Function: set_base_addr
+  // Function -- NODOCS -- set_base_addr
   //
   // Set the base address of this map.
 
-  //extern virtual function void   set_base_addr (uvm_reg_addr_t  offset);
-
-  // set_base_addr
-
+  // @uvm-ieee 1800.2-2017 auto 18.2.3.9
   public void set_base_addr(uvm_reg_addr_t offset) {
-    synchronized(this) {
+    synchronized (this) {
       if (_m_parent_map !is null) {
 	_m_parent_map.set_submap_offset(this, offset);
       }
@@ -684,26 +617,9 @@ class uvm_reg_map: uvm_object
   }
 
 
-  // Function: reset
-  //
-  // Reset the mirror for all registers in this address map.
-  //
-  // Sets the mirror value of all registers in this address map
-  // and all of its submaps
-  // to the reset value corresponding to the specified reset event.
-  // See <uvm_reg_field::reset()> for more details.
-  // Does not actually set the value of the registers in the design,
-  // only the values mirrored in their corresponding mirror.
-  //
-  // Note that, unlike the other reset() method, the default
-  // reset event for this method is "SOFT".
-  //
-  // extern virtual function void reset(string kind = "SOFT");
-
-  // reset
-
+  // @uvm-ieee 1800.2-2017 auto 18.2.3.10
   public void reset(string kind = "SOFT") {
-    synchronized(this) {
+    synchronized (this) {
       uvm_reg[] regs;
 
       get_registers(regs);
@@ -715,13 +631,9 @@ class uvm_reg_map: uvm_object
   }
 
 
-  // /*private*/ extern virtual function void add_parent_map(uvm_reg_map  parent_map,
-  //                                                       uvm_reg_addr_t offset);
-
-  // add_parent_map
-
-  public void add_parent_map(uvm_reg_map parent_map, uvm_reg_addr_t offset) {
-    synchronized(this) {
+  public void add_parent_map(uvm_reg_map parent_map,
+			     uvm_reg_addr_t offset) {
+    synchronized (this) {
 
       if (parent_map is null) {
 	uvm_error("RegModel",
@@ -739,15 +651,13 @@ class uvm_reg_map: uvm_object
       }
 
       _m_parent_map = parent_map;
-      _m_parent_maps[parent_map] = offset; // prep for multiple parents
       parent_map._m_submaps[this] = offset;
 
     }
   }
 
-  // /*private*/ extern virtual public void Xverify_map_configX();
   public void Xverify_map_configX() {
-    synchronized(this) {
+    synchronized (this) {
       // Make sure there is a generic payload sequence for each map
       // in the model and vice-versa if this is a root sequencer
       bool error;
@@ -756,13 +666,11 @@ class uvm_reg_map: uvm_object
       if (root_map.get_adapter() is null) {
 	uvm_error("RegModel", "Map '" ~ root_map.get_full_name() ~ 
 		  "' does not have an adapter registered");
-	// error++;
 	error = true;
       }
       if (root_map.get_sequencer() is null) {
 	uvm_error("RegModel", "Map '" ~ root_map.get_full_name() ~ 
 		  "' does not have a sequencer registered");
-	// error++;
 	error = true;
       }
       if (error) {
@@ -775,15 +683,10 @@ class uvm_reg_map: uvm_object
   }
   
 
-  // /*private*/ extern virtual public void m_set_reg_offset(uvm_reg   rg,
-  // 							uvm_reg_addr_t offset,
-  // 							bool unmapped);
-
-  // m_set_reg_offset
   public void m_set_reg_offset(uvm_reg rg, 
 			       uvm_reg_addr_t offset,
 			       bool unmapped) {
-    synchronized(this) {
+    synchronized (this) {
       if (rg !in _m_regs_info) {
 	uvm_error("RegModel",
 		  "Cannot modify offset of register '" ~ rg.get_full_name() ~ 
@@ -808,7 +711,7 @@ class uvm_reg_map: uvm_object
 	      top_map._m_regs_by_offset.remove(iaddr);
 	    }
 	    else {
-	      if (top_map._m_regs_by_offset[iaddr] == rg) {
+	      if (top_map._m_regs_by_offset[iaddr] is rg) {
 		top_map._m_regs_by_offset[iaddr] = 
 		  top_map._m_regs_by_offset_wo[iaddr];
 		uvm_reg_read_only_cbs.remove(rg);
@@ -851,8 +754,7 @@ class uvm_reg_map: uvm_object
 		uvm_reg_read_only_cbs.add(rg2);
 	      }
 	      else {
-		string a;
-		a = format("%0h",addr);
+		string a = format("%0h",addr);
 		uvm_warning("RegModel", "In map '" ~ get_full_name() ~ "' register '" ~ 
 			    rg.get_full_name() ~  "' maps to same address as register '" ~ 
 			    top_map._m_regs_by_offset[addr].get_full_name() ~ "': 'h" ~ a);
@@ -863,8 +765,7 @@ class uvm_reg_map: uvm_object
 
 	    foreach (range, memoff; top_map._m_mems_by_offset) {
 	      if (addr >= range.min && addr <= range.max) {
-		string a;
-		a = format("%0h",addr);
+		string a = format("%0h",addr);
 		uvm_warning("RegModel", "In map '" ~ get_full_name() ~ "' register '" ~ 
 			    rg.get_full_name() ~  "' overlaps with address range of memory '" ~ 
 			    top_map._m_mems_by_offset[range].get_full_name() ~ "': 'h" ~ a);
@@ -886,12 +787,6 @@ class uvm_reg_map: uvm_object
       
     }
   }
-
-  // /*private*/ extern virtual public void m_set_mem_offset(uvm_mem mem,
-  // 							  uvm_reg_addr_t offset,
-  // 							  bool unmapped);
-
-  // m_set_mem_offset
 
   void m_set_mem_offset(uvm_mem mem, 
 			uvm_reg_addr_t offset,
@@ -937,14 +832,13 @@ class uvm_reg_map: uvm_object
 	  addrs_max[0] : addrs_max[addrs_max.length-1];
 	max2 = addrs_max[0];
 	// address interval between consecutive mem locations
-	stride = cast(uint) ((max2 - max)/(mem.get_size()-1));
+	stride = cast (uint) ((max2 - max)/(mem.get_size()-1));
 
 	// make sure new offset does not conflict with others
 	foreach (reg_addr, regoff; top_map._m_regs_by_offset) {
 	  if (reg_addr >= min && reg_addr <= max) {
-	    string a,b;
-	    a = format("[%0h:%0h]",min,max);
-	    b = format("%0h",reg_addr);
+	    string a = format("[%0h:%0h]", min, max);
+	    string b = format("%0h", reg_addr);
 	    uvm_warning("RegModel", "In map '" ~ get_full_name() ~ "' memory '" ~ 
 			mem.get_full_name() ~  "' with range " ~ a ~ 
 			" overlaps with address of existing register '" ~ 
@@ -956,9 +850,8 @@ class uvm_reg_map: uvm_object
 	  if (min <= range.max && max >= range.max ||
 	      min <= range.min && max >= range.min ||
 	      min >= range.min && max <= range.max) {
-	    string a,b;
-	    a = format("[%0h:%0h]",min,max);
-	    b = format("[%0h:%0h]",range.min,range.max);
+	    string a = format("[%0h:%0h]",min,max);
+	    string b = format("[%0h:%0h]",range.min,range.max);
 	    uvm_warning("RegModel", "In map '" ~ get_full_name() ~ "' memory '" ~ 
 			mem.get_full_name() ~  "' with range " ~ a ~ 
 			" overlaps existing memory with range '" ~ 
@@ -966,13 +859,11 @@ class uvm_reg_map: uvm_object
 	  }
 	}
 
-	{
-	  uvm_reg_map_addr_range range = uvm_reg_map_addr_range(min, max, stride);
+	  uvm_reg_map_addr_range range =
+	    uvm_reg_map_addr_range(min, max, stride);
 	  top_map._m_mems_by_offset[range] = mem;
 	  info.addr  = addrs;
 	  info.mem_range = range;
-	}
-
       }
     }
 
@@ -987,17 +878,17 @@ class uvm_reg_map: uvm_object
   }
 
   //---------------------
-  // Group: Introspection
+  // Group -- NODOCS -- Introspection
   //---------------------
 
-  // Public: get_name
+  // Public -- NODOCS -- get_name
   //
   // Get the simple name
   //
   // Return the simple object name of this address map.
   //
 
-  // Public: get_full_name
+  // Public -- NODOCS -- get_full_name
   //
   // Get the hierarchical name
   //
@@ -1006,105 +897,56 @@ class uvm_reg_map: uvm_object
   //
   // extern virtual public string get_full_name();
 
-  // get_full_name
-
   override string get_full_name() {
-    synchronized(this) {
-      auto full_name = get_name();
-      if (_m_parent is null) {
-	return full_name;
-      }
-      return _m_parent.get_full_name() ~ "." ~ full_name;
+    synchronized (this) {
+      if (_m_parent is null)
+	return get_name();
+      else
+	return _m_parent.get_full_name() ~ "." ~ get_name();
     }
   }
 
   
 
-  // Public: get_root_map
-  //
-  // Get the externally-visible address map
-  //
-  // Get the top-most address map where this address map is instantiated.
-  // It corresponds to the externally-visible address map that can
-  // be accessed by the verification environment.
-  //
-  // extern virtual public uvm_reg_map get_root_map();
-
-  // get_root_map
-
+  // @uvm-ieee 1800.2-2017 auto 18.2.4.1
   public uvm_reg_map get_root_map() {
-    synchronized(this) {
+    synchronized (this) {
       return (_m_parent_map is null) ? this : _m_parent_map.get_root_map();
     }
   }
 
-
-  // Public: get_parent
-  //
-  // Get the parent block
-  //
-  // Return the block that is the parent of this address map.
-  //
-  //extern virtual public uvm_reg_block get_parent();
-  //------------
-  // get methods
-  //------------
-
-  // get_parent
-
+  // @uvm-ieee 1800.2-2017 auto 18.2.4.2
   public uvm_reg_block get_parent() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_parent;
     }
   }
 
 
-
-  // Public: get_parent_map
-  // Get the higher-level address map
-  //
-  // Return the address map in which this address map is mapped.
-  // returns ~null~ if this is a top-level address map.
-  //
-  // extern virtual public uvm_reg_map           get_parent_map();
-  // get_parent_map
-
+  // @uvm-ieee 1800.2-2017 auto 18.2.4.3
   public uvm_reg_map get_parent_map() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_parent_map;
     }
   }
 
 
-
-
-
-  // Public: get_base_addr
-  //
-  // Get the base offset address for this map. If this map is the
-  // root map, the base address is that set with the ~base_addr~ argument
-  // to <uvm_reg_block::create_map()>. If this map is a submap of a higher-level map,
-  // the base address is offset given this submap by the parent map.
-  // See <set_submap_offset>.
-  //
-  // extern virtual public uvm_reg_addr_t get_base_addr (uvm_hier_e hier=UVM_HIER);
-  // get_base_addr
-
+  // @uvm-ieee 1800.2-2017 auto 18.2.4.4
   public uvm_reg_addr_t  get_base_addr(uvm_hier_e hier = uvm_hier_e.UVM_HIER) {
-    synchronized(this) {
+    synchronized (this) {
       // the next line seems redundant
       // uvm_reg_map child = this;
-      if (hier == UVM_NO_HIER || _m_parent_map is null) {
+      if (hier == uvm_hier_e.UVM_NO_HIER || _m_parent_map is null) {
 	return _m_base_addr;
       }
       auto base_addr = _m_parent_map.get_submap_offset(this);
-      base_addr += _m_parent_map.get_base_addr(UVM_HIER);
+      base_addr += _m_parent_map.get_base_addr(uvm_hier_e.UVM_HIER);
       return base_addr;
     }
   }
 
 
-  // Public: get_n_bytes
+  // Public -- NODOCS -- get_n_bytes
   //
   // Get the width in bytes of the bus associated with this map. If ~hier~
   // is ~UVM_HIER~, then gets the effective bus width relative to the system
@@ -1112,13 +954,9 @@ class uvm_reg_map: uvm_object
   // map to the top-level root map. Each bus access will be limited to this
   // bus width.
   //
-  // extern virtual public uint get_n_bytes (uvm_hier_e hier=UVM_HIER);
-
-  // get_n_bytes
-
   public uint get_n_bytes(uvm_hier_e hier = uvm_hier_e.UVM_HIER) {
-    synchronized(this) {
-      if (hier == UVM_NO_HIER) {
+    synchronized (this) {
+      if (hier == uvm_hier_e.UVM_NO_HIER) {
 	return _m_n_bytes;
       }
       return _m_system_n_bytes;
@@ -1127,131 +965,72 @@ class uvm_reg_map: uvm_object
 
 
 
-  // Public: get_addr_unit_bytes
+  // Public -- NODOCS -- get_addr_unit_bytes
   //
   // Get the number of bytes in the smallest addressable unit in the map.
   // Returns 1 if the address map was configured using byte-level addressing.
   // Returns <get_n_bytes()> otherwise.
   //
-  // extern virtual public uint get_addr_unit_bytes();
-
-  // get_addr_unit_bytes
-
   public uint get_addr_unit_bytes() {
-    synchronized(this) {
+    synchronized (this) {
       return (_m_byte_addressing) ? 1 : _m_n_bytes;
     }
   }
 
 
-
-  // Public: get_base_addr
-  //
-  // Gets the endianness of the bus associated with this map. If ~hier~ is
-  // set to ~UVM_HIER~, gets the system-level endianness.
-  //
-  // extern virtual public uvm_endianness_e get_endian (uvm_hier_e hier=UVM_HIER);
-
-  // get_endian
-
+  // @uvm-ieee 1800.2-2017 auto 18.2.4.7
   public uvm_endianness_e get_endian(uvm_hier_e hier = uvm_hier_e.UVM_HIER) {
-    synchronized(this) {
-      if (hier == UVM_NO_HIER || _m_parent_map is null) {
+    synchronized (this) {
+      if (hier == uvm_hier_e.UVM_NO_HIER || _m_parent_map is null)
 	return _m_endian;
-      }
       return _m_parent_map.get_endian(hier);
     }
   }
 
 
 
-  // Public: get_sequencer
-  //
-  // Gets the sequencer for the bus associated with this map. If ~hier~ is
-  // set to ~UVM_HIER~, gets the sequencer for the bus at the system-level.
-  // See <set_sequencer>.
-  //
-  // extern virtual public uvm_sequencer_base get_sequencer (uvm_hier_e hier=UVM_HIER);
-  // get_sequencer
-
-  public uvm_sequencer_base get_sequencer(uvm_hier_e hier = uvm_hier_e.UVM_HIER) {
-    synchronized(this) {
-      if (hier == UVM_NO_HIER || _m_parent_map is null) {
+  // @uvm-ieee 1800.2-2017 auto 18.2.4.8
+  public uvm_sequencer_base get_sequencer(uvm_hier_e hier=uvm_hier_e.UVM_HIER) {
+    synchronized (this) {
+      if (hier == uvm_hier_e.UVM_NO_HIER || _m_parent_map is null)
 	return _m_sequencer;
-      }
       return _m_parent_map.get_sequencer(hier);
     }
   }
 
 
 
-
-  // Public: get_adapter
-  //
-  // Gets the bus adapter for the bus associated with this map. If ~hier~ is
-  // set to ~UVM_HIER~, gets the adapter for the bus used at the system-level.
-  // See <set_sequencer>.
-  //
-  // extern virtual public uvm_reg_adapter get_adapter (uvm_hier_e hier=UVM_HIER);
-
-  // get_adapter
-
+  // @uvm-ieee 1800.2-2017 auto 18.2.4.9
   public uvm_reg_adapter get_adapter(uvm_hier_e hier = uvm_hier_e.UVM_HIER) {
-    synchronized(this) {
-      if (hier == UVM_NO_HIER || _m_parent_map is null) {
+    synchronized (this) {
+      if (hier == uvm_hier_e.UVM_NO_HIER || _m_parent_map is null)
 	return _m_adapter;
-      }
       return _m_parent_map.get_adapter(hier);
     }
   }
 
 
-  // Public: get_submaps
-  //
-  // Get the address sub-maps
-  //
-  // Get the address maps instantiated in this address map.
-  // If ~hier~ is ~UVM_HIER~, recursively includes the address maps,
-  // in the sub-maps.
-  //
-  // extern virtual public void  get_submaps (ref uvm_reg_map maps[$],
-  // 					 input uvm_hier_e hier=UVM_HIER);
-  // get_submaps
-
+  // @uvm-ieee 1800.2-2017 auto 18.2.4.10
   public void get_submaps(ref uvm_reg_map[] maps,
-			  uvm_hier_e        hier = uvm_hier_e.UVM_HIER) {
-    synchronized(this) {
-      foreach (submap, unused; _m_submaps) {
+			  uvm_hier_e hier = uvm_hier_e.UVM_HIER) {
+    synchronized (this) {
+      foreach (submap, unused; _m_submaps)
 	maps ~= submap;
-      }
-      if (hier == UVM_HIER) {
+      if (hier == uvm_hier_e.UVM_HIER)
 	foreach (submap, unused; _m_submaps) {
 	  submap.get_submaps(maps);
 	}
-      }
     }
   }
 
 
-  // Public: get_registers
-  //
-  // Get the registers
-  //
-  // Get the registers instantiated in this address map.
-  // If ~hier~ is ~UVM_HIER~, recursively includes the registers
-  // in the sub-maps.
-  //
-  // extern virtual public void  get_registers (ref uvm_reg regs[$],
-  // 					     input uvm_hier_e hier=UVM_HIER);
-  // get_registers
-
+  // @uvm-ieee 1800.2-2017 auto 18.2.4.11
   public void get_registers(ref uvm_reg[] regs,
-			    uvm_hier_e    hier = uvm_hier_e.UVM_HIER) {
-    synchronized(this) {
-      foreach (rg, unused; _m_regs_info) {
+			    uvm_hier_e hier = uvm_hier_e.UVM_HIER) {
+    synchronized (this) {
+      foreach (rg, unused; _m_regs_info)
 	regs ~= rg;
-      }
-      if (hier == UVM_HIER) {
+      if (hier == uvm_hier_e.UVM_HIER) {
 	foreach (submap, unused; _m_submaps) {
 	  submap.get_registers(regs);
 	}
@@ -1260,152 +1039,89 @@ class uvm_reg_map: uvm_object
   }
 
 
-  // Public: get_fields
-  //
-  // Get the fields
-  //
-  // Get the fields in the registers instantiated in this address map.
-  // If ~hier~ is ~UVM_HIER~, recursively includes the fields of the registers
-  // in the sub-maps.
-  //
-  // extern virtual public void  get_fields (ref uvm_reg_field fields[$],
-  // 					  input uvm_hier_e hier=UVM_HIER);
-  // get_fields
-
+  // @uvm-ieee 1800.2-2017 auto 18.2.4.12
   public void get_fields(ref uvm_reg_field[] fields,
-			 uvm_hier_e          hier = uvm_hier_e.UVM_HIER) {
-    synchronized(this) {
+			 uvm_hier_e hier = uvm_hier_e.UVM_HIER) {
+    synchronized (this) {
       foreach (rg, unused; _m_regs_info) {
 	rg.get_fields(fields);
       }
    
-      if (hier == UVM_HIER) {
+      if (hier == uvm_hier_e.UVM_HIER)
 	foreach (submap, unused; _m_submaps) {
 	  submap.get_fields(fields);
 	}
-      }
     }
   }
 
 
-   
-  // Public get_memories
-  //
-  // Get the memories
-  //
-  // Get the memories instantiated in this address map.
-  // If ~hier~ is ~UVM_HIER~, recursively includes the memories
-  // in the sub-maps.
-  //
-  // extern virtual public void  get_memories (ref uvm_mem mems[$],
-  // 					    input uvm_hier_e hier=UVM_HIER);
-
-  // get_memories
-
+  // @uvm-ieee 1800.2-2017 auto 18.2.4.13
   public void get_memories(ref uvm_mem[] mems,
-			   uvm_hier_e    hier = uvm_hier_e.UVM_HIER) {
-    synchronized(this) {
-      foreach (mem, unused; _m_mems_info) {
+			   uvm_hier_e hier = uvm_hier_e.UVM_HIER) {
+    synchronized (this) {
+      foreach (mem, unused; _m_mems_info)
 	mems ~= mem;
-      }
     
-      if (hier == UVM_HIER) {
+      if (hier == uvm_hier_e.UVM_HIER)
 	foreach (submap, unused; _m_submaps) {
 	  submap.get_memories(mems);
 	}
-      }
     }
   }
 
 
-  // Public: get_virtual_registers
-  //
-  // Get the virtual registers
-  //
-  // Get the virtual registers instantiated in this address map.
-  // If ~hier~ is ~UVM_HIER~, recursively includes the virtual registers
-  // in the sub-maps.
-  //
-  // extern virtual public void  get_virtual_registers (ref uvm_vreg regs[$],
-  // 						   input uvm_hier_e hier=UVM_HIER);
-  // get_virtual_registers
-
+  // @uvm-ieee 1800.2-2017 auto 18.2.4.14
   public void get_virtual_registers(ref uvm_vreg[] regs,
-				    uvm_hier_e     hier = uvm_hier_e.UVM_HIER) {
-    synchronized(this) {
+				    uvm_hier_e hier = uvm_hier_e.UVM_HIER) {
+    synchronized (this) {
       uvm_mem[] mems;
-      get_memories(mems,hier);
+      get_memories(mems, hier);
 
-      foreach (mem; mems) {
+      foreach (mem; mems)
 	mem.get_virtual_registers(regs);
-      }
     }
   }
 
 
-  // Public: get_virtual_fields
-  //
-  // Get the virtual fields
-  //
-  // Get the virtual fields from the virtual registers instantiated
-  // in this address map.
-  // If ~hier~ is ~UVM_HIER~, recursively includes the virtual fields
-  // in the virtual registers in the sub-maps.
-  //
-  // extern virtual public void  get_virtual_fields (ref uvm_vreg_field fields[$],
-  // 						input uvm_hier_e hier=UVM_HIER);
-  // get_virtual_fields
-
+  // @uvm-ieee 1800.2-2017 auto 18.2.4.15
   public void get_virtual_fields(ref uvm_vreg_field[] fields,
 				 uvm_hier_e           hier = uvm_hier_e.UVM_HIER) {
-    synchronized(this) {
+    synchronized (this) {
       uvm_vreg[] regs;
       get_virtual_registers(regs, hier);
 
-      foreach (reg; regs) {
+      foreach (reg; regs)
 	reg.get_fields(fields);
-      }
     }
   }
 
 
 
-
-  // extern virtual public uvm_reg_map_info get_reg_map_info(uvm_reg rg,  bool error=1);
-  // get_reg_map_info
-
   public uvm_reg_map_info get_reg_map_info(uvm_reg rg, bool error=true) {
-    synchronized(this) {
+    synchronized (this) {
       uvm_reg_map_info result;
       if (rg !in _m_regs_info) {
-	if (error) {
+	if (error)
 	  uvm_error("REG_NO_MAP", "Register '" ~ rg.get_name() ~
 		    "' not in map '" ~ get_name() ~ "'");
-	}
 	return null;
       }
       result = _m_regs_info[rg];
-      if(! result.is_initialized) {
+      if (! result.is_initialized)
 	uvm_warning("RegModel", "map '" ~ get_name() ~
 		    "' does not seem to be initialized " ~
 		    "correctly, check that the top register " ~
 		    "model is locked()");
-      }
       return result;
     }
   }
 
-  // extern virtual public uvm_reg_map_info get_mem_map_info(uvm_mem mem, bool error=1);
-
-  // get_mem_map_info
-
   public uvm_reg_map_info get_mem_map_info(uvm_mem mem, bool error=true) {
-    synchronized(this) {
+    synchronized (this) {
       if (mem !in _m_mems_info) {
-	if (error) {
+	if (error)
 	  uvm_error("REG_NO_MAP", "Memory '" ~ mem.get_name() ~
 		    "' not in map '" ~ get_name() ~ "'");
-	}
 	return null;
       }
       return _m_mems_info[mem];
@@ -1413,42 +1129,30 @@ class uvm_reg_map: uvm_object
   }
 
 
-  // extern virtual public uint get_size();
-  //----------
-  // Size and Overlap Detection
-  //---------
-
-  // get_size
-
   public uint get_size() {
-    synchronized(this) {
+    synchronized (this) {
 
       uint max_addr;
       uint addr;
 
       // get max offset from registers
       foreach (rg, reg_info; _m_regs_info) {
-	addr = cast(uint) (reg_info.offset + ((rg.get_n_bytes()-1)/_m_n_bytes));
-	if (addr > max_addr) {	/* SV code has a bug here */
-	  max_addr = addr;
-	}
+	addr = cast (uint) (reg_info.offset + ((rg.get_n_bytes()-1)/_m_n_bytes));
+	if (addr > max_addr) max_addr = addr;
       }
 
       // get max offset from memories
       foreach (mem, mem_info; _m_mems_info) {
-	addr = cast(uint) (mem_info.offset +
+	addr = cast (uint) (mem_info.offset +
 			   (mem.get_size() *
 			    (((mem.get_n_bytes()-1)/_m_n_bytes)+1)) -1);
-	if (addr > max_addr)  {
-	  max_addr = addr;
-	}
+	if (addr > max_addr) max_addr = addr;
       }
 
       // get max offset from submaps
       foreach (submap, reg_addr; _m_submaps) {
-	addr = cast(uint) (reg_addr + submap.get_size());
-	if (addr > max_addr)
-	  max_addr = addr;
+	addr = cast (uint) (reg_addr + submap.get_size());
+	if (addr > max_addr) max_addr = addr;
       }
 
       return max_addr + 1;
@@ -1456,159 +1160,23 @@ class uvm_reg_map: uvm_object
   }
 
 
-
-
-  // Public: get_physical_addresses
-  //
-  // Translate a local address into external addresses
-  //
-  // Identify the sequence of addresses that must be accessed physically
-  // to access the specified number of bytes at the specified address
-  // within this address map.
-  // Returns the number of bytes of valid data in each access.
-  //
-  // Returns in ~addr~ a list of address in little endian order,
-  // with the granularity of the top-level address map.
-  //
-  // A register is specified using a base address with ~mem_offset~ as 0.
-  // A location within a memory is specified using the base address
-  // of the memory and the index of the location within that memory.
-  //
-
-  // extern virtual public int get_physical_addresses(uvm_reg_addr_t        base_addr,
-  // 						   uvm_reg_addr_t        mem_offset,
-  // 						   uint          n_bytes,
-  // 						   ref uvm_reg_addr_t    addr[]);
-   
-  // get_physical_addresses
-
-  public int get_physical_addresses(RA, RB)(RA                   base_addr,
-					    RB                   mem_offset,
-					    uint                 n_bytes,
+  // @uvm-ieee 1800.2-2017 auto 18.2.4.16
+  public int get_physical_addresses(RA, RB)(RA base_addr,
+					    RB mem_offset,
+					    uint n_bytes,
 					    ref uvm_reg_addr_t[] addr)
-    if(uvm_reg_addr_t.isAssignableBitVec!RA &&
+    if (uvm_reg_addr_t.isAssignableBitVec!RA &&
        uvm_reg_addr_t.isAssignableBitVec!RB) {
-      synchronized(this) {
-
-	if (n_bytes <= 0) {
-	  uvm_fatal("RegModel",
-		    format("Cannot access %0d bytes. Must be greater than 0",
-			   n_bytes));
-	  return 0;
-	}
-
-	// First, identify the addresses within the block/system
-	uint bus_width = get_n_bytes(UVM_NO_HIER);
-	uvm_reg_addr_t[]  local_addr;
-	uint multiplier = _m_byte_addressing ? bus_width : 1;
-	if (n_bytes <= bus_width) {
-	  local_addr ~= cast(uvm_reg_addr_t)
-	    (base_addr + (mem_offset * multiplier));
-	} else {
-	  auto n = ((n_bytes-1) / bus_width) + 1;
-	  base_addr = cast(uvm_reg_addr_t)
-	    (base_addr + mem_offset * (n * multiplier));
-	  switch (get_endian(UVM_NO_HIER)) {
-	  case UVM_LITTLE_ENDIAN:
-	    for (uint i=0; i != n; ++i) {
-	      local_addr ~= cast(uvm_reg_addr_t)
-		(base_addr + (i * multiplier));
-	    }
-	    break;
-	  case UVM_BIG_ENDIAN:
-	    for (uint i=0; i != n; ++i) {
-	      local_addr ~= cast(uvm_reg_addr_t)
-		(base_addr + ((n - i - 1) * multiplier));
-	    }
-	    break;
-	  case UVM_LITTLE_FIFO:
-	    for (uint i=0; i != n; ++i) {
-	      local_addr ~= base_addr;
-	    }
-	    break;
-	  case UVM_BIG_FIFO:
-	    for (uint i=0; i != n; ++i) {
-	      local_addr ~= base_addr;
-	    }
-	    break;
-	  default:
-	    uvm_error("RegModel",
-		      "Map has no specified endianness. " ~
-		      format("Cannot access %0d bytes register " ~
-			     "via its %0d byte \"%s\" interface",
-			     n_bytes, bus_width, get_full_name()));
-	    break;
-	  }
-	}
-
-	uvm_reg_map up_map = get_parent_map();
-
-	// Then translate these addresses in the parent's space
-	if (up_map is null) {
-	  // This is the top-most system/block!
-	  addr = local_addr.dup;
-	  foreach (ref ad; addr) {
-	    ad += _m_base_addr;
-	  }
-	} else {
-	  int w, k;
-
-	  // Scale the consecutive local address in the system's granularity
-	  if (bus_width < up_map.get_n_bytes(UVM_NO_HIER)) {
-	    k = 1;
-	  }
-	  else {
-	    k = ((bus_width-1) / up_map.get_n_bytes(UVM_NO_HIER)) + 1;
-	  }
-
-	  uvm_reg_addr_t  base_addr_ = up_map.get_submap_offset(this);
-	
-	  foreach (i, lad; local_addr) {
-	    uvm_reg_addr_t[]  sys_addr;
-	    w = up_map.get_physical_addresses(cast(uvm_reg_addr_t)
-					      (base_addr_ + local_addr[i] * k),
-					      0,
-					      bus_width,
-					      sys_addr);
-	    foreach (sad; sys_addr) {
-	      addr ~= sad;
-	    }
-	  }
-	  // The width of each access is the minimum of this block or the system's width
-	  if (w < bus_width) {
-	    bus_width = w;
-	  }
-	}
-
-	return bus_width;
-
-      }
-    }  // get_physical_addresses
+      uint skip;
+      return get_physical_addresses_to_map(base_addr, mem_offset, n_bytes
+					   addr, null, skip, null);
+    }
 
 
-  // Public: get_reg_by_offset
-  //
-  // Get register mapped at offset
-  //
-  // Identify the register located at the specified offset within
-  // this address map for the specified type of access.
-  // Returns ~null~ if no such register is found.
-  //
-  // The model must be locked using <uvm_reg_block::lock_model()>
-  // to enable this publicality.
-  //
-  // extern virtual public uvm_reg get_reg_by_offset(uvm_reg_addr_t offset,
-  // 						  bool           read = 1);
-  //--------------
-  // Get-By-Offset
-  //--------------
-
-
-  // get_reg_by_offset
-
+  // @uvm-ieee 1800.2-2017 auto 18.2.4.17
   public uvm_reg get_reg_by_offset(uvm_reg_addr_t offset,
 				   bool           read = true) {
-    synchronized(this) {
+    synchronized (this) {
       if (!_m_parent.is_locked()) {
 	uvm_error("RegModel", format("Cannot get register by offset: " ~
 				     "Block %s is not locked.",
@@ -1628,24 +1196,9 @@ class uvm_reg_map: uvm_object
   }
 
 
-  //
-  // Public: get_mem_by_offset
-  // Get memory mapped at offset
-  //
-  // Identify the memory located at the specified offset within
-  // this address map. The offset may refer to any memory location
-  // in that memory.
-  // Returns ~null~ if no such memory is found.
-  //
-  // The model must be locked using <uvm_reg_block::lock_model()>
-  // to enable this publicality.
-  //
-  // extern virtual public uvm_mem    get_mem_by_offset(uvm_reg_addr_t offset);
-
-  // get_mem_by_offset
-
+   // @uvm-ieee 1800.2-2017 auto 18.2.4.18
   public uvm_mem get_mem_by_offset(uvm_reg_addr_t offset) {
-    synchronized(this) {
+    synchronized (this) {
       if (! _m_parent.is_locked()) {
 	uvm_error("RegModel", format("Cannot memory register by offset: " ~
 				     "Block %s is not locked.",
@@ -1664,77 +1217,25 @@ class uvm_reg_map: uvm_object
   }
 
 
-
-  //------------------
-  // Group: Bus Access
-  //------------------
-
-  // Public: set_auto_predict 
-  //
-  // Sets the auto-predict mode for his map.
-  //
-  // When ~on~ is ~TRUE~, 
-  // the register model will automatically update its mirror
-  // (what it thinks should be in the DUT) immediately after
-  // any bus read or write operation via this map. Before a <uvm_reg::write>
-  // or <uvm_reg::read> operation returns, the register's <uvm_reg::predict>
-  // method is called to update the mirrored value in the register.
-  //
-  // When ~on~ is ~FALSE~, bus reads and writes via this map do not
-  // automatically update the mirror. For real-time updates to the mirror
-  // in this mode, you connect a <uvm_reg_predictor> instance to the bus
-  // monitor. The predictor takes observed bus transactions from the
-  // bus monitor, looks up the associated <uvm_reg> register given
-  // the address, then calls that register's <uvm_reg::predict> method.
-  // While more complex, this mode will capture all register read/write
-  // activity, including that not directly descendant from calls to
-  // <uvm_reg::write> and <uvm_reg::read>.
-  //
-  // By default, auto-prediction is turned off.
-  // 
-  // public void set_auto_predict(bool on=1); _m_auto_predict = on; }
-  public void set_auto_predict(bool on = true) {
-    synchronized(this) {
+  // @uvm-ieee 1800.2-2017 auto 18.2.5.2
+  public void set_auto_predict(bool on=true) {
+    synchronized (this) {
       _m_auto_predict = on;
     }
   }
 
 
-  // Public: get_auto_predict
-  //
-  // Gets the auto-predict mode setting for this map.
-  // 
-  // public bool  get_auto_predict(); return _m_auto_predict; }
+  // @uvm-ieee 1800.2-2017 auto 18.2.5.1
   public bool  get_auto_predict() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_auto_predict;
     }
   }
 
 
-  // Public: set_check_on_read
-  // 
-  // Sets the check-on-read mode for his map
-  // and all of its submaps.
-  //
-  // When ~on~ is ~TRUE~, 
-  // the register model will automatically check any value read back from
-  // a register or field against the current value in its mirror
-  // and report any discrepancy.
-  // This effectively combines the publicality of the
-  // <uvm_reg::read()> and <uvm_reg::mirror(UVM_CHECK)> method.
-  // This mode is useful when the register model is used passively.
-  //
-  // When ~on~ is ~FALSE~, no check is made against the mirrored value.
-  //
-  // At the end of the read operation, the mirror value is updated based
-  // on the value that was read reguardless of this mode setting.
-  //
-  // By default, auto-prediction is turned off.
-  // 
-  // public void set_check_on_read(bool on=1);
-  public void set_check_on_read(bool on = true) {
-    synchronized(this) {
+  // @uvm-ieee 1800.2-2017 auto 18.2.5.3
+  public void set_check_on_read(bool on=true) {
+    synchronized (this) {
       _m_check_on_read = on;
       foreach (submap, unused; _m_submaps) {
 	submap.set_check_on_read(on);
@@ -1743,333 +1244,46 @@ class uvm_reg_map: uvm_object
   }
 
 
-  // Public: get_check_on_read
+  // Public -- NODOCS -- get_check_on_read
   //
   // Gets the check-on-read mode setting for this map.
   // 
   public bool  get_check_on_read() {
-    synchronized(this) {
+    synchronized (this) {
       return _m_check_on_read;
     }
   }
 
 
    
-  // Task: do_bus_write
+  // Task -- NODOCS -- do_bus_write
   //
   // Perform a bus write operation.
   //
-  // extern virtual task do_bus_write (uvm_reg_item rw,
-  // 				    uvm_sequencer_base sequencer,
-  // 				    uvm_reg_adapter adapter);
-
-  // do_bus_write
-
   // task
   public void do_bus_write (uvm_reg_item rw,
 			    uvm_sequencer_base sequencer,
 			    uvm_reg_adapter adapter) {
-
-    uvm_reg_map        system_map = get_root_map();
-    uint               bus_width  = get_n_bytes();
-    uvm_reg_byte_en_t  byte_en    = cast(uvm_reg_byte_en_t) -1;
-    uvm_reg_map_info   map_info;
-    int                n_bits;
-    int                lsb;
-    int                skip;
-    uint               curr_byte;
-    int                n_access_extra, n_access;
-    int                n_bits_init;
-
-    Xget_bus_infoX(rw, map_info, n_bits_init, lsb, skip);
-    auto addrs = map_info.addr;
-
-    // if a memory, adjust addresses based on offset
-    if (rw.element_kind == UVM_MEM) {
-      foreach (ref addr; addrs) {
-	addr = addr + map_info.mem_range.stride * rw.offset;
-      }
-    }
-
-    foreach (uvm_reg_data_t value; rw.get_value()) { // foreach_value
-
-      /* calculate byte_enables */
-      if (rw.element_kind == UVM_FIELD) {
-	int temp_be;
-	int idx;
-	n_access_extra = lsb%(bus_width*8);                
-	n_access = n_access_extra + n_bits_init;
-	temp_be = n_access_extra;
-	value = value << n_access_extra;
-	while(temp_be >= 8) {
-	  byte_en[idx++] = 0;
-	  temp_be -= 8;
-	}                        
-	temp_be += n_bits_init;
-	while(temp_be > 0) {
-	  byte_en[idx++] = 1;
-	  temp_be -= 8;
-	}
-	byte_en &= (1<<idx)-1;
-	for (int i=0; i<skip; i++) {
-	  addrs = addrs[1..$];
-	}
-	while (addrs.length > (n_bits_init/(bus_width*8) + 1)) {
-	  addrs = addrs[0..$-1];
-	}
-      }
-      curr_byte=0;
-      n_bits= n_bits_init;     
-              
-      foreach(i, addr; addrs) { // : foreach_addr
-
-	uvm_sequence_item bus_req;
-	uvm_reg_bus_op rw_access;
-	uvm_reg_data_t data;
-
-
-	data = (value >> (curr_byte*8)) & ((1L << (bus_width * 8))-1);
-       
-	uvm_info(get_type_name(),
-		 format("Writing 'h%0h at 'h%0h via map \"%s\"...",
-			data, addr, rw.map.get_full_name()), uvm_verbosity.UVM_FULL);
-
-	if (rw.element_kind == UVM_FIELD) {
-	  for (int z=0; z<bus_width; z++) {
-	    rw_access.byte_en[z] = byte_en[curr_byte+z];
-	  }
-	}
-                
-	rw_access.kind    = rw.kind;
-	rw_access.addr    = addr;
-	rw_access.data    = data;
-	rw_access.n_bits  = (n_bits > bus_width*8) ? bus_width*8 : n_bits;
-	rw_access.byte_en = byte_en;
-
-	adapter.m_set_item(rw);
-	bus_req = adapter.reg2bus(rw_access);
-	adapter.m_set_item(null);
-      
-	if (bus_req is null) {
-	  uvm_fatal("RegMem",
-		    "adapter [" ~ adapter.get_name() ~
-		    "] didnt return a bus transaction");
-	}
-      
-	bus_req.set_sequencer(sequencer);
-	rw.parent.start_item(bus_req, rw.prior);
-
-	if (rw.parent !is null && i == 0) {
-	  rw.parent.mid_do(rw);
-	}
-
-	rw.parent.finish_item(bus_req);
-	bus_req.end_event.wait_on();
-
-	if (adapter.provides_responses) {
-	  uvm_sequence_item bus_rsp;
-	  uvm_access_e op;
-	  // TODO: need to test for right trans type, if not put back in q
-	  rw.parent.get_base_response(bus_rsp);
-	  adapter.bus2reg(bus_rsp,rw_access);
-	}
-	else {
-	  adapter.bus2reg(bus_req,rw_access);
-	}
-
-	if (rw.parent !is null && i == addrs.length-1) {
-	  rw.parent.post_do(rw);
-	}
-
-	rw.status = rw_access.status;
-
-	uvm_info(get_type_name(),
-		 format("Wrote 'h%0h at 'h%0h via map \"%s\": %s...",
-			data, addr, rw.map.get_full_name(),
-			rw.status), uvm_verbosity.UVM_FULL);
-
-	if (rw.status == UVM_NOT_OK) break;
-
-	curr_byte += bus_width;
-	n_bits -= bus_width * 8;
-
-      } // : foreach_addr
-
-      foreach (ref addr; addrs) {
-	addr = addr + map_info.mem_range.stride;
-      }
-
-    } // foreach_value
+    do_bus_access(rw, sequencer, adapter);
   }
-  // endtask: do_bus_write
 
   
 
-  // Task: do_bus_read
+  // Task -- NODOCS -- do_bus_read
   //
   // Perform a bus read operation.
   //
-  // extern virtual task do_bus_read (uvm_reg_item rw,
-  // 				   uvm_sequencer_base sequencer,
-  // 				   uvm_reg_adapter adapter);
-
-  // task do_bus_read (uvm_reg_item rw,
-  // 		    uvm_sequencer_base sequencer,
-  // 		    uvm_reg_adapter adapter);
-
   // task
   public void do_bus_read (uvm_reg_item rw,
 			   uvm_sequencer_base sequencer,
 			   uvm_reg_adapter adapter) {
+    do_bus_access(rw, sequencer, adapter);
+  }
 
-    uvm_reg_map        system_map = get_root_map();
-    uint               bus_width  = get_n_bytes();
-    uvm_reg_byte_en_t  byte_en    = -1;
-    uvm_reg_map_info   map_info;
-    int                size, n_bits;
-    int                skip;
-    int                lsb;
-    uint               curr_byte;
-    int                n_access_extra, n_access;
-
-    Xget_bus_infoX(rw, map_info, n_bits, lsb, skip);
-
-    auto addrs = map_info.addr;
-
-    size = n_bits;
-
-    // if a memory, adjust addresses based on offset
-    if (rw.element_kind == UVM_MEM) {
-      foreach (ref addr; addrs) {
-	addr = addr + map_info.mem_range.stride * rw.offset;
-      }
-    }
-    
-    foreach (ref value; rw.get_value()) { // : foreach_value
-
-      /* calculate byte_enables */
-      if (rw.element_kind == UVM_FIELD) {
-	int temp_be;
-	int idx;
-	n_access_extra = lsb%(bus_width*8);                
-	n_access = n_access_extra + n_bits;
-	temp_be = n_access_extra;
-	while(temp_be >= 8) {
-	  byte_en[idx++] = 0;
-	  temp_be -= 8;
-	}                        
-	temp_be += n_bits;
-	while(temp_be > 0) {
-	  byte_en[idx++] = 1;
-	  temp_be -= 8;
-	}
-	byte_en &= (1<<idx)-1;
-	for (int i=0; i<skip; i++) {
-	  addrs = addrs[1..$]; // .pop_front();
-	}
-	while (addrs.length > (n_bits/(bus_width*8) + 1)) {
-	  addrs = addrs[0..$-1]; // .pop_back();
-	}
-      }
-      curr_byte=0;
-      value = 0;
-              
-      foreach (i, ref addr; addrs) {
-
-	uvm_sequence_item bus_req;
-	uvm_reg_bus_op rw_access;
-	uvm_reg_data_logic_t data;
-       
-
-	uvm_info(get_type_name(),
-		 format("Reading address 'h%0h via map \"%s\"...",
-			addr, get_full_name()), uvm_verbosity.UVM_FULL);
-                
-	if (rw.element_kind == UVM_FIELD) {
-	  for (int z=0;z<bus_width;z++) {
-	    rw_access.byte_en[z] = byte_en[curr_byte+z];
-	  }
-	}
-
-	rw_access.kind = rw.kind;
-	rw_access.addr = addr;
-	rw_access.data = 0;
-	rw_access.byte_en = byte_en;
-	rw_access.n_bits = (n_bits > bus_width*8) ? bus_width*8 : n_bits;
-                          
-	adapter.m_set_item(rw);
-	bus_req = adapter.reg2bus(rw_access);
-	adapter.m_set_item(null);
-	if (bus_req is null) {
-	  uvm_fatal("RegMem",
-		    "adapter [" ~ adapter.get_name() ~
-		    "] didnt return a bus transaction");
-	}
-	bus_req.set_sequencer(sequencer);
-	rw.parent.start_item(bus_req,rw.prior);
-
-	if (rw.parent !is null && i == 0) {
-	  rw.parent.mid_do(rw);
-	}
-
-	rw.parent.finish_item(bus_req);
-	bus_req.end_event.wait_on();
-
-	if (adapter.provides_responses) {
-	  uvm_sequence_item bus_rsp;
-	  uvm_access_e op;
-	  // TODO: need to test for right trans type, if not put back in q
-	  rw.parent.get_base_response(bus_rsp);
-	  adapter.bus2reg(bus_rsp,rw_access);
-	}
-	else {
-	  adapter.bus2reg(bus_req,rw_access);
-	}
-
-	data = rw_access.data & ((1<<bus_width*8)-1);
-
-	rw.status = rw_access.status;
-
-	if (rw.status == UVM_IS_OK && data.isX()) {
-	  rw.status = UVM_HAS_X;
-	}
-         
-	uvm_info(get_type_name(),
-		 format("Read 'h%0h at 'h%0h via map \"%s\": %s...",
-			data, addr, get_full_name(), rw.status),
-		 uvm_verbosity.UVM_FULL);
-
-	if (rw.status == UVM_NOT_OK) break;
-
-	value |= data << curr_byte*8;
-
-	if (rw.parent !is null && i == addrs.length-1) {
-	  rw.parent.post_do(rw);
-	}
-
-	curr_byte += bus_width;
-	n_bits -= bus_width * 8;
-      }
-
-      foreach (ref addr; addrs) {
-	addr = addr + map_info.mem_range.stride;
-      }
-
-      if (rw.element_kind == UVM_FIELD)
-	value = (value >> (n_access_extra)) & ((1<<size)-1);
-    }
-  } // endtask: do_bus_read
-
-  // Task: do_write
+  // Task -- NODOCS -- do_write
   //
   // Perform a write operation.
   //
-  // extern virtual task do_write(uvm_reg_item rw);
-  // do_write(uvm_reg_item rw)
-
-  // task
-  // do_bus_read
-
   public void do_write(uvm_reg_item rw) {
 
     uvm_sequence_base tmp_parent_seq;
@@ -2079,23 +1293,40 @@ class uvm_reg_map: uvm_object
 
     if (adapter !is null && adapter.parent_sequence !is null) {
       uvm_object obj = adapter.parent_sequence.clone();
-      auto seq = cast(uvm_sequence_base) obj;
-      assert(seq !is null); // assert($cast(seq,o));
+      auto seq = cast (uvm_sequence_base) obj;
+
+      if (obj is null)
+	uvm_fatal("REG/CLONE",
+		  "failed to clone adapter's parent sequence: '" ~
+                  adapter.parent_sequence.get_full_name() ~
+                  "' (of type '" ~
+                  adapter.parent_sequence.get_type_name() ~
+		  "')");
+      if (seq is null)
+      uvm_fatal("REG/CAST",
+		"failed to cast: '" ~
+		obj.get_full_name() ~
+		"' (of type '" ~
+		obj.get_type_name() ~
+		"') to uvm_sequence_base!");
+      
       seq.set_parent_sequence(rw.parent);
       rw.parent = seq;
       tmp_parent_seq = seq;
     }
 
     if (rw.parent is null) {
-      rw.parent = new uvm_sequence_base("default_parent_seq");
+      rw.parent = new uvm_reg_seq_base("default_parent_seq");
       tmp_parent_seq = rw.parent;
     }
 
     if (adapter is null) {
+      uvm_event_pool ep = rw.get_event_pool();
+      uvm_event!(uvm_object) end_event = ep.get("end") ;
       rw.set_sequencer(sequencer);
-      rw.parent.start_item(rw,rw.prior);
+      rw.parent.start_item(rw, rw.prior);
       rw.parent.finish_item(rw);
-      rw.end_event.wait_on();
+      end_event.wait_on();
     }
     else {
       do_bus_write(rw, sequencer, adapter);
@@ -2106,14 +1337,10 @@ class uvm_reg_map: uvm_object
     }
   }
 
-  // Task: do_read
+  // Task -- NODOCS -- do_read
   //
   // Perform a read operation.
   //
-  // extern virtual task do_read(uvm_reg_item rw);
-
-  // do_read(uvm_reg_item rw)
-
   // task
   public void do_read(uvm_reg_item rw) {
 
@@ -2124,23 +1351,38 @@ class uvm_reg_map: uvm_object
 
     if (adapter !is null && adapter.parent_sequence !is null) {
       uvm_object obj = adapter.parent_sequence.clone();
-      auto seq = cast(uvm_sequence_base) obj;
-      assert(seq !is null); // assert($cast(seq,obj));
+      auto seq = cast (uvm_sequence_base) obj;
+      if (obj is null)
+	uvm_fatal("REG/CLONE",
+		  "failed to clone adapter's parent sequence: '" ~
+                  adapter.parent_sequence.get_full_name() ~
+                  "' (of type '" ~
+                  adapter.parent_sequence.get_type_name() ~
+		  "')");
+      if (seq is null)
+	uvm_fatal("REG/CAST",
+		  "failed to cast: '" ~
+		  obj.get_full_name() ~
+		  "' (of type '" ~
+		  obj.get_type_name() ~
+		  "') to uvm_sequence_base!");
       seq.set_parent_sequence(rw.parent);
       rw.parent = seq;
       tmp_parent_seq = seq;
     }
 
     if (rw.parent is null) {
-      rw.parent = new uvm_sequence_base("default_parent_seq");
+      rw.parent = new uvm_reg_seq_base("default_parent_seq");
       tmp_parent_seq = rw.parent;
     }
 
     if (adapter is null) {
+      uvm_event_pool ep = rw.get_event_pool();
+      uvm_event!(uvm_object) end_event = ep.get("end") ;
       rw.set_sequencer(sequencer);
-      rw.parent.start_item(rw,rw.prior);
+      rw.parent.start_item(rw, rw.prior);
       rw.parent.finish_item(rw);
-      rw.end_event.wait_on();
+      end_event.wait_on();
     }
     else {
       do_bus_read(rw, sequencer, adapter);
@@ -2152,50 +1394,35 @@ class uvm_reg_map: uvm_object
   } // endtask
 
 
-  // extern public void Xget_bus_infoX (uvm_reg_item rw,
-  // 				     output uvm_reg_map_info map_info,
-  // 				     output int size,
-  // 				     output int lsb,
-  // 				     output int addr_skip);
-  //-----------
-  // Bus Access
-  //-----------
-
   public void Xget_bus_infoX(uvm_reg_item rw,
 			     out uvm_reg_map_info map_info,
 			     out int size,
 			     out int lsb,
 			     out int addr_skip) {
 
-    if (rw.element_kind == UVM_MEM) {
-      auto mem = cast(uvm_mem) rw.element;
-      if(rw.element is null || mem is null) {
-	uvm_fatal("REG/CAST",
-		  "uvm_reg_item 'element_kind' is UVM_MEM, " ~ 
-		  "but 'element' does not point to a memory: " ~
-		  rw.get_name());
+    if (rw.element_kind == uvm_elem_kind_e.UVM_MEM) {
+      auto mem = cast (uvm_mem) rw.element;
+      if (rw.element is null || mem is null) {
+	uvm_fatal("REG/CAST", "uvm_reg_item 'element_kind' is UVM_MEM, " ~ 
+		  "but 'element' does not point to a memory: " ~ rw.get_name());
       }
       map_info = get_mem_map_info(mem);
       size = mem.get_n_bits();
     }
-    else if (rw.element_kind == UVM_REG) {
+    else if (rw.element_kind == uvm_elem_kind_e.UVM_REG) {
       auto rg = cast (uvm_reg) rw.element;
-      if(rw.element is null || rg is null) {
-	uvm_fatal("REG/CAST",
-		  "uvm_reg_item 'element_kind' is UVM_REG, " ~ 
-		  "but 'element' does not point to a register: " ~
-		  rw.get_name());
+      if (rw.element is null || rg is null) {
+	uvm_fatal("REG/CAST", "uvm_reg_item 'element_kind' is UVM_REG, " ~ 
+		  "but 'element' does not point to a register: " ~ rw.get_name());
       }
       map_info = get_reg_map_info(rg);
       size = rg.get_n_bits();
     }
-    else if (rw.element_kind == UVM_FIELD) {
-      auto field = cast(uvm_reg_field) rw.element;
-      if(rw.element is null || field is null) {
-	uvm_fatal("REG/CAST",
-		  "uvm_reg_item 'element_kind' is UVM_FIELD, " ~ 
-		  "but 'element' does not point to a field: " ~
-		  rw.get_name());
+    else if (rw.element_kind == uvm_elem_kind_e.UVM_FIELD) {
+      auto field = cast (uvm_reg_field) rw.element;
+      if (rw.element is null || field is null) {
+	uvm_fatal("REG/CAST", "uvm_reg_item 'element_kind' is UVM_FIELD, " ~ 
+		  "but 'element' does not point to a field: " ~ rw.get_name());
       }
       map_info = get_reg_map_info(field.get_parent());
       size = field.get_n_bits();
@@ -2204,13 +1431,6 @@ class uvm_reg_map: uvm_object
     }
   }
 
-
-  //-------------
-  // Standard Ops
-  //-------------
-
-  // extern virtual public string      convert2string();
-  // convert2string
 
   override string convert2string() {
 
@@ -2221,9 +1441,9 @@ class uvm_reg_map: uvm_object
     string prefix;
 
     string result = format("%sMap %s", prefix, get_full_name());
-    endian = get_endian(UVM_NO_HIER);
+    endian = get_endian(uvm_hier_e.UVM_NO_HIER);
     result ~= format(" -- %0d bytes (%s)", 
-		     get_n_bytes(UVM_NO_HIER), endian);
+		     get_n_bytes(uvm_hier_e.UVM_NO_HIER), endian);
     get_registers(regs);
     foreach (reg; regs) {
       result ~= format("\n%s", 
@@ -2242,45 +1462,36 @@ class uvm_reg_map: uvm_object
     return result;
   }
 
-  // extern virtual public uvm_object  clone();
-
-  // clone
-
   override uvm_object clone() {
-    //uvm_rap_map me;
-    //me = new this;
-    //return me;
+    uvm_fatal("UVM/REGMAP/NOCLONE", "uvm_reg_map doesnt support clone()");
     return null;
   }
 
-
-  // extern virtual public void        do_print (uvm_printer printer);
-  // do_print
 
   override void do_print (uvm_printer printer) {
 
     uvm_reg[]          regs;
     uvm_vreg[]         vregs;
     uvm_mem[]          mems;
-    uvm_endianness_e   endian;
     uvm_reg_map[]      maps;
     string             prefix;
     uvm_sequencer_base sqr = get_sequencer();
   
     super.do_print(printer);
-    //  printer.print_generic(get_name(), get_type_name(), -1, convert2string()); 
+    uvm_endianness_e endian = get_endian(uvm_hier_e.UVM_NO_HIER);
+    printer.print("endian", endian); 
+    
+   printer.print("n_bytes", get_n_bytes(uvm_hier_e.UVM_NO_HIER),
+		 uvm_radix_enum.UVM_DEC);
+   printer.print("byte addressing", get_addr_unit_bytes()==1 ,
+		 uvm_radix_enum.UVM_DEC);
 
-    endian = get_endian(UVM_NO_HIER);
-    //   $sformat(convert2string, "%s -- %0d bytes (%s)", convert2string,
-    //            get_n_bytes(UVM_NO_HIER), endian.name());
-   
-    printer.print_generic("endian", "", -2, endian.to!string); 
-    if(sqr !is null) {
+    if (sqr !is null) {
       printer.print_generic("effective sequencer",
 			    sqr.get_type_name(), -2, sqr.get_full_name());
     }
              
-    get_registers(regs,UVM_NO_HIER);
+    get_registers(regs, uvm_hier_e.UVM_NO_HIER);
     foreach (reg; regs) {
       printer.print_generic(reg.get_name(), reg.get_type_name(),
 			    -2, format("@%0d +'h%0x", reg.get_inst_id(),
@@ -2307,12 +1518,9 @@ class uvm_reg_map: uvm_object
     }
   }
 
-  // extern virtual public void        do_copy   (uvm_object rhs);
-  // do_copy
-
   override void do_copy (uvm_object rhs) {
     //uvm_reg_map rhs_;
-    //assert($cast(rhs_,rhs));
+    //assert ($cast(rhs_,rhs));
 
     //rhs_.regs = regs;
     //rhs_.mems = mems;
@@ -2324,7 +1532,498 @@ class uvm_reg_map: uvm_object
   //extern virtual public bit       do_compare (uvm_object rhs, uvm_comparer comparer);
   //extern virtual public void      do_pack (uvm_packer packer);
   //extern virtual public void      do_unpack (uvm_packer packer);
-} // endclass: uvm_reg_map
+
+  // @uvm-ieee 1800.2-2017 auto 18.2.5.5
+  void set_transaction_order_policy(uvm_reg_transaction_order_policy pol) {
+    synchronized (this) {
+      _policy = pol;
+    }
+  }
+
+  // @uvm-ieee 1800.2-2017 auto 18.2.5.4
+  uvm_reg_transaction_order_policy get_transaction_order_policy() {
+    synchronized (this) {
+      return _policy;
+    }
+  }
    
+  // ceil() function
+  private uint ceil(uint a, uint b) {
+    uint r = a / b;
+    uint r0 = a % b;
+    return r0 ? (r+1) : r;
+  }
+  
+  /*
+   * translates an access from the current map ~this~ to an address ~base_addr~ (within the current map) with a 
+   * length of ~n_bytes~ into an access from map ~parent_map~. 
+   * if ~mem~ and ~mem_offset~ are supplied then a memory access is assumed 
+   * results: ~addr~ contains the set of addresses and ~byte_offset~ holds the number of bytes the data stream needs to be shifted 
+   * 
+   * this implementation assumes a packed data access
+   */ 
+  int get_physical_addresses_to_map(RA, RB)(RA base_addr,
+					    RB mem_offset,
+					    uint n_bytes,  // number of bytes
+					    ref uvm_reg_addr_t[] addr, // array of addresses
+					    uvm_reg_map parent_map, // translate till parent_map is the parent of the actual map or NULL if this is a root_map
+					    ref uint byte_offset,
+					    uvm_mem mem =null
+					    )
+    if (uvm_reg_addr_t.isAssignableBitVec!RA &&
+       uvm_reg_addr_t.isAssignableBitVec!RB) {
+      synchronized (this) {
+	int bus_width = get_n_bytes(uvm_hier_e.UVM_NO_HIER);
+	uvm_reg_addr_t[]  local_addr;
+
+	//	`uvm_info("RegModel",$sformatf("this=%p enter base=0x%0x mem_offset=0x%0d request=%0dbytes byte_enable=%0d byte-offset=%0d",
+	//		this,base_addr,mem_offset,n_bytes,m_byte_addressing,byte_offset),UVM_HIGH)
+
+	//	`uvm_info("RegModel",$sformatf("addressUnitBits=%0d busWidthBits=%0d",get_addr_unit_bytes()*8,bus_width*8),UVM_HIGH)
+
+	uvm_reg_map up_map = get_parent_map();
+	uvm_reg_addr_t lbase_addr = up_map is null ?
+	  get_base_addr(uvm_hier_e.UVM_NO_HIER): up_map.get_submap_offset(this);
+	// `uvm_info("RegModel",$sformatf("lbase =0x%0x",lbase_addr),UVM_HIGH)
+
+	if (up_map !is parent_map) {
+	  uvm_reg_addr_t lb;
+	  // now just translate first address and request same number of bytes
+	  // may need to adjust addr,n_bytes if base_addr*AUB is not a multiple of upmap.AUB
+	  // addr=5,aub=8 and up.aub=16 and n_bytes=1 which is translated addr=2,n_bytes=2
+	  uvm_reg_addr_t laddr;
+	  // begin
+	  // adjust base_addr to find the base of memword(mem_offset)
+	  if (mem_offset) {
+	    base_addr += mem_offset*mem.get_n_bytes()/get_addr_unit_bytes();
+	  }
+	  laddr = lbase_addr + base_addr*get_addr_unit_bytes()/up_map.get_addr_unit_bytes(); // start address in terms of the upper map
+	  lb = (base_addr*get_addr_unit_bytes()) % up_map.get_addr_unit_bytes(); // potential byte offset on top of the start address in the upper map
+	  byte_offset += lb; // accumulate!
+	  // end	
+	  return up_map.get_physical_addresses_to_map(laddr, 0, n_bytes+lb, addr,parent_map,byte_offset);
+	}
+	else {
+	  uvm_reg_addr_t lbase_addr2;
+	  // first need to compute set of addresses
+	  // each address is for one full bus width (the last beat may have less bytes to transfer)
+	  local_addr.length = ceil(n_bytes,bus_width);
+
+	  lbase_addr2 = base_addr;
+	  if (mem_offset)					
+	    if (mem !is null &&
+		(mem.get_n_bytes() >= get_addr_unit_bytes())) { // packed model
+	      lbase_addr2 = base_addr + mem_offset*mem.get_n_bytes()/get_addr_unit_bytes();
+	      byte_offset += (mem_offset*mem.get_n_bytes() % get_addr_unit_bytes());
+	    }
+	    else {
+	      lbase_addr2 = base_addr + mem_offset;
+	    }
+
+	  //			`uvm_info("UVM/REG/ADDR",$sformatf("gen addrs map-aub(bytes)=%0d addrs=%0d map-bus-width(bytes)=%0d lbase_addr2=%0x",
+	  //				get_addr_unit_bytes(),local_addr.size(),bus_width,lbase_addr2),UVM_DEBUG)
+
+	  switch (get_endian(uvm_hier_e.UVM_NO_HIER)) {
+	  uvm_endianness_e.UVM_LITTLE_ENDIAN:
+	    foreach (ref laddr; local_addr) {
+	      laddr = lbase_addr2 + i*bus_width/get_addr_unit_bytes();
+	    }
+	    break;
+	  uvm_endianness_e.UVM_BIG_ENDIAN:
+	    foreach (ref laddr; local_addr) {
+	      laddr = lbase_addr2 + (local_addr.size()-1-i) * bus_width/get_addr_unit_bytes() ;
+	    }
+	    break;
+	  uvm_endianness_e.UVM_LITTLE_FIFO:
+	    foreach (ref laddr; local_addr) {
+	      laddr = lbase_addr2;
+	    }
+	    break;
+	  uvm_endianness_e.UVM_BIG_FIFO:
+	    foreach (ref laddr; local_addr) {
+	      laddr = lbase_addr2;
+	    }
+	    break;
+	  default:
+	    uvm_error("UVM/REG/MAPNOENDIANESS",
+		      "Map has no specified endianness. " ~
+		      format("Cannot access %0d bytes register via its %0d byte \"%s\" interface",
+			     n_bytes, bus_width, get_full_name()));
+	  }
+
+	  // foreach(local_addr[idx])
+	  //   `uvm_info("UVM/REG/ADDR",$sformatf("local_addr idx=%0d addr=%0x",idx,local_addr[idx]),UVM_DEBUG)
+
+	  // now need to scale in terms of upper map
+
+	  addr = local_addr.dup;
+
+	  foreach (ref a; addr)
+	    a += lbase_addr;
+			
+	  // foreach(addr[idx])
+	  //   `uvm_info("UVM/REG/ADDR",$sformatf("top %0x:",addr[idx]),UVM_DEBUG)
+			
+	}
+      }
+    }
+  
+  // performs all bus operations ~accesses~ generated from ~rw~ via adapter ~adapter~ on sequencer ~sequencer~
+  // task
+  void perform_accesses(ref uvm_reg_bus_op[] accesses,
+			uvm_reg_item rw,
+			uvm_reg_adapter adapter,
+			uvm_sequencer_base sequencer) {
+    uvm_reg_data_logic_t data;
+    uvm_endianness_e endian;
+	
+    string op = (rw.kind == uvm_access_e.UVM_READ ||
+		 rw.kind == uvm_access_e.UVM_BURST_READ) ? "Read" : "Wrote";
+    endian = get_endian(uvm_hier_e.UVM_NO_HIER);
+  
+    // if set utilize the order policy
+    if (policy !is null)
+      policy.order(accesses);
+    
+    // perform accesses
+    foreach (ref access; accesses) {
+      uvm_reg_bus_op rw_access = access;  
+      uvm_sequence_item bus_req;
+
+      if ((rw_access.kind == uvm_access_e.UVM_WRITE) &&
+	  (endian == uvm_endianness_e.UVM_BIG_ENDIAN)) {
+	rw_access.data = rw_access.data.byteReverse();
+      }
+          
+      adapter.m_set_item(rw);
+      bus_req = adapter.reg2bus(rw_access);
+      adapter.m_set_item(null);
+      
+      if (bus_req is null)
+        uvm_fatal("RegMem",
+		  "adapter [" ~ adapter.get_name() ~
+		  "] didnt return a bus transaction");
+      bus_req.set_sequencer(sequencer);
+      rw.parent.start_item(bus_req, rw.prior);
+      if (rw.parent !is null && i == 0)
+        rw.parent.mid_do(rw);
+
+      rw.parent.finish_item(bus_req);
+
+      // {
+      uvm_event_pool ep = bus_req.get_event_pool();
+      uvm_event!(uvm_object) end_event = ep.get("end") ;
+      end_event.wait_on();
+      // }
+
+      if (adapter.provides_responses) {
+        uvm_sequence_item bus_rsp;
+        uvm_access_e op;
+        // TODO: need to test for right trans type, if not put back in q
+        rw.parent.get_base_response(bus_rsp, bus_req.get_transaction_id());
+        adapter.bus2reg(bus_rsp, rw_access);
+      }
+      else {
+        adapter.bus2reg(bus_req, rw_access);
+      }
+
+      if ((rw_access.kind == uvm_access_e.UVM_READ)
+	  && (endian == uvm_endianness_e.UVM_BIG_ENDIAN)) {
+        // { >> { rw_access.data }} = { << byte { rw_access.data}};
+	rw_access.data = rw_access.data.byteReverse();
+      }
+
+      rw.status = rw_access.status;
+
+      // begin
+      uvm_reg_data_t mask = 1;
+      mask <<= get_n_bytes()*8;
+      mask -= 1;
+      
+      data = rw_access.data & mask; // mask the upper bits
+      
+      if (rw.kind == uvm_access_e.UVM_READ ||
+	  rw.kind == uvm_access_e.UVM_BURST_READ)
+      	if (rw.status == uvm_status_e.UVM_IS_OK && data.isX())
+	  rw.status = uvm_status_e.UVM_HAS_X;
+      	
+      rw_access.data = data;    	
+      // end	
+
+      uvm_info("UVM/REG/ADDR",
+         format("%s 'h%0h at 'h%0h via map \"%s\": %s...", op,
+		rw_access.data, rw_access.addr, rw.map.get_full_name(),
+		rw.status.name()), uvm_verbosity.UVM_FULL);
+
+      if (rw.status == uvm_status_e.UVM_NOT_OK)
+	break;
+        
+      if (rw.parent !is null && i == accesses.length-1)
+        rw.parent.post_do(rw);
+        
+      access = rw_access;
+    }
+  }
+
+  // performs all necessary bus accesses defined by ~rw~ on the sequencer ~sequencer~ utilizing the adapter ~adapter~
+  // task
+  void do_bus_access(uvm_reg_item rw,
+		     uvm_sequencer_base sequencer,
+		     uvm_reg_adapter adapter) {
+    uvm_reg_map system_map = get_root_map();
+    uint bus_width  = get_n_bytes();
+    uvm_reg_byte_en_t  byte_en    = -1;
+    uvm_reg_map_info   map_info;
+    int                n_bits;
+    int                lsb;
+    int                skip;
+    uint       curr_byte;
+    int                n_access_extra, n_access;
+    uvm_reg_bus_op[]    accesses;
+    //	int n_bits_init;
+    uvm_reg_addr_t adr[];
+    uint byte_offset;
+    uint num_stream_bytes;
+    uint n_bytes;
+    uint bytes_per_value;
+    uint bit_shift;
+    uint extra_byte;
+	
+    Xget_bus_infoX(rw, map_info, n_bits, lsb, skip);
+
+    uvm_reg_addr_t[] addrs = map_info.addr;
+    string op = (rw.kind == uvm_access_e.UVM_READ ||
+		 rw.kind == uvm_access_e.UVM_BURST_READ) ?
+      "Reading" : "Writing";
+
+    switch (rw.element_kind) {
+    uvm_elem_kind_e.UVM_MEM:
+      uvm_mem mem = cast (uvm_mem) rw.element;
+      get_physical_addresses_to_map(m_mems_info[mem].offset, rw.offset,
+				    rw.value.size()*mem.get_n_bytes(),
+				    adr, null, byte_offset, mem);
+      num_stream_bytes = rw.value.size()*mem.get_n_bytes();
+      n_bytes = mem.get_n_bytes();
+      bytes_per_value = mem.get_n_bytes();
+      break;
+    uvm_elem_kind_e.UVM_FIELD:
+      uvm_reg_addr_t ad;
+      uvm_reg_field f = cast (uvm_reg_field) rw.element;
+
+      // adjust adr bit skipped bytes; still need to shift data by byte fractions (lsb)
+      get_physical_addresses_to_map(m_regs_info[f.get_parent()].offset+skip,
+				    0, ceil(f.get_n_bits(), 8),
+				    adr, null, byte_offset);
+      num_stream_bytes = ceil(f.get_n_bits(), 8);
+      n_bytes = get_n_bytes(uvm_hier_e.UVM_NO_HIER);	
+      bytes_per_value = ceil(f.get_n_bits(), 8);
+      bit_shift = lsb % (get_n_bytes()*8);
+      if (bit_shift+f.get_n_bits() / 8 !=  f.get_n_bits() /8)
+	extra_byte = 1;
+      // `uvm_info("UVM/REG/ADDR",$sformatf("need to byte skip %0d and bit shift %0d",skip,bit_shift),UVM_DEBUG)
+      break;
+    uvm_elem_kind_e.UVM_REG:
+      uvm_reg_addr_t ad;
+      uvm_reg r = cast (uvm_reg) rw.element;
+
+      get_physical_addresses_to_map(m_regs_info[r].offset,
+				    0, r.get_n_bytes(),
+				    adr ,null, byte_offset);
+      num_stream_bytes = r.get_n_bytes();
+      n_bytes = get_n_bytes(uvm_hier_e.UVM_NO_HIER);
+      bytes_per_value = r.get_n_bytes();
+    }
+
+    bool[] be;
+    byte[] p;
+
+    // adjust bytes if there is a leading bit shift
+    num_stream_bytes += extra_byte;
+
+    for (size_t i=0; i!=byte_offset; ++i) be ~= false;
+    for (size_t i=0; i!=num_stream_bytes; ++i) be ~= true;
+    for (size_t i=0; i!=bus_width; ++i) be ~= false;
+
+    // now shift data to match the alignment
+    for (size_t i=0; i!=byte_offset; ++i) p ~= 0;
+    foreach (val; rw.value)
+      for (int i=0; i<bytes_per_value; i++)
+	p ~= val.getByte(i);
+
+    if (bit_shift) {
+      uvm_reg_data_t ac = 0;
+      foreach(byt; p) {
+	uvm_reg_data_t n;
+	n = (ac | (byt << bit_shift)) & 0xff;
+	ac = (byt >> bit_shift) & 0xff;
+	byt = n;
+      }
+      if (extra_byte)
+	p ~= ac;
+    }
+
+    /*
+      if (uvm_report_enabled(UVM_DEBUG, UVM_INFO, "UVM/REG/ADDR")) begin
+      foreach(be[idx])
+      `uvm_info("UVM/REG/ADDR",$sformatf("idx %0d en=%0d",idx,be[idx]),UVM_DEBUG)
+
+      foreach(adr[idx])
+      `uvm_info("UVM/REG/ADDR",$sformatf("mem-adr %0x byte-offset=%0d",adr[idx],byte_offset),UVM_DEBUG)
+
+      foreach(p[idx])
+      `uvm_info("UVM/REG/ADDR",$sformatf("idx %0d data=%x enable=%0d",idx,p[idx],be[idx]),UVM_DEBUG)
+		
+      foreach(rw.value[idx])
+      `uvm_info("UVM/REG/ADDR",$sformatf("original idx=%0d %0x",idx,rw.value[idx]),UVM_DEBUG)
+		
+      end
+    */
+		
+    // transform into accesses per address
+    accesses.length = 0;
+    foreach (ad; adr) {
+      uvm_reg_bus_op rw_access;
+      uvm_reg_data_t data;
+
+      for (int i0=0; i0 < bus_width; i0++)
+	data.setByte(i0, p[i*bus_width+i0]);
+
+      uvm_info("UVM/REG/ADDR",
+	       format("%s 'h%0h at 'h%0h via map \"%s\"...",op,
+		      data, adr[i], rw.map.get_full_name()),
+	       uvm_verbosity.UVM_FULL);
+
+      for (int z=0; z<bus_width; z++)
+	rw_access.byte_en[z] = be[bus_width*i+z];
+
+      rw_access.kind    = rw.kind;
+      rw_access.addr    = ad;
+      rw_access.data    = data;
+			
+      rw_access.n_bits = 8*bus_width;
+      for (int i=bus_width-1; i>=0; i--) {
+	if (rw_access.byte_en[i] == 0)
+	  rw_access.n_bits -= 8;
+	else
+	  break;
+      }
+
+      accesses ~= rw_access;
+    }
+		
+    perform_accesses(accesses, rw, adapter, sequencer);
+
+    // for reads copy back to rw.value
+    if(rw.kind  == uvm_access_e.UVM_READ ||
+       rw.kind  == uvm_access_e.UVM_BURST_READ) {
+      p.length = 0;
+
+      foreach (access; accesses)
+	for (int i1=0; i1<bus_width; i1++)
+	  p ~= access.data.getByte(i1);
+
+      // repeat(byte_offset) void'(p.pop_front());
+      p = p[byte_offset..$];
+      foreach (ref val; rw.value) val = 0;
+
+      if (bit_shift) {
+	uvm_reg_data_t ac = 0;
+	for (int i=0; i<p.length; i++) {
+	  byte nv = cast(byte) (p[i] >> bit_shift);
+	  if (i != p.length-1)
+	    nv |= cast(byte) (p[i+1] << bit_shift);
+	  p[i] = nv;
+	}
+	if (extra_byte)
+	  p.length -= 1;
+      }
+
+      foreach (ref val; rw.value)
+	for (int i0=0; i0<bytes_per_value; i0++)
+	  val.setByte(i0, p[idx*bytes_per_value+i0]);
+      
+      if (rw.element_kind == uvm_elem_kind_e.UVM_FIELD) {
+
+	uvm_reg_field f = cast(uvm_reg_field) rw.element;
+						
+	uvm_reg_data_t m = 1;
+	m <<= f.get_n_bits();
+	m -= 1;
+
+	foreach (ref val; rw.value)
+	  val &= m;
+      }
+
+      /*
+	if (uvm_report_enabled(UVM_DEBUG, UVM_INFO, "UVM/REG/ADDR")) 
+	foreach(rw.value[idx])
+	`	uvm_info("UVM/REG/ADDR",$sformatf("read return idx=%0d %0x",idx,rw.value[idx]),UVM_DEBUG)
+      */
+			        
+    }
+  }
+  
+  // unregisters all content from this map recursively
+  // it is NOT expected that this leads to a fresh new map 
+  // it rather removes all knowledge of this map from other objects 
+  // so that they can be reused with a fresh map instance
+  // @uvm-ieee 1800.2-2017 auto 18.2.3.11
+  void unregister() {
+    synchronized (this) {
+      uvm_reg_block[] q;
+      uvm_reg_block.get_root_blocks(q);
+		
+      foreach (block; q)
+	block.set_lock(0);
+		
+      foreach (block; q)
+	block.unregister(this);
+		
+      foreach (map_, submap; _m_submaps)
+	map_.unregister();
+    
+      _m_submaps.clear();
+      _m_submap_rights.clear();
 
 
+      foreach (reg_by_offset; _m_regs_by_offset)
+	reg_by_offset.unregister(this);
+		
+      _m_regs_by_offset.clear();
+      _m_regs_by_offset_wo.clear();
+      _m_mems_by_offset.clear();
+
+      _m_regs_info.clear();
+      _m_mems_info.clear();
+			
+      _m_parent_map = null;
+    }
+  }
+
+  uvm_reg_map clone_and_update(string rights) {
+    synchronized (this) {
+      if (_m_parent_map !is null)
+	uvm_error("UVM/REG/CLONEMAPWITHPARENT",
+		  "cannot clone a map which already has a parent");
+      if (_m_submaps.length != 0)
+	uvm_error("UVM/REG/CLONEMAPWITHCHILDREN",
+		  "cannot clone a map which already has children");
+		
+      uvm_reg_map m;
+      uvm_reg_block b = get_parent();
+			
+      m = b.create_map(get_name(), 0 , _m_n_bytes,
+		       _m_endian, _m_byte_addressing);
+			
+      foreach(rg; _m_regs_by_offset) {
+	uvm_reg_map_info info = get_reg_map_info(rg);
+	m.add_reg(rg, info.offset, rights, info.unmapped, info.frontdoor);
+      }
+      foreach(rg; m_mems_by_offset) {
+	uvm_reg_map_info info = get_mem_map_info(rg);
+	m.add_mem(rg, info.offset, rights, info.unmapped, info.frontdoor);
+      }
+      return m;
+    }
+  }
+}

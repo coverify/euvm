@@ -1,6 +1,6 @@
 //
 //------------------------------------------------------------------------------
-//   Copyright 2014-2016 Coverify Systems Technology
+//   Copyright 2014-2019 Coverify Systems Technology
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -26,7 +26,7 @@ class uvm_async_lock: AsyncLock
 {
   import uvm.base.uvm_component: uvm_component;
   this(uvm_component parent, int tokens=0) {
-    synchronized(this) {
+    synchronized (this) {
       super(parent.get_root_entity(), tokens);
       parent.get_root.register_async_lock(this);
     }
@@ -43,7 +43,7 @@ class uvm_async_event
   alias event this;
 
   this (string name, uvm_component parent) {
-    synchronized(this) {
+    synchronized (this) {
       _event.initialize(name, parent.get_entity);
       parent.get_root.register_async_event(this);
     }

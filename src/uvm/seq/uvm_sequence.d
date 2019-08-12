@@ -1,9 +1,12 @@
 //----------------------------------------------------------------------
-//   Copyright 2007-2011 Mentor Graphics Corporation
-//   Copyright 2007-2010 Cadence Design Systems, Inc.
-//   Copyright 2010      Synopsys, Inc.
-//   Copyright 2013      Cisco Systems, Inc.
-//   Copyright 2012-2016 Coverify Systems Technology
+// Copyright 2012-2019 Coverify Systems Technology
+// Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2014 Semifore
+// Copyright 2010-2014 Synopsys, Inc.
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2010-2012 AMD
+// Copyright 2014-2015 NVIDIA Corporation
+// Copyright 2013 Cisco Systems, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -39,17 +42,18 @@ version(UVM_NO_RAND) {}
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_sequence #(REQ,RSP)
+// CLASS -- NODOCS -- uvm_sequence #(REQ,RSP)
 //
 // The uvm_sequence class provides the interfaces necessary in order to create
 // streams of sequence items and/or other sequences.
 //
 //------------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 14.3.1
 abstract class uvm_sequence (REQ_T = uvm_sequence_item, RSP_T = REQ_T):
   uvm_sequence_base
 {
-  mixin(uvm_sync_string);
+  mixin (uvm_sync_string);
 
   alias sequencer_t = uvm_sequencer_param_base!(REQ_T, RSP_T);
   alias REQ = REQ_T;
@@ -65,7 +69,7 @@ abstract class uvm_sequence (REQ_T = uvm_sequence_item, RSP_T = REQ_T):
       private sequencer_t        _param_sequencer;
   }
 
-  // Variable: req
+  // Variable -- NODOCS -- req
   //
   // The sequence contains a field of the request type called req.  The user
   // can use this field, if desired, or create another field to use.  The
@@ -79,7 +83,7 @@ abstract class uvm_sequence (REQ_T = uvm_sequence_item, RSP_T = REQ_T):
   }
 
 
-  // Variable: rsp
+  // Variable -- NODOCS -- rsp
   //
   // The sequence contains a field of the response type called rsp.  The user
   // can use this field, if desired, or create another field to use.   The
@@ -92,15 +96,16 @@ abstract class uvm_sequence (REQ_T = uvm_sequence_item, RSP_T = REQ_T):
       protected RSP_T              rsp;
   }    
 
-  // Function: new
+  // Function -- NODOCS -- new
   //
   // Creates and initializes a new sequence object.
 
+  // @uvm-ieee 1800.2-2017 auto 14.3.3.1
   this(string name = "uvm_sequence") {
     super(name);
   }
 
-  // Function: send_request
+  // Function -- NODOCS -- send_request
   //
   // This method will send the request item to the sequencer, which will forward
   // it to the driver.  If the rerandomize bit is set, the item will be
@@ -109,12 +114,12 @@ abstract class uvm_sequence (REQ_T = uvm_sequence_item, RSP_T = REQ_T):
 
   final override void send_request(uvm_sequence_item request,
 				   bool rerandomize=false) {
-    synchronized(this) {
+    synchronized (this) {
       if (m_sequencer is null) {
 	uvm_report_fatal("SSENDREQ", "Null m_sequencer reference", uvm_verbosity.UVM_NONE);
       }
 
-      REQ_T m_request = cast(REQ_T) request;
+      REQ_T m_request = cast (REQ_T) request;
       if (request is null) {
 	uvm_report_fatal("SSENDREQ", "Failure to cast uvm_sequence_item to request", uvm_verbosity.UVM_NONE);
       }
@@ -123,7 +128,7 @@ abstract class uvm_sequence (REQ_T = uvm_sequence_item, RSP_T = REQ_T):
   }
 
 
-  // Function: get_current_item
+  // Function -- NODOCS -- get_current_item
   //
   // Returns the request item currently being executed by the sequencer. If the
   // sequencer is not currently executing an item, this method will return ~null~.
@@ -134,9 +139,10 @@ abstract class uvm_sequence (REQ_T = uvm_sequence_item, RSP_T = REQ_T):
   // Note that a driver that only calls get will never show a current item,
   // since the item is completed at the same time as it is requested.
 
+  // @uvm-ieee 1800.2-2017 auto 14.3.3.2
   final REQ_T get_current_item() {
-    synchronized(this) {
-      _param_sequencer = cast(sequencer_t) m_sequencer;
+    synchronized (this) {
+      _param_sequencer = cast (sequencer_t) m_sequencer;
       if (_param_sequencer is null) {
 	uvm_report_fatal("SGTCURR", "Failure to cast m_sequencer to the" ~
 			 " parameterized sequencer", uvm_verbosity.UVM_NONE);
@@ -145,7 +151,7 @@ abstract class uvm_sequence (REQ_T = uvm_sequence_item, RSP_T = REQ_T):
     }
   }
 
-  // Task: get_response
+  // Task -- NODOCS -- get_response
   //
   // By default, sequences must retrieve responses by calling get_response.
   // If no transaction_id is specified, this task will return the next response
@@ -161,13 +167,14 @@ abstract class uvm_sequence (REQ_T = uvm_sequence_item, RSP_T = REQ_T):
   //
   // If a response is dropped in the response queue, an error will be reported
   // unless the error reporting is disabled via
-  // set_response_queue_error_report_disabled.
+  // set_response_queue_error_report_enabled.
 
   // task
+  // @uvm-ieee 1800.2-2017 auto 14.3.3.3
   void get_response(out RSP_T response, int transaction_id=-1) {
     uvm_sequence_item rsp;
     get_base_response(rsp, transaction_id);
-    response = cast(RSP_T) rsp;
+    response = cast (RSP_T) rsp;
   }
 
 
@@ -181,7 +188,7 @@ abstract class uvm_sequence (REQ_T = uvm_sequence_item, RSP_T = REQ_T):
       uvm_report_fatal("PUTRSP", "Received a null in response",
 		       uvm_verbosity.UVM_NONE);
     }
-    RSP_T response = cast(RSP_T) response_item;
+    RSP_T response = cast (RSP_T) response_item;
     if (response is null) {
       uvm_report_fatal("PUTRSP",
 		       format("Failure to cast response to type %s in put_response",

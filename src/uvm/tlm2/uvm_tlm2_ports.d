@@ -1,7 +1,10 @@
 //----------------------------------------------------------------------
-//   Copyright 2010 Mentor Graphics Corporation
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2016 Coverify Systems Technology
+// Copyright 2016-2019 Coverify Systems Technology
+// Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2010-2018 Synopsys, Inc.
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2015-2018 NVIDIA Corporation
+// Copyright 2014 Cisco Systems, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -21,25 +24,26 @@
 
 module uvm.tlm2.uvm_tlm2_ports;
 //----------------------------------------------------------------------
-// Title: TLM2 ports
+// Title -- NODOCS -- UVM TLM2 ports
 //
-// The following defines TLM2 port classes.
+// The following defines UVM TLM2 port classes.
 //
 //----------------------------------------------------------------------
 
-// class: uvm_tlm_b_transport_port
+// class -- NODOCS -- uvm_tlm_b_transport_port
 //
 // Class providing the blocking transport port,
 // The port can be bound to one export.
 // There is no backward path for the blocking transport.
 
+// @uvm-ieee 1800.2-2017 auto 12.3.6.1
 class uvm_tlm_b_transport_port(T=uvm_tlm_generic_payload)
   : uvm_port_base!(uvm_tlm_if!(T))
   {
     // `UVM_PORT_COMMON(`UVM_TLM_B_MASK, "uvm_tlm_b_transport_port")
     this(string name, uvm_component parent,
 	 int min_size=1, int max_size=1) {
-      synchronized(this) {
+      synchronized (this) {
 	super(name, parent, uvm_port_type_e.UVM_PORT, min_size, max_size);
 	m_if_mask = UVM_TLM_B_MASK;
       }
@@ -50,7 +54,7 @@ class uvm_tlm_b_transport_port(T=uvm_tlm_generic_payload)
     // `UVM_TLM_B_TRANSPORT_IMP(this.m_if, T, t, delay)
     // task
     void b_transport(T t, uvm_tlm_time delay) {
-      if(delay is null) {
+      if (delay is null) {
 	uvm_error("UVM/TLM/NULLDELAY", get_full_name() ~
 		  ".b_transport() called with 'null' delay");
 	return;
@@ -60,7 +64,7 @@ class uvm_tlm_b_transport_port(T=uvm_tlm_generic_payload)
   }
 
 
-// class: uvm_tlm_nb_transport_fw_port
+// class -- NODOCS -- uvm_tlm_nb_transport_fw_port
 //
 // Class providing the non-blocking backward transport port.
 // Transactions received from the producer, on the forward path, are
@@ -69,6 +73,7 @@ class uvm_tlm_b_transport_port(T=uvm_tlm_generic_payload)
 // The port can be bound to one export.
 //
   
+// @uvm-ieee 1800.2-2017 auto 12.3.6.2
 class uvm_tlm_nb_transport_fw_port(T=uvm_tlm_generic_payload,
 				   P=uvm_tlm_phase_e)
   : uvm_port_base!(uvm_tlm_if!(T,P))
@@ -76,7 +81,7 @@ class uvm_tlm_nb_transport_fw_port(T=uvm_tlm_generic_payload,
     // `UVM_PORT_COMMON(`UVM_TLM_NB_FW_MASK, "uvm_tlm_nb_transport_fw_port")
     this(string name, uvm_component parent,
 	 int min_size=1, int max_size=1) {
-      synchronized(this) {
+      synchronized (this) {
 	super(name, parent, uvm_port_type_e.UVM_PORT, min_size, max_size);
 	m_if_mask = UVM_TLM_NB_FW_MASK;
       }
@@ -95,7 +100,7 @@ class uvm_tlm_nb_transport_fw_port(T=uvm_tlm_generic_payload,
     }
   }
 
-// class: uvm_tlm_nb_transport_bw_port
+// class -- NODOCS -- uvm_tlm_nb_transport_bw_port
 //
 // Class providing the non-blocking backward transport port.
 // Transactions received from the producer, on the forward path, are
@@ -104,6 +109,7 @@ class uvm_tlm_nb_transport_fw_port(T=uvm_tlm_generic_payload,
 // The port can be bound to one export.
 //
   
+// @uvm-ieee 1800.2-2017 auto 12.3.6.3
 class uvm_tlm_nb_transport_bw_port(T=uvm_tlm_generic_payload,
 				   P=uvm_tlm_phase_e)
   : uvm_port_base!(uvm_tlm_if!(T,P))
@@ -111,7 +117,7 @@ class uvm_tlm_nb_transport_bw_port(T=uvm_tlm_generic_payload,
     // `UVM_PORT_COMMON(`UVM_TLM_NB_BW_MASK, "uvm_tlm_nb_transport_bw_port")
     this(string name, uvm_component parent,
 	 int min_size=1, int max_size=1) {
-      synchronized(this) {
+      synchronized (this) {
 	super(name, parent, uvm_port_type_e.UVM_PORT, min_size, max_size);
 	m_if_mask = UVM_TLM_NB_BW_MASK;
       }

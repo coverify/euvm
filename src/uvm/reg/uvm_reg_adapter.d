@@ -72,25 +72,29 @@ abstract class uvm_reg_adapter: uvm_object
   }
 
 
-  mixin(uvm_sync_string);
+  // mixin(uvm_sync_string);
 
   // Variable: supports_byte_enable
   //
   // Set this bit in extensions of this class if the bus protocol supports
   // byte enables.
    
-  @uvm_public_sync
+  // @uvm_public_sync
   bool _supports_byte_enable;
-
+  // uvm_sync_public _supports_byte_enable bool
+  final public bool supports_byte_enable() {synchronized(this) return this._supports_byte_enable;}
+  final public void supports_byte_enable(bool val) {synchronized(this) this._supports_byte_enable = val;}
 
   // Variable: provides_responses
   //
   // Set this bit in extensions of this class if the bus driver provides
   // separate response items.
 
-  @uvm_public_sync
+  // @uvm_public_sync
   bool _provides_responses; 
-
+  // uvm_sync_public _provides_responses bool
+  final public bool provides_responses() {synchronized(this) return this._provides_responses;}
+  final public void provides_responses(bool val) {synchronized(this) this._provides_responses = val;}
 
   // Variable: parent_sequence
   //
@@ -98,9 +102,11 @@ abstract class uvm_reg_adapter: uvm_object
   // bus items be executed via a particular sequence base type. The sequence
   // assigned to this member must implement do_clone().
 
-  @uvm_public_sync  
+  // @uvm_public_sync  
   uvm_sequence_base _parent_sequence; 
-
+  // uvm_sync_public _parent_sequence uvm_sequence_base
+  final public uvm_sequence_base parent_sequence() {synchronized(this) return this._parent_sequence;}
+  final public void parent_sequence(uvm_sequence_base val) {synchronized(this) this._parent_sequence = val;}
 
   // Function: reg2bus
   //
@@ -129,8 +135,11 @@ abstract class uvm_reg_adapter: uvm_object
 			       ref uvm_reg_bus_op rw);
 
 
-  @uvm_private_sync
+  // @uvm_private_sync
   private uvm_reg_item _m_item;
+  // uvm_sync_private _m_item uvm_reg_item
+  final private uvm_reg_item m_item() {synchronized(this) return this._m_item;}
+  final private void m_item(uvm_reg_item val) {synchronized(this) this._m_item = val;}
 
   // function: get_item
   //
@@ -207,7 +216,7 @@ abstract class uvm_reg_adapter: uvm_object
 class uvm_reg_tlm_adapter: uvm_reg_adapter
 {
 
-  mixin uvm_object_utils;
+  mixin uvm_object_essentials;
 
   public this(string name = "uvm_reg_tlm_adapter") {
     super(name);

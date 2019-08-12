@@ -58,8 +58,8 @@ import esdl.rand;
 class uvm_reg_backdoor: uvm_object
 {
 
-  mixin(uvm_sync_string);
-  mixin uvm_object_utils;
+  // mixin(uvm_sync_string);
+  mixin uvm_object_essentials;
   mixin uvm_register_cb!(uvm_reg_cbs);
 
   // Function: new
@@ -373,10 +373,17 @@ class uvm_reg_backdoor: uvm_object
 
   void post_write(uvm_reg_item rw) {}
 
-  @uvm_public_sync
-  string _fname;
-  @uvm_public_sync
-  int _lineno;
+  // @uvm_public_sync
+  private string _fname;
+  // uvm_sync_public _fname string
+  final public string fname() {synchronized(this) return this._fname;}
+  final public void fname(string val) {synchronized(this) this._fname = val;}
+
+  // @uvm_public_sync
+  private int _lineno;
+  // uvm_sync_public _lineno int
+  final public int lineno() {synchronized(this) return this._lineno;}
+  final public void lineno(int val) {synchronized(this) this._lineno = val;}
 
   version(UVM_USE_PROCESS_CONTAINER) {
     private process_container_c[uvm_object] m_update_thread;

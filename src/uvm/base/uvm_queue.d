@@ -1,9 +1,12 @@
 //
 //------------------------------------------------------------------------------
-//   Copyright 2007-2010 Mentor Graphics Corporation
-//   Copyright 2007-2010 Cadence Design Systems, Inc.
-//   Copyright 2010      Synopsys, Inc.
-//   Copyright 2014-2016 Coverify Systems Technology
+// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2017 Intel Corporation
+// Copyright 2010 Synopsys, Inc.
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2010 AMD
+// Copyright 2015-2018 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -26,7 +29,7 @@ module uvm.base.uvm_queue;
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_queue #(T)
+// CLASS -- NODOCS -- uvm_queue #(T)
 //
 //------------------------------------------------------------------------------
 // Implements a class-based dynamic queue. Allows queues to be allocated on
@@ -35,27 +38,34 @@ module uvm.base.uvm_queue;
 
 import uvm.base.uvm_object: uvm_object;
 import uvm.base.uvm_once;
+import uvm.base.uvm_object_defines;
 
 import uvm.meta.misc;
 
 import esdl.data.queue;
+import esdl.base.core;
 
 import std.conv;
 import std.string: format;
 
 
+// @uvm-ieee 1800.2-2017 auto 11.3.1
 class uvm_queue (T=int): uvm_object
 {
   // enum string type_name = "uvm_queue";
 
   alias this_type = uvm_queue!T;
 
+  // `uvm_object_param_utils(uvm_queue#(T))
+  mixin uvm_object_essentials;
+  // `uvm_type_name_decl("uvm_queue")
+
   // No this aliasing -- this aliasing is making the queue object
   // escape from the synchronization guards
 
   // // For this aliasing
   // ref auto get_queue() {
-  //   synchronized(this) {
+  //   synchronized (this) {
   //     return _queue;
   //   }
   // }
@@ -65,16 +75,24 @@ class uvm_queue (T=int): uvm_object
 
   private Queue!T _queue;
 
-  // Function: new
+  // Function -- NODOCS -- new
   //
   // Creates a new queue with the given ~name~.
 
+  // @uvm-ieee 1800.2-2017 auto 11.3.2.1
   this (string name = "") {
-    super(name);
+    synchronized (this) {
+      super(name);
+      _m_size_event.initialize("_m_size_event");
+    }
   }
 
 
-  // Function: get_global_queue
+  // m_event is an effectively immutable object
+  @uvm_immutable_sync
+  private Event      _m_size_event;
+
+  // Function -- NODOCS -- get_global_queue
   //
   // Returns the singleton global queue for the item type, T.
   //
@@ -87,48 +105,35 @@ class uvm_queue (T=int): uvm_object
     @uvm_immutable_sync
     this_type _m_global_queue;
     this() {
-      synchronized(this) {
+      synchronized (this) {
 	_m_global_queue = new this_type("global_queue");
       }
     }
   }
 
-  mixin(uvm_once_sync_string);
+  mixin (uvm_once_sync_string);
 
   static this_type get_global_queue () {
-    // synchronized(typeid(this_type)) {
-    //   uvm_coreservice_t cs = uvm_coreservice_t.get();
-    //   uvm_root top = cs.get_root();
-    //   auto pq = top in _m_global_queue;
-    //   this_type q;
-    //   if(pq is null) {
-    // 	q = new this_type("global_queue");
-    // 	_m_global_queue[top] = q;
-    //   }
-    //   else {
-    // 	q = *pq;
-    //   }
-    //   return q;
-    // }
     return m_global_queue;
   }
 
-  // Function: get_global
+  // Function -- NODOCS -- get_global
   //
   // Returns the specified item instance from the global item queue.
 
+  // @uvm-ieee 1800.2-2017 auto 11.3.2.3
   static T get_global (ptrdiff_t index) {
     return m_global_queue.get(index);
   }
 
   final T opIndex(size_t index) {
-    synchronized(this) {
+    synchronized (this) {
       return _queue[index];
     }
   }
 
   T opIndexAssign(T item, size_t index) {
-    synchronized(this) {
+    synchronized (this) {
       _queue[index] = item;
       return item;
     }
@@ -136,9 +141,9 @@ class uvm_queue (T=int): uvm_object
 
   final int opApplyReverse(int delegate(ref size_t,
 					       ref const T) dg) const {
-    synchronized(this) {
-      for(size_t idx = _queue.length-1; idx != size_t.max; --idx) {
-	if(int r = dg(idx, _queue[idx])) {
+    synchronized (this) {
+      for (size_t idx = _queue.length-1; idx != size_t.max; --idx) {
+	if (int r = dg(idx, _queue[idx])) {
 	  return r;
 	}
       }
@@ -147,9 +152,9 @@ class uvm_queue (T=int): uvm_object
   }
 
   final int opApplyReverse(int delegate(const ref T) dg) const {
-    synchronized(this) {
-      for(size_t idx = _queue.length-1; idx != size_t.max; --idx) {
-	if(int r = dg(_queue[idx])) {
+    synchronized (this) {
+      for (size_t idx = _queue.length-1; idx != size_t.max; --idx) {
+	if (int r = dg(_queue[idx])) {
 	  return r;
 	}
       }
@@ -158,9 +163,9 @@ class uvm_queue (T=int): uvm_object
   }
 
   final int opApplyReverse(int delegate(ref size_t, ref T) dg) {
-    synchronized(this) {
-      for(size_t idx = _queue.length-1; idx != size_t.max; --idx) {
-	if(int r = dg(idx, _queue[idx])) {
+    synchronized (this) {
+      for (size_t idx = _queue.length-1; idx != size_t.max; --idx) {
+	if (int r = dg(idx, _queue[idx])) {
 	  return r;
 	}
       }
@@ -169,9 +174,9 @@ class uvm_queue (T=int): uvm_object
   }
 
   final int opApplyReverse(int delegate(ref T) dg) {
-    synchronized(this) {
-      for(size_t idx = _queue.length-1; idx != size_t.max; --idx) {
-	if(int r = dg(_queue[idx])) {
+    synchronized (this) {
+      for (size_t idx = _queue.length-1; idx != size_t.max; --idx) {
+	if (int r = dg(_queue[idx])) {
 	  return r;
 	}
       }
@@ -180,9 +185,9 @@ class uvm_queue (T=int): uvm_object
   }
 
   final int opApply(int delegate(ref size_t, ref const T) dg) const {
-    synchronized(this) {
-      for(size_t idx = 0; idx < _queue.length; ++idx) {
-	if(int r = dg(idx, _queue[idx])) {
+    synchronized (this) {
+      for (size_t idx = 0; idx < _queue.length; ++idx) {
+	if (int r = dg(idx, _queue[idx])) {
 	  return r;
 	}
       }
@@ -191,9 +196,9 @@ class uvm_queue (T=int): uvm_object
   }
 
   final int opApply(int delegate(ref size_t, ref T) dg) {
-    synchronized(this) {
-      for(size_t idx = 0; idx < _queue.length; ++idx) {
-	if(int r = dg(idx, _queue[idx])) {
+    synchronized (this) {
+      for (size_t idx = 0; idx < _queue.length; ++idx) {
+	if (int r = dg(idx, _queue[idx])) {
 	  return r;
 	}
       }
@@ -202,9 +207,9 @@ class uvm_queue (T=int): uvm_object
   }
 
   final int opApply(int delegate(const ref T) dg) const {
-    synchronized(this) {
-      for(size_t idx = 0; idx < _queue.length; ++idx) {
-	if(int r = dg(_queue[idx])) {
+    synchronized (this) {
+      for (size_t idx = 0; idx < _queue.length; ++idx) {
+	if (int r = dg(_queue[idx])) {
 	  return r;
 	}
       }
@@ -213,9 +218,9 @@ class uvm_queue (T=int): uvm_object
   }
 
   final int opApply(int delegate(ref T) dg) {
-    synchronized(this) {
-      for(size_t idx = 0; idx < _queue.length; ++idx) {
-	if(int r = dg(_queue[idx])) {
+    synchronized (this) {
+      for (size_t idx = 0; idx < _queue.length; ++idx) {
+	if (int r = dg(_queue[idx])) {
 	  return r;
 	}
       }
@@ -223,16 +228,17 @@ class uvm_queue (T=int): uvm_object
     }
   }
 
-  // Function: get
+  // Function -- NODOCS -- get
   //
   // Returns the item at the given ~index~.
   //
   // If no item exists by that key, a new item is created with that key
   // and returned.
 
+  // @uvm-ieee 1800.2-2017 auto 11.3.2.4
   T get (ptrdiff_t index) {
     import uvm.base.uvm_globals;
-    synchronized(this) {
+    synchronized (this) {
       T default_value;
       if (index >= size() || index < 0) {
 	uvm_report_warning("QUEUEGET",
@@ -246,24 +252,26 @@ class uvm_queue (T=int): uvm_object
   }
 
 
-  // Function: size
+  // Function -- NODOCS -- size
   //
   // Returns the number of items stored in the queue.
 
+  // @uvm-ieee 1800.2-2017 auto 11.3.2.5
   size_t length () const {
-    synchronized(this) {
+    synchronized (this) {
       return _queue.length();
     }
   }
 
   alias size = length;
-  // Function: insert
+  // Function -- NODOCS -- insert
   //
   // Inserts the item at the given ~index~ in the queue.
 
+  // @uvm-ieee 1800.2-2017 auto 11.3.2.5
   void insert (ptrdiff_t index, T item) {
     import uvm.base.uvm_globals;
-    synchronized(this) {
+    synchronized (this) {
       if (index >= size() || index < 0) {
 	uvm_report_warning("QUEUEINS",
 			   format("%s:insert: given index out of range for queue of" ~
@@ -272,20 +280,23 @@ class uvm_queue (T=int): uvm_object
 	return;
       }
       _queue.insert(index,item);
+      _m_size_event.notify();
     }
   }
 
 
-  // Function: delete
+  // Function -- NODOCS -- delete
   //
   // Removes the item at the given ~index~ from the queue; if ~index~ is
   // not provided, the entire contents of the queue are deleted.
 
   // it is named delete in systemverilog version -- but D reserves
   // delete as a keyword
+
+  // @uvm-ieee 1800.2-2017 auto 11.3.2.7
   void remove (ptrdiff_t index=-1) {
     import uvm.base.uvm_globals;
-    synchronized(this) {
+    synchronized (this) {
       if (index != -1 &&
 	  (index >= size() || index < -1)) {
 	uvm_report_warning("QUEUEDEL",
@@ -296,115 +307,142 @@ class uvm_queue (T=int): uvm_object
       }
       if (index == -1) {
 	_queue.clear();
+	_m_size_event.notify();
       }
       else {
 	_queue.remove(index);
+	_m_size_event.notify();
       }
     }
   }
 
 
-  // Function: pop_front
+  // Function -- NODOCS -- pop_front
   //
   // Returns the first element in the queue (index=0),
   // or ~null~ if the queue is empty.
 
+  // @uvm-ieee 1800.2-2017 auto 11.3.2.8
   T pop_front() {
-    synchronized(this) {
+    synchronized (this) {
       auto ret = _queue.front();
       _queue.removeFront();
+      _m_size_event.notify();
       return ret;
     }
   }
 
-  // Function: pop_front
+  // Function -- NODOCS -- pop_front
   //
   // Returns the first element in the queue (index=0),
   // or ~null~ if the queue is empty.
 
+  // @uvm-ieee 1800.2-2017 auto 11.3.2.9
   void pop_front(ref T t) {
-    synchronized(this) {
+    synchronized (this) {
       t = _queue.front();
       _queue.removeFront();
+      _m_size_event.notify();
     }
   }
 
 
-  // Function: pop_back
+  // Function -- NODOCS -- pop_back
   //
   // Returns the last element in the queue (index=size()-1),
   // or ~null~ if the queue is empty.
 
+  // @uvm-ieee 1800.2-2017 auto 11.3.2.9
   T pop_back() {
-    synchronized(this) {
+    synchronized (this) {
       auto ret = _queue.back();
       _queue.removeBack();
+      _m_size_event.notify();
       return ret;
     }
   }
 
 
-  // Function: pop_back
+  // Function -- NODOCS -- pop_back
   //
   // Returns the last element in the queue (index=size()-1),
   // or ~null~ if the queue is empty.
 
+  // @uvm-ieee 1800.2-2017 auto 11.3.2.9
   void pop_back(ref T t) {
-    synchronized(this) {
+    synchronized (this) {
       t = _queue.back();
       _queue.removeBack();
+      _m_size_event.notify();
     }
   }
 
 
-  // Function: push_front
+  // Function -- NODOCS -- push_front
   //
   // Inserts the given ~item~ at the front of the queue.
 
+  // @uvm-ieee 1800.2-2017 auto 11.3.2.10
   void push_front(T item) {
-    synchronized(this) {
+    synchronized (this) {
       _queue.pushFront(item);
+      _m_size_event.notify();
     }
   }
 
-  // Function: push_back
+  // Function -- NODOCS -- push_back
   //
   // Inserts the given ~item~ at the back of the queue.
 
+  // @uvm-ieee 1800.2-2017 auto 11.3.2.11
   void push_back(T item) {
-    synchronized(this) {
+    synchronized (this) {
       _queue.pushBack(item);
+      _m_size_event.notify();
     }
   }
 
   void opOpAssign(string op, R)(R other)
-    if(op == "~" && is(R unused: T)) {
-      synchronized(this) {
+    if (op == "~" && is (R unused: T)) {
+      synchronized (this) {
 	this.push_back(other);
       }
     }
 
   override uvm_object create (string name = "") {
-    synchronized(this) {
+    synchronized (this) {
       this_type v = new this_type (name);
       return v;
     }
   }
 
   override string get_type_name () {
-    synchronized(this) {
-      return std.conv.to!string(typeid(this));
+    synchronized (this) {
+      import std.conv: to;
+      return typeid(this).to!string();
+    }
+  }
+
+  // Task -- NODOCS -- wait_until_not_empty
+  //
+  // Blocks until not empty
+
+  // @uvm-ieee 1800.2-2017 auto 11.3.2.12
+  // virtual task
+  void wait_until_not_empty() {
+    while (_queue.length > 0) {
+      _m_size_event.wait();
     }
   }
 
   override void do_copy (uvm_object rhs) {
-    synchronized(this) {
+    synchronized (this) {
       super.do_copy(rhs);
-      this_type p = cast(this_type) rhs;
+      this_type p = cast (this_type) rhs;
       if (rhs is null || p is null) {
 	return;
       }
-      synchronized(p) {
+      synchronized (p) {
 	_queue = p._queue;
       }
     }
@@ -415,9 +453,9 @@ class uvm_queue (T=int): uvm_object
     return to!string(this);
   }
 
-  string to(S)() if(is(S == string)) {
+  string to(S)() if (is (S == string)) {
     import std.conv: to;
-    synchronized(this) {
+    synchronized (this) {
       return std.conv.to!string(_queue.toArray);
     }
   }

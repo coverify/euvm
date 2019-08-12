@@ -33,10 +33,23 @@ module uvm.tlm2.uvm_tlm2_time;
 
 import esdl.data.time;
 import uvm.base.uvm_globals;
+import uvm.base.uvm_once;
+import uvm.meta.misc;
 
 class uvm_tlm_time
 {
-  static shared private real _m_resolution = 1.0e-12; // ps by default
+  static class uvm_once: uvm_once_base
+  {
+    // @uvm_private_sync
+    double _m_resolution = 1.0e-12; // ps by default
+  }
+  // mixin(uvm_once_sync_string);
+  // uvm_once uvm_once
+  static uvm_once _uvm_once_inst() {return uvm_once.get_instance!uvm_once;}
+  // uvm_once_private _m_resolution double uvm_once
+  static private double m_resolution() {synchronized(_uvm_once_inst) return _uvm_once_inst._m_resolution;}
+  static private void m_resolution(double val) {synchronized(_uvm_once_inst) _uvm_once_inst._m_resolution = val;}
+
   private real _m_res;
   // local time _m_time;
   private long _m_time;  // Number of 'm_res' time units,
@@ -58,10 +71,8 @@ class uvm_tlm_time
   // be only a single instance of SystemC Kernel, the time resolution
   // here would really be a shared static
   static void set_time_resolution(real res) {
-    synchronized(typeid(typeof(this))) {
-      // Actually, it does not *really* need to be a power of 10.
-      _m_resolution = res;
-    }
+    // Actually, it does not *really* need to be a power of 10.
+    m_resolution = res;
   }
 
   // Function: new
@@ -75,7 +86,7 @@ class uvm_tlm_time
   this(string name = "uvm_tlm_time", real res = 0) {
     synchronized(this) {
       _m_name = name;
-      _m_res = (res == 0) ? _m_resolution : res;
+      _m_res = (res == 0) ? m_resolution : res;
       reset();
     }
   }
