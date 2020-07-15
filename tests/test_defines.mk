@@ -19,10 +19,10 @@
 
 MODEL = 64
 DFLAGS = -m$(MODEL) -g -fPIC -w -O # -version=UVM_NO_DEPRECATED
-ESDLDIR = ${HOME}/code/vlang
-VLANGDIR = ${HOME}/code/vlang-uvm
+# ESDLDIR = ${HOME}/code/vlang
+# VLANGDIR = ${HOME}/code/vlang-uvm
 
-DMDDIR = /home/puneet/release/vlang-dev-1.0-beta1
+DMDDIR = /home/puneet/release/euvm-1.0-beta4
 DMD = $(DMDDIR)/bin/ldmd2
 
 DMDLIBDIR = $(DMDDIR)/lib
@@ -31,4 +31,4 @@ DRUNTIME = druntime-ldc-shared
 UVMLIB = uvm-ldc-shared
 ESDLLIB = esdl-ldc-shared
 
-LIBDIR = $(VLANGDIR)/lib
+# LIBDIR = $(VLANGDIR)/lib

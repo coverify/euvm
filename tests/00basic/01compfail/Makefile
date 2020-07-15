@@ -16,7 +16,6 @@
 #   the License for the specific language governing 
 #   permissions and limitations under the License. 
 #----------------------------------------------------------------------
-
 include ../../test_defines.mk
 
 .PHONY: all libs run_test
@@ -24,13 +23,13 @@ include ../../test_defines.mk
 all: run_test
 
 clean:
-	rm -f test
+	rm -f test test.o
 
-libs:
-	(cd $(LIBDIR); make libs;)
+# libs:
+# 	(cd $(LIBDIR); make libs;)
 
-test: test.d libs
-	$(DMD) -m$(MODEL) -g -I$(VLANGDIR)/src -I$(ESDLDIR)/src $(DFLAGS)  -of$@ -L-l$(PHOBOS) -L-R$(DMDLIBDIR) -L-l$(ESDLLIB) -L-l$(UVMLIB) -L-L$(LIBDIR) -L-R$(LIBDIR) $<
+test: test.d # libs
+	$(DMD) -m$(MODEL) -g -I$(VLANGDIR)/src -I$(ESDLDIR)/src $(DFLAGS)  -of$@  -L-l$(UVMLIB) -L-l$(ESDLLIB) -L-l$(PHOBOS) -L-l$(DRUNTIME) $<
 
 run_test: test
 	./test +UVM_TESTNAME=test.test

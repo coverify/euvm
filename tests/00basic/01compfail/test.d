@@ -26,24 +26,24 @@ import esdl;
 import uvm;
 import std.stdio;
 
-class test_root: uvm_root
+class test: uvm_test
 {
   mixin uvm_component_utils;
-  override void initial() {
+  
+  this(string name, uvm_component parent){
+    super(name, parent);
+  }
+
+  override void report_phase(uvm_phase phase) {
     uvm_component comp;
     static assert(__traits(compiles, comp = UVM_NONE) == false);
-    writeln("**  UVM TEST PASSED **");
+    writeln("** UVM TEST PASSED **\n");
   }
 }
-
-class TestBench: RootEntity
-{
-  uvm_entity!(test_root) tb;
-}
-
+  
 int main(string[] argv) {
-  TestBench tb = new TestBench;
-  tb.multiCore(0, 0);
+  uvm_tb tb = new uvm_tb;
+  tb.multicore(0, 0);
   tb.elaborate("tb", argv);
   return tb.simulate();
 }
