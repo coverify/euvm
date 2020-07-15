@@ -291,7 +291,7 @@ class uvm_objection: uvm_report_object
   // Internal method for reporting count updates
 
   final void m_report(uvm_object obj, uvm_object source_obj,
-		      string description, int count, string action) {
+		      lazy string description, int count, string action) {
     import uvm.base.uvm_object_globals;
     import uvm.base.uvm_globals;
     synchronized (this) {
@@ -305,6 +305,8 @@ class uvm_objection: uvm_report_object
 	return;
       }
 
+      string description_ = description();
+
       if (source_obj is obj) {
 	uvm_report_info("OBJTN_TRC",
 			format("Object %0s %0s %0d objection(s)%s: " ~
@@ -312,8 +314,8 @@ class uvm_objection: uvm_report_object
 			       (obj.get_full_name() == "") ?
 			       "uvm_top" : obj.get_full_name(),
 			       action, count,
-			       (description != "") ?
-			       " (" ~ description ~ ")" : "",
+			       (description_ != "") ?
+			       " (" ~ description_ ~ ")" : "",
 			       count_, total_), uvm_verbosity.UVM_NONE);
       }
       else {
@@ -348,8 +350,8 @@ class uvm_objection: uvm_report_object
 			       action == "raised" ? "added" : "subtracted",
 			       count, action == "raised" ?
 			       "to" : "from", action, sname,
-			       description != "" ? ", "
-			       ~ description : "", count_, total_), uvm_verbosity.UVM_NONE);
+			       description_ != "" ? ", "
+			       ~ description_ : "", count_, total_), uvm_verbosity.UVM_NONE);
       }
     }
   }

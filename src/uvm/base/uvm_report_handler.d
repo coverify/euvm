@@ -160,10 +160,6 @@ class uvm_report_handler: uvm_object
   // @uvm-ieee 1800.2-2017 auto 6.4.2.2
   override void do_print (uvm_printer printer) {
     synchronized (this) {
-      uvm_severity l_severity;
-      string idx;
-      int l_int;
-
       // max verb
       uvm_verbosity l_verbosity = cast (uvm_verbosity) _m_max_verbosity_level;
     
@@ -243,12 +239,12 @@ class uvm_report_handler: uvm_object
       // sev and id actions 
       if (_severity_id_actions.length != 0) {
 	int _total_cnt;
-	foreach (l_verbosity, id_a_ary; _severity_id_actions) {
+	foreach (l_severity, id_a_ary; _severity_id_actions) {
 	  _total_cnt += id_a_ary.num();
 	}
 	printer.print_array_header("severity_id_actions", _total_cnt,
 				   "array");
-	foreach (l_verbosity, id_a_ary; _severity_id_actions) {
+	foreach (l_severity, id_a_ary; _severity_id_actions) {
 	  foreach (idx, l_action;id_a_ary) {
 	    printer.print_generic(format("[%s:%s]", l_severity.to!string(), idx), 
 				  "uvm_action", 32, format_action(l_action));
@@ -680,7 +676,7 @@ class uvm_report_handler: uvm_object
   void report(uvm_severity severity,
 	      string name,
 	      string id,
-	      string message,
+	      lazy string message,
 	      int verbosity_level=uvm_verbosity.UVM_MEDIUM,
 	      string filename = "",
 	      size_t line = 0,
@@ -700,7 +696,7 @@ class uvm_report_handler: uvm_object
       }
 
       l_report_message = uvm_report_message.new_report_message();
-      l_report_message.set_report_message(severity, id, message, 
+      l_report_message.set_report_message(severity, id, message(), 
 					  verbosity_level, filename, line, name);
       l_report_message.set_report_object(client);
       l_report_message.set_action(get_action(severity,id));

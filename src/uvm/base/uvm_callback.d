@@ -451,7 +451,8 @@ class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
     }
 
     if (obj is null) {
-      foreach (bobj, unused; m_pool) {
+      foreach (bobj_, unused; m_pool) {
+	bobj = bobj_;
 	T me = cast (T) bobj;
 	if (me !is null) {
 	  if (qs.length == 0) {
@@ -814,8 +815,8 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
 	    uvm_callbacks!(uvm_report_object, uvm_callback).m_t_inst.m_tw_cb_q;
 	  foreach (r; qr) q.push_back(r);
 	}
-	foreach (cb; m_t_inst.m_tw_cb_q)
-	  q.push_back(cb);
+	foreach (cb_; m_t_inst.m_tw_cb_q)
+	  q.push_back(cb_);
       }
 
       //check if already exists in the queue

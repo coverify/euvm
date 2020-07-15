@@ -69,6 +69,8 @@ class uvm_tb_root: uvm_root
   }
 }
 
+alias uvm_testbench = uvm_tb;
+
 class uvm_tb: uvm_harness
 {
   uvm_entity!(uvm_tb_root) root_entity;
@@ -77,7 +79,7 @@ class uvm_tb: uvm_harness
   }
 }
 
-class uvm_testbench(ROOT) if (is (ROOT: uvm_root)) : uvm_harness
+class uvm_tb_custom_root(ROOT) if (is (ROOT: uvm_root)) : uvm_harness
 {
   uvm_entity!(ROOT) root_entity;
   void set_seed(uint seed) {

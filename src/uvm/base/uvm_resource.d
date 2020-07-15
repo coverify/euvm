@@ -40,6 +40,8 @@ import uvm.base.uvm_globals: uvm_report_warning, uvm_is_match, uvm_info;
 import uvm.base.uvm_object_globals: uvm_radix_enum, uvm_verbosity;
 import uvm.base.uvm_registry: uvm_object_registry;
 import uvm.base.uvm_factory: uvm_object_wrapper;
+import uvm.base.uvm_misc: uvm_object_value_str;
+
 import uvm.dpi.uvm_regex: uvm_glob_to_re;
 
 import uvm.base.uvm_once;
@@ -761,8 +763,8 @@ class uvm_resource_pool
       uvm_resource_base r;
       size_t i;
 
-      foreach (j, r; q) {
-	i = j;
+      foreach (j, r_; q) {
+	i = j; r = r_;
 	if (r is rsrc) break;
       }
 
@@ -947,7 +949,7 @@ class uvm_resource_pool
     printer.push_element(rq.get_name(),
                          "uvm_queue#(uvm_resource_base)",
                          format("%0d",rq.length),
-			 rq.uvm_object_value_str());
+			 uvm_object_value_str(rq));
 
     for (size_t i=0; i < rq.length; ++i) {
       printer.push_element(format("[%0d]", i),
@@ -975,8 +977,8 @@ class uvm_resource_pool
         printer.print_array_header("accesses",
 				   r.access.length,
 				   "queue");
-        foreach (i, acc; r.access) {
-          printer.print_string(format("[%s]", i),
+        foreach (k, acc; r.access) {
+          printer.print_string(format("[%s]", k),
                                format("reads: %0d @ %s  writes: %0d @ %s",
 				      acc.read_count,
 				      acc.read_time,

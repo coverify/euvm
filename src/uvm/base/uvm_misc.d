@@ -237,13 +237,13 @@ string uvm_instance_scope() {
 //
 //
 
-// Moved to uvm_object.d
 string uvm_object_value_str(uvm_object v) {
-  if (v is null)
-    return "<null>";
-  return "@" ~ (v.get_inst_id()).to!string();
+  import std.conv;
+  if (v is null) return "<null>";
+  else return "@" ~ (v.get_inst_id()).to!string();
 }
 
+  
 // Function- uvm_leaf_scope
 //
 //

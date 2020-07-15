@@ -358,9 +358,6 @@ class uvm_default_report_server: uvm_report_server
   // Print to show report server state
   override void do_print(uvm_printer printer) {
     synchronized (this) {
-      uvm_severity l_severity_count_index;
-      string l_id_count_index;
-
       printer.print("quit_count", _m_quit_count, uvm_radix_enum.UVM_DEC, '.', "int");
       printer.print("max_quit_count", _m_max_quit_count,
 		    uvm_radix_enum.UVM_DEC, '.', "int");

@@ -186,6 +186,11 @@ abstract class uvm_object: uvm_void
     }
   }
 
+  // In SV every class object is randomizable by default. Seeding in
+  // SV happens right at the time when an object is created.
+  // In EUVM, seeding is lazy. It happens only when a randomize (or
+  // the related function like srandom) is called.
+  // This is the hookup function in EUVM to ensure randomization stability
   void _esdl__setupSolver() {
     version (UVM_NO_RAND) {}
     else {
@@ -1136,14 +1141,14 @@ abstract class uvm_object: uvm_void
 
   }
   else {
-    @rand!false @uvm_private_sync
+    @rand(false) @uvm_private_sync
       private string _m_leaf_name;
 
     // // uvm_sync_private _m_leaf_name string
     // final private string m_leaf_name() {synchronized (this) return this._m_leaf_name;}
     // final private void m_leaf_name(string val) {synchronized (this) this._m_leaf_name = val;}
 
-    @rand!false @uvm_immutable_sync
+    @rand(false) @uvm_immutable_sync
       private int _m_inst_id;
 
     // // uvm_sync_private _m_inst_id int
@@ -1153,16 +1158,6 @@ abstract class uvm_object: uvm_void
 
   protected uvm_report_object m_get_report_object() {
     return null;
-  }
-
-  
-  // Moved from uvm_misc
-  string uvm_object_value_str() {
-    import std.conv;
-    // if (v is null) {
-    //   return "<null>";
-    // }
-    return "@" ~ (get_inst_id()).to!string();
   }
 
   

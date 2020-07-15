@@ -456,7 +456,7 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
   // This message will bypass any message catching callbacks.
 
   protected void uvm_report_fatal(string id,
-				  string message,
+				  lazy string message,
 				  int verbosity,
 				  string fname = "",
 				  size_t line = 0,
@@ -474,7 +474,7 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
 
 
   protected void uvm_report_error(string id,
-				  string message,
+				  lazy string message,
 				  int verbosity,
 				  string fname = "",
 				  size_t line = 0,
@@ -491,7 +491,7 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
   // This message will bypass any message catching callbacks.
 
   protected void uvm_report_warning(string id,
-				    string message,
+				    lazy string message,
 				    int verbosity,
 				    string fname = "",
 				    size_t line = 0,
@@ -507,7 +507,7 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
   // This message will bypass any message catching callbacks.
 
   protected void uvm_report_info(string id,
-				 string message,
+				 lazy string message,
 				 int verbosity,
 				 string fname = "",
 				 size_t line = 0,
@@ -524,7 +524,7 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
 
   protected void uvm_report(uvm_severity severity,
 			    string id,
-			    string message,
+			    lazy string message,
 			    int verbosity,
 			    string fname = "",
 			    size_t line = 0,
@@ -537,7 +537,7 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
       }
     }
     l_report_message = uvm_report_message.new_report_message();
-    l_report_message.set_report_message(severity, id, message,
+    l_report_message.set_report_message(severity, id, message(),
 					verbosity, fname, line, context_name);
     this.uvm_process_report_message(l_report_message);
   }

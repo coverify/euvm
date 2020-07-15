@@ -203,7 +203,7 @@ class uvm_report_object: /*extends*/ uvm_object, uvm_report_intf
   void uvm_report(string file=__FILE__,
 		  size_t line=__LINE__)(uvm_severity severity,
 					string id,
-					string message,
+					lazy string message,
 					int verbosity = -1,
 					string context_name = "",
 					bool report_enabled_checked = false) {
@@ -217,7 +217,7 @@ class uvm_report_object: /*extends*/ uvm_object, uvm_report_intf
 
   void uvm_report(uvm_severity severity,
 		  string id,
-		  string message,
+		  lazy string message,
 		  int verbosity,
 		  string filename,
 		  size_t line,
@@ -231,7 +231,7 @@ class uvm_report_object: /*extends*/ uvm_object, uvm_report_intf
       }
     }
     l_report_message = uvm_report_message.new_report_message();
-    l_report_message.set_report_message(severity, id, message,
+    l_report_message.set_report_message(severity, id, message(),
 					verbosity, filename, line, context_name);
     uvm_process_report_message(l_report_message);
   }
@@ -241,7 +241,7 @@ class uvm_report_object: /*extends*/ uvm_object, uvm_report_intf
   // @uvm-ieee 1800.2-2017 auto 6.3.3.3
   void uvm_report_info(string file=__FILE__,
 		       size_t line=__LINE__)(string id,
-					     string message,
+					     lazy string message,
 					     int verbosity=uvm_verbosity.UVM_MEDIUM,
 					     string context_name = "",
 					     bool report_enabled_checked = false) {
@@ -251,7 +251,7 @@ class uvm_report_object: /*extends*/ uvm_object, uvm_report_intf
 
 
   void uvm_report_info(string id,
-  		       string message,
+  		       lazy string message,
   		       int verbosity,
   		       string filename,
   		       size_t line,
@@ -267,7 +267,7 @@ class uvm_report_object: /*extends*/ uvm_object, uvm_report_intf
   // @uvm-ieee 1800.2-2017 auto 6.3.3.3
   void uvm_report_warning(string file=__FILE__,
 			  size_t line=__LINE__)(string id,
-						string message,
+						lazy string message,
 						int verbosity=uvm_verbosity.UVM_MEDIUM,
 						string context_name = "",
 						bool report_enabled_checked = false) {
@@ -276,7 +276,7 @@ class uvm_report_object: /*extends*/ uvm_object, uvm_report_intf
   }
 
   void uvm_report_warning( string id,
-			   string message,
+			   lazy string message,
 			   int verbosity,
 			   string filename,
 			   size_t line,
@@ -292,7 +292,7 @@ class uvm_report_object: /*extends*/ uvm_object, uvm_report_intf
   // @uvm-ieee 1800.2-2017 auto 6.3.3.3
   void uvm_report_error(string file=__FILE__,
 			size_t line=__LINE__)(string id,
-					      string message,
+					      lazy string message,
 					      int verbosity=uvm_verbosity.UVM_NONE,
 					      string context_name = "",
 					      bool report_enabled_checked = false) {
@@ -301,7 +301,7 @@ class uvm_report_object: /*extends*/ uvm_object, uvm_report_intf
   }
 
   void uvm_report_error( string id,
-			 string message,
+			 lazy string message,
 			 int verbosity,
 			 string filename,
 			 size_t line,
@@ -353,7 +353,7 @@ class uvm_report_object: /*extends*/ uvm_object, uvm_report_intf
   // @uvm-ieee 1800.2-2017 auto 6.3.3.3
   void uvm_report_fatal(string file=__FILE__,
 			size_t line=__LINE__)(string id,
-					      string message,
+					      lazy string message,
 					      int verbosity=uvm_verbosity.UVM_NONE,
 					      string context_name = "",
 					      bool report_enabled_checked = false) {
@@ -362,7 +362,7 @@ class uvm_report_object: /*extends*/ uvm_object, uvm_report_intf
   }
 
   void uvm_report_fatal( string id,
-			 string message,
+			 lazy string message,
 			 int verbosity,
 			 string filename,
 			 size_t line,

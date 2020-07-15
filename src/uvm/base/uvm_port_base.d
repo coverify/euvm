@@ -32,6 +32,8 @@ import uvm.base.uvm_phase: uvm_phase;
 import uvm.base.uvm_object_globals: uvm_port_type_e;
 
 import uvm.meta.misc;
+import esdl.rand: _esdl__Norand;
+
 import std.string: format;
 import std.conv: to;
 
@@ -249,7 +251,7 @@ class uvm_port_component(PORT=uvm_object): uvm_port_component_base
 // in 1800.2.
 
 // @uvm-ieee 1800.2-2017 auto 5.5.1
-abstract class uvm_port_base(IF = uvm_void): IF
+abstract class uvm_port_base(IF = uvm_void): IF, _esdl__Norand
 {
 
   mixin (uvm_sync_string);
