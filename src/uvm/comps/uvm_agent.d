@@ -48,7 +48,9 @@ import uvm.base.uvm_resource;
 import uvm.base.uvm_resource_base;
 import uvm.base.uvm_globals;
 import uvm.base.uvm_component_defines;
+import esdl.rand.misc: rand;
 
+@rand(false)
 abstract class uvm_agent: uvm_component
 {
   uvm_active_passive_enum is_active = uvm_active_passive_enum.UVM_ACTIVE;

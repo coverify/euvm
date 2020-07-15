@@ -24,6 +24,7 @@
 module uvm.comps.uvm_test;
 
 import uvm.base;
+import esdl.rand.misc: rand;
 
 //------------------------------------------------------------------------------
 //
@@ -65,6 +66,7 @@ import uvm.base;
 //------------------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto 13.2.1
+@rand(false)
 abstract class uvm_test: uvm_component
 {
   mixin uvm_abstract_component_essentials;

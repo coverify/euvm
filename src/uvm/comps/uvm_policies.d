@@ -23,6 +23,7 @@
 //----------------------------------------------------------------------
 module uvm.comps.uvm_policies;
 import uvm.base.uvm_object;
+import esdl.rand.misc: rand;
 
 // Title -- NODOCS -- Policy Classes
 //
@@ -41,6 +42,7 @@ import uvm.base.uvm_object;
 // T, for which the == operator is defined.
 //----------------------------------------------------------------------
 
+@rand(false)
 class uvm_built_in_comp(T=int)
 {
   static bool comp(T a, T b) {
@@ -58,6 +60,7 @@ class uvm_built_in_comp(T=int)
 // to a string using the %p format specifier.
 //----------------------------------------------------------------------
 
+@rand(false)
 class uvm_built_in_converter(T=int)
 {
   static string convert2string(T t) {
@@ -81,6 +84,7 @@ class uvm_built_in_converter(T=int)
 // Provides a clone method that returns a copy of the built-in type, T.
 //----------------------------------------------------------------------
 
+@rand(false)
 class uvm_built_in_clone(T=int)
 {
   static T clone(T from) {
@@ -99,6 +103,7 @@ class uvm_built_in_clone(T=int)
 // similar to the <uvm_object::compare> method.
 //----------------------------------------------------------------------
 
+@rand(false)
 class uvm_class_comp(T=uvm_object) // (T=int)
 {
   static bool comp(T a, T b) {
@@ -117,6 +122,7 @@ class uvm_class_comp(T=uvm_object) // (T=int)
 // similar to the <uvm_object::convert2string> method.
 //----------------------------------------------------------------------
 
+@rand(false)
 class uvm_class_converter(T=uvm_object) // (T=int)
 {
   static string convert2string(T t) {
@@ -137,6 +143,7 @@ class uvm_class_converter(T=uvm_object) // (T=int)
 // indirectly through use of the `uvm_field macros.
 //----------------------------------------------------------------------
 
+@rand(false)
 class uvm_class_clone(T=uvm_object) // (T=int)
 {
   static uvm_object clone(T from) {

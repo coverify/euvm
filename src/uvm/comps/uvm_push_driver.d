@@ -26,6 +26,7 @@ import uvm.seq.uvm_sequence_item;
 // import uvm.base.uvm_globals; // uvm_report_fatal
 import uvm.tlm1.uvm_imps;
 import uvm.tlm1.uvm_analysis_port;
+import esdl.rand.misc: rand;
 
 import std.string;
 
@@ -46,6 +47,8 @@ import std.string;
 //------------------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto 13.8.1
+
+@rand(false)
 class uvm_push_driver(REQ=uvm_sequence_item,
 		      RSP=REQ): uvm_component
 {

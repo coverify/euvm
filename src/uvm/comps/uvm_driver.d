@@ -23,6 +23,7 @@ import uvm.seq.uvm_sequence_item;
 import uvm.base;
 import uvm.tlm1.uvm_analysis_port;
 import uvm.tlm1.uvm_sqr_connections;
+import esdl.rand.misc: rand;
 
 //------------------------------------------------------------------------------
 //
@@ -44,6 +45,8 @@ import uvm.tlm1.uvm_sqr_connections;
 //------------------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto 13.7.1
+
+@rand(false)
 class uvm_driver(REQ=uvm_sequence_item, RSP=REQ): uvm_component
 {
 

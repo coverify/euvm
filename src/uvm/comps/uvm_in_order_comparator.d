@@ -28,6 +28,7 @@ module uvm.comps.uvm_in_order_comparator;
 import uvm.comps.uvm_policies;
 
 import uvm.base;
+import esdl.rand.misc: rand;
 
 //------------------------------------------------------------------------------
 // Title -- NODOCS -- Comparators
@@ -78,6 +79,7 @@ import uvm.base;
 //
 //------------------------------------------------------------------------------
 
+@rand(false)
 class uvm_in_order_comparator (T = int ,
 			       comp_type = uvm_built_in_comp!T ,
 			       convert = uvm_built_in_converter!T ,
