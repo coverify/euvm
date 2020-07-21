@@ -1420,7 +1420,7 @@ class uvm_objection: uvm_report_object
   // Below is all of the basic data stuff that is needed for a uvm_object
   // for factory registration, printing, comparing, etc.
 
-  alias type_id = uvm_object_registry!(uvm_objection,"uvm_objection");
+  alias type_id = uvm_object_registry!(uvm_objection);
 
   static type_id get_type() {
     return type_id.get();

@@ -114,7 +114,7 @@ class uvm_sequence_item: uvm_transaction, uvm_report_intf
   // Macro for factory creation
   // `uvm_object_registry(uvm_sequence_item, "uvm_sequence_item")
 
-  alias type_id = uvm_object_registry!(uvm_sequence_item, "uvm_sequence_item");
+  alias type_id = uvm_object_registry!(uvm_sequence_item);
 
   static type_id get_type() {
     return type_id.get();

@@ -145,7 +145,7 @@ class uvm_root: uvm_component, uvm_root_intf
   
   this() {
     synchronized (this) {
-      super();
+      super(true);
       _elab_done_semaphore = new Semaphore(); // count 0
     }
   }

@@ -24,13 +24,18 @@ import std.conv: to;
 
 import std.traits: fullyQualifiedName;
 
-// import std.traits: fullyQualifiedName;
+import std.traits: fullyQualifiedName;
 
 // alias qualifiedTypeName = fullyQualifiedName;
 
 template qualifiedTypeName(T) {
+  // pragma(msg, typeid(T).stringof);
+  // pragma(msg, T.stringof);
+  // pragma(msg, fullyQualifiedName!T);
+  // pragma(msg, typeid(T).stringof[7..$-1]);
   // typeid(T).stringof returns string of the form "&typeid(qualifiedTypeName)"
-  enum string qualifiedTypeName = typeid(T).stringof[7..$-1];
+  // enum string qualifiedTypeName = typeid(T).stringof[7..$-1];
+  enum string qualifiedTypeName = fullyQualifiedName!T;
 }
 
 version (X86_64) {
