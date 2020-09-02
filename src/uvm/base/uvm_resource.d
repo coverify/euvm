@@ -275,9 +275,13 @@ class uvm_resource_pool: _esdl__Norand
       rq.push_back(rsrc);
       _ttab[type_handle] = rq;
 
-      // Set the scope of resource. 
-      _ri_tab[rsrc]._rscope = uvm_glob_to_re(rscope);
-      _ri_tab[rsrc]._precedence = get_default_precedence();
+      // Set the scope of resource.
+      
+      rsrc_info_t rsrc_info =
+	rsrc_info_t(uvm_glob_to_re(rscope), get_default_precedence());
+      _ri_tab[rsrc] = rsrc_info;
+      // _ri_tab[rsrc]._rscope = uvm_glob_to_re(rscope);
+      // _ri_tab[rsrc]._precedence = get_default_precedence();
     }
   }
 
