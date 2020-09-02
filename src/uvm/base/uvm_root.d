@@ -462,8 +462,12 @@ class uvm_root: uvm_component, uvm_root_intf
     l_rs.report_summarize();
 
     m_uvm_core_state = uvm_core_state.UVM_CORE_ABORTED;
-
     
+    this.finalize();
+
+    unlockStage();
+    
+    withdrawCaveat();
     finish();
   }
   

@@ -47,8 +47,8 @@ class uvm_harness: RootEntity
     _esdl__configStack(size);
   }
   
-  void start() {
-    super.simulate();
+  ubyte start() {
+    return super.simulate();
   }
 
   void start_bg() {
