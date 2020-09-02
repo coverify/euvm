@@ -93,6 +93,8 @@ import uvm.meta.meta;
 import esdl.base.core;
 import esdl.data.queue;
 
+import esdl.rand.misc: _esdl__Norand;
+
 import std.conv;
 import std.format;
 import std.string: format;
@@ -129,7 +131,7 @@ interface uvm_root_intf
 // in 1800.2-2017 Section F.7
 
 //@uvm-ieee 1800.2-2017 manual F.7
-class uvm_root: uvm_component, uvm_root_intf
+class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
 {
   // adding the mixin here results in gotchas if the user does not add
   // the mixin in the derived classes

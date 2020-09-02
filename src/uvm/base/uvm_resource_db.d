@@ -70,7 +70,8 @@ import std.string;
 //| class uvm_resource_db#(type T=uvm_object)
   
 // @uvm-ieee 1800.2-2017 auto C.3.2.1
-class uvm_resource_db (T=uvm_object) {
+class uvm_resource_db (T=uvm_object)
+{
 
   alias rsrc_t = uvm_resource!T;
 

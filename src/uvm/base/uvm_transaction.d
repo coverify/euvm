@@ -39,6 +39,8 @@ import uvm.meta.mcd;
 import uvm.meta.misc;
 
 import esdl.base.core: SimTime, getRootEntity;
+import esdl.rand.misc: rand;
+
 import std.string: format;
 
 alias uvm_event_pool = uvm_object_string_pool!(uvm_event!(uvm_object));
@@ -143,6 +145,8 @@ alias uvm_event_pool = uvm_object_string_pool!(uvm_event!(uvm_object));
 //------------------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto 5.4.1
+
+@rand(false)
 abstract class uvm_transaction: uvm_object
 {
   import uvm.base.uvm_component;

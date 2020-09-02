@@ -76,7 +76,7 @@ alias uvm_port_list = uvm_port_component_base[string];
 // @uvm-accellera The details of this API are specific to the Accellera implementation, and are not being considered for contribution to 1800.2
 //------------------------------------------------------------------------------
 
-abstract class uvm_port_component_base: uvm_component
+abstract class uvm_port_component_base: uvm_component, _esdl__Norand
 {
 
   this(string name="", uvm_component parent=null) {

@@ -48,8 +48,13 @@
 
 module uvm.tlm1.uvm_tlm_req_rsp;
 
+import uvm.base.uvm_component;
+
+import esdl.rand.misc: _esdl__Norand;
+
 // @uvm-ieee 1800.2-2017 auto 12.2.9.1.1
-class uvm_tlm_req_rsp_channel(REQ=int, RSP=REQ): uvm_component
+class uvm_tlm_req_rsp_channel(REQ=int, RSP=REQ):
+  uvm_component, _esdl__Norand
 {
   alias this_type = uvm_tlm_req_rsp_channel!(REQ, RSP);
   
@@ -307,7 +312,7 @@ class uvm_tlm_req_rsp_channel(REQ=int, RSP=REQ): uvm_component
 
 // @uvm-ieee 1800.2-2017 auto 12.2.9.2.1
 class uvm_tlm_transport_channel(REQ=int, RSP=REQ):
-  uvm_tlm_req_rsp_channel!(REQ, RSP)
+  uvm_tlm_req_rsp_channel!(REQ, RSP), _esdl__Norand
 {
 
   alias this_type = uvm_tlm_transport_channel!(REQ, RSP);

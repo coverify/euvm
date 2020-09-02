@@ -35,10 +35,7 @@ import uvm.seq.uvm_sequencer_param_base;
 
 import std.string: format;
 
-version(UVM_NO_RAND) {}
- else {
-   import esdl.rand;
- }
+import esdl.rand.misc: rand;
 
 //------------------------------------------------------------------------------
 //
@@ -50,6 +47,7 @@ version(UVM_NO_RAND) {}
 //------------------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto 14.3.1
+@rand(false)
 abstract class uvm_sequence (REQ_T = uvm_sequence_item, RSP_T = REQ_T):
   uvm_sequence_base
 {

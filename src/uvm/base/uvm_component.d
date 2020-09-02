@@ -63,6 +63,7 @@ import uvm.meta.misc;		// qualifiedTypeName
 
 import esdl.base.core;
 import esdl.data.queue;
+import esdl.rand.misc: rand;
 
 import std.traits: isIntegral, isAbstractClass, isArray;
 
@@ -118,6 +119,7 @@ struct m_verbosity_setting {
 }
 
 // @uvm-ieee 1800.2-2017 auto 13.1.1
+@rand(false)
 abstract class uvm_component: uvm_report_object, ParContext
 {
   import uvm.base.uvm_objection: uvm_objection;

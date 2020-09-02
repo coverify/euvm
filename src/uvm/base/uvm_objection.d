@@ -95,6 +95,8 @@ import esdl.data.time: sec;
 import esdl.base.core: EntityIntf;
 import esdl.data.queue;
 
+import esdl.rand.misc: _esdl__Norand;
+
 //------------------------------------------------------------------------------
 // Title -- NODOCS -- Objection Mechanism
 //------------------------------------------------------------------------------
@@ -118,7 +120,7 @@ import esdl.data.queue;
 
 // @uvm-ieee 1800.2-2017 auto 10.5.1
 // @uvm-ieee 1800.2-2017 auto 10.5.1.1
-class uvm_objection: uvm_report_object
+class uvm_objection: uvm_report_object, _esdl__Norand
 {
   mixin uvm_register_cb!(uvm_objection_callback);
 

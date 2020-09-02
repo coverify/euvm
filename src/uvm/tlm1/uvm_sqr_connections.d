@@ -32,6 +32,7 @@ import uvm.base.uvm_component;
 
 import uvm.tlm1.uvm_sqr_ifs;
 import uvm.tlm1.uvm_tlm_defines;
+import esdl.rand.misc: _esdl__Norand;
 
 mixin template UVM_SEQ_ITEM_PULL_IMP(alias IMP, REQ, RSP)
 {
@@ -73,7 +74,7 @@ mixin template UVM_SEQ_ITEM_PULL_IMP(alias IMP, REQ, RSP)
 
 // @uvm-ieee 1800.2-2017 auto 15.2.2.1
 class uvm_seq_item_pull_port(REQ=int, RSP=REQ):
-  uvm_port_base!(uvm_sqr_if_base!(REQ, RSP))
+  uvm_port_base!(uvm_sqr_if_base!(REQ, RSP)), _esdl__Norand
 {
   public this(string name=null, uvm_component parent=null,
 	      int min_size=0, int max_size=1) {
@@ -103,7 +104,7 @@ class uvm_seq_item_pull_port(REQ=int, RSP=REQ):
 
 // @uvm-ieee 1800.2-2017 auto 15.2.2.2
 class uvm_seq_item_pull_export(REQ=int, RSP=REQ):
-  uvm_port_base!(uvm_sqr_if_base!(REQ, RSP))
+  uvm_port_base!(uvm_sqr_if_base!(REQ, RSP)), _esdl__Norand
 {
   public this(string name, uvm_component parent,
 	      int min_size=1, int max_size=1) {
@@ -132,7 +133,7 @@ class uvm_seq_item_pull_export(REQ=int, RSP=REQ):
 
 // @uvm-ieee 1800.2-2017 auto 15.2.2.3
 class uvm_seq_item_pull_imp(REQ=int, RSP=REQ, IMP=int):
-  uvm_port_base!(uvm_sqr_if_base!(REQ, RSP))
+  uvm_port_base!(uvm_sqr_if_base!(REQ, RSP)), _esdl__Norand
 {
   private IMP m_imp;
   public this(string name, IMP imp) {

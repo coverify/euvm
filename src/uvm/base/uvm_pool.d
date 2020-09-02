@@ -35,6 +35,8 @@ import uvm.base.uvm_once;
 import uvm.meta.meta;
 import uvm.meta.misc;
 
+import esdl.rand.misc: _esdl__Norand;
+
 import std.conv: to;
 
 // Title -- NODOCS -- Pool Classes
@@ -50,7 +52,7 @@ import std.conv: to;
 //------------------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto 11.2.1
-class uvm_pool(KEY=int, VAL=uvm_void): uvm_object
+class uvm_pool(KEY=int, VAL=uvm_void): uvm_object, _esdl__Norand
 {
 
   alias uvm_pool!(KEY,VAL) this_type;
