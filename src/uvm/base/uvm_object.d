@@ -193,7 +193,7 @@ abstract class uvm_object: uvm_void
   // In EUVM, seeding is lazy. It happens only when a randomize (or
   // the related function like srandom) is called.
   // This is the hookup function in EUVM to ensure randomization stability
-  void _esdl__setupProxy() {
+  void _esdl__seedRandom() {
     version (UVM_NO_RAND) {}
     else {
       if (! _esdl__isRandSeeded()) {
