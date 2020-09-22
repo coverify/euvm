@@ -24,6 +24,7 @@ module uvm.comps.uvm_random_stimulus;
 import uvm.base.uvm_component;
 import uvm.base.uvm_transaction;
 import uvm.base.uvm_object_defines;
+import esdl.rand.misc: rand;
 
 //------------------------------------------------------------------------------
 // CLASS: uvm_random_stimulus #(T)
@@ -47,6 +48,7 @@ import uvm.base.uvm_object_defines;
 //
 //------------------------------------------------------------------------------
 
+@rand(false)
 class uvm_random_stimulus(T=uvm_transaction): uvm_component
 {
   enum string type_name = "uvm_random_stimulus!(T)";

@@ -29,7 +29,9 @@ import uvm.tlm1.uvm_tlm_gen_rsp;
 import uvm.vpi.uvm_vpi_intf;
 import esdl.intf.vpi;
 import esdl.base.core: SimTerminatedException, AsyncLockDisabledException;
+import esdl.rand.misc: rand;
 
+@rand(false)
 class uvm_vpi_monitor(RSP, string VPI_PREFIX): uvm_monitor
 {
   mixin uvm_component_essentials;
@@ -123,7 +125,7 @@ class uvm_vpi_monitor(RSP, string VPI_PREFIX): uvm_monitor
     super.setup_phase(phase);
     s_vpi_systf_data tf_data;
     uvm_info("VPIREG", "Registering vpi system task: " ~
-	     vpi_monitor_task, uvm_verbosity.UVM_NONE);
+	     vpi_monitor_task, uvm_verbosity.UVM_DEBUG);
     tf_data.type = vpiSysFunc;
     tf_data.sysfunctype = vpiIntFunc;
     tf_data.compiletf   = null;

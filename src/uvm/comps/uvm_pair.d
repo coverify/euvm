@@ -40,9 +40,11 @@ module uvm.comps.uvm_pair;
 
 import uvm.base;
 import uvm.meta.meta;
+import esdl.rand.misc: rand;
 
 import std.string: format;
 
+@rand(false)
 class uvm_class_pair(T1=uvm_object, T2=T1): uvm_object
 {
   alias uvm_class_pair!(T1, T2) this_type;

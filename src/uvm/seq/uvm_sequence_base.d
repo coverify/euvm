@@ -29,6 +29,30 @@
 
 module uvm.seq.uvm_sequence_base;
 
+import uvm.base.uvm_coreservice;
+import uvm.seq.uvm_sequence_item;
+import uvm.seq.uvm_sequencer_base;
+import uvm.base.uvm_factory;
+import uvm.base.uvm_recorder;
+import uvm.base.uvm_object_globals;
+import uvm.base.uvm_object_defines;
+import uvm.base.uvm_phase;
+import uvm.base.uvm_tr_stream;
+import uvm.dap.uvm_get_to_lock_dap;
+import uvm.base.uvm_misc: uvm_create_random_seed;
+
+import uvm.meta.misc;
+
+import esdl.base.core;
+import esdl.data.queue;
+import esdl.rand.misc: rand;
+
+version(UVM_NO_RAND) {}
+ else {
+   import esdl.rand;
+ }
+
+import std.string;
 
 //------------------------------------------------------------------------------
 //
@@ -142,31 +166,9 @@ module uvm.seq.uvm_sequence_base;
 // will produce a run-time error.
 //------------------------------------------------------------------------------
 
-import uvm.base.uvm_coreservice;
-import uvm.seq.uvm_sequence_item;
-import uvm.seq.uvm_sequencer_base;
-import uvm.base.uvm_factory;
-import uvm.base.uvm_recorder;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_object_defines;
-import uvm.base.uvm_phase;
-import uvm.base.uvm_tr_stream;
-import uvm.dap.uvm_get_to_lock_dap;
-import uvm.base.uvm_misc: uvm_create_random_seed;
-
-import uvm.meta.misc;
-
-import esdl.base.core;
-import esdl.data.queue;
-
-version(UVM_NO_RAND) {}
- else {
-   import esdl.rand;
- }
-
-import std.string;
 
 // @uvm-ieee 1800.2-2017 auto 14.2.1
+@rand(false)
 abstract class uvm_sequence_base: uvm_sequence_item
 {
   mixin uvm_abstract_object_essentials;

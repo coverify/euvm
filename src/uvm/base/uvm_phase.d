@@ -68,6 +68,7 @@ import std.conv: to;
 import esdl.base.core: Process;
 import esdl.data.queue;
 
+import esdl.rand.misc: _esdl__Norand;
 
 
 //------------------------------------------------------------------------------
@@ -161,7 +162,7 @@ import esdl.data.queue;
 // up that phase in the graph, this is done automatically.
 
 // @uvm-ieee 1800.2-2017 auto 9.3.1.2
-class uvm_phase: uvm_object
+class uvm_phase: uvm_object, _esdl__Norand
 {
   import uvm.base.uvm_component: uvm_component;
 

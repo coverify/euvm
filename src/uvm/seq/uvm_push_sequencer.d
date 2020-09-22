@@ -30,6 +30,9 @@ import uvm.base.uvm_component;
 
 import uvm.tlm1.uvm_ports;
 
+import esdl.rand.misc: rand;
+
+
 //------------------------------------------------------------------------------
 //
 // CLASS -- NODOCS -- uvm_push_sequencer #(REQ,RSP)
@@ -37,6 +40,7 @@ import uvm.tlm1.uvm_ports;
 //------------------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto 15.6.1
+@rand(false)
 class uvm_push_sequencer(REQ=uvm_sequence_item, RSP=REQ):
   uvm_sequencer_param_base!(REQ, RSP)
 {

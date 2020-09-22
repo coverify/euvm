@@ -22,6 +22,7 @@
 //-----------------------------------------------------------------------------
 module uvm.comps.uvm_scoreboard;
 import uvm.base;
+import esdl.rand.misc: rand;
 
 //------------------------------------------------------------------------------
 //
@@ -37,6 +38,7 @@ import uvm.base;
 //------------------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto 13.6.1
+@rand(false)
 abstract class uvm_scoreboard: uvm_component
 {
   mixin uvm_abstract_component_essentials;

@@ -63,6 +63,7 @@ import uvm.meta.misc;		// qualifiedTypeName
 
 import esdl.base.core;
 import esdl.data.queue;
+import esdl.rand.misc: rand;
 
 import std.traits: isIntegral, isAbstractClass, isArray;
 
@@ -118,6 +119,7 @@ struct m_verbosity_setting {
 }
 
 // @uvm-ieee 1800.2-2017 auto 13.1.1
+@rand(false)
 abstract class uvm_component: uvm_report_object, ParContext
 {
   import uvm.base.uvm_objection: uvm_objection;
@@ -293,6 +295,12 @@ abstract class uvm_component: uvm_report_object, ParContext
       _m_children = null;
       _m_children_by_handle = null;
 
+      // return if the constructor has been called factory processing
+      // we do not want uvm_components to be elaborated for the components
+      // that were created for the sake of factory
+      if (parent is null && name == "" && 
+	  uvm_factory.is_active()) return;
+
       // Since Vlang allows multi uvm_root instances, it is better to
       // have a unique name for each uvm_root instance
 
@@ -414,15 +422,20 @@ abstract class uvm_component: uvm_report_object, ParContext
   }
 
   // Csontructor called by uvm_root constructor
-  package this() {
+  package this(bool isRoot) {
     synchronized (this) {
-      super("__top__");
+      if (isRoot) {
+	super("__top__");
 
-      _m_children = null;
-      _m_children_by_handle = null;
-      // // make sure that we are actually construting a uvm_root
-      // auto top = cast (uvm_root) this;
-      // assert (top !is null);
+	_m_children = null;
+	_m_children_by_handle = null;
+	// // make sure that we are actually construting a uvm_root
+	// auto top = cast (uvm_root) this;
+	// assert (top !is null);
+      }
+      else {
+	assert (false, "This constructor is only for uvm_root instanciation");
+      }
     }
   }
 
@@ -631,12 +644,12 @@ abstract class uvm_component: uvm_report_object, ParContext
     }
   }
 
-  package void _set_name_force(string name) {
-    synchronized (this) {
-      super.set_name(name);
-      m_set_full_name();
-    }
-  }
+  // package void _set_name_force(string name) {
+  //   synchronized (this) {
+  //     super.set_name(name);
+  //     m_set_full_name();
+  //   }
+  // }
 
 
   // Function- lookup
@@ -2756,7 +2769,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   private string _m_name;
 
   alias type_id = 
-    uvm_abstract_component_registry!(uvm_component, "uvm_component");
+    uvm_abstract_component_registry!(uvm_component);
 
   static string type_name() {
     return "uvm_component";
@@ -2794,9 +2807,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   }
 
   void _uvm__configure_parallelism(MulticoreConfig config) { // to be called only by a uvm_root
-    import std.stdio;
     import uvm.base.uvm_root;
-    writeln("Calling _uvm__configure_parallelism on: ", get_full_name());
     assert (cast (uvm_root) this);
     _set_id();
     assert (config !is null);
@@ -3648,7 +3659,9 @@ void uvm__config_parallelism(T)(T t, ref _esdl__Multicore linfo)
       }
       else {
 	pconf = t.get_parent._esdl__getMulticoreConfig;
-	assert (pconf !is null);
+	assert (pconf !is null,
+		t.get_name() ~ " failed to get multicore config from parent " ~
+		t.get_parent.get_name() ~ "(" ~ t.get_parent.get_type_name() ~ ")");
       }
 	
       assert (t._esdl__getMulticoreConfig is null);

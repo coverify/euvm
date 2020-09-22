@@ -22,16 +22,6 @@ import esdl;
 import uvm;
 import std.stdio;
 
-class test_root: uvm_root
-{
-  mixin uvm_component_utils;
-}
-
-class TestBench: RootEntity
-{
-  uvm_entity!(test_root) tb;
-}
-
 class test: uvm_test
 {
   mixin uvm_component_utils;
@@ -40,13 +30,13 @@ class test: uvm_test
     super(name, parent);
   }
 
-  override void report() {
+  override void report_phase(uvm_phase phase) {
     writeln("** UVM TEST PASSED **\n");
   }
 }
   
 int main(string[] argv) {
-  TestBench tb = new TestBench;
+  auto tb = new uvm_tb;
   tb.multicore(0, 0);
   tb.elaborate("tb", argv);
   return tb.simulate();

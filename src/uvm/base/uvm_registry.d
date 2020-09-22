@@ -50,7 +50,15 @@ import uvm.base.uvm_factory: uvm_object_wrapper;
 // 8.2.3.1 of 1800.2-2017.
   
 // @uvm-ieee 1800.2-2017 auto 8.2.3.1
-class uvm_component_registry(T, string Tname="<unknown>"): uvm_object_wrapper
+template uvm_component_registry(T, bool NAMED=true)
+{
+  import std.traits: fullyQualifiedName;
+  static if (NAMED)
+    alias uvm_component_registry = uvm_component_registry!(T, fullyQualifiedName!T);
+  else alias uvm_component_registry = uvm_component_registry!(T, "<unknown>");
+}
+
+class uvm_component_registry(T, string Tname): uvm_object_wrapper
 {
   import uvm.base.uvm_component: uvm_component;
   alias this_type = uvm_component_registry !(T,Tname);
@@ -179,7 +187,15 @@ class uvm_component_registry(T, string Tname="<unknown>"): uvm_object_wrapper
 // 8.2.4.1 of 1800.2-2017.
 
 // @uvm-ieee 1800.2-2017 auto 8.2.4.1
-class uvm_object_registry(T, string Tname="<unknown>"): uvm_object_wrapper
+template uvm_object_registry(T, bool NAMED=true)
+{
+  import std.traits: fullyQualifiedName;
+  static if (NAMED)
+    alias uvm_object_registry = uvm_object_registry!(T, fullyQualifiedName!T);
+  else alias uvm_object_registry = uvm_object_registry!(T, "<unknown>");
+}
+
+class uvm_object_registry(T, string Tname): uvm_object_wrapper
 {
   import uvm.base.uvm_component: uvm_component;
   alias this_type = uvm_object_registry!(T,Tname);
@@ -313,7 +329,15 @@ class uvm_object_registry(T, string Tname="<unknown>"): uvm_object_wrapper
 // 8.2.5.1.1 of 1800.2-2017.
 
 // @uvm-ieee 1800.2-2017 auto 8.2.5.1.1
-class uvm_abstract_component_registry(T, string Tname="<unknown>"):
+template uvm_abstract_component_registry(T, bool NAMED=true)
+{
+  import std.traits: fullyQualifiedName;
+  static if (NAMED)
+    alias uvm_abstract_component_registry = uvm_abstract_component_registry!(T, fullyQualifiedName!T);
+  else alias uvm_abstract_component_registry = uvm_abstract_component_registry!(T, "<unknown>");
+}
+
+class uvm_abstract_component_registry(T, string Tname):
   uvm_object_wrapper
 {
   import uvm.base.uvm_component: uvm_component;
@@ -449,7 +473,15 @@ class uvm_abstract_component_registry(T, string Tname="<unknown>"):
 // 8.2.5.2.1 of 1800.2-2017.
 
 // @uvm-ieee 1800.2-2017 auto 8.2.5.2.1
-class uvm_abstract_object_registry(T, string Tname="<unknown>"):
+template uvm_abstract_object_registry(T, bool NAMED=true)
+{
+  import std.traits: fullyQualifiedName;
+  static if (NAMED)
+    alias uvm_abstract_object_registry = uvm_abstract_object_registry!(T, fullyQualifiedName!T);
+  else alias uvm_abstract_object_registry = uvm_abstract_object_registry!(T, "<unknown>");
+}
+
+class uvm_abstract_object_registry(T, string Tname):
   uvm_object_wrapper
 {
   import uvm.base.uvm_component: uvm_component;
@@ -589,7 +621,7 @@ class uvm_abstract_object_registry(T, string Tname="<unknown>"):
 //------------------------------------------------------------------------------
 
 class uvm_registry_common(Tregistry, Tcreator, Tcreated,
-			  string Tname="<unknown>")
+			  string Tname)
 {
   import uvm.base.uvm_component: uvm_component;
   alias this_type = uvm_registry_common!(Tregistry,Tcreator,Tcreated,Tname);

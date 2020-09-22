@@ -69,7 +69,9 @@
 //------------------------------------------------------------------------------
 
 module uvm.comps.uvm_algorithmic_comparator;
+import esdl.rand.misc: rand;
 
+@rand(false)
 class uvm_algorithmic_comparator(BEFORE=int,
 				 AFTER=int,
 				 TRANSFORMER=int): uvm_component

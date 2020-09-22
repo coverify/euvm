@@ -55,6 +55,7 @@ import uvm.seq.uvm_sequencer_base;
 import uvm.meta.misc;
 import uvm.meta.meta;
 import esdl.data.queue;
+import esdl.rand.misc: rand;
 
 // version(UVM_NO_RAND) {}
 //  else {
@@ -62,6 +63,7 @@ import esdl.data.queue;
 //  }
 
 // @uvm-ieee 1800.2-2017 auto 14.1.1
+@rand(false)
 class uvm_sequence_item: uvm_transaction, uvm_report_intf
 {
   mixin(uvm_sync_string);
@@ -77,18 +79,18 @@ class uvm_sequence_item: uvm_transaction, uvm_report_intf
   @uvm_protected_sync
   private int  _m_depth = -1;
 
-  // version(UVM_NO_RAND) {
-  @uvm_protected_sync
-  protected uvm_sequencer_base _m_sequencer;
-  @uvm_protected_sync
-  protected uvm_sequence_base  _m_parent_sequence;
-  // }
-  // else {
-  //   @rand!false @uvm_protected_sync
-  //     protected uvm_sequencer_base _m_sequencer;
-  //   @rand!false @uvm_protected_sync
-  //     protected uvm_sequence_base  _m_parent_sequence;
-  // }
+  version(UVM_NO_RAND) {
+    @uvm_protected_sync
+      protected uvm_sequencer_base _m_sequencer;
+    @uvm_protected_sync
+      protected uvm_sequence_base  _m_parent_sequence;
+  }
+  else {
+    @rand(false) @uvm_protected_sync
+      protected uvm_sequencer_base _m_sequencer;
+    @rand(false) @uvm_protected_sync
+      protected uvm_sequence_base  _m_parent_sequence;
+  }
 
   // issued1 and issued2 seem redundant -- declared in SV version though
   // static     bool               issued1,issued2;
@@ -113,7 +115,7 @@ class uvm_sequence_item: uvm_transaction, uvm_report_intf
   // Macro for factory creation
   // `uvm_object_registry(uvm_sequence_item, "uvm_sequence_item")
 
-  alias type_id = uvm_object_registry!(uvm_sequence_item, "uvm_sequence_item");
+  alias type_id = uvm_object_registry!(uvm_sequence_item);
 
   static type_id get_type() {
     return type_id.get();
@@ -493,7 +495,7 @@ class uvm_sequence_item: uvm_transaction, uvm_report_intf
   void uvm_report(string file = __FILE__,
 		  size_t line = __LINE__)( uvm_severity severity,
 					   string id,
-					   string message,
+					   lazy string message,
 					   int verbosity = -1,
 					   string context_name = "",
 					   bool report_enabled_checked = false) {
@@ -508,7 +510,7 @@ class uvm_sequence_item: uvm_transaction, uvm_report_intf
   // Function -- NODOCS -- uvm_report
   void uvm_report( uvm_severity severity,
 		   string id,
-		   string message,
+		   lazy string message,
 		   int verbosity,
 		   string filename,
 		   size_t line,
@@ -532,7 +534,7 @@ class uvm_sequence_item: uvm_transaction, uvm_report_intf
   // @uvm-ieee 1800.2-2017 auto 14.1.3.3
   void uvm_report_info(string file = __FILE__,
 		       size_t line = __LINE__)( string id,
-						string message,
+						lazy string message,
 						int verbosity = uvm_verbosity.UVM_MEDIUM,
 						string context_name = "",
 						bool report_enabled_checked = false) {
@@ -542,7 +544,7 @@ class uvm_sequence_item: uvm_transaction, uvm_report_intf
   }
 
   void uvm_report_info( string id,
-			string message,
+			lazy string message,
 			int verbosity,
 			string filename,
 			size_t line,
@@ -558,7 +560,7 @@ class uvm_sequence_item: uvm_transaction, uvm_report_intf
   // @uvm-ieee 1800.2-2017 auto 14.1.3.3
   void uvm_report_warning(string file = __FILE__,
 			  size_t line = __LINE__)( string id,
-						   string message,
+						   lazy string message,
 						   int verbosity = uvm_verbosity.UVM_MEDIUM,
 						   string context_name = "",
 						   bool report_enabled_checked = false) {
@@ -568,7 +570,7 @@ class uvm_sequence_item: uvm_transaction, uvm_report_intf
   }
 
   void uvm_report_warning( string id,
-			   string message,
+			   lazy string message,
 			   int verbosity,
 			   string filename,
 			   size_t line,
@@ -584,7 +586,7 @@ class uvm_sequence_item: uvm_transaction, uvm_report_intf
   // @uvm-ieee 1800.2-2017 auto 14.1.3.3
   void uvm_report_error(string file = __FILE__,
 			size_t line = __LINE__)( string id,
-						 string message,
+						 lazy string message,
 						 int verbosity=uvm_verbosity.UVM_NONE,
 						 string context_name = "",
 						 bool report_enabled_checked = false) {
@@ -594,7 +596,7 @@ class uvm_sequence_item: uvm_transaction, uvm_report_intf
   }
 
   void uvm_report_error( string id,
-			 string message,
+			 lazy string message,
 			 int verbosity = uvm_verbosity.UVM_LOW,
 			 string filename = "",
 			 size_t line = 0,
@@ -614,7 +616,7 @@ class uvm_sequence_item: uvm_transaction, uvm_report_intf
   // @uvm-ieee 1800.2-2017 auto 14.1.3.3
   void uvm_report_fatal(string file = __FILE__,
 			size_t line = __LINE__)( string id,
-						 string message,
+						 lazy string message,
 						 int verbosity = uvm_verbosity.UVM_NONE,
 						 string context_name = "",
 						 bool report_enabled_checked = false) {
@@ -624,7 +626,7 @@ class uvm_sequence_item: uvm_transaction, uvm_report_intf
   }
 
   void uvm_report_fatal( string id,
-			 string message,
+			 lazy string message,
 			 int verbosity,
 			 string filename,
 			 size_t line,

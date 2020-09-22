@@ -22,6 +22,7 @@
 //-----------------------------------------------------------------------------
 module uvm.comps.uvm_monitor;
 import uvm.base;
+import esdl.rand.misc: rand;
 
 //-----------------------------------------------------------------------------
 // CLASS -- NODOCS -- uvm_monitor
@@ -35,6 +36,8 @@ import uvm.base;
 //-----------------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto 13.5.1
+
+@rand(false)
 abstract class uvm_monitor: uvm_component
 {
   mixin uvm_abstract_component_essentials;

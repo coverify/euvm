@@ -95,6 +95,8 @@ import esdl.data.time: sec;
 import esdl.base.core: EntityIntf;
 import esdl.data.queue;
 
+import esdl.rand.misc: _esdl__Norand;
+
 //------------------------------------------------------------------------------
 // Title -- NODOCS -- Objection Mechanism
 //------------------------------------------------------------------------------
@@ -118,7 +120,7 @@ import esdl.data.queue;
 
 // @uvm-ieee 1800.2-2017 auto 10.5.1
 // @uvm-ieee 1800.2-2017 auto 10.5.1.1
-class uvm_objection: uvm_report_object
+class uvm_objection: uvm_report_object, _esdl__Norand
 {
   mixin uvm_register_cb!(uvm_objection_callback);
 
@@ -291,7 +293,7 @@ class uvm_objection: uvm_report_object
   // Internal method for reporting count updates
 
   final void m_report(uvm_object obj, uvm_object source_obj,
-		      string description, int count, string action) {
+		      lazy string description, int count, string action) {
     import uvm.base.uvm_object_globals;
     import uvm.base.uvm_globals;
     synchronized (this) {
@@ -305,6 +307,8 @@ class uvm_objection: uvm_report_object
 	return;
       }
 
+      string description_ = description();
+
       if (source_obj is obj) {
 	uvm_report_info("OBJTN_TRC",
 			format("Object %0s %0s %0d objection(s)%s: " ~
@@ -312,8 +316,8 @@ class uvm_objection: uvm_report_object
 			       (obj.get_full_name() == "") ?
 			       "uvm_top" : obj.get_full_name(),
 			       action, count,
-			       (description != "") ?
-			       " (" ~ description ~ ")" : "",
+			       (description_ != "") ?
+			       " (" ~ description_ ~ ")" : "",
 			       count_, total_), uvm_verbosity.UVM_NONE);
       }
       else {
@@ -348,8 +352,8 @@ class uvm_objection: uvm_report_object
 			       action == "raised" ? "added" : "subtracted",
 			       count, action == "raised" ?
 			       "to" : "from", action, sname,
-			       description != "" ? ", "
-			       ~ description : "", count_, total_), uvm_verbosity.UVM_NONE);
+			       description_ != "" ? ", "
+			       ~ description_ : "", count_, total_), uvm_verbosity.UVM_NONE);
       }
     }
   }
@@ -1418,7 +1422,7 @@ class uvm_objection: uvm_report_object
   // Below is all of the basic data stuff that is needed for a uvm_object
   // for factory registration, printing, comparing, etc.
 
-  alias type_id = uvm_object_registry!(uvm_objection,"uvm_objection");
+  alias type_id = uvm_object_registry!(uvm_objection);
 
   static type_id get_type() {
     return type_id.get();

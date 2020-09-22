@@ -35,10 +35,7 @@ import uvm.seq.uvm_sequencer_param_base;
 
 import std.string: format;
 
-version(UVM_NO_RAND) {}
- else {
-   import esdl.rand;
- }
+import esdl.rand.misc: rand;
 
 //------------------------------------------------------------------------------
 //
@@ -50,6 +47,7 @@ version(UVM_NO_RAND) {}
 //------------------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto 14.3.1
+@rand(false)
 abstract class uvm_sequence (REQ_T = uvm_sequence_item, RSP_T = REQ_T):
   uvm_sequence_base
 {
@@ -65,7 +63,7 @@ abstract class uvm_sequence (REQ_T = uvm_sequence_item, RSP_T = REQ_T):
       private sequencer_t        _param_sequencer;
   }
   else {
-    @uvm_public_sync @rand!false
+    @uvm_public_sync @rand(false)
       private sequencer_t        _param_sequencer;
   }
 
@@ -78,7 +76,7 @@ abstract class uvm_sequence (REQ_T = uvm_sequence_item, RSP_T = REQ_T):
     protected REQ_T                req;
   }
   else {
-    @rand!false
+    @rand(false)
       protected REQ_T              req;
   }
 
@@ -92,7 +90,7 @@ abstract class uvm_sequence (REQ_T = uvm_sequence_item, RSP_T = REQ_T):
     protected RSP_T                rsp;
   }
   else {
-    @rand!false
+    @rand(false)
       protected RSP_T              rsp;
   }    
 
@@ -200,7 +198,7 @@ abstract class uvm_sequence (REQ_T = uvm_sequence_item, RSP_T = REQ_T):
 
   // Function- do_print
   //
-  final override void do_print (uvm_printer printer) {
+  override void do_print (uvm_printer printer) {
     super.do_print(printer);
     printer.print_object("req", req);
     printer.print_object("rsp", rsp);

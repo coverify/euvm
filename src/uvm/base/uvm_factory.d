@@ -210,6 +210,12 @@ abstract class uvm_factory
 
   mixin (uvm_once_sync_string);
 
+  static bool _is_active;
+  
+  static bool is_active() {
+    return _is_active;
+  }
+  
   // Group -- NODOCS -- Retrieving the factory
 
 
@@ -963,6 +969,8 @@ class uvm_default_factory: uvm_factory
 
       requested_type = find_override_by_type(requested_type, full_inst_path);
 
+      assert (requested_type !is null);
+      
       return requested_type.create_object(name);
 
     }
@@ -991,6 +999,8 @@ class uvm_default_factory: uvm_factory
       _m_override_info.length = 0;
 
       requested_type = find_override_by_type(requested_type, full_inst_path);
+
+      assert (requested_type !is null);
 
       return requested_type.create_component(name, parent);
 
@@ -1026,35 +1036,11 @@ class uvm_default_factory: uvm_factory
       if (wrapper is null) {
 	wrapper = m_resolve_type_name_by_inst(requested_type_name, inst_path);
 	if (wrapper is null) {
-	  // return null;
-
-	  // SV works via static initialization -- In Vlang we do not
-	  // have that option since we create uvm_root dynamically
-	  // For VLang we have a special recourse == We invoke the
-	  // Object.factory
-	  auto obj = Object.factory(requested_type_name);
-	  if (obj is null) {
-	    uvm_report_warning("BDTYP", "Cannot create an object of type '" ~
-			       requested_type_name ~
-			       "' because it is not registered with the factory.",
-			       uvm_verbosity.UVM_NONE);
-
-	    uvm_report_warning("BDTYP", "Object.factory Cannot create an " ~
-			       "object of type '" ~ requested_type_name ~ "'.",
-			       uvm_verbosity.UVM_NONE);
-	    return null;
-	  }
-	  else {
-	    auto uobj = cast (uvm_object) obj;
-	    if (uobj is null) {
-	      uvm_report_warning("BDTYP", "Object.factory created an object " ~
-				 "but could not cast it to uvm_object type '" ~
-				 requested_type_name ~ "'.",
-				 uvm_verbosity.UVM_NONE);
-	    }
-	    uobj.set_name(name);
-	    return uobj;
-	  }
+	  uvm_report_warning("BDTYP", "Cannot create an object of type '" ~
+			     requested_type_name ~
+			     "' because it is not registered with the factory.",
+			     uvm_verbosity.UVM_NONE);
+	  return null;
 	}
       }
 
@@ -1095,35 +1081,11 @@ class uvm_default_factory: uvm_factory
       // if no override exists, try to use requested_type_name directly
       if (wrapper is null) {
 	if (requested_type_name !in _m_type_names) {
-	  // return null;
-
-	  // SV works via static initialization -- In Vlang we do not
-	  // have that option since we create uvm_root dynamically
-	  // For VLang we have a special recourse == Try to invoke the
-	  // Object.factory
-	  auto comp = Object.factory(requested_type_name);
-	  if (comp is null) {
-	    uvm_report_warning("BDTYP", "Cannot create a component of type '" ~
-			       requested_type_name ~
-			       "' because it is not registered with the factory.",
-			       uvm_verbosity.UVM_NONE);
-	    uvm_report_warning("BDTYP", "Object.factory Cannot create an " ~
-			       "object of type '" ~ requested_type_name ~ "'.",
-			       uvm_verbosity.UVM_NONE);
-	    return null;
-	  }
-	  else {
-	    auto ucomp = cast (uvm_component) comp;
-	    if (ucomp is null) {
-	      uvm_report_warning("BDTYP", "Object.factory created an " ~
-				 "object but could not cast it to " ~
-				 "uvm_component type '" ~
-				 requested_type_name ~ "'.",
-				 uvm_verbosity.UVM_NONE);
-	    }
-	    ucomp._set_name_force(name);
-	    return ucomp;
-	  }
+	  uvm_report_warning("BDTYP", "Cannot create a component of type '" ~
+			     requested_type_name ~
+			     "' because it is not registered with the factory.",
+			     uvm_verbosity.UVM_NONE);
+	  return null;
 	}
 	wrapper = _m_type_names[requested_type_name];
       }
@@ -1816,9 +1778,145 @@ class uvm_default_factory: uvm_factory
     string full_inst_path;
   }
 
-  private bool[uvm_object_wrapper]      _m_types;
+  this() {
+    synchronized(this) {
+      _m_types = new m_types_wrapper();
+      _m_type_names = new m_type_names_wrapper();
+    }
+  }
+
+  class m_types_wrapper
+  {
+    private bool[uvm_object_wrapper]    _types;
+
+    alias _types this;
+
+    bool opIndexAssign(bool val, uvm_object_wrapper obj_wrapper) {
+      return _types[obj_wrapper] = val;
+    }
+
+    ref bool opIndex(uvm_object_wrapper obj_wrapper) {
+      return _types[obj_wrapper];
+    }
+
+    bool* opBinaryRight(string op)(uvm_object_wrapper obj_wrapper)
+      if (op == "in") {
+	if (obj_wrapper is null) return null;
+      
+	bool* p = obj_wrapper in _types;
+	if (p !is null) return p;
+	else {
+	  register_lazy(obj_wrapper);
+	  return obj_wrapper in _types;
+	}
+      }
+
+    void register_lazy(uvm_object_wrapper obj) {
+      string name = obj.get_type_name();
+      
+      import uvm.base.uvm_globals;
+      import uvm.base.uvm_object_globals;
+      assert (obj !is null);
+
+      if (name != "" && name != "<unknown>") {
+	if (_m_type_names.already_has(name)) {
+	  uvm_report_warning("TPRGED", "Type name '" ~ obj.get_type_name() ~
+			     "' already registered with factory. No " ~
+			     "string-based lookup support for multiple" ~
+			     " types with the same type name.", uvm_verbosity.UVM_NONE);
+	}
+	else {
+	  _m_type_names[obj.get_type_name()] = obj;
+	}
+      }
+
+      // this check if for the call made from inside m_type_names_wrapper
+      if (obj in _types) {
+	if (obj.get_type_name() != "" && obj.get_type_name() != "<unknown>") {
+	  uvm_report_error("TPRGED", "Object type '" ~ obj.get_type_name() ~
+			   "' already registered with factory. ", uvm_verbosity.UVM_NONE);
+	}
+      }
+      else {
+	_types[obj] = true;
+	// If a named override happens before the type is registered, need to update
+	// the override type.
+	// Note:Registration occurs via static initialization, which occurs ahead of
+	// procedural (e.g. initial) blocks. There should not be any preexisting overrides.
+	uvm_factory_override[] overrides = _m_type_overrides ~ _m_inst_overrides;
+	foreach (ovrd; overrides) {
+	  if (m_matches_type_pair(ovrd.orig, null, obj.get_type_name())) {
+	    ovrd.orig.m_type = obj; 
+	  }
+	  if (m_matches_type_pair(ovrd.ovrd, null, obj.get_type_name())) {
+	    ovrd.ovrd.m_type = obj;
+	  }
+	}
+      }
+    }
+  }
+  
+  class m_type_names_wrapper
+  {
+    private uvm_object_wrapper[string]  _type_names;
+
+    alias _type_names this;
+    
+    uvm_object_wrapper opIndexAssign(uvm_object_wrapper obj_wrapper, string name) {
+      return _type_names[name] = obj_wrapper;
+    }
+
+    ref uvm_object_wrapper opIndex(string name) {
+      return _type_names[name];
+    }
+
+    uvm_object_wrapper* opBinaryRight(string op)(string name) if (op == "in"){
+      uvm_object_wrapper* p = name in _type_names;
+      if (p !is null) return p;
+      else {
+	if (name != "" && name != "<unknown>") {
+	  register_lazy_by_name(name);
+	  return name in _type_names;
+	}
+	else return null;
+      }
+    }
+
+    uvm_object_wrapper* already_has(string name) {
+      return name in _type_names;
+    }
+
+    void register_lazy_by_name(string requested_type_name) {
+      assert (requested_type_name != "<unknown>" &&
+	      requested_type_name != "");
+      
+      _is_active = true;
+      auto obj = Object.factory(requested_type_name);
+      _is_active = false;
+
+      if (obj is null) return;
+
+      auto uobj = cast (uvm_object) obj;
+      if (uobj is null) return;
+
+      uvm_object_wrapper wrapper = uobj.get_object_type();
+      assert (wrapper !is null);
+
+      if (wrapper.get_type_name() != requested_type_name) {
+	assert(false, "uvm_object of type " ~ requested_type_name ~
+	       " has been registered with wrong type name " ~
+	       wrapper.get_type_name());
+      }
+      else {
+	_m_types.register_lazy(wrapper);
+      }
+    }
+  }
+
+  private m_types_wrapper               _m_types;
+  
   private bool[string]                  _m_lookup_strs;
-  private uvm_object_wrapper[string]    _m_type_names;
+  private m_type_names_wrapper          _m_type_names;
   private m_inst_typename_alias_t[]     _m_inst_aliases;
 
   private uvm_factory_override[]        _m_type_overrides;

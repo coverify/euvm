@@ -24,6 +24,7 @@ module uvm.comps.uvm_subscriber;
 
 import uvm.base;
 import uvm.tlm1.uvm_analysis_port;
+import esdl.rand.misc: rand;
 
 //------------------------------------------------------------------------------
 //
@@ -39,6 +40,7 @@ import uvm.tlm1.uvm_analysis_port;
 //------------------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto 13.9.1
+@rand(false)
 abstract class uvm_subscriber(T=int): uvm_component
 {
   alias uvm_subscriber!T this_type;

@@ -75,6 +75,7 @@ import uvm.vpi.uvm_vpi_intf;
 
 import esdl.base.core;
 import esdl.data.bvec;
+import esdl.rand.misc: rand;
 
 version (UVM_NO_RAND) {}
  else {
@@ -88,6 +89,7 @@ import std.random: uniform;
 import std.range: ElementType;
 
 // @uvm-ieee 1800.2-2017 auto 5.3.1
+@rand(false)
 abstract class uvm_object: uvm_void
 {
   static class uvm_once: uvm_once_base
@@ -186,7 +188,12 @@ abstract class uvm_object: uvm_void
     }
   }
 
-  void _esdl__setupSolver() {
+  // In SV every class object is randomizable by default. Seeding in
+  // SV happens right at the time when an object is created.
+  // In EUVM, seeding is lazy. It happens only when a randomize (or
+  // the related function like srandom) is called.
+  // This is the hookup function in EUVM to ensure randomization stability
+  void _esdl__seedRandom() {
     version (UVM_NO_RAND) {}
     else {
       if (! _esdl__isRandSeeded()) {
@@ -1121,48 +1128,22 @@ abstract class uvm_object: uvm_void
   // The print_matches bit causes an informative message to be printed
   // when a field is set using one of the set methods.
 
-  version (UVM_NO_RAND) {
-    @uvm_private_sync
-      private string _m_leaf_name;
-    // // uvm_sync_private _m_leaf_name string
-    // final private string m_leaf_name() {synchronized (this) return this._m_leaf_name;}
-    // final private void m_leaf_name(string val) {synchronized (this) this._m_leaf_name = val;}
+  @rand(false) @uvm_private_sync
+  private string _m_leaf_name;
 
-    @uvm_immutable_sync
-      private int _m_inst_id;
-    // // uvm_sync_private _m_inst_id int
-    // final private int m_inst_id() {synchronized (this) return this._m_inst_id;}
-    // final private void m_inst_id(int val) {synchronized (this) this._m_inst_id = val;}
+  // // uvm_sync_private _m_leaf_name string
+  // final private string m_leaf_name() {synchronized (this) return this._m_leaf_name;}
+  // final private void m_leaf_name(string val) {synchronized (this) this._m_leaf_name = val;}
 
-  }
-  else {
-    @rand!false @uvm_private_sync
-      private string _m_leaf_name;
+  @rand(false) @uvm_immutable_sync
+  private int _m_inst_id;
 
-    // // uvm_sync_private _m_leaf_name string
-    // final private string m_leaf_name() {synchronized (this) return this._m_leaf_name;}
-    // final private void m_leaf_name(string val) {synchronized (this) this._m_leaf_name = val;}
-
-    @rand!false @uvm_immutable_sync
-      private int _m_inst_id;
-
-    // // uvm_sync_private _m_inst_id int
-    // final private int m_inst_id() {synchronized (this) return this._m_inst_id;}
-    // final private void m_inst_id(int val) {synchronized (this) this._m_inst_id = val;}
-  }
+  // // uvm_sync_private _m_inst_id int
+  // final private int m_inst_id() {synchronized (this) return this._m_inst_id;}
+  // final private void m_inst_id(int val) {synchronized (this) this._m_inst_id = val;}
 
   protected uvm_report_object m_get_report_object() {
     return null;
-  }
-
-  
-  // Moved from uvm_misc
-  string uvm_object_value_str() {
-    import std.conv;
-    // if (v is null) {
-    //   return "<null>";
-    // }
-    return "@" ~ (get_inst_id()).to!string();
   }
 
   

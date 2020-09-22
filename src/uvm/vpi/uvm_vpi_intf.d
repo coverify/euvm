@@ -61,12 +61,11 @@ class uvm_vpi_handle {
 	  t = cast(T) val.value.integer;
 	}
 	else {
+	  alias TT = _bvec!T;
 	  enum VECLEN = T.sizeof / 4;
-	  s_vpi_vecval[VECLEN] vecval;
 	  val.format = vpiVectorVal;
-	  val.value.vector = vecval.ptr;
 	  vpi_get_value(_handle, &val);
-	  TT tt = vecval;
+	  TT tt = val.value.vector[0..VECLEN];
 	  t = tt;
 	}
       }
@@ -108,11 +107,9 @@ class uvm_vpi_handle {
 	}
 	else {
 	  enum VECLEN = (T.SIZE+31)/32;
-	  s_vpi_vecval[VECLEN] vecval;
 	  val.format = vpiVectorVal;
-	  val.value.vector = vecval.ptr;
 	  vpi_get_value(_handle, &val);
-	  t = vecval;
+	  t = val.value.vector[0..VECLEN];
 	}
       }
     }

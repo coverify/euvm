@@ -40,6 +40,8 @@ import uvm.base.uvm_globals: uvm_report_warning, uvm_is_match, uvm_info;
 import uvm.base.uvm_object_globals: uvm_radix_enum, uvm_verbosity;
 import uvm.base.uvm_registry: uvm_object_registry;
 import uvm.base.uvm_factory: uvm_object_wrapper;
+import uvm.base.uvm_misc: uvm_object_value_str;
+
 import uvm.dpi.uvm_regex: uvm_glob_to_re;
 
 import uvm.base.uvm_once;
@@ -48,6 +50,7 @@ import uvm.meta.meta;
 import uvm.meta.misc;
 
 import esdl.base.core: SimTime, getRootEntity, Process;
+import esdl.rand.misc: _esdl__Norand;
 
 import std.string;
 import std.random: Random;
@@ -131,7 +134,7 @@ class get_t {
 //----------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto C.2.4.1
-class uvm_resource_pool
+class uvm_resource_pool: _esdl__Norand
 {
   import esdl.data.queue;
   import std.string: format;
@@ -272,9 +275,13 @@ class uvm_resource_pool
       rq.push_back(rsrc);
       _ttab[type_handle] = rq;
 
-      // Set the scope of resource. 
-      _ri_tab[rsrc]._rscope = uvm_glob_to_re(rscope);
-      _ri_tab[rsrc]._precedence = get_default_precedence();
+      // Set the scope of resource.
+      
+      rsrc_info_t rsrc_info =
+	rsrc_info_t(uvm_glob_to_re(rscope), get_default_precedence());
+      _ri_tab[rsrc] = rsrc_info;
+      // _ri_tab[rsrc]._rscope = uvm_glob_to_re(rscope);
+      // _ri_tab[rsrc]._precedence = get_default_precedence();
     }
   }
 
@@ -761,8 +768,8 @@ class uvm_resource_pool
       uvm_resource_base r;
       size_t i;
 
-      foreach (j, r; q) {
-	i = j;
+      foreach (j, r_; q) {
+	i = j; r = r_;
 	if (r is rsrc) break;
       }
 
@@ -947,7 +954,7 @@ class uvm_resource_pool
     printer.push_element(rq.get_name(),
                          "uvm_queue#(uvm_resource_base)",
                          format("%0d",rq.length),
-			 rq.uvm_object_value_str());
+			 uvm_object_value_str(rq));
 
     for (size_t i=0; i < rq.length; ++i) {
       printer.push_element(format("[%0d]", i),
@@ -975,8 +982,8 @@ class uvm_resource_pool
         printer.print_array_header("accesses",
 				   r.access.length,
 				   "queue");
-        foreach (i, acc; r.access) {
-          printer.print_string(format("[%s]", i),
+        foreach (k, acc; r.access) {
+          printer.print_string(format("[%s]", k),
                                format("reads: %0d @ %s  writes: %0d @ %s",
 				      acc.read_count,
 				      acc.read_time,
@@ -1069,7 +1076,7 @@ class uvm_resource_pool
 //----------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto C.2.5.1
-class uvm_resource(T=int): uvm_resource_base
+class uvm_resource(T=int): uvm_resource_base, _esdl__Norand
 {
 
   alias this_type = uvm_resource!(T);

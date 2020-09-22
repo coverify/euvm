@@ -41,6 +41,7 @@ import uvm.tlm1.uvm_tlm_fifos;
 import uvm.meta.misc;
 
 import esdl.data.queue;
+import esdl.rand.misc: rand;
 
 version(UVM_NO_RAND) {}
  else {
@@ -57,6 +58,7 @@ import std.string: format;
 // request (REQ) and response (RSP) types.
 //------------------------------------------------------------------------------
 
+@rand(false)
 abstract class uvm_sequencer_param_base (REQ = uvm_sequence_item,
 					 RSP = REQ): uvm_sequencer_base
   if (is (REQ: uvm_sequence_item) && is (RSP: uvm_sequence_item))

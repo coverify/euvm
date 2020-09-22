@@ -133,7 +133,7 @@ uvm_message_add(alias VAR, uvm_action ACTION)()
 uvm_report_message
 uvm_report_message_create(T...)(uvm_severity severity,
 				string id,
-				string message,
+				lazy string message,
 				int verbosity,
 				string fname,
 				size_t line,
@@ -1333,7 +1333,7 @@ class uvm_report_message: uvm_object
   // @uvm-ieee 1800.2-2017 auto 6.2.4.10
   void set_report_message(uvm_severity severity,
 			  string id,
-			  string message,
+			  lazy string message,
 			  int verbosity,
 			  string filename,
 			  size_t line,
@@ -1346,7 +1346,7 @@ class uvm_report_message: uvm_object
       _line         = line;
       _severity     = severity;
       _id           = id;
-      _message      = message;
+      _message      = message();
       _verbosity    = verbosity;
     }
   }

@@ -86,7 +86,9 @@ import uvm.base.uvm_port_base;
 import uvm.base.uvm_component;
 import uvm.base.uvm_object_globals;
 
-class uvm_blocking_put_export(T=int): uvm_port_base!(uvm_tlm_if_base!(T,T))
+import esdl.rand.misc: _esdl__Norand;
+
+class uvm_blocking_put_export(T=int): uvm_port_base!(uvm_tlm_if_base!(T,T)), _esdl__Norand
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_BLOCKING_PUT_MASK,"uvm_blocking_put_export")
   // `UVM_BLOCKING_PUT_IMP (this.m_if, T, t)
@@ -108,7 +110,7 @@ class uvm_blocking_put_export(T=int): uvm_port_base!(uvm_tlm_if_base!(T,T))
 }
 
 class uvm_nonblocking_put_export(T=int):
-uvm_port_base!(uvm_tlm_if_base!(T,T))
+  uvm_port_base!(uvm_tlm_if_base!(T,T)), _esdl__Norand
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_NONBLOCKING_PUT_MASK,"uvm_nonblocking_put_export")
   // `UVM_NONBLOCKING_PUT_IMP (this.m_if, T, t)
@@ -134,7 +136,7 @@ uvm_port_base!(uvm_tlm_if_base!(T,T))
 }
 
 class uvm_put_export(T=int):
-uvm_port_base!(uvm_tlm_if_base!(T,T))
+  uvm_port_base!(uvm_tlm_if_base!(T,T)), _esdl__Norand
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_PUT_MASK,"uvm_put_export")
   // `UVM_PUT_IMP (this.m_if, T, t)
@@ -164,7 +166,7 @@ uvm_port_base!(uvm_tlm_if_base!(T,T))
 }
 
 class uvm_blocking_get_export(T=int):
-uvm_port_base!(uvm_tlm_if_base!(T,T))
+  uvm_port_base!(uvm_tlm_if_base!(T,T)), _esdl__Norand
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_BLOCKING_GET_MASK,"uvm_blocking_get_export")
   // `UVM_BLOCKING_GET_IMP (this.m_if, T, t)
@@ -186,7 +188,7 @@ uvm_port_base!(uvm_tlm_if_base!(T,T))
 }
 
 class uvm_nonblocking_get_export(T=int):
-uvm_port_base!(uvm_tlm_if_base!(T,T))
+  uvm_port_base!(uvm_tlm_if_base!(T,T)), _esdl__Norand
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_NONBLOCKING_GET_MASK,"uvm_nonblocking_get_export")
   // `UVM_NONBLOCKING_GET_IMP (this.m_if, T, t)
@@ -210,7 +212,7 @@ uvm_port_base!(uvm_tlm_if_base!(T,T))
 }
 
 class uvm_get_export(T=int):
-uvm_port_base!(uvm_tlm_if_base!(T,T))
+  uvm_port_base!(uvm_tlm_if_base!(T,T)), _esdl__Norand
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_GET_MASK,"uvm_get_export")
   // `UVM_GET_IMP (this.m_if, T, t)
@@ -241,7 +243,7 @@ uvm_port_base!(uvm_tlm_if_base!(T,T))
 }
 
 class uvm_blocking_peek_export(T=int):
-uvm_port_base!(uvm_tlm_if_base!(T,T))
+  uvm_port_base!(uvm_tlm_if_base!(T,T)), _esdl__Norand
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_BLOCKING_PEEK_MASK,"uvm_blocking_peek_export")
   // `UVM_BLOCKING_PEEK_IMP (this.m_if, T, t)
@@ -264,7 +266,7 @@ uvm_port_base!(uvm_tlm_if_base!(T,T))
 }
 
 class uvm_nonblocking_peek_export(T=int):
-uvm_port_base!(uvm_tlm_if_base!(T,T))
+  uvm_port_base!(uvm_tlm_if_base!(T,T)), _esdl__Norand
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_NONBLOCKING_PEEK_MASK,"uvm_nonblocking_peek_export")
   // `UVM_NONBLOCKING_PEEK_IMP (this.m_if, T, t)
@@ -290,7 +292,7 @@ uvm_port_base!(uvm_tlm_if_base!(T,T))
 }
 
 class uvm_peek_export(T=int):
-uvm_port_base!(uvm_tlm_if_base!(T,T))
+  uvm_port_base!(uvm_tlm_if_base!(T,T)), _esdl__Norand
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_PEEK_MASK,"uvm_peek_export")
   // `UVM_PEEK_IMP (this.m_if, T, t)
@@ -322,7 +324,7 @@ uvm_port_base!(uvm_tlm_if_base!(T,T))
 }
 
 class uvm_blocking_get_peek_export(T=int):
-uvm_port_base!(uvm_tlm_if_base!(T,T))
+  uvm_port_base!(uvm_tlm_if_base!(T,T)), _esdl__Norand
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_BLOCKING_GET_PEEK_MASK,"uvm_blocking_get_peek_export")
   // `UVM_BLOCKING_GET_PEEK_IMP (this.m_if, T, t)
@@ -351,7 +353,7 @@ uvm_port_base!(uvm_tlm_if_base!(T,T))
 }
 
 class uvm_nonblocking_get_peek_export(T=int):
-uvm_port_base!(uvm_tlm_if_base!(T,T))
+  uvm_port_base!(uvm_tlm_if_base!(T,T)), _esdl__Norand
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_NONBLOCKING_GET_PEEK_MASK,"uvm_nonblocking_get_peek_export")
   // `UVM_NONBLOCKING_GET_PEEK_IMP (this.m_if, T, t)
@@ -386,7 +388,7 @@ uvm_port_base!(uvm_tlm_if_base!(T,T))
 }
 
 class uvm_get_peek_export(T=int):
-uvm_port_base!(uvm_tlm_if_base!(T,T))
+  uvm_port_base!(uvm_tlm_if_base!(T,T)), _esdl__Norand
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_GET_PEEK_MASK,"uvm_get_peek_export")
   // `UVM_GET_PEEK_IMP (this.m_if, T, t)
@@ -479,7 +481,7 @@ uvm_port_base!(uvm_tlm_if_base!(T,T))
 
 
 class uvm_blocking_master_export (REQ=int, RSP=REQ):
-uvm_port_base !(uvm_tlm_if_base !(REQ, RSP))
+  uvm_port_base !(uvm_tlm_if_base !(REQ, RSP)), _esdl__Norand
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_BLOCKING_MASTER_MASK,"uvm_blocking_master_export")
   // `UVM_BLOCKING_PUT_IMP (this.m_if, REQ, t)
@@ -513,7 +515,7 @@ uvm_port_base !(uvm_tlm_if_base !(REQ, RSP))
 }
 
 class uvm_nonblocking_master_export (REQ=int, RSP=REQ):
-uvm_port_base !(uvm_tlm_if_base !(REQ, RSP))
+  uvm_port_base !(uvm_tlm_if_base !(REQ, RSP)), _esdl__Norand
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_NONBLOCKING_MASTER_MASK,"uvm_nonblocking_master_export")
   // `UVM_NONBLOCKING_PUT_IMP (this.m_if, REQ, t)
@@ -556,7 +558,7 @@ uvm_port_base !(uvm_tlm_if_base !(REQ, RSP))
 }
 
 class uvm_master_export (REQ=int, RSP=REQ):
-uvm_port_base !(uvm_tlm_if_base !(REQ, RSP))
+  uvm_port_base !(uvm_tlm_if_base !(REQ, RSP)), _esdl__Norand
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_MASTER_MASK,"uvm_master_export")
   // `UVM_PUT_IMP (this.m_if, REQ, t)
@@ -614,7 +616,7 @@ uvm_port_base !(uvm_tlm_if_base !(REQ, RSP))
 }
 
 class uvm_blocking_slave_export (REQ=int, RSP=REQ):
-uvm_port_base !(uvm_tlm_if_base !(RSP, REQ))
+  uvm_port_base !(uvm_tlm_if_base !(RSP, REQ)), _esdl__Norand
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_BLOCKING_SLAVE_MASK,"uvm_blocking_slave_export")
   // `UVM_BLOCKING_PUT_IMP (this.m_if, RSP, t)
@@ -648,7 +650,7 @@ uvm_port_base !(uvm_tlm_if_base !(RSP, REQ))
 }
 
 class uvm_nonblocking_slave_export (REQ=int, RSP=REQ):
-uvm_port_base !(uvm_tlm_if_base !(RSP, REQ))
+  uvm_port_base !(uvm_tlm_if_base !(RSP, REQ)), _esdl__Norand
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_NONBLOCKING_SLAVE_MASK,"uvm_nonblocking_slave_export")
   // `UVM_NONBLOCKING_PUT_IMP (this.m_if, RSP, t)
@@ -692,7 +694,7 @@ uvm_port_base !(uvm_tlm_if_base !(RSP, REQ))
 }
 
 class uvm_slave_export (REQ=int, RSP=REQ):
-uvm_port_base !(uvm_tlm_if_base !(RSP, REQ))
+  uvm_port_base !(uvm_tlm_if_base !(RSP, REQ)), _esdl__Norand
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_SLAVE_MASK,"uvm_slave_export")
   // `UVM_PUT_IMP (this.m_if, RSP, t)
@@ -751,7 +753,7 @@ uvm_port_base !(uvm_tlm_if_base !(RSP, REQ))
 
 
 class uvm_blocking_transport_export (REQ=int, RSP=REQ):
-uvm_port_base!(uvm_tlm_if_base !(REQ, RSP))
+  uvm_port_base!(uvm_tlm_if_base !(REQ, RSP)), _esdl__Norand
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_BLOCKING_TRANSPORT_MASK,"uvm_blocking_transport_export")
   // `UVM_BLOCKING_TRANSPORT_IMP (this.m_if, REQ, RSP, req, rsp)
@@ -774,7 +776,7 @@ uvm_port_base!(uvm_tlm_if_base !(REQ, RSP))
 }
 
 class uvm_nonblocking_transport_export (REQ=int, RSP=REQ):
-uvm_port_base !(uvm_tlm_if_base !(REQ, RSP))
+  uvm_port_base !(uvm_tlm_if_base !(REQ, RSP)), _esdl__Norand
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_NONBLOCKING_TRANSPORT_MASK,"uvm_nonblocking_transport_export")
   // `UVM_NONBLOCKING_TRANSPORT_IMP (this.m_if, REQ, RSP, req, rsp)
@@ -796,7 +798,7 @@ uvm_port_base !(uvm_tlm_if_base !(REQ, RSP))
 }
 
 class uvm_transport_export (REQ=int, RSP=REQ):
-uvm_port_base !(uvm_tlm_if_base !(REQ, RSP))
+  uvm_port_base !(uvm_tlm_if_base !(REQ, RSP)), _esdl__Norand
 {
   // `UVM_EXPORT_COMMON(`UVM_TLM_TRANSPORT_MASK,"uvm_transport_export")
   // `UVM_TRANSPORT_IMP (this.m_if, REQ, RSP, req, rsp)

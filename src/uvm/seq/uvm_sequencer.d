@@ -43,6 +43,7 @@ import uvm.tlm1.uvm_sqr_ifs;
 
 import uvm.meta.misc;
 import uvm.meta.meta;
+import esdl.rand.misc: rand;
 
 //------------------------------------------------------------------------------
 //
@@ -51,6 +52,7 @@ import uvm.meta.meta;
 //------------------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto 15.5.1
+@rand(false)
 class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   uvm_sequencer_param_base!(REQ, RSP)
 {

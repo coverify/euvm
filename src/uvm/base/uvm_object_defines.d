@@ -301,12 +301,13 @@ mixin template uvm_type_name_decl(string TNAME_STRING="") {
 mixin template m_uvm_object_auto_utils(T)
 {
   override void do_execute_op(uvm_field_op op) {
-    super.do_execute_op(op);
     m_uvm_execute_field_op(op);
   }
 
   override void m_uvm_execute_field_op(uvm_field_op op) {
+
     super.m_uvm_execute_field_op(op);
+
     uvm_field_flag_t what = op.get_op_type();
     switch (what) {
     case uvm_field_auto_enum.UVM_COPY:

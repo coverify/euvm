@@ -364,7 +364,7 @@ class MailOutbox(T): MailboxBase!T
   
   override void readWait() {_readEvent.wait();}
   override void writeWait() {_writeEvent.wait();}
-  override void readNotify() {_readEvent.schedule();}
+  override void readNotify() {_readEvent.notify();}
   override void writeNotify() {_writeEvent.notify();}
 
   override void peek(ref T val) {
@@ -433,9 +433,9 @@ class MailVpiOutbox(T): MailboxBase!T
   override void writeWait() {_writeEvent.wait();}
   override void readNotify() {
     switch (_readEvent.getRoot().getMode()) {
-    case SchedMode.MASTER: _readEvent.schedule(); break;
+    case SchedMode.MASTER: _readEvent.notify(); break;
     case SchedMode.VPI: {
-      _readEvent.schedule(false);
+      _readEvent.schedule(Vpi.getTime());
       break;      
     }
     default:     assert(false, "Not yet implemented");
@@ -445,7 +445,7 @@ class MailVpiOutbox(T): MailboxBase!T
     switch (_readEvent.getRoot().getMode()) {
     case SchedMode.MASTER: _readEvent.notify(); break;
     case SchedMode.VPI: {
-      _readEvent.schedule(t, false);
+      _readEvent.schedule(t);
       break;      
     }
     default:     assert(false, "Not yet implemented");
@@ -544,7 +544,7 @@ class MailInbox(T): MailboxBase!T
   override void readWait() {_readEvent.wait();}
   override void writeWait() {_writeEvent.wait();}
   override void readNotify() {_readEvent.notify();}
-  override void writeNotify() {_writeEvent.schedule();}
+  override void writeNotify() {_writeEvent.notify();}
 
   override void put(T val) {
     while(true) {
@@ -629,9 +629,9 @@ class MailVpiInbox(T): MailboxBase!T
   }
   override void writeNotify() {
     switch (_writeEvent.getRoot().getMode()) {
-    case SchedMode.MASTER: _writeEvent.schedule(); break;
+    case SchedMode.MASTER: _writeEvent.notify(); break;
     case SchedMode.VPI: {
-      _writeEvent.schedule(false);
+      _writeEvent.schedule(Vpi.getTime());
       break;
     }
     default:     assert(false, "Not yet implemented");
@@ -639,9 +639,9 @@ class MailVpiInbox(T): MailboxBase!T
   }
   override void writeNotify(Time t) {
     switch (_writeEvent.getRoot().getMode()) {
-    case SchedMode.MASTER: _writeEvent.schedule(); break;
+    case SchedMode.MASTER: _writeEvent.notify(); break;
     case SchedMode.VPI: {
-      _writeEvent.schedule(t, false);
+      _writeEvent.schedule(t);
       break;
     }
     default:     assert(false, "Not yet implemented");

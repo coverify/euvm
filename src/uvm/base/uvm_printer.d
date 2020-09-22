@@ -40,7 +40,8 @@ enum int UVM_STDOUT = 1;  // Writes to standard out and logfile
 
 import esdl.data.bvec;
 
-import uvm.base.uvm_misc: uvm_bitvec_to_string, uvm_leaf_scope;
+import uvm.base.uvm_misc: uvm_bitvec_to_string, uvm_leaf_scope,
+  uvm_object_value_str;
 import uvm.base.uvm_object: uvm_object;
 import uvm.base.uvm_policy: uvm_policy;
 import uvm.base.uvm_object_globals: uvm_radix_enum, UVM_FILE,
@@ -279,7 +280,7 @@ abstract class uvm_printer: uvm_policy
       push_element(name,
 		   (value !is null) ?  value.get_type_name() : "object",
 		   "-",
-		   get_id_enabled() ? value.uvm_object_value_str() : "-");
+		   get_id_enabled() ? uvm_object_value_str(value) : "-");
     }
   }
 

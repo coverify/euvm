@@ -23,6 +23,8 @@ module uvm.base.uvm_traversal;
 
 import uvm.base.uvm_object: uvm_object;
 import uvm.base.uvm_component: uvm_component;
+import esdl.rand.misc: _esdl__Norand;
+
 
 import std.regex;
 
@@ -37,7 +39,7 @@ import std.regex;
 //------------------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto F.5.1.1
-abstract class uvm_visitor(NODE=uvm_component): uvm_object
+abstract class uvm_visitor(NODE=uvm_component): uvm_object, _esdl__Norand
 {
   this(string name = "") {
     super(name);

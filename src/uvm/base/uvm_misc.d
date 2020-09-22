@@ -55,6 +55,7 @@ import uvm.meta.misc;
 
 import esdl.data.bvec;
 import esdl.base.core: Event;
+import esdl.rand.misc: rand;
 
 import std.traits: isIntegral, isSigned, isBoolean;
 import std.algorithm: find, canFind;
@@ -64,6 +65,7 @@ import std.range: ElementType;
 interface uvm_void_if { }
 
 // @uvm-ieee 1800.2-2017 auto 5.2
+@rand(false)
 abstract class uvm_void: uvm_void_if {
   // Randomization mixin is in uvm_object class
   // mixin Randomization;
@@ -237,13 +239,13 @@ string uvm_instance_scope() {
 //
 //
 
-// Moved to uvm_object.d
 string uvm_object_value_str(uvm_object v) {
-  if (v is null)
-    return "<null>";
-  return "@" ~ (v.get_inst_id()).to!string();
+  import std.conv;
+  if (v is null) return "<null>";
+  else return "@" ~ (v.get_inst_id()).to!string();
 }
 
+  
 // Function- uvm_leaf_scope
 //
 //

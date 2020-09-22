@@ -110,7 +110,7 @@ class uvm_reg_item: uvm_sequence_item
   // The value to write to, or after completion, the value read from the DUT.
   // Burst operations use the <values> property.
   //
-  @rand!1024 uvm_reg_data_t[] _value;
+  @rand(1024) uvm_reg_data_t[] _value;
 
   uvm_reg_data_t[] get_value() {
     synchronized(this) {

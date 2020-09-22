@@ -261,6 +261,8 @@ abstract class uvm_resource_base: uvm_object
       super(name);
       _modified = new WithEvent!bool("modified", false);
       _read_only = false;
+      _access =
+	new uvm_pool!(string, uvm_resource_types.access_t)("_access");
     }
   }
 
