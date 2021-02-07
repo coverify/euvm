@@ -1,9 +1,10 @@
 //
 //-----------------------------------------------------------------------------
-// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2014-2021 Coverify Systems Technology
 // Copyright 2007-2014 Mentor Graphics Corporation
 // Copyright 2010-2013 Synopsys, Inc.
 // Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2020 Marvell International Ltd.
 // Copyright 2010 AMD
 // Copyright 2013-2018 NVIDIA Corporation
 // Copyright 2014-2017 Cisco Systems, Inc.
@@ -266,10 +267,17 @@ abstract class uvm_transaction: uvm_object
 
 
   // @uvm-ieee 1800.2-2017 auto 5.4.2.4
-  final int begin_tr(SimTime begin_time = 0) {
-    return m_begin_tr(begin_time);
+  version(UVM_1800_2_2020_EA) {
+    final int begin_tr(SimTime begin_time = 0, int parent_handle = 0) {
+      return m_begin_tr(begin_time, parent_handle);
+    }
   }
-
+  else {
+    final int begin_tr(SimTime begin_time = 0) {
+      return m_begin_tr(begin_time);
+    }
+  }
+  
   // Function -- NODOCS -- begin_child_tr
   //
   // This function indicates that the transaction has been started as a child of

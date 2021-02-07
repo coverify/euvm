@@ -521,6 +521,7 @@ template uvm_sync_string_alt(T, TM, string A, string M, string U) {
 
 mixin template uvm_once_sync() {
   // pragma(msg, uvm_once_sync_string!(uvm_once, typeof(this)));
+  import uvm.base.uvm_entity: uvm_entity_base;
   mixin(uvm_once_sync_string!(uvm_once, typeof(this)));
 }
 

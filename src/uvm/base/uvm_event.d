@@ -41,7 +41,8 @@ import uvm.base.uvm_object_defines;
 import uvm.base.uvm_event_callback: uvm_event_callback;
 import uvm.base.uvm_printer: uvm_printer;
 import uvm.base.uvm_misc: uvm_apprepend;
-import uvm.base.uvm_callback: uvm_callback, uvm_callbacks;
+import uvm.base.uvm_callback: uvm_callback, uvm_callbacks,
+  uvm_register_cb;
 
 import uvm.meta.misc;
 import uvm.meta.meta;
@@ -343,6 +344,8 @@ class uvm_event(T=uvm_object): uvm_event_base
   // }
 
   // static local bit m_cb_registered = m_register_cb();
+
+  mixin uvm_register_cb!(cb_type);
    
   mixin uvm_object_essentials;
 

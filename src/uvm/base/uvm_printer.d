@@ -1,12 +1,13 @@
 //
 //------------------------------------------------------------------------------
-// Copyright 2012-2019 Coverify Systems Technology
+// Copyright 2012-2021 Coverify Systems Technology
 // Copyright 2007-2018 Mentor Graphics Corporation
 // Copyright 2014 Semifore
 // Copyright 2018 Qualcomm, Inc.
 // Copyright 2014 Intel Corporation
 // Copyright 2018 Synopsys, Inc.
 // Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2020 Marvell International Ltd.
 // Copyright 2012 AMD
 // Copyright 2013-2018 NVIDIA Corporation
 // Copyright 2014-2018 Cisco Systems, Inc.
@@ -232,21 +233,6 @@ abstract class uvm_printer: uvm_policy
 	  _m_recur_states[value][recursion_policy] =
 	    uvm_policy.recursion_state_e.STARTED;
 	  print_object_header(name, value, scope_separator); // calls push_element
-
-	  // Handle children of the comp
-	  // BOZO:  Why isn't this handled inside of uvm_component::do_print?
-	  uvm_component comp = cast (uvm_component) value;
-	  if (comp !is null) {
-	    string cname;
-	    if (comp.get_first_child(cname)) {
-	      do {
-		uvm_component child_comp = comp.get_child(cname);
-		if (child_comp.print_enabled) {
-		  this.print_object(cname, child_comp);
-		}
-	      } while (comp.get_next_child(cname));
-	    }
-	  }
 
 	  uvm_field_op field_op = uvm_field_op.m_get_available_op() ;
 	  field_op.set(uvm_field_auto_enum.UVM_PRINT, this, null);

@@ -1,13 +1,14 @@
 //
 //------------------------------------------------------------------------------
-// Copyright 2012-2019 Coverify Systems Technology
-// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2012-2020 Coverify Systems Technology
 // Copyright 2010-2018 AMD
-// Copyright 2010-2018 Mentor Graphics Corporation
-// Copyright 2013-2018 NVIDIA Corporation
-// Copyright 2017 Cisco Systems, Inc.
 // Copyright 2015 Analog Devices, Inc.
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2017 Cisco Systems, Inc.
+// Copyright 2010-2018 Mentor Graphics Corporation
+// Copyright 2013-2020 NVIDIA Corporation
 // Copyright 2011 Synopsys, Inc.
+// Copyright 2020 Verific
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the

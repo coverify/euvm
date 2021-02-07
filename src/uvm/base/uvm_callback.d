@@ -1477,26 +1477,28 @@ class uvm_callback: uvm_object
 
 mixin template uvm_register_cb(T, CB) if (is (CB: uvm_callback))
   {
-    import uvm.base.uvm_callback: uvm_callbacks, uvm_cb_trace_noobj;
-    import std.string: format;
     // static this() {
     //   if (uvm_is_uvm_thread) {
     //	uvm_callbacks!(T, CB).m_register_pair();
     //   }
     // }
     void uvm_do_callbacks(void delegate(CB cb) dg) {
+      import uvm.base.uvm_callback: uvm_callbacks;
       foreach (callb; uvm_callbacks!(T, CB).get_all_enabled(this)) {
 	dg(callb);
       }
     }
 
     void uvm_do_callbacks_reverse(void delegate(CB cb) dg) {
+      import uvm.base.uvm_callback: uvm_callbacks;
       foreach_reverse(callb; uvm_callbacks!(T, CB).get_all_enabled(this)) {
 	dg(callb);
       }
     }
 
     bool uvm_do_callbacks_exit_on(bool delegate(CB cb) dg, bool val) {
+      import uvm.base.uvm_callback: uvm_callbacks, uvm_cb_trace_noobj;
+      import std.string: format;
       foreach (callb; uvm_callbacks!(T, CB).get_all_enabled(this)) {
 	if (dg(callb) == val) {
 	  uvm_cb_trace_noobj(callb,
