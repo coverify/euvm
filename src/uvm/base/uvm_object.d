@@ -55,7 +55,7 @@ import uvm.base.uvm_misc: uvm_void;
 import uvm.base.uvm_recorder; // TBD IMPORTS
 
 
-import uvm.base.uvm_once;
+import uvm.base.uvm_scope;
 import uvm.base.uvm_factory: uvm_object_wrapper;
 import uvm.base.uvm_printer: uvm_printer;
 import uvm.base.uvm_copier: uvm_copier;
@@ -92,16 +92,16 @@ import std.range: ElementType;
 @rand(false)
 abstract class uvm_object: uvm_void
 {
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_protected_sync
     private int _m_inst_count;
   }
 
-  // Can not use "mixin uvm_once_sync" template due to forward reference error
+  // Can not use "mixin uvm_scope_sync" template due to forward reference error
   // Using string Mixin function
-  // mixin uvm_once_sync;
-  mixin (uvm_once_sync_string);
+  // mixin uvm_scope_sync;
+  mixin (uvm_scope_sync_string);
   mixin (uvm_lock_string);
 
 
@@ -117,8 +117,8 @@ abstract class uvm_object: uvm_void
 
   this(string name="") {
     int inst_id;
-    synchronized (_uvm_once_inst) {
-      inst_id = _uvm_once_inst._m_inst_count++;
+    synchronized (_uvm_scope_inst) {
+      inst_id = _uvm_scope_inst._m_inst_count++;
     }
     synchronized (this) {
       _m_inst_id = inst_id;
@@ -139,7 +139,7 @@ abstract class uvm_object: uvm_void
   // The <uvm_component> class is an example of a type that has a unique
   // instance name.
 
-  // Moved to _uvm_once_inst
+  // Moved to _uvm_scope_inst
   // shared static bool use_uvm_seeding = true;
 
 
@@ -280,8 +280,8 @@ abstract class uvm_object: uvm_void
   // identifier.
 
   static int get_inst_count() {
-    synchronized (_uvm_once_inst) {
-      return _uvm_once_inst._m_inst_count;
+    synchronized (_uvm_scope_inst) {
+      return _uvm_scope_inst._m_inst_count;
     }
   }
 

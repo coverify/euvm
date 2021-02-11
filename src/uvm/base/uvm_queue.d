@@ -37,7 +37,7 @@ module uvm.base.uvm_queue;
 //------------------------------------------------------------------------------
 
 import uvm.base.uvm_object: uvm_object;
-import uvm.base.uvm_once;
+import uvm.base.uvm_scope;
 import uvm.base.uvm_object_defines;
 
 import uvm.meta.misc;
@@ -100,7 +100,7 @@ class uvm_queue (T=int): uvm_object
   // verification environment.
 
   // __gshared private this_type[uvm_object] _m_global_queue;
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_immutable_sync
     this_type _m_global_queue;
@@ -111,7 +111,7 @@ class uvm_queue (T=int): uvm_object
     }
   }
 
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
 
   static this_type get_global_queue () {
     return m_global_queue;

@@ -40,7 +40,7 @@ import uvm.base.uvm_report_object: uvm_report_object;
 import uvm.base.uvm_object_globals: uvm_verbosity;
 import uvm.base.uvm_globals: uvm_is_match;
 
-import uvm.base.uvm_once;
+import uvm.base.uvm_scope;
 
 import uvm.meta.misc;
 
@@ -111,7 +111,7 @@ uvm_cmdline_processor uvm_cmdline_proc() {
 // @uvm-ieee 1800.2-2017 auto G.1.1
 final class uvm_cmdline_processor: uvm_report_object
 {
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_immutable_sync
     private uvm_cmdline_processor _m_inst;
@@ -124,7 +124,7 @@ final class uvm_cmdline_processor: uvm_report_object
   };
 
   mixin (uvm_sync_string);
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
 
   // Group -- NODOCS -- Singleton
 
@@ -205,6 +205,7 @@ final class uvm_cmdline_processor: uvm_report_object
   // the keyword UVM (case insensitive) as the first three
   // letters of the argument.
 
+  // @uvm-ieee 1800.2-2017 auto G.1.3.3
   final void get_uvm_args (out string[] args) {
     args ~= _m_uvm_argv;
   }

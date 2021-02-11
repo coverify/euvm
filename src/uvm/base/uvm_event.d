@@ -327,6 +327,7 @@ abstract class uvm_event_base: uvm_object
 // can be passed during an event trigger.
 //------------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 10.1.2.1
 class uvm_event(T=uvm_object): uvm_event_base
 {
   alias this_type = uvm_event!(T);

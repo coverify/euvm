@@ -1,9 +1,14 @@
 //
 // -------------------------------------------------------------
-//    Copyright 2004-2009 Synopsys, Inc.
-//    Copyright 2010-2011 Mentor Graphics Corporation
-//    Copyright 2010-2011 Cadence Design Systems, Inc.
-//    Copyright 2014      Coverify Systems Technology
+// Copyright 2014-2021 Coverify Systems Technology
+// Copyright 2010-2020 Mentor Graphics Corporation
+// Copyright 2012-2014 Semifore
+// Copyright 2018 Qualcomm, Inc.
+// Copyright 2004-2018 Synopsys, Inc.
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2010 AMD
+// Copyright 2014-2018 NVIDIA Corporation
+// Copyright 2012 Accellera Systems Initiative
 //    All Rights Reserved Worldwide
 //
 //    Licensed under the Apache License, Version 2.0 (the
@@ -23,77 +28,160 @@
 //
 module uvm.reg.uvm_reg_field;
 
-import uvm.base;
-import uvm.meta.misc;
+import uvm.reg.uvm_reg: uvm_reg;
+import uvm.reg.uvm_reg_adapter: uvm_reg_adapter;
+import uvm.reg.uvm_reg_block: uvm_reg_block;
+import uvm.reg.uvm_reg_cbs: uvm_reg_cbs, uvm_reg_field_cb_iter;
+import uvm.reg.uvm_reg_item: uvm_reg_item;
+import uvm.reg.uvm_reg_map: uvm_reg_map, uvm_reg_map_info;
 
-import uvm.reg.uvm_reg;
-import uvm.reg.uvm_reg_adapter;
-import uvm.reg.uvm_reg_block;
-import uvm.reg.uvm_reg_cbs;
-import uvm.reg.uvm_reg_defines;
-import uvm.reg.uvm_reg_item;
-import uvm.reg.uvm_reg_map;
 import uvm.reg.uvm_reg_model;
-import uvm.seq.uvm_sequence_base;
+import uvm.reg.uvm_reg_defines;
+
+import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_printer: uvm_printer;
+import uvm.base.uvm_packer: uvm_packer;
+import uvm.base.uvm_comparer: uvm_comparer;
+
+import uvm.base.uvm_object_defines;
+import uvm.base.uvm_callback: uvm_register_cb;
+import uvm.base.uvm_globals: uvm_fatal, uvm_error, uvm_warning,
+  uvm_info;
+import uvm.base.uvm_object_globals: uvm_verbosity;
+
+
+import uvm.seq.uvm_sequence_base: uvm_sequence_base;
+
+import uvm.base.uvm_scope;
+import uvm.meta.misc;
 
 import esdl.rand;
 import std.uni: toUpper;
 import std.conv: to;
 
-//-----------------------------------------------------------------
-// CLASS: uvm_reg_field
-// Field abstraction class
-//
-// A field represents a set of bits that behave consistently
-// as a single entity.
-//
-// A field is contained within a single register, but may
-// have different access policies depending on the adddress map
-// use the access the register (thus the field).
-//-----------------------------------------------------------------
+import std.string: format;
+
+
+// @uvm-ieee 1800.2-2017 auto 18.5.1
 class uvm_reg_field: uvm_object
 {
-  // mixin(uvm_sync_string);
-  // Variable: value
+  mixin uvm_sync;
+  mixin (uvm_scope_sync_string);
+  // Variable -- NODOCS -- value
   // Mirrored field value.
   // This value can be sampled in a functional coverage model
   // or constrained when randomized.
+  @uvm_public_sync
   @rand  uvm_reg_data_t  _value; // Mirrored after randomize()
 
+  uvm_reg_data_t get_value() {
+    synchronized(this) {
+      return _value;
+    }
+  }
+
+  @uvm_private_sync
   private uvm_reg_data_t          _m_mirrored; // What we think is in the HW
+  @uvm_private_sync
   private uvm_reg_data_t          _m_desired;  // Mirrored after set()
+  @uvm_private_sync
   private string                  _m_access;
-  // @uvm_private_sync
+  @uvm_private_sync
   private uvm_reg                 _m_parent;
   // uvm_sync_private _m_parent uvm_reg
-  final private uvm_reg m_parent() {synchronized(this) return this._m_parent;}
-  final private void m_parent(uvm_reg val) {synchronized(this) this._m_parent = val;}
-
+  @uvm_private_sync
   private uint                    _m_lsb;
+  @uvm_private_sync
   private uint                    _m_size;
+  @uvm_private_sync
   private bool                    _m_volatile;
+  @uvm_private_sync
   private uvm_reg_data_t[string]  _m_reset;
+  @uvm_private_sync
   private bool                    _m_written;
+  @uvm_private_sync
   private bool                    _m_read_in_progress;
-  // @uvm_private_sync
+  @uvm_private_sync
   private bool                    _m_write_in_progress;
-  // uvm_sync_private _m_write_in_progress bool
-  final private bool m_write_in_progress() {synchronized(this) return this._m_write_in_progress;}
-  final private void m_write_in_progress(bool val) {synchronized(this) this._m_write_in_progress = val;}
 
+  @uvm_private_sync
   private string                  _m_fname;
+  @uvm_private_sync
   private int                     _m_lineno;
+  @uvm_private_sync
   private int                     _m_cover_on;
+  @uvm_private_sync
   private bool                    _m_individually_accessible;
+  @uvm_private_sync
   private uvm_check_e             _m_check;
 
-  private static int              _m_max_size;
-  private static bool[string]     _m_policy_names;
+  static class uvm_scope: uvm_scope_base
+  {
+    @uvm_private_sync
+    private int              _m_max_size;
+    @uvm_private_sync
+    private bool[string]     _m_policy_names;
+    @uvm_private_sync
+    private bool             _m_predefined;
 
-  static this() {
-    m_predefine_policies();
+    @uvm_none_sync
+    bool define_access(string name) {
+      synchronized(this) {
+	if (!_m_predefined) _m_predefined = m_predefine_policies();
+
+	name = name.toUpper();
+
+	bool* policy_name = name in _m_policy_names;
+	if (policy_name) return false;
+	
+	*policy_name = true;
+	return true;
+      }
+    }
+
+    @uvm_none_sync
+    bool m_predefine_policies() {
+      synchronized(this) {
+	if (_m_predefined) return true;
+
+	_m_predefined = true;
+   
+	define_access("RO");
+	define_access("RW");
+	define_access("RC");
+	define_access("RS");
+	define_access("WRC");
+	define_access("WRS");
+	define_access("WC");
+	define_access("WS");
+	define_access("WSRC");
+	define_access("WCRS");
+	define_access("W1C");
+	define_access("W1S");
+	define_access("W1T");
+	define_access("W0C");
+	define_access("W0S");
+	define_access("W0T");
+	define_access("W1SRC");
+	define_access("W1CRS");
+	define_access("W0SRC");
+	define_access("W0CRS");
+	define_access("WO");
+	define_access("WOC");
+	define_access("WOS");
+	define_access("W1");
+	define_access("WO1");
+	return true;
+      }
+    }
+
+    this() {
+      m_predefine_policies();
+    }
+    
   }
   
+
   Constraint!q{
     if (UVM_REG_DATA_WIDTH > _m_size) {
       // _value < (UVM_REG_DATA_WIDTH'h1 << _m_size);
@@ -104,76 +192,18 @@ class uvm_reg_field: uvm_object
   mixin uvm_object_utils; // (uvm_reg_field)
 
   //----------------------
-  // Group: Initialization
+  // Group -- NODOCS -- Initialization
   //----------------------
 
-  // Function: new
-  //
-  // Create a new field instance
-  //
-  // This method should not be used directly.
-  // The uvm_reg_field::type_id::create() factory method
-  // should be used instead.
-  //
 
-  // extern function new(string name = "uvm_reg_field");
-  // new
-
+  // @uvm-ieee 1800.2-2017 auto 18.5.3.1
   this(string name = "uvm_reg_field") {
     super(name);
   }
 
 
 
-  // Function: configure
-  //
-  // Instance-specific configuration
-  //
-  // Specify the ~parent~ register of this field, its
-  // ~size~ in bits, the position of its least-significant bit
-  // within the register relative to the least-significant bit
-  // of the register, its ~access~ policy, volatility,
-  // "HARD" ~reset~ value, 
-  // whether the field value is actually reset
-  // (the ~reset~ value is ignored if ~FALSE~),
-  // whether the field value may be randomized and
-  // whether the field is the only one to occupy a byte lane in the register.
-  //
-  // See <set_access> for a specification of the pre-defined
-  // field access policies.
-  //
-  // If the field access policy is a pre-defined policy and NOT one of
-  // "RW", "WRC", "WRS", "WO", "W1", or "WO1",
-  // the value of ~is_rand~ is ignored and the rand_mode() for the
-  // field instance is turned off since it cannot be written.
-  //
-
-  // extern function void configure(uvm_reg        parent,
-  //                                 uint           size,
-  //                                 uint           lsb_pos,
-  //                                 string         access,
-  //                                 bool           volatile,
-  //                                 uvm_reg_data_t reset,
-  //                                 bool           has_reset,
-  //                                 bool           is_rand,
-  //                                 bool           individually_accessible); 
-
-  // configure
-
-  void configure(T)(uvm_reg        parent,
-		    uint           size,
-		    uint           lsb_pos,
-		    string         access,
-		    bool           is_volatile,
-		    T              reset,
-		    bool           has_reset,
-		    bool           is_rand,
-		    bool           individually_accessible) {
-    uvm_reg_data_t reset_ = reset;
-    configure(parent, size, lsb_pos, access, is_volatile, reset_,
-	      has_reset, is_rand, individually_accessible);
-  }
-
+  // @uvm-ieee 1800.2-2017 auto 18.5.3.2
   void configure(uvm_reg        parent,
 		 uint           size,
 		 uint           lsb_pos,
@@ -202,20 +232,21 @@ class uvm_reg_field: uvm_object
 
       if (has_reset)
 	set_reset(reset);
-      else
-	uvm_resource_db!bool.set("REG."~ get_full_name(),
-				 "NO_REG_HW_RESET_TEST", 1);
 
       _m_parent.add_field(this);
 
-      if (_m_access !in _m_policy_names) {
-	uvm_error("RegModel", "Access policy '" ~ access ~
-		  "' for field '" ~ get_full_name() ~
-		  "' is not defined. Setting to RW");
-	_m_access = "RW";
+      synchronized(_uvm_scope_inst) {
+	if (_m_access !in _m_policy_names) {
+	  uvm_error("RegModel", "Access policy '" ~ access ~
+		    "' for field '" ~ get_full_name() ~
+		    "' is not defined. Setting to RW");
+	  _m_access = "RW";
+	}
       }
-
-      if (size > _m_max_size) _m_max_size = size;
+      
+      synchronized(_uvm_scope_inst) {
+	if (size > m_max_size) m_max_size = size;
+      }
    
       // Ignore is_rand if the field is known not to be writeable
       // i.e. not "RW", "WRC", "WRS", "WO", "W1", "WO1"
@@ -227,7 +258,7 @@ class uvm_reg_field: uvm_object
       default: break;		// do nothing
       }
 
-      if (!is_rand) {
+      if (! is_rand) {
 	uvm_info("RANDMODE", "TBD -- implement rand_mode", uvm_verbosity.UVM_NONE);
 	// _value.rand_mode(0);
       }
@@ -235,10 +266,10 @@ class uvm_reg_field: uvm_object
   }
 
   //---------------------
-  // Group: Introspection
+  // Group -- NODOCS -- Introspection
   //---------------------
 
-  // Function: get_name
+  // Function -- NODOCS -- get_name
   //
   // Get the simple name
   //
@@ -246,7 +277,7 @@ class uvm_reg_field: uvm_object
   //
 
 
-  // Function: get_full_name
+  // Function -- NODOCS -- get_full_name
   //
   // Get the hierarchical name
   //
@@ -254,31 +285,18 @@ class uvm_reg_field: uvm_object
   // The base of the hierarchical name is the root block.
   //
 
-  // extern virtual function string get_full_name();
-  // get_full_name
-
   override string get_full_name() {
     synchronized(this) {
       return _m_parent.get_full_name() ~ "." ~ get_name();
     }
   }
 
-  // Function: get_parent
-  //
-  // Get the parent register
-  //
-
-  // extern virtual function uvm_reg get_parent();
-  // get_parent
-
+  // @uvm-ieee 1800.2-2017 auto 18.5.4.1
   uvm_reg get_parent() {
     synchronized(this) {
       return _m_parent;
     }
   }
-
-  // extern virtual function uvm_reg get_register();
-  // get_register
 
   uvm_reg get_register() {
     synchronized(this) {
@@ -286,7 +304,7 @@ class uvm_reg_field: uvm_object
     }
   }
 
-  // Function: get_lsb_pos
+  // Function -- NODOCS -- get_lsb_pos
   //
   // Return the position of the field
   //
@@ -296,9 +314,6 @@ class uvm_reg_field: uvm_object
   // least-significant bit of the register. 
   //
 
-  // extern virtual function uint         get_lsb_pos();
-  // get_lsb_pos
-
   uint         get_lsb_pos() {
     synchronized(this) {
       return _m_lsb;
@@ -306,13 +321,10 @@ class uvm_reg_field: uvm_object
   }
 
 
-  // Function: get_n_bits
+  // Function -- NODOCS -- get_n_bits
   //
   // Returns the width, in number of bits, of the field. 
   //
-
-  // extern virtual function uint         get_n_bits();
-  // get_n_bits
 
   uint         get_n_bits() {
     synchronized(this) {
@@ -325,236 +337,106 @@ class uvm_reg_field: uvm_object
   // Returns the width, in number of bits, of the largest field. 
   //
 
-  // extern static function uint         get_max_size();
-  // get_max_size
-
   static uint         get_max_size() {
-    //    synchronized
-    return _m_max_size;
-  }
-
-  // Function: set_access
-  //
-  // Modify the access policy of the field
-  //
-  // Modify the access policy of the field to the specified one and
-  // return the previous access policy.
-  //
-  // The pre-defined access policies are as follows.
-  // The effect of a read operation are applied after the current
-  // value of the field is sampled.
-  // The read operation will return the current value,
-  // not the value affected by the read operation (if any).
-  //
-  // "RO"    - W: no effect, R: no effect
-  // "RW"    - W: as-is, R: no effect
-  // "RC"    - W: no effect, R: clears all bits
-  // "RS"    - W: no effect, R: sets all bits
-  // "WRC"   - W: as-is, R: clears all bits
-  // "WRS"   - W: as-is, R: sets all bits
-  // "WC"    - W: clears all bits, R: no effect
-  // "WS"    - W: sets all bits, R: no effect
-  // "WSRC"  - W: sets all bits, R: clears all bits
-  // "WCRS"  - W: clears all bits, R: sets all bits
-  // "W1C"   - W: 1/0 clears/no effect on matching bit, R: no effect
-  // "W1S"   - W: 1/0 sets/no effect on matching bit, R: no effect
-  // "W1T"   - W: 1/0 toggles/no effect on matching bit, R: no effect
-  // "W0C"   - W: 1/0 no effect on/clears matching bit, R: no effect
-  // "W0S"   - W: 1/0 no effect on/sets matching bit, R: no effect
-  // "W0T"   - W: 1/0 no effect on/toggles matching bit, R: no effect
-  // "W1SRC" - W: 1/0 sets/no effect on matching bit, R: clears all bits
-  // "W1CRS" - W: 1/0 clears/no effect on matching bit, R: sets all bits
-  // "W0SRC" - W: 1/0 no effect on/sets matching bit, R: clears all bits
-  // "W0CRS" - W: 1/0 no effect on/clears matching bit, R: sets all bits
-  // "WO"    - W: as-is, R: error
-  // "WOC"   - W: clears all bits, R: error
-  // "WOS"   - W: sets all bits, R: error
-  // "W1"    - W: first one after ~HARD~ reset is as-is, other W have no effects, R: no effect
-  // "WO1"   - W: first one after ~HARD~ reset is as-is, other W have no effects, R: error
-  //
-  // It is important to remember that modifying the access of a field
-  // will make the register model diverge from the specification
-  // that was used to create it.
-  //
-  // extern virtual function string set_access(string mode);
-
-  // set_access
-
-  string set_access(string mode) {
-    synchronized(this) {
-      string set_access_ = _m_access;
-      _m_access = mode.toUpper();
-      if (_m_access !in _m_policy_names) {
-	uvm_error("RegModel", "Access policy '" ~ _m_access ~
-		  "' is not a defined field access policy");
-	_m_access = set_access_;
-      }
-      return set_access_;
+    synchronized(_uvm_scope_inst) {
+      return _m_max_size;
     }
   }
 
-  // Function: define_access
-  //
-  // Define a new access policy value
-  //
-  // Because field access policies are specified using string values,
-  // there is no way for SystemVerilog to verify if a spceific access
-  // value is valid or not.
-  // To help catch typing errors, user-defined access values
-  // must be defined using this method to avoid beign reported as an
-  // invalid access policy.
-  //
-  // The name of field access policies are always converted to all uppercase.
-  //
-  // Returns TRUE if the new access policy was not previously
-  // defined.
-  // Returns FALSE otherwise but does not issue an error message.
-  //
-  // extern static function bool define_access(string name);
-  // define_access
 
-  static bool define_access(string name) {
-    if (!_m_predefined) _m_predefined = m_predefine_policies();
-
-    name = name.toUpper();
-
-    if (name in _m_policy_names) return false;
-
-    _m_policy_names[name] = 1;
-    return true;
+  // @uvm-ieee 1800.2-2017 auto 18.5.4.6
+  string set_access(string mode) {
+    synchronized(this) {
+      string retval = _m_access;
+      _m_access = mode.toUpper();
+      synchronized(_uvm_scope_inst) {
+	if (_m_access !in _m_policy_names) {
+	  uvm_error("RegModel", "Access policy '" ~ _m_access ~
+		    "' is not a defined field access policy");
+	  _m_access = retval;
+	}
+      }
+      return retval;
+    }
   }
 
-  private static bool _m_predefined; //  = _m_predefine_policies();
-  
-  // extern local static function bool m_predefine_policies();
-  // _m_predefined_policies
+  // @uvm-ieee 1800.2-2017 auto 18.5.4.7
+  static bool define_access(string name) {
+    return _uvm_scope_inst.define_access(name);
+  }
 
   static bool m_predefine_policies() {
-    if (_m_predefined) return true;
-
-    _m_predefined = true;
-   
-    define_access("RO");
-    define_access("RW");
-    define_access("RC");
-    define_access("RS");
-    define_access("WRC");
-    define_access("WRS");
-    define_access("WC");
-    define_access("WS");
-    define_access("WSRC");
-    define_access("WCRS");
-    define_access("W1C");
-    define_access("W1S");
-    define_access("W1T");
-    define_access("W0C");
-    define_access("W0S");
-    define_access("W0T");
-    define_access("W1SRC");
-    define_access("W1CRS");
-    define_access("W0SRC");
-    define_access("W0CRS");
-    define_access("WO");
-    define_access("WOC");
-    define_access("WOS");
-    define_access("W1");
-    define_access("WO1");
-    return true;
+    return _uvm_scope_inst.m_predefine_policies();
   }
 
 
-  // Function: get_access
-  //
-  // Get the access policy of the field
-  //
-  // Returns the current access policy of the field
-  // when written and read through the specified address ~map~.
-  // If the register containing the field is mapped in multiple
-  // address map, an address map must be specified.
-  // The access policy of a field from a specific
-  // address map may be restricted by the register's access policy in that
-  // address map.
-  // For example, a RW field may only be writable through one of
-  // the address maps and read-only through all of the other maps.
-  //
-  // extern virtual function string get_access(uvm_reg_map map = null);
-
-  // get_access
-
+  // @uvm-ieee 1800.2-2017 auto 18.5.4.5
   string get_access(uvm_reg_map map = null) {
     synchronized(this) {
-      string get_access_ = _m_access;
+      string field_access = _m_access;
 
-      if (map == uvm_reg_map.backdoor()) {
-	return get_access_;
-      }
+      if (map == uvm_reg_map.backdoor())
+	return field_access;
 
       // Is the register restricted in this map?
       switch(_m_parent.get_rights(map)) {
       case "RW":
 	// No restrictions
-	return get_access_;
+	return field_access;
 
       case "RO":
-	switch(get_access_) {
+	switch(field_access) {
 	case "RW", "RO", "WC", "WS", "W1C", "W1S",
 	  "W1T", "W0C", "W0S", "W0T", "W1":
-	  get_access_ = "RO";
+	  field_access = "RO";
 	  break;
         
 	case "RC", "WRC", "W1SRC", "W0SRC", "WSRC":
-	  get_access_ = "RC";
+	  field_access = "RC";
 	  break;
         
 	case "RS", "WRS", "W1CRS", "W0CRS", "WCRS":
-	  get_access_ = "RS";
+	  field_access = "RS";
 	  break;
         
 	case "WO", "WOC", "WOS", "WO1":
-	  uvm_error("RegModel",
-		    format("%s field \"%s\" restricted to RO in map \"%s\"",
-			   get_access(), get_name(), map.get_full_name()));
+	  field_access = "NOACCESS";
 	  break;
+
 	  // No change for the other modes
 	default: assert(false);
 	}
 	break;
 
       case "WO":
-	switch (get_access_) {
-	case "RW", "WO":
-	  get_access_ = "WO";
-	  break;
-	default:
-	  uvm_error("RegModel", get_access_ ~ " field '" ~ get_full_name() ~ 
-		    "' restricted to WO in map '" ~ map.get_full_name() ~ "'");
-	  break;
+	switch (field_access) {
+	case "RW","WRC","WRS" : field_access = "WO"; break;
+	case "W1SRC" : field_access = "W1S"; break;
+	case "W0SRC": field_access = "W0S"; break;
+	case "W1CRS": field_access = "W1C"; break;
+	case "W0CRS": field_access = "W0C"; break;
+	case "WCRS": field_access = "WC"; break;
+	case "W1" : field_access = "W1"; break;
+	case "WO1" : field_access = "WO1"; break;
+	case "WSRC" : field_access = "WS"; break;
+	case "RO","RC","RS": field_access = "NOACCESS"; break;
 	  // No change for the other modes
+	default: assert(false);
 	}
 	break;
       default:
+	field_access = "NOACCESS";
 	uvm_error("RegModel", "Register '" ~ _m_parent.get_full_name() ~ 
 		  "' containing field '" ~ get_name() ~ "' is mapped in map '" ~ 
 		  map.get_full_name() ~ "' with unknown access right '" ~  _m_parent.get_rights(map) ~  "'");
 	break;
       }
-      return get_access_;
+      return field_access;
     }
   }
 
 
-
-  // Function: is_known_access
-  //
-  // Check if access policy is a built-in one.
-  //
-  // Returns TRUE if the current access policy of the field,
-  // when written and read through the specified address ~map~,
-  // is a built-in access policy.
-  //
-  // extern virtual function bool is_known_access(uvm_reg_map map = null);
-  // is_known_access
-
+  // @uvm-ieee 1800.2-2017 auto 18.5.4.8
   bool is_known_access(uvm_reg_map map = null) {
     synchronized(this) {
       string acc = get_access(map);
@@ -568,38 +450,14 @@ class uvm_reg_field: uvm_object
     }
   }
 
-  //
-  // Function: set_volatility
-  // Modify the volatility of the field to the specified one.
-  //
-  // It is important to remember that modifying the volatility of a field
-  // will make the register model diverge from the specification
-  // that was used to create it.
-  //
-  // extern virtual function void set_volatility(bool volatile);
-  // set_volatility
-
+  // @uvm-ieee 1800.2-2017 auto 18.5.4.9
   void set_volatility(bool is_volatile) {
     synchronized(this) {
       _m_volatile = is_volatile;
     }
   }
 
-  //
-  // Function: is_volatile
-  // Indicates if the field value is volatile
-  //
-  // UVM uses the IEEE 1685-2009 IP-XACT definition of "volatility".
-  // If TRUE, the value of the register is not predictable because it
-  // may change between consecutive accesses.
-  // This typically indicates a field whose value is updated by the DUT.
-  // The nature or cause of the change is not specified.
-  // If FALSE, the value of the register is not modified between
-  // consecutive accesses.
-  //
-  // extern virtual function bool is_volatile();
-  // is_volatile
-
+  // @uvm-ieee 1800.2-2017 auto 18.5.4.10
   bool is_volatile() {
     synchronized(this) {
       return _m_volatile;
@@ -607,43 +465,11 @@ class uvm_reg_field: uvm_object
   }
 
   //--------------
-  // Group: Access
+  // Group -- NODOCS -- Access
   //--------------
 
 
-  // Function: set
-  //
-  // Set the desired value for this field
-  //
-  // It sets the desired value of the field to the specified ~value~
-  // modified by the field access policy.
-  // It does not actually set the value of the field in the design,
-  // only the desired value in the abstraction class.
-  // Use the <uvm_reg::update()> method to update the actual register
-  // with the desired value or the <uvm_reg_field::write()> method
-  // to actually write the field and update its mirrored value.
-  //
-  // The final desired value in the mirror is a function of the field access
-  // policy and the set value, just like a normal physical write operation
-  // to the corresponding bits in the hardware.
-  // As such, this method (when eventually followed by a call to
-  // <uvm_reg::update()>)
-  // is a zero-time functional replacement for the <uvm_reg_field::write()>
-  // method.
-  // For example, the desired value of a read-only field is not modified
-  // by this method and the desired value of a write-once field can only
-  // be set if the field has not yet been
-  // written to using a physical (for example, front-door) write operation.
-  //
-  // Use the <uvm_reg_field::predict()> to modify the mirrored value of
-  // the field.
-  //
-  // extern virtual function void set(uvm_reg_data_t  value,
-  // 				   string          fname = "",
-  // 				   int             lineno = 0);
-
-  // set
-
+  // @uvm-ieee 1800.2-2017 auto 18.5.5.2
   void set(uvm_reg_data_t  value,
 	   string          fname = "",
 	   int             lineno = 0) {
@@ -703,32 +529,7 @@ class uvm_reg_field: uvm_object
   }
 
  
-  
-  // Function: get
-  //
-  // Return the desired value of the field
-  //
-  // It does not actually read the value
-  // of the field in the design, only the desired value
-  // in the abstraction class. Unless set to a different value
-  // using the <uvm_reg_field::set()>, the desired value
-  // and the mirrored value are identical.
-  //
-  // Use the <uvm_reg_field::read()> or <uvm_reg_field::peek()>
-  // method to get the actual field value. 
-  //
-  // If the field is write-only, the desired/mirrored
-  // value is the value last written and assumed
-  // to reside in the bits implementing it.
-  // Although a physical read operation would something different,
-  // the returned value is the actual content.
-  //
-  // extern virtual function uvm_reg_data_t get(string fname = "",
-  //                                            int    lineno = 0);
-
-
-  // get
-
+  // @uvm-ieee 1800.2-2017 auto 18.5.5.1
   uvm_reg_data_t  get(string  fname = "",
 		      int     lineno = 0) {
     synchronized(this) {
@@ -738,23 +539,8 @@ class uvm_reg_field: uvm_object
     }
   }
  
-  // Function: get_mirrored_value
-  //
-  // Return the mirrored value of the field
-  //
-  // It does not actually read the value of the field in the design, only the mirrored value
-  // in the abstraction class. 
-  //
-  // If the field is write-only, the desired/mirrored
-  // value is the value last written and assumed
-  // to reside in the bits implementing it.
-  // Although a physical read operation would something different,
-  // the returned value is the actual content.
-  //
-  // extern virtual function uvm_reg_data_t get_mirrored_value(string fname = "",
-  //                                            int    lineno = 0);
-  // get_mirrored_value
 
+  // @uvm-ieee 1800.2-2017 auto 18.5.5.3
   uvm_reg_data_t  get_mirrored_value(string  fname = "",
 				     int     lineno = 0) {
     synchronized(this) {
@@ -764,25 +550,8 @@ class uvm_reg_field: uvm_object
     }
   }
 
-  // Function: reset
-  //
-  // Reset the desired/mirrored value for this field.
-  //
-  // It sets the desired and mirror value of the field
-  // to the reset event specified by ~kind~.
-  // If the field does not have a reset value specified for the
-  // specified reset ~kind~ the field is unchanged.
-  //
-  // It does not actually reset the value of the field in the design,
-  // only the value mirrored in the field abstraction class.
-  //
-  // Write-once fields can be modified after
-  // a "HARD" reset operation.
-  //
-  // extern virtual function void reset(string kind = "HARD");
 
-  // reset
-
+  // @uvm-ieee 1800.2-2017 auto 18.5.5.4
   void reset(string kind = "HARD") {
     synchronized(this) {
       if (kind !in _m_reset) return;
@@ -795,19 +564,8 @@ class uvm_reg_field: uvm_object
     }
   }
 
-  // Function: get_reset
-  //
-  // Get the specified reset value for this field
-  //
-  // Return the reset value for this field
-  // for the specified reset ~kind~.
-  // Returns the current field value is no reset value has been
-  // specified for the specified reset event.
-  //
-  // extern virtual function uvm_reg_data_t get_reset(string kind = "HARD");
 
-  // get_reset
-
+  // @uvm-ieee 1800.2-2017 auto 18.5.5.6
   uvm_reg_data_t get_reset(string kind = "HARD") {
     synchronized(this) {
       if (kind !in _m_reset) return _m_desired;
@@ -816,21 +574,7 @@ class uvm_reg_field: uvm_object
   }
 
 
-
-
-  // Function: has_reset
-  //
-  // Check if the field has a reset value specified
-  //
-  // Return TRUE if this field has a reset value specified
-  // for the specified reset ~kind~.
-  // If ~delete~ is TRUE, removes the reset value, if any.
-  //
-  // extern virtual function bool has_reset(string kind = "HARD",
-  //                                       bool   delete = 0);
-
-  // has_reset
-
+  // @uvm-ieee 1800.2-2017 auto 18.5.5.5
   bool has_reset(string kind = "HARD",
 		 bool   remove = false) {
     synchronized(this) {
@@ -842,18 +586,7 @@ class uvm_reg_field: uvm_object
     }
   }
 
-  // Function: set_reset
-  //
-  // Specify or modify the reset value for this field
-  //
-  // Specify or modify the reset value for this field corresponding
-  // to the cause specified by ~kind~.
-  //
-  // extern virtual function void set_reset(uvm_reg_data_t value,
-  // 					 string kind = "HARD");
-
-  // set_reset
-
+  // @uvm-ieee 1800.2-2017 auto 18.5.5.7
   void set_reset(uvm_reg_data_t value,
 		 string kind = "HARD") {
     synchronized(this) {
@@ -861,91 +594,20 @@ class uvm_reg_field: uvm_object
     }
   }
 
-  // Function: needs_update
-  //
-  // Check if the abstract model contains different desired and mirrored values.
-  //
-  // If a desired field value has been modified in the abstraction class
-  // without actually updating the field in the DUT,
-  // the state of the DUT (more specifically what the abstraction class
-  // ~thinks~ the state of the DUT is) is outdated.
-  // This method returns TRUE
-  // if the state of the field in the DUT needs to be updated 
-  // to match the desired value.
-  // The mirror values or actual content of DUT field are not modified.
-  // Use the <uvm_reg::update()> to actually update the DUT field.
-  //
-  // extern virtual function bool needs_update();
-
-  // needs_update
-
+  // @uvm-ieee 1800.2-2017 auto 18.5.5.8
   bool needs_update() {
     synchronized(this) {
-      return (_m_mirrored != _m_desired);
+      return (_m_mirrored != _m_desired) | _m_volatile;
     }
   }
 
 
-  // Task: write
-  //
-  // Write the specified value in this field
-  //
-  // Write ~value~ in the DUT field that corresponds to this
-  // abstraction class instance using the specified access
-  // ~path~. 
-  // If the register containing this field is mapped in more
-  //  than one address map, 
-  // an address ~map~ must be
-  // specified if a physical access is used (front-door access).
-  // If a back-door access path is used, the effect of writing
-  // the field through a physical access is mimicked. For
-  // example, read-only bits in the field will not be written.
-  //
-  // The mirrored value will be updated using the <uvm_reg_field::predict()>
-  // method.
-  //
-  // If a front-door access is used, and
-  // if the field is the only field in a byte lane and
-  // if the physical interface corresponding to the address map used
-  // to access the field support byte-enabling,
-  // then only the field is written.
-  // Otherwise, the entire register containing the field is written,
-  // and the mirrored values of the other fields in the same register
-  // are used in a best-effort not to modify their value.
-  //
-  // If a backdoor access is used, a peek-modify-poke process is used.
-  // in a best-effort not to modify the value of the other fields in the
-  // register.
-  //
-  // extern virtual task write (output uvm_status_e       status,
-  // 			     input  uvm_reg_data_t     value,
-  // 			     input  uvm_path_e         path = UVM_DEFAULT_PATH,
-  // 			     input  uvm_reg_map        map = null,
-  // 			     input  uvm_sequence_base  parent = null,
-  // 			     input  int                prior = -1,
-  // 			     input  uvm_object         extension = null,
-  // 			     input  string             fname = "",
-  // 			     input  int                lineno = 0);
 
-  // write
+  // @uvm-ieee 1800.2-2017 auto 18.5.5.9
   // task
-  void write(T)(out uvm_status_e   status,
-		T                  value,
-		uvm_path_e         path = uvm_path_e.UVM_DEFAULT_PATH,
-		uvm_reg_map        map = null,
-		uvm_sequence_base  parent = null,
-		int                prior = -1,
-		uvm_object         extension = null,
-		string             fname = "",
-		int                lineno = 0) {
-    uvm_reg_data_t value_ = value;
-    write(status, value_, path, map, parent, prior, extension,
-	  fname, lineno);
-  }
-
   void write(out uvm_status_e   status,
 	     uvm_reg_data_t     value,
-	     uvm_path_e         path = uvm_path_e.UVM_DEFAULT_PATH,
+	     uvm_door_e         door = uvm_door_e.UVM_DEFAULT_DOOR,
 	     uvm_reg_map        map = null,
 	     uvm_sequence_base  parent = null,
 	     int                prior = -1,
@@ -956,73 +618,32 @@ class uvm_reg_field: uvm_object
     uvm_reg_item rw;
     rw = uvm_reg_item.type_id.create("field_write_item", null, get_full_name());
     synchronized(rw) {
-      rw.element      = this;
-      rw.element_kind = UVM_FIELD;
-      rw.kind         = UVM_WRITE;
-      // rw.value[0]     = value;
-      rw.set_value(0, value);
-      rw.path         = path;
-      rw.map          = map;
-      rw.parent       = parent;
-      rw.prior        = prior;
-      rw.extension    = extension;
-      rw.fname        = fname;
-      rw.lineno       = lineno;
+      rw.set_element(this);
+      rw.set_element_kind(UVM_FIELD);
+      rw.set_kind(UVM_WRITE);
+      rw.set_value(value, 0);
+      rw.set_door(door);
+      rw.set_map(map);
+      rw.set_parent_sequence(parent);
+      rw.set_priority(prior);
+      rw.set_extension(extension);
+      rw.set_fname(fname);
+      rw.set_line(lineno);
     }
 
     do_write(rw);
 
     synchronized(rw) {
-      status = rw.status;
+      status = rw.get_status();
     }
   }
 
 
-  // Task: read
-  //
-  // Read the current value from this field
-  //
-  // Read and return ~value~ from the DUT field that corresponds to this
-  // abstraction class instance using the specified access
-  // ~path~. 
-  // If the register containing this field is mapped in more
-  // than one address map, an address ~map~ must be
-  // specified if a physical access is used (front-door access).
-  // If a back-door access path is used, the effect of reading
-  // the field through a physical access is mimicked. For
-  // example, clear-on-read bits in the filed will be set to zero.
-  //
-  // The mirrored value will be updated using the <uvm_reg_field::predict()>
-  // method.
-  //
-  // If a front-door access is used, and
-  // if the field is the only field in a byte lane and
-  // if the physical interface corresponding to the address map used
-  // to access the field support byte-enabling,
-  // then only the field is read.
-  // Otherwise, the entire register containing the field is read,
-  // and the mirrored values of the other fields in the same register
-  // are updated.
-  //
-  // If a backdoor access is used, the entire containing register is peeked
-  // and the mirrored value of the other fields in the register is updated.
-  //
-  // extern virtual task read  (output uvm_status_e       status,
-  // 			     output uvm_reg_data_t     value,
-  // 			     input  uvm_path_e         path = UVM_DEFAULT_PATH,
-  // 			     input  uvm_reg_map        map = null,
-  // 			     input  uvm_sequence_base  parent = null,
-  // 			     input  int                prior = -1,
-  // 			     input  uvm_object         extension = null,
-  // 			     input  string             fname = "",
-  // 			     input  int                lineno = 0);
-               
-  // read
-
+  // @uvm-ieee 1800.2-2017 auto 18.5.5.10
   // task
   void read(out uvm_status_e   status,
 	    out uvm_reg_data_t value,
-	    uvm_path_e         path = uvm_path_e.UVM_DEFAULT_PATH,
+	    uvm_door_e         door = uvm_door_e.UVM_DEFAULT_DOOR,
 	    uvm_reg_map        map = null,
 	    uvm_sequence_base  parent = null,
 	    int                prior = -1,
@@ -1033,51 +654,29 @@ class uvm_reg_field: uvm_object
     uvm_reg_item rw;
     rw = uvm_reg_item.type_id.create("field_read_item", null, get_full_name());
     synchronized(rw) {
-      rw.element      = this;
-      rw.element_kind = UVM_FIELD;
-      rw.kind         = UVM_READ;
-      // rw.value[0]     = 0;
-      rw.set_value(0, 0);
-      rw.path         = path;
-      rw.map          = map;
-      rw.parent       = parent;
-      rw.prior        = prior;
-      rw.extension    = extension;
-      rw.fname        = fname;
-      rw.lineno       = lineno;
+      rw.set_element(this);
+      rw.set_element_kind(UVM_FIELD);
+      rw.set_kind(UVM_READ);
+      rw.set_value(uvm_reg_data_t(0), 0);
+      rw.set_door(door);
+      rw.set_map(map);
+      rw.set_parent_sequence(parent);
+      rw.set_priority(prior);
+      rw.set_extension(extension);
+      rw.set_fname(fname);
+      rw.set_line(lineno);
     }
     do_read(rw);
 
     synchronized(rw) {
       // value = rw.value[0];
       value = rw.get_value(0);
-      status = rw.status;
+      status = rw.get_status();
     }
   }
 
-  // Task: poke
-  //
-  // Deposit the specified value in this field
-  //
-  // Deposit the value in the DUT field corresponding to this
-  // abstraction class instance, as-is, using a back-door access.
-  // A peek-modify-poke process is used
-  // in a best-effort not to modify the value of the other fields in the
-  // register.
-  //
-  // The mirrored value will be updated using the <uvm_reg_field::predict()>
-  // method.
-  //
-  // extern virtual task poke  (output uvm_status_e       status,
-  //                            input  uvm_reg_data_t     value,
-  //                            input  string             kind = "",
-  //                            input  uvm_sequence_base  parent = null,
-  //                            input  uvm_object         extension = null,
-  //                            input  string             fname = "",
-  //                            input  int                lineno = 0);
 
-  // poke
-
+  // @uvm-ieee 1800.2-2017 auto 18.5.5.11
   // task
   void poke(out uvm_status_e  status,
 	    uvm_reg_data_t    value,
@@ -1086,8 +685,6 @@ class uvm_reg_field: uvm_object
 	    uvm_object        extension = null,
 	    string            fname = "",
 	    int               lineno = 0) {
-    uvm_reg_data_t  tmp;
-    uvm_reg m_parent_;
     synchronized(this) {
       _m_fname = fname;
       _m_lineno = lineno;
@@ -1098,60 +695,36 @@ class uvm_reg_field: uvm_object
 		    get_name() ~ "'");
 	value &= value & ((1<<_m_size)-1);
       }
-      m_parent_ = _m_parent;
     }
-    m_parent_.XatomicX(1);
-    m_parent_.m_is_locked_by_field = true;
+    m_parent.XatomicX(1);
+    m_parent.m_is_locked_by_field = true;
 
-    tmp = 0;
+    uvm_reg_data_t  tmp = 0;
 
     // What is the current values of the other fields???
-    m_parent_.peek(status, tmp, kind, parent, extension, fname, lineno);
+    m_parent.peek(status, tmp, kind, parent, extension, fname, lineno);
 
     if (status == UVM_NOT_OK) {
       uvm_error("RegModel", "poke(): Peek of register '" ~ 
-		m_parent_.get_full_name() ~ "' returned status " ~
+		m_parent.get_full_name() ~ "' returned status " ~
 		status.to!string);
-      m_parent_.XatomicX(0);
-      m_parent_.m_is_locked_by_field = false;
+      m_parent.XatomicX(0);
+      m_parent.m_is_locked_by_field = false;
       return;
     }
       
 
     // Force the value for this field then poke the resulting value
-    tmp &= ~(((1<<_m_size)-1) << _m_lsb);
-    tmp |= value << _m_lsb;
-    m_parent_.poke(status, tmp, kind, parent, extension, fname, lineno);
+    tmp &= ~(((1<<m_size)-1) << m_lsb);
+    tmp |= value << m_lsb;
+    m_parent.poke(status, tmp, kind, parent, extension, fname, lineno);
 
-    m_parent_.XatomicX(0);
-    m_parent_.m_is_locked_by_field = false;
+    m_parent.XatomicX(0);
+    m_parent.m_is_locked_by_field = false;
   }
 
-  // Task: peek
-  //
-  // Read the current value from this field
-  //
-  // Sample the value in the DUT field corresponding to this
-  // absraction class instance using a back-door access.
-  // The field value is sampled, not modified.
-  //
-  // Uses the HDL path for the design abstraction specified by ~kind~.
-  //
-  // The entire containing register is peeked
-  // and the mirrored value of the other fields in the register
-  // are updated using the <uvm_reg_field::predict()> method.
-  //
-  //
-  // extern virtual task peek  (output uvm_status_e       status,
-  // 			     output uvm_reg_data_t     value,
-  // 			     input  string             kind = "",
-  // 			     input  uvm_sequence_base  parent = null,
-  // 			     input  uvm_object         extension = null,
-  // 			     input  string             fname = "",
-  // 			     input  int                lineno = 0);
-               
-  // peek
 
+  // @uvm-ieee 1800.2-2017 auto 18.5.5.12
   // task
   void peek(out uvm_status_e      status,
 	    out uvm_reg_data_t    value,
@@ -1161,123 +734,58 @@ class uvm_reg_field: uvm_object
 	    string                fname = "",
 	    int                   lineno = 0) {
     uvm_reg_data_t  reg_value;
-    uvm_reg m_parent_;
     synchronized(this) {
       _m_fname = fname;
       _m_lineno = lineno;
-      m_parent_ = _m_parent;
     }
 
-    m_parent_.peek(status, reg_value, kind, parent, extension, fname, lineno);
-    value = (reg_value >> _m_lsb) & ((1L << _m_size))-1;
+    m_parent.peek(status, reg_value, kind, parent, extension, fname, lineno);
+    value = (reg_value >> m_lsb) & ((1L << m_size))-1;
   }
                
 
-
-  // Task: mirror
-  //
-  // Read the field and update/check its mirror value
-  //
-  // Read the field and optionally compared the readback value
-  // with the current mirrored value if ~check~ is <UVM_CHECK>.
-  // The mirrored value will be updated using the <predict()>
-  // method based on the readback value.
-  //
-  // The ~path~ argument specifies whether to mirror using 
-  // the  <UVM_FRONTDOOR> (<read>) or
-  // or <UVM_BACKDOOR> (<peek()>).
-  //
-  // If ~check~ is specified as <UVM_CHECK>,
-  // an error message is issued if the current mirrored value
-  // does not match the readback value, unless <set_compare> was used
-  // disable the check.
-  //
-  // If the containing register is mapped in multiple address maps and physical
-  // access is used (front-door access), an address ~map~ must be specified.
-  // For write-only fields, their content is mirrored and optionally
-  // checked only if a UVM_BACKDOOR
-  // access path is used to read the field. 
-  //
-  // extern virtual task mirror(output uvm_status_e      status,
-  //                            input  uvm_check_e       check = UVM_NO_CHECK,
-  //                            input  uvm_path_e        path = UVM_DEFAULT_PATH,
-  //                            input  uvm_reg_map       map = null,
-  //                            input  uvm_sequence_base parent = null,
-  //                            input  int               prior = -1,
-  //                            input  uvm_object        extension = null,
-  //                            input  string            fname = "",
-  //                            input  int               lineno = 0);
-
-
-  // mirror
-
+  // @uvm-ieee 1800.2-2017 auto 18.5.5.13
   // task
   void mirror(out uvm_status_e  status,
 	      uvm_check_e       check = uvm_check_e.UVM_NO_CHECK,
-	      uvm_path_e        path = uvm_path_e.UVM_DEFAULT_PATH,
+	      uvm_door_e        door = uvm_door_e.UVM_DEFAULT_DOOR,
 	      uvm_reg_map       map = null,
 	      uvm_sequence_base parent = null,
 	      int               prior = -1,
 	      uvm_object        extension = null,
 	      string            fname = "",
 	      int               lineno = 0) {
-    uvm_reg m_parent_;
     synchronized(this) {
       _m_fname = fname;
       _m_lineno = lineno;
-      m_parent_ = _m_parent;
     }
     
-    m_parent_.mirror(status, check, path, map, parent, prior, extension,
+    m_parent.mirror(status, check, door, map, parent, prior, extension,
 		     fname, lineno);
   }
 
-  // Function: set_compare
-  //
-  // Sets the compare policy during a mirror update. 
-  // The field value is checked against its mirror only when both the
-  // ~check~ argument in <uvm_reg_block::mirror>, <uvm_reg::mirror>,
-  // or <uvm_reg_field::mirror> and the compare policy for the
-  // field is <UVM_CHECK>.
-  //
-  // extern function void set_compare(uvm_check_e check=UVM_CHECK);
 
-  // set_compare
-
+  // @uvm-ieee 1800.2-2017 auto 18.5.5.15
   void set_compare(uvm_check_e check = uvm_check_e.UVM_CHECK) {
     synchronized(this) {
       _m_check = check;
     }
   }
 
-  // Function: get_compare
-  //
-  // Returns the compare policy for this field.
-  //
-  // extern function uvm_check_e get_compare();
 
-  // get_compare
-
+  // @uvm-ieee 1800.2-2017 auto 18.5.5.14
   uvm_check_e get_compare() {
     synchronized(this) {
       return _m_check;
     }
   }
    
-  // Function: is_indv_accessible
-  //
-  // Check if this field can be written individually, i.e. without
-  // affecting other fields in the containing register.
-  //
-  // extern function bool is_indv_accessible (uvm_path_e  path,
-  //                                         uvm_reg_map local_map);
 
-  // is_indv_accessible
-
-  final bool is_indv_accessible(uvm_path_e  path,
+  // @uvm-ieee 1800.2-2017 auto 18.5.5.16
+  final bool is_indv_accessible(uvm_door_e  door,
 				uvm_reg_map local_map) {
     synchronized(this) {
-      if(path == UVM_BACKDOOR) {
+      if(door == UVM_BACKDOOR) {
 	uvm_warning("RegModel",
 		    "Individual BACKDOOR field access not available for field '" ~ 
 		    get_full_name() ~  "'. Accessing complete register instead.");
@@ -1302,17 +810,18 @@ class uvm_reg_field: uvm_object
    
       uvm_reg_map system_map = local_map.get_root_map();
       uvm_reg_adapter adapter = system_map.get_adapter();
-      if (adapter.supports_byte_enable)	return true;
+      if (adapter.supports_byte_enable)
+	return true;
 
       size_t fld_idx;
       int bus_width = local_map.get_n_bytes();
       uvm_reg_field[] fields;
-      bool sole_field;
+      bool sole_field; 		// why is it there?
 
       _m_parent.get_fields(fields);
 
       if (fields.length == 1) {
-	sole_field = 1;
+	sole_field = true;
       }
       else {
 	int prev_lsb,this_lsb,next_lsb; 
@@ -1377,67 +886,25 @@ class uvm_reg_field: uvm_object
   }
 
 
-  // Function: predict
-  //
-  // Update the mirrored value for this field.
-  //
-  // Predict the mirror value of the field based on the specified
-  // observed ~value~ on a bus using the specified address ~map~.
-  //
-  // If ~kind~ is specified as <UVM_PREDICT_READ>, the value
-  // was observed in a read transaction on the specified address ~map~ or
-  // backdoor (if ~path~ is <UVM_BACKDOOR>).
-  // If ~kind~ is specified as <UVM_PREDICT_WRITE>, the value
-  // was observed in a write transaction on the specified address ~map~ or
-  // backdoor (if ~path~ is <UVM_BACKDOOR>).
-  // If ~kind~ is specified as <UVM_PREDICT_DIRECT>, the value
-  // was computed and is updated as-is, without regard to any access policy.
-  // For example, the mirrored value of a read-only field is modified
-  // by this method if ~kind~ is specified as <UVM_PREDICT_DIRECT>.
-  //
-  // This method does not allow an update of the mirror
-  // when the register containing this field is busy executing
-  // a transaction because the results are unpredictable and
-  // indicative of a race condition in the testbench.
-  //
-  // Returns TRUE if the prediction was succesful.
-  //
-  // extern function bool predict (uvm_reg_data_t    value,
-  //                               uvm_reg_byte_en_t be = -1,
-  //                               uvm_predict_e     kind = UVM_PREDICT_DIRECT,
-  //                               uvm_path_e        path = UVM_FRONTDOOR,
-  //                               uvm_reg_map       map = null,
-  //                               string            fname = "",
-  //                               int               lineno = 0);
-
-  // predict
-
+  // @uvm-ieee 1800.2-2017 auto 18.5.5.17
   bool predict (uvm_reg_data_t    value,
-		uvm_reg_byte_en_t be = -1,
+		uvm_reg_byte_en_t be =  -1,
 		uvm_predict_e     kind = uvm_predict_e.UVM_PREDICT_DIRECT,
-		uvm_path_e        path = uvm_path_e.UVM_FRONTDOOR,
+		uvm_door_e        door = uvm_door_e.UVM_FRONTDOOR,
 		uvm_reg_map       map = null,
 		string            fname = "",
 		int               lineno = 0) {
     uvm_reg_item rw = new uvm_reg_item();
     synchronized(rw) {
-      // rw.value[0] = value;
-      rw.set_value(0, value);
-      rw.path = path;
-      rw.map = map;
-      rw.fname = fname;
-      rw.lineno = lineno;
+      rw.set_value(value, 0);
+      rw.set_door(door);
+      rw.set_map(map);
+      rw.set_fname(fname);
+      rw.set_line(lineno);
       do_predict(rw, kind, be);
-      return (rw.status == UVM_NOT_OK) ? false : true;
+      return (rw.get_status() == UVM_NOT_OK) ? false : true;
     }
   }
-
-  /*local*/
-  // extern virtual function uvm_reg_data_t XpredictX (uvm_reg_data_t cur_val,
-  // 						    uvm_reg_data_t wr_val,
-  // 						    uvm_reg_map    map);
-
-  // XpredictX
 
   uvm_reg_data_t XpredictX (uvm_reg_data_t cur_val,
 			    uvm_reg_data_t wr_val,
@@ -1450,12 +917,12 @@ class uvm_reg_field: uvm_object
       case "RW":    return wr_val;
       case "RC":    return cur_val;
       case "RS":    return cur_val;
-      case "WC":    return uvm_reg_data_t(0);
+      case "WC":    return cast(uvm_reg_data_t) 0;
       case "WS":    return mask;
       case "WRC":   return wr_val;
       case "WRS":   return wr_val;
       case "WSRC":  return mask;
-      case "WCRS":  return uvm_reg_data_t(0);
+      case "WCRS":  return cast(uvm_reg_data_t) 0;
       case "W1C":   return cur_val & (~wr_val);
       case "W1S":   return cur_val | wr_val;
       case "W1T":   return cur_val ^ wr_val;
@@ -1467,10 +934,11 @@ class uvm_reg_field: uvm_object
       case "W0SRC": return cur_val | (~wr_val & mask);
       case "W0CRS": return cur_val & wr_val;
       case "WO":    return wr_val;
-      case "WOC":   return uvm_reg_data_t(0);
+      case "WOC":   return cast(uvm_reg_data_t) 0;
       case "WOS":   return mask;
       case "W1":    return (_m_written) ? cur_val : wr_val;
       case "WO1":   return (_m_written) ? cur_val : wr_val;
+      case "NOACCESS": return cur_val;
       default:      return wr_val;
       }
       // this statement is not even reachable, but there in the SV version
@@ -1479,112 +947,98 @@ class uvm_reg_field: uvm_object
     }
   }
 
-  /*local*/
-  // extern virtual function uvm_reg_data_t XupdateX();
-  
-  // XupdateX
-
   uvm_reg_data_t  XupdateX() {
     // Figure out which value must be written to get the desired value
     // given what we think is the current value in the hardware
-    uvm_reg_data_t XupdateX_ = 0;
+    synchronized(this) {
+      uvm_reg_data_t retval = 0;
 
-    switch (_m_access) {
-    case "RO":    XupdateX_ = _m_desired; break;
-    case "RW":    XupdateX_ = _m_desired; break;
-    case "RC":    XupdateX_ = _m_desired; break;
-    case "RS":    XupdateX_ = _m_desired; break;
-    case "WRC":   XupdateX_ = _m_desired; break;
-    case "WRS":   XupdateX_ = _m_desired; break;
-    case "WC":    XupdateX_ = _m_desired; break;  // Warn if != 0
-    case "WS":    XupdateX_ = _m_desired; break;  // Warn if != 1
-    case "WSRC":  XupdateX_ = _m_desired; break;  // Warn if != 1
-    case "WCRS":  XupdateX_ = _m_desired; break;  // Warn if != 0
-    case "W1C":   XupdateX_ = ~_m_desired; break;
-    case "W1S":   XupdateX_ = _m_desired; break;
-    case "W1T":   XupdateX_ = _m_desired ^ _m_mirrored; break;
-    case "W0C":   XupdateX_ = _m_desired; break;
-    case "W0S":   XupdateX_ = ~_m_desired; break;
-    case "W0T":   XupdateX_ = ~(_m_desired ^ _m_mirrored); break;
-    case "W1SRC": XupdateX_ = _m_desired; break;
-    case "W1CRS": XupdateX_ = ~_m_desired; break;
-    case "W0SRC": XupdateX_ = ~_m_desired; break;
-    case "W0CRS": XupdateX_ = _m_desired; break;
-    case "WO":    XupdateX_ = _m_desired; break;
-    case "WOC":   XupdateX_ = _m_desired; break;  // Warn if != 0
-    case "WOS":   XupdateX_ = _m_desired; break;  // Warn if != 1
-    case "W1":    XupdateX_ = _m_desired; break;
-    case "WO1":   XupdateX_ = _m_desired; break;
-    default: XupdateX_ = _m_desired; break;
+      switch (_m_access) {
+      case "RO":    retval = _m_desired; break;
+      case "RW":    retval = _m_desired; break;
+      case "RC":    retval = _m_desired; break;
+      case "RS":    retval = _m_desired; break;
+      case "WRC":   retval = _m_desired; break;
+      case "WRS":   retval = _m_desired; break;
+      case "WC":    retval = _m_desired; break;  // Warn if != 0
+      case "WS":    retval = _m_desired; break;  // Warn if != 1
+      case "WSRC":  retval = _m_desired; break;  // Warn if != 1
+      case "WCRS":  retval = _m_desired; break;  // Warn if != 0
+      case "W1C":   retval = ~_m_desired; break;
+      case "W1S":   retval = _m_desired; break;
+      case "W1T":   retval = _m_desired ^ _m_mirrored; break;
+      case "W0C":   retval = _m_desired; break;
+      case "W0S":   retval = ~_m_desired; break;
+      case "W0T":   retval = ~(_m_desired ^ _m_mirrored); break;
+      case "W1SRC": retval = _m_desired; break;
+      case "W1CRS": retval = ~_m_desired; break;
+      case "W0SRC": retval = ~_m_desired; break;
+      case "W0CRS": retval = _m_desired; break;
+      case "WO":    retval = _m_desired; break;
+      case "WOC":   retval = _m_desired; break;  // Warn if != 0
+      case "WOS":   retval = _m_desired; break;  // Warn if != 1
+      case "W1":    retval = _m_desired; break;
+      case "WO1":   retval = _m_desired; break;
+      default: retval = _m_desired; break;
+      }
+      retval &= (1L << _m_size) - 1;
+      return retval;
     }
-    XupdateX_ &= (1L << _m_size) - 1;
-    return XupdateX_;
   }
 
-  /*local*/
-  // extern  bool Xcheck_accessX (input uvm_reg_item rw,
-  //                                      output uvm_reg_map_info map_info,
-  //                                      input string caller);
-  // Xcheck_accessX
-
   bool Xcheck_accessX(uvm_reg_item rw,
-		      out uvm_reg_map_info map_info,
-		      string caller) {
+		      out uvm_reg_map_info map_info) {
     synchronized(this) {
                         
-      if (rw.path == UVM_DEFAULT_PATH) {
+      if (rw.get_door() == UVM_DEFAULT_DOOR) {
 	uvm_reg_block blk = _m_parent.get_block();
-	rw.path = blk.get_default_path();
+	rw.set_door(blk.get_default_door());
       }
 
-      if (rw.path == UVM_BACKDOOR) {
+      if (rw.get_door() == UVM_BACKDOOR) {
 	if (_m_parent.get_backdoor() is null && !_m_parent.has_hdl_path()) {
 	  uvm_warning("RegModel",
 		      "No backdoor access available for field '" ~ get_full_name() ~ 
 		      "' . Using frontdoor instead.");
-	  rw.path = UVM_FRONTDOOR;
+	  rw.set_door(UVM_FRONTDOOR);
 	}
 	else
-	  rw.map = uvm_reg_map.backdoor();
+	  rw.set_map(uvm_reg_map.backdoor());
       }
 
-      if (rw.path != UVM_BACKDOOR) {
+      if (rw.get_door() != UVM_BACKDOOR) {
 
-	rw.local_map = _m_parent.get_local_map(rw.map,caller);
+	rw.set_local_map(_m_parent.get_local_map(rw.get_map()));
 
-	if (rw.local_map is null) {
+	if (rw.get_local_map() is null) {
+	  uvm_reg_map local_tmp_map = rw.get_map();
 	  uvm_error(get_type_name(), 
 		    "No transactor available to physically access memory from map '" ~ 
-		    rw.map.get_full_name() ~ "'");
-	  rw.status = UVM_NOT_OK;
+		    local_tmp_map.get_full_name() ~ "'");
+	  rw.set_status(UVM_NOT_OK);
 	  return false;
 	}
 
-	map_info = rw.local_map.get_reg_map_info(_m_parent);
+	uvm_reg_map local_tmp_map = rw.get_map();
+	map_info = local_tmp_map.get_reg_map_info(_m_parent);
 
 	if (map_info.frontdoor is null && map_info.unmapped) {
 	  uvm_error("RegModel", "Field '" ~ get_full_name() ~ 
 		    "' in register that is unmapped in map '" ~ 
-		    rw.map.get_full_name() ~ 
+		    local_tmp_map.get_full_name() ~ 
 		    "' and does not have a user-defined frontdoor");
-	  rw.status = UVM_NOT_OK;
+	  rw.set_status(UVM_NOT_OK);
 	  return false;
 	}
 
-	if (rw.map is null) {
-	  rw.map = rw.local_map;
+	if (rw.get_map() is null) {
+	  rw.set_map(rw.local_map);
 	}
       }
 
       return true;
     }
   }
-
-
-
-  // extern virtual task do_write(uvm_reg_item rw);
-
-  // do_write
 
   // task
   void do_write(uvm_reg_item rw) {
@@ -1594,31 +1048,26 @@ class uvm_reg_field: uvm_object
     uvm_reg_field[]  fields;
     bool             bad_side_effect;
 
-    uvm_reg          m_parent_;
-
+    m_parent.XatomicX(1);
     synchronized(this) {
-      m_parent_ = _m_parent;
-    }
+      _m_fname  = rw.get_fname();
+      _m_lineno = rw.get_line();
 
-    m_parent_.XatomicX(1);
-    synchronized(this) {
-      _m_fname  = rw.fname;
-      _m_lineno = rw.lineno;
+      if (!Xcheck_accessX(rw, map_info))
+	return;
 
-      if (!Xcheck_accessX(rw,map_info,"write()")) return;
+      _m_write_in_progress = true;
 
-      _m_write_in_progress = 1;
-
-      // if (rw.value[0] >> _m_size) {
       if (rw.get_value(0) >> _m_size) {
 	uvm_warning("RegModel", "write(): Value greater than field '" ~ 
 		    get_full_name() ~ "'");
-	// rw.value[0] &= ((1L << _m_size)-1);
-	rw.and_value(0, ((1L << _m_size)-1));
+	uvm_reg_data_t tmp_value = rw.get_value(0);
+	tmp_value &= ((1<<m_size)-1);
+	rw.set_value(tmp_value, 0);
       }
 
       // Get values to write to the other fields in register
-      m_parent_.get_fields(fields);
+      m_parent.get_fields(fields);
       foreach (i, field; fields) {
 
 	if (field == this) {
@@ -1628,7 +1077,7 @@ class uvm_reg_field: uvm_object
 	}
 
 	// It depends on what kind of bits they are made of...
-	switch (field.get_access(rw.local_map)) {
+	switch (field.get_access(rw.get_local_map())) {
 	  // These...
 	case "RO", "RC", "RS", "W1C", "W1S", "W1T", "W1SRC", "W1CRC":
 	  // Use all 0's
@@ -1654,22 +1103,21 @@ class uvm_reg_field: uvm_object
     }
     version(UVM_REG_NO_INDIVIDUAL_FIELD_ACCESS) {
       synchronized(rw) {
-	rw.element_kind = UVM_REG;
-	rw.element = m_parent_;
-	rw.value[0] = value_adjust;
+	rw.set_element_kind(UVM_REG);
+	rw.set_element(m_parent);
+	rw.set_value(value_adjust, 0);
       }
-      m_parent_.do_write(rw);
+      m_parent.do_write(rw);
     }
     else {
 
-      if (!is_indv_accessible(rw.path, rw.local_map)) {
+      if (!is_indv_accessible(rw.get_door(), rw.get_local_map())) {
 	synchronized(this) {
-	  rw.element_kind = UVM_REG;
-	  rw.element = m_parent_;
-	  // rw.value[0] = value_adjust;
-	  rw.set_value(0, value_adjust);
+	  rw.set_element_kind(UVM_REG);
+	  rw.set_element(m_parent);
+	  rw.set_value(value_adjust, 0);
 	}
-	m_parent_.do_write(rw);
+	m_parent.do_write(rw);
 
 	if (bad_side_effect) {
 	  uvm_warning("RegModel", format("Writing field \"%s\" will cause unintended" ~
@@ -1679,27 +1127,27 @@ class uvm_reg_field: uvm_object
 	}
       }
       else {
-
-	uvm_reg_map system_map = rw.local_map.get_root_map();
+	uvm_reg_map item_map = rw.get_local_map();
+	uvm_reg_map system_map = item_map.get_root_map();
 	uvm_reg_field_cb_iter cbs = new uvm_reg_field_cb_iter(this);
 
-	m_parent_.Xset_busyX(1);
+	m_parent.Xset_busyX(1);
 
-	rw.status = UVM_IS_OK;
+	rw.set_status(UVM_IS_OK);
       
 	pre_write(rw);
 	for (uvm_reg_cbs cb=cbs.first(); cb !is null; cb=cbs.next())
 	  cb.pre_write(rw);
 
-	if (rw.status != UVM_IS_OK) {
+	if (rw.get_status() != UVM_IS_OK) {
 	  m_write_in_progress = 0;
-	  m_parent_.Xset_busyX(0);
-	  m_parent_.XatomicX(0);
+	  m_parent.Xset_busyX(0);
+	  m_parent.XatomicX(0);
         
 	  return;
 	}
             
-	rw.local_map.do_write(rw);
+	item_map.do_write(rw);
 
 	if (system_map.get_auto_predict())
 	  // ToDo: Call parent.XsampleX();
@@ -1709,17 +1157,14 @@ class uvm_reg_field: uvm_object
 	for (uvm_reg_cbs cb=cbs.first(); cb !is null; cb=cbs.next())
 	  cb.post_write(rw);
 
-	m_parent_.Xset_busyX(0);
+	m_parent.Xset_busyX(0);
       
       }
     }
 
-    m_write_in_progress = 0;
-    m_parent_.XatomicX(0);
+    m_write_in_progress = false;
+    m_parent.XatomicX(0);
   }
-
-  // extern virtual task do_read(uvm_reg_item rw);
-  // do_read
 
   // task
   void do_read(uvm_reg_item rw) {
@@ -1727,54 +1172,56 @@ class uvm_reg_field: uvm_object
     uvm_reg_map_info map_info;
     bool bad_side_effect;
 
-    _m_parent.XatomicX(1);
-    _m_fname  = rw.fname;
-    _m_lineno = rw.lineno;
-    _m_read_in_progress = 1;
+    m_parent.XatomicX(1);
+    m_fname  = rw.get_fname();
+    m_lineno = rw.get_line();
+    m_read_in_progress = true;
   
-    if (!Xcheck_accessX(rw,map_info,"read()"))
+    if (!Xcheck_accessX(rw, map_info))
       return;
 
+    uvm_reg_map rw_local_map = rw.get_local_map();
+    
     version(UVM_REG_NO_INDIVIDUAL_FIELD_ACCESS) {
-      rw.element_kind = UVM_REG;
-      rw.element = _m_parent;
-      _m_parent.do_read(rw);
-      rw.value[0] = (rw.value[0] >> _m_lsb) & ((1<<_m_size))-1;
-      bad_side_effect = 1;
+      rw.set_element_kind(UVM_REG);
+      rw.set_element(_m_parent);
+      m_parent.do_read(rw);
+      rw.set_value((rw.get_value(0) >> m_lsb) & ((1<<m_size))-1, 0);
+      bad_side_effect = true;
     }
     else {
 
-      if (!is_indv_accessible(rw.path,rw.local_map)) {
-	rw.element_kind = UVM_REG;
-	rw.element = _m_parent;
-	bad_side_effect = 1;
-	_m_parent.do_read(rw);
-	// rw.value[0] = (rw.value[0] >> _m_lsb) & ((1<<_m_size))-1;
-	rw.set_value(0, (rw.get_value(0) >> _m_lsb) & ((1<<_m_size))-1);
+      if (!is_indv_accessible(rw.get_door(), rw_local_map)) {
+	rw.set_element_kind(UVM_REG);
+	rw.set_element(_m_parent);
+	bad_side_effect = true;
+	m_parent.do_read(rw);
+	uvm_reg_data_t value = rw.get_value(0);
+	rw.set_value((value >> m_lsb) & ((1 << m_size))-1, 0);
       }
       else {
 
-	uvm_reg_map system_map = rw.local_map.get_root_map();
+	uvm_reg_map system_map = rw_local_map.get_root_map();
 	uvm_reg_field_cb_iter cbs = new uvm_reg_field_cb_iter(this);
 
-	_m_parent.Xset_busyX(1);
+	m_parent.Xset_busyX(1);
 
-	rw.status = UVM_IS_OK;
+	rw.set_status(UVM_IS_OK);
       
 	pre_read(rw);
 	for (uvm_reg_cbs cb = cbs.first(); cb !is null; cb = cbs.next()) {
 	  cb.pre_read(rw);
 	}
 
-	if (rw.status != UVM_IS_OK) {
-	  _m_read_in_progress = 0;
-	  _m_parent.Xset_busyX(0);
-	  _m_parent.XatomicX(0);
+	if (rw.get_status() != UVM_IS_OK) {
+	  m_read_in_progress = 0;
+	  m_parent.Xset_busyX(0);
+	  m_parent.XatomicX(0);
 
 	  return;
 	}
             
-	rw.local_map.do_read(rw);
+	rw_local_map.do_read(rw);
 
 
 	if (system_map.get_auto_predict())
@@ -1785,17 +1232,17 @@ class uvm_reg_field: uvm_object
 	for (uvm_reg_cbs cb=cbs.first(); cb !is null; cb=cbs.next())
 	  cb.post_read(rw);
 
-	_m_parent.Xset_busyX(0);
+	m_parent.Xset_busyX(0);
       
       }
     }
 
-    _m_read_in_progress = 0;
-    _m_parent.XatomicX(0);
+    m_read_in_progress = false;
+    m_parent.XatomicX(0);
 
     if (bad_side_effect) {
       uvm_reg_field[] fields;
-      _m_parent.get_fields(fields);
+      m_parent.get_fields(fields);
       foreach (i, field; fields) {
 	string mode;
 	if (field == this) continue;
@@ -1818,42 +1265,36 @@ class uvm_reg_field: uvm_object
     }
   }
 
-  // extern virtual function void do_predict 
-  //                                (uvm_reg_item rw,
-  //                                 uvm_predict_e kind=UVM_PREDICT_DIRECT,
-  //                                 uvm_reg_byte_en_t be = -1);
-
-  // do_predict
-
   void do_predict(uvm_reg_item      rw,
 		  uvm_predict_e     kind = uvm_predict_e.UVM_PREDICT_DIRECT,
-		  uvm_reg_byte_en_t be = -1) {
+		  uvm_reg_byte_en_t be =  -1) {
     synchronized(this) {
       // uvm_reg_data_t field_val = rw.value[0] & ((1 << _m_size)-1);
       uvm_reg_data_t field_val = rw.get_value(0) & ((1 << _m_size)-1);
 
-      if (rw.status != UVM_NOT_OK)
-	rw.status = UVM_IS_OK;
+      if (rw.get_status() != UVM_NOT_OK)
+	rw.set_status(UVM_IS_OK);
 
       // Assume that the entire field is enabled
-      if (!be[0]) return;
+      if (!be[0])
+	return;
 
-      _m_fname = rw.fname;
-      _m_lineno = rw.lineno;
+      _m_fname = rw.get_fname();
+      _m_lineno = rw.get_line();
 
       switch (kind) {
 
       case UVM_PREDICT_WRITE:
 	uvm_reg_field_cb_iter cbs = new uvm_reg_field_cb_iter (this);
 
-	if (rw.path == UVM_FRONTDOOR || rw.path == UVM_PREDICT)
-	  field_val = XpredictX(_m_mirrored, field_val, rw.map);
+	if (rw.get_door() == UVM_FRONTDOOR || rw.get_door() == UVM_PREDICT)
+	  field_val = XpredictX(_m_mirrored, field_val, rw.get_map());
 
 	_m_written = 1;
 
 	for (uvm_reg_cbs cb = cbs.first(); cb !is null; cb = cbs.next())
 	  cb.post_predict(this, _m_mirrored, field_val, 
-			  UVM_PREDICT_WRITE, rw.path, rw.map);
+			  UVM_PREDICT_WRITE, rw.get_door(), rw.get_map());
 
 	field_val &= (1L << _m_size)-1;
 	break;
@@ -1861,9 +1302,9 @@ class uvm_reg_field: uvm_object
       case UVM_PREDICT_READ:
 	uvm_reg_field_cb_iter cbs = new uvm_reg_field_cb_iter(this);
 
-	if (rw.path == UVM_FRONTDOOR || rw.path == UVM_PREDICT) {
+	if (rw.get_door() == UVM_FRONTDOOR || rw.get_door() == UVM_PREDICT) {
 
-	  string acc = get_access(rw.map);
+	  string acc = get_access(rw.get_map());
 
 	  if (acc == "RC" ||
 	      acc == "WRC" ||
@@ -1882,13 +1323,14 @@ class uvm_reg_field: uvm_object
 	  else if (acc == "WO" ||
 		   acc == "WOC" ||
 		   acc == "WOS" ||
-		   acc == "WO1")
+		   acc == "WO1" ||
+		   acc == "NOACCESS")
 	    return;
 	}
 
 	for (uvm_reg_cbs cb = cbs.first(); cb !is null; cb = cbs.next()) {
 	  cb.post_predict(this, _m_mirrored, field_val,
-			  UVM_PREDICT_READ, rw.path, rw.map);
+			  UVM_PREDICT_READ, rw.get_door(), rw.get_map());
 	}
 	field_val &= (1L << _m_size)-1;
 	break;
@@ -1898,7 +1340,7 @@ class uvm_reg_field: uvm_object
 	  uvm_warning("RegModel", "Trying to predict value of field '" ~
 		      get_name() ~ "' while register '" ~
 		      _m_parent.get_full_name() ~ "' is being accessed");
-	  rw.status = UVM_NOT_OK;
+	  rw.set_status(UVM_NOT_OK);
 	}
 	break;
       default: assert(0);
@@ -1909,13 +1351,7 @@ class uvm_reg_field: uvm_object
       this._value = field_val;
     }
   }
-
                
-
-
-  // extern function void pre_randomize();
-  // pre_randomize
-
   void pre_randomize() {
     // Update the only publicly known property with the current
     // desired value so it can be used as a state variable should
@@ -1924,9 +1360,6 @@ class uvm_reg_field: uvm_object
       _value = _m_desired;
     }
   }
-
-  // extern function void post_randomize();
-  // post_randomize
 
   void post_randomize() {
     synchronized(this) {
@@ -1937,105 +1370,36 @@ class uvm_reg_field: uvm_object
 
 
   //-----------------
-  // Group: Callbacks
+  // Group -- NODOCS -- Callbacks
   //-----------------
 
   mixin uvm_register_cb!(uvm_reg_cbs);
 
 
-  // Task: pre_write
-  //
-  // Called before field write.
-  //
-  // If the specified data value, access ~path~ or address ~map~ are modified,
-  // the updated data value, access path or address map will be used
-  // to perform the register operation.
-  // If the ~status~ is modified to anything other than <UVM_IS_OK>,
-  // the operation is aborted.
-  //
-  // The field callback methods are invoked after the callback methods
-  // on the containing register.
-  // The registered callback methods are invoked after the invocation
-  // of this method.
-  //
-  // virtual task pre_write  (uvm_reg_item rw);
-
+  // @uvm-ieee 1800.2-2017 auto 18.5.6.1
   // task
   void pre_write(uvm_reg_item rw) { }
 
-  // Task: post_write
-  //
-  // Called after field write.
-  //
-  // If the specified ~status~ is modified,
-  // the updated status will be
-  // returned by the register operation.
-  //
-  // The field callback methods are invoked after the callback methods
-  // on the containing register.
-  // The registered callback methods are invoked before the invocation
-  // of this method.
-  //
-  // virtual task post_write (uvm_reg_item rw);
-
+  // @uvm-ieee 1800.2-2017 auto 18.5.6.2
   // task
   void post_write(uvm_reg_item rw) {}
 
-
-  // Task: pre_read
-  //
-  // Called before field read.
-  //
-  // If the access ~path~ or address ~map~ in the ~rw~ argument are modified,
-  // the updated access path or address map will be used to perform
-  // the register operation.
-  // If the ~status~ is modified to anything other than <UVM_IS_OK>,
-  // the operation is aborted.
-  //
-  // The field callback methods are invoked after the callback methods
-  // on the containing register.
-  // The registered callback methods are invoked after the invocation
-  // of this method.
-  //
-  // virtual task pre_read (uvm_reg_item rw);
-
+  // @uvm-ieee 1800.2-2017 auto 18.5.6.3
   // task
   void pre_read (uvm_reg_item rw) {}
 
-
-  // Task: post_read
-  //
-  // Called after field read.
-  //
-  // If the specified readback data or~status~ in the ~rw~ argument is
-  // modified, the updated readback data or status will be
-  // returned by the register operation.
-  //
-  // The field callback methods are invoked after the callback methods
-  // on the containing register.
-  // The registered callback methods are invoked before the invocation
-  // of this method.
-  //
-  // virtual task post_read  (uvm_reg_item rw);
-
+  // @uvm-ieee 1800.2-2017 auto 18.5.6.4
   // task
   void post_read  (uvm_reg_item rw) {}
 
-
-  // extern virtual function void do_print (uvm_printer printer);
-  // do_print
 
   override void do_print (uvm_printer printer) {
     printer.print_generic(get_name(), get_type_name(), -1, convert2string());
   }
 
-  // extern virtual function string convert2string;
-
-  // convert2string
-
   override string convert2string() {
     synchronized(this) {
-      string convert2string_;
+      string retval;
       string res_str;
       string t_str;
       bool with_debug_info;
@@ -2044,7 +1408,7 @@ class uvm_reg_field: uvm_object
 
       string fmt = format("%0d'h%%%0dh", get_n_bits(),
 			  (get_n_bits()-1)/4 + 1);
-      convert2string_ = format("%s %s %s[%0d:%0d]=" ~ fmt ~ "%s", prefix,
+      retval = format("%s %s %s[%0d:%0d]=" ~ fmt ~ "%s", prefix,
 			       get_access(),
 			       reg_.get_name(),
 			       get_lsb_pos() + get_n_bits() - 1,
@@ -2055,14 +1419,14 @@ class uvm_reg_field: uvm_object
       if (_m_read_in_progress == true) {
 	if (_m_fname != "" && _m_lineno != 0)
 	  res_str = format(" from %s:%0d",_m_fname, _m_lineno);
-	convert2string_ = convert2string_ ~  "\n" ~  "currently being read" ~  res_str; 
+	retval = retval ~  "\n" ~  "currently being read" ~  res_str; 
       }
       if (_m_write_in_progress == true) {
 	if (_m_fname != "" && _m_lineno != 0)
 	  res_str = format(" from %s:%0d",_m_fname, _m_lineno);
-	convert2string_ = convert2string_ ~  "\n" ~  res_str ~  "currently being written"; 
+	retval = retval ~  "\n" ~  res_str ~  "currently being written"; 
       }
-      return convert2string_;
+      return retval;
     }
   }
 
@@ -2070,26 +1434,16 @@ class uvm_reg_field: uvm_object
     return convert2string();
   }
   
-  // extern virtual function uvm_object clone();
-  // clone
-
   override uvm_object clone() {
     uvm_fatal("RegModel","RegModel field cannot be cloned");
     return null;
   }
-
-  // extern virtual function void do_copy   (uvm_object rhs);
-  // do_copy
 
   override void do_copy(uvm_object rhs) {
     uvm_warning("RegModel","RegModel field copy not yet implemented");
     // just a set(rhs.get()) ?
   }
 
-
-  // extern virtual function bool do_compare (uvm_object  rhs,
-  //                                           uvm_comparer comparer);
-  // do_compare
 
   override bool do_compare (uvm_object  rhs,
 			    uvm_comparer comparer) {
@@ -2099,28 +1453,12 @@ class uvm_reg_field: uvm_object
   }
 
 
-  // extern virtual function void do_pack (uvm_packer packer);
-  // do_pack
-
   override void do_pack (uvm_packer packer) {
     uvm_warning("RegModel","RegModel field cannot be packed");
   }
-
-  // extern virtual function void do_unpack (uvm_packer packer);
-  // do_unpack
 
   override void do_unpack (uvm_packer packer) {
     uvm_warning("RegModel","RegModel field cannot be unpacked");
   }
 
 }
-
-
-//------------------------------------------------------------------------------
-// IMPLEMENTATION
-//------------------------------------------------------------------------------
-
-
-
-
-

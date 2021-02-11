@@ -122,6 +122,7 @@ mixin (declareEnums!uvm_tlm_response_status_e);
 // @uvm-ieee 1800.2-2017 auto 12.3.4.2.1
 class uvm_tlm_generic_payload: uvm_sequence_item
 {
+  mixin uvm_sync;
   // Variable -- NODOCS -- m_address
   //
   // Address for the bus operation.
@@ -141,7 +142,8 @@ class uvm_tlm_generic_payload: uvm_sequence_item
   // for example) it shall generate a standard error response. The
   // recommended response status is ~UVM_TLM_ADDRESS_ERROR_RESPONSE~.
   //
-  @rand ulong _m_address;
+  @uvm_public_sync
+  @rand private ulong _m_address;
 
  
   // Variable -- NODOCS -- m_command
@@ -164,7 +166,8 @@ class uvm_tlm_generic_payload: uvm_sequence_item
   // The command attribute shall be set by the initiator, and shall
   // not be overwritten by any interconnect
   //
-  @rand uvm_tlm_command_e _m_command;
+  @uvm_public_sync
+  @rand private uvm_tlm_command_e _m_command;
 
    
   // Variable -- NODOCS -- m_data
@@ -200,7 +203,8 @@ class uvm_tlm_generic_payload: uvm_sequence_item
   // to use/be interpreted using the host endianness.
   // However, this process is currently outside the scope of this standard.
   //
-  @rand(32768) ubyte[] _m_data;
+  @uvm_public_sync
+  @rand(32768) private ubyte[] _m_data;
 
 
   // Variable -- NODOCS -- m_length
@@ -215,7 +219,8 @@ class uvm_tlm_generic_payload: uvm_sequence_item
   // In order to transfer zero bytes, the <m_command> attribute
   // should be set to <UVM_TLM_IGNORE_COMMAND>.
   //
-  @rand uint _m_length;
+  @uvm_public_sync
+  @rand private uint _m_length;
    
 
   // Variable -- NODOCS -- m_response_status
@@ -262,7 +267,8 @@ class uvm_tlm_generic_payload: uvm_sequence_item
   // other words, the initiator ignores the
   // response status at its own risk.
   //
-  @rand uvm_tlm_response_status_e _m_response_status;
+  @uvm_public_sync
+  @rand private uvm_tlm_response_status_e _m_response_status;
 
 
   // Variable -- NODOCS -- m_dmi
@@ -271,7 +277,8 @@ class uvm_tlm_generic_payload: uvm_sequence_item
   // This variable is provided for completeness and interoperability
   // with SystemC.
   //
-  bool _m_dmi;
+  @uvm_public_sync
+  private bool _m_dmi;
    
 
   // Variable -- NODOCS -- m_byte_enable
@@ -312,7 +319,8 @@ class uvm_tlm_generic_payload: uvm_sequence_item
   // component or target should not modify the values of disabled
   // bytes in the <m_data> array.
   //
-  @rand(32768) ubyte[] _m_byte_enable;
+  @uvm_public_sync
+  @rand(32768) private ubyte[] _m_byte_enable;
 
 
   // Variable -- NODOCS -- m_byte_enable_length
@@ -322,7 +330,8 @@ class uvm_tlm_generic_payload: uvm_sequence_item
   // It shall be set by the initiator, and shall not be overwritten
   // by any interconnect component or target.
   //
-  @rand uint _m_byte_enable_length;
+  @uvm_public_sync
+  @rand private uint _m_byte_enable_length;
 
 
   // Variable -- NODOCS -- m_streaming_width
@@ -375,11 +384,15 @@ class uvm_tlm_generic_payload: uvm_sequence_item
   // response. The recommended response status is
   // TLM_BURST_ERROR_RESPONSE.
   //
-  @rand uint _m_streaming_width;
+  @uvm_public_sync
+  @rand private uint _m_streaming_width;
 
+  @uvm_protected_sync
   protected uvm_tlm_extension_base[uvm_tlm_extension_base] _m_extensions;
+
   // @rand(1024)
-  uvm_tlm_extension_base[] _m_rand_exts;
+  @uvm_public_sync
+  private uvm_tlm_extension_base[] _m_rand_exts;
 
 
   mixin uvm_object_essentials;
@@ -1212,8 +1225,6 @@ class uvm_tlm_extension(T): uvm_tlm_extension_base
 
   alias this_type=uvm_tlm_extension!(T);
 
-  static this_type m_my_tlm_ext_type;
-
   // Function -- NODOCS -- new
   //
   // creates a new extension object.
@@ -1230,11 +1241,8 @@ class uvm_tlm_extension(T): uvm_tlm_extension_base
   // from a <uvm_tlm_generic_payload> instance,
   // using the <uvm_tlm_generic_payload::get_extension()> method.
   //
-  static this_type ID() {
-    if (m_my_tlm_ext_type is null) {
-      m_my_tlm_ext_type = new this_type();
-    }
-    return m_my_tlm_ext_type;
+  static TypeInfo ID() {
+    return typeid(this_type);
   }
 
   uvm_tlm_extension_base get_type_handle() {

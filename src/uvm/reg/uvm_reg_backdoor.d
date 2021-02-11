@@ -1,9 +1,11 @@
 //
 // -------------------------------------------------------------
-//    Copyright 2004-2009 Synopsys, Inc.
-//    Copyright 2010-2011 Mentor Graphics Corporation
-//    Copyright 2010 Cadence Design Systems, Inc.
-//    Copyright 2015 Coverify Systems Technology
+// Copyright 2015-2021 Coverify Systems Technology
+// Copyright 2010-2020 Mentor Graphics Corporation
+// Copyright 2004-2018 Synopsys, Inc.
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2010 AMD
+// Copyright 2015-2018 NVIDIA Corporation
 //    All Rights Reserved Worldwide
 //
 //    Licensed under the Apache License, Version 2.0 (the
@@ -24,15 +26,16 @@
 
 module uvm.reg.uvm_reg_backdoor;
 
-import uvm.reg.uvm_reg_field;
-import uvm.reg.uvm_reg_item;
+import uvm.reg.uvm_reg_field: uvm_reg_field;
+import uvm.reg.uvm_reg_item: uvm_reg_item;
 import uvm.reg.uvm_reg_model;
-import uvm.reg.uvm_reg_cbs;
-import uvm.reg.uvm_reg;
-import uvm.base.uvm_callback;
-import uvm.base.uvm_object;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_globals;
+import uvm.reg.uvm_reg_cbs: uvm_reg_cbs;
+import uvm.reg.uvm_reg: uvm_reg;
+
+import uvm.base.uvm_callback: uvm_register_cb;
+import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_globals: uvm_fatal, uvm_error;
+
 import uvm.base.uvm_object_defines;
 
 import uvm.meta.misc;
@@ -40,6 +43,7 @@ import uvm.meta.misc;
 import esdl.base.core: Process, fork;
 import esdl.rand;
 
+import std.string: format;
 
 
 // typedef class uvm_reg_cbs;
@@ -55,132 +59,62 @@ import esdl.rand;
 // or that are not accessible using the default DPI backdoor mechanism.
 //------------------------------------------------------------------------------
 
-class uvm_reg_backdoor: uvm_object
+// @uvm-ieee 1800.2-2017 auto 19.5.1
+abstract class uvm_reg_backdoor: uvm_object
 {
+  mixin(uvm_sync_string);
+  
+  mixin uvm_abstract_object_utils;
 
-  // mixin(uvm_sync_string);
-  mixin uvm_object_essentials;
-  mixin uvm_register_cb!(uvm_reg_cbs);
-
-  // Function: new
-  //
-  // Create an instance of this class
-  //
-  // Create an instance of the user-defined backdoor class
-  // for the specified register or memory
-  //
+  // @uvm-ieee 1800.2-2017 auto 19.5.2.1
   this(string name = "") {
-    synchronized(this) {
-      super(name);
-    }
+    super(name);
   }
 
-
-  // Task: do_pre_read
-  //
-  // Execute the pre-read callbacks
-  //
-  // This method ~must~ be called as the first statement in
-  // a user extension of the <read()> method.
-  //
-  // protected task do_pre_read(uvm_reg_item rw);
-
+  // @uvm-ieee 1800.2-2017 auto 19.5.2.2
   // task
   void do_pre_read(uvm_reg_item rw) {
     pre_read(rw);
     uvm_do_callbacks((uvm_reg_cbs cb) {cb.pre_read(rw);});
   }
 
-
-  // Task: do_post_read
-  //
-  // Execute the post-read callbacks
-  //
-  // This method ~must~ be called as the last statement in
-  // a user extension of the <read()> method.
-  //
-  // protected task do_post_read(uvm_reg_item rw);
-
+  // @uvm-ieee 1800.2-2017 auto 19.5.2.3
   // task
   protected void do_post_read(uvm_reg_item rw) {
-    // uvm_do_callbacks_reverse((uvm_reg_cbs cb) {cb.decode(rw.value);});
-    uvm_do_callbacks_reverse((uvm_reg_cbs cb) {cb.decode(rw);});
+    uvm_reg_data_t[] value_array;
+    uvm_do_callbacks_reverse((uvm_reg_cbs cb) {
+	value_array = rw.get_value();
+	cb.decode(value_array);
+      });
     uvm_do_callbacks((uvm_reg_cbs cb) {cb.post_read(rw);});
     post_read(rw);
   }
 
-
-  // Task: do_pre_write
-  //
-  // Execute the pre-write callbacks
-  //
-  // This method ~must~ be called as the first statement in
-  // a user extension of the <write()> method.
-  //
-  // protected task do_pre_write(uvm_reg_item rw);
-
+  // @uvm-ieee 1800.2-2017 auto 19.5.2.4
   // task
   protected void do_pre_write(uvm_reg_item rw) {
     pre_write(rw);
     uvm_do_callbacks((uvm_reg_cbs cb) {cb.pre_read(rw);});
-    // uvm_do_callbacks((uvm_reg_cbs cb) {cb.encode(rw.value);});
-    uvm_do_callbacks((uvm_reg_cbs cb) {cb.encode(rw);});
+    uvm_do_callbacks((uvm_reg_cbs cb) {
+	uvm_reg_data_t[] rw_value = rw.get_value();
+	cb.encode(rw_value);
+      });
   }
 
-
-  // Execute the post-write callbacks
-  //
-  // This method ~must~ be called as the last statement in
-  // a user extension of the <write()> method.
-  //
-  // protected task do_post_write(uvm_reg_item rw);
-
+  // @uvm-ieee 1800.2-2017 auto 19.5.2.5
   // task
   protected void do_post_write(uvm_reg_item rw) {
     uvm_do_callbacks((uvm_reg_cbs cb) {cb.post_write(rw);});
     post_write(rw);
   }
 
-
-  // Task: write
-  //
-  // User-defined backdoor write operation.
-  //
-  // Call <do_pre_write()>.
-  // Deposit the specified value in the specified register HDL implementation.
-  // Call <do_post_write()>.
-  // Returns an indication of the success of the operation.
-  //
-  // extern virtual task write(uvm_reg_item rw);
-
-  // write
-
+  // @uvm-ieee 1800.2-2017 auto 19.5.2.6
   // task
   void write(uvm_reg_item rw) {
-    uvm_fatal("RegModel", "uvm_reg_backdoor::write() method has" ~
-	      " not been overloaded");
+    uvm_fatal("RegModel", "uvm_reg_backdoor::write() method has not been overloaded");
   }
 
-
-
-  // Task: read
-  //
-  // User-defined backdoor read operation.
-  //
-  // Overload this method only if the backdoor requires the use of task.
-  //
-  // Call <do_pre_read()>.
-  // Peek the current value of the specified HDL implementation.
-  // Call <do_post_read()>.
-  // Returns the current value and an indication of the success of
-  // the operation.
-  //
-  // By default, calls <read_func()>.
-  //
-  // extern virtual task read(uvm_reg_item rw);
-
-  // read
-
+  // @uvm-ieee 1800.2-2017 auto 19.5.2.7
   // task
   void read(uvm_reg_item rw) {
     do_pre_read(rw);
@@ -188,208 +122,123 @@ class uvm_reg_backdoor: uvm_object
     do_post_read(rw);
   }
 
-
-  // Function: read_func
-  //
-  // User-defined backdoor read operation.
-  //
-  // Peek the current value in the HDL implementation.
-  // Returns the current value and an indication of the success of
-  // the operation.
-  //
-  // extern virtual function void read_func(uvm_reg_item rw);
-
-  // read_func
-
+  // @uvm-ieee 1800.2-2017 auto 19.5.2.8
   void read_func(uvm_reg_item rw) {
-    uvm_fatal("RegModel", "uvm_reg_backdoor::read_func() method has" ~
-	      " not been overloaded");
+    uvm_fatal("RegModel", "uvm_reg_backdoor::read_func() method has not been overloaded");
     // SV version has this -- would it ever be executed after uvm_fatal
-    rw.status = UVM_NOT_OK;
+    rw.set_status(UVM_NOT_OK);
   }
 
-  // Function: is_auto_updated
-  //
-  // Indicates if wait_for_change() method is implemented
-  //
-  // Implement to return TRUE if and only if
-  // <wait_for_change()> is implemented to watch for changes
-  // in the HDL implementation of the specified field
-  //
-  // extern virtual function bit is_auto_updated(uvm_reg_field field);
-
-  // is_auto_updated
-
+  // @uvm-ieee 1800.2-2017 auto 19.5.2.9
   bool is_auto_updated(uvm_reg_field field) {
     return false;
   }
 
-
-
-  // Task: wait_for_change
-  //
-  // Wait for a change in the value of the register or memory
-  // element in the DUT.
-  //
-  // When this method returns, the mirror value for the register
-  // corresponding to this instance of the backdoor class will be updated
-  // via a backdoor read operation.
-  //
-  // extern virtual local task wait_for_change(uvm_object element);
-
-
-  // wait_for_change
-
+  // @uvm-ieee 1800.2-2017 auto 19.5.2.10
   // task
   private void wait_for_change(uvm_object element) {
-    uvm_fatal("RegModel", "uvm_reg_backdoor::wait_for_change() method" ~
-	      " has not been overloaded");
+    uvm_fatal("RegModel", "uvm_reg_backdoor::wait_for_change() method has not been overloaded");
   }
-
-
-  // /*local*/ extern function void start_update_thread(uvm_object element);
-
-  // start_update_thread
 
   void start_update_thread(uvm_object element) {
     synchronized(this) {
-      if (element in this.m_update_thread) {
+      if (element in this._m_update_thread) {
 	this.kill_update_thread(element);
       }
-      uvm_reg rg = cast(uvm_reg) element;
-      if (rg is null) return; // only regs supported at this time
-
-      fork({
+    }
+    uvm_reg rg = cast(uvm_reg) element;
+    if (rg is null) return; // only regs supported at this time
+    fork({
+	synchronized(this) {
 	  version(UVM_USE_PROCESS_CONTAINER) {
-	    this.m_update_thread[element] =
+	    this._m_update_thread[element] =
 	      new process_container_c(Process.self());
 	  }
 	  else {
-	    this.m_update_thread[element] = Process.self();
+	    this._m_update_thread[element] = Process.self();
 	  }
-	  uvm_reg_field[] fields;
-	  rg.get_fields(fields);
-	  while(true) {
-	    uvm_status_e status;
-	    uvm_reg_data_t  val;
-	    uvm_reg_item r_item = new uvm_reg_item("bd_r_item");
-	    r_item.element = rg;
-	    r_item.element_kind = UVM_REG;
-	    this.read(r_item);
-	    // val = r_item.value[0];
-	    val = r_item.get_value(0);
-	    if (r_item.status != UVM_IS_OK) {
-	      uvm_error("RegModel", format("Backdoor read of register" ~
-					   " '%s' failed.", rg.get_name()));
-	    }
-	    foreach (field; fields) {
-	      if (this.is_auto_updated(field)) {
-		// r_item.value[0] = (val >> field.get_lsb_pos()) &
-		//   ((1 << field.get_n_bits())-1);
-		r_item.set_value(0, (val >> field.get_lsb_pos()) &
-				 ((1 << field.get_n_bits())-1));
-		field.do_predict(r_item);
-	      }
-	    }
-	    this.wait_for_change(element);
+	}
+	uvm_reg_field[] fields;
+	rg.get_fields(fields);
+	while(true) {
+	  uvm_status_e status;
+	  uvm_reg_data_t  val;
+	  uvm_reg_item r_item = new uvm_reg_item("bd_r_item");
+	  r_item.set_element(rg);
+	  r_item.set_element_kind(UVM_REG);
+	  this.read(r_item);
+	  val = r_item.get_value(0);
+	  if (r_item.get_status() != UVM_IS_OK) {
+	    uvm_error("RegModel", format("Backdoor read of register '%s' failed.",
+					 rg.get_name()));
 	  }
-	});
-    }
+	  foreach (field; fields) {
+	    if (this.is_auto_updated(field)) {
+	      uvm_reg_data_t tmp = (val >> field.get_lsb_pos()) &
+		((1 << field.get_n_bits())-1);
+	      r_item.set_value(tmp, 0);
+	      field.do_predict(r_item);
+	    }
+	  }
+	  this.wait_for_change(element);
+	}
+      });
   }
 
 
-  // /*local*/ extern function void kill_update_thread(uvm_object element);
-
-  // kill_update_thread
-
   void kill_update_thread(uvm_object element) {
     synchronized(this) {
-      if (element in this.m_update_thread) {
+      if (element in this._m_update_thread) {
 	version(UVM_USE_PROCESS_CONTAINER) {
-	  this.m_update_thread[element].p.abort();
+	  this._m_update_thread[element].p.abort();
 	}
 	else {
-	  this.m_update_thread[element].abort();
+	  this._m_update_thread[element].abort();
 	}
-	this.m_update_thread.remove(element);
+	this._m_update_thread.remove(element);
       }
     }
   }
 
-  // /*local*/ extern function bit has_update_threads();
-
-  // has_update_threads
-
   bool has_update_threads() {
-    return this.m_update_thread.length > 0;
+    synchronized(this) {
+      return this._m_update_thread.length > 0;
+    }
   }
 
-
-  // Task: pre_read
-  //
-  // Called before user-defined backdoor register read.
-  //
-  // The registered callback methods are invoked after the invocation
-  // of this method.
-  //
-  // virtual task pre_read(uvm_reg_item rw); endtask
+  // @uvm-ieee 1800.2-2017 auto 19.5.2.11
   // task
-  void pre_read(uvm_reg_item rw) {}
+  void pre_read(uvm_reg_item rw) { }
 
+  // @uvm-ieee 1800.2-2017 auto 19.5.2.12
+  // task
+  void post_read(uvm_reg_item rw) { }
 
-  // Task: post_read
-  //
-  // Called after user-defined backdoor register read.
-  //
-  // The registered callback methods are invoked before the invocation
-  // of this method.
-  //
-  // virtual task post_read(uvm_reg_item rw); endtask
-  void post_read(uvm_reg_item rw) {}
+  // @uvm-ieee 1800.2-2017 auto 19.5.2.13
+  // task
+  void pre_write(uvm_reg_item rw) { }
 
+  // @uvm-ieee 1800.2-2017 auto 19.5.2.14
+  // task
+  void post_write(uvm_reg_item rw) { }
 
-  // Task: pre_write
-  //
-  // Called before user-defined backdoor register write.
-  //
-  // The registered callback methods are invoked after the invocation
-  // of this method.
-  //
-  // The written value, if modified, modifies the actual value that
-  // will be written.
-  //
-  // virtual task pre_write(uvm_reg_item rw); endtask
-  void pre_write(uvm_reg_item rw) {}
-
-
-  // Task: post_write
-  //
-  // Called after user-defined backdoor register write.
-  //
-  // The registered callback methods are invoked before the invocation
-  // of this method.
-  //
-  // virtual task post_write(uvm_reg_item rw); endtask
-
-  void post_write(uvm_reg_item rw) {}
-
-  // @uvm_public_sync
+  @uvm_public_sync
   private string _fname;
-  // uvm_sync_public _fname string
-  final public string fname() {synchronized(this) return this._fname;}
-  final public void fname(string val) {synchronized(this) this._fname = val;}
 
-  // @uvm_public_sync
+  @uvm_public_sync
   private int _lineno;
-  // uvm_sync_public _lineno int
-  final public int lineno() {synchronized(this) return this._lineno;}
-  final public void lineno(int val) {synchronized(this) this._lineno = val;}
 
   version(UVM_USE_PROCESS_CONTAINER) {
-    private process_container_c[uvm_object] m_update_thread;
+  @uvm_public_sync
+    private process_container_c[uvm_object] _m_update_thread;
   }
   else {
-    private Process[uvm_object] m_update_thread;
+    @uvm_public_sync
+    private Process[uvm_object] _m_update_thread;
   }
 
+  mixin uvm_register_cb!(uvm_reg_cbs);
+  
 }
+
+

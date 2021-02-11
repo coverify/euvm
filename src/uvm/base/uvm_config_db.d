@@ -53,7 +53,7 @@ import uvm.base.uvm_factory: uvm_object_wrapper;
 import uvm.base.uvm_object_globals: uvm_bitstream_t;
 import uvm.base.uvm_resource: uvm_resource, uvm_resource_pool;
 import uvm.base.uvm_resource_base:  uvm_resource_types, uvm_resource_base;
-import uvm.base.uvm_once;
+import uvm.base.uvm_scope;
 
 import uvm.meta.misc;
 import uvm.dpi.uvm_regex: uvm_re_match, uvm_glob_to_re;
@@ -105,7 +105,7 @@ class uvm_config_db (T = int): uvm_resource_db!T
   // private __gshared uvm_pool!(string, uvm_resource!T)[uvm_component] _m_rsc;
 
   // singleton resources
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     // Internal lookup of config settings so they can be reused
     // The context has a pool that is keyed by the inst/field name.
@@ -117,7 +117,7 @@ class uvm_config_db (T = int): uvm_resource_db!T
     private uvm_array!(m_uvm_waiter)[string] _m_waiters;
   }
 
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
 
   alias this_type = uvm_config_db!T;
 
@@ -242,11 +242,11 @@ class uvm_config_db (T = int): uvm_resource_db!T
 
     uvm_pool!(string, uvm_resource!T) pool;
 
-    synchronized (_uvm_once_inst) {
-      if (cntxt !in _uvm_once_inst._m_rsc) {
-    	_uvm_once_inst._m_rsc[cntxt] = new uvm_pool!(string, uvm_resource!T);
+    synchronized (_uvm_scope_inst) {
+      if (cntxt !in _uvm_scope_inst._m_rsc) {
+    	_uvm_scope_inst._m_rsc[cntxt] = new uvm_pool!(string, uvm_resource!T);
       }
-      pool = _uvm_once_inst._m_rsc[cntxt];
+      pool = _uvm_scope_inst._m_rsc[cntxt];
     }
 
     // Insert the token in the middle to prevent cache
@@ -276,12 +276,12 @@ class uvm_config_db (T = int): uvm_resource_db!T
     rp.set_priority_name(r, uvm_resource_types.priority_e.PRI_HIGH);
     
     //trigger any waiters
-    synchronized (_uvm_once_inst) {
-      if (field_name in _uvm_once_inst._m_waiters) {
+    synchronized (_uvm_scope_inst) {
+      if (field_name in _uvm_scope_inst._m_waiters) {
 	m_uvm_waiter w;
 	for (size_t i=0;
-	     i < _uvm_once_inst._m_waiters[field_name].length; ++i) {
-	  w = _uvm_once_inst._m_waiters[field_name].get(i);
+	     i < _uvm_scope_inst._m_waiters[field_name].length; ++i) {
+	  w = _uvm_scope_inst._m_waiters[field_name].get(i);
 	  if ( uvm_is_match(inst_name, w.inst_name) )
 	    w.trigger.notify();  
 	}
@@ -359,10 +359,10 @@ class uvm_config_db (T = int): uvm_resource_db!T
 
     m_uvm_waiter waiter = new m_uvm_waiter(inst_name, field_name);
 
-    synchronized (_uvm_once_inst) {
-      if (field_name !in _uvm_once_inst._m_waiters)
-	_uvm_once_inst._m_waiters[field_name] = new uvm_array!(m_uvm_waiter);
-      _uvm_once_inst._m_waiters[field_name].push_back(waiter);
+    synchronized (_uvm_scope_inst) {
+      if (field_name !in _uvm_scope_inst._m_waiters)
+	_uvm_scope_inst._m_waiters[field_name] = new uvm_array!(m_uvm_waiter);
+      _uvm_scope_inst._m_waiters[field_name].push_back(waiter);
     }
 
 
@@ -372,12 +372,12 @@ class uvm_config_db (T = int): uvm_resource_db!T
     // wait on the waiter to trigger
     waiter.wait_for_trigger();
 
-    synchronized (_uvm_once_inst) {
+    synchronized (_uvm_scope_inst) {
       // Remove the waiter from the waiter list
       for (size_t i = 0;
-	   i < _uvm_once_inst._m_waiters[field_name].length; ++i) {
-	if (_uvm_once_inst._m_waiters[field_name].get(i) is waiter) {
-	  _uvm_once_inst._m_waiters[field_name].remove(i);
+	   i < _uvm_scope_inst._m_waiters[field_name].length; ++i) {
+	if (_uvm_scope_inst._m_waiters[field_name].get(i) is waiter) {
+	  _uvm_scope_inst._m_waiters[field_name].remove(i);
 	  break;
 	}
       }
@@ -405,7 +405,7 @@ alias uvm_config_int = uvm_config_db!uvm_bitstream_t;
 //
 //| typedef uvm_config_db#(string) uvm_config_string;
 
-/* @uvm-ieee 1800.2-2017 auto C.4.2.3.3*/ 
+/* @uvm-ieee 1800.2-2017 auto C.4.2.3.2*/ 
 alias uvm_config_string = uvm_config_db!string;
 
 //----------------------------------------------------------------------
@@ -415,7 +415,7 @@ alias uvm_config_string = uvm_config_db!string;
 //
 //| typedef uvm_config_db#(uvm_object) uvm_config_object;
 
-/* @uvm-ieee 1800.2-2017 auto C.4.2.3.4*/
+/* @uvm-ieee 1800.2-2017 auto C.4.2.3.3*/
 alias uvm_config_object = uvm_config_db!uvm_object;
 
 //----------------------------------------------------------------------
@@ -425,6 +425,7 @@ alias uvm_config_object = uvm_config_db!uvm_object;
 //
 //| typedef uvm_config_db#(uvm_object_wrapper) uvm_config_wrapper;
 
+/* @uvm-ieee 1800.2-2017 auto C.4.2.3.4*/
 alias uvm_config_wrapper = uvm_config_db!uvm_object_wrapper;
 
 
@@ -441,14 +442,14 @@ package class uvm_config_db_options
 {
   import uvm.base.uvm_cmdline_processor: uvm_cmdline_processor;
 
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     private bool _ready;
     private bool _tracing;
   }
 
 
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
 
   // Function: turn_on_tracing
   //
@@ -462,9 +463,9 @@ package class uvm_config_db_options
 
 
   static void turn_on_tracing() {
-    synchronized (_uvm_once_inst) {
-      if (!_uvm_once_inst._ready) init_trace();
-      _uvm_once_inst._tracing = true;
+    synchronized (_uvm_scope_inst) {
+      if (!_uvm_scope_inst._ready) init_trace();
+      _uvm_scope_inst._tracing = true;
     }
   }
 
@@ -476,9 +477,9 @@ package class uvm_config_db_options
 
 
   static void turn_off_tracing() {
-    synchronized (_uvm_once_inst) {
-      if (!_uvm_once_inst._ready) init_trace();
-      _uvm_once_inst._tracing = false;
+    synchronized (_uvm_scope_inst) {
+      if (!_uvm_scope_inst._ready) init_trace();
+      _uvm_scope_inst._tracing = false;
     }
   }
 
@@ -490,23 +491,23 @@ package class uvm_config_db_options
 
 
   static bool is_tracing() {
-    synchronized (_uvm_once_inst) {
-      if (!_uvm_once_inst._ready) init_trace();
-      return _uvm_once_inst._tracing;
+    synchronized (_uvm_scope_inst) {
+      if (!_uvm_scope_inst._ready) init_trace();
+      return _uvm_scope_inst._tracing;
     }
   }
 
 
   static private void init_trace() {
-    synchronized (_uvm_once_inst) {
+    synchronized (_uvm_scope_inst) {
       string[] trace_args;
 
       uvm_cmdline_processor clp = uvm_cmdline_processor.get_inst();
 
       if (clp.get_arg_matches(`\+UVM_CONFIG_DB_TRACE`, trace_args)) {
-	_uvm_once_inst._tracing = true;
+	_uvm_scope_inst._tracing = true;
       }
-      _uvm_once_inst._ready = true;
+      _uvm_scope_inst._ready = true;
     }
   }
 

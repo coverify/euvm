@@ -48,18 +48,26 @@ import uvm.reg.uvm_reg_map: uvm_reg_map;
 import uvm.reg.uvm_reg_block: uvm_reg_block;
 import uvm.reg.uvm_reg_file: uvm_reg_file;
 import uvm.reg.uvm_reg_item: uvm_reg_item;
+
 import uvm.reg.uvm_reg_sequence: uvm_reg_frontdoor;
 import uvm.seq.uvm_sequence_base: uvm_sequence_base;
+
 import uvm.base.uvm_object: uvm_object;
 import uvm.base.uvm_globals: uvm_warning, uvm_error;
 import uvm.base.uvm_resource_db: uvm_resource_db;
 
+import uvm.meta.misc;
+
 import std.string: format;
 
+// @uvm-ieee 1800.2-2017 auto 18.7.1
 class uvm_reg_indirect_data: uvm_reg
 {
-
+  mixin uvm_sync;
+  
+  @uvm_protected_sync
   protected uvm_reg   _m_idx;
+  @uvm_protected_sync
   protected uvm_reg[] _m_tbl;
 
   // @uvm-ieee 1800.2-2017 auto 18.7.2.1
@@ -67,7 +75,7 @@ class uvm_reg_indirect_data: uvm_reg
     super(name, n_bits, has_cover);
   }
 
-  void build() {}
+  void build() { }
 
   // @uvm-ieee 1800.2-2017 auto 18.7.2.2
   void configure (uvm_reg idx, uvm_reg[] reg_a,
@@ -84,13 +92,12 @@ class uvm_reg_indirect_data: uvm_reg
 
       // Add a frontdoor to each indirectly-accessed register
       // for every address map this register is in.
-      foreach (map, unused; m_maps) {
+      foreach (map; get_maps()) {
 	add_frontdoors(map);
       }
     }
   }
    
-  // /*local*/ virtual function void add_map(uvm_reg_map map);
   override void add_map(uvm_reg_map map) {
     synchronized(this) {
       super.add_map(map);
@@ -162,7 +169,7 @@ class uvm_reg_indirect_data: uvm_reg
   override uvm_reg_data_t  get(string  fname = "",
 			       int     lineno = 0) {
     uvm_error(get_full_name(), "Cannot get() an indirect data access register");
-    return 0;
+    return uvm_reg_data_t(0);
   }
    
   uvm_reg get_indirect_reg(string  fname = "",
@@ -306,8 +313,13 @@ class uvm_reg_indirect_data: uvm_reg
 
 class uvm_reg_indirect_ftdr_seq: uvm_reg_frontdoor
 {
+  mixin uvm_sync;
+  
+  @uvm_immutable_sync
   private uvm_reg _m_addr_reg;
+  @uvm_immutable_sync
   private uvm_reg _m_data_reg;
+  @uvm_immutable_sync
   private int     _m_idx;
    
   this(uvm_reg addr_reg, int idx, uvm_reg data_reg) {
@@ -328,13 +340,13 @@ class uvm_reg_indirect_ftdr_seq: uvm_reg_frontdoor
     synchronized(rw) {
       rw.set_element(_m_addr_reg);
       rw.set_kind(UVM_WRITE);
-      rw.set_value(_m_idx, 0);
+      rw.set_value(cast(uvm_reg_data_t) _m_idx, 0);
     }
 
-    _m_addr_reg.XatomicX(1);
-    _m_data_reg.XatomicX(1);
+    m_addr_reg.XatomicX(1);
+    m_data_reg.XatomicX(1);
       
-    _m_addr_reg.do_write(rw);
+    m_addr_reg.do_write(rw);
 
     if (rw.get_status() == UVM_NOT_OK) {
       return;
@@ -346,15 +358,15 @@ class uvm_reg_indirect_ftdr_seq: uvm_reg_frontdoor
     rw.set_element(_m_data_reg);
 
     if (rw_info.get_kind() == UVM_WRITE) {
-      _m_data_reg.do_write(rw);
+      m_data_reg.do_write(rw);
     }
     else {
-      _m_data_reg.do_read(rw);
+      m_data_reg.do_read(rw);
       rw_info.set_value(rw.get_value[0], 0);
     }
 
-    _m_addr_reg.XatomicX(0);
-    _m_data_reg.XatomicX(0);
+    m_addr_reg.XatomicX(0);
+    m_data_reg.XatomicX(0);
       
     rw_info.set_status(rw.get_status());
   }

@@ -44,7 +44,7 @@ import uvm.base.uvm_misc: uvm_object_value_str;
 
 import uvm.dpi.uvm_regex: uvm_glob_to_re;
 
-import uvm.base.uvm_once;
+import uvm.base.uvm_scope;
 
 import uvm.meta.meta;
 import uvm.meta.misc;
@@ -146,7 +146,7 @@ class uvm_resource_pool: _esdl__Norand
   }
   // table to set/get scope and precedence for resources
 
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_immutable_sync
     private uvm_pool!(uvm_resource_base, rsrc_info_t) _ri_tab;
@@ -168,7 +168,7 @@ class uvm_resource_pool: _esdl__Norand
     }
   }
 
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
 
   private uvm_resource_types.rsrc_q_t[string]     _rtab;
   private uvm_resource_types.rsrc_q_t[uvm_resource_base]   _ttab;
@@ -1081,7 +1081,7 @@ class uvm_resource(T=int): uvm_resource_base, _esdl__Norand
 
   alias this_type = uvm_resource!(T);
 
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     // singleton handle that represents the type of this resource
     @uvm_immutable_sync
@@ -1093,7 +1093,7 @@ class uvm_resource(T=int): uvm_resource_base, _esdl__Norand
     }
   }
 
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
   mixin (uvm_sync_string);
   // Can't be rand since things like rand strings are not legal.
   @uvm_protected_sync

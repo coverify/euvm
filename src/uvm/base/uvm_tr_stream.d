@@ -28,7 +28,7 @@ module uvm.base.uvm_tr_stream;
 import uvm.base.uvm_tr_database: uvm_tr_database;
 import uvm.base.uvm_object: uvm_object;
 import uvm.base.uvm_recorder: uvm_recorder, uvm_text_recorder;
-import uvm.base.uvm_once;
+import uvm.base.uvm_scope;
 import uvm.base.uvm_object_defines;
 import uvm.dap.uvm_set_before_get_dap: uvm_set_before_get_dap;
 
@@ -64,7 +64,7 @@ class m_uvm_tr_stream_cfg
 abstract class uvm_tr_stream: uvm_object
 {
 
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     // Variable- m_ids_by_stream
     // An associative array of int, indexed by uvm_tr_streams.  This
@@ -86,7 +86,7 @@ abstract class uvm_tr_stream: uvm_object
     
   }
 
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
 
   // Variable- m_cfg_dap
   // Data access protected reference to the DB
@@ -253,8 +253,8 @@ abstract class uvm_tr_stream: uvm_object
 
       _m_warn_null_cfg = true;
 
-      synchronized (_uvm_once_inst) {
-	auto pid = this in _uvm_once_inst._m_ids_by_stream;
+      synchronized (_uvm_scope_inst) {
+	auto pid = this in _uvm_scope_inst._m_ids_by_stream;
 	if (pid !is null) {
 	  m_free_id(*pid);
 	}
@@ -444,14 +444,14 @@ abstract class uvm_tr_stream: uvm_object
     }
 
     // Check for the weird case where our handle changed.
-    synchronized (_uvm_once_inst) {
-      auto phandle = this in _uvm_once_inst._m_ids_by_stream;
+    synchronized (_uvm_scope_inst) {
+      auto phandle = this in _uvm_scope_inst._m_ids_by_stream;
       if (phandle !is null && *phandle !is handle) {
-    	_uvm_once_inst._m_streams_by_id.remove(*phandle);
+    	_uvm_scope_inst._m_streams_by_id.remove(*phandle);
       }
 
-      _uvm_once_inst._m_streams_by_id[handle] = this;
-      _uvm_once_inst._m_ids_by_stream[this] = handle;
+      _uvm_scope_inst._m_streams_by_id[handle] = this;
+      _uvm_scope_inst._m_ids_by_stream[this] = handle;
 
     }
 
@@ -463,8 +463,8 @@ abstract class uvm_tr_stream: uvm_object
     if (id == 0) {
       return null;
     }
-    synchronized (_uvm_once_inst) {
-      auto pstream = id in _uvm_once_inst._m_streams_by_id;
+    synchronized (_uvm_scope_inst) {
+      auto pstream = id in _uvm_scope_inst._m_streams_by_id;
       if (// $isunknown(id) ||
     	 pstream is null) {
     	return null;
@@ -478,17 +478,17 @@ abstract class uvm_tr_stream: uvm_object
   // Frees the id/stream link (memory cleanup)
   //
   static void m_free_id(int id) {
-    synchronized (_uvm_once_inst) {
+    synchronized (_uvm_scope_inst) {
       uvm_tr_stream stream;
-      auto pstream = id in _uvm_once_inst._m_streams_by_id;
+      auto pstream = id in _uvm_scope_inst._m_streams_by_id;
       if (// !$isunknown(id) &&
     	 pstream !is null) {
     	stream = *pstream;
       }
 
       if (stream !is null) {
-    	_uvm_once_inst._m_streams_by_id.remove(id);
-    	_uvm_once_inst._m_ids_by_stream.remove(stream);
+    	_uvm_scope_inst._m_streams_by_id.remove(id);
+    	_uvm_scope_inst._m_ids_by_stream.remove(stream);
       }
     }
   }

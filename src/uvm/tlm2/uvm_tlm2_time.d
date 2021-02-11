@@ -33,22 +33,22 @@ module uvm.tlm2.uvm_tlm2_time;
 
 import esdl.data.time;
 import uvm.base.uvm_globals;
-import uvm.base.uvm_once;
+import uvm.base.uvm_scope;
 import uvm.meta.misc;
 
 class uvm_tlm_time
 {
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     // @uvm_private_sync
     double _m_resolution = 1.0e-12; // ps by default
   }
-  // mixin(uvm_once_sync_string);
-  // uvm_once uvm_once
-  static uvm_once _uvm_once_inst() {return uvm_once.get_instance!uvm_once;}
-  // uvm_once_private _m_resolution double uvm_once
-  static private double m_resolution() {synchronized(_uvm_once_inst) return _uvm_once_inst._m_resolution;}
-  static private void m_resolution(double val) {synchronized(_uvm_once_inst) _uvm_once_inst._m_resolution = val;}
+  // mixin(uvm_scope_sync_string);
+  // uvm_scope uvm_scope
+  static uvm_scope _uvm_scope_inst() {return uvm_scope.get_instance!uvm_scope;}
+  // uvm_scope_private _m_resolution double uvm_scope
+  static private double m_resolution() {synchronized(_uvm_scope_inst) return _uvm_scope_inst._m_resolution;}
+  static private void m_resolution(double val) {synchronized(_uvm_scope_inst) _uvm_scope_inst._m_resolution = val;}
 
   private real _m_res;
   // local time _m_time;

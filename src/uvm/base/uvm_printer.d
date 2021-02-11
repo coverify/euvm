@@ -50,7 +50,7 @@ import uvm.base.uvm_object_globals: uvm_radix_enum, UVM_FILE,
   UVM_RADIX, UVM_RECURSION;
 import uvm.base.uvm_object_defines;
 import uvm.base.uvm_traversal: uvm_structure_proxy;
-import uvm.base.uvm_once: uvm_once_base;
+import uvm.base.uvm_scope: uvm_scope_base;
 import uvm.base.uvm_coreservice: uvm_coreservice_t;
 import uvm.base.uvm_globals: uvm_error, uvm_warning;
 import uvm.base.uvm_field_op: uvm_field_op;
@@ -1089,8 +1089,8 @@ class uvm_table_printer: uvm_printer
     }
   }
 
-  mixin (uvm_once_sync_string);
-  static class uvm_once: uvm_once_base
+  mixin (uvm_scope_sync_string);
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_private_sync
     private uvm_table_printer _m_default_table_printer ;
@@ -1100,7 +1100,7 @@ class uvm_table_printer: uvm_printer
 
   // @uvm-ieee 1800.2-2017 auto 16.2.10.2.3
   static void set_default(uvm_table_printer printer) {
-    synchronized (_uvm_once_inst) {
+    synchronized (_uvm_scope_inst) {
       _m_default_table_printer = printer;
     }
   }
@@ -1119,12 +1119,12 @@ class uvm_table_printer: uvm_printer
 
   // @uvm-ieee 1800.2-2017 auto 16.2.10.2.4
   static uvm_table_printer get_default() {
-    synchronized (_uvm_once_inst) {
-      if (_uvm_once_inst._m_default_table_printer is null) {
-	_uvm_once_inst._m_default_table_printer =
+    synchronized (_uvm_scope_inst) {
+      if (_uvm_scope_inst._m_default_table_printer is null) {
+	_uvm_scope_inst._m_default_table_printer =
 	  new uvm_table_printer("uvm_default_table_printer") ;
       }
-      return _uvm_once_inst._m_default_table_printer ;
+      return _uvm_scope_inst._m_default_table_printer ;
     }
   }
     
@@ -1224,14 +1224,14 @@ class uvm_table_printer: uvm_printer
 class uvm_tree_printer: uvm_printer
 {
   mixin (uvm_sync_string);
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
 
   @uvm_private_sync
   private string _m_newline = "\n";
   @uvm_private_sync
   private string _m_linefeed ;
 
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_private_sync
     private uvm_tree_printer _m_default_tree_printer ;
@@ -1255,8 +1255,8 @@ class uvm_tree_printer: uvm_printer
 
   // @uvm-ieee 1800.2-2017 auto 16.2.11.2.3
   static void set_default(uvm_tree_printer printer) {
-    synchronized (_uvm_once_inst) {
-      _uvm_once_inst._m_default_tree_printer = printer ;
+    synchronized (_uvm_scope_inst) {
+      _uvm_scope_inst._m_default_tree_printer = printer ;
     }
   }
 
@@ -1274,12 +1274,12 @@ class uvm_tree_printer: uvm_printer
 
   // @uvm-ieee 1800.2-2017 auto 16.2.11.2.4
   static uvm_tree_printer get_default() {
-    synchronized (_uvm_once_inst) {
-      if (_uvm_once_inst._m_default_tree_printer is null) {
-	_uvm_once_inst._m_default_tree_printer =
+    synchronized (_uvm_scope_inst) {
+      if (_uvm_scope_inst._m_default_tree_printer is null) {
+	_uvm_scope_inst._m_default_tree_printer =
 	  new uvm_tree_printer("uvm_default_tree_printer") ;
       }
-      return _uvm_once_inst._m_default_tree_printer ;
+      return _uvm_scope_inst._m_default_tree_printer ;
     }
   }
 
@@ -1435,7 +1435,7 @@ class uvm_tree_printer: uvm_printer
 class uvm_line_printer: uvm_tree_printer {
 
   mixin (uvm_sync_string);
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
   // @uvm-ieee 1800.2-2017 auto 16.2.12.2.2
   mixin uvm_object_essentials;
 
@@ -1456,7 +1456,7 @@ class uvm_line_printer: uvm_tree_printer {
   }
 
 
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_private_sync
     private uvm_line_printer _m_default_line_printer ;
@@ -1465,8 +1465,8 @@ class uvm_line_printer: uvm_tree_printer {
   // @uvm-ieee 1800.2-2017 auto 16.2.12.2.3
   // @uvm-ieee 1800.2-2017 auto 16.2.2.2
   static void set_default(uvm_line_printer printer) {
-    synchronized (_uvm_once_inst) {
-      _uvm_once_inst._m_default_line_printer = printer ;
+    synchronized (_uvm_scope_inst) {
+      _uvm_scope_inst._m_default_line_printer = printer ;
     }
   }
 
@@ -1484,12 +1484,12 @@ class uvm_line_printer: uvm_tree_printer {
 
   // @uvm-ieee 1800.2-2017 auto 16.2.2.3
   static uvm_line_printer get_default() {
-    synchronized (_uvm_once_inst) {
-      if (_uvm_once_inst._m_default_line_printer is null) {
-	_uvm_once_inst._m_default_line_printer =
+    synchronized (_uvm_scope_inst) {
+      if (_uvm_scope_inst._m_default_line_printer is null) {
+	_uvm_scope_inst._m_default_line_printer =
 	  new uvm_line_printer("uvm_default_line_printer") ;
       }
-      return _uvm_once_inst._m_default_line_printer ;
+      return _uvm_scope_inst._m_default_line_printer ;
     }
   }
 

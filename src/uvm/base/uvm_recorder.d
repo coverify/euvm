@@ -60,7 +60,7 @@ import uvm.base.uvm_text_tr_database: uvm_text_tr_database;
 import uvm.base.uvm_field_op: uvm_field_op;
 
 import uvm.base.uvm_object_defines;
-import uvm.base.uvm_once;
+import uvm.base.uvm_scope;
 
 import uvm.meta.mcd;
 import uvm.meta.misc;
@@ -88,7 +88,7 @@ abstract class uvm_recorder: uvm_policy
 
   mixin uvm_abstract_object_essentials;
   
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     // Variable- m_ids_by_recorder
     // An associative array of integers, indexed by uvm_recorders.  This
@@ -112,7 +112,7 @@ abstract class uvm_recorder: uvm_policy
     // private int _m_id;  // declared in SV -- otherwise unused
   };
 
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
 
   mixin (uvm_sync_string);
 
@@ -318,8 +318,8 @@ abstract class uvm_recorder: uvm_policy
 
       _m_warn_null_stream = true;
 
-      synchronized (_uvm_once_inst) {
-	auto pid = this in _uvm_once_inst._m_ids_by_recorder;
+      synchronized (_uvm_scope_inst) {
+	auto pid = this in _uvm_scope_inst._m_ids_by_recorder;
 	if (pid !is null) {
 	  m_free_id(*pid);
 	}
@@ -418,16 +418,16 @@ abstract class uvm_recorder: uvm_policy
   // Frees the id/recorder link (memory cleanup)
   //
   static void m_free_id(int id) {
-    synchronized (_uvm_once_inst) {
+    synchronized (_uvm_scope_inst) {
       uvm_recorder recorder;
-      auto pid = id in _uvm_once_inst._m_recorders_by_id;
+      auto pid = id in _uvm_scope_inst._m_recorders_by_id;
       if (pid !is null) {
 	recorder = *pid;
       }
 
       if (recorder !is null) {
-	_uvm_once_inst._m_recorders_by_id.remove(id);
-	_uvm_once_inst._m_ids_by_recorder.remove(recorder);
+	_uvm_scope_inst._m_recorders_by_id.remove(id);
+	_uvm_scope_inst._m_ids_by_recorder.remove(recorder);
       }
     }
   }
@@ -440,16 +440,16 @@ abstract class uvm_recorder: uvm_policy
     }
     else {
       int handle = get_inst_id();
-      synchronized (_uvm_once_inst) {
+      synchronized (_uvm_scope_inst) {
 	// Check for the weird case where our handle changed.
-	auto pid = this in _uvm_once_inst._m_ids_by_recorder;
+	auto pid = this in _uvm_scope_inst._m_ids_by_recorder;
 	if (pid !is null && *pid !is handle) {
 	  assert (false, "The weird case where our handle changed!");
-	  // _uvm_once_inst._m_recorders_by_id.remove(*pid);
+	  // _uvm_scope_inst._m_recorders_by_id.remove(*pid);
 	}
 
-	_uvm_once_inst._m_recorders_by_id[handle] = this;
-	_uvm_once_inst._m_ids_by_recorder[this] = handle;
+	_uvm_scope_inst._m_recorders_by_id[handle] = this;
+	_uvm_scope_inst._m_ids_by_recorder[this] = handle;
 
 	return handle;
       }
@@ -459,12 +459,12 @@ abstract class uvm_recorder: uvm_policy
 
   // @uvm-ieee 1800.2-2017 auto 16.4.5.2
   static uvm_recorder get_recorder_from_handle(int id) {
-    synchronized (_uvm_once_inst) {
+    synchronized (_uvm_scope_inst) {
       if (id == 0) {
 	return null;
       }
 
-      auto pid = id in _uvm_once_inst._m_recorders_by_id;
+      auto pid = id in _uvm_scope_inst._m_recorders_by_id;
       
       if (pid is null) {
 	return null;

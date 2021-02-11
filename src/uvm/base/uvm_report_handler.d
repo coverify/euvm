@@ -42,7 +42,7 @@ import uvm.base.uvm_printer: uvm_printer;
 import uvm.base.uvm_globals: uvm_report_enabled;
 import uvm.base.uvm_object_defines;
 import uvm.base.uvm_version;
-import uvm.base.uvm_once;
+import uvm.base.uvm_scope;
 
 import uvm.meta.misc;
 
@@ -86,13 +86,13 @@ alias uvm_sev_override_array = uvm_pool!(uvm_severity, uvm_severity);
 class uvm_report_handler: uvm_object
 {
 
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_private_sync
     private bool _m_relnotes_done;
   }
 
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
   mixin (uvm_sync_string);
 
   // internal variables

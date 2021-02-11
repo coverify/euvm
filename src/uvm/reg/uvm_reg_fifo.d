@@ -43,6 +43,7 @@ import uvm.reg.uvm_reg_model;
 import uvm.reg.uvm_reg_field: uvm_reg_field;
 import uvm.reg.uvm_reg_map: uvm_reg_map;
 import uvm.reg.uvm_reg_item: uvm_reg_item;
+
 import uvm.seq.uvm_sequence_base: uvm_sequence_base;
 import uvm.base.uvm_object: uvm_object;
 import uvm.base.uvm_globals: uvm_warning, uvm_error;
@@ -52,6 +53,7 @@ import esdl.rand;
 
 import std.string: format;
 
+// @uvm-ieee 1800.2-2017 auto 18.8.1
 class uvm_reg_fifo: uvm_reg
 {
   mixin uvm_sync;
@@ -77,13 +79,13 @@ class uvm_reg_fifo: uvm_reg
   @uvm_public_sync
   private @rand Queue!uvm_reg_data_t _fifo;
 
-  private size_t _get_fifo_length() {
+  private size_t get_fifo_length() {
     synchronized(this) {
       return _fifo.length;
     }
   }
 
-  private uvm_reg_data_t _get_fifo_elem(size_t i) {
+  private uvm_reg_data_t get_fifo_elem(size_t i) {
     synchronized(this) {
       return _fifo[i];
     }
@@ -98,11 +100,8 @@ class uvm_reg_fifo: uvm_reg
   // Group -- NODOCS -- Initialization
   //----------------------
 
-  // Function: new
-  //
-  // Creates an instance of a FIFO register having ~size~ elements of
-  // ~n_bits~ each.
-  //
+
+  // @uvm-ieee 1800.2-2017 auto 18.8.3.1
   this(string name,
        uint size,
        uint n_bits,
@@ -123,17 +122,11 @@ class uvm_reg_fifo: uvm_reg
     synchronized(this) {
       _value = uvm_reg_field.type_id.create("value");
       _value.configure(this, get_n_bits(), 0, "RW",
-		       false, 0, true, false, true);
+		       false, uvm_reg_data_t(0), true, false, true);
     }
   }
 
-  // Function: set_compare
-  //
-  // Sets the compare policy during a mirror (read) of the DUT FIFO. 
-  // The DUT read value is checked against its mirror only when both the
-  // ~check~ argument in the <mirror()> call and the compare policy
-  // for the field is <UVM_CHECK>.
-  //
+  // @uvm-ieee 1800.2-2017 auto 18.8.3.2
   void set_compare(uvm_check_e check=UVM_CHECK) {
     synchronized(this) {
       _value.set_compare(check);
@@ -189,14 +182,7 @@ class uvm_reg_fifo: uvm_reg
   //  enabled, the frontmost value in abstract FIFO is popped.
 
 
-  // Function: set
-  //
-  // Pushes the given value to the abstract FIFO. You may call this
-  // method several times before an <update()> as a means of preloading
-  // the DUT FIFO. Calls to ~set()~ to a full FIFO are ignored. You
-  // must call <update()> to update the DUT FIFO with your set values.
-  //
-
+  // @uvm-ieee 1800.2-2017 auto 18.8.5.2
   override void set(uvm_reg_data_t  value,
 		    string          fname = "",
 		    int             lineno = 0) {
@@ -213,13 +199,7 @@ class uvm_reg_fifo: uvm_reg
   }
     
 
-  // Function: update
-  //
-  // Pushes (writes) all values preloaded using <set(()> to the DUT>.
-  // You must ~update~ after ~set~ before any blocking statements,
-  // else other reads/writes to the DUT FIFO may cause the mirror to
-  // become out of sync with the DUT.
-  //
+  // @uvm-ieee 1800.2-2017 auto 18.8.5.7
   // task
   override void update(out uvm_status_e  status,
 		       uvm_door_e        door = UVM_DEFAULT_DOOR,
@@ -229,27 +209,19 @@ class uvm_reg_fifo: uvm_reg
 		       uvm_object        extension = null,
 		       string            fname = "",
 		       int               lineno = 0) {
-    // declared in SV version but unused
-    // uvm_reg_data_t upd;
-
-    
     synchronized(this) {
-      if (! _m_set_cnt || _fifo.length == 0) {
+      if (! _m_set_cnt || _fifo.length == 0)
 	return;
-      }
       _m_update_in_progress = true;
     }
-    // FIXME synchronization for fifo and for m_set_cnt
-    for (size_t i = _get_fifo_length() - m_set_cnt; m_set_cnt > 0; i++, dcr_m_set_cnt()) {
+    for (size_t i = get_fifo_length() - m_set_cnt; m_set_cnt > 0; i++, dcr_m_set_cnt()) {
       if (i >= 0) {
 	//uvm_reg_data_t val = get();
 	//super.update(status,door,map,parent,prior,extension,fname,lineno);
-	write(status,_get_fifo_elem(i),door,map,parent,prior,extension,fname,lineno);
+	write(status,get_fifo_elem(i),door,map,parent,prior,extension,fname,lineno);
       }
     }
-    synchronized(this) {
-      _m_update_in_progress = false;
-    }
+    m_update_in_progress = false;
   }
 
 
@@ -261,11 +233,7 @@ class uvm_reg_fifo: uvm_reg
   // <set_compare()>.
 
 
-  // Function: get
-  //
-  // Returns the next value from the abstract FIFO, but does not pop it.
-  // Used to get the expected value in a <mirror()> operation.
-  //
+  // @uvm-ieee 1800.2-2017 auto 18.8.5.1
   override uvm_reg_data_t get(string fname="", int lineno=0) {
     synchronized(this) {
       //return fifo.pop_front();
@@ -301,31 +269,23 @@ class uvm_reg_fifo: uvm_reg
 
       final switch (kind) {
 
-      case UVM_PREDICT_WRITE,
-	UVM_PREDICT_DIRECT:
-	{
-	  if (_fifo.length != _m_size && !m_update_in_progress) {
-	    _fifo ~= this._value.get_value();
-	  }
-	}
-
+      case UVM_PREDICT_WRITE, UVM_PREDICT_DIRECT:
+	if (_fifo.length != _m_size && !m_update_in_progress)
+	  _fifo ~= this._value.get_value();
+	break;
       case UVM_PREDICT_READ:
-        {
-	  uvm_reg_data_t value = rw.get_value(0) & ((1 << get_n_bits())-1);
-	  uvm_reg_data_t mirror_val;
-	  if (_fifo.length == 0) {
-	    return;
-	  }
-	  _fifo.popFront(mirror_val);
-	  if (this.value.get_compare() == UVM_CHECK && mirror_val != value) {
-	    uvm_warning("MIRROR_MISMATCH",
-			format("Observed DUT read value 'h%0h != mirror" ~
-			       " value 'h%0h", value, mirror_val));
-	  }
-        }
-
+	uvm_reg_data_t value = rw.get_value(0) & ((1 << get_n_bits())-1);
+	uvm_reg_data_t mirror_val;
+	if (_fifo.length == 0) {
+	  return;
+	}
+	_fifo.popFront(mirror_val);
+	if (this.value.get_compare() == UVM_CHECK && mirror_val != value) {
+	  uvm_warning("MIRROR_MISMATCH",
+		      format("Observed DUT read value 'h%0h != mirror value 'h%0h",
+			     value, mirror_val));
+	}
       }
-
     }
   }
 
@@ -345,13 +305,13 @@ class uvm_reg_fifo: uvm_reg
   // task -- does not have a wait statement though
   override void pre_write(uvm_reg_item rw) {
     synchronized(this) {
-      if (_m_set_cnt && !m_update_in_progress) {
+      if (_m_set_cnt && ! m_update_in_progress) {
 	uvm_error("Needs Update","Must call update() after set()" ~
 		  " and before write()");
 	rw.set_status(UVM_NOT_OK);
 	return;
       }
-      if (_fifo.length >= _m_size && !m_update_in_progress) {
+      if (_fifo.length >= _m_size && ! m_update_in_progress) {
 	uvm_error("FIFO Full","Write to full FIFO ignored");
 	rw.set_status(UVM_NOT_OK);
 	return;
@@ -369,7 +329,7 @@ class uvm_reg_fifo: uvm_reg
   //
   //
 
-  // task
+  // task -- does not have a wait statement though
   override void pre_read(uvm_reg_item rw) {
     synchronized(this) {
       // abort if fifo empty
@@ -386,5 +346,4 @@ class uvm_reg_fifo: uvm_reg
       _m_set_cnt = 0;
     }
   }
-
 }

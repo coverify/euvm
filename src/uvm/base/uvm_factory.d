@@ -36,7 +36,7 @@ import uvm.base.uvm_component: uvm_component;
 import uvm.base.uvm_globals: uvm_report_warning;
 
 
-import uvm.base.uvm_once;
+import uvm.base.uvm_scope;
 
 import uvm.meta.misc;
 import uvm.meta.mcd;
@@ -202,13 +202,13 @@ final class uvm_factory_queue_class
 // @uvm-ieee 1800.2-2017 auto 8.3.1.1
 abstract class uvm_factory
 {
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_private_sync
     private bool _m_debug_pass;
   }
 
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
 
   static bool _is_active;
   

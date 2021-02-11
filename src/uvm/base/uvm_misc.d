@@ -49,7 +49,7 @@ import uvm.base.uvm_object: uvm_object;
 import uvm.base.uvm_object_globals: uvm_radix_enum;
 
 
-import uvm.base.uvm_once;
+import uvm.base.uvm_scope;
 
 import uvm.meta.misc;
 
@@ -97,7 +97,7 @@ enum uvm_apprepend: bool
 //
 final class uvm_seed_map
 {
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     // ** from uvm_misc
     // Variable- m_global_random_seed
@@ -114,11 +114,11 @@ final class uvm_seed_map
     private uvm_seed_map[string] _uvm_random_seed_table_lookup;
   }
 
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
 
   static void set_seed(uint seed) {
-    synchronized (_uvm_once_inst) {
-      _uvm_once_inst._m_global_random_seed = seed;
+    synchronized (_uvm_scope_inst) {
+      _uvm_scope_inst._m_global_random_seed = seed;
     }
   }
 
@@ -133,10 +133,10 @@ final class uvm_seed_map
 
     type_id =  uvm_instance_scope() ~ type_id;
 
-    synchronized (_uvm_once_inst) {
-      if (inst_id !in _uvm_once_inst._uvm_random_seed_table_lookup)
-	_uvm_once_inst._uvm_random_seed_table_lookup[inst_id] = new uvm_seed_map();
-      seed_map = _uvm_once_inst._uvm_random_seed_table_lookup[inst_id];
+    synchronized (_uvm_scope_inst) {
+      if (inst_id !in _uvm_scope_inst._uvm_random_seed_table_lookup)
+	_uvm_scope_inst._uvm_random_seed_table_lookup[inst_id] = new uvm_seed_map();
+      seed_map = _uvm_scope_inst._uvm_random_seed_table_lookup[inst_id];
     }
 
     return seed_map.create_random_seed(type_id, inst_id);

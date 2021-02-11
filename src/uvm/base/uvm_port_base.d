@@ -495,7 +495,7 @@ abstract class uvm_port_base(IF = uvm_void): IF, _esdl__Norand
   // must not be set before the end_of_elaboration phase, when port connections
   // have not yet been resolved.
 
-  // @uvm-ieee 1800.2-2017 auto 5.5.2.12
+  // @uvm-ieee 1800.2-2017 auto 5.5.2.13
   final void set_default_index(size_t index) {
     synchronized (this) {
       _m_def_index = index;
@@ -803,6 +803,7 @@ abstract class uvm_port_base(IF = uvm_void): IF, _esdl__Norand
   // get_provided_to
   // ---------------
 
+  // @uvm-ieee 1800.2-2017 auto 5.5.2.10
   final void get_provided_to (out uvm_port_base!IF[string] list) {
     synchronized (this) {
       foreach (name, port; _m_provided_to) {

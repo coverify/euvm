@@ -313,6 +313,7 @@ class uvm_wrap_obj(T) {
 }
 
 enum uvm_none_sync;		// no wrapper
+enum uvm_void_sync;		// no wrapper -- except for once wrapper
 enum uvm_private_sync;
 enum uvm_public_sync;
 enum uvm_protected_sync;
@@ -328,6 +329,9 @@ template uvm_sync_access(size_t I=0, A...) {
   }
   else static if(is(A[I] == uvm_none_sync)) {
       enum string uvm_sync_access = "none";
+    }
+  else static if(is(A[I] == uvm_void_sync)) {
+      enum string uvm_sync_access = "void";
     }
   else static if(is(A[I] == uvm_private_sync)) {
       enum string uvm_sync_access = "private";
@@ -364,7 +368,7 @@ template uvm_lock_string(T, string U="this", size_t ITER=0) {
   }
   else {
     enum string mem = (T.tupleof[ITER].stringof);
-    static if(mem == "this" || mem == "uvm_once_inst" || mem == "_uvm_once_inst") {
+    static if(mem == "this" || mem == "uvm_scope_inst" || mem == "_uvm_scope_inst") {
       // exclude "this" in nested classes
       enum string uvm_lock_string =
 	uvm_lock_string!(T, U, ITER+1);
@@ -404,7 +408,7 @@ template uvm_sync_string(T, string U="this", size_t ITER=0) {
   }
   else {
     enum string mem = __traits(derivedMembers, T)[ITER];
-    static if(mem == "this" || mem == "uvm_once_inst" || mem == "_uvm_once_inst") {
+    static if(mem == "this" || mem == "uvm_scope_inst" || mem == "_uvm_scope_inst") {
       // exclude "this" in nested classes
       enum string uvm_sync_string =
 	uvm_sync_string!(T, U, ITER+1);
@@ -441,7 +445,7 @@ template uvm_check_sync(string C, string A, string M, string U) {
 }
 
 template uvm_sync_string(string C, string A, string M, string U) {
-  static if(U == "_uvm_once_inst" || U == "uvm_once_inst") enum string SCOPE = "static";
+  static if(U == "_uvm_scope_inst" || U == "uvm_scope_inst") enum string SCOPE = "static";
   else enum string SCOPE = "";
   debug(UVM_SYNC_LIST) {
     enum string uvm_sync_check = uvm_check_sync!(C, A, M, U);
@@ -449,7 +453,7 @@ template uvm_sync_string(string C, string A, string M, string U) {
   else {
     enum string uvm_sync_check = "";
   }
-  static if(A == "" || A == "none") {
+  static if(A == "" || A == "none" || A == "void") {
     enum string uvm_sync_string = uvm_sync_check;
   }
   else static if(A == "immutable") {
@@ -483,7 +487,7 @@ template uvm_sync_string(string C, string A, string M, string U) {
 
 template uvm_sync_string_alt(T, TM, string A, string M, string U) {
   enum TMSTR = TM.stringof;
-  static if(U == "_uvm_once_inst" || U == "uvm_once_inst") enum string SCOPE = "static";
+  static if(U == "_uvm_scope_inst" || U == "uvm_scope_inst") enum string SCOPE = "static";
   else enum string SCOPE = "";
   debug(UVM_SYNC_LIST) {
     enum string uvm_sync_check = uvm_check_sync!(C, A, M, U);
@@ -491,7 +495,7 @@ template uvm_sync_string_alt(T, TM, string A, string M, string U) {
   else {
     enum string uvm_sync_check = "";
   }
-  static if(A == "" || A == "none") {
+  static if(A == "" || A == "none" || A == "void") {
     enum string uvm_sync_string_alt = uvm_sync_check;
   }
   else static if(A == "immutable") {
@@ -519,153 +523,153 @@ template uvm_sync_string_alt(T, TM, string A, string M, string U) {
   }
 }
 
-mixin template uvm_once_sync() {
-  // pragma(msg, uvm_once_sync_string!(uvm_once, typeof(this)));
+mixin template uvm_scope_sync() {
+  // pragma(msg, uvm_scope_sync_string!(uvm_scope, typeof(this)));
   import uvm.base.uvm_entity: uvm_entity_base;
-  mixin(uvm_once_sync_string!(uvm_once, typeof(this)));
+  mixin(uvm_scope_sync_string!(uvm_scope, typeof(this)));
 }
 
-string uvm_once_sync_string() {
-  return "mixin(uvm_once_sync_string!(uvm_once));\n";
+string uvm_scope_sync_string() {
+  return "mixin(uvm_scope_sync_string!(uvm_scope));\n";
 }
 
-// template uvm_once_sync_string() {
-//   enum string uvm_once_sync_string =
-//     "mixin(uvm_once_sync_string!(uvm_once, typeof(this)));\n";
+// template uvm_scope_sync_string() {
+//   enum string uvm_scope_sync_string =
+//     "mixin(uvm_scope_sync_string!(uvm_scope, typeof(this)));\n";
 // }
 
-template uvm_once_sync_string(T, size_t ITER=0) {
+template uvm_scope_sync_string(T, size_t ITER=0) {
   static if(ITER == (__traits(derivedMembers, T).length)) {
-    enum string uvm_once_sync_string = "static " ~ T.stringof ~ " _uvm_once_inst() {\n" ~
+    enum string uvm_scope_sync_string = "static " ~ T.stringof ~ " _uvm_scope_inst() {\n" ~
       "  return " ~ T.stringof ~ ".get_instance!" ~ T.stringof ~ ";\n}\n" ~
-      "mixin(uvm_sync_string!(" ~ T.stringof ~ ", \"_uvm_once_inst\"));\n";
+      "mixin(uvm_sync_string!(" ~ T.stringof ~ ", \"_uvm_scope_inst\"));\n";
   }
   else {
     enum string mem = __traits(derivedMembers, T)[ITER];
     static if(mem == "__ctor" || mem == "__dtor") {
-      enum string uvm_once_sync_string = uvm_once_sync_string!(T, ITER+1);
+      enum string uvm_scope_sync_string = uvm_scope_sync_string!(T, ITER+1);
     }
     else {
-      enum string uvm_once_sync_string =
-	uvm_once_sync_string!(T, ITER+1) ~
+      enum string uvm_scope_sync_string =
+	uvm_scope_sync_string!(T, ITER+1) ~
 	"static if(uvm_sync_access!(0, __traits(getAttributes, " ~
 	T.stringof ~ "." ~ mem ~ ")) != \"none\") {\n" ~
 	"  static private ref " ~ " auto " ~ " " ~ mem ~ "() {\n" ~
-	"    return _uvm_once_inst." ~ mem ~ ";\n    }\n  }\n";
+	"    return _uvm_scope_inst." ~ mem ~ ";\n    }\n  }\n";
     }
   }
 }
 
-template uvm_once_sync_string(T, U, size_t ITER=0) {
+template uvm_scope_sync_string(T, U, size_t ITER=0) {
   static if(ITER == (__traits(derivedMembers, T).length)) {
-    enum string uvm_once_sync_string = "static uvm_once _uvm_once_inst() {\n" ~
+    enum string uvm_scope_sync_string = "static uvm_scope _uvm_scope_inst() {\n" ~
       "  import uvm.base.uvm_root;\n" ~
       "  auto root = uvm_entity_base.get();\n" ~
-      "  return root.root_once._" ~ U.stringof ~ "_once;\n}\n" ~
-      "mixin(uvm_sync_string!(" ~ T.stringof ~ ", \"_uvm_once_inst\"));\n";
+      "  return root.root_scope._" ~ U.stringof ~ "_scope;\n}\n" ~
+      "mixin(uvm_sync_string!(" ~ T.stringof ~ ", \"_uvm_scope_inst\"));\n";
   }
   else {
     enum string mem = __traits(derivedMembers, T)[ITER];
     static if(mem == "__ctor" || mem == "__dtor") {
-      enum string uvm_once_sync_string = uvm_once_sync_string!(T, U, ITER+1);
+      enum string uvm_scope_sync_string = uvm_scope_sync_string!(T, U, ITER+1);
     }
     else {
-      enum string uvm_once_sync_string =
-	uvm_once_sync_string!(T, U, ITER+1) ~
+      enum string uvm_scope_sync_string =
+	uvm_scope_sync_string!(T, U, ITER+1) ~
 	"static if(uvm_sync_access!(0, __traits(getAttributes, " ~
 	T.stringof ~ "." ~ mem ~ ")) != \"none\") {\n" ~
 	"  static private ref " ~ " auto " ~ " " ~ mem ~ "() {\n" ~
-	"    return _uvm_once_inst." ~ mem ~ ";\n    }\n  }\n";
+	"    return _uvm_scope_inst." ~ mem ~ ";\n    }\n  }\n";
     }
   }
 }
 
-template uvm_once_sync_string(T, string _inst, size_t ITER=0) {
+template uvm_scope_sync_string(T, string _inst, size_t ITER=0) {
   static if(ITER == (__traits(derivedMembers, T).length)) {
-    enum string uvm_once_sync_string = T.stringof ~ " " ~
-      _inst ~ "_uvm_once() {\n" ~
+    enum string uvm_scope_sync_string = T.stringof ~ " " ~
+      _inst ~ "_uvm_scope() {\n" ~
       "  return " ~ T.stringof ~ ".get_instance!" ~ T.stringof ~ ";\n}\n" ~
-      "mixin(uvm_sync_string!(" ~ T.stringof ~ ", \"" ~ _inst ~ "_uvm_once\"));\n";
+      "mixin(uvm_sync_string!(" ~ T.stringof ~ ", \"" ~ _inst ~ "_uvm_scope\"));\n";
       }
   else {
     enum string mem = __traits(derivedMembers, T)[ITER];
     static if(mem == "__ctor" || mem == "__dtor") {
-      enum string uvm_once_sync_string = uvm_once_sync_string!(T, _inst, ITER+1);
+      enum string uvm_scope_sync_string = uvm_scope_sync_string!(T, _inst, ITER+1);
     }
     else {
-      enum string uvm_once_sync_string = uvm_once_sync_string!(T, _inst, ITER+1) ~
+      enum string uvm_scope_sync_string = uvm_scope_sync_string!(T, _inst, ITER+1) ~
 	"private ref " ~ " auto " ~ " " ~ mem ~ "() {\n" ~
-	"  return " ~ _inst ~ "_uvm_once." ~ mem ~ ";\n  }\n";
+	"  return " ~ _inst ~ "_uvm_scope." ~ mem ~ ";\n  }\n";
     }
   }
 }
 
-string uvm_once_lock_string() {
-  return "mixin(uvm_once_lock_string!(uvm_once));\n";
+string uvm_scope_lock_string() {
+  return "mixin(uvm_scope_lock_string!(uvm_scope));\n";
 }
 
-template uvm_once_lock_string(T, size_t ITER=0) {
+template uvm_scope_lock_string(T, size_t ITER=0) {
   static if(ITER == (T.tupleof).length) {
-    enum string uvm_once_lock_string = "static uvm_once _uvm_once_inst() {\n" ~
-      "  return uvm_once.get_instance!uvm_once;\n}\n" ~
-      "mixin(uvm_sync_string!(" ~ T.stringof ~ ", \"_uvm_once_inst\"));\n";
+    enum string uvm_scope_lock_string = "static uvm_scope _uvm_scope_inst() {\n" ~
+      "  return uvm_scope.get_instance!uvm_scope;\n}\n" ~
+      "mixin(uvm_sync_string!(" ~ T.stringof ~ ", \"_uvm_scope_inst\"));\n";
   }
   else {
     enum string mem = (T.tupleof[ITER]).stringof;
     static if(mem == "__ctor" || mem == "__dtor") {
-      enum string uvm_once_lock_string = uvm_once_lock_string!(T, ITER+1);
+      enum string uvm_scope_lock_string = uvm_scope_lock_string!(T, ITER+1);
     }
     else {
-      enum string uvm_once_lock_string =
-	uvm_once_lock_string!(T, ITER+1) ~
+      enum string uvm_scope_lock_string =
+	uvm_scope_lock_string!(T, ITER+1) ~
 	"static if(uvm_sync_access!(0, __traits(getAttributes, " ~
 	T.stringof ~ "." ~ mem ~ ")) != \"none\") {\n" ~
 	"  static private ref " ~ " auto " ~ " " ~ mem ~ "() {\n" ~
-	"    return _uvm_once_inst." ~ mem ~ ";\n    }\n  }\n";
+	"    return _uvm_scope_inst." ~ mem ~ ";\n    }\n  }\n";
     }
   }
 }
 
-template uvm_once_lock_string(T, U, size_t ITER=0) {
+template uvm_scope_lock_string(T, U, size_t ITER=0) {
   static if(ITER == T.tupleof.length) {
-    enum string uvm_once_lock_string = "static uvm_once _uvm_once_inst() {\n" ~
+    enum string uvm_scope_lock_string = "static uvm_scope _uvm_scope_inst() {\n" ~
       "  import uvm.base.uvm_root;\n" ~
       "  auto root = uvm_entity_base.get();\n" ~
-      "  return root.root_once._" ~ U.stringof ~ "_once;\n}\n" ~
-      "mixin(uvm_sync_string!(" ~ T.stringof ~ ", \"_uvm_once_inst\"));\n";
+      "  return root.root_scope._" ~ U.stringof ~ "_scope;\n}\n" ~
+      "mixin(uvm_sync_string!(" ~ T.stringof ~ ", \"_uvm_scope_inst\"));\n";
   }
   else {
     enum string mem = (T.tupleof[ITER]).stringof;
     static if(mem == "__ctor" || mem == "__dtor") {
-      enum string uvm_once_lock_string = uvm_once_lock_string!(T, U, ITER+1);
+      enum string uvm_scope_lock_string = uvm_scope_lock_string!(T, U, ITER+1);
     }
     else {
-      enum string uvm_once_lock_string =
-	uvm_once_lock_string!(T, U, ITER+1) ~
+      enum string uvm_scope_lock_string =
+	uvm_scope_lock_string!(T, U, ITER+1) ~
 	"static if(uvm_sync_access!(0, __traits(getAttributes, " ~
 	T.stringof ~ "." ~ mem ~ ")) != \"none\") {\n" ~
 	"  static private ref " ~ " auto " ~ " " ~ mem ~ "() {\n" ~
-	"    return _uvm_once_inst." ~ mem ~ ";\n    }\n  }\n";
+	"    return _uvm_scope_inst." ~ mem ~ ";\n    }\n  }\n";
     }
   }
 }
 
-template uvm_once_lock_string(T, string _inst, size_t ITER=0) {
+template uvm_scope_lock_string(T, string _inst, size_t ITER=0) {
   static if(ITER == T.tupleof.length) {
-    enum string uvm_once_lock_string = T.stringof ~ " " ~
-      _inst ~ "_uvm_once() {\n" ~
+    enum string uvm_scope_lock_string = T.stringof ~ " " ~
+      _inst ~ "_uvm_scope() {\n" ~
       "  return " ~ T.stringof ~ ".get_instance!" ~ T.stringof ~ ";\n}\n" ~
-      "mixin(uvm_sync_string!(" ~ T.stringof ~ ", \"" ~ _inst ~ "_uvm_once\"));\n";
+      "mixin(uvm_sync_string!(" ~ T.stringof ~ ", \"" ~ _inst ~ "_uvm_scope\"));\n";
       }
   else {
     enum string mem = (T.tupleof[ITER]).stringof;
     static if(mem == "__ctor" || mem == "__dtor") {
-      enum string uvm_once_lock_string = uvm_once_lock_string!(T, _inst, ITER+1);
+      enum string uvm_scope_lock_string = uvm_scope_lock_string!(T, _inst, ITER+1);
     }
     else {
-      enum string uvm_once_lock_string = uvm_once_lock_string!(T, _inst, ITER+1) ~
+      enum string uvm_scope_lock_string = uvm_scope_lock_string!(T, _inst, ITER+1) ~
 	"private ref " ~ " auto " ~ " " ~ mem ~ "() {\n" ~
-	"  return " ~ _inst ~ "_uvm_once." ~ mem ~ ";\n  }\n";
+	"  return " ~ _inst ~ "_uvm_scope." ~ mem ~ ";\n  }\n";
     }
   }
 }
@@ -681,4 +685,9 @@ template BitCount(V)
 
 uint bitCount(V)(V v) {
   return BitCount!V;
+}
+
+bool inside(T)(T t, T[] args ...) {
+  foreach (arg; args) if (t == arg) return true;
+  return false;
 }

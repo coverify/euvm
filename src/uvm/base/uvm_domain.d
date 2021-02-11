@@ -26,11 +26,11 @@
 module uvm.base.uvm_domain;
 
 import uvm.base.uvm_phase: uvm_phase;
-import uvm.base.uvm_once;
+import uvm.base.uvm_scope;
 
 import uvm.meta.misc;
 
-final class uvm_once_domain_globals: uvm_once_base
+final class uvm_scope_domain_globals: uvm_scope_base
 {
   @uvm_public_sync
   private uvm_phase _build_ph;
@@ -52,7 +52,7 @@ final class uvm_once_domain_globals: uvm_once_base
   private uvm_phase _report_ph;
 }
 
-mixin (uvm_once_sync_string!(uvm_once_domain_globals, "uvm_once_domain_globals"));
+mixin (uvm_scope_sync_string!(uvm_scope_domain_globals, "uvm_scope_domain_globals"));
 
 //------------------------------------------------------------------------------
 //
@@ -69,7 +69,7 @@ class uvm_domain: uvm_phase
 {
   import std.string: format;
 
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_private_sync
     private uvm_domain         _m_uvm_domain; // run-time phases
@@ -78,18 +78,18 @@ class uvm_domain: uvm_phase
     private uvm_phase          _m_uvm_schedule;
   };
 
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
 
   // @uvm-ieee 1800.2-2017 auto 9.4.2.2
   static void get_domains(out uvm_domain[string] domains) {
-    synchronized (_uvm_once_inst) {
-      domains = _uvm_once_inst._m_domains.dup;
+    synchronized (_uvm_scope_inst) {
+      domains = _uvm_scope_inst._m_domains.dup;
     }
   }
 
   static const(uvm_domain[string]) get_domains() {
-    synchronized (_uvm_once_inst) {
-      return _uvm_once_inst._m_domains.dup;
+    synchronized (_uvm_scope_inst) {
+      return _uvm_scope_inst._m_domains.dup;
     }
   }
 
@@ -100,7 +100,7 @@ class uvm_domain: uvm_phase
   //
   static uvm_phase get_uvm_schedule() {
     get_uvm_domain();
-    synchronized (_uvm_once_inst) {
+    synchronized (_uvm_scope_inst) {
       return m_uvm_schedule;
     }
   }
@@ -118,11 +118,11 @@ class uvm_domain: uvm_phase
     import uvm.base.uvm_common_phases;
     // defined in SV version but not used anywhere
     // uvm_phase schedule;
-    synchronized (_uvm_once_inst) {
+    synchronized (_uvm_scope_inst) {
       uvm_domain domain;
 
-      if ("common" in _uvm_once_inst._m_domains) {
-	domain = _uvm_once_inst._m_domains["common"];
+      if ("common" in _uvm_scope_inst._m_domains) {
+	domain = _uvm_scope_inst._m_domains["common"];
       }
 
       if (domain !is null) {
@@ -141,7 +141,7 @@ class uvm_domain: uvm_phase
       domain.add(uvm_report_phase.get());
       domain.add(uvm_final_phase.get());
 
-      _uvm_once_inst._m_domains["common"] = domain;
+      _uvm_scope_inst._m_domains["common"] = domain;
 
       // for backward compatibility, make common phases visible;
       // same as uvm_<name>_phase.get().
@@ -156,17 +156,14 @@ class uvm_domain: uvm_phase
       report_ph              = domain.find(uvm_report_phase.get());
 
       domain = get_uvm_domain();
-      _uvm_once_inst._m_domains["common"].add(domain,
-				    _uvm_once_inst._m_domains["common"].find(uvm_run_phase.get()));
+      _uvm_scope_inst._m_domains["common"].add(domain,
+				    _uvm_scope_inst._m_domains["common"].find(uvm_run_phase.get()));
 
-      return _uvm_once_inst._m_domains["common"];
+      return _uvm_scope_inst._m_domains["common"];
     }
   }
 
-  // Function: add_uvm_phases
-  //
-  // Appends to the given ~schedule~ the built-in UVM phases.
-  //
+  // @uvm-ieee 1800.2-2017 auto 9.4.2.3
   static void add_uvm_phases(uvm_phase schedule) {
     import uvm.base.uvm_runtime_phases;
     assert (schedule !is null);
@@ -192,7 +189,7 @@ class uvm_domain: uvm_phase
   //
   static uvm_domain get_uvm_domain() {
     import uvm.base.uvm_object_globals;
-    synchronized (_uvm_once_inst) {
+    synchronized (_uvm_scope_inst) {
       if (m_uvm_domain is null) {
 	m_uvm_domain = new uvm_domain("uvm");
 	m_uvm_schedule = new uvm_phase("uvm_sched", uvm_phase_type.UVM_PHASE_SCHEDULE);
@@ -203,26 +200,21 @@ class uvm_domain: uvm_phase
     }
   }
 
-  // Function: new
-  //
-  // Create a new instance of a phase domain.
+  // @uvm-ieee 1800.2-2017 auto 9.4.2.1
   this(string name="") {
     import uvm.base.uvm_globals;
     import uvm.base.uvm_object_globals;
     super(name, uvm_phase_type.UVM_PHASE_DOMAIN);
-    synchronized (_uvm_once_inst) {
-      if (name in _uvm_once_inst._m_domains) {
+    synchronized (_uvm_scope_inst) {
+      if (name in _uvm_scope_inst._m_domains) {
 	uvm_error("UNIQDOMNAM",
 		  format("Domain created with non-unique name '%s'", name));
       }
-      _uvm_once_inst._m_domains[name] = this;
+      _uvm_scope_inst._m_domains[name] = this;
     }
   }
 
-  // Function: jump
-  //
-  // jumps all active phases of this domain to to-phase if
-  // there is a path between active-phase and to-phase
+  // @uvm-ieee 1800.2-2017 auto 9.4.2.4
   override void jump(uvm_phase phase) {
     import uvm.base.uvm_object_globals;
     import std.algorithm;	// filter
@@ -230,8 +222,9 @@ class uvm_domain: uvm_phase
     uvm_phase[] phases = m_get_transitive_children();
     foreach (ph;
 	    filter!((uvm_phase p) {
-		return (p.get_state >= uvm_phase_state.UVM_PHASE_STARTED &&
-			p.get_state <= uvm_phase_state.UVM_PHASE_CLEANUP);
+		uvm_phase_state phase_state = p.get_state();
+		return (phase_state >= uvm_phase_state.UVM_PHASE_STARTED &&
+			phase_state <= uvm_phase_state.UVM_PHASE_CLEANUP);
 	      }) (phases)) {
       if (ph.is_before(phase) || ph.is_after(phase))
 	ph.jump(phase);

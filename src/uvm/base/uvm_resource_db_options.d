@@ -22,7 +22,7 @@
 
 
 module uvm.base.uvm_resource_db_options;
-import uvm.base.uvm_once;
+import uvm.base.uvm_scope;
 import uvm.meta.misc;
 
 //----------------------------------------------------------------------
@@ -55,7 +55,7 @@ import uvm.meta.misc;
 class uvm_resource_db_options
 {
    
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_private_sync
     bool _ready;
@@ -63,7 +63,7 @@ class uvm_resource_db_options
     bool _tracing;
   }
     
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
 
 
   // Function: turn_on_tracing
@@ -78,9 +78,9 @@ class uvm_resource_db_options
 
 
   static void turn_on_tracing() {
-    synchronized (_uvm_once_inst) {
-      if (! _uvm_once_inst._ready) init();
-      _uvm_once_inst._tracing = true;
+    synchronized (_uvm_scope_inst) {
+      if (! _uvm_scope_inst._ready) init();
+      _uvm_scope_inst._tracing = true;
     }
   }
 
@@ -92,9 +92,9 @@ class uvm_resource_db_options
 
 
   static void turn_off_tracing() {
-    synchronized (_uvm_once_inst) {
-      if (! _uvm_once_inst._ready) init();
-      _uvm_once_inst._tracing = false;
+    synchronized (_uvm_scope_inst) {
+      if (! _uvm_scope_inst._ready) init();
+      _uvm_scope_inst._tracing = false;
     }
   }
 
@@ -106,25 +106,25 @@ class uvm_resource_db_options
 
 
   static bool is_tracing() {
-    synchronized (_uvm_once_inst) {
-      if (! _uvm_once_inst._ready) init();
-      return _uvm_once_inst._tracing;
+    synchronized (_uvm_scope_inst) {
+      if (! _uvm_scope_inst._ready) init();
+      return _uvm_scope_inst._tracing;
     }
   }
 
   static private void init() {
     import uvm.base.uvm_cmdline_processor;
-    synchronized (_uvm_once_inst) {
+    synchronized (_uvm_scope_inst) {
       uvm_cmdline_processor clp;
       string[] trace_args;
      
       clp = uvm_cmdline_processor.get_inst();
 
       if (clp.get_arg_matches("+UVM_RESOURCE_DB_TRACE", trace_args)) {
-	_uvm_once_inst._tracing = true;
+	_uvm_scope_inst._tracing = true;
       }
 
-      _uvm_once_inst._ready = true;
+      _uvm_scope_inst._ready = true;
     }
   }
 }

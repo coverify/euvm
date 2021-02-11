@@ -22,7 +22,7 @@
 //----------------------------------------------------------------------
 
 module uvm.base.uvm_resource_base;
-import uvm.base.uvm_once;
+import uvm.base.uvm_scope;
 import uvm.base.uvm_pool: uvm_pool;
 import uvm.base.uvm_queue: uvm_queue;
 import uvm.base.uvm_object: uvm_object;
@@ -173,13 +173,13 @@ class uvm_resource_types
 class uvm_resource_options
 {
 
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_private_sync
     bool _auditing = true;
   }
     
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
 
   // Function -- NODOCS -- turn_on_auditing
   //
@@ -188,8 +188,8 @@ class uvm_resource_options
   // the accesses. Auditing is turned on by default.
 
   static void turn_on_auditing() {
-    synchronized (_uvm_once_inst) {
-      _uvm_once_inst._auditing = true;
+    synchronized (_uvm_scope_inst) {
+      _uvm_scope_inst._auditing = true;
     }
   }
 
@@ -200,8 +200,8 @@ class uvm_resource_options
   // database accesses.
 
   static void turn_off_auditing() {
-    synchronized (_uvm_once_inst) {
-      _uvm_once_inst._auditing = false;
+    synchronized (_uvm_scope_inst) {
+      _uvm_scope_inst._auditing = false;
     }
   }
 
@@ -210,8 +210,8 @@ class uvm_resource_options
   // Returns 1 if the auditing facility is on and 0 if it is off.
 
   static bool is_auditing() {
-    synchronized (_uvm_once_inst) {
-      return _uvm_once_inst._auditing;
+    synchronized (_uvm_scope_inst) {
+      return _uvm_scope_inst._auditing;
     }
   }
 }

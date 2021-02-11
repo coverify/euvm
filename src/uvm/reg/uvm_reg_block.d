@@ -1,9 +1,13 @@
 //
 // -------------------------------------------------------------
-//    Copyright 2004-2011 Synopsys, Inc.
-//    Copyright 2010-2011 Mentor Graphics Corporation
-//    Copyright 2010-2011 Cadence Design Systems, Inc.
-//    Copyright 2014      Coverify Systems Technology
+// Copyright 2014-2021 Coverify Systems Technology
+// Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2014 Semifore
+// Copyright 2004-2018 Synopsys, Inc.
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2010 AMD
+// Copyright 2014-2018 NVIDIA Corporation
+// Copyright 2019 Cisco Systems, Inc.
 //    All Rights Reserved Worldwide
 //
 //    Licensed under the Apache License, Version 2.0 (the
@@ -23,88 +27,118 @@
 //
 module uvm.reg.uvm_reg_block;
 
-import uvm.base.uvm_object;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_pool;
-import uvm.base.uvm_queue;
-import uvm.base.uvm_printer;
-import uvm.base.uvm_packer;
-import uvm.base.uvm_comparer;
-import uvm.base.uvm_globals;
-import uvm.base.uvm_resource_db;
-import uvm.base.uvm_resource;
+import uvm.base.uvm_event: uvm_event;
+import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_object_globals: uvm_verbosity;
+import uvm.base.uvm_object_defines;
+import uvm.base.uvm_pool: uvm_object_string_pool;
+import uvm.base.uvm_queue: uvm_queue;
+import uvm.base.uvm_printer: uvm_printer;
+import uvm.base.uvm_packer: uvm_packer;
+import uvm.base.uvm_comparer: uvm_comparer;
+import uvm.base.uvm_globals: uvm_error, uvm_is_match,
+  uvm_report_fatal, uvm_report_warning, uvm_report_info;
 
-import uvm.seq.uvm_sequence_base;
+import uvm.seq.uvm_sequence_base: uvm_sequence_base;
 
-import uvm.reg.uvm_reg;
-import uvm.reg.uvm_reg_backdoor;
 import uvm.reg.uvm_reg_defines;
-import uvm.reg.uvm_reg_field;
-import uvm.reg.uvm_reg_map;
 import uvm.reg.uvm_reg_model;
-import uvm.reg.uvm_mem;
-import uvm.reg.uvm_vreg;
-import uvm.reg.uvm_vreg_field;
+
+import uvm.reg.uvm_reg: uvm_reg;
+import uvm.reg.uvm_reg_backdoor: uvm_reg_backdoor;
+import uvm.reg.uvm_reg_field: uvm_reg_field;
+import uvm.reg.uvm_reg_map: uvm_reg_map;
+import uvm.reg.uvm_mem: uvm_mem;
+import uvm.reg.uvm_vreg: uvm_vreg;
+import uvm.reg.uvm_vreg_field: uvm_vreg_field;
+
+import uvm.base.uvm_scope;
+import uvm.meta.misc;
 
 import std.string: format;
 
-//------------------------------------------------------------------------
+
 // Class: uvm_reg_block
-//
-// Block abstraction base class
-//
-// A block represents a design hierarchy. It can contain registers,
-// register files, memories and sub-blocks.
-//
-// A block has one or more address maps, each corresponding to a physical
-// interface on the block.
-//
-//------------------------------------------------------------------------
-abstract class uvm_reg_block: uvm_object
+// This is an implementation of uvm_reg_block as described in 1800.2-2017 with
+// the addition of API described below.
+
+// @uvm-ieee 1800.2-2017 auto 18.1.1
+class uvm_reg_block: uvm_object
 {
 
-  private uvm_reg_block    _parent;
+  mixin uvm_object_utils;
 
-  private static bool[uvm_reg_block]      _m_roots;
+  mixin (uvm_sync_string);
+  mixin (uvm_scope_sync_string);
+  
+  static class uvm_scope: uvm_scope_base
+  {
+    @uvm_void_sync
+    private bool[uvm_reg_block]      _m_roots;
+    @uvm_void_sync
+    private uint[string]             _m_root_names;
+    @uvm_void_sync
+    private int                      _id;
+  }
+
+  @uvm_private_sync
+  private uvm_reg_block                   _parent;
+
+  @uvm_private_sync
   private uint[uvm_reg_block]             _blks;
   uint[uvm_reg_block] get_blks() {
     synchronized(this) {
       return _blks.dup;
     }
   }
+  @uvm_private_sync
   private uint[uvm_reg]                   _regs;
   uint[uvm_reg] get_regs() {
     synchronized(this) {
       return _regs.dup;
     }
   }
+  @uvm_private_sync
   private uint[uvm_vreg]                  _vregs;
+  @uvm_private_sync
   private uint[uvm_mem]                   _mems;
+  @uvm_private_sync
   private bool[uvm_reg_map]               _maps;
 
-  // Variable: default_path
+  // Variable -- NODOCS -- default_path
   // Default access path for the registers and memories in this block.
-  uvm_path_e               _default_path = uvm_path_e.UVM_DEFAULT_PATH;
+  @uvm_private_sync
+  private uvm_door_e _default_path = uvm_door_e.UVM_DEFAULT_DOOR;
 
+  @uvm_private_sync
   private string           _default_hdl_path = "RTL";
+  @uvm_private_sync
   private uvm_reg_backdoor _backdoor;
+  @uvm_private_sync
   private uvm_object_string_pool!(uvm_queue!string) _hdl_paths_pool;
+  @uvm_private_sync
   private string[string]   _root_hdl_paths;
 
+  @uvm_private_sync
   private bool             _locked;
 
+  @uvm_private_sync
   private int              _has_cover;
+  @uvm_private_sync
   private int              _cover_on;
+  @uvm_private_sync
   private string           _fname;
+  @uvm_private_sync
   private int              _lineno;
 
-  private static int       _id;
+  @uvm_private_sync
+  private uvm_event!uvm_object _m_uvm_lock_model_complete;
 
   //----------------------
   // Group: Initialization
   //----------------------
 
-  // Function: new
+  // Function -- NODOCS -- new
   //
   // Create a new instance and type-specific configuration
   //
@@ -117,23 +151,27 @@ abstract class uvm_reg_block: uvm_object
   // symbolic names, as defined by the <uvm_coverage_model_e> type.
   //
 
-  // extern function new(string name="", int has_coverage=UVM_NO_COVERAGE);
-
-  // new
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.2.1
   this(string name="", int has_coverage = uvm_coverage_model_e.UVM_NO_COVERAGE) {
     synchronized(this) {
       super(name);
-      _hdl_paths_pool = new uvm_object_string_pool!(uvm_queue!string)
-	("hdl_paths");
+      _hdl_paths_pool =
+	new uvm_object_string_pool!(uvm_queue!string)("hdl_paths");
       this._has_cover = has_coverage;
       // Root block until registered with a parent
-      _m_roots[this] = false;
+      synchronized(_uvm_scope_inst) {
+	_m_roots[this] = false;
+
+	if (name in _m_root_names) _m_root_names[name] += 1;
+	else _m_root_names[name] = true;
+      }
+
+      _m_uvm_lock_model_complete = new uvm_event!uvm_object("m_uvm_lock_model_complete");
     }
   }
 
 
-  // Function: configure
+  // Function -- NODOCS -- configure
   //
   // Instance-specific configuration
   //
@@ -147,26 +185,19 @@ abstract class uvm_reg_block: uvm_object
   // to the hierarchical HDL path of any contained registers or memories.
   //
 
-  // extern function void configure(uvm_reg_block parent=null,
-  // 				 string hdl_path="");
-
-  // configure
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.2.2
   final void configure(uvm_reg_block parent=null, string hdl_path="") {
     synchronized(this) {
       this._parent = parent; 
-      if (parent !is null) {
+      if (parent !is null)
 	this._parent.add_block(this);
-      }
       add_hdl_path(hdl_path);
-
-      uvm_resource_db!(uvm_reg_block).set("uvm_reg.*", get_full_name(), this);
     }
   }
 
 
 
-  // Function: create_map
+  // Function -- NODOCS -- create_map
   //
   // Create an address map in this block
   //
@@ -188,43 +219,25 @@ abstract class uvm_reg_block: uvm_object
   //| APB = create_map("APB", 0, 1, UVM_LITTLE_ENDIAN, 1);
   //
 
-  // extern virtual function uvm_reg_map create_map(string name,
-  // 						 uvm_reg_addr_t base_addr,
-  // 						 uint n_bytes,
-  // 						 uvm_endianness_e endian,
-  // 						 bool byte_addressing = 1);
-
-  // create_map
-
-  uvm_reg_map create_map(T)(string name,
-			    T base_addr,
-			    uint n_bytes,
-			    uvm_endianness_e endian,
-			    bool byte_addressing = true) {
+  // @uvm-ieee 1800.2-2017 auto 18.1.2.3
+  uvm_reg_map create_map(string name,
+			 uvm_reg_addr_t base_addr,
+			 uint n_bytes,
+			 uvm_endianness_e endian,
+			 bool byte_addressing = true) {
 
     synchronized(this) {
-      uvm_reg_map  map;
+      uvm_reg_map map = uvm_reg_map.type_id.create(name,null,this.get_full_name());
+      map.configure(this, base_addr, n_bytes, endian, byte_addressing);
 
-      uvm_reg_addr_t base_addr_ = base_addr;
-      if (this._locked) {
-	uvm_error("RegModel", "Cannot add map to locked model");
-	return null;
-      }
-
-      map = uvm_reg_map.type_id.create(name,null,this.get_full_name());
-      map.configure(this, base_addr_, n_bytes, endian, byte_addressing);
-
-      this._maps[map] = true;
-      if (_maps.length == 1) {
-	_default_map = map;
-      }
+      add_map(map);
 
       return map;
     }
   }
 
 
-  // Function: check_data_width
+  // Function -- NODOCS -- check_data_width
   //
   // Check that the specified data width (in bits) is less than
   // or equal to the value of `UVM_REG_DATA_WIDTH
@@ -237,12 +250,8 @@ abstract class uvm_reg_block: uvm_object
   //| endclass
   //
 
-  // extern protected static function bool check_data_width(uint width);
-
-  // check_data_width
-
   static bool check_data_width(uint width) {
-    if (width <= uvm_reg_data_t.SIZE) return true;
+    if (width <= UVM_REG_DATA_WIDTH) return true;
 
     uvm_report_fatal("RegModel", format("Register model requires that UVM_REG_DATA_WIDTH be defined as %0d or greater. Currently defined as %0d", width, UVM_REG_DATA_WIDTH));
 
@@ -252,7 +261,7 @@ abstract class uvm_reg_block: uvm_object
 
 
 
-  // Function: set_default_map
+  // Function -- NODOCS -- set_default_map
   //
   // Defines the default address map
   //
@@ -260,22 +269,19 @@ abstract class uvm_reg_block: uvm_object
   // block. The address map must be a map of this address block.
   //
 
-  // extern function void set_default_map (uvm_reg_map map);
-
-  // set_default_map
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.2.4
   void set_default_map(uvm_reg_map map) {
     synchronized(this) {
       if (map !in _maps) {
 	uvm_report_warning("RegModel", "Map '" ~ map.get_full_name() ~
-		    "' does not exist in block");
+			   "' does not exist in block");
       }
       _default_map = map;
     }
   }
 
 
-  // Variable: default_map
+  // Variable -- NODOCS -- default_map
   //
   // Default address map
   //
@@ -286,19 +292,21 @@ abstract class uvm_reg_block: uvm_object
   // It is also the implciit address map for a block with a single,
   // unamed address map because it has only one physical interface.
   //
+  @uvm_private_sync
   private uvm_reg_map _default_map;
 
-  // extern function uvm_reg_map get_default_map ();
-  // get_default_map
+  // Function: get_default_map 
+  // This returns the default address map for this block. 
+  // If create_map has never been called, this returns null. 
+  // If set_default_map has been called, this returns the value set in the most recent call. 
+  // Otherwise, this returns the map created in the first call to create_map
+  // @uvm-contrib This API is being considered for potential contribution to 1800.2
 
   final uvm_reg_map get_default_map() {
     synchronized(this) {
       return _default_map;
     }
   }
-
-  // extern virtual function void set_parent(uvm_reg_block parent);
-  // set_parent
 
   void set_parent(uvm_reg_block parent) {
     synchronized(this) {
@@ -307,11 +315,6 @@ abstract class uvm_reg_block: uvm_object
       }
     }
   }
-
-
-
-  // /*private*/ extern function void add_block (uvm_reg_block blk);
-  // add_block
 
   final void add_block (uvm_reg_block blk) {
     synchronized(this) {
@@ -324,13 +327,16 @@ abstract class uvm_reg_block: uvm_object
 		  "' has already been registered with block '" ~ get_name() ~ "'");
 	return;
       }
-      _blks[blk] = _id++;
-      if (blk in _m_roots) _m_roots.remove(blk);
+      synchronized(_uvm_scope_inst) {
+	_blks[blk] = _id++;
+	if (blk in _m_roots) _m_roots.remove(blk);
+
+	string name = blk.get_name();
+	if (name in _m_root_names) _m_root_names[name] -= 1;
+      }
+      
     }
   }
-
-  // /*private*/ extern function void add_map   (uvm_reg_map map);
-  // add_map
 
   final void add_map(uvm_reg_map map) {
     synchronized(this) {
@@ -352,10 +358,6 @@ abstract class uvm_reg_block: uvm_object
     }
   }
 
-
-  // /*private*/ extern function void add_reg   (uvm_reg  rg);
-  // add_reg
-
   final void add_reg(uvm_reg rg) {
     synchronized(this) {
       if (this.is_locked()) {
@@ -368,14 +370,11 @@ abstract class uvm_reg_block: uvm_object
 		  "' has already been registered with block '" ~ get_name() ~ "'");
 	return;
       }
-
-      _regs[rg] = _id++;
+      synchronized(_uvm_scope_inst) {
+	_regs[rg] = _id++;
+      }
     }
   }
-
-
-  // /*private*/ extern function void add_vreg  (uvm_vreg vreg);
-  // add_vreg
 
   final void add_vreg(uvm_vreg vreg) {
     synchronized(this) {
@@ -389,13 +388,11 @@ abstract class uvm_reg_block: uvm_object
 		  "' has already been registered with block '" ~ get_name() ~ "'");
 	return;
       }
-      _vregs[vreg] = _id++;
+      synchronized(_uvm_scope_inst) {
+	_vregs[vreg] = _id++;
+      }
     }
   }
-
-
-  // /*private*/ extern function void add_mem   (uvm_mem  mem);
-  // add_mem
 
   void add_mem(uvm_mem mem) {
     synchronized(this) {
@@ -409,12 +406,14 @@ abstract class uvm_reg_block: uvm_object
 		  "' has already been registered with block '" ~ get_name() ~ "'");
 	return;
       }
-      _mems[mem] = _id++;
+      synchronized(_uvm_scope_inst) {
+	_mems[mem] = _id++;
+      }
     }
   }
 
 
-  // Function: lock_model
+  // Function -- NODOCS -- lock_model
   //
   // Lock a model and build the address map.
   //
@@ -426,13 +425,8 @@ abstract class uvm_reg_block: uvm_object
   // Once locked, no further structural changes,
   // such as adding registers or memories,
   // can be made.
-  //
-  // It is not possible to unlock a model.
-  //
 
-  // extern virtual function void lock_model();
-  // lock_model
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.2.5
   void lock_model() {
     synchronized(this) {
 
@@ -468,61 +462,78 @@ abstract class uvm_reg_block: uvm_object
 
 	if (max_size > UVM_REG_DATA_WIDTH) {
 	  uvm_report_fatal("RegModel",
-		    format("Register model requires that UVM_REG_DATA_WIDTH be defined as %0d or greater. Currently defined as %0d",
-			   max_size, UVM_REG_DATA_WIDTH));
+			   format("Register model requires that UVM_REG_DATA_WIDTH be defined as %0d or greater. Currently defined as %0d",
+				  max_size, UVM_REG_DATA_WIDTH));
 	}
 
 	Xinit_address_mapsX();
 
 	// Check that root register models have unique names
-
-	// Has this name has been checked before?
-	if (_m_roots[this] != true) {
-	  int n;
-
-	  foreach (_blk, unused; _m_roots) {
-            uvm_reg_block blk = _blk;
-
-            if (blk.get_name() == get_name()) {
-	      _m_roots[blk] = true;
-	      n++;
-	    }
-	  }
-
-	  if (n > 1) {
-            uvm_error("UVM/REG/DUPLROOT",
+	// NOTE:: https://accellera.mantishub.io/view.php?id=6532     
+	synchronized(_uvm_scope_inst) {
+	  if (_m_root_names[get_name()] > 1) {
+	    uvm_error("UVM/REG/DUPLROOT",
 		      format("There are %0d root register models named \"%s\". The names of the root register models have to be unique",
-			     n, get_name()));
-	      }
+			     _m_root_names[get_name()], get_name()));
+	  }
 	}
+
+	_m_uvm_lock_model_complete.trigger();
       }
     }
   }
 
+  // brings back the register mode to a state before lock_model() so that a subsequent lock_model() can be issued
 
-  // Function: is_locked
+  // @uvm-ieee 1800.2-2017 auto 18.1.2.6
+  void unlock_model() {
+    bool[uvm_reg_block] s;
+    synchronized(_uvm_scope_inst) {
+      s = _m_roots.dup;
+      _m_roots.clear();
+    }
+    synchronized(this) {
+      foreach (blk_, tmp; _blks) {
+	blk_.unlock_model();
+      }
+    }
+    synchronized(_uvm_scope_inst) {
+      _m_roots = s;
+      foreach (b, ref root; _m_roots) {
+	root = false;
+      }
+    }
+    synchronized(this) {
+      _locked = false;
+    }
+  }
+   
+  // @uvm-ieee 1800.2-2017 auto 18.1.2.8
+  // task
+  void wait_for_lock() {
+    m_uvm_lock_model_complete.wait_trigger();
+  }
+
+
+  // Function -- NODOCS -- is_locked
   //
   // Return TRUE if the model is locked.
   //
 
-  // extern function bool is_locked();
-  // is_locked
-
+   
+  // @uvm-ieee 1800.2-2017 auto 18.1.2.9
   final bool is_locked() {
     synchronized(this) {
       return this._locked;
     }
   }
 
-
-
-
   //---------------------
-  // Group: Introspection
+  // Group -- NODOCS -- Introspection
   //---------------------
 
 
-  // Function: get_name
+  // Function -- NODOCS -- get_name
   //
   // Get the simple name
   //
@@ -530,7 +541,7 @@ abstract class uvm_reg_block: uvm_object
   //
 
 
-  // Function: get_full_name
+  // Function -- NODOCS -- get_full_name
   //
   // Get the hierarchical name
   //
@@ -538,7 +549,6 @@ abstract class uvm_reg_block: uvm_object
   // The base of the hierarchical name is the root block.
   //
 
-  // extern virtual function string get_full_name();
   override string get_full_name() {
     synchronized(this) {
       if (_parent is null) {
@@ -550,17 +560,14 @@ abstract class uvm_reg_block: uvm_object
     }
   }
 
-  // Function: get_parent
+  // Function -- NODOCS -- get_parent
   //
   // Get the parent block
   //
   // If this a top-level block, returns ~null~. 
   //
 
-  // extern virtual function uvm_reg_block get_parent();
-
-  // get_parent
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.3.1
   uvm_reg_block get_parent() {
     synchronized(this) {
       return this._parent;
@@ -568,26 +575,31 @@ abstract class uvm_reg_block: uvm_object
   }
 
 
-  // Function: get_root_blocks
+  // Function -- NODOCS -- get_root_blocks
   //
   // Get the all root blocks
   //
   // Returns an array of all root blocks in the simulation.
   //
 
-  // extern static  function void get_root_blocks(ref uvm_reg_block blks[$]);
-  // get_root_blocks
-
-  static void get_root_blocks(out uvm_reg_block[] blks) {
-    // synchronized
-    foreach (blk, unused; _m_roots) {
-      blks ~= blk;
+  // @uvm-ieee 1800.2-2017 auto 18.1.3.2
+  static void get_root_blocks(ref uvm_reg_block[] blks) {
+    synchronized(_uvm_scope_inst) {
+      foreach (blk, unused; _m_roots) {
+	blks ~= blk;
+      }
     }
   }
 
-      
+  uvm_reg_block[] get_root_blocks() {
+    synchronized(_uvm_scope_inst) {
+      uvm_reg_block[] retval;
+      foreach (blk, unused; _m_roots) retval ~= blk;
+      return retval;
+    }
+  }
 
-  // Function: find_blocks
+  // Function -- NODOCS -- find_blocks
   //
   // Find the blocks whose hierarchical names match the
   // specified ~name~ glob.
@@ -597,38 +609,37 @@ abstract class uvm_reg_block: uvm_object
   // Returns the number of blocks found.
   //
 
-  // extern static function int find_blocks(input string        name,
-  // 					 ref   uvm_reg_block blks[$],
-  // 					 input uvm_reg_block root = null,
-  // 					 input uvm_object    accessor = null);
-      
-  // find_blocks
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.3.3
   static int find_blocks(string              name,
-			 out uvm_reg_block[] blks,
+			 out uvm_reg_block[] blocks,
 			 uvm_reg_block       root = null,
 			 uvm_object          accessor = null) {
-    // synchronized
-
-    uvm_resource_pool rpl = uvm_resource_pool.get();
-    uvm_resource_types.rsrc_q_t rs;
-
-    // blks.remove(); -- taken care as declared out
-
-    if (root !is null) name = root.get_full_name() ~ "." ~ name;
-
-    rs = rpl.lookup_regex(name, "uvm_reg.");
-    for (int i = 0; i < rs.length; i++) {
-      auto blk = cast(uvm_resource!(uvm_reg_block)) rs.get(i);
-      if (blk is null) continue;
-      blks ~= blk.read(accessor);
+    uvm_reg_block[] r;
+    uvm_reg_block[] b;
+       
+    if (root !is null) {
+      name = root.get_full_name() ~ "." ~ name;
+      b ~= root;
     }
-   
-    return cast(uint) blks.length;
+    else {
+      get_root_blocks(b);
+    }
+    foreach (blk; b) {
+      r ~= blk;
+      blk.get_blocks(r);
+    }
+
+    blocks.length = 0;
+          
+    foreach (blk; r) {
+      if ( uvm_is_match( name, blk.get_full_name() ) )
+	blocks ~= blk;
+    }
+
+    return cast(uint) blocks.length;
   }
 
-
-  // Function: find_block
+  // Function -- NODOCS -- find_block
   //
   // Find the first block whose hierarchical names match the
   // specified ~name~ glob.
@@ -639,33 +650,26 @@ abstract class uvm_reg_block: uvm_object
   // A warning is issued if more than one block is found.
   //
 
-  // extern static function uvm_reg_block find_block(input string        name,
-  // 						  input uvm_reg_block root = null,
-  // 						  input uvm_object    accessor = null);
-  // find_blocks
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.3.4
   static uvm_reg_block find_block(string        name,
 				  uvm_reg_block root = null,
 				  uvm_object    accessor = null) {
-    // synchronized
-    uvm_reg_block[] blks_;
-    if (!find_blocks(name, blks_, root, accessor)) {
+    uvm_reg_block[] blocks;
+    if (!find_blocks(name, blocks, root, accessor))
       return null;
-    }
 
-    if (blks_.length > 1) {
+    if (blocks.length > 1) {
       uvm_report_warning("MRTH1BLK",
-		  "More than one block matched the name \"" ~ name ~ "\".");
+			 "More than one block matched the name \"" ~
+			 name ~ "\".");
     }
    
 
-    return blks_[0];
+    return blocks[0];
   }
-
-
       
 
-  // Function: get_blocks
+  // Function -- NODOCS -- get_blocks
   //
   // Get the sub-blocks
   //
@@ -673,13 +677,9 @@ abstract class uvm_reg_block: uvm_object
   // If ~hier~ is TRUE, recursively includes any sub-blocks.
   //
 
-  // extern virtual function void get_blocks (ref uvm_reg_block  blks[$],
-  // 					   input uvm_hier_e hier=UVM_HIER);
-
-  // get_blocks
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.3.5
   void get_blocks(ref uvm_reg_block[] blks,
-			 in uvm_hier_e hier=uvm_hier_e.UVM_HIER) {
+		  in uvm_hier_e hier=uvm_hier_e.UVM_HIER) {
     synchronized(this) {
 
       foreach (blk_, unused; this._blks) {
@@ -692,16 +692,27 @@ abstract class uvm_reg_block: uvm_object
     }
   }
 
-  // Function: get_maps
+  uvm_reg_block[] get_blocks(uvm_hier_e hier=uvm_hier_e.UVM_HIER) {
+    synchronized(this) {
+      uvm_reg_block[] blocks;
+      foreach (blk, unused; this._blks) {
+	blocks ~= blk;
+	if (hier == uvm_hier_e.UVM_HIER) {
+	  blocks ~= blk.get_blocks(hier);
+	}
+      }
+      return blocks;
+    }
+  }
+
+  // Function -- NODOCS -- get_maps
   //
   // Get the address maps
   //
   // Get the address maps instantiated in this block.
   //
 
-  // extern virtual function void get_maps (ref uvm_reg_map maps[$]);
-  // get_maps
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.3.6
   void get_maps(ref uvm_reg_map[] maps) {
     synchronized(this) {
       foreach (map, unused; this._maps) {
@@ -710,9 +721,18 @@ abstract class uvm_reg_block: uvm_object
     }
   }
 
+  uvm_reg_map[] get_maps() {
+    synchronized(this) {
+      uvm_reg_map[] maps;
+      foreach (map, unused; this._maps) {
+	maps ~= map;
+      }
+      return maps;
+    }
+  }
 
 
-  // Function: get_registers
+  // Function -- NODOCS -- get_registers
   //
   // Get the registers
   //
@@ -724,11 +744,8 @@ abstract class uvm_reg_block: uvm_object
   // address maps. To get the registers in a specific address map,
   // use the <uvm_reg_map::get_registers()> method.
   //
-  // extern virtual function void get_registers (ref uvm_reg regs[$],
-  // 					      input uvm_hier_e hier=UVM_HIER);
 
-  // get_registers
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.3.7
   void get_registers(ref uvm_reg[] regs,
 		     in uvm_hier_e hier=uvm_hier_e.UVM_HIER) {
     synchronized(this) {
@@ -744,8 +761,24 @@ abstract class uvm_reg_block: uvm_object
     }
   }
 
+  uvm_reg[] get_registers(uvm_hier_e hier=uvm_hier_e.UVM_HIER) {
+    synchronized(this) {
+      uvm_reg[] registers;
+      foreach (reg, unused; this._regs) {
+	registers ~= reg;
+      }
+      if (hier == uvm_hier_e.UVM_HIER) {
+	foreach (blk_, unused; _blks) {
+	  uvm_reg_block blk = blk_;
+	  registers ~= blk.get_registers(hier);
+	}
+      }
+      return registers;
+    }
+  }
 
-  // Function: get_fields
+
+  // Function -- NODOCS -- get_fields
   //
   // Get the fields
   //
@@ -753,13 +786,10 @@ abstract class uvm_reg_block: uvm_object
   // If ~hier~ is TRUE, recursively includes the fields of the registers
   // in the sub-blocks.
   //
-  // extern virtual function void get_fields (ref uvm_reg_field  fields[$],
-  // 					   input uvm_hier_e hier=UVM_HIER);
 
-  // get_fields
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.3.8
   void get_fields(ref uvm_reg_field[] fields,
-			 in uvm_hier_e hier=uvm_hier_e.UVM_HIER) {
+		  in uvm_hier_e hier=uvm_hier_e.UVM_HIER) {
     synchronized(this) {
       foreach (rg_, unused; _regs) {
 	uvm_reg rg = rg_;
@@ -775,8 +805,23 @@ abstract class uvm_reg_block: uvm_object
   }
 
 
+  uvm_reg_field[] get_fields(uvm_hier_e hier=uvm_hier_e.UVM_HIER) {
+    synchronized(this) {
+      uvm_reg_field[] fields;
+      foreach (reg, unused; this._regs) {
+	fields ~= reg.get_fields();
+      }
+      if (hier == uvm_hier_e.UVM_HIER) {
+	foreach (blk_, unused; _blks) {
+	  uvm_reg_block blk = blk_;
+	  fields ~= blk.get_fields(hier);
+	}
+      }
+      return fields;
+    }
+  }
 
-  // Function: get_memories
+  // Function -- NODOCS -- get_memories
   //
   // Get the memories
   //
@@ -789,13 +834,9 @@ abstract class uvm_reg_block: uvm_object
   // use the <uvm_reg_map::get_memories()> method.
   //
 
-  // extern virtual function void get_memories (ref uvm_mem mems[$],
-  // 					     input uvm_hier_e hier=UVM_HIER);
-
-  // get_memories
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.3.9
   void get_memories(ref uvm_mem[] mems,
-			   in uvm_hier_e hier=uvm_hier_e.UVM_HIER) {
+		    in uvm_hier_e hier=uvm_hier_e.UVM_HIER) {
     synchronized(this) {
       foreach (mem_, unused; this._mems) {
 	uvm_mem mem = mem_;
@@ -810,7 +851,23 @@ abstract class uvm_reg_block: uvm_object
     }
   }
 
-  // Function: get_virtual_registers
+  uvm_mem[] get_memories(uvm_hier_e hier=uvm_hier_e.UVM_HIER) {
+    synchronized(this) {
+      uvm_mem[] memories;
+      foreach (mem, unused; this._mems) {
+	memories ~= mem;
+      }
+      if (hier == uvm_hier_e.UVM_HIER) {
+	foreach (blk_, unused; _blks) {
+	  uvm_reg_block blk = blk_;
+	  memories ~= blk.get_memories(hier);
+	}
+      }
+      return memories;
+    }
+  }
+
+  // Function -- NODOCS -- get_virtual_registers
   //
   // Get the virtual registers
   //
@@ -819,28 +876,39 @@ abstract class uvm_reg_block: uvm_object
   // in the sub-blocks.
   //
 
-  // extern virtual function void get_virtual_registers(ref uvm_vreg regs[$],
-  // 						     input uvm_hier_e hier=UVM_HIER);
-
-  // get_virtual_registers
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.3.10
   void get_virtual_registers(ref uvm_vreg[] regs,
-				    in uvm_hier_e hier=uvm_hier_e.UVM_HIER) {
+			     in uvm_hier_e hier=uvm_hier_e.UVM_HIER) {
     synchronized(this) {
       foreach (rg, unused; _vregs) {
 	regs ~= rg;
       }
-
-      if (hier == uvm_hier_e.UVM_HIER)
+      if (hier == uvm_hier_e.UVM_HIER) {
 	foreach (blk_, unused; _blks) {
 	  uvm_reg_block blk = blk_;
 	  blk.get_virtual_registers(regs);
 	}
+      }
     }
   }
 
+  uvm_vreg[] get_virtual_registers(uvm_hier_e hier=uvm_hier_e.UVM_HIER) {
+    synchronized(this) {
+      uvm_vreg[] virtual_registers;
+      foreach (vreg, unused; this._vregs) {
+	virtual_registers ~= vreg;
+      }
+      if (hier == uvm_hier_e.UVM_HIER) {
+	foreach (blk_, unused_; _blks) {
+	  uvm_reg_block blk = blk_;
+	  virtual_registers ~= blk.get_virtual_registers(hier);
+	}
+      }
+      return virtual_registers;
+    }
+  }
 
-  // Function: get_virtual_fields
+  // Function -- NODOCS -- get_virtual_fields
   //
   // Get the virtual fields
   //
@@ -849,13 +917,10 @@ abstract class uvm_reg_block: uvm_object
   // If ~hier~ is TRUE, recursively includes the virtual fields
   // in the virtual registers in the sub-blocks.
   //
-  // extern virtual function void get_virtual_fields (ref uvm_vreg_field fields[$],
-  // 						   input uvm_hier_e hier=UVM_HIER);
 
-  // get_virtual_fields
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.3.11
   void get_virtual_fields(ref uvm_vreg_field[] fields,
-				 in uvm_hier_e hier=uvm_hier_e.UVM_HIER) {
+			  in uvm_hier_e hier=uvm_hier_e.UVM_HIER) {
     synchronized(this) {
       foreach (vreg_, unused; _vregs) {
 	uvm_vreg vreg = vreg_;
@@ -870,9 +935,24 @@ abstract class uvm_reg_block: uvm_object
     }
   }
 
+  uvm_vreg_field[] get_virtual_fields(uvm_hier_e hier=uvm_hier_e.UVM_HIER) {
+    synchronized(this) {
+      uvm_vreg_field[] virtual_fields;
+      foreach (vreg, unused; this._vregs) {
+	virtual_fields ~= vreg.get_fields();
+      }
+      if (hier == uvm_hier_e.UVM_HIER) {
+	foreach (blk_, unused; _blks) {
+	  uvm_reg_block blk = blk_;
+	  virtual_fields ~= blk.get_virtual_fields(hier);
+	}
+      }
+      return virtual_fields;
+    }
+  }
 
 
-  // Function: get_block_by_name
+  // Function -- NODOCS -- get_block_by_name
   //
   // Finds a sub-block with the specified simple name.
   //
@@ -885,14 +965,11 @@ abstract class uvm_reg_block: uvm_object
   // If no blocks are found, returns ~null~.
   //
 
-  // extern virtual function uvm_reg_block get_block_by_name (string name);  
-  // get_block_by_name
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.3.12
   uvm_reg_block get_block_by_name(string name) {
     synchronized(this) {
-      if (get_name() == name) {
+      if (get_name() == name)
 	return this;
-      }
 
       foreach (blk_, unused; _blks) {
 	uvm_reg_block blk = blk_;
@@ -912,12 +989,12 @@ abstract class uvm_reg_block: uvm_object
       }
 
       uvm_report_warning("RegModel", "Unable to locate block '" ~ name ~
-		  "' in block '" ~ get_full_name() ~ "'");
+			 "' in block '" ~ get_full_name() ~ "'");
       return null;
     }
   }
 
-  // Function: get_map_by_name
+  // Function -- NODOCS -- get_map_by_name
   //
   // Finds an address map with the specified simple name.
   //
@@ -930,10 +1007,7 @@ abstract class uvm_reg_block: uvm_object
   // If no address maps are found, returns ~null~.
   //
 
-  // extern virtual function uvm_reg_map get_map_by_name (string name);
-
-  // get_map_by_name
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.3.13
   uvm_reg_map get_map_by_name(string name) {
     synchronized(this) {
       uvm_reg_map[] _maps;
@@ -941,9 +1015,8 @@ abstract class uvm_reg_block: uvm_object
       this.get_maps(_maps);
 
       foreach (map; _maps) {
-	if (map.get_name() == name) {
+	if (map.get_name() == name)
 	  return map;
-	}
       }
 
       foreach (map; _maps) {
@@ -951,19 +1024,18 @@ abstract class uvm_reg_block: uvm_object
 	map.get_submaps(submaps, uvm_hier_e.UVM_HIER);
 
 	foreach (submap; submaps) {
-	  if (submap.get_name() == name) {
+	  if (submap.get_name() == name)
 	    return submap;
-	  }
 	}
       }
 
       uvm_report_warning("RegModel", "Map with name '" ~ name ~
-		  "' does not exist in block");
+			 "' does not exist in block");
       return null;
     }
   }
 
-  // Function: get_reg_by_name
+  // Function -- NODOCS -- get_reg_by_name
   //
   // Finds a register with the specified simple name.
   //
@@ -976,10 +1048,7 @@ abstract class uvm_reg_block: uvm_object
   // If no registers are found, returns ~null~.
   //
 
-  // extern virtual function uvm_reg get_reg_by_name (string name);
-
-  // get_reg_by_name
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.3.14
   uvm_reg get_reg_by_name(string name) {
     synchronized(this) {
 
@@ -1001,13 +1070,13 @@ abstract class uvm_reg_block: uvm_object
       }
 
       uvm_report_warning("RegModel", "Unable to locate register '" ~ name ~ 
-		  "' in block '" ~ get_full_name() ~ "'");
+			 "' in block '" ~ get_full_name() ~ "'");
       return null;
     }
   }
 
 
-  // Function: get_field_by_name
+  // Function -- NODOCS -- get_field_by_name
   //
   // Finds a field with the specified simple name.
   //
@@ -1020,10 +1089,7 @@ abstract class uvm_reg_block: uvm_object
   // If no fields are found, returns ~null~.
   //
 
-  // extern virtual function uvm_reg_field get_field_by_name (string name);
-
-  // get_field_by_name
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.3.15
   uvm_reg_field get_field_by_name(string name) {
     synchronized(this) {
 
@@ -1056,12 +1122,12 @@ abstract class uvm_reg_block: uvm_object
       }
 
       uvm_report_warning("RegModel", "Unable to locate field '" ~ name ~ 
-		  "' in block '" ~ get_full_name() ~ "'");
+			 "' in block '" ~ get_full_name() ~ "'");
       return null;
     }
   }
 
-  // Function: get_mem_by_name
+  // Function -- NODOCS -- get_mem_by_name
   //
   // Finds a memory with the specified simple name.
   //
@@ -1074,7 +1140,7 @@ abstract class uvm_reg_block: uvm_object
   // If no memories are found, returns ~null~.
   //
 
-  // extern virtual function uvm_mem get_mem_by_name (string name);
+  // @uvm-ieee 1800.2-2017 auto 18.1.3.16
   uvm_mem get_mem_by_name(string name) {
     synchronized(this) {
       foreach (mem_, unused; _mems) {
@@ -1098,13 +1164,13 @@ abstract class uvm_reg_block: uvm_object
       
 
       uvm_report_warning("RegModel", "Unable to locate memory '" ~ name ~ 
-		  "' in block '" ~ get_full_name() ~ "'");
+			 "' in block '" ~ get_full_name() ~ "'");
       return null;
     }
   }
 
 
-  // Function: get_vreg_by_name
+  // Function -- NODOCS -- get_vreg_by_name
   //
   // Finds a virtual register with the specified simple name.
   //
@@ -1118,10 +1184,7 @@ abstract class uvm_reg_block: uvm_object
   // If no virtual registers are found, returns ~null~.
   //
 
-  // extern virtual function uvm_vreg get_vreg_by_name (string name);
-
-  // get_vreg_by_name
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.3.17
   uvm_vreg get_vreg_by_name(string name) {
     synchronized(this) {
       foreach (rg_, unused; _vregs) {
@@ -1144,12 +1207,12 @@ abstract class uvm_reg_block: uvm_object
       }
 
       uvm_report_warning("RegModel", "Unable to locate virtual register '" ~ name ~ 
-		  "' in block '" ~ get_full_name() ~ "'");
+			 "' in block '" ~ get_full_name() ~ "'");
       return null;
     }
   }
 
-  // Function: get_vfield_by_name
+  // Function -- NODOCS -- get_vfield_by_name
   //
   // Finds a virtual field with the specified simple name.
   //
@@ -1163,9 +1226,7 @@ abstract class uvm_reg_block: uvm_object
   // If no virtual fields are found, returns ~null~.
   //
 
-  // extern virtual function uvm_vreg_field get_vfield_by_name (string name);
-  // get_vfield_by_name
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.3.18
   uvm_vreg_field get_vfield_by_name(string name) {
     synchronized(this) {
       foreach (rg_, unused; _vregs) {
@@ -1195,7 +1256,7 @@ abstract class uvm_reg_block: uvm_object
       }
 
       uvm_report_warning("RegModel", "Unable to locate virtual field '" ~ name ~ 
-		  "' in block '" ~ get_full_name() ~ "'");
+			 "' in block '" ~ get_full_name() ~ "'");
 
       return null;
     }
@@ -1208,7 +1269,7 @@ abstract class uvm_reg_block: uvm_object
   //----------------
 
 
-  // Function: build_coverage
+  // Function -- NODOCS -- build_coverage
   //
   // Check if all of the specified coverage model must be built.
   //
@@ -1222,20 +1283,19 @@ abstract class uvm_reg_block: uvm_object
   // block model.
   //
 
-  // extern protected function uvm_reg_cvr_t build_coverage(uvm_reg_cvr_t models);
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.4.1
   uvm_reg_cvr_t build_coverage(uvm_reg_cvr_t models) {
     synchronized(this) {
-      uvm_reg_cvr_t build_coverage_ = uvm_coverage_model_e.UVM_NO_COVERAGE;
+      uvm_reg_cvr_t retval = uvm_coverage_model_e.UVM_NO_COVERAGE;
       uvm_reg_cvr_rsrc_db.read_by_name("uvm_reg." ~ get_full_name(),
 				       "include_coverage",
-				       build_coverage_, this);
-      return build_coverage_ & models;
+				       retval, this);
+      return retval & models;
     }
   }
 
 
-  // Function: add_coverage
+  // Function -- NODOCS -- add_coverage
   //
   // Specify that additional coverage models are available.
   //
@@ -1248,9 +1308,7 @@ abstract class uvm_reg_block: uvm_object
   // subsequently derived classes.
   //
 
-  // extern virtual protected function void add_coverage(uvm_reg_cvr_t models);
-  // add_coverage
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.4.2
   void add_coverage(uvm_reg_cvr_t models) {
     synchronized(this) {
       this._has_cover |= models;
@@ -1259,7 +1317,7 @@ abstract class uvm_reg_block: uvm_object
 
 
 
-  // Function: has_coverage
+  // Function -- NODOCS -- has_coverage
   //
   // Check if block has coverage model(s)
   //
@@ -1268,17 +1326,15 @@ abstract class uvm_reg_block: uvm_object
   // Models are specified by adding the symbolic value of individual
   // coverage model as defined in <uvm_coverage_model_e>.
   //
-  // extern virtual function bool has_coverage(uvm_reg_cvr_t models);
 
-  // has_coverage
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.4.3
   bool has_coverage(uvm_reg_cvr_t models) {
     synchronized(this) {
       return ((this._has_cover & models) == models);
     }
   }
 
-  // Function: set_coverage
+  // Function -- NODOCS -- set_coverage
   //
   // Turns on coverage measurement.
   //
@@ -1300,9 +1356,7 @@ abstract class uvm_reg_block: uvm_object
   // the available functional coverage models.
   //
 
-  // extern virtual function uvm_reg_cvr_t set_coverage(uvm_reg_cvr_t is_on);
-  // set_coverage
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.4.5
   uvm_reg_cvr_t set_coverage(uvm_reg_cvr_t is_on) {
     synchronized(this) {
       this._cover_on = this._has_cover & is_on;
@@ -1327,7 +1381,7 @@ abstract class uvm_reg_block: uvm_object
   }
 
 
-  // Function: get_coverage
+  // Function -- NODOCS -- get_coverage
   //
   // Check if coverage measurement is on.
   //
@@ -1339,9 +1393,7 @@ abstract class uvm_reg_block: uvm_object
   // See <uvm_reg_block::set_coverage()> for more details. 
   //
 
-  // extern virtual function bool get_coverage(uvm_reg_cvr_t is_on = UVM_CVR_ALL);
-  // get_coverage
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.4.4
   bool get_coverage(uvm_reg_cvr_t is_on = uvm_coverage_model_e.UVM_CVR_ALL) {
     synchronized(this) {
       if (this.has_coverage(is_on) == false) return false;
@@ -1349,7 +1401,7 @@ abstract class uvm_reg_block: uvm_object
     }
   }
 
-  // Function: sample
+  // Function -- NODOCS -- sample
   //
   // Functional coverage measurement method
   //
@@ -1363,11 +1415,13 @@ abstract class uvm_reg_block: uvm_object
   // abstraction class generator to perform the required sampling
   // in any provided functional coverage model.
   //
+
+  // @uvm-ieee 1800.2-2017 auto 18.1.4.6
   protected void  sample(uvm_reg_addr_t offset, bool is_read,
 			 uvm_reg_map map) { }
 
 
-  // Function: sample_values
+  // Function -- NODOCS -- sample_values
   //
   // Functional coverage measurement method for field values
   //
@@ -1386,10 +1440,7 @@ abstract class uvm_reg_block: uvm_object
   // If this method is extended, it MUST call super.sample_values().
   //
 
-  // extern virtual function void sample_values();
-
-  // sample_values
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.4.7
   void sample_values() {
     synchronized(this) {
       foreach (rg_, unused; _regs) {
@@ -1404,14 +1455,9 @@ abstract class uvm_reg_block: uvm_object
     }
   }
 
-  // /*private*/ extern function void XsampleX(uvm_reg_addr_t addr,
-  // 					  bool            is_read,
-  // 					  uvm_reg_map    map);
-  // XsampleX
-
   void XsampleX(uvm_reg_addr_t addr,
-		       bool           is_read,
-		       uvm_reg_map    map) {
+		bool           is_read,
+		uvm_reg_map    map) {
     synchronized(this) {
       sample(addr, is_read, map);
       if (_parent !is null) {
@@ -1427,33 +1473,55 @@ abstract class uvm_reg_block: uvm_object
   // Group: Access
   //--------------
 
-  // Function: get_default_path
-  //
-  // Default access path
-  //
-  // Returns the default access path for this block.
-  //
+  // Function -- NODOCS -- get_default_door
 
-  // extern virtual function uvm_path_e get_default_path();
-
-  // get_default_path
-
-   uvm_path_e get_default_path() {
+  // @uvm-ieee 1800.2-2017 auto 18.1.5.1
+  uvm_door_e get_default_door() {
     synchronized(this) {
-      if (this._default_path != uvm_path_e.UVM_DEFAULT_PATH) {
+      if (this._default_path != uvm_door_e.UVM_DEFAULT_DOOR) {
 	return this._default_path;
       }
 
       if (this._parent !is null) {
-	return this._parent.get_default_path();
+	return this._parent.get_default_door();
       }
 
       return UVM_FRONTDOOR;
     }
   }
 
+  // Function -- NODOCS -- set_default_door
 
-  // Function: reset
+  // @uvm-ieee 1800.2-2017 auto 18.1.5.2
+  void set_default_door(uvm_door_e door) {
+    synchronized(this) {
+      this._default_path = door;
+    }
+  }
+
+  // Function -- NODOCS -- get_default_path
+  //
+  // Default access path
+  //
+  // Returns the default access path for this block.
+  //
+
+  //  uvm_door_e get_default_path() {
+  //   synchronized(this) {
+  //     if (this._default_path != uvm_door_e.UVM_DEFAULT_DOOR) {
+  // 	return this._default_path;
+  //     }
+
+  //     if (this._parent !is null) {
+  // 	return this._parent.get_default_path();
+  //     }
+
+  //     return UVM_FRONTDOOR;
+  //   }
+  // }
+
+
+  // Function -- NODOCS -- reset
   //
   // Reset the mirror for this block.
   //
@@ -1464,9 +1532,7 @@ abstract class uvm_reg_block: uvm_object
   // only the values mirrored in their corresponding mirror.
   //
 
-  // extern virtual function void reset(string kind = "HARD");
-  // reset
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.5.3
   void reset(string kind = "HARD") {
     synchronized(this) {
       foreach (rg_, unused; _regs) {
@@ -1484,7 +1550,7 @@ abstract class uvm_reg_block: uvm_object
 
 
 
-  // Function: needs_update
+  // Function -- NODOCS -- needs_update
   //
   // Check if DUT registers need to be written
   //
@@ -1501,9 +1567,7 @@ abstract class uvm_reg_block: uvm_object
   // For additional information, see <uvm_reg_block::update()> method.
   //
 
-  // extern virtual function bool needs_update();
-  // needs_update
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.5.4
   bool needs_update() {
     synchronized(this) {
       foreach (rg_, unused; _regs) {
@@ -1520,7 +1584,7 @@ abstract class uvm_reg_block: uvm_object
     }
   }
 
-  // Task: update
+  // Task -- NODOCS -- update
   //
   // Batch update of register.
   //
@@ -1531,19 +1595,10 @@ abstract class uvm_reg_block: uvm_object
   // This method performs the reverse operation of <uvm_reg_block::mirror()>. 
   //
 
-  // extern virtual task update(output uvm_status_e       status,
-  // 			     input  uvm_path_e         path = UVM_DEFAULT_PATH,
-  // 			     input  uvm_sequence_base  parent = null,
-  // 			     input  int                prior = -1,
-  // 			     input  uvm_object         extension = null,
-  // 			     input  string             fname = "",
-  // 			     input  int                lineno = 0);
-
-  // update
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.5.5
   // task
   void update(out uvm_status_e   status,
-	      uvm_path_e         path = uvm_path_e.UVM_DEFAULT_PATH,
+	      uvm_door_e         path = uvm_door_e.UVM_DEFAULT_DOOR,
 	      uvm_sequence_base  parent = null,
 	      int                prior = -1,
 	      uvm_object         extension = null,
@@ -1553,12 +1608,12 @@ abstract class uvm_reg_block: uvm_object
 
     if (!needs_update()) {
       uvm_report_info("RegModel", format("%s:%0d - RegModel block %s does not need updating",
-				  fname, lineno, this.get_name()), uvm_verbosity.UVM_HIGH);
+					 fname, lineno, this.get_name()), uvm_verbosity.UVM_HIGH);
       return;
     }
    
     uvm_report_info("RegModel", format("%s:%0d - Updating model block %s with %s path",
-				fname, lineno, this.get_name(), path ), uvm_verbosity.UVM_HIGH);
+				       fname, lineno, this.get_name(), path ), uvm_verbosity.UVM_HIGH);
 
     foreach (rg_, unused; get_regs()) {
       uvm_reg rg = rg_;
@@ -1579,7 +1634,7 @@ abstract class uvm_reg_block: uvm_object
   }
 
 
-  // Task: mirror
+  // Task -- NODOCS -- mirror
   //
   // Update the mirrored values
   //
@@ -1593,21 +1648,11 @@ abstract class uvm_reg_block: uvm_object
   // This method performs the reverse operation of <uvm_reg_block::update()>.
   // 
 
-  // extern virtual task mirror(output uvm_status_e       status,
-  // 			     input  uvm_check_e        check = UVM_NO_CHECK,
-  // 			     input  uvm_path_e         path  = UVM_DEFAULT_PATH,
-  // 			     input  uvm_sequence_base  parent = null,
-  // 			     input  int                prior = -1,
-  // 			     input  uvm_object         extension = null,
-  // 			     input  string             fname = "",
-  // 			     input  int                lineno = 0);
-
-  // mirror
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.5.6
   // task
   void mirror(out uvm_status_e   status,
 	      uvm_check_e        check = uvm_check_e.UVM_NO_CHECK,
-	      uvm_path_e         path = uvm_path_e.UVM_DEFAULT_PATH,
+	      uvm_door_e         path = uvm_door_e.UVM_DEFAULT_DOOR,
 	      uvm_sequence_base  parent = null,
 	      int                prior = -1,
 	      uvm_object         extension = null,
@@ -1637,31 +1682,18 @@ abstract class uvm_reg_block: uvm_object
 
 
 
-  // Task: write_reg_by_name
+  // Task -- NODOCS -- write_reg_by_name
   //
   // Write the named register
   //
   // Equivalent to <get_reg_by_name()> followed by <uvm_reg::write()>
   //
 
-  // extern virtual task write_reg_by_name(
-  // 					output uvm_status_e        status,
-  // 					input  string              name,
-  // 					input  uvm_reg_data_t      data,
-  // 					input  uvm_path_e     path = UVM_DEFAULT_PATH,
-  // 					input  uvm_reg_map         map = null,
-  // 					input  uvm_sequence_base   parent = null,
-  // 					input  int                 prior = -1,
-  // 					input  uvm_object          extension = null,
-  // 					input  string              fname = "",
-  // 					input  int                 lineno = 0);
-
-  // write_reg_by_name
-
+  // @uvm-ieee 1800.2-2017 auto D.3.1
   void write_reg_by_name(out uvm_status_e    status,
 			 string              name,
 			 uvm_reg_data_t      data,
-			 uvm_path_e          path = uvm_path_e.UVM_DEFAULT_PATH,
+			 uvm_door_e          path = uvm_door_e.UVM_DEFAULT_DOOR,
 			 uvm_reg_map         map = null,
 			 uvm_sequence_base   parent = null,
 			 int                 prior = -1,
@@ -1682,30 +1714,18 @@ abstract class uvm_reg_block: uvm_object
 
 
 
-  // Task: read_reg_by_name
+  // Task -- NODOCS -- read_reg_by_name
   //
   // Read the named register
   //
   // Equivalent to <get_reg_by_name()> followed by <uvm_reg::read()>
   //
-  // extern virtual task read_reg_by_name(
-  // 				       output uvm_status_e       status,
-  // 				       input  string             name,
-  // 				       output uvm_reg_data_t     data,
-  // 				       input  uvm_path_e    path = UVM_DEFAULT_PATH,
-  // 				       input  uvm_reg_map        map = null,
-  // 				       input  uvm_sequence_base  parent = null,
-  // 				       input  int                prior = -1,
-  // 				       input  uvm_object         extension = null,
-  // 				       input  string             fname = "",
-  // 				       input  int                lineno = 0);
 
-  // read_reg_by_name
-
+  // @uvm-ieee 1800.2-2017 auto D.3.2
   void read_reg_by_name(out uvm_status_e       status,
 			string                 name,
 			out uvm_reg_data_t     data,
-			uvm_path_e             path = uvm_path_e.UVM_DEFAULT_PATH,
+			uvm_door_e             path = uvm_door_e.UVM_DEFAULT_DOOR,
 			uvm_reg_map            map = null,
 			uvm_sequence_base      parent = null,
 			int                    prior = -1,
@@ -1724,32 +1744,19 @@ abstract class uvm_reg_block: uvm_object
   }
 
 
-  // Task: write_mem_by_name
+  // Task -- NODOCS -- write_mem_by_name
   //
   // Write the named memory
   //
   // Equivalent to <get_mem_by_name()> followed by <uvm_mem::write()>
   //
 
-  // extern virtual task write_mem_by_name(
-  // 					output uvm_status_e       status,
-  // 					input  string             name,
-  // 					input  uvm_reg_addr_t     offset,
-  // 					input  uvm_reg_data_t     data,
-  // 					input  uvm_path_e    path = UVM_DEFAULT_PATH,
-  // 					input  uvm_reg_map        map = null,
-  // 					input  uvm_sequence_base  parent = null,
-  // 					input  int                prior = -1,
-  // 					input  uvm_object         extension = null,
-  // 					input  string             fname = "",
-  // 					input  int                lineno = 0);
-  // write_mem_by_name
-
+  // @uvm-ieee 1800.2-2017 auto D.3.3
   void write_mem_by_name(out uvm_status_e  status,
 			 string             name,
 			 uvm_reg_addr_t     offset,
 			 uvm_reg_data_t     data,
-			 uvm_path_e         path = uvm_path_e.UVM_DEFAULT_PATH,
+			 uvm_door_e         path = uvm_door_e.UVM_DEFAULT_DOOR,
 			 uvm_reg_map        map = null,
 			 uvm_sequence_base  parent = null,
 			 int                prior = -1,
@@ -1768,34 +1775,19 @@ abstract class uvm_reg_block: uvm_object
     }
   }
 
-  // Task: read_mem_by_name
+  // Task -- NODOCS -- read_mem_by_name
   //
   // Read the named memory
   //
   // Equivalent to <get_mem_by_name()> followed by <uvm_mem::read()>
   //
-  // extern virtual task read_mem_by_name(
-  // 				       output uvm_status_e       status,
-  // 				       input  string             name,
-  // 				       input  uvm_reg_addr_t     offset,
-  // 				       output uvm_reg_data_t     data,
-  // 				       input  uvm_path_e    path = UVM_DEFAULT_PATH,
-  // 				       input  uvm_reg_map        map = null,
-  // 				       input  uvm_sequence_base  parent = null,
-  // 				       input  int                prior = -1,
-  // 				       input  uvm_object         extension = null,
-  // 				       input  string             fname = "",
-  // 				       input  int                lineno = 0);
 
-
-  // read_mem_by_name
-
-
+  // @uvm-ieee 1800.2-2017 auto D.3.4
   void read_mem_by_name(out uvm_status_e   status,
 			string             name,
 			uvm_reg_addr_t     offset,
 			out uvm_reg_data_t data,
-			uvm_path_e         path = uvm_path_e.UVM_DEFAULT_PATH,
+			uvm_door_e         path = uvm_door_e.UVM_DEFAULT_DOOR,
 			uvm_reg_map        map = null,
 			uvm_sequence_base  parent = null,
 			int                prior = -1,
@@ -1813,15 +1805,7 @@ abstract class uvm_reg_block: uvm_object
     }
   }
 
-
-  // extern virtual task readmemh(string filename);
-  // readmemh
-
   void readmemh(string filename) {/* TODO */}
-
-
-  // extern virtual task writememh(string filename);
-  // writememh
 
   void writememh(string filename) {/* TODO */}
 
@@ -1830,7 +1814,7 @@ abstract class uvm_reg_block: uvm_object
   // Group: Backdoor
   //----------------
 
-  // Function: get_backdoor
+  // Function -- NODOCS -- get_backdoor
   //
   // Get the user-defined backdoor for all registers in this block
   //
@@ -1842,9 +1826,7 @@ abstract class uvm_reg_block: uvm_object
   // if none have been specified for this block.
   //
 
-  // extern function uvm_reg_backdoor get_backdoor(bool inherited = 1);
-  // get_backdoor
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.6.1
   final uvm_reg_backdoor get_backdoor(bool inherited = true) {
     synchronized(this) {
       if (_backdoor is null && inherited) {
@@ -1861,7 +1843,7 @@ abstract class uvm_reg_block: uvm_object
   }
 
 
-  // Function: set_backdoor
+  // Function -- NODOCS -- set_backdoor
   //
   // Set the user-defined backdoor for all registers in this block
   //
@@ -1869,12 +1851,8 @@ abstract class uvm_reg_block: uvm_object
   // in this block and sub-blocks, unless overriden by a definition
   // in a lower-level block or register.
   //
-  // extern function void set_backdoor (uvm_reg_backdoor bkdr,
-  // 				     string fname = "",
-  // 				     int lineno = 0);
 
-  // set_backdoor
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.6.2
   final void set_backdoor(uvm_reg_backdoor bkdr,
 			  string           fname = "",
 			  int              lineno = 0) {
@@ -1884,14 +1862,14 @@ abstract class uvm_reg_block: uvm_object
       if (this._backdoor !is null &&
 	  this._backdoor.has_update_threads()) {
 	uvm_report_warning("RegModel",
-		    "Previous register backdoor still has update threads running. Backdoors with active mirroring should only be set before simulation starts.");
+			   "Previous register backdoor still has update threads running. Backdoors with active mirroring should only be set before simulation starts.");
       }
       this._backdoor = bkdr;
     }
   }
 
 
-  // Function:  clear_hdl_path
+  // Function -- NODOCS --  clear_hdl_path
   //
   // Delete HDL paths
   //
@@ -1899,20 +1877,17 @@ abstract class uvm_reg_block: uvm_object
   // for the specified design abstraction.
   //
 
-  // extern function void clear_hdl_path (string kind = "RTL");
-  // clear_hdl_path
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.6.3
   final void clear_hdl_path(string kind = "RTL") {
     synchronized(this) {
       if (kind == "ALL") {
-	_hdl_paths_pool = new uvm_object_string_pool!(uvm_queue!string)
-	  ("hdl_paths");
+	_hdl_paths_pool =
+	  new uvm_object_string_pool!(uvm_queue!string)("hdl_paths");
 	return;
       }
 
-      if (kind == "") {
+      if (kind == "")
 	kind = get_default_hdl_path();
-      }
 
       if (!_hdl_paths_pool.exists(kind)) {
 	uvm_report_warning("RegModel", "Unknown HDL Abstraction '" ~ kind ~ "'");
@@ -1926,7 +1901,7 @@ abstract class uvm_reg_block: uvm_object
 
 
 
-  // Function:  add_hdl_path
+  // Function -- NODOCS --  add_hdl_path
   //
   // Add an HDL path
   //
@@ -1936,9 +1911,7 @@ abstract class uvm_reg_block: uvm_object
   // in the design abstraction
   //
 
-  // extern function void add_hdl_path (string path, string kind = "RTL");
-  // add_hdl_path
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.6.4
   final void add_hdl_path(string path, string kind = "RTL") {
     synchronized(this) {
       uvm_queue!string paths = _hdl_paths_pool.get(kind);
@@ -1946,7 +1919,7 @@ abstract class uvm_reg_block: uvm_object
     }
   }
 
-  // Function:   has_hdl_path
+  // Function -- NODOCS --   has_hdl_path
   //
   // Check if a HDL path is specified
   //
@@ -1956,9 +1929,7 @@ abstract class uvm_reg_block: uvm_object
   // the nearest block ancestor with a specified default design abstraction.
   //
 
-  // extern function bool has_hdl_path (string kind = "");
-  // has_hdl_path
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.6.5
   final bool  has_hdl_path(string kind = "") {
     synchronized(this) {
       if (kind == "") {
@@ -1972,7 +1943,7 @@ abstract class uvm_reg_block: uvm_object
 
 
 
-  // Function:  get_hdl_path
+  // Function -- NODOCS --  get_hdl_path
   //
   // Get the incremental HDL path(s)
   //
@@ -1985,9 +1956,7 @@ abstract class uvm_reg_block: uvm_object
   // for this block is used.
   //
 
-  // extern function void get_hdl_path (ref string paths[$], input string kind = "");
-  // get_hdl_path
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.6.6
   void get_hdl_path(ref string[] paths, string kind = "") {
     synchronized(this) {
       if (kind == "")
@@ -2012,7 +1981,7 @@ abstract class uvm_reg_block: uvm_object
 
 
 
-  // Function:  get_full_hdl_path
+  // Function -- NODOCS --  get_full_hdl_path
   //
   // Get the full hierarchical HDL path(s)
   //
@@ -2027,11 +1996,7 @@ abstract class uvm_reg_block: uvm_object
   // for each ancestor block is used to get each incremental path.
   //
 
-  // extern function void get_full_hdl_path (ref string paths[$],
-  // 					  input string kind = "",
-  // 					  string separator = ".");
-  // get_full_hdl_path
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.6.7
   final void get_full_hdl_path(out string[] paths,
 			       string       kind = "",
 			       string       separator = ".") {
@@ -2047,53 +2012,45 @@ abstract class uvm_reg_block: uvm_object
       }
 
       if (!has_hdl_path(kind)) {
-	uvm_error("RegModel",
-		  "Block does not have hdl path defined for abstraction '" ~
-		  kind ~ "'");
+	uvm_error("RegModel", "Block does not have hdl path defined for abstraction '" ~ kind ~ "'");
 	return;
       }
    
       uvm_queue!string hdl_paths = _hdl_paths_pool.get(kind);
       string[] parent_paths;
 
-      if (_parent !is null) {
+      if (_parent !is null)
 	_parent.get_full_hdl_path(parent_paths, kind, separator);
-      }
 
       for (int i=0; i < hdl_paths.length; ++i) {
 	string hdl_path = hdl_paths.get(i);
 
 	if (parent_paths.length == 0) {
-	  if (hdl_path != "") {
+	  if (hdl_path != "")
 	    paths ~= hdl_path;
-	  }
+
 	  continue;
 	}
          
 	foreach (path; parent_paths)  {
-	  if (hdl_path == "") {
+	  if (hdl_path == "")
 	    paths ~= path;
-	  }
-	  else {
+	  else
 	    paths ~= path ~ separator ~ hdl_path;
-	  }
 	}
       }
     }
   }
   
 
-  // Function: set_default_hdl_path
+  // Function -- NODOCS -- set_default_hdl_path
   //
   // Set the default design abstraction
   //
   // Set the default design abstraction for this block instance.
   //
 
-  // extern function void   set_default_hdl_path (string kind);
-
-  // set_default_hdl_path
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.6.9
   void set_default_hdl_path(string kind) {
     synchronized(this) {
 
@@ -2110,7 +2067,7 @@ abstract class uvm_reg_block: uvm_object
   }
 
 
-  // Function:  get_default_hdl_path
+  // Function -- NODOCS --  get_default_hdl_path
   //
   // Get the default design abstraction
   //
@@ -2120,10 +2077,8 @@ abstract class uvm_reg_block: uvm_object
   // nearest block ancestor.
   // Returns "" if no default design abstraction has been specified.
   //
-  // extern function string get_default_hdl_path ();
 
-  // get_default_hdl_path
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.6.8
   string get_default_hdl_path() {
     synchronized(this) {
       if (_default_hdl_path == "" && _parent !is null) {
@@ -2134,7 +2089,7 @@ abstract class uvm_reg_block: uvm_object
   }
 
 
-  // Function: set_hdl_path_root
+  // Function -- NODOCS -- set_hdl_path_root
   //
   // Specify a root HDL path
   //
@@ -2146,10 +2101,7 @@ abstract class uvm_reg_block: uvm_object
   // same design abstraction specified using <add_hdl_path>.
   //
 
-  // extern function void set_hdl_path_root (string path, string kind = "RTL");
-
-  // set_hdl_path_root
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.6.10
   void set_hdl_path_root (string path, string kind = "RTL") {
     synchronized(this) {
       if (kind == "")
@@ -2160,7 +2112,7 @@ abstract class uvm_reg_block: uvm_object
   }
 
 
-  // Function: is_hdl_path_root
+  // Function -- NODOCS -- is_hdl_path_root
   //
   // Check if this block has an absolute path
   //
@@ -2170,14 +2122,11 @@ abstract class uvm_reg_block: uvm_object
   // for this block is used.
   //
 
-  // extern function bool is_hdl_path_root (string kind = "");
-  // is_hdl_path_root
-
+  // @uvm-ieee 1800.2-2017 auto 18.1.6.11
   final bool  is_hdl_path_root (string kind = "") {
     synchronized(this) {
-      if (kind == "") {
+      if (kind == "")
 	kind = get_default_hdl_path();
-      }
 
       if(kind in _root_hdl_paths) return true;
       else return false;
@@ -2185,8 +2134,6 @@ abstract class uvm_reg_block: uvm_object
   }
 
 
-  // extern virtual function void   do_print      (uvm_printer printer);
-  // do_print
   override void do_print (uvm_printer printer) {
     synchronized(this) {
       super.do_print(printer);
@@ -2226,46 +2173,26 @@ abstract class uvm_reg_block: uvm_object
 
 
 
-  // extern virtual function void   do_copy       (uvm_object rhs);
-  // do_copy
-
   override void do_copy(uvm_object rhs) {
     uvm_report_fatal("RegModel","RegModel blocks cannot be copied");
   }
 
-
-  // extern virtual function bool    do_compare    (uvm_object  rhs,
-  // 						uvm_comparer comparer);
-  // do_compare
-
   override bool do_compare (uvm_object  rhs,
-		   uvm_comparer comparer) {
+			    uvm_comparer comparer) {
     uvm_report_warning("RegModel","RegModel blocks cannot be compared");
     return false;
   }
-
-
-  // extern virtual function void   do_pack       (uvm_packer packer);
-  // do_pack
 
   override void do_pack (uvm_packer packer) {
     uvm_report_warning("RegModel","RegModel blocks cannot be packed");
   }
 
-
-  // extern virtual function void   do_unpack     (uvm_packer packer);
-  // do_unpack
-
   override void do_unpack (uvm_packer packer) {
     uvm_report_warning("RegModel","RegModel blocks cannot be unpacked");
   }
 
-  // extern virtual function string convert2string ();
-  // convert2string
-
   override string convert2string() {
     synchronized(this) {
-
       string image;
       string[] maps;
       string[] blk_maps;
@@ -2328,17 +2255,10 @@ abstract class uvm_reg_block: uvm_object
     }
   }
   
-  // extern virtual function uvm_object clone();
-  // clone
-
   override uvm_object clone() {
     uvm_report_fatal("RegModel","RegModel blocks cannot be cloned");
     return null;
   }
-
-   
-  // extern private function void Xinit_address_mapsX();
-  // Xinit_address_mapsX
 
   final void Xinit_address_mapsX() {
     synchronized(this) {
@@ -2350,4 +2270,31 @@ abstract class uvm_reg_block: uvm_object
     }
   }
 
+  // @uvm-ieee 1800.2-2017 auto 18.1.2.7
+  void set_lock(bool v) {
+    synchronized(this) {
+      _locked = v;
+      foreach (idx, blk; _blks) {
+	idx.set_lock(v);
+      }
+    }
+  }
+
+  // remove all knowledge of map m and all regs|mems|vregs contained in m from the block
+
+  // @uvm-ieee 1800.2-2017 auto 18.1.2.10
+  void unregister(uvm_reg_map m) {
+    synchronized(this) {
+      foreach (idx, reg; _regs) {
+	if (idx.is_in_map(m)) _regs.remove(idx);
+      }
+      foreach (idx, mem; _mems) {
+	if (idx.is_in_map(m)) _mems.remove(idx);
+      }
+      foreach (idx, vreg; _vregs) {
+	if (idx.is_in_map(m)) _vregs.remove(idx);
+      }
+      _maps.remove(m);
+    }
+  }
 }

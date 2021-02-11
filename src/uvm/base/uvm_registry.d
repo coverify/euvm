@@ -27,7 +27,7 @@
 //------------------------------------------------------------------------------
 
 module uvm.base.uvm_registry;
-import uvm.base.uvm_once;
+import uvm.base.uvm_scope;
 import uvm.meta.misc;
 
 import uvm.base.uvm_object: uvm_object;
@@ -94,20 +94,20 @@ class uvm_component_registry(T, string Tname): uvm_object_wrapper
     return common.get_type_name();
   }
 
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_public_sync
     this_type _m_inst;
   }
     
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
   
   static this_type get() {
-    synchronized (_uvm_once_inst) {
-      if (_uvm_once_inst._m_inst is null) {
-	_uvm_once_inst._m_inst = new this_type();
+    synchronized (_uvm_scope_inst) {
+      if (_uvm_scope_inst._m_inst is null) {
+	_uvm_scope_inst._m_inst = new this_type();
       }
-      return _uvm_once_inst._m_inst;
+      return _uvm_scope_inst._m_inst;
     }
   }
 
@@ -236,20 +236,20 @@ class uvm_object_registry(T, string Tname): uvm_object_wrapper
   // Returns the singleton instance of this type. Type-based factory operation
   // depends on there being a single proxy instance for each registered type.
 
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_public_sync
     this_type _m_inst;
   }
     
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
   
   static this_type get() {
-    synchronized (_uvm_once_inst) {
-      if (_uvm_once_inst._m_inst is null) {
-	_uvm_once_inst._m_inst = new this_type();
+    synchronized (_uvm_scope_inst) {
+      if (_uvm_scope_inst._m_inst is null) {
+	_uvm_scope_inst._m_inst = new this_type();
       }
-      return _uvm_once_inst._m_inst;
+      return _uvm_scope_inst._m_inst;
     }
   }
 
@@ -385,20 +385,20 @@ class uvm_abstract_component_registry(T, string Tname):
   // Returns the singleton instance of this type. Type-based factory operation
   // depends on there being a single proxy instance for each registered type.
 
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_public_sync
     this_type _m_inst;
   }
     
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
   
   static this_type get() {
-    synchronized (_uvm_once_inst) {
-      if (_uvm_once_inst._m_inst is null) {
-	_uvm_once_inst._m_inst = new this_type();
+    synchronized (_uvm_scope_inst) {
+      if (_uvm_scope_inst._m_inst is null) {
+	_uvm_scope_inst._m_inst = new this_type();
       }
-      return _uvm_once_inst._m_inst;
+      return _uvm_scope_inst._m_inst;
     }
   }
 
@@ -526,20 +526,20 @@ class uvm_abstract_object_registry(T, string Tname):
   // Returns the singleton instance of this type. Type-based factory operation
   // depends on there being a single proxy instance for each registered type.
 
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_public_sync
     this_type _m_inst;
   }
     
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
   
   static this_type get() {
-    synchronized (_uvm_once_inst) {
-      if (_uvm_once_inst._m_inst is null) {
-	_uvm_once_inst._m_inst = new this_type();
+    synchronized (_uvm_scope_inst) {
+      if (_uvm_scope_inst._m_inst is null) {
+	_uvm_scope_inst._m_inst = new this_type();
       }
-      return _uvm_once_inst._m_inst;
+      return _uvm_scope_inst._m_inst;
     }
   }
 
@@ -626,7 +626,7 @@ class uvm_registry_common(Tregistry, Tcreator, Tcreated,
   import uvm.base.uvm_component: uvm_component;
   alias this_type = uvm_registry_common!(Tregistry,Tcreator,Tcreated,Tname);
 
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_private_sync
     string[] _m__type_aliases;
@@ -634,13 +634,13 @@ class uvm_registry_common(Tregistry, Tcreator, Tcreated,
     this_type _m_inst;
   }
     
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
   
   static string type_name() {
-    synchronized (_uvm_once_inst) {
+    synchronized (_uvm_scope_inst) {
       if ((Tname == "<unknown>") &&
-	  (_uvm_once_inst._m__type_aliases.length != 0)) {
-        return _uvm_once_inst._m__type_aliases[0];
+	  (_uvm_scope_inst._m__type_aliases.length != 0)) {
+        return _uvm_scope_inst._m__type_aliases[0];
       }
       return Tname;
     }
@@ -651,11 +651,11 @@ class uvm_registry_common(Tregistry, Tcreator, Tcreated,
   }
 
   static this_type get() {
-    synchronized (_uvm_once_inst) {
-      if (_uvm_once_inst._m_inst is null) {
-	_uvm_once_inst._m_inst = new this_type();
+    synchronized (_uvm_scope_inst) {
+      if (_uvm_scope_inst._m_inst is null) {
+	_uvm_scope_inst._m_inst = new this_type();
       }
-     return _uvm_once_inst._m_inst;
+     return _uvm_scope_inst._m_inst;
     }
   }
 
@@ -711,9 +711,9 @@ class uvm_registry_common(Tregistry, Tcreator, Tcreated,
   static void set_type_alias(string alias_name) {
     import std.algorithm.sorting;
     import uvm.base.uvm_factory: uvm_factory;
-    synchronized (_uvm_once_inst) {
-      _uvm_once_inst._m__type_aliases ~= alias_name;
-      _uvm_once_inst._m__type_aliases.sort();
+    synchronized (_uvm_scope_inst) {
+      _uvm_scope_inst._m__type_aliases ~= alias_name;
+      _uvm_scope_inst._m__type_aliases.sort();
       // if (uvm_pkg.get_core_state() != UVM_CORE_UNINITIALIZED) {
       uvm_factory factory = uvm_factory.get();
       Tregistry rgtry = Tregistry.get();
@@ -740,14 +740,14 @@ class uvm_registry_common(Tregistry, Tcreator, Tcreated,
   // local static bit m__initialized=__deferred_init();
 
   void initialize() {
-    synchronized (_uvm_once_inst) {
+    synchronized (_uvm_scope_inst) {
       import uvm.base.uvm_factory: uvm_factory;
       uvm_factory factory = uvm_factory.get();
       Tregistry rgtry = Tregistry.get();
       factory.register(rgtry);
       // add aliases that were set before
       // the wrapper was registered with the factory
-      foreach (type_alias; _uvm_once_inst._m__type_aliases) {
+      foreach (type_alias; _uvm_scope_inst._m__type_aliases) {
 	factory.set_type_alias(type_alias, rgtry);
       }
     }

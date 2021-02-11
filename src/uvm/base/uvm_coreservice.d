@@ -39,7 +39,7 @@ import uvm.base.uvm_packer: uvm_packer;
 import uvm.base.uvm_resource: uvm_resource_pool;
 import uvm.base.uvm_copier: uvm_copier;
 import uvm.base.uvm_entity: uvm_entity_base;
-import uvm.base.uvm_once;
+import uvm.base.uvm_scope;
 
 import uvm.meta.misc;
 
@@ -55,11 +55,12 @@ import uvm.meta.misc;
 // and can selected via the define UVM_CORESERVICE_TYPE. They cannot reside in another package.
 //----------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto F.4.1.1
 abstract class uvm_coreservice_t
 {
   import uvm.base.uvm_printer: uvm_printer, uvm_table_printer;
   import uvm.base.uvm_comparer: uvm_comparer;
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_immutable_sync
     private uvm_coreservice_t _inst;
@@ -75,7 +76,7 @@ abstract class uvm_coreservice_t
     }
   }
 
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
 
   // @uvm-ieee 1800.2-2017 auto F.4.1.4.2
   abstract uvm_factory get_factory();
@@ -195,6 +196,8 @@ abstract class uvm_coreservice_t
 // uvm_coreservice_t API. It instantiates uvm_default_factory, uvm_default_report_server,
 // uvm_root.
 //----------------------------------------------------------------------
+ 
+// @uvm-ieee 1800.2-2017 auto F.4.2.1
 class uvm_default_coreservice_t: uvm_coreservice_t
 {
   import uvm.base.uvm_printer: uvm_printer, uvm_table_printer;

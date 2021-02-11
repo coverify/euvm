@@ -33,7 +33,7 @@ import uvm.base.uvm_field_op: uvm_field_op;
 import uvm.base.uvm_globals: uvm_error, uvm_fatal, uvm_warning;
 import uvm.base.uvm_coreservice: uvm_coreservice_t;
 import std.traits: isIntegral, isBoolean, isArray, isDynamicArray, isStaticArray;
-import uvm.base.uvm_once;
+import uvm.base.uvm_scope;
 
 //------------------------------------------------------------------------------
 //

@@ -30,7 +30,7 @@ import uvm.base.uvm_object: uvm_object;
 import uvm.base.uvm_printer: uvm_printer;
 import uvm.base.uvm_object_defines;
 
-import uvm.base.uvm_once;
+import uvm.base.uvm_scope;
 
 import uvm.meta.meta;
 import uvm.meta.misc;
@@ -153,7 +153,7 @@ class uvm_pool(KEY=int, VAL=uvm_void): uvm_object, _esdl__Norand
   // This allows items to be shared amongst components throughout the
   // verification environment.
 
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_immutable_sync
     this_type _m_global_pool;
@@ -163,7 +163,7 @@ class uvm_pool(KEY=int, VAL=uvm_void): uvm_object, _esdl__Norand
       }
     }
   }
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
 
   // private __gshared this_type[uvm_object] _m_global_pool;
 
@@ -464,7 +464,7 @@ class uvm_object_string_pool(VAL=uvm_object): uvm_pool!(string,VAL) {
   // verification environment.
 
   // private __gshared this_type[uvm_object] _m_global_pool;
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_immutable_sync
     this_type _m_global_pool;
@@ -474,7 +474,7 @@ class uvm_object_string_pool(VAL=uvm_object): uvm_pool!(string,VAL) {
       }
     }
   }
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
 
   static this_type get_global_pool() {
     // import uvm.base.uvm_coreservice;

@@ -57,7 +57,7 @@ import uvm.base.uvm_port_base: uvm_port_base;
 import uvm.base.uvm_resource_base: uvm_resource_base;
 import uvm.base.uvm_registry: uvm_abstract_component_registry;
 
-import uvm.base.uvm_once;
+import uvm.base.uvm_scope;
 
 import uvm.meta.meta;		// qualifiedTypeName
 import uvm.meta.misc;		// qualifiedTypeName
@@ -98,7 +98,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 {
   import uvm.base.uvm_objection: uvm_objection;
   import uvm.base.uvm_field_op: uvm_field_op;
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     // m_config_set is declared in SV version but is not used anywhere
     @uvm_private_sync
@@ -151,13 +151,13 @@ abstract class uvm_component: uvm_report_object, ParContext
     }
   }
 
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
 
   protected const(uvm_cmdline_parsed_arg_t[]) m_uvm_applied_cl_action() {
-    return _uvm_once_inst.m_uvm_applied_cl_action();
+    return _uvm_scope_inst.m_uvm_applied_cl_action();
   }
   protected const(uvm_cmdline_parsed_arg_t[]) m_uvm_applied_cl_sev() {
-    return _uvm_once_inst.m_uvm_applied_cl_sev();
+    return _uvm_scope_inst.m_uvm_applied_cl_sev();
   }
 
   mixin (uvm_sync_string);
@@ -451,8 +451,6 @@ abstract class uvm_component: uvm_report_object, ParContext
     return this.get_entity.getRoot();
   }
 
-  //   extern virtual function uvm_component get_parent ();
-
 
   // Function- get_full_name
   //
@@ -718,8 +716,6 @@ abstract class uvm_component: uvm_report_object, ParContext
   // do not call super.build_phase(phase).
   //
   // This method should never be called directly.
-
-  // extern virtual function void build_phase(uvm_phase phase);
 
   // phase methods
   //--------------
@@ -1157,8 +1153,6 @@ abstract class uvm_component: uvm_report_object, ParContext
   // the phase being started. Any threads spawned in this callback are
   // not affected when the phase ends.
 
-  //   extern virtual function void phase_started (uvm_phase phase);
-
   // phase_started
   // -------------
   // phase_started() and phase_ended() are extra callbacks called at the
@@ -1251,8 +1245,6 @@ abstract class uvm_component: uvm_report_object, ParContext
   // Function- get_domain
   //
   // Return handle to the phase domain set on this component
-
-  // extern function uvm_domain get_domain();
 
   // @uvm-ieee 1800.2-2017 auto 13.1.4.4.2
   final uvm_domain get_domain() {
@@ -1521,7 +1513,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   // Setting this static variable causes uvm_config_db::get() to print info about
   // matching configuration settings as they are being applied.
 
-  // moved to uvm_once
+  // moved to uvm_scope
   //   __gshared bit print_config_matches;
 
 
@@ -1604,9 +1596,6 @@ abstract class uvm_component: uvm_report_object, ParContext
   // of the component created may be different than the requested type. See
   // <set_type_override> and <set_inst_override>. See also <uvm_factory> for
   // details on factory operation.
-
-  //   extern function uvm_component create_component (string requested_type_name,
-  //                                                   string name);
 
   final uvm_component create_component (string requested_type_name,
 					string name) {
@@ -2773,8 +2762,8 @@ abstract class uvm_component: uvm_report_object, ParContext
     synchronized (this) {
       uint id;
       if (m_comp_id == -1) {
-	synchronized (_uvm_once_inst) {
-	  id = _uvm_once_inst._m_comp_count++;
+	synchronized (_uvm_scope_inst) {
+	  id = _uvm_scope_inst._m_comp_count++;
 	}
 	debug(UVM_AUTO) {
 	  import std.stdio;
@@ -2837,9 +2826,6 @@ abstract class uvm_component: uvm_report_object, ParContext
 
 
   // Internal methods for setting up command line messaging stuff
-  //   extern function void m_set_cl_msg_args;
-  // m_set_cl_msg_args
-  // -----------------
 
   final void m_set_cl_msg_args() {
     // string s_;
@@ -2860,25 +2846,21 @@ abstract class uvm_component: uvm_report_object, ParContext
 
   }
 
-  //   extern function void m_set_cl_verb;
-  //   extern function void m_set_cl_action;
-  //   extern function void m_set_cl_sev;
-
 
   private void add_time_setting(m_verbosity_setting setting) {
-    synchronized (_uvm_once_inst) {
-      _uvm_once_inst._m_time_settings ~= setting;
+    synchronized (_uvm_scope_inst) {
+      _uvm_scope_inst._m_time_settings ~= setting;
     }
   }
 
   private const(m_verbosity_setting[]) sort_time_settings() {
-    synchronized (_uvm_once_inst) {
-      if (_uvm_once_inst._m_time_settings.length > 0) {
+    synchronized (_uvm_scope_inst) {
+      if (_uvm_scope_inst._m_time_settings.length > 0) {
 	// m_time_settings.sort() with ( item.offset );
 	sort!((m_verbosity_setting a, m_verbosity_setting b)
-	      {return a.offset < b.offset;})(_uvm_once_inst._m_time_settings);
+	      {return a.offset < b.offset;})(_uvm_scope_inst._m_time_settings);
       }
-      return _uvm_once_inst._m_time_settings.dup;
+      return _uvm_scope_inst._m_time_settings.dup;
     }
   }
 
@@ -3020,13 +3002,13 @@ abstract class uvm_component: uvm_report_object, ParContext
 	  uvm_cmdline_parsed_arg_t t;
 	  t.args = args;
 	  t.arg = value;
-	  _uvm_once_inst.add_m_uvm_applied_cl_action(t);
+	  _uvm_scope_inst.add_m_uvm_applied_cl_action(t);
 	}
 	cl_action_initialized = true;
       }
 
-      synchronized (_uvm_once_inst) {
-	foreach (i, ref cl_action; _uvm_once_inst._m_uvm_applied_cl_action) {
+      synchronized (_uvm_scope_inst) {
+	foreach (i, ref cl_action; _uvm_scope_inst._m_uvm_applied_cl_action) {
 	  string[] args = cl_action.args;
 
 	  if (!uvm_is_match(args[0], get_full_name()) ) {
@@ -3036,7 +3018,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 	  uvm_string_to_severity(args[2], sev);
 	  uvm_string_to_action(args[3], action);
 
-	  synchronized (_uvm_once_inst) {
+	  synchronized (_uvm_scope_inst) {
 	    cl_action.used++;
 	  }
 
@@ -3103,12 +3085,12 @@ abstract class uvm_component: uvm_report_object, ParContext
 	  uvm_cmdline_parsed_arg_t t;
 	  t.args = args;
 	  t.arg = value;
-	  _uvm_once_inst.add_m_uvm_applied_cl_sev(t);
+	  _uvm_scope_inst.add_m_uvm_applied_cl_sev(t);
 	}
 	cl_sev_initialized = true;
       }
-      synchronized (_uvm_once_inst) {
-	foreach (i, ref cl_sev; _uvm_once_inst._m_uvm_applied_cl_sev) {
+      synchronized (_uvm_scope_inst) {
+	foreach (i, ref cl_sev; _uvm_scope_inst._m_uvm_applied_cl_sev) {
 	  string[] args = cl_sev.args;
 
 	  if (!uvm_is_match(args[0], get_full_name())) {
@@ -3117,7 +3099,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 
 	  uvm_string_to_severity(args[2], orig_sev);
 	  uvm_string_to_severity(args[3], sev);
-	  synchronized (_uvm_once_inst) {
+	  synchronized (_uvm_scope_inst) {
 	    cl_sev.used++;
 	  }
 
@@ -3143,8 +3125,6 @@ abstract class uvm_component: uvm_report_object, ParContext
       }
     }
   }
-
-  // extern function void m_apply_verbosity_settings(uvm_phase phase);
 
   // m_apply_verbosity_settings
   // --------------------------
@@ -3200,10 +3180,6 @@ abstract class uvm_component: uvm_report_object, ParContext
   private Queue!m_verbosity_setting _m_verbosity_settings;
 
   //   // does the pre abort callback hierarchically
-  //   extern /*local*/ function void m_do_pre_abort;
-
-  // // m_do_pre_abort
-  // // --------------
 
   final void m_do_pre_abort() {
     foreach (child; get_children) {

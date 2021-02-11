@@ -89,7 +89,7 @@ import uvm.meta.misc;
 import uvm.meta.meta;
 import uvm.base.uvm_report_object: uvm_report_object;
 import uvm.base.uvm_object: uvm_object;
-import uvm.base.uvm_once;
+import uvm.base.uvm_scope;
 
 import esdl.data.time: sec;
 import esdl.base.core: EntityIntf;
@@ -126,7 +126,7 @@ class uvm_objection: uvm_report_object, _esdl__Norand
 
   mixin (uvm_sync_string);
 
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_none_sync
     private uvm_objection[] _m_objections;
@@ -183,7 +183,7 @@ class uvm_objection: uvm_report_object, _esdl__Norand
   }
 
 
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
 
   @uvm_protected_sync
   private bool _m_trace_mode;
@@ -260,8 +260,8 @@ class uvm_objection: uvm_report_object, _esdl__Norand
 	_m_trace_mode = true;
       }
 
-      synchronized (_uvm_once_inst) {
-	_uvm_once_inst._m_objections ~= this;
+      synchronized (_uvm_scope_inst) {
+	_uvm_scope_inst._m_objections ~= this;
       }
 
     }
@@ -529,13 +529,13 @@ class uvm_objection: uvm_report_object, _esdl__Norand
     // First go through the scheduled list
     int idx = 0;
     uvm_objection_context_object ctxt;
-    synchronized (_uvm_once_inst) {
-      while (idx < _uvm_once_inst._m_scheduled_list.length) {
-	if ((_uvm_once_inst._m_scheduled_list[idx].obj is obj) &&
-	   (_uvm_once_inst._m_scheduled_list[idx].objection is this)) {
+    synchronized (_uvm_scope_inst) {
+      while (idx < _uvm_scope_inst._m_scheduled_list.length) {
+	if ((_uvm_scope_inst._m_scheduled_list[idx].obj is obj) &&
+	   (_uvm_scope_inst._m_scheduled_list[idx].objection is this)) {
 	  // Caught it before the drain was forked
-	  ctxt = _uvm_once_inst._m_scheduled_list[idx];
-	  _uvm_once_inst._m_scheduled_list.remove(idx);
+	  ctxt = _uvm_scope_inst._m_scheduled_list[idx];
+	  _uvm_scope_inst._m_scheduled_list.remove(idx);
 	  break;
 	}
 	idx++;
@@ -626,8 +626,8 @@ class uvm_objection: uvm_report_object, _esdl__Norand
 
       // Cleanup
       ctxt.clear();
-      synchronized (_uvm_once_inst) {
-	_uvm_once_inst._m_context_pool.pushBack(ctxt);
+      synchronized (_uvm_scope_inst) {
+	_uvm_scope_inst._m_context_pool.pushBack(ctxt);
       }
     }
   }
@@ -764,10 +764,10 @@ class uvm_objection: uvm_report_object, _esdl__Norand
       }
       else {
 	uvm_objection_context_object ctxt;
-	synchronized (_uvm_once_inst) {
-	  if (_uvm_once_inst._m_context_pool.length !is 0) {
-	    ctxt = _uvm_once_inst._m_context_pool.front();
-	    _uvm_once_inst._m_context_pool.removeFront();
+	synchronized (_uvm_scope_inst) {
+	  if (_uvm_scope_inst._m_context_pool.length !is 0) {
+	    ctxt = _uvm_scope_inst._m_context_pool.front();
+	    _uvm_scope_inst._m_context_pool.removeFront();
 	  }
 	  else {
 	    ctxt = new uvm_objection_context_object();
@@ -792,9 +792,9 @@ class uvm_objection: uvm_report_object, _esdl__Norand
 
 	// Using the background process just allows us to
 	// separate the links of the chain.
-	synchronized (_uvm_once_inst) {
-	  _uvm_once_inst._m_scheduled_list.pushBack(ctxt);
-	  _uvm_once_inst._m_scheduled_list_event.notify();
+	synchronized (_uvm_scope_inst) {
+	  _uvm_scope_inst._m_scheduled_list.pushBack(ctxt);
+	  _uvm_scope_inst._m_scheduled_list_event.notify();
 	}
       } // else: !if (m_total_count[obj] !is 0)
     }
@@ -833,12 +833,12 @@ class uvm_objection: uvm_report_object, _esdl__Norand
     size_t idx = 0;
 
     // m_scheduled_list/m_context_pool are a once resource -- use guarded version
-    synchronized (_uvm_once_inst) {
-      while (idx < _uvm_once_inst._m_scheduled_list.length) {
-	if (_uvm_once_inst._m_scheduled_list[idx].objection is this) {
-	  _uvm_once_inst._m_scheduled_list[idx].clear();
-	  _uvm_once_inst._m_context_pool.pushBack(_uvm_once_inst._m_scheduled_list[idx]);
-	  _uvm_once_inst._m_scheduled_list.remove(idx);
+    synchronized (_uvm_scope_inst) {
+      while (idx < _uvm_scope_inst._m_scheduled_list.length) {
+	if (_uvm_scope_inst._m_scheduled_list[idx].objection is this) {
+	  _uvm_scope_inst._m_scheduled_list[idx].clear();
+	  _uvm_scope_inst._m_context_pool.pushBack(_uvm_scope_inst._m_scheduled_list[idx]);
+	  _uvm_scope_inst._m_scheduled_list.remove(idx);
 	}
 	else {
 	  idx++;
@@ -852,8 +852,8 @@ class uvm_objection: uvm_report_object, _esdl__Norand
       _m_scheduled_contexts = null;
       while (_m_forked_list.length) {
 	_m_forked_list[0].clear();
-	synchronized (_uvm_once_inst) {
-	  _uvm_once_inst._m_context_pool.pushBack(_m_forked_list[0]);
+	synchronized (_uvm_scope_inst) {
+	  _uvm_scope_inst._m_context_pool.pushBack(_m_forked_list[0]);
 	}
 	_m_forked_list.removeFront();
       }
@@ -872,8 +872,8 @@ class uvm_objection: uvm_report_object, _esdl__Norand
 	}
 
 	_m_forked_contexts[o].clear();
-	synchronized (_uvm_once_inst) {
-	  _uvm_once_inst._m_context_pool.pushBack(_m_forked_contexts[o]);
+	synchronized (_uvm_scope_inst) {
+	  _uvm_scope_inst._m_context_pool.pushBack(_m_forked_contexts[o]);
 	}
 	_m_forked_contexts.remove(o);
       }
@@ -897,13 +897,13 @@ class uvm_objection: uvm_report_object, _esdl__Norand
   static void m_execute_scheduled_forks() {
     while (true) {
       // wait(m_scheduled_list.size() !is 0);
-      if (_uvm_once_inst.m_scheduled_list_length() == 0) {
+      if (_uvm_scope_inst.m_scheduled_list_length() == 0) {
 	wait(m_scheduled_list_event);
       }
       else {
 	// Save off the context before the fork
 	uvm_objection_context_object c;
-	_uvm_once_inst.m_scheduled_list_pop_front(c);
+	_uvm_scope_inst.m_scheduled_list_pop_front(c);
 	if (c is null) {
 	  continue;
 	}
@@ -948,8 +948,8 @@ class uvm_objection: uvm_report_object, _esdl__Norand
 		  // Clear out the context object (prevent memory leaks)
 		  ctxt.clear();
 		  // Save the context in the pool for later reuse
-		  synchronized (_uvm_once_inst) {
-		    _uvm_once_inst._m_context_pool.pushBack(ctxt);
+		  synchronized (_uvm_scope_inst) {
+		    _uvm_scope_inst._m_context_pool.pushBack(ctxt);
 		  }
 		}
 	      }
