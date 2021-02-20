@@ -53,6 +53,7 @@ import uvm.meta.misc;
 
 import esdl.data.bvec;
 import esdl.base.comm: SemaphoreObj;
+import esdl.rand;
 
 import std.string: format;
 
@@ -91,6 +92,7 @@ import std.string: format;
 //------------------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto 18.9.1
+@rand(false)
 class uvm_vreg: uvm_object
 {
   mixin uvm_sync;

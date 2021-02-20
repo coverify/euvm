@@ -62,10 +62,12 @@ import uvm.base.uvm_scope: uvm_scope_base;
 import esdl.base.core: Process;
 import esdl.data.bvec;
 import esdl.base.comm: SemaphoreObj;
+import esdl.rand;
 
 import std.string: format;
 
 // @uvm-ieee 1800.2-2017 auto 18.4.1
+@rand(false)
 class uvm_reg: uvm_object
 {
   mixin uvm_sync;

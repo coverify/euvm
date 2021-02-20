@@ -75,10 +75,12 @@ import uvm.seq.uvm_sequence_base: uvm_sequence_base;
 import uvm.meta.misc;
 
 import uvm.dpi.uvm_hdl;
+import esdl.rand;
 
 import std.string: format, toUpper;
 
 // @uvm-ieee 1800.2-2017 auto 18.6.1
+@rand(false)
 class uvm_mem: uvm_object
 {
   // See Mantis 6040. I did NOT make this class virtual because it 

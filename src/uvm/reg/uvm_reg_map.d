@@ -59,6 +59,7 @@ import uvm.reg.uvm_mem: uvm_mem;
 import uvm.reg.uvm_reg_defines: UVM_REG_DATA_WIDTH;
 
 import esdl.data.bvec;
+import esdl.rand;
 
 import std.string: format;
 import std.conv: to;
@@ -91,6 +92,7 @@ class uvm_reg_map_info
 
 
 // Class -- NODOCS -- uvm_reg_transaction_order_policy
+@rand(false)
 abstract class uvm_reg_transaction_order_policy: uvm_object
 {
   this(string name = "policy") {
@@ -136,6 +138,7 @@ class uvm_reg_seq_base: uvm_sequence_base
 //------------------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto 18.2.1
+@rand(false)
 class uvm_reg_map: uvm_object
 {
   mixin uvm_object_essentials;

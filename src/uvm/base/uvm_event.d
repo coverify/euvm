@@ -50,6 +50,7 @@ import uvm.meta.meta;
 import esdl.data.time;
 import esdl.base.core;
 import esdl.data.queue;
+import esdl.rand;
 
 import std.string: format;
 
@@ -328,6 +329,7 @@ abstract class uvm_event_base: uvm_object
 //------------------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto 10.1.2.1
+@rand(false)
 class uvm_event(T=uvm_object): uvm_event_base
 {
   alias this_type = uvm_event!(T);
