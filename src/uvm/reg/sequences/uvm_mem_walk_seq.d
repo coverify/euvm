@@ -83,7 +83,8 @@ class uvm_mem_single_walk_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
   //
   // The memory to test; must be assigned prior to starting sequence.
 
-  uvm_mem mem;
+  @rand(false)
+    uvm_mem mem;
 
 
   // Function -- NODOCS -- new

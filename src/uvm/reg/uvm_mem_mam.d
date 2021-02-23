@@ -122,10 +122,10 @@ class uvm_mem_mam
   // Region allocation policy
   //
   // This object is repeatedly randomized when allocating new regions.
-  @uvm_private_sync
+  @uvm_private_sync @rand(false)
   private uvm_mem_mam_policy _default_alloc;
   
-  @uvm_private_sync
+  @uvm_private_sync @rand(false)
   private uvm_mem _memory;
 
   @uvm_private_sync

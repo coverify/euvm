@@ -60,7 +60,6 @@ import std.string: format;
 //------------------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto 19.5.1
-@rand(false)
 abstract class uvm_reg_backdoor: uvm_object
 {
   mixin(uvm_sync_string);

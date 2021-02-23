@@ -70,7 +70,8 @@ class uvm_mem_single_access_seq: uvm_reg_sequence!(uvm_sequence!(uvm_reg_item))
   //
   // The memory to be tested
   //
-  uvm_mem mem;
+  @rand(false)
+    uvm_mem mem;
 
   mixin uvm_object_utils;
 
@@ -325,4 +326,3 @@ class uvm_mem_access_seq: uvm_reg_sequence!(uvm_sequence!(uvm_reg_item))
   void reset_blk(uvm_reg_block blk) { }
 
 }
-

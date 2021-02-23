@@ -81,6 +81,7 @@ import esdl.base.core: sleep, wait;
 //------------------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto 19.4.1.1
+@rand(false)
 class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
 {
   
@@ -116,7 +117,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
   // Block abstraction this sequence executes on, defined only when this
   // sequence is a user-defined test sequence.
   //
-  @uvm_public_sync
+  @uvm_public_sync @rand(false)
   private uvm_reg_block _model;
 
 
@@ -126,7 +127,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
   // and physical bus transactions, defined only when this sequence is a
   // translation sequence.
   //
-  @uvm_public_sync
+  @uvm_public_sync @rand(false)
   private uvm_reg_adapter _adapter;
 
 
@@ -138,7 +139,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
   // and physical bus transactions. Defined only when this sequence is a
   // translation sequence, and we want to "pull" from an upstream sequencer.
   //
-  @uvm_public_sync
+  @uvm_public_sync @rand(false)
   private uvm_sequencer!(uvm_reg_item) _reg_seqr;
 
 

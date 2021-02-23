@@ -39,8 +39,10 @@ import uvm.base.uvm_globals: uvm_fatal,
 import uvm.base.uvm_object_defines;
 
 import uvm.meta.misc;
+import esdl.rand: rand;
 
 // @uvm-ieee 1800.2-2017 auto 18.3.1
+@rand(false)
 class uvm_reg_file: uvm_object
 {
   mixin uvm_sync;

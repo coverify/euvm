@@ -80,7 +80,8 @@ class uvm_reg_single_access_seq: uvm_reg_sequence!(uvm_sequence!(uvm_reg_item))
 
   // Variable -- NODOCS -- rg
   // The register to be tested
-  uvm_reg rg;
+  @rand(false)
+    uvm_reg rg;
 
   mixin uvm_object_utils;
 
