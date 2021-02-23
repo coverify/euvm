@@ -1,9 +1,13 @@
 //
 // -------------------------------------------------------------
-//    Copyright 2004-2009 Synopsys, Inc.
-//    Copyright 2010-2011 Mentor Graphics Corporation
-//    Copyright 2010 Cadence Design Systems, Inc.
-//    Copyright 2014 Coverify Systems Technology LLP
+// Copyright 2014-2021 Coverify Systems Technology
+// Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2014 Semifore
+// Copyright 2004-2014 Synopsys, Inc.
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2010 AMD
+// Copyright 2014-2018 NVIDIA Corporation
+// Copyright 2018 Cisco Systems, Inc.
 //    All Rights Reserved Worldwide
 //
 //    Licensed under the Apache License, Version 2.0 (the
@@ -23,17 +27,17 @@
 //
 module uvm.reg.uvm_mem_mam;
 
-import uvm.reg.uvm_mem;
-import uvm.reg.uvm_vreg;
-import uvm.reg.uvm_reg_map;
+import uvm.reg.uvm_mem: uvm_mem;
+import uvm.reg.uvm_vreg: uvm_vreg;
+import uvm.reg.uvm_reg_map: uvm_reg_map;
 import uvm.reg.uvm_reg_model;
 
-import uvm.seq.uvm_sequence_base;
+import uvm.seq.uvm_sequence_base: uvm_sequence_base;
 
-import uvm.base.uvm_globals;
-import uvm.base.uvm_object;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_root;
+import uvm.base.uvm_globals: uvm_report_error, uvm_error, uvm_info;
+import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_object_globals: uvm_verbosity;
+import uvm.base.uvm_root: uvm_root;
 import uvm.meta.misc;
 
 import esdl.data.bvec;
@@ -43,7 +47,7 @@ import std.string: format;
 
 //------------------------------------------------------------------------------
 //
-// Title: Memory Allocation Manager
+// Title -- NODOCS -- Memory Allocation Manager
 //
 // Manages the exclusive allocation of consecutive memory locations
 // called ~regions~.
@@ -69,7 +73,7 @@ import std.string: format;
 
 
 //------------------------------------------------------------------------------
-// CLASS: uvm_mem_mam
+// CLASS -- NODOCS -- uvm_mem_mam
 //------------------------------------------------------------------------------
 // Memory allocation manager
 //
@@ -79,14 +83,15 @@ import std.string: format;
 // contiguous address space.
 //------------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 18.12.1
 class uvm_mem_mam
 {
 
   //----------------------
-  // Group: Initialization
+  // Group -- NODOCS -- Initialization
   //----------------------
 
-  // Type: alloc_mode_e
+  // Type -- NODOCS -- alloc_mode_e
   //
   // Memory allocation mode
   //
@@ -95,13 +100,10 @@ class uvm_mem_mam
   // GREEDY   - Consume new, previously unallocated memory
   // THRIFTY  - Reused previously released memory as much as possible (not yet implemented)
   //
-  enum alloc_mode_e: bool {
-    GREEDY,
-    THRIFTY
-  };
+  enum alloc_mode_e: bool {GREEDY, THRIFTY};
   mixin(declareEnums!alloc_mode_e);
 
-  // Type: locality_e
+  // Type -- NODOCS -- locality_e
   //
   // Location of memory regions
   //
@@ -110,59 +112,37 @@ class uvm_mem_mam
   // BROAD    - Locate new regions randomly throughout the address space
   // NEARBY   - Locate new regions adjacent to existing regions
 
-  enum locality_e: bool {
-    BROAD,
-    NEARBY
-  };
+  enum locality_e: bool {BROAD, NEARBY};
   mixin(declareEnums!locality_e);
 
-  // mixin(uvm_sync_string);
+  mixin(uvm_sync_string);
 
-  // Variable: default_alloc
+  // Variable -- NODOCS -- default_alloc
   //
   // Region allocation policy
   //
   // This object is repeatedly randomized when allocating new regions.
-  // @uvm_private_sync
+  @uvm_private_sync @rand(false)
   private uvm_mem_mam_policy _default_alloc;
-  // uvm_sync_private _default_alloc uvm_mem_mam_policy
-  final private uvm_mem_mam_policy default_alloc() {synchronized(this) return this._default_alloc;}
-  final private void default_alloc(uvm_mem_mam_policy val) {synchronized(this) this._default_alloc = val;}
-
   
-  // @uvm_private_sync
+  @uvm_private_sync @rand(false)
   private uvm_mem _memory;
-  // uvm_sync_private _memory uvm_mem
-  final private uvm_mem memory() {synchronized(this) return this._memory;}
-  final private void memory(uvm_mem val) {synchronized(this) this._memory = val;}
 
-  // @uvm_private_sync
+  @uvm_private_sync
   private uvm_mem_mam_cfg _cfg;
-  // uvm_sync_private _cfg uvm_mem_mam_cfg
-  final private uvm_mem_mam_cfg cfg() {synchronized(this) return this._cfg;}
-  final private void cfg(uvm_mem_mam_cfg val) {synchronized(this) this._cfg = val;}
 
   private uvm_mem_region[] _in_use;
 
-  // @uvm_private_sync
+  @uvm_private_sync
   private int _for_each_idx = -1;
-  // uvm_sync_private _for_each_idx int
-  final private int for_each_idx() {synchronized(this) return this._for_each_idx;}
-  final private void for_each_idx(int val) {synchronized(this) this._for_each_idx = val;}
 
-  // @uvm_private_sync
+  @uvm_private_sync
   private string _fname;
-  // uvm_sync_private _fname string
-  final private string fname() {synchronized(this) return this._fname;}
-  final private void fname(string val) {synchronized(this) this._fname = val;}
 
-  // @uvm_private_sync
+  @uvm_private_sync
   private int _lineno;
-  // uvm_sync_private _lineno int
-  final private int lineno() {synchronized(this) return this._lineno;}
-  final private void lineno(int val) {synchronized(this) this._lineno = val;}
 
-  // Function: new
+  // Function -- NODOCS -- new
   //
   // Create a new manager instance
   //
@@ -176,10 +156,6 @@ class uvm_mem_mam
   // descriptor, using the <uvm_mem_region::read()> and
   // <uvm_mem_region::write()> methods.
   //
-  // function new(string      name,
-  //	       uvm_mem_mam_cfg cfg,
-  //	       uvm_mem mem = null);
-
   public this(string name,
 	      uvm_mem_mam_cfg cfg,
 	      uvm_mem mem=null) {
@@ -191,7 +167,7 @@ class uvm_mem_mam
   }
 
 
-  // Function: reconfigure
+  // Function -- NODOCS -- reconfigure
   //
   // Reconfigure the manager
   //
@@ -206,17 +182,12 @@ class uvm_mem_mam
   // if no new configuration is specified, simply returns the current
   // configuration.
   //
-  // extern function uvm_mem_mam_cfg reconfigure(uvm_mem_mam_cfg cfg = null);
-
   public uvm_mem_mam_cfg reconfigure(uvm_mem_mam_cfg cfg = null) {
     synchronized(this) {
-      uvm_root top;
-
-      if (cfg is null) {
+      if (cfg is null)
 	return this._cfg;
-      }
 
-      top = uvm_root.get();
+      uvm_root top = uvm_root.get();
 
       // Cannot reconfigure n_bytes
       if (cfg._n_bytes != this._cfg._n_bytes) {
@@ -247,17 +218,17 @@ class uvm_mem_mam
 	}
       }
 
-      auto reconfigure_ = this._cfg;
+      uvm_mem_mam_cfg retval = this._cfg;
       this._cfg = cfg;
-      return reconfigure_;
+      return retval;
     }
-  } // reconfigure
+  }
 
   //-------------------------
-  // Group: Memory Management
+  // Group -- NODOCS -- Memory Management
   //-------------------------
 
-  // Function: reserve_region
+  // Function -- NODOCS -- reserve_region
   //
   // Reserve a specific memory region
   //
@@ -273,29 +244,23 @@ class uvm_mem_mam
   //
   // Regions can be reserved to create "holes" in the managed address space.
   //
-  // extern function uvm_mem_region reserve_region(bit [63:0]   start_offset,
-  //						int unsigned n_bytes,
-  //						string       fname = "",
-  //						int          lineno = 0);
-
-
   public uvm_mem_region reserve_region(uvm_reg_addr_t      start_offset,
 				       uint                n_bytes,
 				       string              fname = "",
 				       int                 lineno = 0) {
     synchronized(this) {
-      uvm_mem_region reserve_region_;
+      uvm_mem_region retval;
       this.fname = fname;
       this.lineno = lineno;
       if (n_bytes == 0) {
-	uvm_report_error("RegModel", "Cannot reserve 0 bytes");
+	uvm_error("RegModel", "Cannot reserve 0 bytes");
 	return null;
       }
 
       if (start_offset < this.cfg.start_offset) {
-	uvm_report_error("RegModel", format("Cannot reserve before start " ~
-					    "of memory space: 'h%h < 'h%h",
-					    start_offset, this.cfg.start_offset));
+	uvm_error("RegModel", format("Cannot reserve before start " ~
+				     "of memory space: 'h%h < 'h%h",
+				     start_offset, this.cfg.start_offset));
 	return null;
       }
 
@@ -303,46 +268,46 @@ class uvm_mem_mam
       n_bytes = cast(uint) ((end_offset - start_offset + 1) * this.cfg.n_bytes);
 
       if (end_offset > this.cfg.end_offset) {
-	uvm_report_error("RegModel", format("Cannot reserve past end of " ~
-					    "memory space: 'h%h > 'h%h",
-					    end_offset, this.cfg.end_offset));
+	uvm_error("RegModel", format("Cannot reserve past end of " ~
+				     "memory space: 'h%h > 'h%h",
+				     end_offset, this.cfg.end_offset));
 	return null;
       }
 
-      uvm_report_info("RegModel", format("Attempting to reserve ['h%h:'h%h]...",
-					 start_offset, end_offset), uvm_verbosity.UVM_MEDIUM);
+      uvm_info("RegModel", format("Attempting to reserve ['h%h:'h%h]...",
+				  start_offset, end_offset), uvm_verbosity.UVM_MEDIUM);
 
       foreach (i, used; this._in_use) {
 	if (start_offset <= used.get_end_offset() &&
 	    end_offset >= used.get_start_offset()) {
 	  // Overlap!
-	  uvm_report_error("RegModel", format("Cannot reserve ['h%h:'h%h] " ~
-					      "because it overlaps with %s",
-					      start_offset, end_offset,
-					      used.convert2string()));
+	  uvm_error("RegModel", format("Cannot reserve ['h%h:'h%h] " ~
+				       "because it overlaps with %s",
+				       start_offset, end_offset,
+				       used.convert2string()));
 	  return null;
 	}
 
 	// Regions are stored in increasing start offset
 	if (start_offset > used.get_start_offset()) {
-	  reserve_region_ = new uvm_mem_region(cast(ulong) start_offset, end_offset,
-					       cast(uint) (end_offset - start_offset + 1),
-					       cast(uint) n_bytes, this);
-	  this._in_use = _in_use[0..i] ~ reserve_region_ ~
-	    _in_use[i..$];	// insert(i, reserve_region_);
-	  return reserve_region_;
+	  retval = new uvm_mem_region(cast(ulong) start_offset, end_offset,
+				      cast(uint) (end_offset - start_offset + 1),
+				      cast(uint) n_bytes, this);
+	  this._in_use = _in_use[0..i] ~ retval ~
+	    _in_use[i..$];	// insert(i, retval);
+	  return retval;
 	}
       }
 
-      reserve_region_ = new uvm_mem_region(cast(ulong) start_offset, end_offset,
-					   cast(uint) (end_offset - start_offset + 1),
-					   cast(uint) n_bytes, this);
-      this._in_use ~= reserve_region_;
-      return reserve_region_;
+      retval = new uvm_mem_region(cast(ulong) start_offset, end_offset,
+				  cast(uint) (end_offset - start_offset + 1),
+				  cast(uint) n_bytes, this);
+      this._in_use ~= retval;
+      return retval;
     }
   } // reserve_region
 
-  // Function: request_region
+  // Function -- NODOCS -- request_region
   //
   // Request and reserve a memory region
   //
@@ -365,19 +330,14 @@ class uvm_mem_mam
   // If the memory allocation is configured to ~THRIFTY~ or ~NEARBY~,
   // a suitable region is first sought procedurally.
   //
-  // extern function uvm_mem_region request_region(int unsigned   n_bytes,
-  //						uvm_mem_mam_policy alloc = null,
-  //						string         fname = "",
-  //						int            lineno = 0);
-
   public uvm_mem_region request_region(uint                  n_bytes,
 				       uvm_mem_mam_policy    alloc = null,
 				       string            fname = "",
 				       int               lineno = 0) {
     synchronized(this) {
-      this.fname = fname;
-      this.lineno = lineno;
-      if (alloc is null) alloc = this.default_alloc;
+      this._fname = fname;
+      this._lineno = lineno;
+      if (alloc is null) alloc = this._default_alloc;
 
       synchronized(alloc) {
 	alloc._len        = (n_bytes-1) / this.cfg.n_bytes + 1;
@@ -390,15 +350,15 @@ class uvm_mem_mam
 	alloc.randomize();
       }
       catch(Throwable) {
-	uvm_report_error("RegModel", "Unable to randomize policy");
+	uvm_error("RegModel", "Unable to randomize policy");
 	return null;
       }
 
       return reserve_region(cast(uvm_reg_addr_t) alloc.start_offset, n_bytes);
     }
-  } // request_region
+  }
 
-  // Function: release_region
+  // Function -- NODOCS -- release_region
   //
   // Release the specified region
   //
@@ -407,62 +367,55 @@ class uvm_mem_mam
   // specified region has not been previously allocated or
   // is no longer allocated.
   //
-  // extern function void release_region(uvm_mem_region region);
-
   public void release_region(uvm_mem_region region) {
+    if (region is null) return;
     synchronized(this) {
-      if (region is null) return;
-
       foreach (i, used; this._in_use) {
-	if (used is region) {
+	if (used == region) {
 	  this._in_use = _in_use[0..i] ~ _in_use[i+1..$]; // .remove(i);
 	  return;
 	}
       }
-      uvm_report_error("RegModel", "Attempting to release unallocated region\n" ~
-		       region.convert2string());
+      uvm_error("RegModel", "Attempting to release unallocated region\n" ~
+		region.convert2string());
     }
-  } // release_region
+  }
 
 
-  // Function: release_all_regions
+  // Function -- NODOCS -- release_all_regions
   //
   // Forcibly release all allocated memory regions.
   //
-  // extern function void release_all_regions();
-
   public void release_all_regions() {
     synchronized(this) {
       _in_use.length = 0;
     }
-  } // release_all_regions
+  }
 
 
   //---------------------
-  // Group: Introspection
+  // Group -- NODOCS -- Introspection
   //---------------------
 
-  // Function: convert2string
+  // Function -- NODOCS -- convert2string
   //
   // Image of the state of the manager
   //
   // Create a human-readable description of the state of
   // the memory manager and the currently allocated regions.
   //
-  // extern function string convert2string();
-
   string convert2string() {
     synchronized(this) {
-      string _convert2string = "Allocated memory regions:\n";
+      string retval = "Allocated memory regions:\n";
       foreach (i, used; this._in_use) {
-	_convert2string ~= format("   %s\n",
-				  used.convert2string());
+	retval ~= format("   %s\n",
+			 used.convert2string());
       }
-      return _convert2string;
+      return retval;
     }
-  } // convert2string
+  }
 
-  // Function: for_each
+  // Function -- NODOCS -- for_each
   //
   // Iterate over all currently allocated regions
   //
@@ -471,8 +424,6 @@ class uvm_mem_mam
   // Returns ~null~ when there are no additional allocated
   // regions to iterate on.
   //
-  // extern function uvm_mem_region for_each(bit reset = 0);
-
   uvm_mem_region for_each(bool reset = false) {
     synchronized(this) {
       if (reset) this._for_each_idx = -1;
@@ -485,11 +436,9 @@ class uvm_mem_mam
 
       return this._in_use[this._for_each_idx];
     }
-  } // for_each
+  }
 
-
-
-  // Function: get_memory
+  // Function -- NODOCS -- get_memory
   //
   // Get the managed memory implementation
   //
@@ -499,19 +448,18 @@ class uvm_mem_mam
   // Returns ~null~ if no
   // memory abstraction class was specified at construction time.
   //
-  // extern function uvm_mem get_memory();
   public uvm_mem get_memory() {
     synchronized(this) {
       return this._memory;
     }
-  } // get_memory
+  }
 
-}; // uvm_mem_mam
+};
 
 
 
 //------------------------------------------------------------------------------
-// CLASS: uvm_mem_region
+// CLASS -- NODOCS -- uvm_mem_region
 //------------------------------------------------------------------------------
 // Allocated memory region descriptor
 //
@@ -522,65 +470,27 @@ class uvm_mem_mam
 // methods.
 //------------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 18.12.7.1
 class uvm_mem_region
 {
 
-  // mixin(uvm_sync_string);
-  // @uvm_private_sync
+  mixin(uvm_sync_string);
+  @uvm_private_sync
   private ulong _Xstart_offsetX;  // Can't be local since function
-  // uvm_sync_private _Xstart_offsetX ulong
-  final private ulong Xstart_offsetX() {synchronized(this) return this._Xstart_offsetX;}
-  final private void Xstart_offsetX(ulong val) {synchronized(this) this._Xstart_offsetX = val;}
-
-  // @uvm_private_sync
+  @uvm_private_sync
   private ulong _Xend_offsetX;    // calls not supported in constraints
-  // uvm_sync_private _Xend_offsetX ulong
-  final private ulong Xend_offsetX() {synchronized(this) return this._Xend_offsetX;}
-  final private void Xend_offsetX(ulong val) {synchronized(this) this._Xend_offsetX = val;}
-
-  // @uvm_private_sync
+  @uvm_private_sync
   private uint         _len;
-  // uvm_sync_private _len uint
-  final private uint len() {synchronized(this) return this._len;}
-  final private void len(uint val) {synchronized(this) this._len = val;}
-
-  // @uvm_private_sync
+  @uvm_private_sync
   private uint         _n_bytes;
-  // uvm_sync_private _n_bytes uint
-  final private uint n_bytes() {synchronized(this) return this._n_bytes;}
-  final private void n_bytes(uint val) {synchronized(this) this._n_bytes = val;}
-
-  // @uvm_private_sync
+  @uvm_private_sync
   private uvm_mem_mam  _parent;
-  // uvm_sync_private _parent uvm_mem_mam
-  final private uvm_mem_mam parent() {synchronized(this) return this._parent;}
-  final private void parent(uvm_mem_mam val) {synchronized(this) this._parent = val;}
-
-  // @uvm_private_sync
+  @uvm_private_sync
   private string       _fname;
-  // uvm_sync_private _fname string
-  final private string fname() {synchronized(this) return this._fname;}
-  final private void fname(string val) {synchronized(this) this._fname = val;}
-
-  // @uvm_private_sync
+  @uvm_private_sync
   private int          _lineno;
-  // uvm_sync_private _lineno int
-  final private int lineno() {synchronized(this) return this._lineno;}
-  final private void lineno(int val) {synchronized(this) this._lineno = val;}
-
-  // @uvm_private_sync
+  @uvm_private_sync
   /*local*/ private uvm_vreg _XvregX;
-  // uvm_sync_private _XvregX uvm_vreg
-  final private uvm_vreg XvregX() {synchronized(this) return this._XvregX;}
-  final private void XvregX(uvm_vreg val) {synchronized(this) this._XvregX = val;}
-
-
-  // extern /*local*/ function new(bit [63:0]   start_offset,
-  //				bit [63:0]   end_offset,
-  //				int unsigned len,
-  //				int unsigned n_bytes,
-  //				uvm_mem_mam      parent);
-
 
   public this (ulong start_offset,
 	       ulong end_offset,
@@ -595,151 +505,88 @@ class uvm_mem_region
       this._parent         = parent;
       this._XvregX         = null;
     }
-  } // new
+  }
 
 
-    // Function: get_start_offset
-    //
-    // Get the start offset of the region
-    //
-    // Return the address offset, within the memory,
-    // where this memory region starts.
-    //
-    // extern function bit [63:0] get_start_offset();
-
+  // Function -- NODOCS -- get_start_offset
+  //
+  // Get the start offset of the region
+  //
+  // Return the address offset, within the memory,
+  // where this memory region starts.
+  //
   public ulong get_start_offset() {
     synchronized(this) {
       return this._Xstart_offsetX;
     }
-  } // get_start_offset
+  }
 
-
-
-    // Function: get_end_offset
-    //
-    // Get the end offset of the region
-    //
-    // Return the address offset, within the memory,
-    // where this memory region ends.
-    //
-    // extern function bit [63:0] get_end_offset();
-
+  // Function -- NODOCS -- get_end_offset
+  //
+  // Get the end offset of the region
+  //
+  // Return the address offset, within the memory,
+  // where this memory region ends.
+  //
   public ulong get_end_offset() {
     synchronized(this) {
       return this._Xend_offsetX;
     }
-  } // get_end_offset
+  }
 
-
-
-    // Function: get_len
-    //
-    // Size of the memory region
-    //
-    // Return the number of consecutive memory locations
-    // (not necessarily bytes) in the allocated region.
-    //
-    // extern function int unsigned get_len();
-
+  // Function -- NODOCS -- get_len
+  //
+  // Size of the memory region
+  //
+  // Return the number of consecutive memory locations
+  // (not necessarily bytes) in the allocated region.
+  //
   public uint get_len() {
     synchronized(this) {
       return this._len;
     }
-  } // get_len
+  }
 
-
-
-    // Function: get_n_bytes
-    //
-    // Number of bytes in the region
-    //
-    // Return the number of consecutive bytes in the allocated region.
-    // If the managed memory contains more than one byte per address,
-    // the number of bytes in an allocated region may
-    // be greater than the number of requested or reserved bytes.
-    //
-    // extern function int unsigned get_n_bytes();
-
+  // Function -- NODOCS -- get_n_bytes
+  //
+  // Number of bytes in the region
+  //
+  // Return the number of consecutive bytes in the allocated region.
+  // If the managed memory contains more than one byte per address,
+  // the number of bytes in an allocated region may
+  // be greater than the number of requested or reserved bytes.
+  //
   public uint get_n_bytes() {
     synchronized(this) {
       return this._n_bytes;
     }
-  } // get_n_bytes
+  }
 
-
-    // Function: release_region
-    //
-    // Release this region
-    //
-    // extern function void release_region();
-
+  // @uvm-ieee 1800.2-2017 auto 18.12.7.2.5
   public void release_region() {
     this.parent.release_region(this);
   }
 
 
-  // Function: get_memory
-  //
-  // Get the memory where the region resides
-  //
-  // Return a reference to the memory abstraction class
-  // for the memory implementing this allocated memory region.
-  // Returns ~null~ if no memory abstraction class was specified
-  // for the allocation manager that allocated this region.
-  //
-  // extern function uvm_mem get_memory();
-
+  // @uvm-ieee 1800.2-2017 auto 18.12.7.2.6
   public uvm_mem get_memory() {
     return this.parent.get_memory();
-  } // get_memory
+  }
 
-
-
-    // Function: get_virtual_registers
-    //
-    // Get the virtual register array in this region
-    //
-    // Return a reference to the virtual register array abstraction class
-    // implemented in this region.
-    // Returns ~null~ if the memory region is
-    // not known to implement virtual registers.
-    //
-    // extern function uvm_vreg get_virtual_registers();
-
+  // @uvm-ieee 1800.2-2017 auto 18.12.7.2.7
   public uvm_vreg get_virtual_registers() {
     synchronized(this) {
       return this._XvregX;
     }
-  } // get_virtual_registers
+  }
 
 
-    // Task: write
-    //
-    // Write to a memory location in the region.
-    //
-    // Write to the memory location that corresponds to the
-    // specified ~offset~ within this region.
-    // Requires that the memory abstraction class be associated with
-    // the memory allocation manager that allocated this region.
-    //
-    // See <uvm_mem::write()> for more details.
-    //
-    // extern task write(output uvm_status_e       status,
-    //		    input  uvm_reg_addr_t     offset,
-    //		    input  uvm_reg_data_t     value,
-    //		    input  uvm_path_e         path   = UVM_DEFAULT_PATH,
-    //		    input  uvm_reg_map        map    = null,
-    //		    input  uvm_sequence_base  parent = null,
-    //		    input  int                prior = -1,
-    //		    input  uvm_object         extension = null,
-    //		    input  string             fname = "",
-    //		    input  int                lineno = 0);
-
-    // task
+  // @uvm-ieee 1800.2-2017 auto 18.12.7.2.8
+  // task
   public void write(out uvm_status_e   status,
 		    uvm_reg_addr_t     offset,
 		    uvm_reg_data_t     value,
-		    uvm_path_e         path = uvm_path_e.UVM_DEFAULT_PATH,
+		    uvm_door_e         path = uvm_door_e.UVM_DEFAULT_DOOR,
 		    uvm_reg_map        map    = null,
 		    uvm_sequence_base  parent = null,
 		    int                prior = -1,
@@ -754,53 +601,33 @@ class uvm_mem_region
     }
 
     if (mem is null) {
-      uvm_report_error("RegModel", "Cannot use uvm_mem_region::write() on" ~
-		       " a region that was allocated by a Memory Allocation" ~
-		       " Manager that was not associated with a uvm_mem instance");
+      uvm_error("RegModel", "Cannot use uvm_mem_region::write() on" ~
+		" a region that was allocated by a Memory Allocation" ~
+		" Manager that was not associated with a uvm_mem instance");
       status = UVM_NOT_OK;
       return;
     }
 
     if (offset > this.len) {
-      uvm_report_error("RegModel",
-		       format("Attempting to write to an offset outside"
-			      ~ " of the allocated region (%0d > %0d)",
-			      offset, this.len));
+      uvm_error("RegModel",
+		format("Attempting to write to an offset outside"
+		       ~ " of the allocated region (%0d > %0d)",
+		       offset, this.len));
       status = UVM_NOT_OK;
       return;
     }
 
     mem.write(status, offset + this.get_start_offset(), value,
 	      path, map, parent, prior, extension);
-  } // write
+  }
 
-    // Task: read
-    //
-    // Read from a memory location in the region.
-    //
-    // Read from the memory location that corresponds to the
-    // specified ~offset~ within this region.
-    // Requires that the memory abstraction class be associated with
-    // the memory allocation manager that allocated this region.
-    //
-    // See <uvm_mem::read()> for more details.
-    //
-    // extern task read(output uvm_status_e       status,
-    //		   input  uvm_reg_addr_t     offset,
-    //		   output uvm_reg_data_t     value,
-    //		   input  uvm_path_e         path   = UVM_DEFAULT_PATH,
-    //		   input  uvm_reg_map        map    = null,
-    //		   input  uvm_sequence_base  parent = null,
-    //		   input  int                prior = -1,
-    //		   input  uvm_object         extension = null,
-    //		   input  string             fname = "",
-    //		   input  int                lineno = 0);
 
-    // task
+  // @uvm-ieee 1800.2-2017 auto 18.12.7.2.9
+  // task
   public void read(out uvm_status_e   status,
 		   uvm_reg_addr_t     offset,
 		   out uvm_reg_data_t value,
-		   uvm_path_e         path = uvm_path_e.UVM_DEFAULT_PATH,
+		   uvm_door_e         path = uvm_door_e.UVM_DEFAULT_DOOR,
 		   uvm_reg_map        map    = null,
 		   uvm_sequence_base  parent = null,
 		   int                prior = -1,
@@ -814,54 +641,33 @@ class uvm_mem_region
     }
 
     if (mem is null) {
-      uvm_report_error("RegModel", "Cannot use uvm_mem_region::read()" ~
-		       " on a region that was allocated by a Memory" ~
-		       " Allocation Manager that was not associated with" ~
-		       " a uvm_mem instance");
+      uvm_error("RegModel", "Cannot use uvm_mem_region::read()" ~
+		" on a region that was allocated by a Memory" ~
+		" Allocation Manager that was not associated with" ~
+		" a uvm_mem instance");
       status = UVM_NOT_OK;
       return;
     }
 
     if (offset > this.len) {
-      uvm_report_error("RegModel",
-		       format("Attempting to read from an offset outside" ~
-			      " of the allocated region (%0d > %0d)",
-			      offset, this.len));
+      uvm_error("RegModel",
+		format("Attempting to read from an offset outside" ~
+		       " of the allocated region (%0d > %0d)",
+		       offset, this.len));
       status = UVM_NOT_OK;
       return;
     }
 
     mem.read(status, offset + this.get_start_offset(), value,
 	     path, map, parent, prior, extension);
-  } // read
+  }
 
-    // Task: burst_write
-    //
-    // Write to a set of memory location in the region.
-    //
-    // Write to the memory locations that corresponds to the
-    // specified ~burst~ within this region.
-    // Requires that the memory abstraction class be associated with
-    // the memory allocation manager that allocated this region.
-    //
-    // See <uvm_mem::burst_write()> for more details.
-    //
-    // extern task burst_write(output uvm_status_e       status,
-    //			  input  uvm_reg_addr_t     offset,
-    //			  input  uvm_reg_data_t     value[],
-    //			  input  uvm_path_e         path   = UVM_DEFAULT_PATH,
-    //			  input  uvm_reg_map        map    = null,
-    //			  input  uvm_sequence_base  parent = null,
-    //			  input  int                prior  = -1,
-    //			  input  uvm_object         extension = null,
-    //			  input  string             fname  = "",
-    //			  input  int                lineno = 0);
-
-    // task
+  // @uvm-ieee 1800.2-2017 auto 18.12.7.2.10
+  // task
   public void burst_write(out uvm_status_e   status,
 			  uvm_reg_addr_t     offset,
 			  uvm_reg_data_t[]   value,
-			  uvm_path_e         path = uvm_path_e.UVM_DEFAULT_PATH,
+			  uvm_door_e         path = uvm_door_e.UVM_DEFAULT_DOOR,
 			  uvm_reg_map        map    = null,
 			  uvm_sequence_base  parent = null,
 			  int                prior = -1,
@@ -875,20 +681,20 @@ class uvm_mem_region
     }
 
     if (mem is null) {
-      uvm_report_error("RegModel", "Cannot use uvm_mem_region::burst_write()" ~
-		       " on a region that was allocated by a Memory" ~
-		       " Allocation Manager that was not associated with" ~
-		       " a uvm_mem instance");
+      uvm_error("RegModel", "Cannot use uvm_mem_region::burst_write()" ~
+		" on a region that was allocated by a Memory" ~
+		" Allocation Manager that was not associated with" ~
+		" a uvm_mem instance");
       status = UVM_NOT_OK;
       return;
     }
 
     if (offset + value.length > this.len) {
-      uvm_report_error("RegModel",
-		       format("Attempting to burst-write to an offset" ~
-			      " outside of the allocated region (burst" ~
-			      " to [%0d:%0d] > mem_size %0d)",
-			      offset,offset+value.length, this.len));
+      uvm_error("RegModel",
+		format("Attempting to burst-write to an offset" ~
+		       " outside of the allocated region (burst" ~
+		       " to [%0d:%0d] > mem_size %0d)",
+		       offset,offset+value.length, this.len));
       status = UVM_NOT_OK;
       return;
     }
@@ -896,37 +702,14 @@ class uvm_mem_region
     mem.burst_write(status, offset + get_start_offset(), value,
 		    path, map, parent, prior, extension);
 
-  } // burst_write
+  }
 
-
-
-    // Task: burst_read
-    //
-    // Read from a set of memory location in the region.
-    //
-    // Read from the memory locations that corresponds to the
-    // specified ~burst~ within this region.
-    // Requires that the memory abstraction class be associated with
-    // the memory allocation manager that allocated this region.
-    //
-    // See <uvm_mem::burst_read()> for more details.
-    //
-    // extern task burst_read(output uvm_status_e       status,
-    //			 input  uvm_reg_addr_t     offset,
-    //			 output uvm_reg_data_t     value[],
-    //			 input  uvm_path_e         path   = UVM_DEFAULT_PATH,
-    //			 input  uvm_reg_map        map    = null,
-    //			 input  uvm_sequence_base  parent = null,
-    //			 input  int                prior  = -1,
-    //			 input  uvm_object         extension = null,
-    //			 input  string             fname  = "",
-    //			 input  int                lineno = 0);
-
-    // task
+  // @uvm-ieee 1800.2-2017 auto 18.12.7.2.11
+  // task
   public void burst_read(out uvm_status_e       status,
 			 uvm_reg_addr_t         offset,
 			 out uvm_reg_data_t[]   value,
-			 uvm_path_e             path      = uvm_path_e.UVM_DEFAULT_PATH,
+			 uvm_door_e             path      = uvm_door_e.UVM_DEFAULT_DOOR,
 			 uvm_reg_map            map       = null,
 			 uvm_sequence_base      parent    = null,
 			 int                    prior     = -1,
@@ -940,19 +723,19 @@ class uvm_mem_region
     }
 
     if (mem is null) {
-      uvm_report_error("RegModel", "Cannot use uvm_mem_region::burst_read()" ~
-		       " on a region that was allocated by a Memory Allocation" ~
-		       " Manager that was not associated with a uvm_mem instance");
+      uvm_error("RegModel", "Cannot use uvm_mem_region::burst_read()" ~
+		" on a region that was allocated by a Memory Allocation" ~
+		" Manager that was not associated with a uvm_mem instance");
       status = UVM_NOT_OK;
       return;
     }
 
     if (offset + value.length > this.len) {
-      uvm_report_error("RegModel",
-		       format("Attempting to burst-read to an offset" ~
-			      " outside of the allocated region (burst" ~
-			      " to [%0d:%0d] > mem_size %0d)",
-			      offset,offset+value.length, this.len));
+      uvm_error("RegModel",
+		format("Attempting to burst-read to an offset" ~
+		       " outside of the allocated region (burst" ~
+		       " to [%0d:%0d] > mem_size %0d)",
+		       offset,offset+value.length, this.len));
       status = UVM_NOT_OK;
       return;
     }
@@ -960,30 +743,10 @@ class uvm_mem_region
     mem.burst_read(status, offset + get_start_offset(), value,
 		   path, map, parent, prior, extension);
 
-  } // burst_read
+  }
 
-
-    // Task: poke
-    //
-    // Deposit in a memory location in the region.
-    //
-    // Deposit the specified value in the memory location
-    // that corresponds to the
-    // specified ~offset~ within this region.
-    // Requires that the memory abstraction class be associated with
-    // the memory allocation manager that allocated this region.
-    //
-    // See <uvm_mem::poke()> for more details.
-    //
-    // extern task poke(output uvm_status_e       status,
-    //		   input  uvm_reg_addr_t     offset,
-    //		   input  uvm_reg_data_t     value,
-    //		   input  uvm_sequence_base  parent = null,
-    //		   input  uvm_object         extension = null,
-    //		   input  string             fname = "",
-    //		   input  int                lineno = 0);
-
-    // task
+  // @uvm-ieee 1800.2-2017 auto 18.12.7.2.12
+  // task
   public void poke(out uvm_status_e   status,
 		   uvm_reg_addr_t     offset,
 		   uvm_reg_data_t     value,
@@ -998,49 +761,30 @@ class uvm_mem_region
     }
 
     if (mem is null) {
-      uvm_report_error("RegModel", "Cannot use uvm_mem_region::poke()" ~
-		       " on a region that was allocated by a Memory" ~
-		       " Allocation Manager that was not associated" ~
-		       " with a uvm_mem instance");
+      uvm_error("RegModel", "Cannot use uvm_mem_region::poke()" ~
+		" on a region that was allocated by a Memory" ~
+		" Allocation Manager that was not associated" ~
+		" with a uvm_mem instance");
       status = UVM_NOT_OK;
       return;
     }
 
     if (offset > this.len) {
-      uvm_report_error("RegModel",
-		       format("Attempting to poke to an offset outside" ~
-			      " of the allocated region (%0d > %0d)",
-			      offset, this.len));
+      uvm_error("RegModel",
+		format("Attempting to poke to an offset outside" ~
+		       " of the allocated region (%0d > %0d)",
+		       offset, this.len));
       status = UVM_NOT_OK;
       return;
     }
 
     mem.poke(status, offset + this.get_start_offset(), value, "",
 	     parent, extension);
-  } // poke
+  }
 
 
-
-    // Task: peek
-    //
-    // Sample a memory location in the region.
-    //
-    // Sample the memory location that corresponds to the
-    // specified ~offset~ within this region.
-    // Requires that the memory abstraction class be associated with
-    // the memory allocation manager that allocated this region.
-    //
-    // See <uvm_mem::peek()> for more details.
-    //
-    // extern task peek(output uvm_status_e       status,
-    //		   input  uvm_reg_addr_t     offset,
-    //		   output uvm_reg_data_t     value,
-    //		   input  uvm_sequence_base  parent = null,
-    //		   input  uvm_object         extension = null,
-    //		   input  string             fname = "",
-    //		   input  int                lineno = 0);
-
-    // task
+  // @uvm-ieee 1800.2-2017 auto 18.12.7.2.13
+  // task
   public void peek(out uvm_status_e   status,
 		   uvm_reg_addr_t     offset,
 		   out uvm_reg_data_t value,
@@ -1049,33 +793,34 @@ class uvm_mem_region
 		   string             fname = "",
 		   int                lineno = 0) {
     uvm_mem mem = this.parent.get_memory();
-    this.fname = fname;
-    this.lineno = lineno;
+    synchronized(this) {
+      this._fname = fname;
+      this._lineno = lineno;
+    }
 
     if (mem is null) {
-      uvm_report_error("RegModel", "Cannot use uvm_mem_region::peek()" ~
-		       " on a region that was allocated by a Memory" ~
-		       " Allocation Manager that was not associated" ~
-		       " with a uvm_mem instance");
+      uvm_error("RegModel", "Cannot use uvm_mem_region::peek()" ~
+		" on a region that was allocated by a Memory" ~
+		" Allocation Manager that was not associated" ~
+		" with a uvm_mem instance");
       status = UVM_NOT_OK;
       return;
     }
 
     if (offset > this.len) {
-      uvm_report_error("RegModel",
-		       format("Attempting to peek from an offset outside" ~
-			      " of the allocated region (%0d > %0d)",
-			      offset, this.len));
+      uvm_error("RegModel",
+		format("Attempting to peek from an offset outside" ~
+		       " of the allocated region (%0d > %0d)",
+		       offset, this.len));
       status = UVM_NOT_OK;
       return;
     }
 
     mem.peek(status, offset + this.get_start_offset(), value, "",
 	     parent, extension);
-  } // peek
+  }
 
 
-    // extern function string convert2string();
   public string convert2string() {
     synchronized(this) {
       return format("['h%h:'h%h]",
@@ -1087,7 +832,7 @@ class uvm_mem_region
 
 
 //------------------------------------------------------------------------------
-// Class: uvm_mem_mam_policy
+// Class -- NODOCS -- uvm_mem_mam_policy
 //------------------------------------------------------------------------------
 //
 // An instance of this class is randomized to determine
@@ -1099,119 +844,84 @@ class uvm_mem_region
 // it can be implemented in the pre/post_randomize() method.
 //------------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 18.12.8.1
 class uvm_mem_mam_policy
 {
-  // mixin(uvm_sync_string);
+  mixin(uvm_sync_string);
   mixin Randomization;
-  // variable: len
+
+  // variable -- NODOCS -- len
   // Number of addresses required
-  // @uvm_private_sync
+  @uvm_private_sync
   private uint _len;
-  // uvm_sync_private _len uint
-  final private uint len() {synchronized(this) return this._len;}
-  final private void len(uint val) {synchronized(this) this._len = val;}
 
-  // variable: start_offset
+  // variable -- NODOCS -- start_offset
   // The starting offset of the region
-  // @uvm_private_sync
+  @uvm_private_sync
   @rand private ulong _start_offset;
-  // uvm_sync_private _start_offset ulong
-  final private ulong start_offset() {synchronized(this) return this._start_offset;}
-  final private void start_offset(ulong val) {synchronized(this) this._start_offset = val;}
 
-  // variable: min_offset
+  // variable -- NODOCS -- min_offset
   // Minimum address offset in the managed address space
-  // @uvm_private_sync
+  @uvm_private_sync
   private ulong _min_offset;
-  // uvm_sync_private _min_offset ulong
-  final private ulong min_offset() {synchronized(this) return this._min_offset;}
-  final private void min_offset(ulong val) {synchronized(this) this._min_offset = val;}
 
-  // variable: max_offset
+  // variable -- NODOCS -- max_offset
   // Maximum address offset in the managed address space
-  // @uvm_private_sync
+  @uvm_private_sync
   private ulong _max_offset;
-  // uvm_sync_private _max_offset ulong
-  final private ulong max_offset() {synchronized(this) return this._max_offset;}
-  final private void max_offset(ulong val) {synchronized(this) this._max_offset = val;}
 
-  // variable: in_use
+  // variable -- NODOCS -- in_use
   // Regions already allocated in the managed address space
-  // @uvm_private_sync
+  @uvm_private_sync
   private uvm_mem_region[] _in_use;
-  // uvm_sync_private _in_use uvm_mem_region[]
-  final private uvm_mem_region[] in_use() {synchronized(this) return this._in_use;}
-  final private void in_use(uvm_mem_region[] val) {synchronized(this) this._in_use = val;}
 
   Constraint!q{
     _start_offset >= _min_offset;
     _start_offset <= _max_offset - _len + 1;
   } uvm_mem_mam_policy_valid;
 
-  // For now, Vlang does not know how to handle an array of
-  // objects in constraints -- not difficult to implement though
-      
-  // Constraint!q{
-  // 	foreach (iu; _in_use) {
-  // 	  _start_offset > iu.Xend_offsetX ||
-  // 	    _start_offset + _len - 1 < iu.Xstart_offsetX;
-  // 	}
-  // } uvm_mem_mam_policy_no_overlap;
+  Constraint!q{
+    foreach (iu; _in_use) {
+      _start_offset > iu._Xend_offsetX ||
+	_start_offset + _len - 1 < iu._Xstart_offsetX;
+    }
+  } uvm_mem_mam_policy_no_overlap;
 
 };
 
 
 
-//
-// CLASS: uvm_mem_mam_cfg
-// Specifies the memory managed by an instance of a <uvm_mem_mam> memory
-// allocation manager class.
-//
+// @uvm-ieee 1800.2-2017 auto 18.12.9.1
 class uvm_mem_mam_cfg
 {
-  // mixin(uvm_sync_string);
+  mixin(uvm_sync_string);
 
-  // variable: n_bytes
+  // variable -- NODOCS -- n_bytes
   // Number of bytes in each memory location
 
-  // @uvm_public_sync
+  @uvm_public_sync
   @rand private uint _n_bytes;
-  // uvm_sync_public _n_bytes uint
-  final public uint n_bytes() {synchronized(this) return this._n_bytes;}
-  final public void n_bytes(uint val) {synchronized(this) this._n_bytes = val;}
 
-  // FIXME start_offset and end_offset should be "longint unsigned" to match the memory addr types
-  // variable: start_offset
+  // Mantis 6601 calls for these two offset fields to be type longint unsigned
+  // variable -- NODOCS -- start_offset
   // Lowest address of managed space
-  // @uvm_public_sync
+  @uvm_public_sync
   @rand private ulong _start_offset;
-  // uvm_sync_public _start_offset ulong
-  final public ulong start_offset() {synchronized(this) return this._start_offset;}
-  final public void start_offset(ulong val) {synchronized(this) this._start_offset = val;}
 
-  // variable: end_offset
+  // variable -- NODOCS -- end_offset
   // Last address of managed space
-  // @uvm_public_sync
+  @uvm_public_sync
   @rand private ulong _end_offset;
-  // uvm_sync_public _end_offset ulong
-  final public ulong end_offset() {synchronized(this) return this._end_offset;}
-  final public void end_offset(ulong val) {synchronized(this) this._end_offset = val;}
 
-  // variable: mode
+  // variable -- NODOCS -- mode
   // Region allocation mode
-  // @uvm_public_sync
+  @uvm_public_sync
   @rand private uvm_mem_mam.alloc_mode_e _mode;
-  // uvm_sync_public _mode uvm_mem_mam.alloc_mode_e
-  final public uvm_mem_mam.alloc_mode_e mode() {synchronized(this) return this._mode;}
-  final public void mode(uvm_mem_mam.alloc_mode_e val) {synchronized(this) this._mode = val;}
 
-  // variable: locality
+  // variable -- NODOCS -- locality
   // Region location mode
-  // @uvm_public_sync
+  @uvm_public_sync
   @rand private uvm_mem_mam.locality_e _locality;
-  // uvm_sync_public _locality uvm_mem_mam.locality_e
-  final public uvm_mem_mam.locality_e locality() {synchronized(this) return this._locality;}
-  final public void locality(uvm_mem_mam.locality_e val) {synchronized(this) this._locality = val;}
 
   Constraint!q{
     _end_offset > _start_offset;

@@ -587,36 +587,33 @@ class uvm_packer: uvm_policy
   }
 
 
-  void unpack(T)(ref T value, size_t size = -1) if (isArray!T) {
-    import uvm.base.uvm_globals;
-    synchronized (this) {
-      size_t max_size = value.length * BitCount!T;
-      if (size == -1)
-	size = max_size;
+  void unpack(T)(ref T value, size_t size = -1)
+    if (isArray!T && (! is (T == string))) {
+      import uvm.base.uvm_globals;
+      synchronized (this) {
+	size_t max_size = value.length * BitCount!T;
+	if (size == -1)
+	  size = max_size;
 
-      if (size > max_size) {
-	uvm_error("UVM/BASE/PACKER/BAD_SIZE",
-		  format("unpack_bits called with size '%0d'," ~
-			 " which exceeds value.size() of '%0d'",
-			 size,
-			 max_size));
-	return;
-      }
+	if (size > max_size) {
+	  uvm_error("UVM/BASE/PACKER/BAD_SIZE",
+		    format("unpack_bits called with size '%0d'," ~
+			   " which exceeds value.size() of '%0d'",
+			   size,
+			   max_size));
+	  return;
+	}
 
-      if (enough_bits(size, "integral")) {
-	_m_bits.unpack(value, size);
+	if (enough_bits(size, "integral")) {
+	  _m_bits.unpack(value, size);
+	}
       }
     }
-  }
 
   // Function -- NODOCS -- unpack_bits
   //
   // Unpacks bits from the pack array into an unpacked array of bits.
   //
-  // extern virtual function void unpack_bits(ref bit value[], input int size = -1);
-  // unpack_bits
-  // -------------------
-
   // @uvm-ieee 1800.2-2017 auto 16.5.4.18
   alias unpack_bits = unpack;
 
@@ -624,9 +621,7 @@ class uvm_packer: uvm_policy
   //
   // Unpacks bits from the pack array into an unpacked array of bytes.
   //
-  // extern virtual function void unpack_bytes(ref byte value[], input int size = -1);
   // @uvm-ieee 1800.2-2017 auto 16.5.4.19
-
   alias unpack_bytes = unpack;
 
 

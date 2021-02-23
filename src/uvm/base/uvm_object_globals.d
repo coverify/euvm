@@ -33,7 +33,7 @@ import esdl.data.bvec;
 import esdl.data.time;
 import uvm.meta.misc;
 import uvm.meta.mcd;
-import uvm.base.uvm_once;
+import uvm.base.uvm_scope;
 
 // version (UVM_NO_DEPRECATED) { }
 //  else {
@@ -410,7 +410,7 @@ enum uvm_sequencer_arb_mode: byte
 //                      <uvm_sequence_base::pre_start()> task is
 //                      being executed.
 // UVM_PRE_BODY           - The sequence is started and the
-//                      <uvm_sequence_base::pre_frame()> task is
+//                      <uvm_sequence_base::pre_body()> task is
 //                      being executed.
 // UVM_BODY               - The sequence is started and the
 //                      <uvm_sequence_base::body()> task is
@@ -418,7 +418,7 @@ enum uvm_sequencer_arb_mode: byte
 // UVM_ENDED              - The sequence has completed the execution of the
 //                      <uvm_sequence_base::body()> task.
 // UVM_POST_BODY          - The sequence is started and the
-//                      <uvm_sequence_base::post_frame()> task is
+//                      <uvm_sequence_base::post_body()> task is
 //                      being executed.
 // UVM_POST_START         - The sequence is started and the
 //                      <uvm_sequence_base::post_start()> task is
@@ -657,23 +657,23 @@ enum uvm_core_state {
 	UVM_CORE_ABORTED	
 }
 
-class uvm_object_globals_once: uvm_once_base {
+class uvm_object_globals_scope: uvm_scope_base {
   @uvm_none_sync
   uvm_core_state _m_uvm_core_state = uvm_core_state.UVM_CORE_UNINITIALIZED;
   // enum uvm_core_state UVM_CORE_POST_INIT = uvm_core_state.UVM_CORE_INITIALIZED;
 }
 
-mixin (uvm_once_sync_string!(uvm_object_globals_once));
+mixin (uvm_scope_sync_string!(uvm_object_globals_scope));
 
 uvm_core_state m_uvm_core_state() {
-  synchronized (_uvm_once_inst) {
-    return _uvm_once_inst._m_uvm_core_state;
+  synchronized (_uvm_scope_inst) {
+    return _uvm_scope_inst._m_uvm_core_state;
   }
 }
 
 void m_uvm_core_state(uvm_core_state state) {
-  synchronized (_uvm_once_inst) {
-    _uvm_once_inst._m_uvm_core_state = state;
+  synchronized (_uvm_scope_inst) {
+    _uvm_scope_inst._m_uvm_core_state = state;
   }
 }
 

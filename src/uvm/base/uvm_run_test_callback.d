@@ -23,7 +23,7 @@
 module uvm.base.uvm_run_test_callback;
 
 import uvm.meta.misc;
-import uvm.base.uvm_once;
+import uvm.base.uvm_scope;
 import uvm.base.uvm_callback;
 import std.algorithm.searching: canFind;
 import std.algorithm.mutation: removeItem = remove;
@@ -32,13 +32,13 @@ import std.algorithm.mutation: removeItem = remove;
 abstract class uvm_run_test_callback: uvm_callback
 {
 
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_none_sync
     private uvm_run_test_callback[] _m_registered_cbs;
   }
 
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
   
   // @uvm-ieee 1800.2-2017 auto F.6.2.1
   // @uvm-ieee 1800.2-2017 auto F.7.1.1
@@ -57,20 +57,20 @@ abstract class uvm_run_test_callback: uvm_callback
 
   // @uvm-ieee 1800.2-2017 auto F.6.2.5
   static bool add(uvm_run_test_callback cb) {
-    synchronized (_uvm_once_inst) {
-      if (cb is null || canFind(_uvm_once_inst._m_registered_cbs, cb))
+    synchronized (_uvm_scope_inst) {
+      if (cb is null || canFind(_uvm_scope_inst._m_registered_cbs, cb))
 	return false;
-      _uvm_once_inst._m_registered_cbs ~= cb;
+      _uvm_scope_inst._m_registered_cbs ~= cb;
       return true;
     }
   }
 
   // @uvm-ieee 1800.2-2017 auto F.6.2.6
   static bool remove(uvm_run_test_callback cb) { // delete is a keyword
-    synchronized (_uvm_once_inst) {
-      if (cb !is null && canFind(_uvm_once_inst._m_registered_cbs, cb)) {
-	uvm_run_test_callback[] cbs = _uvm_once_inst._m_registered_cbs.dup;
-	_uvm_once_inst._m_registered_cbs = removeItem!(x => x is cb)(cbs);
+    synchronized (_uvm_scope_inst) {
+      if (cb !is null && canFind(_uvm_scope_inst._m_registered_cbs, cb)) {
+	uvm_run_test_callback[] cbs = _uvm_scope_inst._m_registered_cbs.dup;
+	_uvm_scope_inst._m_registered_cbs = removeItem!(x => x is cb)(cbs);
 	return true;
       }
       else
@@ -79,24 +79,24 @@ abstract class uvm_run_test_callback: uvm_callback
   }
 
   static void m_do_pre_run_test() {
-    synchronized (_uvm_once_inst) {
-      foreach (cb; _uvm_once_inst._m_registered_cbs) {
+    synchronized (_uvm_scope_inst) {
+      foreach (cb; _uvm_scope_inst._m_registered_cbs) {
 	cb.pre_run_test();
       }
     }
   }
     
   static void m_do_post_run_test() {
-    synchronized (_uvm_once_inst) {
-      foreach (cb; _uvm_once_inst._m_registered_cbs) {
+    synchronized (_uvm_scope_inst) {
+      foreach (cb; _uvm_scope_inst._m_registered_cbs) {
 	cb.post_run_test();
       }
     }
   }
 
   static void m_do_pre_abort() {
-    synchronized (_uvm_once_inst) {
-      foreach (cb; _uvm_once_inst._m_registered_cbs) {
+    synchronized (_uvm_scope_inst) {
+      foreach (cb; _uvm_scope_inst._m_registered_cbs) {
 	cb.pre_abort();
       }
     }

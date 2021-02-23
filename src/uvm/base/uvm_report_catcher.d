@@ -39,7 +39,7 @@ import uvm.base.uvm_object_globals: uvm_severity, uvm_action, uvm_integral_t,
   uvm_bitstream_t, uvm_radix_enum, uvm_action_type, uvm_verbosity, UVM_FILE;
 import uvm.base.uvm_globals: uvm_report_intf, uvm_info_context;
 
-import uvm.base.uvm_once;
+import uvm.base.uvm_scope;
 
 import uvm.meta.misc;
 import uvm.meta.mcd;
@@ -85,7 +85,7 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
   static private uvm_report_message _m_orig_report_message;
   static private bool _m_set_action_called;
 
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     // Counts for the demoteds and caughts
     @uvm_private_sync
@@ -114,7 +114,7 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
     }
   }
 
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
 
   // Flag counts
   enum int DO_NOT_CATCH = 1;
@@ -591,7 +591,7 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
   //
 
   static bool process_all_report_catchers(uvm_report_message rm) {
-    synchronized (_uvm_once_inst) {
+    synchronized (_uvm_scope_inst) {
       bool thrown = true;
       uvm_severity orig_severity;
 
@@ -653,9 +653,9 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
 	  if (thrown is false) {
 	    // bool break_loop = true;
 	    final switch (orig_severity) {
-	    case uvm_severity.UVM_FATAL:   _uvm_once_inst._m_caught_fatal++; break;
-	    case uvm_severity.UVM_ERROR:   _uvm_once_inst._m_caught_error++; break;
-	    case uvm_severity.UVM_WARNING: _uvm_once_inst._m_caught_warning++; break;
+	    case uvm_severity.UVM_FATAL:   _uvm_scope_inst._m_caught_fatal++; break;
+	    case uvm_severity.UVM_ERROR:   _uvm_scope_inst._m_caught_error++; break;
+	    case uvm_severity.UVM_WARNING: _uvm_scope_inst._m_caught_warning++; break;
 	    case uvm_severity.UVM_INFO:    // break_loop = false;
 	      break;
 	    }
@@ -669,17 +669,17 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
 	switch (orig_severity) {
 	case uvm_severity.UVM_FATAL:
 	  if (_m_modified_report_message.get_severity() < orig_severity) {
-	    _uvm_once_inst._m_demoted_fatal++;
+	    _uvm_scope_inst._m_demoted_fatal++;
 	  }
 	  break;
 	case uvm_severity.UVM_ERROR:
 	  if (_m_modified_report_message.get_severity() < orig_severity) {
-	    _uvm_once_inst._m_demoted_error++;
+	    _uvm_scope_inst._m_demoted_error++;
 	  }
 	  break;
 	case uvm_severity.UVM_WARNING:
 	  if (_m_modified_report_message.get_severity() < orig_severity) {
-	    _uvm_once_inst._m_demoted_warning++;
+	    _uvm_scope_inst._m_demoted_warning++;
 	  }
 	  break;
 	default: break;
@@ -727,24 +727,24 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
   // It prints the statistics for the active catchers.
 
   static void summarize() {
-    synchronized (_uvm_once_inst) {
+    synchronized (_uvm_scope_inst) {
       import uvm.base.uvm_root: uvm_root;
       string s;
       string q;
-      if (_uvm_once_inst._do_report) {
+      if (_uvm_scope_inst._do_report) {
 	q ~= "\n--- UVM Report catcher Summary ---\n\n\n";
 	q ~= format("Number of demoted UVM_FATAL reports  :%5d\n",
-		    _uvm_once_inst._m_demoted_fatal);
+		    _uvm_scope_inst._m_demoted_fatal);
 	q ~= format("Number of demoted UVM_ERROR reports  :%5d\n",
-		    _uvm_once_inst._m_demoted_error);
+		    _uvm_scope_inst._m_demoted_error);
 	q ~= format("Number of demoted UVM_WARNING reports:%5d\n",
-		    _uvm_once_inst._m_demoted_warning);
+		    _uvm_scope_inst._m_demoted_warning);
 	q ~= format("Number of caught UVM_FATAL reports   :%5d\n",
-		    _uvm_once_inst._m_caught_fatal);
+		    _uvm_scope_inst._m_caught_fatal);
 	q ~= format("Number of caught UVM_ERROR reports   :%5d\n",
-		    _uvm_once_inst._m_caught_error);
+		    _uvm_scope_inst._m_caught_error);
 	q ~= format("Number of caught UVM_WARNING reports :%5d\n",
-		    _uvm_once_inst._m_caught_warning);
+		    _uvm_scope_inst._m_caught_warning);
 
 	uvm_info_context("UVM/REPORT/CATCHER", q, uvm_verbosity.UVM_LOW, uvm_root.get());
       }

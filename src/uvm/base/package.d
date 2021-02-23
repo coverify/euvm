@@ -121,6 +121,6 @@ public import uvm.base.uvm_component_defines;
 public import uvm.base.uvm_entity;
 public import uvm.base.uvm_global_defines;
 public import uvm.base.uvm_object_defines;
-public import uvm.base.uvm_once;
+public import uvm.base.uvm_scope;
 public import uvm.base.uvm_port_base;
 public import uvm.base.uvm_root;

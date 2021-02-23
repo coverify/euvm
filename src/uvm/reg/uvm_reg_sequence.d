@@ -1,9 +1,11 @@
 //
 // -------------------------------------------------------------
-//    Copyright 2004-2009 Synopsys, Inc.
-//    Copyright 2010-2011 Mentor Graphics Corporation
-//    Copyright 2010-2011 Cadence Design Systems, Inc.
-//    Copyright 2015      Coverify Systems Technology
+// Copyright 2015-2021 Coverify Systems Technology
+// Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2004-2018 Synopsys, Inc.
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2010 AMD
+// Copyright 2014-2018 NVIDIA Corporation
 //    All Rights Reserved Worldwide
 //
 //    Licensed under the Apache License, Version 2.0 (the
@@ -23,28 +25,31 @@
 //
  
 module uvm.reg.uvm_reg_sequence;  
-import uvm.seq.uvm_sequence;
-import uvm.seq.uvm_sequence_base;
-import uvm.seq.uvm_sequencer;
-import uvm.seq.uvm_sequencer_base;
-import uvm.seq.uvm_sequence_item;
-import uvm.reg.uvm_reg;
-import uvm.reg.uvm_reg_item;
-import uvm.reg.uvm_reg_block;
-import uvm.reg.uvm_reg_adapter;
-import uvm.reg.uvm_reg_map;
-import uvm.reg.uvm_reg_model;
-import uvm.reg.uvm_mem;
 
-import esdl.base.core: sleep, wait;
+import uvm.reg.uvm_reg: uvm_reg;
+import uvm.reg.uvm_reg_item: uvm_reg_item;
+import uvm.reg.uvm_reg_adapter: uvm_reg_adapter;
+import uvm.reg.uvm_reg_map: uvm_reg_map;
+import uvm.reg.uvm_reg_model;
+import uvm.reg.uvm_reg_block: uvm_reg_block;
+import uvm.reg.uvm_mem: uvm_mem;
 
 import uvm.base.uvm_object_defines;
-import uvm.base.uvm_object_globals;
+import uvm.base.uvm_object_globals: uvm_verbosity;
+
+import uvm.seq.uvm_sequence: uvm_sequence;
+import uvm.seq.uvm_sequence_base: uvm_sequence_base;
+import uvm.seq.uvm_sequencer: uvm_sequencer;
+import uvm.seq.uvm_sequencer_base: uvm_sequencer_base;
+import uvm.seq.uvm_sequence_item: uvm_sequence_item;
 
 import uvm.meta.misc;
+import esdl.rand;
+import esdl.base.core: sleep, wait;
+
 
 //------------------------------------------------------------------------------
-// TITLE: Register Sequence Classes
+// TITLE -- NODOCS -- Register Sequence Classes
 //------------------------------------------------------------------------------
 //
 // This section defines the base classes used for register stimulus generation.
@@ -53,7 +58,7 @@ import uvm.meta.misc;
                                                               
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_reg_sequence
+// CLASS -- NODOCS -- uvm_reg_sequence
 //
 // This class provides base functionality for both user-defined RegModel test
 // sequences and "register translation sequences".
@@ -75,13 +80,16 @@ import uvm.meta.misc;
 // Note- The convenience API not yet implemented.
 //------------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 19.4.1.1
+@rand(false)
 class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
 {
-  import esdl.rand;
   
   mixin uvm_object_essentials;
 
-  // Parameter: BASE
+  mixin (uvm_sync_string);
+
+  // Parameter -- NODOCS -- BASE
   //
   // Specifies the sequence type to extend from.
   //
@@ -104,24 +112,26 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
   // user-defined base sequences.
 
 
-  // Variable: model
+  // Variable -- NODOCS -- model
   //
   // Block abstraction this sequence executes on, defined only when this
   // sequence is a user-defined test sequence.
   //
-  uvm_reg_block _model;
+  @uvm_public_sync @rand(false)
+  private uvm_reg_block _model;
 
 
-  // Variable: adapter
+  // Variable -- NODOCS -- adapter
   //
   // Adapter to use for translating between abstract register transactions
   // and physical bus transactions, defined only when this sequence is a
   // translation sequence.
   //
-  uvm_reg_adapter _adapter;
+  @uvm_public_sync @rand(false)
+  private uvm_reg_adapter _adapter;
 
 
-  // Variable: reg_seqr
+  // Variable -- NODOCS -- reg_seqr
   //
   // Layered upstream "register" sequencer.
   //
@@ -129,29 +139,16 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
   // and physical bus transactions. Defined only when this sequence is a
   // translation sequence, and we want to "pull" from an upstream sequencer.
   //
-  uvm_sequencer!(uvm_reg_item) _reg_seqr;
+  @uvm_public_sync @rand(false)
+  private uvm_sequencer!(uvm_reg_item) _reg_seqr;
 
 
-  // Function: new
-  //
-  // Create a new instance, giving it the optional ~name~.
-  //
+  // @uvm-ieee 1800.2-2017 auto 19.4.1.4.1
   this(string name="uvm_reg_sequence_inst") {
     super(name);
   }
 
-
-  // Task: body
-  //
-  // Continually gets a register transaction from the configured upstream
-  // sequencer, <reg_seqr>, and executes the corresponding bus transaction
-  // via <do_rw_access>. 
-  //
-  // User-defined RegModel test sequences must override body() and not call
-  // super.body(), else a warning will be issued and the calling process
-  // not return.
-  //
-
+  // @uvm-ieee 1800.2-2017 auto 19.4.1.4.2
   // task
   override void body() {
     if (m_sequencer is null) {
@@ -159,7 +156,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
 		"Sequence executing as translation sequence, but is not" ~
 		" associated with a sequencer (m_sequencer == null)");
     }
-    if (_reg_seqr is null) {
+    if (reg_seqr is null) {
       uvm_warning("REG_XLATE_NO_SEQR",
 		  "Executing RegModel translation sequence on sequencer " ~
 		  m_sequencer.get_full_name() ~
@@ -174,9 +171,9 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
 	     m_sequencer.get_full_name() ~ "'", uvm_verbosity.UVM_LOW);
     while(true) {
       uvm_reg_item reg_item;
-      _reg_seqr.peek(reg_item);
+      reg_seqr.peek(reg_item);
       do_reg_item(reg_item);
-      _reg_seqr.get(reg_item);
+      reg_seqr.get(reg_item);
       // #0
       wait(0);
     }
@@ -185,50 +182,40 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
 
   enum seq_parent_e { LOCAL, UPSTREAM };
 
-  seq_parent_e _parent_select = seq_parent_e.LOCAL;
+  @uvm_public_sync
+  private seq_parent_e _parent_select = seq_parent_e.LOCAL;
 
-  uvm_sequence_base _upstream_parent;
+  @uvm_public_sync
+  private uvm_sequence_base _upstream_parent;
 
 
-  // Function: do_reg_item
-  //
-  // Executes the given register transaction, ~rw~, via the sequencer on
-  // which this sequence was started (i.e. m_sequencer). Uses the configured
-  // <adapter> to convert the register transaction into the type expected by
-  // this sequencer.
-  //
-
+  // @uvm-ieee 1800.2-2017 auto 19.4.1.4.3
   // task
   void do_reg_item(uvm_reg_item rw) {
-    if (m_sequencer is null) {
+    if (m_sequencer is null)
       uvm_fatal("REG/DO_ITEM/NULL", "do_reg_item: m_sequencer is null");
-    }
-    if (_adapter is null) {
+    if (adapter is null)
       uvm_fatal("REG/DO_ITEM/NULL","do_reg_item: adapter handle is null");
-    }
 
     uvm_info("DO_RW_ACCESS","Doing transaction: " ~ rw.convert2string(), uvm_verbosity.UVM_HIGH);
 
-    if (_parent_select == seq_parent_e.LOCAL) {
-      _upstream_parent = rw.parent;
+    if (parent_select == seq_parent_e.LOCAL) {
+      upstream_parent = rw.parent;
       rw.parent = this;
     }
 
-    if (rw.kind == UVM_WRITE) {
-      rw.local_map.do_bus_write(rw, m_sequencer, _adapter);
-    }
-    else {
-      rw.local_map.do_bus_read(rw, m_sequencer, _adapter);
-    }
+    if (rw.kind == UVM_WRITE)
+      rw.local_map.do_bus_write(rw, m_sequencer, adapter);
+    else
+      rw.local_map.do_bus_read(rw, m_sequencer, adapter);
     
-    if (_parent_select == seq_parent_e.LOCAL) {
-      rw.parent = _upstream_parent;
-    }
+    if (parent_select == seq_parent_e.LOCAL)
+      rw.parent = upstream_parent;
   }
 
 
   //----------------------------------
-  // Group: Convenience Write/Read API
+  // Group -- NODOCS -- Convenience Write/Read API
   //----------------------------------
   //
   // The following methods delegate to the corresponding method in the 
@@ -244,79 +231,41 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
   //
 
 
-  // Task: write_reg
-  //
-  // Writes the given register ~rg~ using <uvm_reg::write>, supplying 'this' as
-  // the ~parent~ argument. Thus,
-  //
-  //| write_reg(model.regA, status, value);
-  //
-  // is equivalent to
-  //
-  //| model.regA.write(status, value, .parent(this));
-  //
+  // @uvm-ieee 1800.2-2017 auto 19.4.1.5.1
   // task
   void write_reg(ref uvm_reg       rg,
 		 out uvm_status_e  status,
 		 uvm_reg_data_t    value,
-		 uvm_path_e        path = uvm_path_e.UVM_DEFAULT_PATH,
+		 uvm_door_e        path = uvm_door_e.UVM_DEFAULT_DOOR,
 		 uvm_reg_map       map = null,
 		 int               prior = -1,
 		 uvm_object        extension = null,
 		 string            fname = "",
 		 int               lineno = 0) {
-    if (rg is null) {
+    if (rg is null)
       uvm_error("NO_REG","Register argument is null");
-    }
-    else {
+    else
       rg.write(status, value, path, map, this, prior, extension, fname, lineno);
-    }
   }
 
-
-  // Task: read_reg
-  //
-  // Reads the given register ~rg~ using <uvm_reg::read>, supplying 'this' as
-  // the ~parent~ argument. Thus,
-  //
-  //| read_reg(model.regA, status, value);
-  //
-  // is equivalent to
-  //
-  //| model.regA.read(status, value, .parent(this));
-  //
-  //
+  // @uvm-ieee 1800.2-2017 auto 19.4.1.5.2
   // task
   void read_reg(ref uvm_reg           rg,
 		out uvm_status_e      status,
 		out uvm_reg_data_t    value,
-		uvm_path_e            path = uvm_path_e.UVM_DEFAULT_PATH,
+		uvm_door_e            path = uvm_door_e.UVM_DEFAULT_DOOR,
 		uvm_reg_map           map = null,
 		int                   prior = -1,
 		uvm_object            extension = null,
 		string                fname = "",
 		int                   lineno = 0) {
-    if (rg is null) {
+    if (rg is null)
       uvm_error("NO_REG","Register argument is null");
-    }
-    else {
+    else
       rg.read(status, value, path, map, this, prior, extension, fname, lineno);
-    }
   }
 
-
-  // Task: poke_reg
-  //
-  // Pokes the given register ~rg~ using <uvm_reg::poke>, supplying 'this' as
-  // the ~parent~ argument. Thus,
-  //
-  //| poke_reg(model.regA, status, value);
-  //
-  // is equivalent to
-  //
-  //| model.regA.poke(status, value, .parent(this));
-  //
-  //
+  // @uvm-ieee 1800.2-2017 auto 19.4.1.5.3
   // task
   void poke_reg(ref uvm_reg       rg,
 		out uvm_status_e  status,
@@ -325,27 +274,13 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
 		uvm_object        extension = null,
 		string            fname = "",
 		int               lineno = 0) {
-    if (rg is null) {
+    if (rg is null)
       uvm_error("NO_REG","Register argument is null");
-    }
-    else {
+    else
       rg.poke(status, value, kind, this, extension, fname, lineno);
-    }
   }
 
-
-
-  // Task: peek_reg
-  //
-  // Peeks the given register ~rg~ using <uvm_reg::peek>, supplying 'this' as
-  // the ~parent~ argument. Thus,
-  //
-  //| peek_reg(model.regA, status, value);
-  //
-  // is equivalent to
-  //
-  //| model.regA.peek(status, value, .parent(this));
-  //
+  // @uvm-ieee 1800.2-2017 auto 19.4.1.5.4
   // task
   void peek_reg(ref uvm_reg           rg,
 		out uvm_status_e      status,
@@ -354,151 +289,82 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
 		uvm_object            extension = null,
 		string                fname = "",
 		int                   lineno = 0) {
-    if (rg is null) {
+    if (rg is null)
       uvm_error("NO_REG","Register argument is null");
-    }
-    else {
+    else
       rg.peek(status,value,kind,this,extension,fname,lineno);
-    }
   }
    
-   
-  // Task: update_reg
-  //
-  // Updates the given register ~rg~ using <uvm_reg::update>, supplying 'this' as
-  // the ~parent~ argument. Thus,
-  //
-  //| update_reg(model.regA, status, value);
-  //
-  // is equivalent to
-  //
-  //| model.regA.update(status, value, .parent(this));
-  //
+  // @uvm-ieee 1800.2-2017 auto 19.4.1.5.5
   // task
   void update_reg(ref uvm_reg       rg,
 		  out uvm_status_e  status,
-		  uvm_path_e        path = uvm_path_e.UVM_DEFAULT_PATH,
+		  uvm_door_e        path = uvm_door_e.UVM_DEFAULT_DOOR,
 		  uvm_reg_map       map = null,
 		  int               prior = -1,
 		  uvm_object        extension = null,
 		  string            fname = "",
 		  int               lineno = 0) {
-    if (rg is null) {
+    if (rg is null)
       uvm_error("NO_REG","Register argument is null");
-    }
-    else {
+    else
       rg.update(status,path,map,this,prior,extension,fname,lineno);
-    }
   }
 
-
-
-  // Task: mirror_reg
-  //
-  // Mirrors the given register ~rg~ using <uvm_reg::mirror>, supplying 'this' as
-  // the ~parent~ argument. Thus,
-  //
-  //| mirror_reg(model.regA, status, UVM_CHECK);
-  //
-  // is equivalent to
-  //
-  //| model.regA.mirror(status, UVM_CHECK, .parent(this));
-  //
+  // @uvm-ieee 1800.2-2017 auto 19.4.1.5.6
   // task
   void mirror_reg(ref uvm_reg       rg,
 		  out uvm_status_e  status,
 		  uvm_check_e       check  = uvm_check_e.UVM_NO_CHECK,
-		  uvm_path_e        path = uvm_path_e.UVM_DEFAULT_PATH,
+		  uvm_door_e        path = uvm_door_e.UVM_DEFAULT_DOOR,
 		  uvm_reg_map       map = null,
 		  int               prior = -1,
 		  uvm_object        extension = null,
 		  string            fname = "",
 		  int               lineno = 0) {
-    if (rg is null) {
+    if (rg is null)
       uvm_error("NO_REG","Register argument is null");
-    }
-    else {
+    else
       rg.mirror(status, check, path, map, this, prior, extension, fname, lineno);
-    }
   }
   
-
-  // Task: write_mem
-  //
-  // Writes the given memory ~mem~ using <uvm_mem::write>, supplying 'this' as
-  // the ~parent~ argument. Thus,
-  //
-  //| write_mem(model.regA, status, offset, value);
-  //
-  // is equivalent to
-  //
-  //| model.regA.write(status, offset, value, .parent(this));
-  //
+  // @uvm-ieee 1800.2-2017 auto 19.4.1.5.7
   // task
   void write_mem(ref uvm_mem       mem,
 		 out uvm_status_e  status,
 		 uvm_reg_addr_t    offset,
 		 uvm_reg_data_t    value,
-		 uvm_path_e        path = uvm_path_e.UVM_DEFAULT_PATH,
+		 uvm_door_e        path = uvm_door_e.UVM_DEFAULT_DOOR,
 		 uvm_reg_map       map = null,
 		 int               prior = -1,
 		 uvm_object        extension = null,
 		 string            fname = "",
 		 int               lineno = 0) {
-    if (mem is null) {
+    if (mem is null)
       uvm_error("NO_MEM","Memory argument is null");
-    }
-    else {
+    else
       mem.write(status, offset, value, path, map, this, prior, extension, fname, lineno);
-    }
   }
 
-
-  // Task: read_mem
-  //
-  // Reads the given memory ~mem~ using <uvm_mem::read>, supplying 'this' as
-  // the ~parent~ argument. Thus,
-  //
-  //| read_mem(model.regA, status, offset, value);
-  //
-  // is equivalent to
-  //
-  //| model.regA.read(status, offset, value, .parent(this));
-  //
-  //
+  // @uvm-ieee 1800.2-2017 auto 19.4.1.5.8
   // task
   void read_mem(ref uvm_mem        mem,
 		out uvm_status_e   status,
 		uvm_reg_addr_t     offset,
 		out uvm_reg_data_t value,
-		uvm_path_e         path = uvm_path_e.UVM_DEFAULT_PATH,
+		uvm_door_e         path = uvm_door_e.UVM_DEFAULT_DOOR,
 		uvm_reg_map        map = null,
 		int                prior = -1,
 		uvm_object         extension = null,
 		string             fname = "",
 		int                lineno = 0) {
-    if (mem is null) {
+    if (mem is null)
       uvm_error("NO_MEM","Memory argument is null");
-    }
-    else {
+    else
       mem.read(status, offset, value, path, map, this, prior, extension, fname, lineno);
-    }
   }
 
-
-
-  // Task: poke_mem
-  //
-  // Pokes the given memory ~mem~ using <uvm_mem::poke>, supplying 'this' as
-  // the ~parent~ argument. Thus,
-  //
-  //| poke_mem(model.regA, status, offset, value);
-  //
-  // is equivalent to
-  //
-  //| model.regA.poke(status, offset, value, .parent(this));
-  //
-  //
+  // @uvm-ieee 1800.2-2017 auto 19.4.1.5.9
   // task
   void poke_mem(ref uvm_mem       mem,
 		out uvm_status_e  status,
@@ -508,27 +374,13 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
 		uvm_object        extension = null,
 		string            fname = "",
 		int               lineno = 0) {
-    if (mem is null) {
+    if (mem is null)
       uvm_error("NO_MEM", "Memory argument is null");
-    }
-    else {
+    else
       mem.poke(status, offset, value, kind, this, extension, fname, lineno);
-    }
   }
 
-
-
-  // Task: peek_mem
-  //
-  // Peeks the given memory ~mem~ using <uvm_mem::peek>, supplying 'this' as
-  // the ~parent~ argument. Thus,
-  //
-  //| peek_mem(model.regA, status, offset, value);
-  //
-  // is equivalent to
-  //
-  //| model.regA.peek(status, offset, value, .parent(this));
-  //
+  // @uvm-ieee 1800.2-2017 auto 19.4.1.5.10
   // task
   void peek_mem(ref uvm_mem        mem,
 		out uvm_status_e   status,
@@ -538,12 +390,10 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
 		uvm_object         extension = null,
 		string             fname = "",
 		int                lineno = 0) {
-    if (mem is null) {
+    if (mem is null)
       uvm_error("NO_MEM","Memory argument is null");
-    }
-    else {
+    else
       mem.peek(status, offset, value, kind, this, extension, fname, lineno);
-    }
   }
 
    
@@ -557,67 +407,36 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
   }
 }
 
-
-//------------------------------------------------------------------------------
-// Class: uvm_reg_frontdoor
-//
-// Facade class for register and memory frontdoor access.
-//------------------------------------------------------------------------------
-//
-// User-defined frontdoor access sequence
-//
-// Base class for user-defined access to register and memory reads and writes
-// through a physical interface.
-//
-// By default, different registers and memories are mapped to different
-// addresses in the address space and are accessed via those exclusively
-// through physical addresses.
-//
-// The frontdoor allows access using a non-linear and/or non-mapped mechanism.
-// Users can extend this class to provide the physical access to these registers.
-//
+// @uvm-ieee 1800.2-2017 auto 19.4.2.1
 abstract class uvm_reg_frontdoor: uvm_reg_sequence!(uvm_sequence!(uvm_sequence_item))
 {
-  // mixin(uvm_sync_string);
-  // Variable: rw_info
+
+  mixin uvm_abstract_object_utils;
+
+  mixin uvm_sync;
+  // Variable -- NODOCS -- rw_info
   //
   // Holds information about the register being read or written
   //
-  // @uvm_public_sync
-  private uvm_reg_item _rw_info;
-  // uvm_sync_public _rw_info uvm_reg_item
-  final public uvm_reg_item rw_info() {synchronized(this) return this._rw_info;}
-  final public void rw_info(uvm_reg_item val) {synchronized(this) this._rw_info = val;}
+  @uvm_public_sync
+  protected uvm_reg_item _rw_info;
 
-  // Variable: sequencer
+  // Variable -- NODOCS -- sequencer
   //
   // Sequencer executing the operation
   //
-  // @uvm_public_sync
+  @uvm_public_sync
   private uvm_sequencer_base _sequencer;
-  // uvm_sync_public _sequencer uvm_sequencer_base
-  final public uvm_sequencer_base sequencer() {synchronized(this) return this._sequencer;}
-  final public void sequencer(uvm_sequencer_base val) {synchronized(this) this._sequencer = val;}
 
-  // Function: new
-  //
-  // Constructor, new object givne optional ~name~.
-  //
+  // @uvm-ieee 1800.2-2017 auto 19.4.2.3
   this(string name="") {
     super(name);
   }
 
-  // @uvm_public_sync
+  @uvm_public_sync
   private string _fname;
-  // uvm_sync_public _fname string
-  final public string fname() {synchronized(this) return this._fname;}
-  final public void fname(string val) {synchronized(this) this._fname = val;}
 
-  // @uvm_public_sync
+  @uvm_public_sync
   private int _lineno;
-  // uvm_sync_public _lineno int
-  final public int lineno() {synchronized(this) return this._lineno;}
-  final public void lineno(int val) {synchronized(this) this._lineno = val;}
 
 }
-

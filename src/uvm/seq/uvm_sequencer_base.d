@@ -32,7 +32,7 @@ import uvm.base.uvm_coreservice;
 import uvm.seq.uvm_sequence_item;
 import uvm.seq.uvm_sequence_base;
 import uvm.base.uvm_component;
-import uvm.base.uvm_once;
+import uvm.base.uvm_scope;
 import uvm.base.uvm_config_db;
 import uvm.base.uvm_entity;
 import uvm.base.uvm_factory;
@@ -107,7 +107,7 @@ abstract class uvm_sequencer_base: uvm_component
       }
 
 
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_private_sync
     private int _g_request_id;
@@ -120,31 +120,31 @@ abstract class uvm_sequencer_base: uvm_component
   };
 
   static uvm_sequencer_base[uint] all_sequencer_insts() {
-    synchronized(_uvm_once_inst) {
-      return _uvm_once_inst._all_sequencer_insts.dup;
+    synchronized(_uvm_scope_inst) {
+      return _uvm_scope_inst._all_sequencer_insts.dup;
     }
   }
 
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
   mixin (uvm_sync_string);
 
   mixin uvm_abstract_component_essentials;
 
   static int inc_g_request_id() {
-    synchronized (_uvm_once_inst) {
-      return _uvm_once_inst._g_request_id++;
+    synchronized (_uvm_scope_inst) {
+      return _uvm_scope_inst._g_request_id++;
     }
   }
 
   static int inc_g_sequence_id() {
-    synchronized (_uvm_once_inst) {
-      return _uvm_once_inst._g_sequence_id++;
+    synchronized (_uvm_scope_inst) {
+      return _uvm_scope_inst._g_sequence_id++;
     }
   }
 
   static int inc_g_sequencer_id() {
-    synchronized (_uvm_once_inst) {
-      return _uvm_once_inst._g_sequencer_id++;
+    synchronized (_uvm_scope_inst) {
+      return _uvm_scope_inst._g_sequencer_id++;
     }
   }
 
@@ -217,8 +217,8 @@ abstract class uvm_sequencer_base: uvm_component
       _m_sequencer_id = inc_g_sequencer_id();
       _m_lock_arb_size = -1;
     }
-    synchronized (_uvm_once_inst) {
-      _uvm_once_inst._all_sequencer_insts[m_sequencer_id] = this;
+    synchronized (_uvm_scope_inst) {
+      _uvm_scope_inst._all_sequencer_insts[m_sequencer_id] = this;
     }
   }
 

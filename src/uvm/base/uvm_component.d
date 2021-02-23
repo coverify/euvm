@@ -1,15 +1,16 @@
 //
 //------------------------------------------------------------------------------
-// Copyright 2012-2019 Coverify Systems Technology
+// Copyright 2012-2021 Coverify Systems Technology
 // Copyright 2010 Paradigm Works
 // Copyright 2007-2017 Mentor Graphics Corporation
 // Copyright 2014 Semifore
 // Copyright 2018 Intel Corporation
 // Copyright 2010-2014 Synopsys, Inc.
 // Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2020 Marvell International Ltd.
 // Copyright 2011-2018 AMD
-// Copyright 2012-2018 Cisco Systems, Inc.
 // Copyright 2013-2018 NVIDIA Corporation
+// Copyright 2012-2018 Cisco Systems, Inc.
 // Copyright 2012 Accellera Systems Initiative
 // Copyright 2017-2018 Verific
 //   All Rights Reserved Worldwide
@@ -56,7 +57,7 @@ import uvm.base.uvm_port_base: uvm_port_base;
 import uvm.base.uvm_resource_base: uvm_resource_base;
 import uvm.base.uvm_registry: uvm_abstract_component_registry;
 
-import uvm.base.uvm_once;
+import uvm.base.uvm_scope;
 
 import uvm.meta.meta;		// qualifiedTypeName
 import uvm.meta.misc;		// qualifiedTypeName
@@ -77,39 +78,12 @@ import std.exception: enforce;
 alias uvm_event_pool = uvm_object_string_pool!(uvm_event!(uvm_object));
 
 
-//------------------------------------------------------------------------------
+//----------------------------------------------------------------------
+// Class: uvm_component
 //
-// CLASS -- NODOCS -- uvm_component
-//
-// The uvm_component class is the root base class for UVM components. In
-// addition to the features inherited from <uvm_object> and <uvm_report_object>,
-// uvm_component provides the following interfaces:
-//
-// Hierarchy - provides methods for searching and traversing the component
-//     hierarchy.
-//
-// Phasing - defines a phased test flow that all components follow, with a
-//     group of standard phase methods and an API for custom phases and
-//     multiple independent phasing domains to mirror DUT behavior e.g. power
-//
-// Reporting - provides a convenience interface to the <uvm_report_handler>. All
-//     messages, warnings, and errors are processed through this interface.
-//
-// Transaction recording - provides methods for recording the transactions
-//     produced or consumed by the component to a transaction database (vendor
-//     specific).
-//
-// Factory - provides a convenience interface to the <uvm_factory>. The factory
-//     is used to create new components and other objects based on type-wide and
-//     instance-specific configuration.
-//
-// The uvm_component is automatically seeded during construction using UVM
-// seeding, if enabled. All other objects must be manually reseeded, if
-// appropriate. See <uvm_object::reseed> for more information.
-//
-//------------------------------------------------------------------------------
-
-
+// The library implements the following public API beyond what is 
+// documented in 1800.2.
+///------------------------------------------------------------------------------
 struct m_verbosity_setting {
   string comp;
   string phase;
@@ -123,7 +97,8 @@ struct m_verbosity_setting {
 abstract class uvm_component: uvm_report_object, ParContext
 {
   import uvm.base.uvm_objection: uvm_objection;
-  static class uvm_once: uvm_once_base
+  import uvm.base.uvm_field_op: uvm_field_op;
+  static class uvm_scope: uvm_scope_base
   {
     // m_config_set is declared in SV version but is not used anywhere
     @uvm_private_sync
@@ -176,13 +151,13 @@ abstract class uvm_component: uvm_report_object, ParContext
     }
   }
 
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
 
   protected const(uvm_cmdline_parsed_arg_t[]) m_uvm_applied_cl_action() {
-    return _uvm_once_inst.m_uvm_applied_cl_action();
+    return _uvm_scope_inst.m_uvm_applied_cl_action();
   }
   protected const(uvm_cmdline_parsed_arg_t[]) m_uvm_applied_cl_sev() {
-    return _uvm_once_inst.m_uvm_applied_cl_sev();
+    return _uvm_scope_inst.m_uvm_applied_cl_sev();
   }
 
   mixin (uvm_sync_string);
@@ -476,8 +451,6 @@ abstract class uvm_component: uvm_report_object, ParContext
     return this.get_entity.getRoot();
   }
 
-  //   extern virtual function uvm_component get_parent ();
-
 
   // Function- get_full_name
   //
@@ -743,8 +716,6 @@ abstract class uvm_component: uvm_report_object, ParContext
   // do not call super.build_phase(phase).
   //
   // This method should never be called directly.
-
-  // extern virtual function void build_phase(uvm_phase phase);
 
   // phase methods
   //--------------
@@ -1182,8 +1153,6 @@ abstract class uvm_component: uvm_report_object, ParContext
   // the phase being started. Any threads spawned in this callback are
   // not affected when the phase ends.
 
-  //   extern virtual function void phase_started (uvm_phase phase);
-
   // phase_started
   // -------------
   // phase_started() and phase_ended() are extra callbacks called at the
@@ -1276,8 +1245,6 @@ abstract class uvm_component: uvm_report_object, ParContext
   // Function- get_domain
   //
   // Return handle to the phase domain set on this component
-
-  // extern function uvm_domain get_domain();
 
   // @uvm-ieee 1800.2-2017 auto 13.1.4.4.2
   final uvm_domain get_domain() {
@@ -1546,7 +1513,7 @@ abstract class uvm_component: uvm_report_object, ParContext
   // Setting this static variable causes uvm_config_db::get() to print info about
   // matching configuration settings as they are being applied.
 
-  // moved to uvm_once
+  // moved to uvm_scope
   //   __gshared bit print_config_matches;
 
 
@@ -1629,9 +1596,6 @@ abstract class uvm_component: uvm_report_object, ParContext
   // of the component created may be different than the requested type. See
   // <set_type_override> and <set_inst_override>. See also <uvm_factory> for
   // details on factory operation.
-
-  //   extern function uvm_component create_component (string requested_type_name,
-  //                                                   string name);
 
   final uvm_component create_component (string requested_type_name,
 					string name) {
@@ -2083,31 +2047,21 @@ abstract class uvm_component: uvm_report_object, ParContext
   }
 
 
-  // Function- begin_tr
+  // Function: begin_tr
+  // Implementation of uvm_component::begin_tr as described in IEEE 1800.2-2017.
   //
-  // This function marks the start of a transaction, ~tr~, by this component.
-  // Specifically, it performs the following actions:
-  //
-  // - Calls ~tr~'s <uvm_transaction::begin_tr> method, passing to it the
-  //   ~begin_time~ argument. The ~begin_time~ should be greater than or equal
-  //   to the accept time. By default, when ~begin_time~ = 0, the current
-  //   simulation time is used.
-  //
-  //   If recording is enabled (recording_detail !is UVM_OFF), then a new
-  //   database-transaction is started on the component's transaction stream
-  //   given by the stream argument. No transaction properties are recorded at
-  //   this time.
-  //
-  // - Calls the component's <do_begin_tr> method to allow for any post-begin
-  //   action in derived classes.
-  //
-  // - Triggers the component's internal begin_tr event. Any processes waiting
-  //   on this event will resume in the next delta cycle.
-  //
-  // A handle to the transaction is returned. The meaning of this handle, as
-  // well as the interpretation of the arguments ~stream_name~, ~label~, and
-  // ~desc~ are vendor specific.
-
+  //| function int begin_tr( uvm_transaction tr,
+  //|                        string stream_name="main",
+  //|                        string label="",
+  //|                        string desc="",
+  //|                        time begin_time=0,
+  //|                        int parent_handle=0 );
+  // 
+  // As an added feature, this implementation will attempt to get a non-0 
+  // parent_handle from the parent sequence of the transaction tr if the 
+  // parent_handle argument is 0 and the transaction can be cast to a 
+  // uvm_sequence_item.
+ 
    // @uvm-ieee 1800.2-2017 auto 13.1.6.3
   final int begin_tr (uvm_transaction tr,
 		      string stream_name = "main",
@@ -2166,28 +2120,22 @@ abstract class uvm_component: uvm_report_object, ParContext
       tr.end_tr(end_time, free_handle);
 
       if ((cast (uvm_verbosity) _recording_detail) != uvm_verbosity.UVM_NONE) {
-
 	if (tr in _m_tr_h) {
-
 	  recorder = _m_tr_h[tr];
-
-	  do_end_tr(tr, recorder.get_handle()); // callback
-
-	  _m_tr_h.remove(tr);
-
-	  tr.record(recorder);
-
-	  recorder.close(end_time);
-
-	  if (free_handle) {
-	    recorder.free();
-	  }
-
 	}
-	else {
-	  do_end_tr(tr, 0); // callback
-	}
+      }
 
+      do_end_tr(tr, (recorder is null) ? 0: recorder.get_handle()); // callback
+
+      if (recorder !is null) {
+	_m_tr_h.remove(tr);
+
+	tr.record(recorder);
+
+	recorder.close(end_time);
+
+	if (free_handle)
+	  recorder.free();
       }
 
       uvm_event!uvm_object e = event_pool.get("end_tr");
@@ -2410,6 +2358,26 @@ abstract class uvm_component: uvm_report_object, ParContext
   void print_enabled(bool val) {
     synchronized (this) {
       _print_enabled = val;
+    }
+  }
+
+  override void do_execute_op(uvm_field_op op) {
+    synchronized (this) {
+      if (op.get_op_type == uvm_field_auto_enum.UVM_PRINT) {
+	// Handle children of the comp
+	uvm_printer printer = cast(uvm_printer) op.get_policy();
+	
+	if (printer is null)
+	  uvm_error("INVPRINTOP",
+		    "do_execute_op() called with a field_op that has op_type UVM_PRINT but a policy that does not derive from uvm_printer");
+	else {
+	  foreach (cname, child_comp; _m_children) {
+	    if (child_comp.print_enabled)
+	      printer.print_object(cname, child_comp);
+	  }
+	}
+      }
+      super.do_execute_op(op);  
     }
   }
 
@@ -2676,22 +2644,22 @@ abstract class uvm_component: uvm_report_object, ParContext
       uvm_event!uvm_object e;
       string    name;
       string    kind;
-      uvm_tr_database db;
       int   handle, link_handle;
       uvm_tr_stream stream;
       uvm_recorder recorder, parent_recorder, link_recorder;
 
-      if (tr is null) {
+      if (tr is null)
 	return 0;
-      }
 
-      db = get_tr_database();
+      uvm_tr_database db = get_tr_database();
 
       if (parent_handle != 0) {
 	parent_recorder = uvm_recorder.get_recorder_from_handle(parent_handle);
+	if (parent_recorder is null)
+	  uvm_error("ILLHNDL",
+		    "begin_tr was passed a non-0 parent handle that corresponds to a null recorder");
       }
-
-      if (parent_recorder is null) {
+      else {
 	uvm_sequence_item seq = cast (uvm_sequence_item) tr;
 	if (seq !is null) {
 	  uvm_sequence_base parent_seq = seq.get_parent_sequence();
@@ -2702,7 +2670,12 @@ abstract class uvm_component: uvm_report_object, ParContext
       }
 
       if (parent_recorder !is null) {
-	link_handle = tr.begin_child_tr(begin_time, parent_recorder.get_handle());
+	version (UVM_1800_2_2020_EA) {
+	  link_handle = tr.begin_tr(begin_time, parent_recorder.get_handle());
+	}
+	else {
+	  link_handle = tr.begin_child_tr(begin_time, parent_recorder.get_handle());
+	}
       }
       else {
 	link_handle = tr.begin_tr(begin_time);
@@ -2713,17 +2686,14 @@ abstract class uvm_component: uvm_report_object, ParContext
       }
 
 
-      if (tr.get_name() != "") {
+      if (tr.get_name() != "")
 	name = tr.get_name();
-      }
-      else {
+      else
 	name = tr.get_type_name();
-      }
+
+      if (stream_name == "") stream_name = "main";
 
       if ((cast (uvm_verbosity) _recording_detail) != uvm_verbosity.UVM_NONE) {
-	if (stream_name == "")
-	  stream_name = "main";
-
 	stream = get_tr_stream(stream_name, "TVM");
 
 	if (stream !is null ) {
@@ -2732,12 +2702,10 @@ abstract class uvm_component: uvm_report_object, ParContext
 	  recorder = stream.open_recorder(name, begin_time, kind);
 
 	  if (recorder !is null) {
-	    if (label != "") {
+	    if (label != "")
 	      recorder.record_string("label", label);
-	    }
-	    if (desc != "") {
+	    if (desc != "")
 	      recorder.record_string("desc", desc);
-	    }
 
 	    if (parent_recorder !is null) {
 	      tr_database.establish_link(uvm_parent_child_link.get_link(parent_recorder,
@@ -2753,13 +2721,13 @@ abstract class uvm_component: uvm_report_object, ParContext
 	}
 
 	handle = (recorder is null) ? 0 : recorder.get_handle();
-	do_begin_tr(tr, stream_name, handle);
       }
 
+      do_begin_tr(tr, stream_name, handle);
+
       e = event_pool.get("begin_tr");
-      if (e !is null) {
+      if (e !is null)
 	e.trigger(tr);
-      }
 
       return handle;
 
@@ -2794,8 +2762,8 @@ abstract class uvm_component: uvm_report_object, ParContext
     synchronized (this) {
       uint id;
       if (m_comp_id == -1) {
-	synchronized (_uvm_once_inst) {
-	  id = _uvm_once_inst._m_comp_count++;
+	synchronized (_uvm_scope_inst) {
+	  id = _uvm_scope_inst._m_comp_count++;
 	}
 	debug(UVM_AUTO) {
 	  import std.stdio;
@@ -2858,9 +2826,6 @@ abstract class uvm_component: uvm_report_object, ParContext
 
 
   // Internal methods for setting up command line messaging stuff
-  //   extern function void m_set_cl_msg_args;
-  // m_set_cl_msg_args
-  // -----------------
 
   final void m_set_cl_msg_args() {
     // string s_;
@@ -2881,25 +2846,21 @@ abstract class uvm_component: uvm_report_object, ParContext
 
   }
 
-  //   extern function void m_set_cl_verb;
-  //   extern function void m_set_cl_action;
-  //   extern function void m_set_cl_sev;
-
 
   private void add_time_setting(m_verbosity_setting setting) {
-    synchronized (_uvm_once_inst) {
-      _uvm_once_inst._m_time_settings ~= setting;
+    synchronized (_uvm_scope_inst) {
+      _uvm_scope_inst._m_time_settings ~= setting;
     }
   }
 
   private const(m_verbosity_setting[]) sort_time_settings() {
-    synchronized (_uvm_once_inst) {
-      if (_uvm_once_inst._m_time_settings.length > 0) {
+    synchronized (_uvm_scope_inst) {
+      if (_uvm_scope_inst._m_time_settings.length > 0) {
 	// m_time_settings.sort() with ( item.offset );
 	sort!((m_verbosity_setting a, m_verbosity_setting b)
-	      {return a.offset < b.offset;})(_uvm_once_inst._m_time_settings);
+	      {return a.offset < b.offset;})(_uvm_scope_inst._m_time_settings);
       }
-      return _uvm_once_inst._m_time_settings.dup;
+      return _uvm_scope_inst._m_time_settings.dup;
     }
   }
 
@@ -3041,13 +3002,13 @@ abstract class uvm_component: uvm_report_object, ParContext
 	  uvm_cmdline_parsed_arg_t t;
 	  t.args = args;
 	  t.arg = value;
-	  _uvm_once_inst.add_m_uvm_applied_cl_action(t);
+	  _uvm_scope_inst.add_m_uvm_applied_cl_action(t);
 	}
 	cl_action_initialized = true;
       }
 
-      synchronized (_uvm_once_inst) {
-	foreach (i, ref cl_action; _uvm_once_inst._m_uvm_applied_cl_action) {
+      synchronized (_uvm_scope_inst) {
+	foreach (i, ref cl_action; _uvm_scope_inst._m_uvm_applied_cl_action) {
 	  string[] args = cl_action.args;
 
 	  if (!uvm_is_match(args[0], get_full_name()) ) {
@@ -3057,7 +3018,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 	  uvm_string_to_severity(args[2], sev);
 	  uvm_string_to_action(args[3], action);
 
-	  synchronized (_uvm_once_inst) {
+	  synchronized (_uvm_scope_inst) {
 	    cl_action.used++;
 	  }
 
@@ -3124,12 +3085,12 @@ abstract class uvm_component: uvm_report_object, ParContext
 	  uvm_cmdline_parsed_arg_t t;
 	  t.args = args;
 	  t.arg = value;
-	  _uvm_once_inst.add_m_uvm_applied_cl_sev(t);
+	  _uvm_scope_inst.add_m_uvm_applied_cl_sev(t);
 	}
 	cl_sev_initialized = true;
       }
-      synchronized (_uvm_once_inst) {
-	foreach (i, ref cl_sev; _uvm_once_inst._m_uvm_applied_cl_sev) {
+      synchronized (_uvm_scope_inst) {
+	foreach (i, ref cl_sev; _uvm_scope_inst._m_uvm_applied_cl_sev) {
 	  string[] args = cl_sev.args;
 
 	  if (!uvm_is_match(args[0], get_full_name())) {
@@ -3138,7 +3099,7 @@ abstract class uvm_component: uvm_report_object, ParContext
 
 	  uvm_string_to_severity(args[2], orig_sev);
 	  uvm_string_to_severity(args[3], sev);
-	  synchronized (_uvm_once_inst) {
+	  synchronized (_uvm_scope_inst) {
 	    cl_sev.used++;
 	  }
 
@@ -3164,8 +3125,6 @@ abstract class uvm_component: uvm_report_object, ParContext
       }
     }
   }
-
-  // extern function void m_apply_verbosity_settings(uvm_phase phase);
 
   // m_apply_verbosity_settings
   // --------------------------
@@ -3221,10 +3180,6 @@ abstract class uvm_component: uvm_report_object, ParContext
   private Queue!m_verbosity_setting _m_verbosity_settings;
 
   //   // does the pre abort callback hierarchically
-  //   extern /*local*/ function void m_do_pre_abort;
-
-  // // m_do_pre_abort
-  // // --------------
 
   final void m_do_pre_abort() {
     foreach (child; get_children) {

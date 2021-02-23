@@ -1,8 +1,11 @@
 //
 //--------------------------------------------------------------
-//    Copyright 2004-2009 Synopsys, Inc.
-//    Copyright 2010 Mentor Graphics Corporation
-//    Copyright 2015 Coverify Systems Technology
+// Copyright 2015-2021 Coverify Systems Technology
+// Copyright 2010-2020 Mentor Graphics Corporation
+// Copyright 2004-2018 Synopsys, Inc.
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2010 AMD
+// Copyright 2014-2018 NVIDIA Corporation
 //    All Rights Reserved Worldwide
 //
 //    Licensed under the Apache License, Version 2.0 (the
@@ -22,25 +25,17 @@
 //
 
 module uvm.reg.uvm_reg_item;
-import uvm.base.uvm_object;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_pool;
-import uvm.base.uvm_queue;
+
+import uvm.reg.uvm_reg_map: uvm_reg_map;
+import uvm.reg.uvm_reg_model;
+
+import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_object_globals: uvm_verbosity,
+  uvm_severity;
 import uvm.base.uvm_object_defines;
 
-import uvm.seq.uvm_sequence_base;
-import uvm.seq.uvm_sequence_item;
-
-import uvm.reg.uvm_reg;
-import uvm.reg.uvm_reg_item;
-import uvm.reg.uvm_reg_map;
-import uvm.reg.uvm_reg_model;
-import uvm.reg.uvm_mem;
-import uvm.reg.uvm_reg_file;
-import uvm.reg.uvm_reg_block;
-import uvm.reg.uvm_reg_field;
-import uvm.reg.uvm_reg_sequence;
-import uvm.reg.uvm_reg_backdoor;
+import uvm.seq.uvm_sequence_base: uvm_sequence_base;
+import uvm.seq.uvm_sequence_item: uvm_sequence_item;
 
 import uvm.meta.misc;
 
@@ -48,7 +43,7 @@ import std.conv: to;
 import std.string: format;
 
 //------------------------------------------------------------------------------
-// Title: Generic Register Operation Descriptors
+// Title -- NODOCS -- Generic Register Operation Descriptors
 //
 // This section defines the abtract register transaction item. It also defines
 // a descriptor for a physical bus operation that is used by <uvm_reg_adapter>
@@ -58,126 +53,82 @@ import std.string: format;
 
 
 //------------------------------------------------------------------------------
-// CLASS: uvm_reg_item
+// CLASS -- NODOCS -- uvm_reg_item
 //
 // Defines an abstract register transaction item. No bus-specific information
 // is present, although a handle to a <uvm_reg_map> is provided in case a user
 // wishes to implement a custom address translation algorithm.
 //------------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 19.1.1.1
 class uvm_reg_item: uvm_sequence_item
 {
   import esdl.rand;
   mixin uvm_object_essentials;
 
-  // mixin(uvm_sync_string);
+  mixin (uvm_sync_string);
 
-  // Variable: element_kind
+  // Variable -- NODOCS -- element_kind
   //
   // Kind of element being accessed: REG, MEM, or FIELD. See <uvm_elem_kind_e>.
   //
-  // @uvm_public_sync
+  @uvm_public_sync
   private uvm_elem_kind_e _element_kind;
-  // uvm_sync_public _element_kind uvm_elem_kind_e
-  final public uvm_elem_kind_e element_kind() {synchronized(this) return this._element_kind;}
-  final public void element_kind(uvm_elem_kind_e val) {synchronized(this) this._element_kind = val;}
 
-  // Variable: element
+  // Variable -- NODOCS -- element
   //
   // A handle to the RegModel model element associated with this transaction.
   // Use <element_kind> to determine the type to cast  to: <uvm_reg>,
   // <uvm_mem>, or <uvm_reg_field>.
   //
-  // @uvm_public_sync
+  @uvm_public_sync
   private uvm_object _element;
-  // uvm_sync_public _element uvm_object
-  final public uvm_object element() {synchronized(this) return this._element;}
-  final public void element(uvm_object val) {synchronized(this) this._element = val;}
 
-  // Variable: kind
+  // Variable -- NODOCS -- kind
   //
   // Kind of access: READ or WRITE.
   //
-  // @uvm_public_sync
+  @uvm_public_sync
   private @rand uvm_access_e _kind;
-  // uvm_sync_public _kind uvm_access_e
-  final public uvm_access_e kind() {synchronized(this) return this._kind;}
-  final public void kind(uvm_access_e val) {synchronized(this) this._kind = val;}
 
 
-  // Variable: value
+  // Variable -- NODOCS -- value
   //
   // The value to write to, or after completion, the value read from the DUT.
   // Burst operations use the <values> property.
   //
-  @rand(1024) uvm_reg_data_t[] _value;
+  @uvm_public_sync
+  private @rand(1024) uvm_reg_data_t[] _value;
 
-  uvm_reg_data_t[] get_value() {
+  void and_value(uvm_reg_data_t val, size_t idx) {
     synchronized(this) {
-      return _value.dup;
-    }
-  }
-  
-  uvm_reg_data_t get_value(size_t index) {
-    synchronized(this) {
-      return _value[index];
-    }
-  }
-  
-  void set_value(uvm_reg_data_t[] val) {
-    synchronized(this) {
-      _value = val;
-    }
-  }
-  
-  void set_value(T)(size_t index, T val) {
-    synchronized(this) {
-      _value[index] = val;
-    }
-  }
-  
-  void and_value(T)(size_t index, T val) {
-    synchronized(this) {
-      _value[index] &= val;
-    }
-  }
-  
-  size_t num_values() {
-    synchronized(this) {
-      return _value.length;
+      _value[idx] &= val;
     }
   }
   
 
-
-  // TODO: parameterize
+  // TODO -- NODOCS -- parameterize
   Constraint! q{
     _value.length > 0 && _value.length < 1000;
   } max_values;
 
-  // Variable: offset
+  // Variable -- NODOCS -- offset
   //
   // For memory accesses, the offset address. For bursts,
   // the ~starting~ offset address.
   //
-  // @uvm_public_sync
+  @uvm_public_sync
   private @rand uvm_reg_addr_t _offset;
-  // uvm_sync_public _offset uvm_reg_addr_t
-  final public uvm_reg_addr_t offset() {synchronized(this) return this._offset;}
-  final public void offset(uvm_reg_addr_t val) {synchronized(this) this._offset = val;}
 
-  // Variable: status
+  // Variable -- NODOCS -- status
   //
   // The result of the transaction: IS_OK, HAS_X, or ERROR.
   // See <uvm_status_e>.
   //
-  // @uvm_public_sync
+  @uvm_public_sync
   private uvm_status_e _status;
-  // uvm_sync_public _status uvm_status_e
-  final public uvm_status_e status() {synchronized(this) return this._status;}
-  final public void status(uvm_status_e val) {synchronized(this) this._status = val;}
 
-  // Variable: local_map
+  // Variable -- NODOCS -- local_map
   //
   // The local map used to obtain addresses. Users may customize
   // address-translation using this map. Access to the sequencer
@@ -185,103 +136,73 @@ class uvm_reg_item: uvm_sequence_item
   // then calling <uvm_reg_map::get_sequencer> and
   // <uvm_reg_map::get_adapter>.
   //
-  // @uvm_public_sync
+  @uvm_public_sync
   private uvm_reg_map _local_map;
-  // uvm_sync_public _local_map uvm_reg_map
-  final public uvm_reg_map local_map() {synchronized(this) return this._local_map;}
-  final public void local_map(uvm_reg_map val) {synchronized(this) this._local_map = val;}
 
-  // Variable: map
+  // Variable -- NODOCS -- map
   //
   // The original map specified for the operation. The actual <map>
   // used may differ when a test or sequence written at the block
   // level is reused at the system level.
   //
-  // @uvm_public_sync
+  @uvm_public_sync
   private uvm_reg_map _map;
-  // uvm_sync_public _map uvm_reg_map
-  final public uvm_reg_map map() {synchronized(this) return this._map;}
-  final public void map(uvm_reg_map val) {synchronized(this) this._map = val;}
 
-  // Variable: path
+  // Variable -- NODOCS -- path
   //
-  // The path being used: <UVM_FRONTDOOR> or <UVM_BACKDOOR>.
+  // The path being used -- NODOCS -- <UVM_FRONTDOOR> or <UVM_BACKDOOR>.
   //
-  // @uvm_public_sync
-  private uvm_path_e _path;
-  // uvm_sync_public _path uvm_path_e
-  final public uvm_path_e path() {synchronized(this) return this._path;}
-  final public void path(uvm_path_e val) {synchronized(this) this._path = val;}
+  @uvm_public_sync
+  private uvm_door_e _door;
 
-  // Variable: parent
+  // Variable -- NODOCS -- parent
   //
   // The sequence from which the operation originated.
   //
-  // @uvm_public_sync
+  @uvm_public_sync
   private @rand uvm_sequence_base _parent;
-  // uvm_sync_public _parent uvm_sequence_base
-  final public uvm_sequence_base parent() {synchronized(this) return this._parent;}
-  final public void parent(uvm_sequence_base val) {synchronized(this) this._parent = val;}
 
-  // Variable: prior
+  // Variable -- NODOCS -- prior
   //
   // The priority requested of this transfer, as defined by
   // <uvm_sequence_base::start_item>.
   //
-  // @uvm_public_sync
+  @uvm_public_sync
   private int _prior = -1;
-  // uvm_sync_public _prior int
-  final public int prior() {synchronized(this) return this._prior;}
-  final public void prior(int val) {synchronized(this) this._prior = val;}
 
-  // Variable: extension
+  // Variable -- NODOCS -- extension
   //
   // Handle to optional user data, as conveyed in the call to
   // write(), read(), mirror(), or update() used to trigger the operation.
   //
-  // @uvm_public_sync
+  @uvm_public_sync
   private @rand uvm_object _extension;
-  // uvm_sync_public _extension uvm_object
-  final public uvm_object extension() {synchronized(this) return this._extension;}
-  final public void extension(uvm_object val) {synchronized(this) this._extension = val;}
 
-  // Variable: bd_kind
+  // Variable -- NODOCS -- bd_kind
   //
   // If path is UVM_BACKDOOR, this member specifies the abstraction
   // kind for the backdoor access, e.g. "RTL" or "GATES".
   //
-  // @uvm_public_sync
+  @uvm_public_sync
   private string _bd_kind;
-  // uvm_sync_public _bd_kind string
-  final public string bd_kind() {synchronized(this) return this._bd_kind;}
-  final public void bd_kind(string val) {synchronized(this) this._bd_kind = val;}
 
-  // Variable: fname
+  // Variable -- NODOCS -- fname
   //
   // The file name from where this transaction originated, if provided
   // at the call site.
   //
-  // @uvm_public_sync
+  @uvm_public_sync
   private string _fname;
-  // uvm_sync_public _fname string
-  final public string fname() {synchronized(this) return this._fname;}
-  final public void fname(string val) {synchronized(this) this._fname = val;}
 
-  // Variable: lineno
+  // Variable -- NODOCS -- lineno
   //
   // The file name from where this transaction originated, if provided
   // at the call site.
   //
-  // @uvm_public_sync
+  @uvm_public_sync
   private int _lineno;
-  // uvm_sync_public _lineno int
-  final public int lineno() {synchronized(this) return this._lineno;}
-  final public void lineno(int val) {synchronized(this) this._lineno = val;}
 
-  // Function: new
-  //
-  // Create a new instance of this type, giving it the optional ~name~.
-  //
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.3.1
   this(string name="") {
     synchronized(this) {
       super(name);
@@ -289,11 +210,7 @@ class uvm_reg_item: uvm_sequence_item
     }
   }
 
-
-  // Function: convert2string
-  //
-  // Returns a string showing the contents of this transaction.
-  //
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.3.2
   override string convert2string() {
     synchronized(this) {
       string s = "kind=" ~ kind.to!string ~
@@ -318,13 +235,13 @@ class uvm_reg_item: uvm_sequence_item
 	s ~= format(" offset=%0h", _offset);
       }
       s ~= " map=" ~ (_map is null ? "null" : _map.get_full_name()) ~
-	" path=" ~ _path.to!string;
+	" path=" ~ _door.to!string;
       s ~= " status=" ~ _status.to!string;
       return s;
     }
   }
 
-  // Function: do_copy
+  // Function -- NODOCS -- do_copy
   //
   // Copy the ~rhs~ object into this object. The ~rhs~ object must
   // derive from <uvm_reg_item>.
@@ -335,39 +252,277 @@ class uvm_reg_item: uvm_sequence_item
     }
 
     uvm_reg_item rhs_ = cast(uvm_reg_item) rhs;
-    if (rhs is null) {
+    if (rhs_ is null) {
       uvm_error("WRONG_TYPE","Provided rhs is not of type uvm_reg_item");
       return;
     }
 
     synchronized(this) {
-      synchronized(rhs) {
-	super.copy(rhs);
-	_element_kind = rhs_.element_kind;
-	_element = rhs_.element;
-	_kind = rhs_.kind;
-	_value = rhs_.get_value();
-	_offset = rhs_.offset;
-	_status = rhs_.status;
-	_local_map = rhs_.local_map;
-	_map = rhs_.map;
-	_path = rhs_.path;
-	_extension = rhs_.extension;
-	_bd_kind = rhs_.bd_kind;
-	_parent = rhs_.parent;
-	_prior = rhs_.prior;
-	_fname = rhs_.fname;
-	_lineno = rhs_.lineno;
+      synchronized(rhs_) {
+	super.do_copy(rhs_);
+	set_element_kind(rhs_.get_element_kind());
+	set_element(rhs_.get_element());
+	set_kind(rhs_.get_kind());
+	set_value(rhs_.get_value());
+	set_offset(rhs_.get_offset());
+	set_status(rhs_.get_status());
+	set_local_map(rhs_.get_local_map());
+	set_map(rhs_.get_map());
+	set_door(rhs_.get_door());
+	set_extension(rhs_.get_extension());
+	set_bd_kind(rhs_.get_bd_kind());
+	set_parent_sequence(rhs_.get_parent_sequence());
+	set_priority(rhs_.get_priority());
+	set_fname(rhs_.get_fname());
+	set_line(rhs_.get_line());
       }
     }
   }
+
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.1
+  void set_element_kind(uvm_elem_kind_e element_kind) {
+    synchronized(this) {
+      this._element_kind = element_kind;
+    }
+  }
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.1
+  uvm_elem_kind_e get_element_kind() {
+    synchronized(this) {
+      return _element_kind;
+    }
+  }
+
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.2
+  void set_element(uvm_object element) {
+    synchronized(this) {
+      this._element = element;
+    }
+  }
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.2
+  uvm_object get_element() {
+    synchronized(this) {
+      return _element;
+    }
+  }
+
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.3
+  void set_kind(uvm_access_e kind) {
+    synchronized(this) {
+      this._kind = kind;
+    }
+  }
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.3
+  uvm_access_e get_kind() {
+    synchronized(this) {
+      return _kind;
+    }
+  }
+
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.4
+  void get_value_array(ref uvm_reg_data_t[] value) {
+    synchronized(this) {
+      value = _value.dup;
+    }
+  }
+  uvm_reg_data_t[] get_value() {
+    synchronized(this) {
+      return _value.dup;
+    }
+  }
+  
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.4
+  uvm_reg_data_t get_value(size_t idx) {
+    synchronized(this) {
+      return _value[idx];
+    }
+  }
+  
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.4
+  void set_value_array(uvm_reg_data_t[] value) {
+    synchronized(this) {
+      this._value = value.dup;
+    }
+  }
+
+  void set_value(uvm_reg_data_t[] val) {
+    synchronized(this) {
+      _value = val.dup;
+    }
+  }
+  
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.4
+  void set_value(uvm_reg_data_t val, size_t idx) {
+    synchronized(this) {
+      _value[idx] = val;
+    }
+  }
+
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.4
+  void set_value_size(size_t sz) {
+    synchronized(this) {
+      this._value.length = sz;
+    }
+  }
+
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.4
+  size_t get_value_size() {
+    synchronized(this) {
+      return this._value.length;
+    }
+  }
+
+
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.5
+  void set_offset(uvm_reg_addr_t offset) {
+    synchronized(this) {
+      this._offset = offset;
+    }
+  }
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.5
+  uvm_reg_addr_t get_offset() {
+    synchronized(this) {
+      return _offset;
+    }
+  }
+
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.6
+  void set_status(uvm_status_e status) {
+    synchronized(this) {
+      this._status = status;
+    }
+  }
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.6
+  uvm_status_e get_status() {
+    synchronized(this) {
+      return _status;
+    }
+  }
+
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.7
+  void set_local_map(uvm_reg_map map) {
+    synchronized(this) {
+      this._local_map = local_map;
+    }
+  }
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.7
+  uvm_reg_map get_local_map() {
+    synchronized(this) {
+      return _local_map;
+    }
+  }
+
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.8
+  void set_map(uvm_reg_map map) {
+    synchronized(this) {
+      this._map = map;
+    }
+  }
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.8
+  uvm_reg_map get_map() {
+    synchronized(this) {
+      return _map;
+    }
+  }
+
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.9
+  void set_door(uvm_door_e door) {
+    synchronized(this) {
+      this._door = door;
+    }
+  }
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.9
+  uvm_door_e get_door() {
+    synchronized(this) {
+      return _door;
+    }
+  }
+
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.10
+  override void set_parent_sequence(uvm_sequence_base parent) {
+    synchronized(this) {
+      this._parent = parent;
+    }
+  }
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.10
+  override uvm_sequence_base get_parent_sequence() {
+    synchronized(this) {
+      return _parent;
+    }
+  }
+
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.11
+  void set_priority(int value) {
+    synchronized(this) {
+      this._prior = value;
+    }
+  }
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.11
+  int get_priority() {
+    synchronized(this) {
+      return _prior;
+    }
+  }
+
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.12
+  void set_extension(uvm_object extension) {
+    synchronized(this) {
+      this._extension = extension;
+    }
+  }
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.12
+  uvm_object get_extension() {
+    synchronized(this) {
+      return _extension;
+    }
+  }
+
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.13
+  void set_bd_kind(string bd_kind) {
+    synchronized(this) {
+      this._bd_kind = bd_kind;
+    }
+  }
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.13
+  string get_bd_kind() {
+    synchronized(this) {
+      return _bd_kind;
+    }
+  }
+
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.14
+  void set_fname(string fname) {
+    synchronized(this) {
+      this._fname = fname;
+    }
+  }
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.14
+  string get_fname() {
+    synchronized(this) {
+      return _fname;
+    }
+  }
+
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.15
+  void set_line(int line) {
+    synchronized(this) {
+      this._lineno = line;
+    }
+  }
+  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.15
+  int get_line() {
+    synchronized(this) {
+      return _lineno;
+    }
+  }
+
+  
 }
 
 
 
 //------------------------------------------------------------------------------
 //
-// CLASS: uvm_reg_bus_op
+// CLASS -- NODOCS -- uvm_reg_bus_op
 //
 // Struct that defines a generic bus transaction for register and memory accesses, having
 // ~kind~ (read or write), ~address~, ~data~, and ~byte enable~ information.
@@ -381,33 +536,14 @@ class uvm_reg_item: uvm_sequence_item
 
 struct uvm_reg_bus_op {
 
-  // Variable: kind
-  //
-  // Kind of access: READ or WRITE.
-  //
   uvm_access_e kind;
 
 
-  // Variable: addr
-  //
-  // The bus address.
-  //
   uvm_reg_addr_t addr;
 
 
-  // Variable: data
-  //
-  // The data to write. If the bus width is smaller than the register or
-  // memory width, ~data~ represents only the portion of ~value~ that is
-  // being transferred this bus cycle.
-  //
   uvm_reg_data_t data;
 
-
-  // Variable: n_bits
-  //
-  // The number of bits of <uvm_reg_item::value> being transferred by
-  // this transaction.
 
   int n_bits;
 
@@ -419,20 +555,9 @@ struct uvm_reg_bus_op {
   */
 
 
-  // Variable: byte_en
-  //
-  // Enables for the byte lanes on the bus. Meaningful only when the
-  // bus supports byte enables and the operation originates from a field
-  // write/read.
-  //
   uvm_reg_byte_en_t byte_en;
 
 
-  // Variable: status
-  //
-  // The result of the transaction: UVM_IS_OK, UVM_HAS_X, UVM_NOT_OK.
-  // See <uvm_status_e>.
-  //
   uvm_status_e status;
 
 }

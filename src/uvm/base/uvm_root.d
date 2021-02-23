@@ -718,8 +718,6 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
   }
 
 
-  //   extern protected virtual function bit m_add_child(uvm_component child);
-
   // m_add_child
   // -----------
 
@@ -733,8 +731,6 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
 	return false;
     }
   }
-
-  //   extern function void build_phase(uvm_phase phase);
 
   // build_phase
   // -----
@@ -761,10 +757,6 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
   override ParContext _esdl__parInheritFrom() {
     return Process.self().getParentEntity();
   }
-
-  //   extern local function void m_do_verbosity_settings();
-  // m_do_verbosity_settings
-  // -----------------------
 
   void m_do_verbosity_settings() {
     import uvm.base.uvm_globals;
@@ -797,10 +789,6 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
   }
 
 
-
-  //   extern local function void m_do_timeout_settings();
-  // m_do_timeout_settings
-  // ---------------------
 
   void m_do_timeout_settings() {
     // synchronized (this) {
@@ -848,10 +836,6 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
   }
 
 
-  //   extern local function void m_do_factory_settings();
-  // m_do_factory_settings
-  // ---------------------
-
   void m_do_factory_settings() {
     string[] args;
 
@@ -867,10 +851,7 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
     }
   }
 
-  //   extern local function void m_process_inst_override(string ovr);
-  // m_process_inst_override
-  // -----------------------
-
+  
   void m_process_inst_override(string ovr) {
     import uvm.base.uvm_coreservice;
     import uvm.base.uvm_globals;
@@ -894,10 +875,6 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
 		    "+uvm_set_inst_override=" ~ ovr, uvm_verbosity.UVM_NONE);
     factory.set_inst_override_by_name(split_val[0], split_val[1], split_val[2]);
   }
-
-  //   extern local function void m_process_type_override(string ovr);
-  // m_process_type_override
-  // -----------------------
 
   void m_process_type_override(string ovr) {
     import uvm.base.uvm_coreservice;
@@ -938,10 +915,6 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
   }
 
 
-  //   extern local function void m_do_config_settings();
-  // m_do_config_settings
-  // --------------------
-
   void m_do_config_settings() {
     string[] args;
     clp.get_arg_matches("/^\\+(UVM_SET_CONFIG_INT|uvm_set_config_int)=/",
@@ -960,10 +933,6 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
       m_process_default_sequence(arg[26..$]);
     }
   }
-
-  //   extern local function void m_do_max_quit_settings();
-  // m_do_max_quit_settings
-  // ----------------------
 
   void m_do_max_quit_settings() {
     import uvm.base.uvm_report_server;
@@ -1007,10 +976,6 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
     }
   }
 
-  //   extern local function void m_do_dump_args();
-  // m_do_dump_args
-  // --------------
-
   void m_do_dump_args() {
     import uvm.base.uvm_object_globals;
     string[] dump_args;
@@ -1024,10 +989,6 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
     }
   }
 
-
-  // extern local function void m_process_config(string cfg, bit is_int);
-  // m_process_config
-  // ----------------
 
   void m_process_config(string cfg, bool is_int) {
     import uvm.base.uvm_coreservice;
@@ -1160,10 +1121,6 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
       }
     }
   }
-
-  //   extern function void m_check_verbosity();
-  // m_check_verbosity
-  // ----------------
 
   void m_check_verbosity() {
     import uvm.base.uvm_object_globals;

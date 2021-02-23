@@ -1,8 +1,11 @@
 //
 // -------------------------------------------------------------
-//    Copyright 2004-2009 Synopsys, Inc.
-//    Copyright 2010 Mentor Graphics Corporation
-//    Copyright 2015 Coverify Systems Technology
+// Copyright 2015-2021 Coverify Systems Technology
+// Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2004-2018 Synopsys, Inc.
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2010 AMD
+// Copyright 2014-2018 NVIDIA Corporation
 //    All Rights Reserved Worldwide
 //
 //    Licensed under the Apache License, Version 2.0 (the
@@ -22,21 +25,26 @@
 //
 
 module uvm.reg.uvm_vreg_field;
-import uvm.reg.uvm_vreg;
-import uvm.reg.uvm_mem;
-import uvm.reg.uvm_reg_map;
-import uvm.reg.uvm_reg_block;
+import uvm.reg.uvm_vreg: uvm_vreg;
+import uvm.reg.uvm_mem: uvm_mem;
+import uvm.reg.uvm_reg_map: uvm_reg_map;
+import uvm.reg.uvm_reg_block: uvm_reg_block;
 import uvm.reg.uvm_reg_model;
 import uvm.reg.uvm_reg_defines;
 
-import uvm.base.uvm_object;
+import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_object_globals: uvm_verbosity;
+import uvm.base.uvm_printer: uvm_printer;
+import uvm.base.uvm_comparer: uvm_comparer;
+import uvm.base.uvm_packer: uvm_packer;
+import uvm.base.uvm_globals: uvm_error,
+  uvm_warning, uvm_info;
+import uvm.base.uvm_callback: uvm_register_cb,
+  uvm_callback, uvm_callbacks, uvm_callback_iter;
+
 import uvm.base.uvm_object_defines;
-import uvm.base.uvm_object_globals;
-import uvm.base.uvm_printer;
-import uvm.base.uvm_comparer;
-import uvm.base.uvm_packer;
-import uvm.base.uvm_globals;
-import uvm.base.uvm_callback;
+
+import uvm.meta.misc;
 
 import uvm.seq.uvm_sequence_base;
 
@@ -45,7 +53,7 @@ import esdl.rand;
 import std.string: format;
 
 //------------------------------------------------------------------------------
-// Title: Virtual Register Field Classes
+// Title -- NODOCS -- Virtual Register Field Classes
 //
 // This section defines the virtual field and callback classes.
 //
@@ -60,7 +68,7 @@ import std.string: format;
 
 
 //------------------------------------------------------------------------------
-// Class: uvm_vreg_field
+// Class -- NODOCS -- uvm_vreg_field
 //
 // Virtual field abstraction class
 //
@@ -69,61 +77,48 @@ import std.string: format;
 //
 //------------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 18.10.1
 class uvm_vreg_field: uvm_object
 {
 
-  mixin uvm_object_essentials;
+  mixin uvm_object_utils;
 
-  // Moved to constructor
-  // `uvm_register_cb(uvm_vreg_field, uvm_vreg_field_cbs)
+  mixin uvm_sync;
 
-  private uvm_vreg parent;
-  private uint lsb;
-  private uint size;
-  private string fname;
-  private int lineno;
-  private bool read_in_progress;
-  private bool write_in_progress;
+  mixin uvm_register_cb!uvm_vreg_field_cbs;
 
+  @uvm_private_sync
+  private uvm_vreg _parent;
+  @uvm_private_sync
+  private uint _lsb;
+  @uvm_private_sync
+  private uint _size;
+  @uvm_private_sync
+  private string _fname;
+  @uvm_private_sync
+  private int _lineno;
+  @uvm_private_sync
+  private bool _read_in_progress;
+  @uvm_private_sync
+  private bool _write_in_progress;
 
   //
-  // Group: initialization
+  // Group -- NODOCS -- initialization
   //
 
-  //
-  // Function: new
-  // Create a new virtual field instance
-  //
-  // This method should not be used directly.
-  // The uvm_vreg_field::type_id::create() method should be used instead.
-  //
-  // extern function new(string name = "uvm_vreg_field");
+  // @uvm-ieee 1800.2-2017 auto 18.10.2.1
   this(string name="uvm_vreg_field") {
     synchronized(this) {
       super(name);
-      // uvm_callbacks!(uvm_vreg_field_cbs).m_register_pair;
     }
   }
 
-
-  //
-  // Function: configure
-  // Instance-specific configuration
-  //
-  // Specify the ~parent~ virtual register of this virtual field, its
-  // ~size~ in bits, and the position of its least-significant bit
-  // within the virtual register relative to the least-significant bit
-  // of the virtual register.
-  //
-  // extern function void configure(uvm_vreg parent,
-  //                                uint size,
-  //                                uint lsb_pos);
-
+  // @uvm-ieee 1800.2-2017 auto 18.10.2.2
   void configure(uvm_vreg  parent,
 		 uint  size,
 		 uint  lsb_pos) {
     synchronized(this) {
-      this.parent = parent;
+      this._parent = parent;
       if (size == 0) {
 	uvm_error("RegModel", format("Virtual field \"%s\" cannot have" ~
 				     " 0 bits", this.get_full_name()));
@@ -136,61 +131,52 @@ class uvm_vreg_field: uvm_object
 	size = UVM_REG_DATA_WIDTH;
       }
 
-      this.size   = size;
-      this.lsb    = lsb_pos;
+      this._size   = size;
+      this._lsb    = lsb_pos;
 
-      this.parent.add_field(this);
+      this._parent.add_field(this);
     }
   }
 
   //
-  // Group: Introspection
+  // Group -- NODOCS -- Introspection
   //
 
   //
-  // Function: get_name
+  // Function -- NODOCS -- get_name
   // Get the simple name
   //
   // Return the simple object name of this virtual field
   //
 
   //
-  // Function: get_full_name
+  // Function -- NODOCS -- get_full_name
   // Get the hierarchical name
   //
   // Return the hierarchal name of this virtual field
   // The base of the hierarchical name is the root block.
   //
-  // extern virtual function string        get_full_name();
   override string get_full_name() {
     synchronized(this) {
-      return this.parent.get_full_name() ~ "." ~ this.get_name();
+      return this._parent.get_full_name() ~ "." ~ this.get_name();
     }
   }
 
-
-
-  //
-  // FUNCTION: get_parent
-  // Get the parent virtual register
-  //
-  // extern virtual function uvm_vreg get_parent();
+  // @uvm-ieee 1800.2-2017 auto 18.10.3.1
   uvm_vreg get_parent() {
     synchronized(this) {
-      return this.parent;
+      return this._parent;
     }
   }
-
-  // extern virtual function uvm_vreg get_register();
 
   uvm_vreg get_register() {
     synchronized(this) {
-      return this.parent;
+      return this._parent;
     }
   }
 
   //
-  // FUNCTION: get_lsb_pos_in_register
+  // FUNCTION -- NODOCS -- get_lsb_pos_in_register
   // Return the position of the virtual field
   ///
   // Returns the index of the least significant bit of the virtual field
@@ -198,45 +184,28 @@ class uvm_vreg_field: uvm_object
   // An offset of 0 indicates a field that is aligned with the
   // least-significant bit of the register.
   //
-  // extern virtual function uint get_lsb_pos_in_register();
   uint get_lsb_pos_in_register() {
     synchronized(this) {
-      return this.lsb;
+      return this._lsb;
     }
   }
 
 
   //
-  // FUNCTION: get_n_bits
+  // FUNCTION -- NODOCS -- get_n_bits
   // Returns the width, in bits, of the virtual field.
   //
-  // extern virtual function uint get_n_bits();
 
   uint get_n_bits() {
     synchronized(this) {
-      return this.size;
+      return this._size;
     }
   }
 
-  //
-  // FUNCTION: get_access
-  // Returns the access policy of the virtual field register
-  // when written and read via an address map.
-  //
-  // If the memory implementing the virtual field
-  // is mapped in more than one address map,
-  // an address ~map~ must be specified.
-  // If access restrictions are present when accessing a memory
-  // through the specified address map, the access mode returned
-  // takes the access restrictions into account.
-  // For example, a read-write memory accessed
-  // through an address map with read-only restrictions would return "RO".
-  //
-  // extern virtual function string get_access(uvm_reg_map map = null);
-
+  // @uvm-ieee 1800.2-2017 auto 18.10.3.4
   string get_access(uvm_reg_map map = null) {
     synchronized(this) {
-      if (this.parent.get_memory() is null) {
+      if (this._parent.get_memory() is null) {
 	uvm_error("RegModel",
 		  format("Cannot call uvm_vreg_field::get_rights() on" ~
 			 " unimplemented virtual field \"%s\"",
@@ -244,60 +213,26 @@ class uvm_vreg_field: uvm_object
 	return "RW";
       }
 
-      return this.parent.get_access(map);
+      return this._parent.get_access(map);
     }
   }
 
 
   //
-  // Group: HDL Access
+  // Group -- NODOCS -- HDL Access
   //
 
-  //
-  // TASK: write
-  // Write the specified value in a virtual field
-  //
-  // Write ~value~ in the DUT memory location(s) that implements
-  // the virtual field that corresponds to this
-  // abstraction class instance using the specified access
-  // ~path~.
-  //
-  // If the memory implementing the virtual register array
-  // containing this virtual field
-  // is mapped in more than one address map,
-  // an address ~map~ must be
-  // specified if a physical access is used (front-door access).
-  //
-  // The operation is eventually mapped into
-  // memory read-modify-write operations at the location
-  // where the virtual register
-  // specified by ~idx~ in the virtual register array is implemented.
-  // If a backdoor is available for the memory implemeting the
-  // virtual field, it will be used for the memory-read operation.
-  //
-  // extern virtual task write(input  ulong   idx,
-  //                           output uvm_status_e  status,
-  //                           input  uvm_reg_data_t     value,
-  //                           input  uvm_path_e    path = UVM_DEFAULT_PATH,
-  //                           input  uvm_reg_map        map = null,
-  //                           input  uvm_sequence_base  parent = null,
-  //                           input  uvm_object         extension = null,
-  //                           input  string             fname = "",
-  //                           input  int                lineno = 0);
-
+  // @uvm-ieee 1800.2-2017 auto 18.10.4.1
   // task
   void write(ulong               idx,
 	     out uvm_status_e    status,
 	     uvm_reg_data_t      value,
-	     uvm_path_e          path = uvm_path_e.UVM_DEFAULT_PATH,
+	     uvm_door_e          path = uvm_door_e.UVM_DEFAULT_DOOR,
 	     uvm_reg_map         map = null,
 	     uvm_sequence_base   parent = null,
 	     uvm_object          extension = null,
 	     string              fname = "",
 	     int                 lineno = 0) {
-
-    // pretty much unused
-    // uvm_reg_data_t  segval;
 
     uvm_vreg_field_cb_iter cbs = new uvm_vreg_field_cb_iter(this);
 
@@ -315,9 +250,9 @@ class uvm_vreg_field: uvm_object
       return;
     }
 
-    if (path == UVM_DEFAULT_PATH) {
+    if (path == UVM_DEFAULT_DOOR) {
       uvm_reg_block blk = this.parent.get_block();
-      path = blk.get_default_path();
+      path = blk.get_default_door();
     }
 
     status = UVM_IS_OK;
@@ -347,7 +282,7 @@ class uvm_vreg_field: uvm_object
       (this.parent.get_offset_in_memory(idx) + (flsb / segsiz));
 
     // Favor backdoor read to frontdoor read for the RMW operation
-    uvm_path_e rm_path = uvm_path_e.UVM_DEFAULT_PATH;
+    uvm_door_e rm_path = uvm_door_e.UVM_DEFAULT_DOOR;
     if (mem.get_backdoor() !is null) rm_path = UVM_BACKDOOR;
 
     // Any bits on the LSB side we need to RMW?
@@ -428,49 +363,17 @@ class uvm_vreg_field: uvm_object
     this.lineno = 0;
   }
 
-  //
-  // TASK: read
-  // Read the current value from a virtual field
-  //
-  // Read from the DUT memory location(s) that implements
-  // the virtual field that corresponds to this
-  // abstraction class instance using the specified access
-  // ~path~, and return the readback ~value~.
-  //
-  // If the memory implementing the virtual register array
-  // containing this virtual field
-  // is mapped in more than one address map,
-  // an address ~map~ must be
-  // specified if a physical access is used (front-door access).
-  //
-  // The operation is eventually mapped into
-  // memory read operations at the location(s)
-  // where the virtual register
-  // specified by ~idx~ in the virtual register array is implemented.
-  //
-  // extern virtual task read(input  ulong    idx,
-  //                          output uvm_status_e   status,
-  //                          output uvm_reg_data_t      value,
-  //                          input  uvm_path_e     path = UVM_DEFAULT_PATH,
-  //                          input  uvm_reg_map         map = null,
-  //                          input  uvm_sequence_base   parent = null,
-  //                          input  uvm_object          extension = null,
-  //                          input  string              fname = "",
-  //                          input  int                 lineno = 0);
-
-
+  // @uvm-ieee 1800.2-2017 auto 18.10.4.2
   // task
   void read(ulong               idx,
 	    out uvm_status_e    status,
 	    out uvm_reg_data_t  value,
-	    uvm_path_e          path = uvm_path_e.UVM_DEFAULT_PATH,
+	    uvm_door_e          path = uvm_door_e.UVM_DEFAULT_DOOR,
 	    uvm_reg_map         map = null,
 	    uvm_sequence_base   parent = null,
 	    uvm_object          extension = null,
 	    string              fname = "",
 	    int                 lineno = 0) {
-    // Unused in SV version
-    // uvm_reg_data_t  segval;
 
     uvm_vreg_field_cb_iter cbs = new uvm_vreg_field_cb_iter(this);
 
@@ -478,28 +381,33 @@ class uvm_vreg_field: uvm_object
     this.lineno = lineno;
 
     read_in_progress = true;
+
     uvm_mem mem = this.parent.get_memory();
-    if (mem is null) {
-      uvm_error("RegModel",
-		format("Cannot call uvm_vreg_field::read() on " ~
-		       "unimplemented virtual register \"%s\"",
-		       this.get_full_name()));
-      status = UVM_NOT_OK;
-      return;
+
+    synchronized(this) {
+      if (mem is null) {
+	uvm_error("RegModel",
+		  format("Cannot call uvm_vreg_field::read() on " ~
+			 "unimplemented virtual register \"%s\"",
+			 this.get_full_name()));
+	status = UVM_NOT_OK;
+	return;
+      }
+
+      if (path == UVM_DEFAULT_DOOR) {
+	uvm_reg_block blk = this.parent.get_block();
+	path = blk.get_default_door();
+      }
+
+      status = UVM_IS_OK;
+
+      this.parent.XatomicX(1);
+
+      value = 0;
     }
-
-    if (path == UVM_DEFAULT_PATH) {
-      uvm_reg_block blk = this.parent.get_block();
-      path = blk.get_default_path();
-    }
-
-    status = UVM_IS_OK;
-
-    this.parent.XatomicX(1);
-
-    value = 0;
-
+    
     this.pre_read(idx, path, map);
+
     for (uvm_vreg_field_cbs cb = cbs.first(); cb !is null;
 	 cb = cbs.next()) {
       cb.fname = this.fname;
@@ -539,8 +447,10 @@ class uvm_vreg_field: uvm_object
     this.post_read(idx, value, path, map, status);
     for (uvm_vreg_field_cbs cb = cbs.first(); cb !is null;
 	 cb = cbs.next()) {
-      cb.fname = this.fname;
-      cb.lineno = this.lineno;
+      synchronized(this) {
+	cb.fname = this.fname;
+	cb.lineno = this.lineno;
+      }
       cb.post_read(this, idx, value, path, map, status);
     }
 
@@ -557,28 +467,7 @@ class uvm_vreg_field: uvm_object
     this.lineno = 0;
   }
 
-  //
-  // TASK: poke
-  // Deposit the specified value in a virtual field
-  //
-  // Deposit ~value~ in the DUT memory location(s) that implements
-  // the virtual field that corresponds to this
-  // abstraction class instance using the specified access
-  // ~path~.
-  //
-  // The operation is eventually mapped into
-  // memory peek-modify-poke operations at the location
-  // where the virtual register
-  // specified by ~idx~ in the virtual register array is implemented.
-  //
-  // extern virtual task poke(input  ulong    idx,
-  //			   output uvm_status_e   status,
-  //			   input  uvm_reg_data_t      value,
-  //			   input  uvm_sequence_base   parent = null,
-  //			   input  uvm_object          extension = null,
-  //			   input  string              fname = "",
-  //			   input  int                 lineno = 0);
-
+  // @uvm-ieee 1800.2-2017 auto 18.10.4.3
   // task
   void poke(ulong             idx,
 	    out uvm_status_e      status,
@@ -587,11 +476,7 @@ class uvm_vreg_field: uvm_object
 	    uvm_object        extension = null,
 	    string            fname = "",
 	    int               lineno = 0) {
-    // unused in SV version
-    // uvm_reg_data_t  segval;
 
-    // unused in SV version
-    // uvm_path_e rm_path;
     this.fname = fname;
     this.lineno = lineno;
 
@@ -688,34 +573,7 @@ class uvm_vreg_field: uvm_object
     this.lineno = 0;
   }
 
-  //
-  // TASK: peek
-  // Sample the current value from a virtual field
-  //
-  // Sample from the DUT memory location(s) that implements
-  // the virtual field that corresponds to this
-  // abstraction class instance using the specified access
-  // ~path~, and return the readback ~value~.
-  //
-  // If the memory implementing the virtual register array
-  // containing this virtual field
-  // is mapped in more than one address map,
-  // an address ~map~ must be
-  // specified if a physical access is used (front-door access).
-  //
-  // The operation is eventually mapped into
-  // memory peek operations at the location(s)
-  // where the virtual register
-  // specified by ~idx~ in the virtual register array is implemented.
-  //
-  // extern virtual task peek(input  ulong    idx,
-  //			   output uvm_status_e   status,
-  //			   output uvm_reg_data_t      value,
-  //			   input  uvm_sequence_base   parent = null,
-  //			   input  uvm_object          extension = null,
-  //			   input  string              fname = "",
-  //			   input  int                 lineno = 0);
-
+  // @uvm-ieee 1800.2-2017 auto 18.10.4.4
   // task
   void peek(ulong             idx,
 	    out uvm_status_e      status,
@@ -724,8 +582,6 @@ class uvm_vreg_field: uvm_object
 	    uvm_object        extension = null,
 	    string            fname = "",
 	    int               lineno = 0) {
-    // unused in SV
-    // uvm_reg_data_t  segval;
 
     this.fname = fname;
     this.lineno = lineno;
@@ -787,187 +643,107 @@ class uvm_vreg_field: uvm_object
   }
 
   //
-  // Group: Callbacks
+  // Group -- NODOCS -- Callbacks
   //
 
-
-  //
-  // TASK: pre_write
-  // Called before virtual field write.
-  //
-  // If the specified data value, access ~path~ or address ~map~ are modified,
-  // the updated data value, access path or address map will be used
-  // to perform the virtual register operation.
-  //
-  // The virtual field callback methods are invoked before the callback methods
-  // on the containing virtual register.
-  // The registered callback methods are invoked after the invocation
-  // of this method.
-  // The pre-write virtual register and field callbacks are executed
-  // before the corresponding pre-write memory callbacks
-  //
-  // virtual task pre_write(ulong     idx,
-  //			 ref uvm_reg_data_t   wdat,
-  //			 ref uvm_path_e  path,
-  //			 ref uvm_reg_map   map);
-
+  // @uvm-ieee 1800.2-2017 auto 18.10.5.1
   // task
   void pre_write(ulong              idx,
 		 ref uvm_reg_data_t wdat,
-		 ref uvm_path_e     path,
-		 ref uvm_reg_map    map) {}
+		 ref uvm_door_e     path,
+		 ref uvm_reg_map    map) { }
 
-  //
-  // TASK: post_write
-  // Called after virtual field write
-  //
-  // If the specified ~status~ is modified,
-  // the updated status will be
-  // returned by the virtual register operation.
-  //
-  // The virtual field callback methods are invoked after the callback methods
-  // on the containing virtual register.
-  // The registered callback methods are invoked before the invocation
-  // of this method.
-  // The post-write virtual register and field callbacks are executed
-  // after the corresponding post-write memory callbacks
-  //
-  // virtual task post_write(ulong       idx,
-  //			  uvm_reg_data_t         wdat,
-  //			  uvm_path_e        path,
-  //			  uvm_reg_map         map,
-  //			  ref uvm_status_e  status);
+  // @uvm-ieee 1800.2-2017 auto 18.10.5.2
   // task
   void post_write(ulong             idx,
 		  uvm_reg_data_t    wdat,
-		  uvm_path_e        path,
+		  uvm_door_e        path,
 		  uvm_reg_map       map,
-		  ref uvm_status_e  status) {}
+		  ref uvm_status_e  status) { }
 
-  //
-  // TASK: pre_read
-  // Called before virtual field read.
-  //
-  // If the specified access ~path~ or address ~map~ are modified,
-  // the updated access path or address map will be used to perform
-  // the virtual register operation.
-  //
-  // The virtual field callback methods are invoked after the callback methods
-  // on the containing virtual register.
-  // The registered callback methods are invoked after the invocation
-  // of this method.
-  // The pre-read virtual register and field callbacks are executed
-  // before the corresponding pre-read memory callbacks
-  //
-  // virtual task pre_read(ulong      idx,
-  //			ref uvm_path_e   path,
-  //			ref uvm_reg_map    map);
-
+  // @uvm-ieee 1800.2-2017 auto 18.10.5.3
   // task
   void pre_read(ulong              idx,
-		ref uvm_path_e     path,
-		ref uvm_reg_map    map) {}
+		ref uvm_door_e     path,
+		ref uvm_reg_map    map) { }
 
-  //
-  // TASK: post_read
-  // Called after virtual field read.
-  //
-  // If the specified readback data ~rdat~ or ~status~ is modified,
-  // the updated readback data or status will be
-  // returned by the virtual register operation.
-  //
-  // The virtual field callback methods are invoked after the callback methods
-  // on the containing virtual register.
-  // The registered callback methods are invoked before the invocation
-  // of this method.
-  // The post-read virtual register and field callbacks are executed
-  // after the corresponding post-read memory callbacks
-  //
-  // virtual task post_read(ulong       idx,
-  //			 ref uvm_reg_data_t     rdat,
-  //			 uvm_path_e        path,
-  //			 uvm_reg_map         map,
-  //			 ref uvm_status_e  status);
-
+  // @uvm-ieee 1800.2-2017 auto 18.10.5.4
   // task
   void post_read(ulong              idx,
 		 ref uvm_reg_data_t rdat,
-		 uvm_path_e         path,
+		 uvm_door_e         path,
 		 uvm_reg_map        map,
-		 ref uvm_status_e   status) {}
+		 ref uvm_status_e   status) { }
 
 
-  // extern virtual function void do_print (uvm_printer printer);
   override void do_print (uvm_printer printer) {
     synchronized(this) {
       super.do_print(printer);
-      printer.print_generic("initiator", parent.get_type_name(),
+      printer.print_generic("initiator", _parent.get_type_name(),
 			    -1, convert2string());
     }
   }
 
-  // extern virtual function string convert2string;
   override string convert2string() {
     synchronized(this) {
-      string t_str;
-      bool with_debug_info = false;
-
-      string res_str =
+      string retval =
 	format("%s[%0d-%0d]", this.get_name(),
 	       this.get_lsb_pos_in_register() + this.get_n_bits() - 1,
 	       this.get_lsb_pos_in_register());
-      if (read_in_progress == true) {
-	res_str ~= "\n";
-	if (fname != "" && lineno != 0) {
-	  res_str ~= format("%s:%0d ", fname, lineno);
+      if (_read_in_progress == true) {
+	retval ~= "\n";
+	if (_fname != "" && _lineno != 0) {
+	  retval ~= format("%s:%0d ", _fname, _lineno);
 	}
-	res_str ~= "currently executing read method";
+	retval ~= "currently executing read method";
       }
-      if ( write_in_progress == true) {
-	res_str ~= "\n";
-	if (fname != "" && lineno != 0) {
-	  res_str ~= format("%s:%0d ", fname, lineno);
+      if ( _write_in_progress == true) {
+	retval ~= "\n";
+	if (_fname != "" && _lineno != 0) {
+	  retval ~= format("%s:%0d ", _fname, _lineno);
 	}
-	res_str ~= "currently executing write method";
+	retval ~= "currently executing write method";
       }
-      return res_str;
+      return retval;
     }
   }
 
-  // extern virtual function uvm_object clone();
   override uvm_object clone() {
     return null;
   }
 
-  // extern virtual function void do_copy   (uvm_object rhs);
-  override void do_copy   (uvm_object rhs) {}
+  override void do_copy   (uvm_object rhs) { }
 
-  // extern virtual function bool do_compare (uvm_object  rhs,
-  //                                          uvm_comparer comparer);
   override bool do_compare (uvm_object  rhs,
-		   uvm_comparer comparer) {
-    return 0;
+			    uvm_comparer comparer) {
+    return false;
   }
 
-  // extern virtual function void do_pack (uvm_packer packer);
-  override void do_pack (uvm_packer packer) {}
+  override void do_pack (uvm_packer packer) { }
 
-  // extern virtual function void do_unpack (uvm_packer packer);
-  override void do_unpack (uvm_packer packer) {}
-
+  override void do_unpack (uvm_packer packer) { }
 }
 
 //------------------------------------------------------------------------------
-// Class: uvm_vreg_field_cbs
+// Class -- NODOCS -- uvm_vreg_field_cbs
 //
 // Pre/post read/write callback facade class
 //
 //------------------------------------------------------------------------------
 
-class uvm_vreg_field_cbs: uvm_callback
+// @uvm-ieee 1800.2-2017 auto 18.10.6.1
+abstract class uvm_vreg_field_cbs: uvm_callback
 {
-  string fname;
-  int    lineno;
+
+  mixin uvm_abstract_object_utils;
+  
+  mixin uvm_sync;
+
+  @uvm_public_sync
+  private string _fname;
+  @uvm_public_sync
+  private int    _lineno;
+
 
   this(string name = "uvm_vreg_field_cbs") {
     synchronized(this) {
@@ -975,124 +751,54 @@ class uvm_vreg_field_cbs: uvm_callback
     }
   }
 
-
-  //
-  // Task: pre_write
-  // Callback called before a write operation.
-  //
-  // The registered callback methods are invoked before the invocation
-  // of the virtual register pre-write callbacks and
-  // after the invocation of the <uvm_vreg_field::pre_write()> method.
-  //
-  // The written value ~wdat~, access ~path~ and address ~map~,
-  // if modified, modifies the actual value, access path or address map
-  // used in the register operation.
-  //
-  // virtual task pre_write(uvm_vreg_field       field,
-  //                        ulong     idx,
-  //                        ref uvm_reg_data_t   wdat,
-  //                        ref uvm_path_e  path,
-  //                        ref uvm_reg_map   map);
-
+  // @uvm-ieee 1800.2-2017 auto 18.10.6.2.1
   // task
   void pre_write(uvm_vreg_field     field,
 		 ulong              idx,
 		 ref uvm_reg_data_t wdat,
-		 ref uvm_path_e     path,
-		 ref uvm_reg_map    map) {}
+		 ref uvm_door_e     path,
+		 ref uvm_reg_map    map) { }
 
-  //
-  // TASK: post_write
-  // Called after a write operation
-  //
-  // The registered callback methods are invoked after the invocation
-  // of the virtual register post-write callbacks and
-  // before the invocation of the <uvm_vreg_field::post_write()> method.
-  //
-  // The ~status~ of the operation,
-  // if modified, modifies the actual returned status.
-  //
-  // virtual task post_write(uvm_vreg_field        field,
-  //			  ulong      idx,
-  //			  uvm_reg_data_t        wdat,
-  //			  uvm_path_e       path,
-  //			  uvm_reg_map        map,
-  //			  ref uvm_status_e status);
-
+  // @uvm-ieee 1800.2-2017 auto 18.10.6.2.2
   //task
   void post_write(uvm_vreg_field   field,
 		  ulong            idx,
 		  uvm_reg_data_t   wdat,
-		  uvm_path_e       path,
+		  uvm_door_e       path,
 		  uvm_reg_map      map,
-		  ref uvm_status_e status) {}
+		  ref uvm_status_e status) { }
 
-
-  //
-  // TASK: pre_read
-  // Called before a virtual field read.
-  //
-  // The registered callback methods are invoked after the invocation
-  // of the virtual register pre-read callbacks and
-  // after the invocation of the <uvm_vreg_field::pre_read()> method.
-  //
-  // The access ~path~ and address ~map~,
-  // if modified, modifies the actual access path or address map
-  // used in the register operation.
-  //
-  // virtual task pre_read(uvm_vreg_field        field,
-  //			ulong      idx,
-  //			ref uvm_path_e   path,
-  //			ref uvm_reg_map    map);
-
+  // @uvm-ieee 1800.2-2017 auto 18.10.6.2.3
   // task
   void pre_read(uvm_vreg_field    field,
 		ulong             idx,
-		ref uvm_path_e    path,
-		ref uvm_reg_map   map) {}
+		ref uvm_door_e    path,
+		ref uvm_reg_map   map) { }
 
-
-  //
-  // TASK: post_read
-  // Called after a virtual field read.
-  //
-  // The registered callback methods are invoked after the invocation
-  // of the virtual register post-read callbacks and
-  // before the invocation of the <uvm_vreg_field::post_read()> method.
-  //
-  // The readback value ~rdat~ and the ~status~ of the operation,
-  // if modified, modifies the actual returned readback value and status.
-  //
-  // virtual task post_read(uvm_vreg_field         field,
-  //			 ulong       idx,
-  //			 ref uvm_reg_data_t     rdat,
-  //			 uvm_path_e        path,
-  //			 uvm_reg_map         map,
-  //			 ref uvm_status_e  status);
-
+  // @uvm-ieee 1800.2-2017 auto 18.10.6.2.4
   // task
   void post_read(uvm_vreg_field     field,
 		 ulong              idx,
 		 ref uvm_reg_data_t rdat,
-		 uvm_path_e         path,
+		 uvm_door_e         path,
 		 uvm_reg_map        map,
-		 ref uvm_status_e   status) {}
+		 ref uvm_status_e   status) { }
 }
 
 //
-// Type: uvm_vreg_field_cb
+// Type -- NODOCS -- uvm_vreg_field_cb
 // Convenience callback type declaration
 //
 // Use this declaration to register virtual field callbacks rather than
 // the more verbose parameterized class
 //
-alias uvm_vreg_field_cb = uvm_callbacks!(uvm_vreg_field, uvm_vreg_field_cbs);
+alias uvm_vreg_field_cb = uvm_callbacks!(uvm_vreg_field, uvm_vreg_field_cbs);  /* @uvm-ieee 1800.2-2017 auto D.4.6.11*/
 
 //
-// Type: uvm_vreg_field_cb_iter
+// Type -- NODOCS -- uvm_vreg_field_cb_iter
 // Convenience callback iterator type declaration
 //
 // Use this declaration to iterate over registered virtual field callbacks
 // rather than the more verbose parameterized class
 //
-alias uvm_vreg_field_cb_iter = uvm_callback_iter!(uvm_vreg_field, uvm_vreg_field_cbs);
+alias uvm_vreg_field_cb_iter = uvm_callback_iter!(uvm_vreg_field, uvm_vreg_field_cbs);  /* @uvm-ieee 1800.2-2017 auto D.4.6.12*/

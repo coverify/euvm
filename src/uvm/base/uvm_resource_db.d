@@ -55,7 +55,7 @@ import uvm.base.uvm_resource_db_options: uvm_resource_db_options;
 import uvm.base.uvm_object: uvm_object;
 import uvm.base.uvm_globals: uvm_warning;
 
-import uvm.base.uvm_once;
+import uvm.base.uvm_scope;
 
 import uvm.meta.misc;
 

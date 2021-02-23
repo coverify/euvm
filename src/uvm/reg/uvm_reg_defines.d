@@ -1,8 +1,9 @@
 //----------------------------------------------------------------------
-//   Copyright 2010 Synopsys, Inc.
-//   Copyright 2010 Mentor Graphics Corporation
-//   Copyright 2014 Coverify Systems Technology
-//
+// Copyright 2014-2021 Coverify Systems Technology
+// Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2010 AMD
+// Copyright 2014-2015 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -22,15 +23,11 @@
 
 module uvm.reg.uvm_reg_defines;
 
-// static if(__traits(compiles, "import config = vlang_config;")) {
-//   import config = vlang_config;
-//  }
-
 //------------------------
-// Group: Register Defines
+// Group -- NODOCS -- Register Defines
 //------------------------
 
-// Macro: `UVM_REG_ADDR_WIDTH
+// Macro -- NODOCS -- `UVM_REG_ADDR_WIDTH
 //
 // Maximum address width in bits
 //
@@ -40,11 +37,13 @@ module uvm.reg.uvm_reg_defines;
 //   enum int UVM_REG_ADDR_WIDTH = config.UVM_REG_ADDR_WIDTH;
 //  }
 //  else {
+
+// @uvm-ieee 1800.2-2017 auto B.6.4
 enum int UVM_REG_ADDR_WIDTH = 64;
  // }
 
 
-// Macro: `UVM_REG_DATA_WIDTH
+// Macro -- NODOCS -- `UVM_REG_DATA_WIDTH
 //
 // Maximum data width in bits
 //
@@ -54,11 +53,12 @@ enum int UVM_REG_ADDR_WIDTH = 64;
 //   enum int UVM_REG_DATA_WIDTH = config.UVM_REG_DATA_WIDTH;
 //  }
 //  else {
+// @uvm-ieee 1800.2-2017 auto B.6.5
 enum int UVM_REG_DATA_WIDTH = 64;
  // }
 
 
-// Macro: `UVM_REG_BYTENABLE_WIDTH
+// Macro -- NODOCS -- `UVM_REG_BYTENABLE_WIDTH
 //
 // Maximum number of byte enable bits
 //
@@ -72,7 +72,7 @@ enum int UVM_REG_DATA_WIDTH = 64;
 enum int UVM_REG_BYTENABLE_WIDTH = (UVM_REG_DATA_WIDTH-1)/8 + 1;
  // }
 
-// Macro: `UVM_REG_CVR_WIDTH
+// Macro -- NODOCS -- `UVM_REG_CVR_WIDTH
 //
 // Maximum number of bits in a <uvm_reg_cvr_t> coverage model set.
 //
@@ -82,5 +82,6 @@ enum int UVM_REG_BYTENABLE_WIDTH = (UVM_REG_DATA_WIDTH-1)/8 + 1;
 //   enum int UVM_REG_CVR_WIDTH = config.UVM_REG_CVR_WIDTH;
 //  }
 //  else {
+// @uvm-ieee 1800.2-2017 auto B.6.7
 enum int UVM_REG_CVR_WIDTH = 32;
  // }

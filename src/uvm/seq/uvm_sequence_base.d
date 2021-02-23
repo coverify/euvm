@@ -386,9 +386,9 @@ abstract class uvm_sequence_base: uvm_sequence_item
       set_item_context(parent_sequence, sequencer);
 
       // if (!(m_sequence_state inside {CREATED,STOPPED,FINISHED}))
-      if (_m_sequence_state != uvm_sequence_state.UVM_CREATED &&
-	 _m_sequence_state != uvm_sequence_state.UVM_STOPPED &&
-	 _m_sequence_state != uvm_sequence_state.UVM_FINISHED) {
+      if (! _m_sequence_state.inside(uvm_sequence_state.UVM_CREATED,
+				     uvm_sequence_state.UVM_STOPPED,
+				     uvm_sequence_state.UVM_FINISHED)) {
 	uvm_report_fatal("SEQ_NOT_DONE",
 			 "Sequence " ~ get_full_name() ~ " already started",
 			 uvm_verbosity.UVM_NONE);
@@ -582,6 +582,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   // called.
   // This method should not be called directly by the user.
 
+  // @uvm-ieee 1800.2-2017 auto 14.2.3.3
   // task
   void pre_body() {
     return;

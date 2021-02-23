@@ -315,7 +315,6 @@ class uvm_comparer: uvm_policy
   //
   // The radix is used for reporting purposes, the default radix is hex.
 
-  // @uvm-ieee 1800.2-2017 auto 16.3.3.1
   bool compare(T)(string name,
 		  T lhs,
 		  T rhs,
@@ -393,7 +392,6 @@ class uvm_comparer: uvm_policy
   // types match (the return from ~lhs.get_type_name()~ matches
   // ~rhs.get_type_name()~).
 
-  // @uvm-ieee 1800.2-2017 auto 16.3.3.4
   bool compare(T)(string name,
 		  T lhs,
 		  T rhs)
@@ -519,7 +517,6 @@ class uvm_comparer: uvm_policy
   //
   // The ~lhs~ and ~rhs~ objects are the two objects used for comparison.
 
-  // @uvm-ieee 1800.2-2017 auto 16.3.3.6
   bool compare(T)(string name,
 		  T lhs,
 		  T rhs)

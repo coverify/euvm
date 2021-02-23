@@ -28,16 +28,6 @@ import uvm.base.uvm_object_globals;
 import esdl.intf.vpi;
 
 import std.string: format;
-// #include "uvm_dpi.h"
-// #include <math.h>
-
-// #include "svdpi.h"
-// #include "vcsuser.h"
-
-// #ifdef VCSMX
-// #include "mhpi_user.h"
-// #include "vhpi_user.h"
-// #endif
 
 
 /* 
@@ -57,8 +47,7 @@ import std.string: format;
  *
  */
 
-// from uvm_hdl.svh
-// `define UVM_HDL_MAX_WIDTH 1024
+// @uvm-ieee 1800.2-2017 auto 19.6.1
 enum uint UVM_HDL_MAX_WIDTH = 1024;
 
 static int uvm_hdl_max_width()
@@ -87,7 +76,7 @@ bool uvm_hdl_set_vlog(T)(string path, T value, vpiFlagsTypeT flag=vpiNoDelay) {
 
   vpiHandle r = vpiGetHandleByName(path, null);
 
-  if(r is null) {
+  if (r is null) {
     uvm_error("UVM/DPI/HDL_SET",
 	      format("set: unable to locate hdl path (%s)\n Either the" ~
 		     " name is incorrect, or you may not have PLI/ACC " ~
@@ -95,7 +84,7 @@ bool uvm_hdl_set_vlog(T)(string path, T value, vpiFlagsTypeT flag=vpiNoDelay) {
     return false;
   }
   else {
-    if(maxsize == -1) {
+    if (maxsize == -1) {
       maxsize = uvm_hdl_max_width();
     }
 
@@ -121,7 +110,7 @@ bool uvm_hdl_get_vlog(T)(string path, ref T value) {
 
   vpiHandle r = vpiGetHandleByName(path, null);
 
-  if(r is null) {
+  if (r is null) {
     uvm_error("UVM/DPI/HDL_GET",
 	      format("get: unable to locate hdl path (%s)\n Either the" ~
 		     " name is incorrect, or you may not have PLI/ACC " ~
@@ -136,7 +125,7 @@ bool uvm_hdl_get_vlog(T)(string path, ref T value) {
     }
 
     auto size = vpi_get(vpiSize, r);
-    if(size > maxsize) {
+    if (size > maxsize) {
       uvm_error("UVM/DPI/HDL_SET",
 		format("uvm_reg : hdl path '%s' is %0d bits, but the" ~
 		       " maximum size is %0d.  You can increase the " ~

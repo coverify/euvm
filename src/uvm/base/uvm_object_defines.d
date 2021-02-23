@@ -300,12 +300,22 @@ mixin template uvm_type_name_decl(string TNAME_STRING="") {
 
 mixin template m_uvm_object_auto_utils(T)
 {
+  import uvm.base.uvm_field_op: uvm_field_op;
+
   override void do_execute_op(uvm_field_op op) {
     m_uvm_execute_field_op(op);
   }
 
   override void m_uvm_execute_field_op(uvm_field_op op) {
-
+    import uvm.base.uvm_copier: uvm_copier;
+    import uvm.base.uvm_comparer: uvm_comparer;
+    import uvm.base.uvm_printer: uvm_printer;
+    import uvm.base.uvm_recorder: uvm_recorder;
+    import uvm.base.uvm_packer: uvm_packer;
+    import uvm.base.uvm_resource_base: uvm_resource_base;
+    import uvm.base.uvm_object_globals: uvm_field_flag_t,
+      uvm_field_auto_enum;
+    
     super.m_uvm_execute_field_op(op);
 
     uvm_field_flag_t what = op.get_op_type();

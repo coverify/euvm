@@ -24,7 +24,7 @@
 module uvm.base.uvm_field_op;
 
 
-import uvm.base.uvm_once: uvm_once_base;
+import uvm.base.uvm_scope: uvm_scope_base;
 import uvm.base.uvm_object: uvm_object;
 import uvm.base.uvm_object_globals: uvm_field_flag_t;
 import uvm.base.uvm_object_globals: uvm_field_auto_enum, uvm_field_xtra_enum;
@@ -214,8 +214,8 @@ class uvm_field_op: uvm_object
     }
   }
 
-  mixin (uvm_once_sync_string);
-  static class uvm_once: uvm_once_base
+  mixin (uvm_scope_sync_string);
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_private_sync
     private uvm_field_op[] _m_recycled_op; 
@@ -236,17 +236,17 @@ class uvm_field_op: uvm_object
    // artifact, should not be used directly by the user.
   void m_recycle() {
     this.flush();
-    synchronized (_uvm_once_inst) {
-      _uvm_once_inst._m_recycled_op ~= this;
+    synchronized (_uvm_scope_inst) {
+      _uvm_scope_inst._m_recycled_op ~= this;
     }
   }
  
   static uvm_field_op m_get_available_op() {
-    synchronized (_uvm_once_inst) {
+    synchronized (_uvm_scope_inst) {
       uvm_field_op field_op ;
-      if (_uvm_once_inst._m_recycled_op.length > 0) {
-	field_op = _uvm_once_inst._m_recycled_op[$-1];
-	_uvm_once_inst._m_recycled_op.length -= 1;
+      if (_uvm_scope_inst._m_recycled_op.length > 0) {
+	field_op = _uvm_scope_inst._m_recycled_op[$-1];
+	_uvm_scope_inst._m_recycled_op.length -= 1;
       }
       else {
 	field_op = uvm_field_op.type_id.create("field_op");

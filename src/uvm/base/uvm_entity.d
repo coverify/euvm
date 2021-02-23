@@ -23,7 +23,7 @@ module uvm.base.uvm_entity;
 import uvm.base.uvm_root: uvm_root;
 import uvm.base.uvm_globals: uvm_init;
 import uvm.base.uvm_object_globals: uvm_core_state, m_uvm_core_state;
-import uvm.base.uvm_once;
+import uvm.base.uvm_scope;
 
 import uvm.meta.misc;
 import uvm.meta.meta;
@@ -93,9 +93,9 @@ abstract class uvm_entity_base: Entity
   this() {
     synchronized (this) {
       _uvm_root_init_semaphore = new Semaphore(); // count 0
-      // uvm_once has some events etc that need to know the context for init
+      // uvm_scope has some events etc that need to know the context for init
       set_thread_context();
-      _root_once = new uvm_root_once();
+      _root_scope = new uvm_root_scope();
       m_uvm_core_state = uvm_core_state.UVM_CORE_PRE_INIT;
     }
   }
@@ -105,10 +105,10 @@ abstract class uvm_entity_base: Entity
 
   // effectively immutable
   // @uvm_immutable_sync
-  private uvm_root_once _root_once;
+  private uvm_root_scope _root_scope;
   
-  uvm_root_once root_once() {
-    return _root_once;
+  uvm_root_scope root_scope() {
+    return _root_scope;
   }
 
   static uvm_entity_base get() {

@@ -50,7 +50,7 @@ import uvm.base.uvm_object_globals: uvm_core_state, m_uvm_core_state;
 import uvm.base.uvm_domain: uvm_domain;
 import uvm.base.uvm_task_phase: uvm_task_phase;
 import uvm.base.uvm_object_defines;
-import uvm.base.uvm_once;
+import uvm.base.uvm_scope;
 
 import uvm.base.uvm_object_globals: uvm_phase_type, uvm_phase_state, uvm_wait_op, uvm_verbosity;
 
@@ -167,9 +167,9 @@ class uvm_phase: uvm_object, _esdl__Norand
   import uvm.base.uvm_component: uvm_component;
 
   mixin (uvm_sync_string);
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
 
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_none_sync
     private bool[uvm_phase] _m_executing_phases;
@@ -211,19 +211,19 @@ class uvm_phase: uvm_object, _esdl__Norand
   }
 
   void add_executing_phase(uvm_phase phase) {
-    synchronized (_uvm_once_inst) {
-      _uvm_once_inst._m_executing_phases[phase] = true;
+    synchronized (_uvm_scope_inst) {
+      _uvm_scope_inst._m_executing_phases[phase] = true;
     }
   }
   void rem_executing_phase(uvm_phase phase) {
-    synchronized (_uvm_once_inst) {
-      _uvm_once_inst._m_executing_phases.remove(phase);
+    synchronized (_uvm_scope_inst) {
+      _uvm_scope_inst._m_executing_phases.remove(phase);
     }
   }
   uvm_phase[] get_executing_phases() {
-    synchronized (_uvm_once_inst) {
+    synchronized (_uvm_scope_inst) {
       import std.algorithm.sorting;
-      auto phases = _uvm_once_inst._m_executing_phases.keys;
+      auto phases = _uvm_scope_inst._m_executing_phases.keys;
       sort(phases);
       return phases;
     }
@@ -301,16 +301,16 @@ class uvm_phase: uvm_object, _esdl__Norand
 
   // @uvm-ieee 1800.2-2017 auto 9.3.1.3.5
   static void set_default_max_ready_to_end_iterations(int max) {
-    synchronized (_uvm_once_inst) {
-      _uvm_once_inst._m_default_max_ready_to_end_iters = max;
+    synchronized (_uvm_scope_inst) {
+      _uvm_scope_inst._m_default_max_ready_to_end_iters = max;
     }
   }
 
 
   // @uvm-ieee 1800.2-2017 auto 9.3.1.3.6
   static int get_default_max_ready_to_end_iterations() {
-    synchronized (_uvm_once_inst) {
-      return _uvm_once_inst._m_default_max_ready_to_end_iters;
+    synchronized (_uvm_scope_inst) {
+      return _uvm_scope_inst._m_default_max_ready_to_end_iters;
     }
   }
   

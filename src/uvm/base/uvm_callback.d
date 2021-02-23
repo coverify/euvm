@@ -61,7 +61,7 @@
 module uvm.base.uvm_callback;
 
 import uvm.base.uvm_pool;
-import uvm.base.uvm_once;
+import uvm.base.uvm_scope;
 import uvm.base.uvm_misc: uvm_apprepend;
 import uvm.base.uvm_object: uvm_object;
 import uvm.base.uvm_queue: uvm_queue;
@@ -100,7 +100,7 @@ import std.array;
 class uvm_callbacks_base: uvm_object
 {
   
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_public_sync
     private bool _m_tracing = true;
@@ -119,7 +119,7 @@ class uvm_callbacks_base: uvm_object
     }
   };
 
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
   mixin (uvm_sync_string);
 
   this(string name) {
@@ -226,7 +226,7 @@ class uvm_callbacks_base: uvm_object
 
 class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
 {
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_private_sync
     private this_type _m_t_inst;
@@ -242,7 +242,7 @@ class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
     // }
   }
   
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
   mixin (uvm_sync_string);
 
   enum string m_typename = qualifiedTypeName!T;
@@ -278,7 +278,7 @@ class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
   }
 
   static this_type m_initialize() {
-    synchronized (_uvm_once_inst) {
+    synchronized (_uvm_scope_inst) {
       if (m_t_inst is null) {
 	// super_type.m_initialize taken care of by once constructor
 	// super_type.m_initialize();
@@ -571,13 +571,13 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
 {
   import uvm.base.uvm_component: uvm_component;
 
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_private_sync
     this_type _m_inst;
   }
 
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
   mixin (uvm_sync_string);
 
   this(string name) {
@@ -1075,6 +1075,7 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
   // The iterator class <uvm_callback_iter> may be used as an alternative, simplified,
   // iterator interface.
 
+  // @uvm-ieee 1800.2-2017 auto 10.7.2.4.1
   static CB get_first (ref size_t itr, T obj) {
     get();
     uvm_queue!(uvm_callback) q = m_get_q(obj);
@@ -1099,6 +1100,7 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
   // The iterator class <uvm_callback_iter> may be used as an alternative, simplified,
   // iterator interface.
 
+  // @uvm-ieee 1800.2-2017 auto 10.7.2.4.2
   static CB get_last (ref size_t itr, T obj) {
     get();
     uvm_queue!(uvm_callback) q = m_get_q(obj);
@@ -1125,6 +1127,7 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
   // The iterator class <uvm_callback_iter> may be used as an alternative, simplified,
   // iterator interface.
 
+  // @uvm-ieee 1800.2-2017 auto 10.7.2.4.3
   static CB get_next (ref size_t itr, T obj) {
     get();
     uvm_queue!(uvm_callback) q = m_get_q(obj);
@@ -1152,6 +1155,7 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
   // The iterator class <uvm_callback_iter> may be used as an alternative, simplified,
   // iterator interface.
 
+  // @uvm-ieee 1800.2-2017 auto 10.7.2.4.4
   static CB get_prev (ref size_t itr, T obj) {
     get();
     uvm_queue!(uvm_callback) q = m_get_q(obj);
@@ -1477,26 +1481,28 @@ class uvm_callback: uvm_object
 
 mixin template uvm_register_cb(T, CB) if (is (CB: uvm_callback))
   {
-    import uvm.base.uvm_callback: uvm_callbacks, uvm_cb_trace_noobj;
-    import std.string: format;
     // static this() {
     //   if (uvm_is_uvm_thread) {
     //	uvm_callbacks!(T, CB).m_register_pair();
     //   }
     // }
     void uvm_do_callbacks(void delegate(CB cb) dg) {
+      import uvm.base.uvm_callback: uvm_callbacks;
       foreach (callb; uvm_callbacks!(T, CB).get_all_enabled(this)) {
 	dg(callb);
       }
     }
 
     void uvm_do_callbacks_reverse(void delegate(CB cb) dg) {
+      import uvm.base.uvm_callback: uvm_callbacks;
       foreach_reverse(callb; uvm_callbacks!(T, CB).get_all_enabled(this)) {
 	dg(callb);
       }
     }
 
     bool uvm_do_callbacks_exit_on(bool delegate(CB cb) dg, bool val) {
+      import uvm.base.uvm_callback: uvm_callbacks, uvm_cb_trace_noobj;
+      import std.string: format;
       foreach (callb; uvm_callbacks!(T, CB).get_all_enabled(this)) {
 	if (dg(callb) == val) {
 	  uvm_cb_trace_noobj(callb,

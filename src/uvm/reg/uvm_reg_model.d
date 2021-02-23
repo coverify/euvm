@@ -1,9 +1,13 @@
 //
 // -------------------------------------------------------------
-//    Copyright 2004-2009 Synopsys, Inc.
-//    Copyright 2010-2011 Mentor Graphics Corporation
-//    Copyright 2010 Cadence Design Systems, Inc.
-//    Copyright 2014 Coverify Systems Technology
+// Copyright 2014-2021 Coverify Systems Technology
+// Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2014 Semifore
+// Copyright 2014 Intel Corporation
+// Copyright 2004-2010 Synopsys, Inc.
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2010 AMD
+// Copyright 2015-2018 NVIDIA Corporation
 //    All Rights Reserved Worldwide
 //
 //    Licensed under the Apache License, Version 2.0 (the
@@ -29,77 +33,119 @@ import uvm.reg.uvm_reg_defines;
 
 import esdl.data.bvec;
 
-import uvm.base.uvm_resource_db;
+import uvm.base.uvm_resource_db: uvm_resource_db;
 import uvm.meta.misc;
 
 import std.string: format;
 //------------------------------------------------------------------------------
-// TITLE: Global Declarations for the Register Layer
+// TITLE -- NODOCS -- Global Declarations for the Register Layer
 //------------------------------------------------------------------------------
 //
 // This section defines globally available types, enums, and utility classes.
 //
 //------------------------------------------------------------------------------
 
-// typedef class uvm_reg_field;
-// typedef class uvm_vreg_field;
-// typedef class uvm_reg;
-// typedef class uvm_reg_file;
-// typedef class uvm_vreg;
-// typedef class uvm_reg_block;
-// typedef class uvm_mem;
-// typedef class uvm_reg_item;
-// typedef class uvm_reg_map;
-// typedef class uvm_reg_map_info;
-// typedef class uvm_reg_sequence;
-// typedef class uvm_reg_adapter;
-// typedef class uvm_reg_indirect_data;
-
-
 //-------------
-// Group: Types
+// Group -- NODOCS -- Types
 //-------------
 
-// Type: uvm_reg_data_t
+// Type -- NODOCS -- uvm_reg_data_t
 //
 // 2-state data value with <`UVM_REG_DATA_WIDTH> bits
 //
-// typedef bit unsigned [`UVM_REG_DATA_WIDTH-1:0]  uvm_reg_data_t ;
-alias uvm_reg_data_t=UBit!UVM_REG_DATA_WIDTH;
+// alias uvm_reg_data_t = UBit!UVM_REG_DATA_WIDTH;
+alias uvm_reg_data_t = UBit!UVM_REG_DATA_WIDTH;
 
 
-// Type: uvm_reg_data_logic_t
+// Type -- NODOCS -- uvm_reg_data_logic_t
 //
 // 4-state data value with <`UVM_REG_DATA_WIDTH> bits
 //
-// typedef  logic unsigned [`UVM_REG_DATA_WIDTH-1:0]  uvm_reg_data_logic_t ;
-alias uvm_reg_data_logic_t = ULogic!UVM_REG_DATA_WIDTH;
+// alias uvm_reg_data_logic_t = UBit!UVM_REG_DATA_WIDTH;
+// static if (UVM_REG_DATA_WIDTH == 8) {
+//   alias uvm_reg_data_logic_t = ubyte;
+//  }
+//  else static if (UVM_REG_DATA_WIDTH == 16) {
+//    alias uvm_reg_data_logic_t = ushort;
+//  }
+//  else static if (UVM_REG_DATA_WIDTH == 32) {
+//    alias uvm_reg_data_logic_t = uint;
+//  }
+//  else static if (UVM_REG_DATA_WIDTH == 64) {
+//    alias uvm_reg_data_logic_t = ulong;
+//  }
+//  else {
+   alias uvm_reg_data_logic_t = ULogic!UVM_REG_DATA_WIDTH;
+// }
 
-// Type: uvm_reg_addr_t
+// Type -- NODOCS -- uvm_reg_addr_t
 //
 // 2-state address value with <`UVM_REG_ADDR_WIDTH> bits
 //
-// typedef  bit unsigned [`UVM_REG_ADDR_WIDTH-1:0]  uvm_reg_addr_t ;
-alias uvm_reg_addr_t = UBit!UVM_REG_ADDR_WIDTH;
+// alias uvm_reg_addr_t = UBit!UVM_REG_ADDR_WIDTH;
+static if (UVM_REG_ADDR_WIDTH == 8) {
+  alias uvm_reg_addr_t = ubyte;
+ }
+ else static if (UVM_REG_ADDR_WIDTH == 16) {
+   alias uvm_reg_addr_t = ushort;
+ }
+ else static if (UVM_REG_ADDR_WIDTH == 32) {
+   alias uvm_reg_addr_t = uint;
+ }
+ else static if (UVM_REG_ADDR_WIDTH == 64) {
+   alias uvm_reg_addr_t = ulong;
+ }
+ else {
+   alias uvm_reg_addr_t = UBit!UVM_REG_ADDR_WIDTH;
+ }
 
+alias uvm_reg_addr_bvec_t = UBit!UVM_REG_ADDR_WIDTH;
 
-// Type: uvm_reg_addr_logic_t
+// Type -- NODOCS -- uvm_reg_addr_logic_t
 //
 // 4-state address value with <`UVM_REG_ADDR_WIDTH> bits
 //
-// typedef  logic unsigned [`UVM_REG_ADDR_WIDTH-1:0]  uvm_reg_addr_logic_t ;
-alias uvm_reg_addr_logic_t = ULogic!UVM_REG_ADDR_WIDTH;
+// alias uvm_reg_addr_logic_t = UBit!UVM_REG_ADDR_WIDTH;
+// static if (UVM_REG_ADDR_WIDTH == 8) {
+//   alias uvm_reg_addr_logic_t = ubyte;
+//  }
+//  else static if (UVM_REG_ADDR_WIDTH == 16) {
+//    alias uvm_reg_addr_logic_t = ushort;
+//  }
+//  else static if (UVM_REG_ADDR_WIDTH == 32) {
+//    alias uvm_reg_addr_logic_t = uint;
+//  }
+//  else static if (UVM_REG_ADDR_WIDTH == 64) {
+//    alias uvm_reg_addr_logic_t = ulong;
+//  }
+//  else {
+   alias uvm_reg_addr_logic_t = ULogic!UVM_REG_ADDR_WIDTH;
+// }
 
 
-// Type: uvm_reg_byte_en_t
+// Type -- NODOCS -- uvm_reg_byte_en_t
 //
 // 2-state byte_enable value with <`UVM_REG_BYTENABLE_WIDTH> bits
 //
-// typedef  bit unsigned [`UVM_REG_BYTENABLE_WIDTH-1:0]  uvm_reg_byte_en_t ;
+// static if (UVM_REG_BYTENABLE_WIDTH == 8) {
+//   alias uvm_reg_byte_en_t = ubyte;
+//  }
+//  else static if (UVM_REG_BYTENABLE_WIDTH == 16) {
+//    alias uvm_reg_byte_en_t = ushort;
+//  }
+//  else static if (UVM_REG_BYTENABLE_WIDTH == 32) {
+//    alias uvm_reg_byte_en_t = uint;
+//  }
+//  else static if (UVM_REG_BYTENABLE_WIDTH == 64) {
+//    alias uvm_reg_byte_en_t = ulong;
+//  }
+//  else {
 alias uvm_reg_byte_en_t = UBit!UVM_REG_BYTENABLE_WIDTH;
+// }
 
+alias uvm_reg_byte_en_bvec_t = UBit!UVM_REG_BYTENABLE_WIDTH;
 
-// Type: uvm_reg_cvr_t
+// Type -- NODOCS -- uvm_reg_cvr_t
 //
 // Coverage model value set with <`UVM_REG_CVR_WIDTH> bits.
 //
@@ -114,11 +160,25 @@ alias uvm_reg_byte_en_t = UBit!UVM_REG_BYTENABLE_WIDTH;
 // 16-23   - User-defined coverage models
 // 24..    - Reserved
 //
-// typedef  bit [`UVM_REG_CVR_WIDTH-1:0]  uvm_reg_cvr_t ;
-alias uvm_reg_cvr_t=Bit!UVM_REG_CVR_WIDTH;
+static if (UVM_REG_CVR_WIDTH == 8) {
+  alias uvm_reg_cvr_t = ubyte;
+ }
+ else static if (UVM_REG_CVR_WIDTH == 16) {
+   alias uvm_reg_cvr_t = ushort;
+ }
+ else static if (UVM_REG_CVR_WIDTH == 32) {
+   alias uvm_reg_cvr_t = uint;
+ }
+ else static if (UVM_REG_CVR_WIDTH == 64) {
+   alias uvm_reg_cvr_t = ulong;
+ }
+ else {
+   alias uvm_reg_cvr_t = UBit!UVM_REG_CVR_WIDTH;
+ }
 
+alias uvm_reg_cvr_bvec_t = UBit!UVM_REG_CVR_WIDTH;
 
-// Type: uvm_hdl_path_slice
+// Type -- NODOCS -- uvm_hdl_path_slice
 //
 // Slice of an HDL path
 //
@@ -134,30 +194,31 @@ alias uvm_reg_cvr_t=Bit!UVM_REG_CVR_WIDTH;
 //|
 //| r1.add_hdl_path('{ '{"r1", -1, -1} });
 //|
-//
-// typedef struct {
-//    string path;
-//    int offset;
-//    int size;
-// } uvm_hdl_path_slice;
 
 struct uvm_hdl_path_slice {
-  string path;
-  int offset;
-  int size;
+  string _path;
+  string path() {return _path;}
+  void path(string val) {_path = val;}
+
+  int    _offset;
+  int offset() {return _offset;}
+  void offset(int val) {_offset = val;}
+
+  int    _size;
+  int size() {return _size;}
+  void size(int val) {_size = val;}
 }
 
 
-// typedef uvm_resource_db#(uvm_reg_cvr_t) uvm_reg_cvr_rsrc_db;
-alias uvm_reg_cvr_rsrc_db=uvm_resource_db!uvm_reg_cvr_t;
+alias uvm_reg_cvr_rsrc_db = uvm_resource_db!uvm_reg_cvr_t;
 
 
 
 //--------------------
-// Group: Enumerations
+// Group -- NODOCS -- Enumerations
 //--------------------
 
-// Enum: uvm_status_e
+// Enum -- NODOCS -- uvm_status_e
 //
 // Return status for register operations
 //
@@ -174,7 +235,7 @@ enum uvm_status_e {
 
 mixin(declareEnums!uvm_status_e());
 
-// Enum: uvm_path_e
+// Enum -- NODOCS -- uvm_path_e
 //
 // Path used for register operation
 //
@@ -182,18 +243,18 @@ mixin(declareEnums!uvm_status_e());
 // UVM_BACKDOOR     - Use the back door
 // UVM_PREDICT      - Operation derived from observations by a bus monitor via
 //                    the <uvm_reg_predictor> class.
-// UVM_DEFAULT_PATH - Operation specified by the context
+// UVM_DEFAULT_DOOR - Operation specified by the context
 //
 
-enum uvm_path_e {
+enum uvm_door_e {
   UVM_FRONTDOOR,
   UVM_BACKDOOR,
   UVM_PREDICT,
-  UVM_DEFAULT_PATH
+  UVM_DEFAULT_DOOR
 }
-mixin(declareEnums!uvm_path_e());
+mixin(declareEnums!uvm_door_e());
 
-// Enum: uvm_check_e
+// Enum -- NODOCS -- uvm_check_e
 //
 // Read-only or read-and-check
 //
@@ -208,7 +269,7 @@ enum uvm_check_e {
 mixin(declareEnums!uvm_check_e());
 
 
-// Enum: uvm_endianness_e
+// Enum -- NODOCS -- uvm_endianness_e
 //
 // Specifies byte ordering
 //
@@ -228,7 +289,7 @@ enum uvm_endianness_e {
 }
 mixin(declareEnums!uvm_endianness_e());
 
-// Enum: uvm_elem_kind_e
+// Enum -- NODOCS -- uvm_elem_kind_e
 //
 // Type of element being read or written
 //
@@ -245,7 +306,7 @@ enum uvm_elem_kind_e {
 mixin(declareEnums!uvm_elem_kind_e());
 
 
-// Enum: uvm_access_e
+// Enum -- NODOCS -- uvm_access_e
 //
 // Type of operation begin performed
 //
@@ -262,7 +323,7 @@ enum uvm_access_e {
 mixin(declareEnums!uvm_access_e());
 
 
-// Enum: uvm_hier_e
+// Enum -- NODOCS -- uvm_hier_e
 //
 // Whether to provide the requested information from a hierarchical context.
 //
@@ -277,7 +338,7 @@ mixin(declareEnums!uvm_hier_e());
 
 
 
-// Enum: uvm_predict_e
+// Enum -- NODOCS -- uvm_predict_e
 //
 // How the mirror is to be updated
 //
@@ -293,7 +354,7 @@ enum uvm_predict_e {
 mixin(declareEnums!uvm_predict_e());
 
 
-// Enum: uvm_coverage_model_e
+// Enum -- NODOCS -- uvm_coverage_model_e
 //
 // Coverage models available or desired.
 // Multiple models may be specified by bitwise OR'ing individual model identifiers.
@@ -305,24 +366,16 @@ mixin(declareEnums!uvm_predict_e());
 // UVM_CVR_ALL          - All coverage models
 //
 
-// typedef enum uvm_reg_cvr_t {
-//    UVM_NO_COVERAGE      = 'h0000,
-//    UVM_CVR_REG_BITS     = 'h0001,
-//    UVM_CVR_ADDR_MAP     = 'h0002,
-//    UVM_CVR_FIELD_VALS   = 'h0004,
-//    UVM_CVR_ALL          = -1
-// } uvm_coverage_model_e;
-
 enum uvm_coverage_model_e {
-   UVM_NO_COVERAGE      = 0x0000,
-   UVM_CVR_REG_BITS     = 0x0001,
-   UVM_CVR_ADDR_MAP     = 0x0002,
-   UVM_CVR_FIELD_VALS   = 0x0004,
-   UVM_CVR_ALL          = -1
+  UVM_NO_COVERAGE      = 0x0000,
+  UVM_CVR_REG_BITS     = 0x0001,
+  UVM_CVR_ADDR_MAP     = 0x0002,
+  UVM_CVR_FIELD_VALS   = 0x0004,
+  UVM_CVR_ALL          = -1
 }
 mixin(declareEnums!uvm_coverage_model_e());
 
-// Enum: uvm_reg_mem_tests_e
+// Enum -- NODOCS -- uvm_reg_mem_tests_e
 //
 // Select which pre-defined test sequence to execute.
 //
@@ -340,30 +393,21 @@ mixin(declareEnums!uvm_coverage_model_e());
 // Test sequences, when selected, are executed in the
 // order in which they are specified above.
 //
-// typedef enum bit [63:0] {
-//   UVM_DO_REG_HW_RESET      = 64'h0000_0000_0000_0001,
-//   UVM_DO_REG_BIT_BASH      = 64'h0000_0000_0000_0002,
-//   UVM_DO_REG_ACCESS        = 64'h0000_0000_0000_0004,
-//   UVM_DO_MEM_ACCESS        = 64'h0000_0000_0000_0008,
-//   UVM_DO_SHARED_ACCESS     = 64'h0000_0000_0000_0010,
-//   UVM_DO_MEM_WALK          = 64'h0000_0000_0000_0020,
-//   UVM_DO_ALL_REG_MEM_TESTS = 64'hffff_ffff_ffff_ffff 
-// } uvm_reg_mem_tests_e;
 
-enum uvm_reg_mem_tests_e: long {
-  UVM_DO_REG_HW_RESET      = 0x0000_0000_0000_0001,
-  UVM_DO_REG_BIT_BASH      = 0x0000_0000_0000_0002,
-  UVM_DO_REG_ACCESS        = 0x0000_0000_0000_0004,
-  UVM_DO_MEM_ACCESS        = 0x0000_0000_0000_0008,
-  UVM_DO_SHARED_ACCESS     = 0x0000_0000_0000_0010,
-  UVM_DO_MEM_WALK          = 0x0000_0000_0000_0020,
-  UVM_DO_ALL_REG_MEM_TESTS = 0xffff_ffff_ffff_ffff 
-}
+enum uvm_reg_mem_tests_e: ulong
+{   UVM_DO_REG_HW_RESET      = 0x0000_0000_0000_0001,
+    UVM_DO_REG_BIT_BASH      = 0x0000_0000_0000_0002,
+    UVM_DO_REG_ACCESS        = 0x0000_0000_0000_0004,
+    UVM_DO_MEM_ACCESS        = 0x0000_0000_0000_0008,
+    UVM_DO_SHARED_ACCESS     = 0x0000_0000_0000_0010,
+    UVM_DO_MEM_WALK          = 0x0000_0000_0000_0020,
+    UVM_DO_ALL_REG_MEM_TESTS = 0xffff_ffff_ffff_ffff 
+    }
 mixin(declareEnums!uvm_reg_mem_tests_e());
 
 
 //-----------------------
-// Group: Utility Classes
+// Group -- NODOCS -- Utility Classes
 //-----------------------
 
 //------------------------------------------------------------------------------
@@ -401,34 +445,47 @@ class uvm_hdl_path_concat
   // Variable: slices
   // Array of individual slices,
   // stored in most-to-least significant order
-  uvm_hdl_path_slice[] slices;
+  private uvm_hdl_path_slice[] _slices;
 
-  // Function: set
+  uvm_hdl_path_slice[] slices() {
+    synchronized(this) {
+      return _slices.dup;
+    }
+  }
+
+  void slices(uvm_hdl_path_slice[] t) {
+    synchronized(this) {
+      _slices = t.dup;
+    }
+  }
+
+  
+  // Function -- NODOCS -- set
   // Initialize the concatenation using an array literal
   void set(uvm_hdl_path_slice[] t) {
     synchronized(this) {
-      slices = t;
+      _slices = t.dup;
     }
   }
 
-  // Function: add_slice
+  // Function -- NODOCS -- add_slice
   // Append the specified ~slice~ literal to the path concatenation
   void add_slice(uvm_hdl_path_slice slice) {
     synchronized(this) {
-      slices ~= slice;
+      _slices ~= slice;
     }
   }
 
-  // Function: add_path
+  // Function -- NODOCS -- add_path
   // Append the specified ~path~ to the path concatenation,
   // for the specified number of bits at the specified ~offset~.
   void add_path(string path,
 		uint offset = -1,
 		uint size = -1) {
     uvm_hdl_path_slice t;
-    t.offset = offset;
-    t.path   = path;
-    t.size   = size;
+    t._offset = offset;
+    t._path   = path;
+    t._size   = size;
       
     add_slice(t);
   }
@@ -441,62 +498,37 @@ class uvm_hdl_path_concat
 
 // function automatic string uvm_hdl_concat2string(uvm_hdl_path_concat concat);
 string uvm_hdl_concat2string(uvm_hdl_path_concat concat) {
-  string image = "{";
-   
-  if (concat.slices.length == 1 &&
-      concat.slices[0].offset == -1 &&
-      concat.slices[0].size == -1) {
-    return concat.slices[0].path;
-  }
-
-  foreach (i, slice; concat.slices) {
-    image ~= (i == 0) ? "" : ", " ~ slice.path;
-    if (slice.offset >= 0) {
-      image ~= "@" ~ format("[%0d +: %0d]", slice.offset, slice.size);
+  synchronized(concat) {
+    string image = "{";
+    if (concat._slices.length == 1 &&
+	concat._slices[0]._offset == -1 &&
+	concat._slices[0]._size == -1) {
+      return concat._slices[0]._path;
     }
-  }
-  image ~= "}";
+  
+    foreach (i, slice; concat._slices) {
+      image ~= (i == 0) ? "" : ", " ~ slice._path;
+      if (slice._offset >= 0) {
+	image ~= "@" ~ format("[%0d +: %0d]", slice._offset, slice._size);
+      }
+    }
+    image ~= "}";
 
-  return image;
+    return image;
+  }
 }
 
-
-// typedef struct packed {
-//   uvm_reg_addr_t min;
-//   uvm_reg_addr_t max;
-//   int unsigned stride;
-//   } uvm_reg_map_addr_range;
 
 struct uvm_reg_map_addr_range {
-  uvm_reg_addr_t min;
-  uvm_reg_addr_t max;
-  uint stride;
+  uvm_reg_addr_t _min;
+  uvm_reg_addr_t min() {return _min;}
+  void min(uvm_reg_addr_t val) {_min = val;}
+  uvm_reg_addr_t _max;
+  uvm_reg_addr_t max() {return _max;}
+  void max(uvm_reg_addr_t val) {_max = val;}
+  uint _stride;
+  uint stride() {return _stride;}
+  void stride(uint val) {_stride = val;}
 }
 
 
-// `include "reg/uvm_reg_item.svh"
-// `include "reg/uvm_reg_adapter.svh"
-// `include "reg/uvm_reg_predictor.svh"
-// `include "reg/uvm_reg_sequence.svh"
-// `include "reg/uvm_reg_cbs.svh"
-// `include "reg/uvm_reg_backdoor.svh"
-// `include "reg/uvm_reg_field.svh"
-// `include "reg/uvm_vreg_field.svh"
-// `include "reg/uvm_reg.svh"
-// `include "reg/uvm_reg_indirect.svh"
-// `include "reg/uvm_reg_fifo.svh"
-// `include "reg/uvm_reg_file.svh"
-// `include "reg/uvm_mem_mam.svh"
-// `include "reg/uvm_vreg.svh"
-// `include "reg/uvm_mem.svh"
-// `include "reg/uvm_reg_map.svh"
-// `include "reg/uvm_reg_block.svh"
-
-// `include "reg/sequences/uvm_reg_hw_reset_seq.svh"
-// `include "reg/sequences/uvm_reg_bit_bash_seq.svh"
-// `include "reg/sequences/uvm_mem_walk_seq.svh"
-// `include "reg/sequences/uvm_mem_access_seq.svh"
-// `include "reg/sequences/uvm_reg_access_seq.svh"
-// `include "reg/sequences/uvm_reg_mem_shared_access_seq.svh"
-// `include "reg/sequences/uvm_reg_mem_built_in_seq.svh"
-// `include "reg/sequences/uvm_reg_mem_hdl_paths_seq.svh"

@@ -149,11 +149,11 @@ mixin template uvm_abstract_component_utils(T=void)
   mixin m_uvm_object_auto_utils!(U);
   mixin m_uvm_component_auto_utils!(U);
 
-  version (UVM_NO_RAND) { }
-  else {
-    import esdl.rand;
-    mixin Randomization;
-  }
+  // version (UVM_NO_RAND) { }
+  // else {
+  //   import esdl.rand;
+  //   mixin Randomization;
+  // }
   // `uvm_field_utils_begin(U)
 
   // Add a defaultConstructor for Object.factory to work

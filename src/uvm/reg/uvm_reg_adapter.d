@@ -1,8 +1,12 @@
 //
 // -------------------------------------------------------------
-//    Copyright 2004-2009 Synopsys, Inc.
-//    Copyright 2010      Mentor Graphics Corporation
-//    Copyright 2014-2016 Coverify Systems Technology
+// Copyright 2014-2021 Coverify Systems Technology
+// Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2014 Semifore
+// Copyright 2004-2018 Synopsys, Inc.
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2010 AMD
+// Copyright 2014-2015 NVIDIA Corporation
 //    All Rights Reserved Worldwide
 //
 //    Licensed under the Apache License, Version 2.0 (the
@@ -23,29 +27,26 @@
 
 module uvm.reg.uvm_reg_adapter;
 
-import uvm.base.uvm_object;
-import uvm.base.uvm_globals;
-import uvm.base.uvm_object_defines;
-
-import uvm.reg.uvm_reg;
-import uvm.reg.uvm_reg_adapter;
-import uvm.reg.uvm_reg_block;
-import uvm.reg.uvm_reg_map;
 import uvm.reg.uvm_reg_model;
-import uvm.reg.uvm_reg_item;
-import uvm.reg.uvm_mem;
+import uvm.reg.uvm_reg_item: uvm_reg_item, uvm_reg_bus_op;
 
 import uvm.meta.misc;
 
-import uvm.seq.uvm_sequence_base;
-import uvm.seq.uvm_sequence_item;
+import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_globals: uvm_fatal, uvm_error;
+import uvm.base.uvm_object_defines;
+
+
+import uvm.seq.uvm_sequence_base: uvm_sequence_base;
+import uvm.seq.uvm_sequence_item: uvm_sequence_item;
 
 import uvm.tlm2.uvm_tlm2_generic_payload;
 
 import esdl.rand;
+import esdl.data.bvec: getByte, setByte;
 
 //------------------------------------------------------------------------------
-// Title: Classes for Adapting Between Register and Bus Operations
+// Title -- NODOCS -- Classes for Adapting Between Register and Bus Operations
 //
 // This section defines classes used to convert transaction streams between
 // generic register address/data reads and writes and physical bus accesses. 
@@ -54,61 +55,55 @@ import esdl.rand;
 
 //------------------------------------------------------------------------------
 //
-// Class: uvm_reg_adapter
+// Class -- NODOCS -- uvm_reg_adapter
 //
 // This class defines an interface for converting between <uvm_reg_bus_op>
 // and a specific bus transaction. 
 //------------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 19.2.1.1
 abstract class uvm_reg_adapter: uvm_object
 {
 
-  // Function: new
+  mixin uvm_abstract_object_utils;
+  // Function -- NODOCS -- new
   //
   // Create a new instance of this type, giving it the optional ~name~.
 
+  // @uvm-ieee 1800.2-2017 auto 19.2.1.2.1
   public this(string name="") {
     super(name);
   }
 
 
-  // mixin(uvm_sync_string);
+  mixin(uvm_sync_string);
 
-  // Variable: supports_byte_enable
+  // Variable -- NODOCS -- supports_byte_enable
   //
   // Set this bit in extensions of this class if the bus protocol supports
   // byte enables.
    
-  // @uvm_public_sync
+  @uvm_public_sync
   bool _supports_byte_enable;
-  // uvm_sync_public _supports_byte_enable bool
-  final public bool supports_byte_enable() {synchronized(this) return this._supports_byte_enable;}
-  final public void supports_byte_enable(bool val) {synchronized(this) this._supports_byte_enable = val;}
 
-  // Variable: provides_responses
+  // Variable -- NODOCS -- provides_responses
   //
   // Set this bit in extensions of this class if the bus driver provides
   // separate response items.
 
-  // @uvm_public_sync
+  @uvm_public_sync
   bool _provides_responses; 
-  // uvm_sync_public _provides_responses bool
-  final public bool provides_responses() {synchronized(this) return this._provides_responses;}
-  final public void provides_responses(bool val) {synchronized(this) this._provides_responses = val;}
 
-  // Variable: parent_sequence
+  // Variable -- NODOCS -- parent_sequence
   //
   // Set this member in extensions of this class if the bus driver requires
   // bus items be executed via a particular sequence base type. The sequence
   // assigned to this member must implement do_clone().
 
-  // @uvm_public_sync  
+  @uvm_public_sync  
   uvm_sequence_base _parent_sequence; 
-  // uvm_sync_public _parent_sequence uvm_sequence_base
-  final public uvm_sequence_base parent_sequence() {synchronized(this) return this._parent_sequence;}
-  final public void parent_sequence(uvm_sequence_base val) {synchronized(this) this._parent_sequence = val;}
 
-  // Function: reg2bus
+  // Function -- NODOCS -- reg2bus
   //
   // Extensions of this class ~must~ implement this method to convert the specified
   // <uvm_reg_bus_op> to a corresponding <uvm_sequence_item> subtype that defines the bus
@@ -119,11 +114,11 @@ abstract class uvm_reg_adapter: uvm_object
   // the corresponding members from the given generic ~rw~ bus operation, then
   // return it.
 
-  // pure virtual function uvm_sequence_item reg2bus(const ref uvm_reg_bus_op rw);
+  // @uvm-ieee 1800.2-2017 auto 19.2.1.2.5
   public abstract uvm_sequence_item reg2bus(const ref uvm_reg_bus_op rw);
 
 
-  // Function: bus2reg
+  // Function -- NODOCS -- bus2reg
   //
   // Extensions of this class ~must~ implement this method to copy members
   // of the given bus-specific ~bus_item~ to corresponding members of the provided
@@ -131,26 +126,16 @@ abstract class uvm_reg_adapter: uvm_object
   // is not allocated from scratch. This is to accommodate applications
   // where the bus response must be returned in the original request.
 
+  // @uvm-ieee 1800.2-2017 auto 19.2.1.2.6
   public abstract void bus2reg(uvm_sequence_item bus_item,
 			       ref uvm_reg_bus_op rw);
 
 
-  // @uvm_private_sync
+  @uvm_private_sync
   private uvm_reg_item _m_item;
-  // uvm_sync_private _m_item uvm_reg_item
-  final private uvm_reg_item m_item() {synchronized(this) return this._m_item;}
-  final private void m_item(uvm_reg_item val) {synchronized(this) this._m_item = val;}
 
-  // function: get_item
-  //
-  // Returns the bus-independent read/write information that corresponds to
-  // the generic bus transaction currently translated to a bus-specific
-  // transaction.
-  // This function returns a value reference only when called in the
-  // <uvm_reg_adapter::reg2bus()> method.
-  // It returns null at all other times.
-  // The content of the return <uvm_reg_item> instance must not be modified
-  // and used strictly to obtain additional information about the operation.  
+  
+  // @uvm-ieee 1800.2-2017 auto 19.2.1.2.7
   public uvm_reg_item get_item() {
     synchronized(this) {
       return _m_item;
@@ -167,7 +152,7 @@ abstract class uvm_reg_adapter: uvm_object
 
 
 //------------------------------------------------------------------------------
-// Group: Example
+// Title -- Group -- Example
 //
 // The following example illustrates how to implement a RegModel-BUS adapter class
 // for the APB bus protocol.
@@ -207,12 +192,13 @@ abstract class uvm_reg_adapter: uvm_object
 
 //------------------------------------------------------------------------------
 //
-// Class: uvm_reg_tlm_adapter
+// Class -- NODOCS -- uvm_reg_tlm_adapter
 //
 // For converting between <uvm_reg_bus_op> and <uvm_tlm_gp> items.
 //
 //------------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2017 auto 19.2.2.1
 class uvm_reg_tlm_adapter: uvm_reg_adapter
 {
 
@@ -222,10 +208,11 @@ class uvm_reg_tlm_adapter: uvm_reg_adapter
     super(name);
   }
 
-  // Function: reg2bus
+  // Function -- NODOCS -- reg2bus
   //
   // Converts a <uvm_reg_bus_op> struct to a <uvm_tlm_gp> item.
 
+  // @uvm-ieee 1800.2-2017 auto 19.2.2.2.1
   override uvm_sequence_item reg2bus(const ref uvm_reg_bus_op rw) {
     // rw is struct instance -- can not synchronize
     uvm_tlm_gp gp = uvm_tlm_gp.type_id.create("tlm_gp", null,
@@ -234,49 +221,46 @@ class uvm_reg_tlm_adapter: uvm_reg_adapter
       int  nbytes = (rw.n_bits-1)/8 + 1;
       uvm_reg_addr_t addr=rw.addr;
 
-      if (rw.kind == UVM_WRITE) {
+      if (rw.kind == UVM_WRITE)
 	gp.set_command(UVM_TLM_WRITE_COMMAND);
-      }
-      else {
+      else
 	gp.set_command(UVM_TLM_READ_COMMAND);
-      }
 
       gp.set_address(addr);
 
-      auto byte_enable = new ubyte[nbytes];
-      gp.set_byte_enable_length(nbytes);
-
-      auto data = new ubyte[nbytes];
-      gp.set_data_length(nbytes);
+      gp.m_byte_enable = new ubyte[nbytes];
+      gp.m_byte_enable_length(nbytes);
 
       gp.set_streaming_width(nbytes);
 
+      gp.m_data = new ubyte[nbytes];
+      gp.m_length(nbytes);
+
+
       for (int i = 0; i < nbytes; i++) {
-	data[i] = rw.data.getByte(i); // [i*8+:8]
+	gp.m_data[i] = rw.data.getByte(i); // [i*8+:8]
 	// SV UVM has it this way, but how can i be > nbytes in this loop?
 	// byte_enable[i] = (i > nbytes) ? 0 : rw.byte_en[i];
-	byte_enable[i] = rw.byte_en[i];
+	gp.m_byte_enable[i] = rw.byte_en[i] ? 0xFF: 0x00;
       }
 
-      gp.set_byte_enable(byte_enable);
-      gp.set_data(data);
-      
       return gp;
     }
   }
-  // Function: bus2reg
+  // Function -- NODOCS -- bus2reg
   //
   // Converts a <uvm_tlm_gp> item to a <uvm_reg_bus_op>.
   // into the provided ~rw~ transaction.
   //
+
+  // @uvm-ieee 1800.2-2017 auto 19.2.2.2.2
   override public void bus2reg(uvm_sequence_item bus_item,
 		      ref uvm_reg_bus_op rw) {
     synchronized(this) {
       int  nbytes;
 
-      if (bus_item is null) {
+      if (bus_item is null)
 	uvm_fatal("REG/NULL_ITEM","bus2reg: bus_item argument is null");
-      }
 
       uvm_tlm_gp gp = cast(uvm_tlm_gp) bus_item;
 
@@ -285,27 +269,22 @@ class uvm_reg_tlm_adapter: uvm_reg_adapter
 	return;
       }
 
-      if (gp.get_command() == UVM_TLM_WRITE_COMMAND) {
+      if (gp.get_command() == UVM_TLM_WRITE_COMMAND)
 	rw.kind = UVM_WRITE;
-      }
-      else {
+      else
 	rw.kind = UVM_READ;
-      }
 
       rw.addr = gp.get_address();
 
       rw.byte_en = 0;
-      foreach (i, en; gp.get_byte_enable) {
+      foreach (i, en; gp.m_byte_enable)
 	rw.byte_en[i] = (en == 0xff);
-      }
 
       rw.data = 0;
-      foreach (i, data; gp.get_data) {
+      foreach (i, data; gp.m_data)
 	rw.data.setByte(i, data); // [i*8+:8]
-      }
 
       rw.status = (gp.is_response_ok()) ? UVM_IS_OK : UVM_NOT_OK;
-
 
     }
   }

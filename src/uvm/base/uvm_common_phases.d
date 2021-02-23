@@ -75,7 +75,7 @@ import uvm.base.uvm_topdown_phase: uvm_topdown_phase;
 import uvm.base.uvm_component: uvm_component;
 import uvm.base.uvm_task_phase: uvm_task_phase;
 
-import uvm.base.uvm_once;
+import uvm.base.uvm_scope;
 
 import uvm.meta.misc;
 import uvm.meta.meta;
@@ -83,7 +83,7 @@ import uvm.meta.meta;
 // @uvm-ieee 1800.2-2017 auto 9.8.1.1
 final class uvm_build_phase: uvm_topdown_phase
 {
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_immutable_sync
     private uvm_build_phase _m_inst;
@@ -94,7 +94,7 @@ final class uvm_build_phase: uvm_topdown_phase
     }
   }
 
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
   
   final override void exec_func(uvm_component comp, uvm_phase phase) {
     comp.build_phase(phase);
@@ -147,7 +147,7 @@ final class uvm_build_phase: uvm_topdown_phase
 // @uvm-ieee 1800.2-2017 auto 9.8.1.2
 final class uvm_connect_phase: uvm_bottomup_phase
 {
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_immutable_sync
     uvm_connect_phase _m_inst;
@@ -158,7 +158,7 @@ final class uvm_connect_phase: uvm_bottomup_phase
     }
   }
 
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
   final override void exec_func(uvm_component comp, uvm_phase phase) {
     comp.connect_phase(phase);
   }
@@ -179,7 +179,7 @@ final class uvm_connect_phase: uvm_bottomup_phase
 
 final class uvm_setup_phase: uvm_topdown_phase
 {
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_immutable_sync
     uvm_setup_phase _m_inst;
@@ -190,7 +190,7 @@ final class uvm_setup_phase: uvm_topdown_phase
     }
   }
 
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
   
   final override void exec_func(uvm_component comp, uvm_phase phase) {
     comp.setup_phase(phase);
@@ -239,7 +239,7 @@ final class uvm_setup_phase: uvm_topdown_phase
 // @uvm-ieee 1800.2-2017 auto 9.8.1.3
 final class uvm_end_of_elaboration_phase: uvm_bottomup_phase
 {
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_immutable_sync
     uvm_end_of_elaboration_phase _m_inst;
@@ -250,7 +250,7 @@ final class uvm_end_of_elaboration_phase: uvm_bottomup_phase
     }
   }
 
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
 
   final override void exec_func(uvm_component comp, uvm_phase phase) {
     comp.end_of_elaboration_phase(phase);
@@ -297,7 +297,7 @@ final class uvm_end_of_elaboration_phase: uvm_bottomup_phase
 // @uvm-ieee 1800.2-2017 auto 9.8.1.4
 final class uvm_start_of_simulation_phase: uvm_bottomup_phase
 {
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_immutable_sync
     uvm_start_of_simulation_phase _m_inst;
@@ -308,7 +308,7 @@ final class uvm_start_of_simulation_phase: uvm_bottomup_phase
     }
   }
 
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
 
   final override void exec_func(uvm_component comp, uvm_phase phase) {
     comp.start_of_simulation_phase(phase);
@@ -332,7 +332,7 @@ final class uvm_start_of_simulation_phase: uvm_bottomup_phase
 // @uvm-ieee 1800.2-2017 auto 9.8.1.5
 final class uvm_run_phase: uvm_task_phase
 {
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_immutable_sync
     uvm_run_phase _m_inst;
@@ -343,7 +343,7 @@ final class uvm_run_phase: uvm_task_phase
     }
   }
 
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
   
   final override void exec_task(uvm_component comp, uvm_phase phase) {
     comp.run_phase(phase);
@@ -368,7 +368,7 @@ final class uvm_run_phase: uvm_task_phase
 // @uvm-ieee 1800.2-2017 auto 9.8.1.6
 final class uvm_extract_phase: uvm_bottomup_phase
 {
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_immutable_sync
     uvm_extract_phase _m_inst;
@@ -379,7 +379,7 @@ final class uvm_extract_phase: uvm_bottomup_phase
     }
   }
 
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
 
   final override void exec_func(uvm_component comp, uvm_phase phase) {
     comp.extract_phase(phase);
@@ -403,7 +403,7 @@ final class uvm_extract_phase: uvm_bottomup_phase
 // @uvm-ieee 1800.2-2017 auto 9.8.1.7
 final class uvm_check_phase: uvm_bottomup_phase
 {
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_immutable_sync
     uvm_check_phase _m_inst;
@@ -414,7 +414,7 @@ final class uvm_check_phase: uvm_bottomup_phase
     }
   }
 
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
 
   final override void exec_func(uvm_component comp, uvm_phase phase) {
     comp.check_phase(phase);
@@ -438,7 +438,7 @@ final class uvm_check_phase: uvm_bottomup_phase
 // @uvm-ieee 1800.2-2017 auto 9.8.1.8
 final class uvm_report_phase: uvm_bottomup_phase
 {
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_immutable_sync
     uvm_report_phase _m_inst;
@@ -449,7 +449,7 @@ final class uvm_report_phase: uvm_bottomup_phase
     }
   }
 
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
 
   final override void exec_func(uvm_component comp, uvm_phase phase) {
     comp.report_phase(phase);
@@ -491,7 +491,7 @@ final class uvm_report_phase: uvm_bottomup_phase
 // @uvm-ieee 1800.2-2017 auto 9.8.1.9
 final class uvm_final_phase: uvm_topdown_phase
 {
-  static class uvm_once: uvm_once_base
+  static class uvm_scope: uvm_scope_base
   {
     @uvm_immutable_sync
     uvm_final_phase _m_inst;
@@ -502,7 +502,7 @@ final class uvm_final_phase: uvm_topdown_phase
     }
   }
 
-  mixin (uvm_once_sync_string);
+  mixin (uvm_scope_sync_string);
 
   final override void exec_func(uvm_component comp, uvm_phase phase) {
     comp.final_phase(phase);
