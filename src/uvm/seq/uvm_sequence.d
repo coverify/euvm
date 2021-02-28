@@ -47,9 +47,8 @@ import esdl.rand.misc: rand;
 //------------------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto 14.3.1
-@rand(false)
 abstract class uvm_sequence (REQ_T = uvm_sequence_item, RSP_T = REQ_T):
-  uvm_sequence_base
+  uvm_sequence_base, rand.barrier
 {
   mixin (uvm_sync_string);
 

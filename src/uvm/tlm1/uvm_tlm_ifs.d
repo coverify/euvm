@@ -26,7 +26,7 @@ module uvm.tlm1.uvm_tlm_ifs;
 
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_globals;
-import esdl.rand.misc: _esdl__Norand;
+import esdl.rand.misc: rand;
 
 //-----------------------------------------------------------------------------
 //
@@ -51,7 +51,7 @@ import esdl.rand.misc: _esdl__Norand;
 //-----------------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto 12.2.4.1
-abstract class uvm_tlm_if_base(T1=int, T2=int): _esdl__Norand
+abstract class uvm_tlm_if_base(T1=int, T2=int): rand.disable
 {
 
   enum string UVM_TASK_ERROR = "UVM TLM interface task not implemented";

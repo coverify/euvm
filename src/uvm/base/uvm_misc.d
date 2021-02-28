@@ -65,8 +65,8 @@ import std.range: ElementType;
 interface uvm_void_if { }
 
 // @uvm-ieee 1800.2-2017 auto 5.2
-@rand(false)
-abstract class uvm_void: uvm_void_if {
+abstract class uvm_void: uvm_void_if
+{
   // Randomization mixin is in uvm_object class
   // mixin Randomization;
 }

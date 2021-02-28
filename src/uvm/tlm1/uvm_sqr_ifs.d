@@ -28,7 +28,7 @@ module uvm.tlm1.uvm_sqr_ifs;
 
 import uvm.base.uvm_globals;
 import uvm.base.uvm_object_globals;
-import esdl.rand.misc: _esdl__Norand;
+import esdl.rand.misc: rand;
 
 //------------------------------------------------------------------------------
 //
@@ -41,7 +41,7 @@ import esdl.rand.misc: _esdl__Norand;
 //------------------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto 15.2.1.1
-abstract class uvm_sqr_if_base(T1=uvm_object, T2=T1): _esdl__Norand
+abstract class uvm_sqr_if_base(T1=uvm_object, T2=T1): rand.disable
 {
 
   enum string UVM_SEQ_ITEM_TASK_ERROR =

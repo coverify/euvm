@@ -36,7 +36,7 @@ import uvm.base.uvm_component_defines;
 
 import uvm.meta.mailbox;
 
-import esdl.rand.misc: _esdl__Norand;
+import esdl.rand.misc: rand;
 
 //------------------------------------------------------------------------------
 //
@@ -60,7 +60,7 @@ import esdl.rand.misc: _esdl__Norand;
 //------------------------------------------------------------------------------
 
 class uvm_tlm_fifo_common(T=int, size_t N=0):
-  uvm_tlm_fifo_base!(T), _esdl__Norand
+  uvm_tlm_fifo_base!(T), rand.disable
 {
   mixin uvm_component_essentials;
 
@@ -235,7 +235,7 @@ class uvm_tlm_fifo_common(T=int, size_t N=0):
 
 // @uvm-ieee 1800.2-2017 auto 18.2.8.2
 class uvm_tlm_fifo(T=int, size_t N=0):
-  uvm_tlm_fifo_common!(T, N), _esdl__Norand
+  uvm_tlm_fifo_common!(T, N), rand.disable
 {
   mixin uvm_component_essentials;
   // mixin uvm_type_name_decl;
@@ -249,7 +249,7 @@ class uvm_tlm_fifo(T=int, size_t N=0):
 }
 
 class uvm_tlm_async_pull_fifo(T=int, size_t N=0):
-  uvm_tlm_fifo_common!(T, N), _esdl__Norand
+  uvm_tlm_fifo_common!(T, N), rand.disable
 {
   mixin uvm_component_essentials;
   public this(string name=null, uvm_component parent = null, int size = 1) {
@@ -261,7 +261,7 @@ class uvm_tlm_async_pull_fifo(T=int, size_t N=0):
 }
 
 class uvm_tlm_async_push_fifo(T=int, size_t N=0):
-  uvm_tlm_fifo_common!(T, N), _esdl__Norand
+  uvm_tlm_fifo_common!(T, N), rand.disable
 {
   mixin uvm_component_essentials;
   public this(string name=null, uvm_component parent = null, int size = 1) {
@@ -273,7 +273,7 @@ class uvm_tlm_async_push_fifo(T=int, size_t N=0):
 }
 
 class uvm_tlm_async_fifo(T=int, size_t N=0):
-  uvm_tlm_fifo_common!(T, N), _esdl__Norand
+  uvm_tlm_fifo_common!(T, N), rand.disable
 {
   mixin uvm_component_essentials;
   public this(string name=null, uvm_component parent = null, int size = 1) {
@@ -285,7 +285,7 @@ class uvm_tlm_async_fifo(T=int, size_t N=0):
 }
 
 class uvm_tlm_vpi_pull_fifo(T=int, size_t N=0):
-  uvm_tlm_fifo_common!(T, N), _esdl__Norand
+  uvm_tlm_fifo_common!(T, N), rand.disable
 {
   mixin uvm_component_essentials;
   public this(string name=null, uvm_component parent = null, int size = 1) {
@@ -297,7 +297,7 @@ class uvm_tlm_vpi_pull_fifo(T=int, size_t N=0):
 }
 
 class uvm_tlm_vpi_push_fifo(T=int, size_t N=0):
-  uvm_tlm_fifo_common!(T, N), _esdl__Norand
+  uvm_tlm_fifo_common!(T, N), rand.disable
 {
   mixin uvm_component_essentials;
   public this(string name=null, uvm_component parent = null, int size = 1) {
@@ -320,7 +320,7 @@ class uvm_tlm_vpi_push_fifo(T=int, size_t N=0):
 //------------------------------------------------------------------------------
 
 class uvm_tlm_analysis_fifo(T=int):
-  uvm_tlm_fifo!T, _esdl__Norand
+  uvm_tlm_fifo!T, rand.disable
 {
 
   mixin uvm_component_essentials;

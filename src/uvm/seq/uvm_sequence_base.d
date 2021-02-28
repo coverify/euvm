@@ -168,8 +168,7 @@ import std.string;
 
 
 // @uvm-ieee 1800.2-2017 auto 14.2.1
-@rand(false)
-abstract class uvm_sequence_base: uvm_sequence_item
+abstract class uvm_sequence_base: uvm_sequence_item, rand.barrier
 {
   mixin uvm_abstract_object_essentials;
   

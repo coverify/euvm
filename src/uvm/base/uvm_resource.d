@@ -50,7 +50,7 @@ import uvm.meta.meta;
 import uvm.meta.misc;
 
 import esdl.base.core: SimTime, getRootEntity, Process;
-import esdl.rand.misc: _esdl__Norand;
+import esdl.rand.misc: rand;
 
 import std.string;
 import std.random: Random;
@@ -134,7 +134,7 @@ class get_t {
 //----------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto C.2.4.1
-class uvm_resource_pool: _esdl__Norand
+class uvm_resource_pool: rand.disable
 {
   import esdl.data.queue;
   import std.string: format;
@@ -1076,7 +1076,7 @@ class uvm_resource_pool: _esdl__Norand
 //----------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto C.2.5.1
-class uvm_resource(T=int): uvm_resource_base, _esdl__Norand
+class uvm_resource(T=int): uvm_resource_base, rand.disable
 {
 
   alias this_type = uvm_resource!(T);

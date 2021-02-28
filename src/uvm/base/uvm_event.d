@@ -329,8 +329,7 @@ abstract class uvm_event_base: uvm_object
 //------------------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto 10.1.2.1
-@rand(false)
-class uvm_event(T=uvm_object): uvm_event_base
+class uvm_event(T=uvm_object): uvm_event_base, rand.barrier
 {
   alias this_type = uvm_event!(T);
   alias cb_type = uvm_event_callback!(T);

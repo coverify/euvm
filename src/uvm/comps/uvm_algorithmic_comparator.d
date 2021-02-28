@@ -71,10 +71,9 @@
 module uvm.comps.uvm_algorithmic_comparator;
 import esdl.rand.misc: rand;
 
-@rand(false)
 class uvm_algorithmic_comparator(BEFORE=int,
 				 AFTER=int,
-				 TRANSFORMER=int): uvm_component
+				 TRANSFORMER=int): uvm_component, rand.barrier
 {
 
   alias this_type =

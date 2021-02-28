@@ -36,7 +36,7 @@ import uvm.base.uvm_object_globals;
 import uvm.base.uvm_phase;
 
 import esdl.base.core;
-import esdl.rand.misc: _esdl__Norand;
+import esdl.rand.misc: rand;
 
 class uvm_tlm_event
 {
@@ -67,7 +67,7 @@ class uvm_tlm_event
 //------------------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto 12.2.8.1.1
-abstract class uvm_tlm_fifo_base(T=int): uvm_component, _esdl__Norand
+abstract class uvm_tlm_fifo_base(T=int): uvm_component, rand.disable
 {
 
   mixin uvm_abstract_component_essentials;

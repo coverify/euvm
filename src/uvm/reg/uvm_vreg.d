@@ -92,8 +92,7 @@ import std.string: format;
 //------------------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto 18.9.1
-@rand(false)
-class uvm_vreg: uvm_object
+class uvm_vreg: uvm_object, rand.barrier
 {
   mixin uvm_sync;
 

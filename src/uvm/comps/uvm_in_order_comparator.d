@@ -79,11 +79,10 @@ import esdl.rand.misc: rand;
 //
 //------------------------------------------------------------------------------
 
-@rand(false)
 class uvm_in_order_comparator (T = int ,
 			       comp_type = uvm_built_in_comp!T ,
 			       convert = uvm_built_in_converter!T ,
-			       pair_type = uvm_built_in_pair!T ):  uvm_component
+			       pair_type = uvm_built_in_pair!T ): uvm_component, rand.barrier
 {
   alias uvm_in_order_comparator!(T,comp_type,convert,pair_type) this_type;
   mixin uvm_component_essentials;

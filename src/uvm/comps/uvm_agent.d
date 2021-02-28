@@ -50,9 +50,8 @@ import uvm.base.uvm_globals;
 import uvm.base.uvm_component_defines;
 import esdl.rand.misc: rand;
 
-@rand(false)
 // @uvm-ieee 1800.2-2017 auto 13.4.1
-abstract class uvm_agent: uvm_component
+abstract class uvm_agent: uvm_component, rand.barrier
 {
   uvm_active_passive_enum is_active = uvm_active_passive_enum.UVM_ACTIVE;
   

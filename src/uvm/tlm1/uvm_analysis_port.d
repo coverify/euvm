@@ -65,13 +65,13 @@ import uvm.base.uvm_object_globals;
 
 import uvm.tlm1.uvm_tlm_ifs;
 import uvm.tlm1.uvm_tlm_defines;
-import esdl.rand.misc: _esdl__Norand;
+import esdl.rand.misc: rand;
 
 private alias Identity(alias A) = A;
 private alias parentOf(alias sym) = Identity!(__traits(parent, sym));
 
 // @uvm-ieee 1800.2-2017 auto 12.2.10.1.1
-class uvm_analysis_port(T): uvm_port_base!(uvm_tlm_if_base!(T,T)), _esdl__Norand
+class uvm_analysis_port(T): uvm_port_base!(uvm_tlm_if_base!(T,T)), rand.disable
 {
   public this(string name=null, uvm_component parent=null) {
     synchronized (this) {
@@ -131,7 +131,7 @@ class uvm_analysis_port(T): uvm_port_base!(uvm_tlm_if_base!(T,T)), _esdl__Norand
 //------------------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto 12.2.10.2
-class uvm_analysis_imp(T, IMP, string F=""): uvm_port_base!(uvm_tlm_if_base !(T,T)), _esdl__Norand
+class uvm_analysis_imp(T, IMP, string F=""): uvm_port_base!(uvm_tlm_if_base !(T,T)), rand.disable
 if (is (IMP: uvm_component))
 {
   // `UVM_IMP_COMMON(`UVM_TLM_ANALYSIS_MASK,"uvm_analysis_imp",IMP)
@@ -158,7 +158,7 @@ if (is (IMP: uvm_component))
   }
 }
 
-class uvm_analysis_imp(T, IMP, alias F): uvm_port_base!(uvm_tlm_if_base !(T,T)), _esdl__Norand
+class uvm_analysis_imp(T, IMP, alias F): uvm_port_base!(uvm_tlm_if_base !(T,T)), rand.disable
 if (is (IMP: uvm_component))
 {
   // `UVM_IMP_COMMON(`UVM_TLM_ANALYSIS_MASK,"uvm_analysis_imp",IMP)
@@ -236,7 +236,7 @@ private auto recreateDelegate(alias F, T)(T _entity)
 //------------------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto 12.2.10.3.1
-class uvm_analysis_export(T): uvm_port_base!(uvm_tlm_if_base!(T,T)), _esdl__Norand
+class uvm_analysis_export(T): uvm_port_base!(uvm_tlm_if_base!(T,T)), rand.disable
 {
 
   // @uvm-ieee 1800.2-2017 auto 12.2.10.3.2

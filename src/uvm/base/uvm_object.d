@@ -89,8 +89,7 @@ import std.random: uniform;
 import std.range: ElementType;
 
 // @uvm-ieee 1800.2-2017 auto 5.3.1
-@rand(false)
-abstract class uvm_object: uvm_void
+abstract class uvm_object: uvm_void, rand.barrier
 {
   static class uvm_scope: uvm_scope_base
   {

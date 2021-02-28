@@ -37,8 +37,7 @@ import esdl.rand.misc: rand;
 
 // @uvm-ieee 1800.2-2017 auto 13.5.1
 
-@rand(false)
-abstract class uvm_monitor: uvm_component
+abstract class uvm_monitor: uvm_component, rand.barrier
 {
   mixin uvm_abstract_component_essentials;
 

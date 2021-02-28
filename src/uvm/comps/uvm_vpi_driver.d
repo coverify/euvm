@@ -29,8 +29,7 @@ import esdl.intf.vpi;
 import esdl.base.core: SimTerminatedException, AsyncLockDisabledException;
 import esdl.rand.misc: rand;
 
-@rand(false)
-class uvm_vpi_driver(REQ, string VPI_PREFIX): uvm_driver!REQ
+class uvm_vpi_driver(REQ, string VPI_PREFIX): uvm_driver!REQ, rand.barrier
 {
   mixin uvm_component_essentials;
   

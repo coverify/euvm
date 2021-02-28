@@ -81,8 +81,7 @@ import esdl.base.core: sleep, wait;
 //------------------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto 19.4.1.1
-@rand(false)
-class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
+class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE, rand.barrier
 {
   
   mixin uvm_object_essentials;

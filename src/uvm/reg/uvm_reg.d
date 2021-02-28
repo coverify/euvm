@@ -67,8 +67,7 @@ import esdl.rand;
 import std.string: format;
 
 // @uvm-ieee 1800.2-2017 auto 18.4.1
-@rand(false)
-class uvm_reg: uvm_object
+class uvm_reg: uvm_object, rand.barrier
 {
   mixin uvm_sync;
 

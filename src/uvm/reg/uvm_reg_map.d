@@ -92,8 +92,7 @@ class uvm_reg_map_info
 
 
 // Class -- NODOCS -- uvm_reg_transaction_order_policy
-@rand(false)
-abstract class uvm_reg_transaction_order_policy: uvm_object
+abstract class uvm_reg_transaction_order_policy: uvm_object, rand.barrier
 {
   this(string name = "policy") {
     super(name);
@@ -138,8 +137,7 @@ class uvm_reg_seq_base: uvm_sequence_base
 //------------------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto 18.2.1
-@rand(false)
-class uvm_reg_map: uvm_object
+class uvm_reg_map: uvm_object, rand.barrier
 {
   mixin uvm_object_essentials;
 

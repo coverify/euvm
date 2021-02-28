@@ -44,8 +44,7 @@ import esdl.rand.misc: rand;
 
 import std.string: format;
 
-@rand(false)
-class uvm_class_pair(T1=uvm_object, T2=T1): uvm_object
+class uvm_class_pair(T1=uvm_object, T2=T1): uvm_object, rand.barrier
 {
   alias uvm_class_pair!(T1, T2) this_type;
 

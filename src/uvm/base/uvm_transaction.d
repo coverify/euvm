@@ -147,8 +147,7 @@ alias uvm_event_pool = uvm_object_string_pool!(uvm_event!(uvm_object));
 
 // @uvm-ieee 1800.2-2017 auto 5.4.1
 
-@rand(false)
-abstract class uvm_transaction: uvm_object
+abstract class uvm_transaction: uvm_object, rand.barrier
 {
   import uvm.base.uvm_component;
   mixin (uvm_sync_string);

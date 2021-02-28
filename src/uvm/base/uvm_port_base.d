@@ -32,7 +32,7 @@ import uvm.base.uvm_phase: uvm_phase;
 import uvm.base.uvm_object_globals: uvm_port_type_e;
 
 import uvm.meta.misc;
-import esdl.rand: _esdl__Norand;
+import esdl.rand: rand;
 
 import std.string: format;
 import std.conv: to;
@@ -76,7 +76,7 @@ alias uvm_port_list = uvm_port_component_base[string];
 // @uvm-accellera The details of this API are specific to the Accellera implementation, and are not being considered for contribution to 1800.2
 //------------------------------------------------------------------------------
 
-abstract class uvm_port_component_base: uvm_component, _esdl__Norand
+abstract class uvm_port_component_base: uvm_component, rand.disable
 {
 
   this(string name="", uvm_component parent=null) {
@@ -251,7 +251,7 @@ class uvm_port_component(PORT=uvm_object): uvm_port_component_base
 // in 1800.2.
 
 // @uvm-ieee 1800.2-2017 auto 5.5.1
-abstract class uvm_port_base(IF = uvm_void): IF, _esdl__Norand
+abstract class uvm_port_base(IF = uvm_void): IF, rand.disable
 {
 
   mixin (uvm_sync_string);

@@ -31,8 +31,7 @@ import esdl.intf.vpi;
 import esdl.base.core: SimTerminatedException, AsyncLockDisabledException;
 import esdl.rand.misc: rand;
 
-@rand(false)
-class uvm_vpi_monitor(RSP, string VPI_PREFIX): uvm_monitor
+class uvm_vpi_monitor(RSP, string VPI_PREFIX): uvm_monitor, rand.barrier
 {
   mixin uvm_component_essentials;
 

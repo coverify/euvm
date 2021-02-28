@@ -48,8 +48,7 @@ import esdl.rand.misc: rand;
 //
 //------------------------------------------------------------------------------
 
-@rand(false)
-class uvm_random_stimulus(T=uvm_transaction): uvm_component
+class uvm_random_stimulus(T=uvm_transaction): uvm_component, rand.barrier
 {
   enum string type_name = "uvm_random_stimulus!(T)";
 

@@ -58,9 +58,8 @@ import std.string: format;
 // request (REQ) and response (RSP) types.
 //------------------------------------------------------------------------------
 
-@rand(false)
 abstract class uvm_sequencer_param_base (REQ = uvm_sequence_item,
-					 RSP = REQ): uvm_sequencer_base
+					 RSP = REQ): uvm_sequencer_base, rand.barrier
   if (is (REQ: uvm_sequence_item) && is (RSP: uvm_sequence_item))
 {
   mixin (uvm_sync_string);

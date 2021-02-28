@@ -63,8 +63,7 @@ import esdl.rand.misc: rand;
 //  }
 
 // @uvm-ieee 1800.2-2017 auto 14.1.1
-@rand(false)
-class uvm_sequence_item: uvm_transaction, uvm_report_intf
+class uvm_sequence_item: uvm_transaction, uvm_report_intf, rand.barrier
 {
   mixin(uvm_sync_string);
 

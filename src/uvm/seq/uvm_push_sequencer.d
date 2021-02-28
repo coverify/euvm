@@ -40,9 +40,8 @@ import esdl.rand.misc: rand;
 //------------------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto 15.6.1
-@rand(false)
 class uvm_push_sequencer(REQ=uvm_sequence_item, RSP=REQ):
-  uvm_sequencer_param_base!(REQ, RSP)
+  uvm_sequencer_param_base!(REQ, RSP), rand.barrier
 {
   mixin(uvm_sync_string);
 

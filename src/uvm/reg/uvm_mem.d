@@ -80,8 +80,7 @@ import esdl.rand;
 import std.string: format, toUpper;
 
 // @uvm-ieee 1800.2-2017 auto 18.6.1
-@rand(false)
-class uvm_mem: uvm_object
+class uvm_mem: uvm_object, rand.barrier
 {
   // See Mantis 6040. I did NOT make this class virtual because it 
   // seems to break a lot of existing tests and code. 

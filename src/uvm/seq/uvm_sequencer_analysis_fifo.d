@@ -33,9 +33,8 @@ import uvm.base.uvm_component_defines;
 import uvm.meta.misc;
 import esdl.rand.misc: rand;
 
-@rand(false)
 class uvm_sequencer_analysis_fifo (RSP = uvm_sequence_item)
-  : uvm_tlm_fifo!RSP
+  : uvm_tlm_fifo!RSP, rand.barrier
 {
   mixin (uvm_sync_string);
 

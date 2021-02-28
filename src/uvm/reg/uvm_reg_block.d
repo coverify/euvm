@@ -65,8 +65,7 @@ import std.string: format;
 // the addition of API described below.
 
 // @uvm-ieee 1800.2-2017 auto 18.1.1
-@rand(false)
-class uvm_reg_block: uvm_object
+class uvm_reg_block: uvm_object, rand.barrier
 {
 
   mixin uvm_object_utils;

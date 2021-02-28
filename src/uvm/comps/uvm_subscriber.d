@@ -40,8 +40,7 @@ import esdl.rand.misc: rand;
 //------------------------------------------------------------------------------
 
 // @uvm-ieee 1800.2-2017 auto 13.9.1
-@rand(false)
-abstract class uvm_subscriber(T=int): uvm_component
+abstract class uvm_subscriber(T=int): uvm_component, rand.barrier
 {
   alias uvm_subscriber!T this_type;
 

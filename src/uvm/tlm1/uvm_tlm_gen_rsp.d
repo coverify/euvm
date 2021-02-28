@@ -55,10 +55,10 @@ import uvm.tlm1.uvm_tlm_fifos;
 
 import uvm.base;
 
-import esdl.rand.misc: _esdl__Norand;
+import esdl.rand.misc: rand;
 
 // @uvm-ieee 1800.2-2017 auto 12.2.9.1.1
-class uvm_tlm_gen_rsp_channel(RSP): uvm_component, _esdl__Norand
+class uvm_tlm_gen_rsp_channel(RSP): uvm_component, rand.disable
 {
   mixin uvm_component_essentials;
   
@@ -244,7 +244,7 @@ class uvm_tlm_gen_rsp_channel(RSP): uvm_component, _esdl__Norand
 
 // @uvm-ieee 1800.2-2017 auto 12.2.9.2.1
 class uvm_tlm_transport_channel(REQ, RSP=REQ):
-  uvm_tlm_req_rsp_channel!(REQ, RSP), _esdl__Norand
+  uvm_tlm_req_rsp_channel!(REQ, RSP), rand.disable
 {
 
   mixin uvm_component_essentials;
@@ -301,7 +301,7 @@ class uvm_tlm_transport_channel(REQ, RSP=REQ):
 }
 
 class uvm_tlm_gen_rsp_vpi_channel(RSP):
-  uvm_component, _esdl__Norand
+  uvm_component, rand.disable
 {
   mixin uvm_component_essentials;
 

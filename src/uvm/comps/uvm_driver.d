@@ -46,8 +46,7 @@ import esdl.rand.misc: rand;
 
 // @uvm-ieee 1800.2-2017 auto 13.7.1
 
-@rand(false)
-class uvm_driver(REQ=uvm_sequence_item, RSP=REQ): uvm_component
+class uvm_driver(REQ=uvm_sequence_item, RSP=REQ): uvm_component, rand.barrier
 {
 
   mixin uvm_component_essentials;

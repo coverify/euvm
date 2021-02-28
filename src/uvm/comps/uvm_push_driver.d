@@ -48,9 +48,8 @@ import std.string;
 
 // @uvm-ieee 1800.2-2017 auto 13.8.1
 
-@rand(false)
 class uvm_push_driver(REQ=uvm_sequence_item,
-		      RSP=REQ): uvm_component
+		      RSP=REQ): uvm_component, rand.barrier
 {
   mixin uvm_component_essentials;
   mixin uvm_type_name_decl;

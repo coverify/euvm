@@ -68,8 +68,7 @@ alias uvm_config_seq = uvm_config_db!uvm_sequence_base;
 
 // Utility class for tracking default_sequences
 // TBD -- make this a struct
-@rand(false)
-class uvm_sequence_process_wrapper
+class uvm_sequence_process_wrapper: rand.barrier
 {
   mixin (uvm_sync_string);
   @uvm_private_sync
@@ -89,8 +88,7 @@ class uvm_sequence_process_wrapper
 
 // Implementation artifact, extends virtual class uvm_sequence_base
 // so that it can be constructed for execute_item
-@rand(false)
-class m_uvm_sqr_seq_base: uvm_sequence_base
+class m_uvm_sqr_seq_base: uvm_sequence_base, rand.barrier
 {
   this(string name="unnamed-m_uvm_sqr_seq_base") {
     super(name);
@@ -98,8 +96,7 @@ class m_uvm_sqr_seq_base: uvm_sequence_base
 }
 
 // @uvm-ieee 1800.2-2017 auto 15.3.1
-@rand(false)
-abstract class uvm_sequencer_base: uvm_component
+abstract class uvm_sequencer_base: uvm_component, rand.barrier
 {
   enum seq_req_t: byte
   {   SEQ_TYPE_REQ,
@@ -1464,8 +1461,7 @@ abstract class uvm_sequencer_base: uvm_component
 //
 //------------------------------------------------------------------------------
 
-@rand(false)
-class uvm_sequence_request
+class uvm_sequence_request: rand.barrier
 {
   mixin (uvm_sync_string);
   @uvm_public_sync

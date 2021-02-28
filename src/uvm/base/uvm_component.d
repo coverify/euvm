@@ -93,8 +93,7 @@ struct m_verbosity_setting {
 }
 
 // @uvm-ieee 1800.2-2017 auto 13.1.1
-@rand(false)
-abstract class uvm_component: uvm_report_object, ParContext
+abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
 {
   import uvm.base.uvm_objection: uvm_objection;
   import uvm.base.uvm_field_op: uvm_field_op;
