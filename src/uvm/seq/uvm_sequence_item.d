@@ -85,9 +85,9 @@ class uvm_sequence_item: uvm_transaction, uvm_report_intf, rand.barrier
       protected uvm_sequence_base  _m_parent_sequence;
   }
   else {
-    @rand(false) @uvm_protected_sync
+    @uvm_protected_sync
       protected uvm_sequencer_base _m_sequencer;
-    @rand(false) @uvm_protected_sync
+    @uvm_protected_sync
       protected uvm_sequence_base  _m_parent_sequence;
   }
 

@@ -70,8 +70,7 @@ class uvm_mem_single_access_seq: uvm_reg_sequence!(uvm_sequence!(uvm_reg_item))
   //
   // The memory to be tested
   //
-  @rand(false)
-    uvm_mem mem;
+  uvm_mem mem;
 
   mixin uvm_object_utils;
 

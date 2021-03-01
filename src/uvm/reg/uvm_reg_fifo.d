@@ -56,6 +56,7 @@ import std.string: format;
 // @uvm-ieee 1800.2-2017 auto 18.8.1
 class uvm_reg_fifo: uvm_reg
 {
+  mixin Randomization;
   mixin uvm_sync;
   
   @uvm_private_sync

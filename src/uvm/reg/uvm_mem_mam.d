@@ -122,10 +122,10 @@ class uvm_mem_mam
   // Region allocation policy
   //
   // This object is repeatedly randomized when allocating new regions.
-  @uvm_private_sync @rand(false)
+  @uvm_private_sync
   private uvm_mem_mam_policy _default_alloc;
   
-  @uvm_private_sync @rand(false)
+  @uvm_private_sync
   private uvm_mem _memory;
 
   @uvm_private_sync
@@ -872,7 +872,7 @@ class uvm_mem_mam_policy
 
   // variable -- NODOCS -- in_use
   // Regions already allocated in the managed address space
-  @uvm_private_sync
+  @uvm_private_sync @rand(false)
   private uvm_mem_region[] _in_use;
 
   Constraint!q{

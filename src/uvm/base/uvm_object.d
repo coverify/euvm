@@ -1127,14 +1127,14 @@ abstract class uvm_object: uvm_void, rand.barrier
   // The print_matches bit causes an informative message to be printed
   // when a field is set using one of the set methods.
 
-  @rand(false) @uvm_private_sync
+  @uvm_private_sync
   private string _m_leaf_name;
 
   // // uvm_sync_private _m_leaf_name string
   // final private string m_leaf_name() {synchronized (this) return this._m_leaf_name;}
   // final private void m_leaf_name(string val) {synchronized (this) this._m_leaf_name = val;}
 
-  @rand(false) @uvm_immutable_sync
+  @uvm_immutable_sync
   private int _m_inst_id;
 
   // // uvm_sync_private _m_inst_id int

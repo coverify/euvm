@@ -62,7 +62,7 @@ abstract class uvm_sequence (REQ_T = uvm_sequence_item, RSP_T = REQ_T):
       private sequencer_t        _param_sequencer;
   }
   else {
-    @uvm_public_sync @rand(false)
+    @uvm_public_sync
       private sequencer_t        _param_sequencer;
   }
 
@@ -75,8 +75,7 @@ abstract class uvm_sequence (REQ_T = uvm_sequence_item, RSP_T = REQ_T):
     protected REQ_T                req;
   }
   else {
-    @rand(false)
-      protected REQ_T              req;
+    protected REQ_T              req;
   }
 
 
@@ -89,8 +88,7 @@ abstract class uvm_sequence (REQ_T = uvm_sequence_item, RSP_T = REQ_T):
     protected RSP_T                rsp;
   }
   else {
-    @rand(false)
-      protected RSP_T              rsp;
+    protected RSP_T              rsp;
   }    
 
   // Function -- NODOCS -- new
