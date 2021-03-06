@@ -203,6 +203,20 @@ class uvm_reg_field: uvm_object
 
 
 
+  void configure(T)(uvm_reg        parent,
+		    uint           size,
+		    uint           lsb_pos,
+		    string         access,
+		    bool           is_volatile,
+		    T              reset,
+		    bool           has_reset,
+		    bool           is_rand,
+		    bool           individually_accessible) {
+    uvm_reg_data_t reset_ = reset;
+    configure(parent, size, lsb_pos, access, is_volatile, reset_,
+	      has_reset, is_rand, individually_accessible);
+  }
+
   // @uvm-ieee 1800.2-2017 auto 18.5.3.2
   void configure(uvm_reg        parent,
 		 uint           size,
