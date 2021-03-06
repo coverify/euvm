@@ -872,7 +872,7 @@ class uvm_mem_mam_policy
 
   // variable -- NODOCS -- in_use
   // Regions already allocated in the managed address space
-  @uvm_private_sync @rand(false)
+  @uvm_private_sync // @rand(false)
   private uvm_mem_region[] _in_use;
 
   Constraint!q{
