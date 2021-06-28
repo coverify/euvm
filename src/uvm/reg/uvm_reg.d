@@ -740,6 +740,19 @@ class uvm_reg: uvm_object, rand.barrier
     }
   }
 
+  void write(T)(out uvm_status_e  status,
+		T                 value_,
+		uvm_door_e        door = uvm_door_e.UVM_DEFAULT_DOOR,
+		uvm_reg_map       map = null,
+		uvm_sequence_base parent = null,
+		int               prior = -1,
+		uvm_object        extension = null,
+		string            fname = "",
+		int               lineno = 0) {
+    uvm_reg_data_t value = value_;
+    write(status, value, door, map, parent, prior, extension, fname, lineno);
+  }
+
   // @uvm-ieee 1800.2-2017 auto 18.4.4.9
   // @uvm-ieee 1800.2-2017 auto 18.8.5.3
   // task

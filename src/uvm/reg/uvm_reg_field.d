@@ -617,6 +617,19 @@ class uvm_reg_field: uvm_object
 
 
 
+  void write(T)(out uvm_status_e  status,
+		T                 value_,
+		uvm_door_e        door = uvm_door_e.UVM_DEFAULT_DOOR,
+		uvm_reg_map       map = null,
+		uvm_sequence_base parent = null,
+		int               prior = -1,
+		uvm_object        extension = null,
+		string            fname = "",
+		int               lineno = 0) {
+    uvm_reg_data_t value = value_;
+    write(status, value, door, map, parent, prior, extension, fname, lineno);
+  }
+
   // @uvm-ieee 1800.2-2017 auto 18.5.5.9
   // task
   void write(out uvm_status_e   status,
