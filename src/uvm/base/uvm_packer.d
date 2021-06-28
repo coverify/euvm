@@ -271,6 +271,25 @@ class uvm_packer: uvm_policy
       }
     }
 
+  void pack(T)(T value)
+    if (is (T == struct)) {
+      import uvm.base.uvm_object_globals;
+      import uvm.base.uvm_globals;
+      synchronized (this) {
+	uvm_field_op field_op;
+	_m_bits.pack(0xF, 4);
+	field_op = uvm_field_op.m_get_available_op();
+	field_op.set(uvm_field_auto_enum.UVM_PACK, this);
+	uvm_struct_do_execute_op(value, field_op);
+	if (field_op.user_hook_enabled()) {
+	  static if (__traits(compiles, value.do_pack(this))) {
+	    value.do_pack(this);
+	  }
+	}
+	field_op.m_recycle();
+      }
+    }
+
 
 
   // Function -- NODOCS -- pack_field
@@ -537,6 +556,24 @@ class uvm_packer: uvm_policy
 	  field_op.m_recycle();
 	  pop_active_object();
 	}
+      }
+    }
+
+  void unpack(T)(T value)
+    if (is (T == struct)) {
+      import uvm.base.uvm_object_globals;
+      import uvm.base.uvm_globals;
+      synchronized (this) {
+	_m_bits.skip(4); // advance past the !null
+	uvm_field_op field_op = uvm_field_op.m_get_available_op();
+	field_op.set(uvm_field_auto_enum.UVM_UNPACK, this);
+	uvm_struct_do_execute_op(value, field_op);
+	if (field_op.user_hook_enabled()) {
+	  static if (__traits(compiles, value.do_unpack(this))) {
+	    value.do_unpack(this);
+	  }
+	}
+	field_op.m_recycle();
       }
     }
 

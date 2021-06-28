@@ -254,6 +254,29 @@ abstract class uvm_printer: uvm_policy
   // @uvm-ieee 1800.2-2017 auto 16.2.3.1
   alias print_object = print;
 
+  void print(T)(string     name,
+		T          value,
+		char       scope_separator='.')
+       if (is (T == struct) && ! is (T == SimTime)) {
+	 import uvm.base.uvm_component;
+	 synchronized (this) {
+	   print_object_header(name, value, scope_separator); // calls push_element
+
+	   uvm_field_op field_op = uvm_field_op.m_get_available_op() ;
+	   field_op.set(uvm_field_auto_enum.UVM_PRINT, this, null);
+	   uvm_struct_do_execute_op(value, field_op);
+	   if (field_op.user_hook_enabled()) {
+	     static if (__traits(compiles, value.do_print(this))) {
+	       value.do_print(this);
+	     }
+	   }
+	   field_op.m_recycle();
+
+	   pop_element() ; // matches push in print_object_header
+
+	 }
+       }
+
 
   void print_object_header (string name,
 			    uvm_object value,
@@ -267,6 +290,20 @@ abstract class uvm_printer: uvm_policy
 		   (value !is null) ?  value.get_type_name() : "object",
 		   "-",
 		   get_id_enabled() ? uvm_object_value_str(value) : "-");
+    }
+  }
+
+  void print_object_header(T) (string name,
+			       T value,
+			       char scope_separator='.') if (is (T == struct)) {
+    synchronized (this) {
+      if (name == "") {
+	name = "<unnamed>";
+      }
+
+      push_element(name,
+		   "struct(" ~ T.stringof ~ ")",
+		   "-", "-");
     }
   }
 
@@ -1335,7 +1372,7 @@ class uvm_tree_printer: uvm_printer
       if (!_m_flushed) {
 	uvm_error("UVM/PRINT/NO_FLUSH",
 		  "printer emit() method called twice without intervening uvm_printer::flush()");
-	  }
+      }
       else {
 	_m_flushed = false;
       }

@@ -36,7 +36,8 @@ module uvm.base.uvm_component;
 // typedef class uvm_sequence_item;
 
 import uvm.base.uvm_object_globals;
-import uvm.base.uvm_object: uvm_object, uvm_field_auto_get_flags;
+import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_object_defines: uvm_field_auto_get_flags;
 import uvm.base.uvm_phase: uvm_phase;
 import uvm.base.uvm_domain: uvm_domain;
 import uvm.base.uvm_common_phases: uvm_build_phase, uvm_run_phase;

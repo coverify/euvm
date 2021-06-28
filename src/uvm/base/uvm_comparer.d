@@ -784,7 +784,6 @@ class uvm_comparer: uvm_policy
       uvm_field_op field_op;
       bool ret_val = true;
 
-      bool compare_;
       if (rhs is lhs)
 	return ret_val;
 
@@ -886,6 +885,47 @@ class uvm_comparer: uvm_policy
 			 get_verbosity());
         
       }
+      return ret_val;
+    }
+  }
+
+  bool compare_struct(T)(string name,
+			 T lhs,
+			 T rhs) if (is (T == struct)) {
+    import uvm.base.uvm_object_globals;
+    synchronized (this) {
+      int old_result ;
+      uvm_field_op field_op;
+      bool ret_val = true;
+
+      // Push the name on the stack
+      _m_object_names ~= name;
+
+      // Hierarchical comparison
+      if (ret_val) {
+	old_result = get_result();
+
+	field_op = uvm_field_op.m_get_available_op();
+	field_op.set(uvm_field_auto_enum.UVM_COMPARE, this);
+	uvm_struct_do_execute_op(lhs, rhs, field_op);
+	if (field_op.user_hook_enabled()) {
+	  static if (__traits(compiles, lhs.do_compare(rhs, this))) {
+	    ret_val = lhs.do_compare(rhs, this);
+	  }
+	}
+	field_op.m_recycle();
+
+	// If do_compare() returned 1, check for a change
+	// in the result count.
+	if (ret_val && (get_result() > old_result)) {
+	  ret_val = false;
+	}
+
+      } // if (ret_val)
+
+      // Pop the name off the stack
+      _m_object_names.length =- 1;
+
       return ret_val;
     }
   }
@@ -1063,6 +1103,9 @@ class uvm_comparer: uvm_policy
 	else {
 	  m_uvm_compare_object(name, lhs, rhs);
 	}
+    }
+    else static if (is (E == struct)) {
+      compare_struct(name, lhs, rhs);
     }
     else static if (isBitVector!E || isIntegral!E || isBoolean!E) {
       compare(name, lhs, rhs, cast (uvm_radix_enum) (flags & UVM_RADIX));

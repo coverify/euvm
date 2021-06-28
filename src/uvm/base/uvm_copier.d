@@ -124,6 +124,21 @@ class uvm_copier: uvm_policy
     }
   }
   
+  void copy_struct(T)(ref T lhs, ref T rhs) {
+    synchronized (this) {
+      uvm_field_op field_op;
+      field_op = uvm_field_op.m_get_available_op() ;
+      field_op.set(uvm_field_auto_enum.UVM_COPY, this);
+      uvm_struct_do_execute_op(lhs, rhs, field_op);
+      if (field_op.user_hook_enabled()) {
+	static if (__traits(compiles, lhs.do_print(rhs))) {
+	  lhs.do_copy(rhs);
+	}
+      }
+      field_op.m_recycle();
+    }
+  }
+  
   // @uvm-ieee 1800.2-2017 auto 16.6.4.2
   recursion_state_e object_copied(uvm_object lhs,
 				  uvm_object rhs,
@@ -299,6 +314,10 @@ class uvm_copier: uvm_policy
     else static if (is (E: uvm_object)) {
       auto policy = cast (uvm_recursion_policy_enum) (UVM_RECURSION && flags);
       uvm_copy_object(name, lhs, rhs, policy);
+    }
+    else static if (is (E == struct)) {
+      auto policy = cast (uvm_recursion_policy_enum) (UVM_RECURSION && flags);
+      this.copy_struct(lhs, rhs);
     }
     else {
       lhs = rhs;

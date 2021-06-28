@@ -1146,156 +1146,164 @@ abstract class uvm_object: uvm_void, rand.barrier
   }
 
   
-  static void _m_uvm_execute_copy(int I, T)(T t, T rhs, uvm_copier copier)
-    if (is (T: uvm_object)) {
-      import uvm.base.uvm_object_globals;
-      static if (I < t.tupleof.length) {
-	enum FLAGS = uvm_field_auto_get_flags!(t, I);
-	static if (!(FLAGS & uvm_field_auto_enum.UVM_NOCOPY) &&
-		   FLAGS & uvm_field_auto_enum.UVM_COPY) {
-	  copier.uvm_copy_element(t.tupleof[I].stringof[2..$],
-				  t.tupleof[I], rhs.tupleof[I], FLAGS);
-	}
-	_m_uvm_execute_copy!(I+1)(t, rhs, copier);
-      }
-    }
+  // static void _m_uvm_execute_copy(int I, T)(T t, T rhs, uvm_copier copier)
+  //   if (is (T: uvm_object)) {
+  //     import uvm.base.uvm_object_globals;
+  //     static if (I < t.tupleof.length) {
+  // 	enum FLAGS = uvm_field_auto_get_flags!(t, I);
+  // 	static if (!(FLAGS & uvm_field_auto_enum.UVM_NOCOPY) &&
+  // 		   FLAGS & uvm_field_auto_enum.UVM_COPY) {
+  // 	  copier.uvm_copy_element(t.tupleof[I].stringof[2..$],
+  // 				  t.tupleof[I], rhs.tupleof[I], FLAGS);
+  // 	}
+  // 	_m_uvm_execute_copy!(I+1)(t, rhs, copier);
+  //     }
+  //   }
   
-  static void _m_uvm_execute_compare(int I, T)(T t, T rhs,
-					       uvm_comparer comparer)
-    if (is (T: uvm_object)) {
-      import uvm.base.uvm_object_globals;
-      static if (I < t.tupleof.length) {
-	enum FLAGS = uvm_field_auto_get_flags!(t, I);
-	static if (!(FLAGS & uvm_field_auto_enum.UVM_NOCOMPARE) &&
-		   FLAGS & uvm_field_auto_enum.UVM_COMPARE) {
-	  comparer.uvm_compare_element(t.tupleof[I].stringof[2..$],
-				  t.tupleof[I], rhs.tupleof[I], FLAGS);
-	}
-	_m_uvm_execute_compare!(I+1)(t, rhs, comparer);
-      }
-    }
+  // static void _m_uvm_execute_compare(int I, T)(T t, T rhs,
+  // 					       uvm_comparer comparer)
+  //   if (is (T: uvm_object)) {
+  //     import uvm.base.uvm_object_globals;
+  //     static if (I < t.tupleof.length) {
+  // 	enum FLAGS = uvm_field_auto_get_flags!(t, I);
+  // 	static if (!(FLAGS & uvm_field_auto_enum.UVM_NOCOMPARE) &&
+  // 		   FLAGS & uvm_field_auto_enum.UVM_COMPARE) {
+  // 	  comparer.uvm_compare_element(t.tupleof[I].stringof[2..$],
+  // 				  t.tupleof[I], rhs.tupleof[I], FLAGS);
+  // 	}
+  // 	_m_uvm_execute_compare!(I+1)(t, rhs, comparer);
+  //     }
+  //   }
   
-  static void _m_uvm_execute_print(int I, T)(T t, uvm_printer printer)
-    if (is (T: uvm_object)) {
-      import uvm.base.uvm_object_globals;
-      static if (I < t.tupleof.length) {
-	enum FLAGS = uvm_field_auto_get_flags!(t, I);
-	static if (!(FLAGS & uvm_field_auto_enum.UVM_NOPRINT) &&
-		   FLAGS & uvm_field_auto_enum.UVM_PRINT) {
-	  printer.uvm_print_element(t.tupleof[I].stringof[2..$],
-				    t.tupleof[I], FLAGS);
-	}
-	_m_uvm_execute_print!(I+1)(t, printer);
-      }
-    }
+  // static void _m_uvm_execute_print(int I, T)(T t, uvm_printer printer)
+  //   if (is (T: uvm_object)) {
+  //     import uvm.base.uvm_object_globals;
+  //     static if (I < t.tupleof.length) {
+  // 	enum FLAGS = uvm_field_auto_get_flags!(t, I);
+  // 	static if (!(FLAGS & uvm_field_auto_enum.UVM_NOPRINT) &&
+  // 		   FLAGS & uvm_field_auto_enum.UVM_PRINT) {
+  // 	  printer.uvm_print_element(t.tupleof[I].stringof[2..$],
+  // 				    t.tupleof[I], FLAGS);
+  // 	}
+  // 	_m_uvm_execute_print!(I+1)(t, printer);
+  //     }
+  //   }
   
-  static void _m_uvm_execute_pack(int I, T)(T t, uvm_packer packer)
-    if (is (T: uvm_object)) {
-      import uvm.base.uvm_object_globals;
-      static if (I < t.tupleof.length) {
-	enum FLAGS = uvm_field_auto_get_flags!(t, I);
-	static if (!(FLAGS & uvm_field_auto_enum.UVM_NOPACK) &&
-		   FLAGS & uvm_field_auto_enum.UVM_PACK) {
-	  packer.uvm_pack_element(t.tupleof[I].stringof[2..$],
-				    t.tupleof[I], FLAGS);
-	}
-	_m_uvm_execute_pack!(I+1)(t, packer);
-      }
-    }
+  // static void _m_uvm_execute_pack(int I, T)(T t, uvm_packer packer)
+  //   if (is (T: uvm_object)) {
+  //     import uvm.base.uvm_object_globals;
+  //     static if (I < t.tupleof.length) {
+  // 	enum FLAGS = uvm_field_auto_get_flags!(t, I);
+  // 	static if (!(FLAGS & uvm_field_auto_enum.UVM_NOPACK) &&
+  // 		   FLAGS & uvm_field_auto_enum.UVM_PACK) {
+  // 	  packer.uvm_pack_element(t.tupleof[I].stringof[2..$],
+  // 				    t.tupleof[I], FLAGS);
+  // 	}
+  // 	_m_uvm_execute_pack!(I+1)(t, packer);
+  //     }
+  //   }
   
-  static void _m_uvm_execute_unpack(int I, T)(T t, uvm_packer packer)
-    if (is (T: uvm_object)) {
-      import uvm.base.uvm_object_globals;
-      static if (I < t.tupleof.length) {
-	enum FLAGS = uvm_field_auto_get_flags!(t, I);
-	static if (!(FLAGS & uvm_field_auto_enum.UVM_NOUNPACK) &&
-		   FLAGS & uvm_field_auto_enum.UVM_UNPACK) {
-	  packer.uvm_unpack_element(t.tupleof[I].stringof[2..$],
-				    t.tupleof[I], FLAGS);
-	}
-	_m_uvm_execute_unpack!(I+1)(t, packer);
-      }
-    }
+  // static void _m_uvm_execute_unpack(int I, T)(T t, uvm_packer packer)
+  //   if (is (T: uvm_object)) {
+  //     import uvm.base.uvm_object_globals;
+  //     static if (I < t.tupleof.length) {
+  // 	enum FLAGS = uvm_field_auto_get_flags!(t, I);
+  // 	static if (!(FLAGS & uvm_field_auto_enum.UVM_NOUNPACK) &&
+  // 		   FLAGS & uvm_field_auto_enum.UVM_UNPACK) {
+  // 	  packer.uvm_unpack_element(t.tupleof[I].stringof[2..$],
+  // 				    t.tupleof[I], FLAGS);
+  // 	}
+  // 	_m_uvm_execute_unpack!(I+1)(t, packer);
+  //     }
+  //   }
   
-  static void _m_uvm_execute_record(int I, T)(T t, uvm_recorder recorder)
-    if (is (T: uvm_object)) {
-      import uvm.base.uvm_object_globals;
-      static if (I < t.tupleof.length) {
-	enum FLAGS = uvm_field_auto_get_flags!(t, I);
-	static if (!(FLAGS & uvm_field_auto_enum.UVM_NORECORD) &&
-		   FLAGS & uvm_field_auto_enum.UVM_RECORD) {
-	  recorder.uvm_record_element(t.tupleof[I].stringof[2..$],
-				      t.tupleof[I], FLAGS);
-	}
-	_m_uvm_execute_record!(I+1)(t, recorder);
-      }
-    }
+  // static void _m_uvm_execute_record(int I, T)(T t, uvm_recorder recorder)
+  //   if (is (T: uvm_object)) {
+  //     import uvm.base.uvm_object_globals;
+  //     static if (I < t.tupleof.length) {
+  // 	enum FLAGS = uvm_field_auto_get_flags!(t, I);
+  // 	static if (!(FLAGS & uvm_field_auto_enum.UVM_NORECORD) &&
+  // 		   FLAGS & uvm_field_auto_enum.UVM_RECORD) {
+  // 	  recorder.uvm_record_element(t.tupleof[I].stringof[2..$],
+  // 				      t.tupleof[I], FLAGS);
+  // 	}
+  // 	_m_uvm_execute_record!(I+1)(t, recorder);
+  //     }
+  //   }
   
-  static void _m_uvm_execute_set(int I, T)(T t, uvm_resource_base rsrc)
-    if (is (T: uvm_object)) {
-      import uvm.base.uvm_object_globals;
-      static if (I < t.tupleof.length) {
-	enum FLAGS = uvm_field_auto_get_flags!(t, I);
-	static if (!(FLAGS & uvm_field_auto_enum.UVM_NOSET) &&
-		   FLAGS & uvm_field_auto_enum.UVM_SET) {
-	  rsrc.uvm_set_element(t.tupleof[I].stringof[2..$],
-			       t.tupleof[I], t, FLAGS);
-	}
-	_m_uvm_execute_set!(I+1)(t, rsrc);
-      }
-    }
+  // static void _m_uvm_execute_set(int I, T)(T t, uvm_resource_base rsrc)
+  //   if (is (T: uvm_object)) {
+  //     import uvm.base.uvm_object_globals;
+  //     static if (I < t.tupleof.length) {
+  // 	enum FLAGS = uvm_field_auto_get_flags!(t, I);
+  // 	static if (!(FLAGS & uvm_field_auto_enum.UVM_NOSET) &&
+  // 		   FLAGS & uvm_field_auto_enum.UVM_SET) {
+  // 	  rsrc.uvm_set_element(t.tupleof[I].stringof[2..$],
+  // 			       t.tupleof[I], t, FLAGS);
+  // 	}
+  // 	_m_uvm_execute_set!(I+1)(t, rsrc);
+  //     }
+  //   }
   
-  static void _m_uvm_object_automation(int I, T)(T          t,
-						 T          rhs,
-						 int        what, 
-						 string     str)
-    if (is (T: uvm_object)) {
-      import uvm.base.uvm_object_globals;
-      import uvm.base.uvm_misc: UVM_ELEMENT_TYPE;
-      static if (I < t.tupleof.length) {
-	enum FLAGS = uvm_field_auto_get_flags!(t, I);
-	alias EE = UVM_ELEMENT_TYPE!(typeof(t.tupleof[I]));
-	static if (FLAGS != 0 &&
-		   (isIntegral!EE || isBitVector!EE || isBoolean!EE ||
-		    is (EE: uvm_object) || is (EE == string))) {
-	  if (what == uvm_field_auto_enum.UVM_COMPARE ||
-	      what == uvm_field_auto_enum.UVM_COPY) {
-	    assert (rhs !is null);
-	    _m_uvm_object_automation(t.tupleof[I], rhs.tupleof[I], what, str,
-				     t.tupleof[I].stringof[2..$],
-				     FLAGS);
-	  }
-	  else {
-	    _m_uvm_object_automation(t.tupleof[I], typeof(t.tupleof[I]).init,
-				     what, str, t.tupleof[I].stringof[2..$],
-				     FLAGS);
-	  }
-	}
-	_m_uvm_object_automation!(I+1)(t, rhs, what, str);
-      }
-    }
+  // static void _m_uvm_object_automation(int I, T)(T          t,
+  // 						 T          rhs,
+  // 						 int        what, 
+  // 						 string     str)
+  //   if (is (T: uvm_object)) {
+  //     import uvm.base.uvm_object_globals;
+  //     import uvm.base.uvm_misc: UVM_ELEMENT_TYPE;
+  //     static if (I < t.tupleof.length) {
+  // 	enum FLAGS = uvm_field_auto_get_flags!(t, I);
+  // 	alias EE = UVM_ELEMENT_TYPE!(typeof(t.tupleof[I]));
+  // 	static if (FLAGS != 0 &&
+  // 		   (isIntegral!EE || isBitVector!EE || isBoolean!EE ||
+  // 		    is (EE: uvm_object) || is (EE == string))) {
+  // 	  if (what == uvm_field_auto_enum.UVM_COMPARE ||
+  // 	      what == uvm_field_auto_enum.UVM_COPY) {
+  // 	    assert (rhs !is null);
+  // 	    _m_uvm_object_automation(t.tupleof[I], rhs.tupleof[I], what, str,
+  // 				     t.tupleof[I].stringof[2..$],
+  // 				     FLAGS);
+  // 	  }
+  // 	  else {
+  // 	    _m_uvm_object_automation(t.tupleof[I], typeof(t.tupleof[I]).init,
+  // 				     what, str, t.tupleof[I].stringof[2..$],
+  // 				     FLAGS);
+  // 	  }
+  // 	}
+  // 	_m_uvm_object_automation!(I+1)(t, rhs, what, str);
+  //     }
+  //   }
+
+  // static void _m_uvm_object_automation(int I, T)(T          t,
+  // 						 T          rhs,
+  // 						 int        what, 
+  // 						 string     str)
+  //      if (is (T == struct)) {
+  // 	 import uvm.base.uvm_object_globals;
+  // 	 import uvm.base.uvm_misc: UVM_ELEMENT_TYPE;
+  // 	 static if (I < t.tupleof.length) {
+  // 	   enum FLAGS = uvm_field_auto_get_flags!(t, I);
+  // 	   alias EE = UVM_ELEMENT_TYPE!(typeof(t.tupleof[I]));
+  // 	   static if (FLAGS != 0 &&
+  // 		      (isIntegral!EE || isBitVector!EE || isBoolean!EE ||
+  // 		       is (EE: uvm_object) || is (EE == string))) {
+  // 	     if (what == uvm_field_auto_enum.UVM_COMPARE ||
+  // 		 what == uvm_field_auto_enum.UVM_COPY) {
+  // 	       assert (rhs !is null);
+  // 	       _m_uvm_object_automation(t.tupleof[I], rhs.tupleof[I], what, str,
+  // 					t.tupleof[I].stringof[2..$],
+  // 					FLAGS);
+  // 	     }
+  // 	     else {
+  // 	       _m_uvm_object_automation(t.tupleof[I], typeof(t.tupleof[I]).init,
+  // 					what, str, t.tupleof[I].stringof[2..$],
+  // 					FLAGS);
+  // 	     }
+  // 	   }
+  // 	   _m_uvm_object_automation!(I+1)(t, rhs, what, str);
+  // 	 }
+  //      }
+  
 }
 
-template uvm_field_auto_get_flags(alias t, size_t I)
-{
-  enum int uvm_field_auto_get_flags =
-    uvm_field_auto_acc_flags!(__traits(getAttributes, t.tupleof[I]));
-}
-
-template uvm_field_auto_acc_flags(A...)
-{
-  import uvm.base.uvm_object_globals: uvm_recursion_policy_enum,
-    uvm_field_auto_enum, uvm_radix_enum;
-  static if (A.length is 0) {
-    enum int uvm_field_auto_acc_flags = 0;
-  }
-  else static if (is (typeof(A[0]) == uvm_recursion_policy_enum) ||
-		 is (typeof(A[0]) == uvm_field_auto_enum) ||
-		 is (typeof(A[0]) == uvm_radix_enum)) {
-      enum int uvm_field_auto_acc_flags = A[0] |
-	uvm_field_auto_acc_flags!(A[1..$]);
-    }
-    else {
-      enum int uvm_field_auto_acc_flags = uvm_field_auto_acc_flags!(A[1..$]);
-    }
-}

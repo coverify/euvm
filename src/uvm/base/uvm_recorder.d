@@ -550,6 +550,17 @@ abstract class uvm_recorder: uvm_policy
 
   alias record_object = record;
 
+  void record(T)(string name,
+		 T value)
+    if (is (T == struct) && ! is (T == SimTime)) {
+      synchronized (this) {
+	if (get_stream() is null) {
+	  return;
+	}
+	do_record_struct(name, value);
+      }
+    }
+
   // @uvm-ieee 1800.2-2017 auto 16.4.6.5
   void record(T)(string name,
 		 T value)
@@ -658,6 +669,18 @@ abstract class uvm_recorder: uvm_policy
 	value.do_record(this);
       field_op.m_recycle();
     }
+  }
+
+  protected void do_record_struct(T)(string name,
+				     T value) {
+    uvm_field_op field_op = uvm_field_op.m_get_available_op();
+    field_op.set(uvm_field_auto_enum.UVM_RECORD, this, null);
+    uvm_struct_do_execute_op(value, field_op);
+    if (field_op.user_hook_enabled())
+      static if (__traits(compiles, value.do_record(this))) {
+	value.do_record(this);
+      }
+    field_op.m_recycle();
   }
 
 
