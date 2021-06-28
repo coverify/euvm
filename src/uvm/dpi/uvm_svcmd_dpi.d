@@ -35,22 +35,22 @@ public string[][] uvm_dpi_get_args() {
 
   bool vpiUsable = cast(bool) vpi_get_vlog_info(&info);
 
-  auto vlogargv = info.argv;
-  auto vlogargc = info.argc;
+  auto vlogArgv = info.argv;
+  auto vlogArgc = info.argc;
 
-  // use the vlang commandline arguments if we are not using Verilog
+  // use the esdl commandline arguments if we are not using Verilog
   // Note that command line arguments have to be passed at the time of
   // RootEntity elaboration
-  string[] vlangargv = getRootEntity().getArgv();
+  string[] esdlArgv = getRootEntity().getArgv();
 
   uint argc;
 
   if(vpiUsable) {
-    argc = vlogargc;
-    if(vlogargv is null) return argvs;
+    argc = vlogArgc;
+    if (vlogArgv is null) return argvs;
   }
   else {
-    argc = cast(uint) vlangargv.length;
+    argc = cast(uint) esdlArgv.length;
   }
 
   
@@ -59,11 +59,11 @@ public string[][] uvm_dpi_get_args() {
 
     string arg;
     if(vpiUsable) {
-      char* vlogarg = *(vlogargv+i);
-      arg = (vlogarg++).to!string;
+      char* vlogArg = *(vlogArgv+i);
+      arg = (vlogArg++).to!string;
     }
     else {
-      arg = vlangargv[i];
+      arg = esdlArgv[i];
     }
     
     if(arg == "-f" || arg == "-F") {
