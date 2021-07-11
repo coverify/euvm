@@ -33,6 +33,8 @@ import uvm.base.uvm_field_op: uvm_field_op;
 import uvm.base.uvm_globals: uvm_error, uvm_fatal, uvm_warning;
 import uvm.base.uvm_coreservice: uvm_coreservice_t;
 import std.traits: isIntegral, isBoolean, isArray, isDynamicArray, isStaticArray;
+import esdl.data.bvec: isBitVector;
+
 import uvm.base.uvm_scope;
 
 //------------------------------------------------------------------------------
@@ -310,6 +312,9 @@ class uvm_copier: uvm_policy
       for (size_t i=0; i != lhs.length; ++i) {
 	m_uvm_copy_element(name, lhs[i], rhs[i], flags);
       }
+    }
+    else static if (isBitVector!E || isIntegral!E || isBoolean!E) {
+      lhs = rhs;
     }
     else static if (is (E: uvm_object)) {
       auto policy = cast (uvm_recursion_policy_enum) (UVM_RECURSION && flags);

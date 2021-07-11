@@ -1104,11 +1104,11 @@ class uvm_comparer: uvm_policy
 	  m_uvm_compare_object(name, lhs, rhs);
 	}
     }
-    else static if (is (E == struct)) {
-      compare_struct(name, lhs, rhs);
-    }
     else static if (isBitVector!E || isIntegral!E || isBoolean!E) {
       compare(name, lhs, rhs, cast (uvm_radix_enum) (flags & UVM_RADIX));
+    }
+    else static if (is (E == struct)) {
+      compare_struct(name, lhs, rhs);
     }
     else {
       compare(name, lhs, rhs);

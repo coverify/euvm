@@ -552,7 +552,7 @@ abstract class uvm_recorder: uvm_policy
 
   void record(T)(string name,
 		 T value)
-    if (is (T == struct) && ! is (T == SimTime)) {
+    if (is (T == struct)  && ! (isBitVector!T) && ! is (T == SimTime)) {
       synchronized (this) {
 	if (get_stream() is null) {
 	  return;

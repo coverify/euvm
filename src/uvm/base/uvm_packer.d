@@ -272,7 +272,7 @@ class uvm_packer: uvm_policy
     }
 
   void pack(T)(T value)
-    if (is (T == struct)) {
+    if (is (T == struct) && ! (isBitVector!T)) {
       import uvm.base.uvm_object_globals;
       import uvm.base.uvm_globals;
       synchronized (this) {
@@ -560,7 +560,7 @@ class uvm_packer: uvm_policy
     }
 
   void unpack(T)(T value)
-    if (is (T == struct)) {
+    if (is (T == struct) && ! (isBitVector!T)) {
       import uvm.base.uvm_object_globals;
       import uvm.base.uvm_globals;
       synchronized (this) {
