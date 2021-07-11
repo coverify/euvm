@@ -437,6 +437,19 @@ abstract class uvm_object: uvm_void, rand.barrier
     return tmp;
   }
 
+  uvm_object dup() {
+    import uvm.base.uvm_object_globals;
+    import uvm.base.uvm_globals;
+    uvm_report_warning("CRFLD",
+		       format("The create method failed for %s,  " ~
+			      "object cannot be \"dup\"licated", get_name()),
+			 uvm_verbosity.UVM_NONE);
+    uvm_report_warning("CRFLD",
+		       format("Consider adding mixin uvm_object_utils to " ~
+			      "the objects class", get_name()),
+		       uvm_verbosity.UVM_NONE);
+    assert (false);
+  }
 
   // Group -- NODOCS -- Printing
 

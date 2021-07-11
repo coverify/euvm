@@ -69,6 +69,12 @@ mixin template uvm_object_utils(T=void)
   mixin m_uvm_object_create_func!(U);
   mixin m_uvm_get_type_name_func!(U);
   mixin m_uvm_object_auto_utils!(U);
+
+  override U dup() {
+    import uvm.meta.misc: shallowCopy;
+    return shallowCopy(this);
+  }
+  
   version (UVM_NO_RAND) {}
   else {
     import esdl.rand;
