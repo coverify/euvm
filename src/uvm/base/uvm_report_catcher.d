@@ -501,6 +501,22 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
 		    context_name, report_enabled_checked);
   }
 
+  // Function -- NODOCS -- uvm_report_trace
+  //
+  // Issues a trace message using the current message's report object.
+  // This message will bypass any message catching callbacks.
+
+  protected void uvm_report_trace(string id,
+				  lazy string message,
+				  int verbosity,
+				  string fname = "",
+				  size_t line = 0,
+				  string context_name = "",
+				  bool report_enabled_checked = false) {
+    this.uvm_report(uvm_severity.UVM_TRACE, id, message, verbosity, fname, line,
+		    context_name, report_enabled_checked);
+  }
+
   // Function -- NODOCS -- uvm_report_info
   //
   // Issues a info message using the current message's report object.
@@ -649,7 +665,7 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
 	    case uvm_severity.UVM_FATAL:   _uvm_scope_inst._m_caught_fatal++; break;
 	    case uvm_severity.UVM_ERROR:   _uvm_scope_inst._m_caught_error++; break;
 	    case uvm_severity.UVM_WARNING: _uvm_scope_inst._m_caught_warning++; break;
-	    case uvm_severity.UVM_INFO:    // break_loop = false;
+	    case uvm_severity.UVM_INFO, uvm_severity.UVM_TRACE:    // break_loop = false;
 	      break;
 	    }
 	    // if (break_loop) {

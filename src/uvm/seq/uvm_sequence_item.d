@@ -528,6 +528,31 @@ class uvm_sequence_item: uvm_transaction, uvm_report_intf, rand.barrier
     uvm_process_report_message(l_report_message);
   }
 
+  // Function -- NODOCS -- uvm_report_trace
+
+  void uvm_report_trace(string file = __FILE__,
+			size_t line = __LINE__)( string id,
+						 lazy string message,
+						 int verbosity = uvm_verbosity.UVM_MEDIUM,
+						 string context_name = "",
+						 bool report_enabled_checked = false) {
+
+    this.uvm_report_trace(id, message, verbosity, file, line,
+			  context_name, report_enabled_checked);
+  }
+
+  void uvm_report_trace( string id,
+			 lazy string message,
+			 int verbosity,
+			 string filename,
+			 size_t line,
+			 string context_name = "",
+			 bool report_enabled_checked = false) {
+
+    this.uvm_report(uvm_severity.UVM_TRACE, id, message, verbosity, filename, line,
+                    context_name, report_enabled_checked);
+  }
+
   // Function -- NODOCS -- uvm_report_info
 
   // @uvm-ieee 1800.2-2020 auto 14.1.3.3

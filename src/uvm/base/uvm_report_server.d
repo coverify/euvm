@@ -865,6 +865,8 @@ class uvm_default_report_server: uvm_report_server
       string verbosity_str;
       string terminator_str;
       string msg_body_str;
+      string trace_str;
+      
       uvm_report_handler l_report_handler;
 
       uvm_severity l_severity = report_message.get_severity();
@@ -878,6 +880,10 @@ class uvm_default_report_server: uvm_report_server
 
       // Make definable in terms of units.
       string time_str = format("%0s", getRootEntity.getSimTime);
+
+      if (l_severity == uvm_severity.UVM_TRACE) {
+	trace_str = format(" [%0.6f]", getRootEntity.getRunTime()/1000000.0);
+      }
 
       if (report_message.get_context() != "") {
 	context_str = "@@" ~ report_message.get_context();
@@ -917,7 +923,7 @@ class uvm_default_report_server: uvm_report_server
       }
 
       return sev_string ~ verbosity_str ~ " " ~ filename_line_string ~
-	"@ " ~ time_str ~ ": " ~ report_object_name ~ context_str ~ " [" ~
+	"@ " ~ time_str ~ trace_str ~ ": " ~ report_object_name ~ context_str ~ " [" ~
 	report_message.get_id() ~ "] " ~ msg_body_str ~ terminator_str;
     }
   }

@@ -411,12 +411,14 @@ class uvm_report_handler: uvm_object
       _id_verbosities = new uvm_id_verbosities_array();
       _sev_overrides = new uvm_sev_override_array();
 
+      set_severity_action(uvm_severity.UVM_TRACE,   uvm_action_type.UVM_DISPLAY);
       set_severity_action(uvm_severity.UVM_INFO,    uvm_action_type.UVM_DISPLAY);
       set_severity_action(uvm_severity.UVM_WARNING, uvm_action_type.UVM_DISPLAY);
       set_severity_action(uvm_severity.UVM_ERROR,   uvm_action_type.UVM_DISPLAY | uvm_action_type.UVM_COUNT);
       set_severity_action(uvm_severity.UVM_FATAL,   uvm_action_type.UVM_DISPLAY | uvm_action_type.UVM_EXIT);
 
-      set_severity_file(uvm_severity.UVM_INFO, _default_file_handle);
+      set_severity_file(uvm_severity.UVM_TRACE,   _default_file_handle);
+      set_severity_file(uvm_severity.UVM_INFO,    _default_file_handle);
       set_severity_file(uvm_severity.UVM_WARNING, _default_file_handle);
       set_severity_file(uvm_severity.UVM_ERROR,   _default_file_handle);
       set_severity_file(uvm_severity.UVM_FATAL,   _default_file_handle);
@@ -687,7 +689,7 @@ class uvm_report_handler: uvm_object
       bool l_report_enabled = false;
       uvm_report_message l_report_message;
       uvm_coreservice_t cs = uvm_coreservice_t.get();
-      if (!uvm_report_enabled(verbosity_level, uvm_severity.UVM_INFO, id)) {
+      if (! uvm_report_enabled(verbosity_level, uvm_severity.UVM_INFO, id)) {
 	return;
       }
 

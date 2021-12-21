@@ -275,6 +275,7 @@ enum uvm_field_xtra_enum: uint
 //
 // Defines all possible values for report severity.
 //
+//   UVM_TRACE   - Trace message.
 //   UVM_INFO    - Informative message.
 //   UVM_WARNING - Indicates a potential problem.
 //   UVM_ERROR   - Indicates a real problem. Simulation continues subject
@@ -285,7 +286,8 @@ enum uvm_field_xtra_enum: uint
 // typedef bit [1:0] uvm_severity;
 
 enum uvm_severity: byte
-  {   UVM_INFO,
+  {   UVM_TRACE,
+      UVM_INFO,
       UVM_WARNING,
       UVM_ERROR,
       UVM_FATAL

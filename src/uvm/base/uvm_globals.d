@@ -65,6 +65,9 @@ interface uvm_report_intf
   bool uvm_report_enabled(int verbosity, uvm_severity severity=uvm_severity.UVM_INFO,
 			  string id="");
   void uvm_process_report_message(uvm_report_message msg);
+  void uvm_report_trace(string id, lazy string message, int verbosity, string filename,
+			size_t line, string context_name = "",
+			bool report_enabled_checked = false);
   void uvm_report_info(string id, lazy string message, int verbosity, string filename,
 		       size_t line, string context_name = "",
 		       bool report_enabled_checked = false);
@@ -88,6 +91,35 @@ interface uvm_report_intf
     }
   }
   
+  // MACRO: `uvm_trace
+  //
+  //| `uvm_trace(ID,MSG,VERBOSITY)
+  //
+  // Calls uvm_report_trace if ~VERBOSITY~ is lower than the configured verbosity of
+  // the associated reporter. ~ID~ is given as the message tag and ~MSG~ is given as
+  // the message text. The file and line are also sent to the uvm_report_trace call.
+  //
+
+  void uvm_trace(string file=__FILE__, size_t line=__LINE__)
+    (string id, lazy string message, uvm_verbosity verbosity) {
+    if (uvm_report_enabled(verbosity, uvm_severity.UVM_TRACE, id))
+      uvm_report_trace(id, message, verbosity, file, line);
+  }
+
+  void uvm_trace(string file=__FILE__, size_t line=__LINE__, MF...)
+    (string id, lazy string message, uvm_verbosity verbosity, MF mf)
+    if (MF.length > 0 && is (MF[0]: uvm_report_message_element_base)) {
+      uvm_report_message rm;
+      uvm_message(uvm_severity.UVM_TRACE, id, message, verbosity, file, line, rm, mf);
+    }
+
+  void uvm_trace(string file=__FILE__, size_t line=__LINE__, MF...)
+    (string id, lazy string message, uvm_verbosity verbosity,
+     ref uvm_report_message rm, MF mf)
+    if (MF.length == 0 || is (MF[0]: uvm_report_message_element_base)) {
+      uvm_message(uvm_severity.UVM_TRACE, id, message, verbosity, file, line, rm, mf);
+    }
+
   // MACRO: `uvm_info
   //
   //| `uvm_info(ID,MSG,VERBOSITY)
@@ -224,6 +256,35 @@ void uvm_message(MF...)(uvm_severity severity, string id, lazy string message,
   }
 }
   
+// MACRO: `uvm_trace
+//
+//| `uvm_trace(ID,MSG,VERBOSITY)
+//
+// Calls uvm_report_trace if ~VERBOSITY~ is lower than the configured verbosity of
+// the associated reporter. ~ID~ is given as the message tag and ~MSG~ is given as
+// the message text. The file and line are also sent to the uvm_report_trace call.
+//
+
+void uvm_trace(string file=__FILE__, size_t line=__LINE__)
+  (string id, lazy string message, uvm_verbosity verbosity) {
+  if (uvm_report_enabled(verbosity, uvm_severity.UVM_TRACE, id))
+    uvm_report_trace(id, message, verbosity, file, line);
+}
+
+void uvm_trace(string file=__FILE__, size_t line=__LINE__, MF...)
+  (string id, lazy string message, uvm_verbosity verbosity, MF mf)
+  if (MF.length > 0 && is (MF[0]: uvm_report_message_element_base)) {
+    uvm_report_message rm;
+    uvm_message(uvm_severity.UVM_TRACE, id, message, verbosity, file, line, rm, mf);
+  }
+
+void uvm_trace(string file=__FILE__, size_t line=__LINE__, MF...)
+  (string id, lazy string message, uvm_verbosity verbosity,
+   ref uvm_report_message rm, MF mf)
+  if (MF.length == 0 || is (MF[0]: uvm_report_message_element_base)) {
+    uvm_message(uvm_severity.UVM_TRACE, id, message, verbosity, file, line, rm, mf);
+  }
+
 // MACRO: `uvm_info
 //
 //| `uvm_info(ID,MSG,VERBOSITY)
@@ -355,6 +416,38 @@ static void uvm_message_context(MF...)(uvm_severity severity, string id,
     ro.uvm_process_report_message(rm);
   }
 }
+
+// MACRO: `uvm_trace_context
+//
+//| `uvm_trace_context(ID,MSG,VERBOSITY,CNTXT)
+//
+// Operates identically to `uvm_trace but requires that the
+// context, or <uvm_report_object>, in which the message is printed be
+// explicitly supplied as a macro argument.
+
+static void uvm_trace_context(string file=__FILE__, size_t line=__LINE__)
+  (string id, lazy string message, uvm_verbosity verbosity, uvm_report_object ro) {
+  if (ro.uvm_report_enabled(verbosity, uvm_severity.UVM_TRACE, id)) {
+    ro.uvm_report_trace(id, message, verbosity, file, line);
+  }
+}
+
+static void uvm_trace_context(string file=__FILE__, size_t line=__LINE__, MF...)
+  (string id, lazy string message, uvm_verbosity verbosity,
+   uvm_report_object ro, MF mf)
+  if (MF.length > 0 && is (MF[0]: uvm_report_message_element_base)) {
+    uvm_report_message rm;
+    uvm_message_context(uvm_severity.UVM_TRACE, id, message, verbosity,
+			file, line, ro, rm, mf);
+  }
+
+static void uvm_trace_context(string file=__FILE__, size_t line=__LINE__, MF...)
+  (string id, lazy string message, uvm_verbosity verbosity,
+   uvm_report_object ro, ref uvm_report_message rm, MF mf)
+  if (MF.length == 0 || is (MF[0]: uvm_report_message_element_base)) {
+    uvm_message_context(uvm_severity.UVM_TRACE, id, message, verbosity,
+			file, line, ro, rm, mf);
+  }
 
 // MACRO: `uvm_info_context
 //
@@ -579,6 +672,34 @@ void uvm_report(uvm_severity severity,
   uvm_root top = cs.get_root();
   top.uvm_report(severity, id, message, verbosity, filename, line,
 		 context_name, report_enabled_checked);
+}
+
+// Function -- NODOCS -- uvm_report_trace
+
+// @uvm-ieee 1800.2-2020 auto F.3.2.3
+void uvm_report_trace(string file=__FILE__,
+		      size_t line=__LINE__)(string id,
+					    lazy string message,
+					    int verbosity=uvm_verbosity.UVM_MEDIUM,
+					    string context_name = "",
+					    bool report_enabled_checked = false) {
+  uvm_report_trace(id, message, verbosity, file, line,
+		   context_name, report_enabled_checked);
+}
+
+void uvm_report_trace(string id,
+		      lazy string message,
+		      int verbosity = uvm_verbosity.UVM_MEDIUM,
+		      string filename = "",
+		      size_t line = 0,
+		      string context_name = "",
+		      bool report_enabled_checked = false) {
+  import uvm.base.uvm_coreservice;
+  import uvm.base.uvm_root;
+  uvm_coreservice_t cs = uvm_coreservice_t.get();
+  uvm_root top = cs.get_root();
+  top.uvm_report_trace(id, message, verbosity, filename, line,
+		       context_name, report_enabled_checked);
 }
 
 // Function -- NODOCS -- uvm_report_info

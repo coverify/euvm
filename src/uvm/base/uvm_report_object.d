@@ -88,6 +88,7 @@ import esdl.base.core: finish;
 //
 // Default Actions - The following provides the default actions assigned to
 // each severity. These can be overridden by any of the ~set_*_action~ methods.
+//|    UVM_TRACE -      UVM_DISPLAY
 //|    UVM_INFO -       UVM_DISPLAY
 //|    UVM_WARNING -    UVM_DISPLAY
 //|    UVM_ERROR -      UVM_DISPLAY | UVM_COUNT
@@ -235,6 +236,32 @@ class uvm_report_object: /*extends*/ uvm_object, uvm_report_intf
     l_report_message.set_report_message(severity, id, message(),
 					verbosity, filename, line, context_name);
     uvm_process_report_message(l_report_message);
+  }
+
+  // Function -- NODOCS -- uvm_report_trace
+
+  // @uvm-ieee 1800.2-2020 auto 6.3.3.3
+  void uvm_report_trace(string file=__FILE__,
+			size_t line=__LINE__)(string id,
+					      lazy string message,
+					      int verbosity=uvm_verbosity.UVM_MEDIUM,
+					      string context_name = "",
+					      bool report_enabled_checked = false) {
+    uvm_report_trace(id, message, verbosity, file, line,
+		     context_name, report_enabled_checked);
+  }
+
+
+  void uvm_report_trace(string id,
+			lazy string message,
+			int verbosity,
+			string filename,
+			size_t line,
+			string context_name = "",
+			bool report_enabled_checked = false) {
+
+    uvm_report(uvm_severity.UVM_TRACE, id, message, verbosity,
+  	       filename, line, context_name, report_enabled_checked);
   }
 
   // Function -- NODOCS -- uvm_report_info
