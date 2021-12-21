@@ -1,11 +1,11 @@
 //----------------------------------------------------------------------
-// Copyright 2012-2019 Coverify Systems Technology
+// Copyright 2012-2021 Coverify Systems Technology
+// Copyright 2010 AMD
+// Copyright 2012 Accellera Systems Initiative
 // Copyright 2007-2018 Cadence Design Systems, Inc.
 // Copyright 2007-2011 Mentor Graphics Corporation
-// Copyright 2010 AMD
-// Copyright 2012-2018 NVIDIA Corporation
+// Copyright 2012-2020 NVIDIA Corporation
 // Copyright 2014 Semifore
-// Copyright 2012 Accellera Systems Initiative
 // Copyright 2010-2014 Synopsys, Inc.
 //   All Rights Reserved Worldwide
 //
@@ -327,26 +327,10 @@ class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
     return -1;
   }
 
-  // no shared variable -- therefor no synchronized lock is required
-  static bool m_cb_find_name(uvm_queue!uvm_callback q,
-			     string name, string where) {
-    import uvm.base.uvm_globals;
-    foreach (cb; q) {
-      if (cb.get_name() == name) {
-	uvm_warning("UVM/CB/NAM/SAM", "A callback named \"" ~ name ~
-		    "\" is already registered with " ~ where);
-	return true;
-      }
-    }
-    return false;
-  }
-
   //For a typewide callback, need to add to derivative types as well.
   override void m_add_tw_cbs(uvm_callback cb, uvm_apprepend ordering) {
     synchronized (this) {
-      bool warned;
       if (m_cb_find(/*m_t_inst.*/m_tw_cb_q, cb) == -1) {
-	warned = m_cb_find_name(/*m_t_inst.*/m_tw_cb_q, cb.get_name(), "type");
 	if (ordering == uvm_apprepend.UVM_APPEND)
 	  /*m_t_inst.*/m_tw_cb_q.push_back(cb);
 	else
@@ -361,10 +345,6 @@ class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
 	    /*m_t_inst.*/m_pool.add(obj, q);
 	  }
 	  if (m_cb_find(q, cb) == -1) {
-	    if (!warned) {
-	      m_cb_find_name(q, cb.get_name(), "object instance " ~
-			     me.get_full_name());
-	    }
 	    if (ordering == uvm_apprepend.UVM_APPEND)
 	      q.push_back(cb);
 	    else
@@ -566,7 +546,7 @@ class uvm_typed_callbacks(T = uvm_object): uvm_callbacks_base
 // | class uvm_callbacks #(type T=uvm_object, type CB=uvm_callback)
 //
   
-// @uvm-ieee 1800.2-2017 auto 10.7.2.1
+// @uvm-ieee 1800.2-2020 auto 10.7.2.1
 class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
 {
   import uvm.base.uvm_component: uvm_component;
@@ -717,7 +697,7 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
   //| uvm_callbacks!(my_comp).add(comp_a, cb);
   //| uvm_callbacks!(my_comp, my_callback).add(comp_a, cb);
 
-  // @uvm-ieee 1800.2-2017 auto 10.7.2.3.1
+  // @uvm-ieee 1800.2-2020 auto 10.7.2.3.1
   static void add(T obj, uvm_callback cb,
 		  uvm_apprepend ordering = uvm_apprepend.UVM_APPEND) {
     import uvm.base.uvm_object_globals;
@@ -826,8 +806,6 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
 			   obj.get_full_name(), uvm_verbosity.UVM_NONE);
       }
       else {
-	m_cb_find_name(q, cb.get_name(), "object instance " ~
-		       obj.get_full_name());
 	if (ordering == uvm_apprepend.UVM_APPEND)
 	  q.push_back(cb);
 	else
@@ -846,7 +824,7 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
   // the component hierarchy to start the search for ~name~. See <uvm_root.find_all>
   // for more details on searching by name.
 
-  // @uvm-ieee 1800.2-2017 auto 10.7.2.3.2
+  // @uvm-ieee 1800.2-2020 auto 10.7.2.3.2
   static void add_by_name(string name,
 			  uvm_callback cb,
 			  uvm_component root,
@@ -897,7 +875,7 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
   //| uvm_callbacks!(my_comp).delete(comp_a, cb);
   //| uvm_callbacks!(my_comp, my_callback).delete(comp_a, cb);
 
-  // @uvm-ieee 1800.2-2017 auto 10.7.2.3.3
+  // @uvm-ieee 1800.2-2020 auto 10.7.2.3.3
   static void remove(T obj, uvm_callback cb) {
     import uvm.base.uvm_globals;
     import uvm.base.uvm_object_globals;
@@ -936,7 +914,7 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
   // the search for ~name~. See <uvm_root.find_all> for more details on searching
   // by name.
 
-  // @uvm-ieee 1800.2-2017 auto 10.7.2.3.4
+  // @uvm-ieee 1800.2-2020 auto 10.7.2.3.4
   static void delete_by_name(string name, uvm_callback cb,
 			     uvm_component root) {
     import uvm.base.uvm_coreservice;
@@ -997,22 +975,7 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
 
   // TBD -- Add range interface
 
-  // Function: get_all
-  // Populates the end of the ~all_callbacks~ queue with the list of all registered callbacks
-  // for ~obj~ (whether they are enabled or disabled).
-  //
-  // If ~obj~ is ~null~, then ~all_callbacks~ shall be populated with all registered typewide
-  // callbacks.  If ~obj~ is not ~null~, then ~all_callbacks~ shall be populated with both
-  // the typewide and instance callbacks (if any) registered for ~obj~.
-  //
-  // NOTE: This API contradicts the definition provided in section 10.7.2.5 of the P1800.2-2017
-  //       LRM.  See DEVIATIONS.md for additional details.
-  //
-  //| static function void get_all( ref CB all_callbacks[$], input T obj=null );
-  //
-  // @uvm-contrib This API is being considered for potential contribution to 1800.2
-
-  // @uvm-ieee 1800.2-2017 auto 10.7.2.5
+  // @uvm-ieee 1800.2-2020 auto 10.7.2.5
 
   static CB[] get_all(T obj) {
     CB[] callbacks_to_append;
@@ -1075,7 +1038,7 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
   // The iterator class <uvm_callback_iter> may be used as an alternative, simplified,
   // iterator interface.
 
-  // @uvm-ieee 1800.2-2017 auto 10.7.2.4.1
+  // @uvm-ieee 1800.2-2020 auto 10.7.2.4.1
   static CB get_first (ref size_t itr, T obj) {
     get();
     uvm_queue!(uvm_callback) q = m_get_q(obj);
@@ -1100,7 +1063,7 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
   // The iterator class <uvm_callback_iter> may be used as an alternative, simplified,
   // iterator interface.
 
-  // @uvm-ieee 1800.2-2017 auto 10.7.2.4.2
+  // @uvm-ieee 1800.2-2020 auto 10.7.2.4.2
   static CB get_last (ref size_t itr, T obj) {
     get();
     uvm_queue!(uvm_callback) q = m_get_q(obj);
@@ -1127,7 +1090,7 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
   // The iterator class <uvm_callback_iter> may be used as an alternative, simplified,
   // iterator interface.
 
-  // @uvm-ieee 1800.2-2017 auto 10.7.2.4.3
+  // @uvm-ieee 1800.2-2020 auto 10.7.2.4.3
   static CB get_next (ref size_t itr, T obj) {
     get();
     uvm_queue!(uvm_callback) q = m_get_q(obj);
@@ -1155,7 +1118,7 @@ class uvm_callbacks (T=uvm_object, CB=uvm_callback): uvm_typed_callbacks!T
   // The iterator class <uvm_callback_iter> may be used as an alternative, simplified,
   // iterator interface.
 
-  // @uvm-ieee 1800.2-2017 auto 10.7.2.4.4
+  // @uvm-ieee 1800.2-2020 auto 10.7.2.4.4
   static CB get_prev (ref size_t itr, T obj) {
     get();
     uvm_queue!(uvm_callback) q = m_get_q(obj);
@@ -1263,7 +1226,7 @@ class uvm_derived_callbacks (T=uvm_object, ST=uvm_object, CB=uvm_callback):
 // callbacks and executing the callback methods.
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto D.1.1
+// @uvm-ieee 1800.2-2020 auto D.1.1
 class uvm_callback_iter (T = uvm_object, CB = uvm_callback)
 {
   private size_t _m_i;
@@ -1275,7 +1238,7 @@ class uvm_callback_iter (T = uvm_object, CB = uvm_callback)
   // Creates a new callback iterator object. It is required that the object
   // context be provided.
 
-  // @uvm-ieee 1800.2-2017 auto D.1.2.1
+  // @uvm-ieee 1800.2-2020 auto D.1.2.1
   this(T obj) {
     synchronized (this) {
       _m_obj = obj;
@@ -1288,7 +1251,7 @@ class uvm_callback_iter (T = uvm_object, CB = uvm_callback)
   // a derivative) that is in the queue of the context object. If the
   // queue is empty then ~null~ is returned.
 
-  // @uvm-ieee 1800.2-2017 auto D.1.2.2
+  // @uvm-ieee 1800.2-2020 auto D.1.2.2
   CB first() {
     synchronized (this) {
       _m_cb = uvm_callbacks!(T, CB).get_first(_m_i, _m_obj);
@@ -1302,7 +1265,7 @@ class uvm_callback_iter (T = uvm_object, CB = uvm_callback)
   // a derivative) that is in the queue of the context object. If the
   // queue is empty then ~null~ is returned.
 
-  // @uvm-ieee 1800.2-2017 auto D.1.2.3
+  // @uvm-ieee 1800.2-2020 auto D.1.2.3
   CB last() {
     synchronized (this) {
       _m_cb = uvm_callbacks!(T, CB).get_last(_m_i, _m_obj);
@@ -1316,7 +1279,7 @@ class uvm_callback_iter (T = uvm_object, CB = uvm_callback)
   // a derivative) that is in the queue of the context object. If there
   // are no more valid callbacks in the queue, then ~null~ is returned.
 
-   // @uvm-ieee 1800.2-2017 auto D.1.2.4
+   // @uvm-ieee 1800.2-2020 auto D.1.2.4
   CB next() {
     synchronized (this) {
       _m_cb = uvm_callbacks!(T, CB).get_next(_m_i, _m_obj);
@@ -1330,7 +1293,7 @@ class uvm_callback_iter (T = uvm_object, CB = uvm_callback)
   // a derivative) that is in the queue of the context object. If there
   // are no more valid callbacks in the queue, then ~null~ is returned.
 
-  // @uvm-ieee 1800.2-2017 auto D.1.2.5
+  // @uvm-ieee 1800.2-2020 auto D.1.2.5
   CB prev() {
     synchronized (this) {
       _m_cb = uvm_callbacks!(T, CB).get_prev(_m_i, _m_obj);
@@ -1343,7 +1306,7 @@ class uvm_callback_iter (T = uvm_object, CB = uvm_callback)
   // Returns the last callback accessed via a first() or next()
   // call.
 
-  // @uvm-ieee 1800.2-2017 auto D.1.2.6
+  // @uvm-ieee 1800.2-2020 auto D.1.2.6
   CB get_cb() {
     synchronized (this) {
       return _m_cb;
@@ -1383,7 +1346,7 @@ class uvm_callback_iter (T = uvm_object, CB = uvm_callback)
 // no restrictions.
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 10.7.1.1
+// @uvm-ieee 1800.2-2020 auto 10.7.1.1
 class uvm_callback: uvm_object
 {
 
@@ -1395,7 +1358,7 @@ class uvm_callback: uvm_object
   //
   // Creates a new uvm_callback object, giving it an optional ~name~.
 
-  // @uvm-ieee 1800.2-2017 auto 10.7.1.2.1
+  // @uvm-ieee 1800.2-2020 auto 10.7.1.2.1
   this(string name="uvm_callback") {
     synchronized (this) {
       super(name);
@@ -1407,7 +1370,7 @@ class uvm_callback: uvm_object
   //
   // Enable/disable callbacks (modeled like rand_mode and constraint_mode).
 
-  // @uvm-ieee 1800.2-2017 auto 10.7.1.2.2
+  // @uvm-ieee 1800.2-2020 auto 10.7.1.2.2
   bool callback_mode(int on = -1) {
     synchronized (this) {
       import std.string: format;
@@ -1433,7 +1396,7 @@ class uvm_callback: uvm_object
   //
   // Returns 1 if the callback is enabled, 0 otherwise.
 
-  // @uvm-ieee 1800.2-2017 auto 10.7.1.2.3
+  // @uvm-ieee 1800.2-2020 auto 10.7.1.2.3
   bool is_enabled() {
     return callback_mode();
   }

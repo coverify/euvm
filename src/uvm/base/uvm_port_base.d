@@ -1,16 +1,15 @@
 //
 //------------------------------------------------------------------------------
-// Copyright 2014-2019 Coverify Systems Technology
-// Copyright 2007-2018 Mentor Graphics Corporation
-// Copyright 2015 Analog Devices, Inc.
-// Copyright 2014 Semifore
-// Copyright 2014 Intel Corporation
-// Copyright 2010-2018 Synopsys, Inc.
-// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2014-2021 Coverify Systems Technology
 // Copyright 2010 AMD
-// Copyright 2014-2018 NVIDIA Corporation
+// Copyright 2015 Analog Devices, Inc.
+// Copyright 2007-2018 Cadence Design Systems, Inc.
 // Copyright 2012-2017 Cisco Systems, Inc.
-// Copyright 2017 Verific
+// Copyright 2014 Intel Corporation
+// Copyright 2007-2018 Mentor Graphics Corporation
+// Copyright 2014-2020 NVIDIA Corporation
+// Copyright 2014 Semifore
+// Copyright 2010-2018 Synopsys, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -250,7 +249,7 @@ class uvm_port_component(PORT=uvm_object): uvm_port_component_base
 // The library implements the following public API beyond what is documented
 // in 1800.2.
 
-// @uvm-ieee 1800.2-2017 auto 5.5.1
+// @uvm-ieee 1800.2-2020 auto 5.5.1
 abstract class uvm_port_base(IF = uvm_void): IF, rand.disable
 {
 
@@ -293,7 +292,7 @@ abstract class uvm_port_base(IF = uvm_void): IF, rand.disable
   // port's ~check_connection_relationships~ bit via ~uvm_config_int::set()~. See
   // <connect> for more information.
 
-  // @uvm-ieee 1800.2-2017 auto 5.5.2.1
+  // @uvm-ieee 1800.2-2020 auto 5.5.2.1
   this(string name,
 	      uvm_component parent,
 	      uvm_port_type_e port_type,
@@ -322,7 +321,7 @@ abstract class uvm_port_base(IF = uvm_void): IF, rand.disable
   //
   // Returns the leaf name of this port.
 
-  // @uvm-ieee 1800.2-2017 auto 5.5.2.2
+  // @uvm-ieee 1800.2-2020 auto 5.5.2.2
   string get_name() {
     return m_comp.get_name();
   }
@@ -332,7 +331,7 @@ abstract class uvm_port_base(IF = uvm_void): IF, rand.disable
   //
   // Returns the full hierarchical name of this port.
 
-  // @uvm-ieee 1800.2-2017 auto 5.5.2.3
+  // @uvm-ieee 1800.2-2020 auto 5.5.2.3
   string get_full_name() {
     return m_comp.get_full_name();
   }
@@ -342,7 +341,7 @@ abstract class uvm_port_base(IF = uvm_void): IF, rand.disable
   //
   // Returns the handle to this port's parent, or ~null~ if it has no parent.
 
-  // @uvm-ieee 1800.2-2017 auto 5.5.2.4
+  // @uvm-ieee 1800.2-2020 auto 5.5.2.4
   uvm_component get_parent() {
     return m_comp.get_parent();
   }
@@ -369,7 +368,7 @@ abstract class uvm_port_base(IF = uvm_void): IF, rand.disable
   // this method to return the concrete type. Otherwise, only a generic
   // "uvm_port", "uvm_export" or "uvm_implementation" is returned.
 
-  // @uvm-ieee 1800.2-2017 auto 5.5.2.5
+  // @uvm-ieee 1800.2-2020 auto 5.5.2.5
   string get_type_name() {
     import uvm.base.uvm_object_globals;
     synchronized (this) {
@@ -389,7 +388,7 @@ abstract class uvm_port_base(IF = uvm_void): IF, rand.disable
   // Returns the minimum number of implementation ports that must
   // be connected to this port by the end_of_elaboration phase.
 
-  // @uvm-ieee 1800.2-2017 auto 5.5.2.7
+  // @uvm-ieee 1800.2-2020 auto 5.5.2.7
   final int max_size() {
     synchronized (this) {
       return _m_max_size;
@@ -402,7 +401,7 @@ abstract class uvm_port_base(IF = uvm_void): IF, rand.disable
   // Returns the maximum number of implementation ports that must
   // be connected to this port by the end_of_elaboration phase.
 
-  // @uvm-ieee 1800.2-2017 auto 5.5.2.6
+  // @uvm-ieee 1800.2-2020 auto 5.5.2.6
   final int min_size() {
     synchronized (this) {
       return _m_min_size;
@@ -416,7 +415,7 @@ abstract class uvm_port_base(IF = uvm_void): IF, rand.disable
   // ports this port can connect to. A port is unbounded when the ~max_size~
   // argument in the constructor is specified as ~UVM_UNBOUNDED_CONNECTIONS~.
 
-  // @uvm-ieee 1800.2-2017 auto 5.5.2.8
+  // @uvm-ieee 1800.2-2020 auto 5.5.2.8
   final bool is_unbounded() {
     synchronized (this) {
       return (_m_max_size == UVM_UNBOUNDED_CONNECTIONS);
@@ -426,7 +425,7 @@ abstract class uvm_port_base(IF = uvm_void): IF, rand.disable
 
   // Function -- NODOCS -- is_port
 
-  // @uvm-ieee 1800.2-2017 auto 5.5.2.9
+  // @uvm-ieee 1800.2-2020 auto 5.5.2.9
   final bool is_port() {
     import uvm.base.uvm_object_globals;
     synchronized (this) {
@@ -436,7 +435,7 @@ abstract class uvm_port_base(IF = uvm_void): IF, rand.disable
 
   // Function -- NODOCS -- is_export
 
-  // @uvm-ieee 1800.2-2017 auto 5.5.2.10
+  // @uvm-ieee 1800.2-2020 auto 5.5.2.10
   final bool is_export() {
     import uvm.base.uvm_object_globals;
     synchronized (this) {
@@ -449,7 +448,7 @@ abstract class uvm_port_base(IF = uvm_void): IF, rand.disable
   // Returns 1 if this port is of the type given by the method name,
   // 0 otherwise.
 
-  // @uvm-ieee 1800.2-2017 auto 5.5.2.11
+  // @uvm-ieee 1800.2-2020 auto 5.5.2.11
   final bool is_imp() {
     import uvm.base.uvm_object_globals;
     synchronized (this) {
@@ -464,7 +463,7 @@ abstract class uvm_port_base(IF = uvm_void): IF, rand.disable
   // is not valid before the end_of_elaboration phase, as port connections have
   // not yet been resolved.
 
-  // @uvm-ieee 1800.2-2017 auto 5.5.2.12
+  // @uvm-ieee 1800.2-2020 auto 5.5.2.12
   final size_t size () {
     synchronized (this) {
       return _m_imp_list.length;
@@ -495,7 +494,7 @@ abstract class uvm_port_base(IF = uvm_void): IF, rand.disable
   // must not be set before the end_of_elaboration phase, when port connections
   // have not yet been resolved.
 
-  // @uvm-ieee 1800.2-2017 auto 5.5.2.13
+  // @uvm-ieee 1800.2-2020 auto 5.5.2.13
   final void set_default_index(size_t index) {
     synchronized (this) {
       _m_def_index = index;
@@ -543,7 +542,7 @@ abstract class uvm_port_base(IF = uvm_void): IF, rand.disable
   // as this method. The component's ~connect~ method is a phase callback where
   // port's ~connect~ method calls are made.
 
-  // @uvm-ieee 1800.2-2017 auto 5.5.2.14
+  // @uvm-ieee 1800.2-2020 auto 5.5.2.14
   void connect (this_type provider) {
     import uvm.base.uvm_domain;
     import uvm.base.uvm_object_globals;
@@ -780,7 +779,7 @@ abstract class uvm_port_base(IF = uvm_void): IF, rand.disable
   // get_connected_to
   // ----------------
 
-  // @uvm-ieee 1800.2-2017 auto 5.5.2.9
+  // @uvm-ieee 1800.2-2020 auto 5.5.2.9
   final void get_connected_to (out uvm_port_base!IF[string] list) {
     synchronized (this) {
       // list = null; // taken care by 'out'
@@ -803,7 +802,7 @@ abstract class uvm_port_base(IF = uvm_void): IF, rand.disable
   // get_provided_to
   // ---------------
 
-  // @uvm-ieee 1800.2-2017 auto 5.5.2.10
+  // @uvm-ieee 1800.2-2020 auto 5.5.2.10
   final void get_provided_to (out uvm_port_base!IF[string] list) {
     synchronized (this) {
       foreach (name, port; _m_provided_to) {
@@ -923,7 +922,7 @@ abstract class uvm_port_base(IF = uvm_void): IF, rand.disable
   // This method is automatically called just before the start of the
   // end_of_elaboration phase. Users should not need to call it directly.
 
-  // @uvm-ieee 1800.2-2017 auto 5.5.2.15
+  // @uvm-ieee 1800.2-2020 auto 5.5.2.15
   void resolve_bindings() {
     import uvm.base.uvm_object_globals;
     synchronized (this) {

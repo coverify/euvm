@@ -1,13 +1,15 @@
 //
 // -------------------------------------------------------------
 // Copyright 2014-2021 Coverify Systems Technology
+// Copyright 2010 AMD
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2019 Cisco Systems, Inc.
+// Copyright 2020 Intel Corporation
+// Copyright 2020 Marvell International Ltd.
 // Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2014-2020 NVIDIA Corporation
 // Copyright 2014 Semifore
 // Copyright 2004-2018 Synopsys, Inc.
-// Copyright 2010-2018 Cadence Design Systems, Inc.
-// Copyright 2010 AMD
-// Copyright 2014-2018 NVIDIA Corporation
-// Copyright 2019 Cisco Systems, Inc.
 //    All Rights Reserved Worldwide
 //
 //    Licensed under the Apache License, Version 2.0 (the
@@ -59,10 +61,6 @@ import esdl.rand;
 
 import std.string: format;
 
-
-// Class: uvm_reg_block
-// This is an implementation of uvm_reg_block as described in 1800.2-2017 with
-// the addition of API described below.
 
 // @uvm-ieee 1800.2-2017 auto 18.1.1
 class uvm_reg_block: uvm_object, rand.barrier
@@ -282,7 +280,6 @@ class uvm_reg_block: uvm_object, rand.barrier
     }
   }
 
-
   // Variable -- NODOCS -- default_map
   //
   // Default address map
@@ -294,16 +291,11 @@ class uvm_reg_block: uvm_object, rand.barrier
   // It is also the implciit address map for a block with a single,
   // unamed address map because it has only one physical interface.
   //
-  @uvm_private_sync
+  @uvm_protected_sync
   private uvm_reg_map _default_map;
 
-  // Function: get_default_map 
-  // This returns the default address map for this block. 
-  // If create_map has never been called, this returns null. 
-  // If set_default_map has been called, this returns the value set in the most recent call. 
-  // Otherwise, this returns the map created in the first call to create_map
-  // @uvm-contrib This API is being considered for potential contribution to 1800.2
 
+  // @uvm-ieee 1800.2-2020 manual 18.1.2.5
   final uvm_reg_map get_default_map() {
     synchronized(this) {
       return _default_map;
@@ -428,7 +420,7 @@ class uvm_reg_block: uvm_object, rand.barrier
   // such as adding registers or memories,
   // can be made.
 
-  // @uvm-ieee 1800.2-2017 auto 18.1.2.5
+  // @uvm-ieee 1800.2-2017 auto 18.1.2.6
   void lock_model() {
     synchronized(this) {
 
@@ -482,12 +474,19 @@ class uvm_reg_block: uvm_object, rand.barrier
 
 	_m_uvm_lock_model_complete.trigger();
       }
+      else {
+	// Initialize root maps within sub-blocks
+	// NOTE: https://accellera.mantishub.io/view.php?id=6398
+	foreach(map, b; _maps)
+	  if (map.get_parent_map() is null) 
+	    map.Xinit_address_mapX();
+      }
     }
   }
 
   // brings back the register mode to a state before lock_model() so that a subsequent lock_model() can be issued
 
-  // @uvm-ieee 1800.2-2017 auto 18.1.2.6
+  // @uvm-ieee 1800.2-2017 auto 18.1.2.7
   void unlock_model() {
     bool[uvm_reg_block] s;
     synchronized(_uvm_scope_inst) {
@@ -510,7 +509,7 @@ class uvm_reg_block: uvm_object, rand.barrier
     }
   }
    
-  // @uvm-ieee 1800.2-2017 auto 18.1.2.8
+  // @uvm-ieee 1800.2-2017 auto 18.1.2.9
   // task
   void wait_for_lock() {
     m_uvm_lock_model_complete.wait_trigger();
@@ -523,7 +522,7 @@ class uvm_reg_block: uvm_object, rand.barrier
   //
 
    
-  // @uvm-ieee 1800.2-2017 auto 18.1.2.9
+  // @uvm-ieee 1800.2-2017 auto 18.1.2.10
   final bool is_locked() {
     synchronized(this) {
       return this._locked;
@@ -1501,28 +1500,6 @@ class uvm_reg_block: uvm_object, rand.barrier
     }
   }
 
-  // Function -- NODOCS -- get_default_path
-  //
-  // Default access path
-  //
-  // Returns the default access path for this block.
-  //
-
-  //  uvm_door_e get_default_path() {
-  //   synchronized(this) {
-  //     if (this._default_path != uvm_door_e.UVM_DEFAULT_DOOR) {
-  // 	return this._default_path;
-  //     }
-
-  //     if (this._parent !is null) {
-  // 	return this._parent.get_default_path();
-  //     }
-
-  //     return UVM_FRONTDOOR;
-  //   }
-  // }
-
-
   // Function -- NODOCS -- reset
   //
   // Reset the mirror for this block.
@@ -1828,7 +1805,7 @@ class uvm_reg_block: uvm_object, rand.barrier
   // if none have been specified for this block.
   //
 
-  // @uvm-ieee 1800.2-2017 auto 18.1.6.1
+  // @uvm-ieee 1800.2-2017 auto 18.1.6.2
   final uvm_reg_backdoor get_backdoor(bool inherited = true) {
     synchronized(this) {
       if (_backdoor is null && inherited) {
@@ -1854,7 +1831,7 @@ class uvm_reg_block: uvm_object, rand.barrier
   // in a lower-level block or register.
   //
 
-  // @uvm-ieee 1800.2-2017 auto 18.1.6.2
+  // @uvm-ieee 1800.2-2017 auto 18.1.6.3
   final void set_backdoor(uvm_reg_backdoor bkdr,
 			  string           fname = "",
 			  int              lineno = 0) {
@@ -1879,7 +1856,7 @@ class uvm_reg_block: uvm_object, rand.barrier
   // for the specified design abstraction.
   //
 
-  // @uvm-ieee 1800.2-2017 auto 18.1.6.3
+  // @uvm-ieee 1800.2-2017 auto 18.1.6.4
   final void clear_hdl_path(string kind = "RTL") {
     synchronized(this) {
       if (kind == "ALL") {
@@ -1913,7 +1890,7 @@ class uvm_reg_block: uvm_object, rand.barrier
   // in the design abstraction
   //
 
-  // @uvm-ieee 1800.2-2017 auto 18.1.6.4
+  // @uvm-ieee 1800.2-2017 auto 18.1.6.5
   final void add_hdl_path(string path, string kind = "RTL") {
     synchronized(this) {
       uvm_queue!string paths = _hdl_paths_pool.get(kind);
@@ -1931,7 +1908,7 @@ class uvm_reg_block: uvm_object, rand.barrier
   // the nearest block ancestor with a specified default design abstraction.
   //
 
-  // @uvm-ieee 1800.2-2017 auto 18.1.6.5
+  // @uvm-ieee 1800.2-2017 auto 18.1.6.6
   final bool  has_hdl_path(string kind = "") {
     synchronized(this) {
       if (kind == "") {
@@ -1958,7 +1935,7 @@ class uvm_reg_block: uvm_object, rand.barrier
   // for this block is used.
   //
 
-  // @uvm-ieee 1800.2-2017 auto 18.1.6.6
+  // @uvm-ieee 1800.2-2017 auto 18.1.6.7
   void get_hdl_path(ref string[] paths, string kind = "") {
     synchronized(this) {
       if (kind == "")
@@ -1998,7 +1975,7 @@ class uvm_reg_block: uvm_object, rand.barrier
   // for each ancestor block is used to get each incremental path.
   //
 
-  // @uvm-ieee 1800.2-2017 auto 18.1.6.7
+  // @uvm-ieee 1800.2-2017 auto 18.1.6.8
   final void get_full_hdl_path(out string[] paths,
 			       string       kind = "",
 			       string       separator = ".") {
@@ -2080,7 +2057,7 @@ class uvm_reg_block: uvm_object, rand.barrier
   // Returns "" if no default design abstraction has been specified.
   //
 
-  // @uvm-ieee 1800.2-2017 auto 18.1.6.8
+  // @uvm-ieee 1800.2-2017 auto 18.1.6.10
   string get_default_hdl_path() {
     synchronized(this) {
       if (_default_hdl_path == "" && _parent !is null) {
@@ -2103,7 +2080,7 @@ class uvm_reg_block: uvm_object, rand.barrier
   // same design abstraction specified using <add_hdl_path>.
   //
 
-  // @uvm-ieee 1800.2-2017 auto 18.1.6.10
+  // @uvm-ieee 1800.2-2017 auto 18.1.6.11
   void set_hdl_path_root (string path, string kind = "RTL") {
     synchronized(this) {
       if (kind == "")
@@ -2124,7 +2101,7 @@ class uvm_reg_block: uvm_object, rand.barrier
   // for this block is used.
   //
 
-  // @uvm-ieee 1800.2-2017 auto 18.1.6.11
+  // @uvm-ieee 1800.2-2017 auto 18.1.6.12
   final bool  is_hdl_path_root (string kind = "") {
     synchronized(this) {
       if (kind == "")
@@ -2272,7 +2249,7 @@ class uvm_reg_block: uvm_object, rand.barrier
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.1.2.7
+  // @uvm-ieee 1800.2-2017 auto 18.1.2.8
   void set_lock(bool v) {
     synchronized(this) {
       _locked = v;
@@ -2284,7 +2261,7 @@ class uvm_reg_block: uvm_object, rand.barrier
 
   // remove all knowledge of map m and all regs|mems|vregs contained in m from the block
 
-  // @uvm-ieee 1800.2-2017 auto 18.1.2.10
+  // @uvm-ieee 1800.2-2017 auto 18.1.2.11
   void unregister(uvm_reg_map m) {
     synchronized(this) {
       foreach (idx, reg; _regs) {

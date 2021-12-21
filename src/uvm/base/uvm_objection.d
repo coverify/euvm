@@ -1,14 +1,14 @@
 //
 //----------------------------------------------------------------------
-// Copyright 2012-2019 Coverify Systems Technology
-// Copyright 2007-2014 Mentor Graphics Corporation
-// Copyright 2014 Semifore
-// Copyright 2014 Intel Corporation
-// Copyright 2010-2014 Synopsys, Inc.
-// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2012-2021 Coverify Systems Technology
 // Copyright 2010-2012 AMD
-// Copyright 2013-2018 NVIDIA Corporation
+// Copyright 2007-2018 Cadence Design Systems, Inc.
 // Copyright 2014 Cisco Systems, Inc.
+// Copyright 2014 Intel Corporation
+// Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2013-2020 NVIDIA Corporation
+// Copyright 2014 Semifore
+// Copyright 2010-2014 Synopsys, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -51,7 +51,7 @@ import std.string : lastIndexOf;
 //  }
 
 alias uvm_objection_cbs_t =
-  uvm_callbacks!(uvm_objection, uvm_objection_callback);
+  uvm_callbacks!(uvm_objection, uvm_objection_callback); /* @uvm-ieee 1800.2-2020 auto D.4.2*/
 
 // typedef class uvm_cmdline_processor;
 // typedef class uvm_callbacks_objection;
@@ -118,8 +118,8 @@ import esdl.rand.misc: rand;
 // objections from the command line using the option +UVM_OBJECTION_TRACE.
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 10.5.1
-// @uvm-ieee 1800.2-2017 auto 10.5.1.1
+// @uvm-ieee 1800.2-2020 auto 10.5.1
+// @uvm-ieee 1800.2-2020 auto 10.5.1.1
 class uvm_objection: uvm_report_object, rand.disable
 {
   mixin uvm_register_cb!(uvm_objection_callback);
@@ -243,7 +243,7 @@ class uvm_objection: uvm_report_object, rand.disable
   // argument +UVM_OBJECTION_TRACE to turn tracing on for
   // all objection objects.
 
-  // @uvm-ieee 1800.2-2017 auto 10.5.1.2
+  // @uvm-ieee 1800.2-2020 auto 10.5.1.2
   this(string name="") {
     import uvm.base.uvm_cmdline_processor;
     import uvm.base.uvm_root: uvm_root;
@@ -425,7 +425,7 @@ class uvm_objection: uvm_report_object, rand.disable
   // Group -- NODOCS -- Objection Control
 
 
-  // @uvm-ieee 1800.2-2017 auto 10.5.1.3.2
+  // @uvm-ieee 1800.2-2020 auto 10.5.1.3.2
   void set_propagate_mode (bool prop_mode) {
     synchronized (this) {
       if (!_m_top_all_dropped && (get_objection_total() != 0)) {
@@ -441,7 +441,7 @@ class uvm_objection: uvm_report_object, rand.disable
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 10.5.1.3.1
+  // @uvm-ieee 1800.2-2020 auto 10.5.1.3.1
   bool get_propagate_mode() {
     synchronized (this) {
       return _m_prop_mode;
@@ -467,7 +467,7 @@ class uvm_objection: uvm_report_object, rand.disable
   //   hierarchy.
   //
 
-  // @uvm-ieee 1800.2-2017 auto 10.5.1.3.3
+  // @uvm-ieee 1800.2-2020 auto 10.5.1.3.3
   void raise_objection (uvm_object obj = null,
 			string description = "",
 			int count = 1) {
@@ -692,7 +692,7 @@ class uvm_objection: uvm_report_object, rand.disable
   // registered callbacks, the forked process can be skipped and propagation
   // proceeds immediately to the parent as described.
 
-  // @uvm-ieee 1800.2-2017 auto 10.5.1.3.4
+  // @uvm-ieee 1800.2-2020 auto 10.5.1.3.4
   void drop_objection (uvm_object obj=null,
 		       string description="",
 		       int count=1) {
@@ -801,7 +801,7 @@ class uvm_objection: uvm_report_object, rand.disable
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 10.5.1.3.5
+  // @uvm-ieee 1800.2-2020 auto 10.5.1.3.5
   void clear(uvm_object obj=null) {
 
     import uvm.base.uvm_root: uvm_root;
@@ -1040,7 +1040,7 @@ class uvm_objection: uvm_report_object, rand.disable
   // the drain_time/all_dropped execution is terminated.
 
   // AE: set_drain_time(drain,obj=null)?
-  // @uvm-ieee 1800.2-2017 auto 10.5.1.3.7
+  // @uvm-ieee 1800.2-2020 auto 10.5.1.3.7
   final void set_drain_time (uvm_object obj, Time drain) {
     set_drain_time(obj, SimTime(getRootEntity(), drain));
   }
@@ -1066,7 +1066,7 @@ class uvm_objection: uvm_report_object, rand.disable
   // Objection callback that is called when a <raise_objection> has reached ~obj~.
   // The default implementation calls <uvm_component::raised>.
 
-  // @uvm-ieee 1800.2-2017 auto 10.5.1.4.1
+  // @uvm-ieee 1800.2-2020 auto 10.5.1.4.1
   void raised(uvm_object obj,
 	      uvm_object source_obj,
 	      string description,
@@ -1090,7 +1090,7 @@ class uvm_objection: uvm_report_object, rand.disable
   // Objection callback that is called when a <drop_objection> has reached ~obj~.
   // The default implementation calls <uvm_component::dropped>.
 
-  // @uvm-ieee 1800.2-2017 auto 10.5.1.4.2
+  // @uvm-ieee 1800.2-2020 auto 10.5.1.4.2
   void dropped (uvm_object obj,
 		uvm_object source_obj,
 		string description,
@@ -1116,7 +1116,7 @@ class uvm_objection: uvm_report_object, rand.disable
   // after the drain time associated with ~obj~. The default implementation
   // calls <uvm_component::all_dropped>.
 
-  // @uvm-ieee 1800.2-2017 auto 10.5.1.4.3
+  // @uvm-ieee 1800.2-2020 auto 10.5.1.4.3
   void all_dropped (uvm_object obj,
 		    uvm_object source_obj,
 		    string description,
@@ -1152,7 +1152,7 @@ class uvm_objection: uvm_report_object, rand.disable
   // Returns the current list of objecting objects (objects that
   // raised an objection but have not dropped it).
 
-  // @uvm-ieee 1800.2-2017 auto 10.5.1.5.1
+  // @uvm-ieee 1800.2-2020 auto 10.5.1.5.1
   final void get_objectors(out Queue!uvm_object list) {
     synchronized (this) {
       foreach (obj, count; _m_source_count) {
@@ -1178,7 +1178,7 @@ class uvm_objection: uvm_report_object, rand.disable
 
   // task
 
-  // @uvm-ieee 1800.2-2017 auto 10.5.1.5.2
+  // @uvm-ieee 1800.2-2020 auto 10.5.1.5.2
   final void wait_for(uvm_objection_event objt_event, uvm_object obj=null) {
 
     import uvm.base.uvm_object_globals;
@@ -1245,7 +1245,7 @@ class uvm_objection: uvm_report_object, rand.disable
   //
   // Returns the current number of objections raised by the given ~object~.
 
-  // @uvm-ieee 1800.2-2017 auto 10.5.1.5.3
+  // @uvm-ieee 1800.2-2020 auto 10.5.1.5.3
   final int get_objection_count (uvm_object obj=null) {
     import uvm.base.uvm_root: uvm_root;
     uvm_root m_top = uvm_root.get();
@@ -1268,7 +1268,7 @@ class uvm_objection: uvm_report_object, rand.disable
   // Returns the current number of objections raised by the given ~object~
   // and all descendants.
 
-  // @uvm-ieee 1800.2-2017 auto 10.5.1.5.4
+  // @uvm-ieee 1800.2-2020 auto 10.5.1.5.4
   final int get_objection_total(uvm_object obj = null) {
     import uvm.base.uvm_root: uvm_root;
     uvm_root m_top = uvm_root.get();
@@ -1292,7 +1292,7 @@ class uvm_objection: uvm_report_object, rand.disable
   //
   // Returns the current drain time set for the given ~object~ (default: 0 ns).
 
-  // @uvm-ieee 1800.2-2017 auto 10.5.1.3.6
+  // @uvm-ieee 1800.2-2020 auto 10.5.1.3.6
   final SimTime get_drain_time (uvm_object obj = null) {
     import uvm.base.uvm_root: uvm_root;
     uvm_root m_top = uvm_root.get();
@@ -1522,7 +1522,7 @@ alias uvm_callbacks_objection = uvm_objection;
 //| end
 
 
-// @uvm-ieee 1800.2-2017 auto 10.5.2.1
+// @uvm-ieee 1800.2-2020 auto 10.5.2.1
 class uvm_objection_callback: uvm_callback
 {
   this(string name) {
@@ -1533,7 +1533,7 @@ class uvm_objection_callback: uvm_callback
   //
   // Objection raised callback function. Called by <uvm_objection::raised>.
 
-  // @uvm-ieee 1800.2-2017 auto 10.5.2.2.1
+  // @uvm-ieee 1800.2-2020 auto 10.5.2.2.1
   void raised (uvm_objection objection, uvm_object obj,
 	       uvm_object source_obj, string description, int count) {
   }
@@ -1542,7 +1542,7 @@ class uvm_objection_callback: uvm_callback
   //
   // Objection dropped callback function. Called by <uvm_objection::dropped>.
 
-  // @uvm-ieee 1800.2-2017 auto 10.5.2.2.2
+  // @uvm-ieee 1800.2-2020 auto 10.5.2.2.2
   void dropped (uvm_objection objection, uvm_object obj,
 		uvm_object source_obj, string description, int count) {
   }
@@ -1553,7 +1553,7 @@ class uvm_objection_callback: uvm_callback
 
   // task
 
-  // @uvm-ieee 1800.2-2017 auto 10.5.2.2.3
+  // @uvm-ieee 1800.2-2020 auto 10.5.2.2.3
   void all_dropped (uvm_objection objection, uvm_object obj,
 		    uvm_object source_obj, string description,
 		    int count) {

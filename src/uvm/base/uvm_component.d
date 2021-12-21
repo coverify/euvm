@@ -1,17 +1,17 @@
 //
 //------------------------------------------------------------------------------
 // Copyright 2012-2021 Coverify Systems Technology
-// Copyright 2010 Paradigm Works
-// Copyright 2007-2017 Mentor Graphics Corporation
-// Copyright 2014 Semifore
-// Copyright 2018 Intel Corporation
-// Copyright 2010-2014 Synopsys, Inc.
-// Copyright 2007-2018 Cadence Design Systems, Inc.
-// Copyright 2020 Marvell International Ltd.
 // Copyright 2011-2018 AMD
-// Copyright 2013-2018 NVIDIA Corporation
-// Copyright 2012-2018 Cisco Systems, Inc.
 // Copyright 2012 Accellera Systems Initiative
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2012-2018 Cisco Systems, Inc.
+// Copyright 2018 Intel Corporation
+// Copyright 2020 Marvell International Ltd.
+// Copyright 2007-2020 Mentor Graphics Corporation
+// Copyright 2013-2020 NVIDIA Corporation
+// Copyright 2010 Paradigm Works
+// Copyright 2014 Semifore
+// Copyright 2010-2014 Synopsys, Inc.
 // Copyright 2017-2018 Verific
 //   All Rights Reserved Worldwide
 //
@@ -31,9 +31,6 @@
 //------------------------------------------------------------------------------
 
 module uvm.base.uvm_component;
-// typedef class uvm_objection;
-// typedef class uvm_sequence_base;
-// typedef class uvm_sequence_item;
 
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_object: uvm_object;
@@ -57,6 +54,8 @@ import uvm.base.uvm_report_object: uvm_report_object;
 import uvm.base.uvm_port_base: uvm_port_base;
 import uvm.base.uvm_resource_base: uvm_resource_base;
 import uvm.base.uvm_registry: uvm_abstract_component_registry;
+import uvm.base.uvm_cmdline_report: uvm_cmdline_verbosity,
+  uvm_cmdline_set_verbosity, uvm_cmdline_set_action, uvm_cmdline_set_severity;
 
 import uvm.base.uvm_scope;
 
@@ -71,7 +70,6 @@ import std.traits: isIntegral, isAbstractClass, isArray;
 
 import std.string: format;
 import std.conv: to;
-import std.random: Random;
 
 import std.algorithm;
 import std.exception: enforce;
@@ -85,15 +83,7 @@ alias uvm_event_pool = uvm_object_string_pool!(uvm_event!(uvm_object));
 // The library implements the following public API beyond what is 
 // documented in 1800.2.
 ///------------------------------------------------------------------------------
-struct m_verbosity_setting {
-  string comp;
-  string phase;
-  SimTime   offset;
-  uvm_verbosity verbosity;
-  string id;
-}
-
-// @uvm-ieee 1800.2-2017 auto 13.1.1
+// @uvm-ieee 1800.2-2020 auto 13.1.1
 abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
 {
   import uvm.base.uvm_objection: uvm_objection;
@@ -109,56 +99,19 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
     @uvm_public_sync
     private bool _print_config_matches;
 
-    private m_verbosity_setting[] _m_time_settings;
-
     @uvm_private_sync
     private bool _print_config_warned;
 
     private uint _m_comp_count;
-
-    private uvm_cmdline_parsed_arg_t[] _m_uvm_applied_cl_action;
-    @uvm_none_sync
-    const(uvm_cmdline_parsed_arg_t[]) m_uvm_applied_cl_action() {
-      synchronized (this) {
-	return _m_uvm_applied_cl_action.dup;
-      }
-    }
-
-    private uvm_cmdline_parsed_arg_t[] _m_uvm_applied_cl_sev;
-    @uvm_none_sync
-    const(uvm_cmdline_parsed_arg_t[]) m_uvm_applied_cl_sev() {
-      synchronized (this) {
-	return _m_uvm_applied_cl_sev.dup;
-      }
-    }
 
     @uvm_private_sync
     private bool _cl_action_initialized;
     @uvm_private_sync
     private bool _cl_sev_initialized;
 
-    @uvm_none_sync
-    void add_m_uvm_applied_cl_action(uvm_cmdline_parsed_arg_t arg) {
-      synchronized (this) {
-	_m_uvm_applied_cl_action ~= arg;
-      }
-    }
-    @uvm_none_sync
-    void add_m_uvm_applied_cl_sev(uvm_cmdline_parsed_arg_t arg) {
-      synchronized (this) {
-	_m_uvm_applied_cl_sev ~= arg;
-      }
-    }
   }
 
   mixin (uvm_scope_sync_string);
-
-  protected const(uvm_cmdline_parsed_arg_t[]) m_uvm_applied_cl_action() {
-    return _uvm_scope_inst.m_uvm_applied_cl_action();
-  }
-  protected const(uvm_cmdline_parsed_arg_t[]) m_uvm_applied_cl_sev() {
-    return _uvm_scope_inst.m_uvm_applied_cl_sev();
-  }
 
   mixin (uvm_sync_string);
 
@@ -257,7 +210,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   // This constructor is called by all the uvm_component derivatives
   // except for uvm_root instances
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.2.1
+  // @uvm-ieee 1800.2-2020 auto 13.1.2.1
   this(string name, uvm_component parent) {
     import uvm.base.uvm_root;
     import uvm.base.uvm_entity;
@@ -428,7 +381,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   //
   // Returns a handle to this component's parent, or ~null~ if it has no parent.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.3.1
+  // @uvm-ieee 1800.2-2020 auto 13.1.3.1
   uvm_component get_parent() {
     synchronized (this) {
       return _m_parent;
@@ -459,7 +412,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   // with the leaf name of this object, as given by <uvm_object::get_name>.
 
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.3.2
+  // @uvm-ieee 1800.2-2020 auto 13.1.3.2
   override string get_full_name () {
     synchronized (this) {
       // Note- Implementation choice to construct full name once since the
@@ -485,7 +438,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   //|   foreach (array[i])
   //|     do_something(array[i]);
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.3.3
+  // @uvm-ieee 1800.2-2020 auto 13.1.3.3
   final void get_children(ref Queue!uvm_component children) {
     synchronized (this) {
       children ~= cast (uvm_component[]) m_children.values;
@@ -508,7 +461,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   // get_child
   // ---------
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.3.4
+  // @uvm-ieee 1800.2-2020 auto 13.1.3.4
   final uvm_component get_child(string name) {
     synchronized (this) {
       auto pcomp = name in m_children;
@@ -526,7 +479,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   // get_next_child
   // --------------
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.3.4
+  // @uvm-ieee 1800.2-2020 auto 13.1.3.4
   final int get_next_child(ref string name) {
     synchronized (this) {
       auto found = find(_children_names, name);
@@ -556,7 +509,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   //|        child.print();
   //|      end while (comp.get_next_child(name));
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.3.4
+  // @uvm-ieee 1800.2-2020 auto 13.1.3.4
   final int get_first_child(ref string name) {
     synchronized (this) {
       _children_names = m_children.keys;
@@ -575,7 +528,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   //
   // Returns the number of this component's children.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.3.5
+  // @uvm-ieee 1800.2-2020 auto 13.1.3.5
   final size_t get_num_children() {
     synchronized (this) {
       return _m_children.length;
@@ -586,7 +539,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   //
   // Returns 1 if this component has a child with the given ~name~, 0 otherwise.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.3.6
+  // @uvm-ieee 1800.2-2020 auto 13.1.3.6
   final bool has_child(string name) {
     synchronized (this) {
       if (name in _m_children) {
@@ -633,7 +586,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   // matching component is returned, else ~null~. The name must not contain
   // wildcards.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.3.7
+  // @uvm-ieee 1800.2-2020 auto 13.1.3.7
   final uvm_component lookup(string name) {
     import uvm.base.uvm_root;
     import uvm.base.uvm_coreservice;
@@ -643,6 +596,17 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
       uvm_component comp = this;
 
       string leaf , remainder;
+
+
+      int name_length = cast(int) name.length;
+  
+      for (int i = 0; i < name_length; i++) {
+	if ((name[i..i+2] == "..") || (name[i] == '*') || (name[i] == '?')) {
+	  uvm_warning("Lookup String Error", format("Malformed look up string: %s", name));
+	  return null;
+	}
+      }
+  
       m_extract_name(name, leaf, remainder);
 
       if (leaf == "") {
@@ -722,12 +686,12 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   // these are prototypes for the methods to be implemented in user components
   // build_phase() has a default implementation, the others have an empty default
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.4.1.1
+  // @uvm-ieee 1800.2-2020 auto 13.1.4.1.1
   void build_phase(uvm_phase phase) {
     synchronized (this) {
       _m_build_done = true;
       if (use_automatic_config())
-	apply_config_settings(print_config_matches);
+	apply_config_settings(get_print_config_matches());
     }
   }
 
@@ -759,7 +723,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   //
   // This method should never be called directly.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.4.1.2
+  // @uvm-ieee 1800.2-2020 auto 13.1.4.1.2
   void connect_phase(uvm_phase phase) {
     return;
   }
@@ -778,7 +742,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   //
   // This method should never be called directly.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.4.1.3
+  // @uvm-ieee 1800.2-2020 auto 13.1.4.1.3
   void end_of_elaboration_phase(uvm_phase phase) {
     return;
   }
@@ -789,7 +753,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   //
   // This method should never be called directly.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.4.1.4
+  // @uvm-ieee 1800.2-2020 auto 13.1.4.1.4
   void start_of_simulation_phase(uvm_phase phase) {
     return;
   }
@@ -809,7 +773,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   //
   // The run_phase task should never be called directly.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.4.1.5
+  // @uvm-ieee 1800.2-2020 auto 13.1.4.1.5
   // task
   void run_phase(uvm_phase phase) {
     return;
@@ -833,7 +797,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   //
   // This method should not be called directly.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.4.2.1
+  // @uvm-ieee 1800.2-2020 auto 13.1.4.2.1
   // task
   void pre_reset_phase(uvm_phase phase) {
     return;
@@ -857,7 +821,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   //
   // This method should not be called directly.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.4.2.2
+  // @uvm-ieee 1800.2-2020 auto 13.1.4.2.2
   // task
   void reset_phase(uvm_phase phase) {
     return;
@@ -881,7 +845,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   //
   // This method should not be called directly.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.4.2.3
+  // @uvm-ieee 1800.2-2020 auto 13.1.4.2.3
   // task
   void post_reset_phase(uvm_phase phase) {
     return;
@@ -905,7 +869,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   //
   // This method should not be called directly.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.4.2.4
+  // @uvm-ieee 1800.2-2020 auto 13.1.4.2.4
   // task
   void pre_configure_phase(uvm_phase phase) {
     return;
@@ -929,7 +893,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   //
   // This method should not be called directly.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.4.2.5
+  // @uvm-ieee 1800.2-2020 auto 13.1.4.2.5
   // task
   void configure_phase(uvm_phase phase) {
     return;
@@ -953,7 +917,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   //
   // This method should not be called directly.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.4.2.6
+  // @uvm-ieee 1800.2-2020 auto 13.1.4.2.6
   // task
   void post_configure_phase(uvm_phase phase) {
     return;
@@ -977,7 +941,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   //
   // This method should not be called directly.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.4.2.7
+  // @uvm-ieee 1800.2-2020 auto 13.1.4.2.7
   // task
   void pre_main_phase(uvm_phase phase) {
     return;
@@ -1001,7 +965,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   //
   // This method should not be called directly.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.4.2.8
+  // @uvm-ieee 1800.2-2020 auto 13.1.4.2.8
   // task
   void main_phase(uvm_phase phase) {
     return;
@@ -1025,7 +989,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   //
   // This method should not be called directly.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.4.2.9
+  // @uvm-ieee 1800.2-2020 auto 13.1.4.2.9
   // task
   void post_main_phase(uvm_phase phase) {
     return;
@@ -1049,7 +1013,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   //
   // This method should not be called directly.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.4.2.10
+  // @uvm-ieee 1800.2-2020 auto 13.1.4.2.10
   // task
   void pre_shutdown_phase(uvm_phase phase) {
     return;
@@ -1073,7 +1037,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   //
   // This method should not be called directly.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.4.2.11
+  // @uvm-ieee 1800.2-2020 auto 13.1.4.2.11
   // task
   void shutdown_phase(uvm_phase phase) {
     return;
@@ -1097,7 +1061,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   //
   // This method should not be called directly.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.4.2.12
+  // @uvm-ieee 1800.2-2020 auto 13.1.4.2.12
   // task
   void post_shutdown_phase(uvm_phase phase) {
     return;
@@ -1109,7 +1073,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   //
   // This method should never be called directly.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.4.1.6
+  // @uvm-ieee 1800.2-2020 auto 13.1.4.1.6
   void extract_phase(uvm_phase phase) {
     return;
   }
@@ -1120,7 +1084,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   //
   // This method should never be called directly.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.4.1.7
+  // @uvm-ieee 1800.2-2020 auto 13.1.4.1.7
   void check_phase(uvm_phase phase) {
     return;
   }
@@ -1131,7 +1095,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   //
   // This method should never be called directly.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.4.1.8
+  // @uvm-ieee 1800.2-2020 auto 13.1.4.1.8
   void report_phase(uvm_phase phase) {
     return;
   }
@@ -1142,7 +1106,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   //
   // This method should never be called directly.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.4.1.9
+  // @uvm-ieee 1800.2-2020 auto 13.1.4.1.9
   void final_phase(uvm_phase phase) {
     return;
   }
@@ -1160,7 +1124,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   // called for all phases the phase is passed in as an argument so the
   // extender can decide what to do, if anything, for each phase.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.4.3.1
+  // @uvm-ieee 1800.2-2020 auto 13.1.4.3.1
   void phase_started(uvm_phase phase) { }
 
   // Function- phase_ready_to_end
@@ -1188,7 +1152,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   // phase_ready_to_end
   // ------------------
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.4.3.2
+  // @uvm-ieee 1800.2-2020 auto 13.1.4.3.2
   void phase_ready_to_end (uvm_phase phase) { }
 
   // Function- phase_ended
@@ -1200,7 +1164,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   // phase_ended
   // -----------
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.4.3.3
+  // @uvm-ieee 1800.2-2020 auto 13.1.4.3.3
   void phase_ended(uvm_phase phase) { }
 
   //------------------------------
@@ -1228,7 +1192,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   // If we have components inherit their parent's domain by default, then ~hier~
   // isn't needed and we need a way to prevent children from inheriting this component's domain
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.4.4.1
+  // @uvm-ieee 1800.2-2020 auto 13.1.4.4.1
   final void set_domain(uvm_domain domain, bool hier=true) {
     synchronized (this) {
       // build and store the custom domain
@@ -1246,7 +1210,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   //
   // Return handle to the phase domain set on this component
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.4.4.2
+  // @uvm-ieee 1800.2-2020 auto 13.1.4.4.2
   final uvm_domain get_domain() {
     synchronized (this) {
       return _m_domain;
@@ -1283,7 +1247,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   // then call <set_domain> to apply it to a component.
 
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.4.4.3
+  // @uvm-ieee 1800.2-2020 auto 13.1.4.4.3
   final void define_domain(uvm_domain domain) {
     synchronized (this) {
       //schedule = domain.find(uvm_domain::get_uvm_schedule());
@@ -1309,7 +1273,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   // A suspended component can be subsequently resumed using <resume()>.
 
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.4.5.1
+  // @uvm-ieee 1800.2-2020 auto 13.1.4.5.1
   // task
   void suspend() {
     uvm_warning("COMP/SPND/UNIMP", "suspend() not implemented");
@@ -1325,7 +1289,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   // may need to be explicitly resumed.
 
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.4.5.2
+  // @uvm-ieee 1800.2-2020 auto 13.1.4.5.2
   // task
   void resume() {
     uvm_warning("COMP/RSUM/UNIMP", "resume() not implemented");
@@ -1416,7 +1380,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   // applied. If the component's <print_config_matches> property is set, then
   // apply_config_settings is automatically called with ~verbose~ = 1.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.5.1
+  // @uvm-ieee 1800.2-2020 auto 13.1.5.1
   void apply_config_settings (bool verbose=false) {
     import uvm.base.uvm_resource;
     import uvm.base.uvm_resource_base;
@@ -1454,7 +1418,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   // Returns 1 if the component should call <apply_config_settings> in the <build_phase>;
   // otherwise, returns 0.
   //
-  // @uvm-ieee 1800.2-2017 auto 13.1.5.2
+  // @uvm-ieee 1800.2-2020 auto 13.1.5.2
   bool use_automatic_config() {
     return true;
   }
@@ -1517,6 +1481,32 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   //   __gshared bit print_config_matches;
 
 
+  // Function: get_print_config_matches
+  //
+  //  static function bit get_print_config_matches() 
+  // 
+  // Returns the value of the internal static variable print_config_matches
+  // which is the value of the verbose argument for apply_config_settings() 
+  // if it is called in build_phase().  The variable has a default value of
+  // 0 which may be overwritten by set_print_config_matches()
+  //
+  // @uvm-accellera The details of this API are specific to the Accellera implementation, and are not being considered for contribution to 1800.2
+  static bool get_print_config_matches() {
+     return print_config_matches;
+  }
+
+  // Function: set_print_config_matches
+  //
+  // static function void set_print_config_matches(bit val)
+  //
+  // Sets the value of the internal static variable print_config_matches to val
+  // (see get_print_config_matches)
+  //
+  // @uvm-accellera The details of this API are specific to the Accellera implementation, and are not being considered for contribution to 1800.2
+  static void set_print_config_matches(bool val) {
+    print_config_matches = val;
+  }
+
   //----------------------------------------------------------------------------
   // Group -- NODOCS -- Objection Interface
   //----------------------------------------------------------------------------
@@ -1536,7 +1526,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   // reason for raising the objection. The ~count~ indicates the number of
   // objections raised by the ~source_obj~.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.5.4
+  // @uvm-ieee 1800.2-2020 auto 13.1.6.1
   void raised (uvm_objection objection, uvm_object source_obj,
 	       string description, int count) { }
 
@@ -1550,7 +1540,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   // reason for dropping the objection. The ~count~ indicates the number of
   // objections dropped by the ~source_obj~.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.5.5
+  // @uvm-ieee 1800.2-2020 auto 13.1.6.2
   void dropped (uvm_objection objection, uvm_object source_obj,
 		string description, int count) { }
 
@@ -1564,7 +1554,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   // reason for raising the objection. The ~count~ indicates the number of
   // objections dropped by the ~source_obj~.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.5.6
+  // @uvm-ieee 1800.2-2020 auto 13.1.6.3
   // task
   void all_dropped (uvm_objection objection, uvm_object source_obj,
 		    string description, int count) { }
@@ -1987,7 +1977,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   //
   // The pre_abort() callback hooks are called in a bottom-up fashion.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.4.6
+  // @uvm-ieee 1800.2-2020 auto 13.1.4.6
   void pre_abort() { }
 
   //----------------------------------------------------------------------------
@@ -2018,7 +2008,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   // accept_tr
   // ---------
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.6.1
+  // @uvm-ieee 1800.2-2020 auto 13.1.7.1
   final void accept_tr(uvm_transaction tr,
 		       SimTime accept_time = 0) {
     if (tr is null)
@@ -2041,14 +2031,14 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   // post-accept action. Implementations should call super.do_accept_tr to
   // ensure correct operation.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.6.2
+  // @uvm-ieee 1800.2-2020 auto 13.1.7.2
   protected void do_accept_tr (uvm_transaction tr) {
     return;
   }
 
 
   // Function: begin_tr
-  // Implementation of uvm_component::begin_tr as described in IEEE 1800.2-2017.
+  // Implementation of uvm_component::begin_tr as described in IEEE 1800.2-2020.
   //
   //| function int begin_tr( uvm_transaction tr,
   //|                        string stream_name="main",
@@ -2062,7 +2052,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   // parent_handle argument is 0 and the transaction can be cast to a 
   // uvm_sequence_item.
  
-   // @uvm-ieee 1800.2-2017 auto 13.1.6.3
+   // @uvm-ieee 1800.2-2020 auto 13.1.7.3
   final int begin_tr (uvm_transaction tr,
 		      string stream_name = "main",
 		      string label = "",
@@ -2079,7 +2069,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   // accommodate any user-defined post-begin action. Implementations should call
   // super.do_begin_tr to ensure correct operation.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.6.4
+  // @uvm-ieee 1800.2-2020 auto 13.1.7.4
   protected void do_begin_tr (uvm_transaction tr,
 			      string stream_name,
 			      int tr_handle) {
@@ -2110,7 +2100,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   // The ~free_handle~ bit indicates that this transaction is no longer needed.
   // The implementation of free_handle is vendor-specific.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.6.5
+  // @uvm-ieee 1800.2-2020 auto 13.1.7.5
   final void end_tr (uvm_transaction tr,
 		     SimTime end_time = 0,
 		     bool free_handle = true) {
@@ -2119,7 +2109,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
       uvm_recorder recorder;
       tr.end_tr(end_time, free_handle);
 
-      if ((cast (uvm_verbosity) _recording_detail) != uvm_verbosity.UVM_NONE) {
+      if (get_recording_enabled()) {
 	if (tr in _m_tr_h) {
 	  recorder = _m_tr_h[tr];
 	}
@@ -2150,7 +2140,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   // post-end action. Implementations should call super.do_end_tr to ensure
   // correct operation.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.6.6
+  // @uvm-ieee 1800.2-2020 auto 13.1.7.6
   protected void do_end_tr(uvm_transaction tr,
 			   int tr_handle) {
     return;
@@ -2171,7 +2161,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   // Interpretation of this handle, as well as the strings ~stream_name~,
   // ~label~, and ~desc~, are vendor-specific.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.6.7
+  // @uvm-ieee 1800.2-2020 auto 13.1.7.7
   final int record_error_tr (string stream_name = "main",
 			     uvm_object info = null,
 			     string label = "error_tr",
@@ -2237,7 +2227,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   // The strings for ~stream_name~, ~label~, and ~desc~ are vendor-specific
   // identifiers for the transaction.
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.6.8
+  // @uvm-ieee 1800.2-2020 auto 13.1.7.8
   final int record_event_tr(string stream_name = "main",
 			    uvm_object info = null,
 			    string label = "event_tr",
@@ -2294,7 +2284,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.6.9
+  // @uvm-ieee 1800.2-2020 auto 13.1.7.9
   uvm_tr_stream get_tr_stream(string name,
 			      string stream_type_name="") {
     synchronized (this) {
@@ -2307,7 +2297,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.6.10
+  // @uvm-ieee 1800.2-2020 auto 13.1.7.10
   void free_tr_stream(uvm_tr_stream stream) {
     synchronized (this) {
       // Check the null case...
@@ -2361,6 +2351,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
     }
   }
 
+  // @uvm-ieee 1800.2-2020 auto 13.1.2.3
   override void do_execute_op(uvm_field_op op) {
     synchronized (this) {
       if (op.get_op_type == uvm_field_auto_enum.UVM_PRINT) {
@@ -2389,7 +2380,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   @uvm_private_sync
   private uvm_tr_database _tr_database;
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.6.12
+  // @uvm-ieee 1800.2-2020 auto 13.1.7.12
   uvm_tr_database get_tr_database() {
     synchronized (this) {
       if (_tr_database is null) {
@@ -2400,7 +2391,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 13.1.6.11
+  // @uvm-ieee 1800.2-2020 auto 13.1.7.11
   void set_tr_database(uvm_tr_database db) {
     synchronized (this) {
       _tr_database = db;
@@ -2670,12 +2661,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
       }
 
       if (parent_recorder !is null) {
-	version (UVM_1800_2_2020_EA) {
-	  link_handle = tr.begin_tr(begin_time, parent_recorder.get_handle());
-	}
-	else {
-	  link_handle = tr.begin_child_tr(begin_time, parent_recorder.get_handle());
-	}
+	link_handle = tr.begin_tr(begin_time, parent_recorder.get_handle());
       }
       else {
 	link_handle = tr.begin_tr(begin_time);
@@ -2691,9 +2677,9 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
       else
 	name = tr.get_type_name();
 
-      if (stream_name == "") stream_name = "main";
+      if (get_recording_enabled()) {
+	if (stream_name == "") stream_name = "main";
 
-      if ((cast (uvm_verbosity) _recording_detail) != uvm_verbosity.UVM_NONE) {
 	stream = get_tr_stream(stream_name, "TVM");
 
 	if (stream !is null ) {
@@ -2793,6 +2779,39 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
 
   private uint _recording_detail = uvm_verbosity.UVM_NONE;
 
+
+  // @uvm-ieee 1800.2-2020 auto 13.1.6.14
+  bool get_recording_enabled() {
+    return (cast(uvm_verbosity) _recording_detail != uvm_verbosity.UVM_NONE);
+  }
+  
+  // Function: set_recording_enabled 
+  //
+  // In addition to the functionality described in IEEE 1800.2, this
+  // library implements a call to set_recording_enabled in build_phase
+  // when a config_db access of the form 
+  // uvm_config_db #(uvm_bitstream_t)::get(this, "", "recording_detail", x)
+  // or 
+  // uvm_config_db #(int)::get(this, "", "recording_detail", x)
+  // returns a non-zero value for x
+
+  // @uvm-ieee 1800.2-2020 auto 13.1.6.13
+  void set_recording_enabled(bool enabled) {
+    if (get_recording_enabled() != enabled) {
+      _recording_detail = enabled ? uvm_verbosity.UVM_LOW : uvm_verbosity.UVM_NONE;
+    }
+   // else don't change another recording_detail value that maps to enabled
+  }
+
+  // @uvm-ieee 1800.2-2020 auto D.2.3
+  void set_recording_enabled_hier (bool enabled) {
+    set_recording_enabled(enabled);
+    synchronized(this) {
+      foreach (c; _m_children)
+	c.set_recording_enabled_hier(enabled);
+    }
+  }
+
   override void do_print(uvm_printer printer) {
     synchronized (this) {
       string v;
@@ -2847,23 +2866,6 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   }
 
 
-  private void add_time_setting(m_verbosity_setting setting) {
-    synchronized (_uvm_scope_inst) {
-      _uvm_scope_inst._m_time_settings ~= setting;
-    }
-  }
-
-  private const(m_verbosity_setting[]) sort_time_settings() {
-    synchronized (_uvm_scope_inst) {
-      if (_uvm_scope_inst._m_time_settings.length > 0) {
-	// m_time_settings.sort() with ( item.offset );
-	sort!((m_verbosity_setting a, m_verbosity_setting b)
-	      {return a.offset < b.offset;})(_uvm_scope_inst._m_time_settings);
-      }
-      return _uvm_scope_inst._m_time_settings.dup;
-    }
-  }
-
   // m_set_cl_verb
   // -------------
   final void m_set_cl_verb() {
@@ -2876,90 +2878,29 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
       // +uvm_set_verbosity=<comp>,<id>,<verbosity>,<phase|time>,<offset>
       // +uvm_set_verbosity=uvm_test_top.env0.agent1.*,_ALL_,UVM_FULL,time,800
 
-      static string[] values;
-      static bool first = true;
       string[] args;
-      uvm_cmdline_processor clp = uvm_cmdline_processor.get_inst();
-      uvm_coreservice_t cs = uvm_coreservice_t.get();
-      uvm_root top = cs.get_root();
 
-      if (first) {
-	string[] t;
-	m_verbosity_setting setting;
-	clp.get_arg_values("+uvm_set_verbosity=", values);
-	foreach (i, value; values) {
-	  args.length = 0;
-	  uvm_split_string(value, ',', args);
-	  if (((args.length == 4) || (args.length == 5)) &&
-	     (clp.m_convert_verb(args[2], setting.verbosity) == 1))
-	    t ~= value;
-	  else
-	    uvm_report_warning("UVM/CMDLINE",
-			       format("argument %s not recognized and therefore dropped", value));
-	}
-      
-	values = t;
-	first = false;
-      }
-
-      foreach (i, value; values) {
-	m_verbosity_setting setting;
-	uvm_split_string(value, ',', args);
-
-	setting.comp = args[0];
-	setting.id = args[1];
-	clp.m_convert_verb(args[2],setting.verbosity);
-	setting.phase = args[3];
-	setting.offset = 0;
-	if (args.length == 5) setting.offset = args[4].to!int;
-	if ((setting.phase == "time") && (this is top)) {
-	  add_time_setting(setting);
-	}
+      foreach (setting; uvm_cmdline_set_verbosity.settings) {
 
 	if (uvm_is_match(setting.comp, get_full_name()) ) {
-	  if ((setting.phase == "" || setting.phase == "build" || setting.phase == "time") &&
-	     (setting.offset == 0))
-	    {
-	      if (setting.id == "_ALL_")
-		set_report_verbosity_level(setting.verbosity);
-	      else
-		set_report_id_verbosity(setting.id, setting.verbosity);
-	    }
+	  if ((setting.phase == "" || setting.phase == "build" ||
+	       (setting.phase == "time" && setting.offset == 0))) {
+	    setting.used[this] = true;
+	    if (setting.id == "_ALL_")
+	      set_report_verbosity_level(setting.verbosity);
+	    else
+	      set_report_id_verbosity(setting.id, setting.verbosity);
+	  }
 	  else {
+	    setting.used[this] = false;
 	    if (setting.phase != "time") {
-	      _m_verbosity_settings.pushBack(setting);
+	      _m_verbosity_settings ~= setting;
 	    }
 	  }
 	}
       }
-      // do time based settings
-      if (this is top) {
-	fork!("uvm_component/do_time_based_settings")({
-	    SimTime last_time = 0;
-	    auto time_settings = sort_time_settings();
-	    foreach (i, setting; time_settings) {
-	      uvm_component[] comps;
-	      top.find_all(setting.comp, comps);
-	      wait((cast (SimTime) setting.offset) - last_time);
-	      // synchronized (this) {
-	      last_time = setting.offset;
-	      if (setting.id == "_ALL_") {
-		foreach (comp; comps) {
-		  comp.set_report_verbosity_level(setting.verbosity);
-		}
-	      }
-	      else {
-		foreach (comp; comps) {
-		  comp.set_report_id_verbosity(setting.id, setting.verbosity);
-		}
-	      }
-	      // }
-	    }
-	  });
-      }
     }
   }
-
 
   final void m_set_cl_action() {
     // _ALL_ can be used for ids or severities
@@ -2968,78 +2909,29 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
     import uvm.base.uvm_cmdline_processor;
     import uvm.base.uvm_globals;
     synchronized (this) {
-      uvm_severity sev;
-      uvm_action action;
 
-      uvm_cmdline_processor uvm_cmdline_proc =
-	uvm_cmdline_processor.get_inst();
-  
-      if (! cl_action_initialized) {
-	string[] values;
-	uvm_cmdline_proc.get_arg_values("+uvm_set_action=", values);
-	foreach (idx, value; values) {
-	  string[] args;
-	  uvm_split_string(value, ',', args);
+      foreach (setting; uvm_cmdline_set_action.settings) {
+	if (!uvm_is_match(setting.comp, get_full_name())) continue;
 
-	  if (args.length !is 4) {
-	    uvm_warning("INVLCMDARGS",
-			format("+uvm_set_action requires 4 arguments, only %0d given for command +uvm_set_action=%s, Usage: +uvm_set_action=<comp>,<id>,<severity>,<action[|action]>",
-			       args.length, value));
-	    continue;
-	  }
-	  if ((args[2] != "_ALL_") && !uvm_string_to_severity(args[2], sev)) {
-	    uvm_warning("INVLCMDARGS",
-			format("Bad severity argument \"%s\" given to command +uvm_set_action=%s, Usage: +uvm_set_action=<comp>,<id>,<severity>,<action[|action]>",
-			       args[2], value));
-	    continue;
-	  }
-	  if (!uvm_string_to_action(args[3], action)) {
-	    uvm_warning("INVLCMDARGS",
-			format("Bad action argument \"%s\" given to command +uvm_set_action=%s, Usage: +uvm_set_action=<comp>,<id>,<severity>,<action[|action]>",
-			       args[3], value));
-	    continue;
-	  }
-	  uvm_cmdline_parsed_arg_t t;
-	  t.args = args;
-	  t.arg = value;
-	  _uvm_scope_inst.add_m_uvm_applied_cl_action(t);
-	}
-	cl_action_initialized = true;
-      }
+	setting.used[this] = true;
 
-      synchronized (_uvm_scope_inst) {
-	foreach (i, ref cl_action; _uvm_scope_inst._m_uvm_applied_cl_action) {
-	  string[] args = cl_action.args;
-
-	  if (!uvm_is_match(args[0], get_full_name()) ) {
-	    continue;
-	  }
-
-	  uvm_string_to_severity(args[2], sev);
-	  uvm_string_to_action(args[3], action);
-
-	  synchronized (_uvm_scope_inst) {
-	    cl_action.used++;
-	  }
-
-	  if (args[1] == "_ALL_") {
-	    if (args[2] == "_ALL_") {
-	      set_report_severity_action(uvm_severity.UVM_INFO, action);
-	      set_report_severity_action(uvm_severity.UVM_WARNING, action);
-	      set_report_severity_action(uvm_severity.UVM_ERROR, action);
-	      set_report_severity_action(uvm_severity.UVM_FATAL, action);
-	    }
-	    else {
-	      set_report_severity_action(sev, action);
-	    }
+	if (setting.id == "_ALL_") {
+	  if (setting.all_sev) {
+	    set_report_severity_action(uvm_severity.UVM_INFO, setting.action);
+	    set_report_severity_action(uvm_severity.UVM_WARNING, setting.action);
+	    set_report_severity_action(uvm_severity.UVM_ERROR, setting.action);
+	    set_report_severity_action(uvm_severity.UVM_FATAL, setting.action);
 	  }
 	  else {
-	    if (args[2] == "_ALL_") {
-	      set_report_id_action(args[1], action);
-	    }
-	    else {
-	      set_report_severity_id_action(sev, args[1], action);
-	    }
+	    set_report_severity_action(setting.sev, setting.action);
+	  }
+	}
+	else {
+	  if (setting.all_sev) {
+	    set_report_id_action(setting.id, setting.action);
+	  }
+	  else {
+	    set_report_severity_id_action(setting.sev, setting.id, setting.action);
 	  }
 	}
       }
@@ -3057,70 +2949,28 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
     import uvm.base.uvm_cmdline_processor;
     import uvm.base.uvm_globals;
     synchronized (this) {
-      uvm_severity orig_sev;
-      uvm_severity sev;
+      foreach(setting; uvm_cmdline_set_severity.settings) {
+	if (!uvm_is_match(setting.comp, get_full_name())) continue; 
 
-      uvm_cmdline_processor uvm_cmdline_proc =
-	uvm_cmdline_processor.get_inst();
-
-      if (! cl_sev_initialized) {
-	string[] values;
-	uvm_cmdline_proc.get_arg_values("+uvm_set_severity=", values);
-
-	foreach (idx, value; values) {
-	  string[] args;
-	  uvm_split_string(value, ',', args);
-	  if (args.length !is 4) {
-	    uvm_warning("INVLCMDARGS", format("+uvm_set_severity requires 4 arguments, only %0d given for command +uvm_set_severity=%s, Usage: +uvm_set_severity=<comp>,<id>,<orig_severity>,<new_severity>", args.length, value));
-	    continue;
-	  }
-	  if (args[2] != "_ALL_" && !uvm_string_to_severity(args[2], orig_sev)) {
-	    uvm_warning("INVLCMDARGS", format("Bad severity argument \"%s\" given to command +uvm_set_severity=%s, Usage: +uvm_set_severity=<comp>,<id>,<orig_severity>,<new_severity>", args[2], value));
-	    continue;
-	  }
-	  if (!uvm_string_to_severity(args[3], sev)) {
-	    uvm_warning("INVLCMDARGS", format("Bad severity argument \"%s\" given to command +uvm_set_severity=%s, Usage: +uvm_set_severity=<comp>,<id>,<orig_severity>,<new_severity>", args[3], value));
-	    continue;
-	  }
-	  uvm_cmdline_parsed_arg_t t;
-	  t.args = args;
-	  t.arg = value;
-	  _uvm_scope_inst.add_m_uvm_applied_cl_sev(t);
+	setting.used[this] = true;
+    
+	if (setting.id == "_ALL_" && setting.all_sev) {
+	  set_report_severity_override(uvm_severity.UVM_INFO, setting.sev);
+	  set_report_severity_override(uvm_severity.UVM_WARNING, setting.sev);
+	  set_report_severity_override(uvm_severity.UVM_ERROR, setting.sev);
+	  set_report_severity_override(uvm_severity.UVM_FATAL, setting.sev);
 	}
-	cl_sev_initialized = true;
-      }
-      synchronized (_uvm_scope_inst) {
-	foreach (i, ref cl_sev; _uvm_scope_inst._m_uvm_applied_cl_sev) {
-	  string[] args = cl_sev.args;
-
-	  if (!uvm_is_match(args[0], get_full_name())) {
-	    continue;
-	  }
-
-	  uvm_string_to_severity(args[2], orig_sev);
-	  uvm_string_to_severity(args[3], sev);
-	  synchronized (_uvm_scope_inst) {
-	    cl_sev.used++;
-	  }
-
-	  if (args[1] == "_ALL_" && args[2] == "_ALL_") {
-	    set_report_severity_override(uvm_severity.UVM_INFO,sev);
-	    set_report_severity_override(uvm_severity.UVM_WARNING,sev);
-	    set_report_severity_override(uvm_severity.UVM_ERROR,sev);
-	    set_report_severity_override(uvm_severity.UVM_FATAL,sev);
-	  }
-	  else if (args[1] == "_ALL_") {
-	    set_report_severity_override(orig_sev,sev);
-	  }
-	  else if (args[2] == "_ALL_") {
-	    set_report_severity_id_override(uvm_severity.UVM_INFO,args[1],sev);
-	    set_report_severity_id_override(uvm_severity.UVM_WARNING,args[1],sev);
-	    set_report_severity_id_override(uvm_severity.UVM_ERROR,args[1],sev);
-	    set_report_severity_id_override(uvm_severity.UVM_FATAL,args[1],sev);
-	  }
-	  else {
-	    set_report_severity_id_override(orig_sev,args[1],sev);
-	  }
+	else if (setting.id == "_ALL_") {
+	  set_report_severity_override(setting.orig_sev, setting.sev);
+	}
+	else if (setting.all_sev) {
+	  set_report_severity_id_override(uvm_severity.UVM_INFO, setting.id, setting.sev);
+	  set_report_severity_id_override(uvm_severity.UVM_WARNING, setting.id, setting.sev);
+	  set_report_severity_id_override(uvm_severity.UVM_ERROR, setting.id, setting.sev);
+	  set_report_severity_id_override(uvm_severity.UVM_FATAL, setting.id, setting.sev);
+	}
+	else {
+	  set_report_severity_id_override(setting.orig_sev, setting.id, setting.sev);
 	}
       }
     }
@@ -3131,53 +2981,25 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
 
   final void m_apply_verbosity_settings(uvm_phase phase) {
     synchronized (this) {
-      int i;
-      while (i < _m_verbosity_settings.length) {
-	auto setting = _m_verbosity_settings[i];
+      uvm_cmdline_set_verbosity[] remaining_settings;
+  
+      foreach (setting; _m_verbosity_settings) {
 	if (phase.get_name() == setting.phase) {
-	  if (setting.offset == 0) {
-	    if (setting.id == "_ALL_") {
-	      set_report_verbosity_level(setting.verbosity);
-	    }
-	    else {
-	      set_report_id_verbosity(setting.id, setting.verbosity);
-	    }
-	  }
-	  else {
-
-	    version (PRESERVE_RANDSTATE) {
-	      Process p = Process.self;
-	      Random p_rand;
-	      p.getRandState(p_rand);
-	    }
-
-	    fork!("uvm_component/apply_verbosity_settings")({
-		wait(setting.offset);
-		// synchronized (this) {
-		if (setting.id == "_ALL_")
-		  set_report_verbosity_level(setting.verbosity);
-		else
-		  set_report_id_verbosity(setting.id, setting.verbosity);
-		// }
-	      });
-
-	    version (PRESERVE_RANDSTATE) {
-	      p.setRandState(p_rand);
-	    }
-	  }
-	  // Remove after use
-	  _m_verbosity_settings.remove(i);
-	  continue;
+	  setting.used[this] = true;
+	  if (setting.id == "_ALL_") 
+	    set_report_verbosity_level(setting.verbosity);
+	  else 
+	    set_report_id_verbosity(setting.id, setting.verbosity);
 	}
-	i += 1;
+	else {
+	  remaining_settings ~= setting;
+	}
       }
+      _m_verbosity_settings = remaining_settings;
     }
   }
 
-  // The verbosity settings may have a specific phase to start at.
-  // We will do this work in the phase_started callback.
-
-  private Queue!m_verbosity_setting _m_verbosity_settings;
+  uvm_cmdline_set_verbosity[] _m_verbosity_settings;
 
   //   // does the pre abort callback hierarchically
 
@@ -3199,12 +3021,6 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
     synchronized (this) {
       _m_unsupported_resource_base = rsrc;
     }
-  }
-
-  struct uvm_cmdline_parsed_arg_t {
-    string arg;
-    string[] args;
-    uint used;
   }
 
   void set_simulation_status(ubyte status) {

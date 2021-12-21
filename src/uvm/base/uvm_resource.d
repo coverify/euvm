@@ -1,16 +1,16 @@
 //----------------------------------------------------------------------
-// Copyright 2014-2019 Coverify Systems Technology
-// Copyright 2010-2011 Paradigm Works
-// Copyright 2010-2018 Mentor Graphics Corporation
-// Copyright 2015 Analog Devices, Inc.
-// Copyright 2014 Semifore
-// Copyright 2017 Intel Corporation
-// Copyright 2010-2014 Synopsys, Inc.
-// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2014-2021 Coverify Systems Technology
 // Copyright 2010-2011 AMD
-// Copyright 2013-2018 NVIDIA Corporation
+// Copyright 2015 Analog Devices, Inc.
+// Copyright 2010-2018 Cadence Design Systems, Inc.
 // Copyright 2017-2018 Cisco Systems, Inc.
 // Copyright 2011-2012 Cypress Semiconductor Corp.
+// Copyright 2017 Intel Corporation
+// Copyright 2010-2018 Mentor Graphics Corporation
+// Copyright 2013-2020 NVIDIA Corporation
+// Copyright 2010-2011 Paradigm Works
+// Copyright 2014 Semifore
+// Copyright 2010-2014 Synopsys, Inc.
 // Copyright 2017-2018 Verific
 //   All Rights Reserved Worldwide
 //
@@ -53,7 +53,6 @@ import esdl.base.core: SimTime, getRootEntity, Process;
 import esdl.rand.misc: rand;
 
 import std.string;
-import std.random: Random;
 import std.algorithm: sort;
 import std.conv: to;
 
@@ -133,7 +132,7 @@ class get_t {
 //
 //----------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto C.2.4.1
+// @uvm-ieee 1800.2-2020 auto C.2.4.1
 class uvm_resource_pool: rand.disable
 {
   import esdl.data.queue;
@@ -176,7 +175,7 @@ class uvm_resource_pool: rand.disable
 
   private get_t[] _get_record;  // history of gets
 
-  // @uvm-ieee 1800.2-2017 auto C.2.4.2.1
+  // @uvm-ieee 1800.2-2020 auto C.2.4.2.1
   this() { }
 
 
@@ -184,7 +183,7 @@ class uvm_resource_pool: rand.disable
   //
   // Returns the singleton handle to the resource pool
 
-  // @uvm-ieee 1800.2-2017 auto C.2.4.2.2
+  // @uvm-ieee 1800.2-2020 auto C.2.4.2.2
   static uvm_resource_pool get() {
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     uvm_resource_pool t_rp = cs.get_resource_pool();
@@ -228,7 +227,7 @@ class uvm_resource_pool: rand.disable
   // functions.
   //
 
-  // @uvm-ieee 1800.2-2017 auto C.2.4.3.1
+  // @uvm-ieee 1800.2-2020 auto C.2.4.3.1
   void set_scope(uvm_resource_base rsrc, string rscope) {
 
     // If resource handle is ~null~ then there is nothing to do.
@@ -289,10 +288,10 @@ class uvm_resource_pool: rand.disable
   //
   // The resource provided as an argument will be entered into the pool
   // and will override both by name and type.
-  // Default value to 'scope' argument is violating 1800.2-2017 LRM, but it
+  // Default value to 'scope' argument is violating 1800.2-2020 LRM, but it
   // is added to make the routine backward compatible
 
-  // @uvm-ieee 1800.2-2017 auto C.2.4.3.2
+  // @uvm-ieee 1800.2-2020 auto C.2.4.3.2
   final void set_override(uvm_resource_base rsrc,
 			  string rscope = "") {
      string s = rscope;
@@ -305,10 +304,10 @@ class uvm_resource_pool: rand.disable
   //
   // The resource provided as an argument will entered into the pool
   // using normal precedence in the type map and will override the name.
-  // Default value to 'scope' argument is violating 1800.2-2017 LRM, but it
+  // Default value to 'scope' argument is violating 1800.2-2020 LRM, but it
   // is added to make the routine backward compatible
 
-  // @uvm-ieee 1800.2-2017 auto C.2.4.3.3
+  // @uvm-ieee 1800.2-2020 auto C.2.4.3.3
   final void set_name_override(uvm_resource_base rsrc,
 			       string rscope = "") {
     string s = rscope;
@@ -321,11 +320,11 @@ class uvm_resource_pool: rand.disable
   //
   // The resource provided as an argument will be entered into the pool
   // using normal precedence in the name map and will override the type.
-  // Default value to 'scope' argument is violating 1800.2-2017 LRM, but it
+  // Default value to 'scope' argument is violating 1800.2-2020 LRM, but it
   // is added to make the routine backward compatible
 
 
-  // @uvm-ieee 1800.2-2017 auto C.2.4.3.4
+  // @uvm-ieee 1800.2-2020 auto C.2.4.3.4
   final void set_type_override(uvm_resource_base rsrc,
 			       string rscope = "") {
     string s = rscope;
@@ -334,7 +333,7 @@ class uvm_resource_pool: rand.disable
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto C.2.4.3.5
+  // @uvm-ieee 1800.2-2020 auto C.2.4.3.5
   bool get_scope(uvm_resource_base rsrc,
 		 out string rscope) {
 
@@ -371,7 +370,7 @@ class uvm_resource_pool: rand.disable
   // within the pool, then the request is silently ignored.
 
  
-  // @uvm-ieee 1800.2-2017 auto C.2.4.3.6
+  // @uvm-ieee 1800.2-2020 auto C.2.4.3.6
   void remove (uvm_resource_base rsrc) {
     synchronized (this) {
       if (rsrc !is null) {
@@ -481,7 +480,7 @@ class uvm_resource_pool: rand.disable
   // not made and resources are returned that match only ~name~ and
   // ~scope~.
 
-  // @uvm-ieee 1800.2-2017 auto C.2.4.4.1
+  // @uvm-ieee 1800.2-2020 auto C.2.4.4.1
   final uvm_resource_types.rsrc_q_t lookup_name(string rscope = "",
 						string name = "",
 						uvm_resource_base type_handle = null,
@@ -489,12 +488,6 @@ class uvm_resource_pool: rand.disable
     synchronized (this) {
       uvm_resource_types.rsrc_q_t q;
 
-      // ensure rand stability during lookup
-      version (PRESERVE_RANDSTATE) {
-	Process p = Process.self();
-	Random s;
-	if (p !is null) p.getRandState(s);
-      }
       q = new  uvm_resource_types.rsrc_q_t("uvm_resource/lookup_name/q");
 
       version (PRESERVE_RANDSTATE) {
@@ -537,8 +530,7 @@ class uvm_resource_pool: rand.disable
   // with the highest precedence value, the first one that has that
   // precedence will be the one that is returned.
 
-  // @uvm-ieee 1800.2-2017 auto C.2.4.4.2
-  // @uvm-ieee 1800.2-2017 auto C.2.4.5.8
+  // @uvm-ieee 1800.2-2020 auto C.2.4.4.2
   static uvm_resource_base get_highest_precedence(ref uvm_resource_types.rsrc_q_t q) {
     if (q.length == 0)
       return null;
@@ -568,7 +560,7 @@ class uvm_resource_pool: rand.disable
   // be last. Resources that have the same precedence and the same name
   // will be ordered by most recently set first.
 
-  // @uvm-ieee 1800.2-2017 auto C.2.4.4.3
+  // @uvm-ieee 1800.2-2020 auto C.2.4.4.3
   static void sort_by_precedence(ref uvm_resource_types.rsrc_q_t q) {
     uvm_resource_types.rsrc_q_t[int] all;
     foreach (r; q) {
@@ -599,7 +591,7 @@ class uvm_resource_pool: rand.disable
   // checker will be invoked and warnings about multiple resources will
   // be produced.
 
-  // @uvm-ieee 1800.2-2017 auto C.2.4.4.4
+  // @uvm-ieee 1800.2-2020 auto C.2.4.4.4
   final uvm_resource_base get_by_name(string rscope,
 				      string name,
 				      uvm_resource_base type_handle,
@@ -624,7 +616,7 @@ class uvm_resource_pool: rand.disable
   // the ~type_handle~ and ~scope~.  If no resources match then the returned
   // queue is empty.
 
-  // @uvm-ieee 1800.2-2017 auto C.2.4.4.5
+  // @uvm-ieee 1800.2-2020 auto C.2.4.4.5
   final uvm_resource_types.rsrc_q_t lookup_type(string rscope,
 						uvm_resource_base type_handle) {
     synchronized (this) {
@@ -650,7 +642,7 @@ class uvm_resource_pool: rand.disable
   // Lookup a resource by ~type_handle~ and ~scope~.  Insert a record into
   // the get history list whether or not the get succeeded.
 
-  // @uvm-ieee 1800.2-2017 auto C.2.4.4.6
+  // @uvm-ieee 1800.2-2020 auto C.2.4.4.6
   final uvm_resource_base get_by_type(string rscope,
 				      uvm_resource_base type_handle) {
     synchronized (this) {
@@ -688,7 +680,7 @@ class uvm_resource_pool: rand.disable
   // Looks for all the resources whose name matches the regular
   // expression argument and whose scope matches the current scope.
 
-  // @uvm-ieee 1800.2-2017 auto C.2.4.4.7
+  // @uvm-ieee 1800.2-2020 auto C.2.4.4.7
   final uvm_resource_types.rsrc_q_t lookup_regex(string re, string rscope) {
     import uvm.dpi.uvm_regex;
     synchronized (this) {
@@ -719,7 +711,7 @@ class uvm_resource_pool: rand.disable
   // quite expensive, as it has to traverse all of the resources in the
   // database.
 
-  // @uvm-ieee 1800.2-2017 auto C.2.4.4.8
+  // @uvm-ieee 1800.2-2020 auto C.2.4.4.8
   final uvm_resource_types.rsrc_q_t lookup_scope(string rscope) {
     synchronized (this) {
       auto q = new uvm_resource_types.rsrc_q_t("uvm_resource/lookup_scope/q");
@@ -796,7 +788,7 @@ class uvm_resource_pool: rand.disable
   // priority enum argument.  This function changes the priority only in
   // the type map, leaving the name map untouched.
 
-  // @uvm-ieee 1800.2-2017 auto C.2.4.5.1
+  // @uvm-ieee 1800.2-2020 auto C.2.4.5.1
   final void set_priority_type(uvm_resource_base rsrc,
 			       uvm_resource_types.priority_e pri) {
     import uvm.base.uvm_globals;
@@ -829,7 +821,7 @@ class uvm_resource_pool: rand.disable
   // priority enum argument.  This function changes the priority only in
   // the name map, leaving the type map untouched.
 
-  // @uvm-ieee 1800.2-2017 auto C.2.4.5.2
+  // @uvm-ieee 1800.2-2020 auto C.2.4.5.2
   final void set_priority_name(uvm_resource_base rsrc,
 			       uvm_resource_types.priority_e pri) {
     import uvm.base.uvm_globals;
@@ -858,7 +850,7 @@ class uvm_resource_pool: rand.disable
   // the priority enum argument.  This function changes the priority in
   // both the name and type maps.
 
-  // @uvm-ieee 1800.2-2017 auto C.2.4.5.3
+  // @uvm-ieee 1800.2-2020 auto C.2.4.5.3
   final void set_priority (uvm_resource_base rsrc,
 			   uvm_resource_types.priority_e pri) {
     synchronized (this) {
@@ -868,7 +860,7 @@ class uvm_resource_pool: rand.disable
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto C.2.4.5.4
+  // @uvm-ieee 1800.2-2020 auto C.2.4.5.4
   static void set_default_precedence(uint precedence) {
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     cs.set_resource_pool_default_precedence(precedence);
@@ -881,7 +873,7 @@ class uvm_resource_pool: rand.disable
   }
 
   
-  // @uvm-ieee 1800.2-2017 auto C.2.4.5.6
+  // @uvm-ieee 1800.2-2020 auto C.2.4.5.6
   void set_precedence(uvm_resource_base r,
 		      uint p=uvm_resource_pool.get_default_precedence()) {
 
@@ -1072,10 +1064,10 @@ class uvm_resource_pool: rand.disable
 //----------------------------------------------------------------------
 // Class: uvm_resource #(T)
 // Implementation of uvm_resource#(T) as defined in section C.2.5.1 of
-// 1800.2-2017.
+// 1800.2-2020.
 //----------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto C.2.5.1
+// @uvm-ieee 1800.2-2020 auto C.2.5.1
 class uvm_resource(T=int): uvm_resource_base, rand.disable
 {
 
@@ -1114,7 +1106,7 @@ class uvm_resource(T=int): uvm_resource_base, rand.disable
 
   // `uvm_type_name_decl($sformatf("uvm_resource#(%s)", `uvm_typename(T)))
 
-  // @uvm-ieee 1800.2-2017 auto C.2.5.2
+  // @uvm-ieee 1800.2-2020 auto C.2.5.2
   this(string name="") {
     super(name);
   }
@@ -1155,7 +1147,7 @@ class uvm_resource(T=int): uvm_resource_base, rand.disable
   // uvm_resource_base.  This function is not static and therefore can
   // only be used by instances of a parameterized resource.
 
-  // @uvm-ieee 1800.2-2017 auto C.2.5.3.2
+  // @uvm-ieee 1800.2-2020 auto C.2.5.3.2
   override uvm_resource_base get_type_handle() {
     return get_type();
   }
@@ -1176,13 +1168,13 @@ class uvm_resource(T=int): uvm_resource_base, rand.disable
   //| function T read(uvm_object accessor = null);
   //
   // This function is the implementation of the uvm_resource#(T)::read 
-  // method detailed in IEEE1800.2-2017 section C.2.5.4.1
+  // method detailed in IEEE1800.2-2020 section C.2.5.4.1
   //
   // It calls uvm_resource_base::record_read_access before returning the value.
   //
   // @uvm-accellera The details of this API are specific to the Accellera implementation, and are not being considered for contribution to 1800.2
 
-  // @uvm-ieee 1800.2-2017 auto C.2.5.4.1
+  // @uvm-ieee 1800.2-2020 auto C.2.5.4.1
   T read(uvm_object accessor = null) {
     synchronized (this) {
       record_read_access(accessor);
@@ -1195,14 +1187,14 @@ class uvm_resource(T=int): uvm_resource_base, rand.disable
   //| function void write(T t, uvm_object accessor = null);
   //
   // This function is the implementation of the uvm_resource#(T)::write 
-  // method detailed in IEEE1800.2-2017 section C.2.5.4.2
+  // method detailed in IEEE1800.2-2020 section C.2.5.4.2
   //
   // It calls uvm_resource_base::record_write_access before writing the value.
   //
   // @uvm-accellera The details of this API are specific to the Accellera implementation, and are not being considered for contribution to 1800.2
 
 
-  // @uvm-ieee 1800.2-2017 auto C.2.5.4.2
+  // @uvm-ieee 1800.2-2020 auto C.2.5.4.2
    void write(T t, uvm_object accessor = null) {
     import uvm.base.uvm_globals;
     synchronized (this) {

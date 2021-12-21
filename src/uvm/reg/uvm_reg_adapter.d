@@ -1,12 +1,12 @@
 //
 // -------------------------------------------------------------
 // Copyright 2014-2021 Coverify Systems Technology
+// Copyright 2010 AMD
+// Copyright 2010-2018 Cadence Design Systems, Inc.
 // Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2014-2020 NVIDIA Corporation
 // Copyright 2014 Semifore
 // Copyright 2004-2018 Synopsys, Inc.
-// Copyright 2010-2018 Cadence Design Systems, Inc.
-// Copyright 2010 AMD
-// Copyright 2014-2015 NVIDIA Corporation
 //    All Rights Reserved Worldwide
 //
 //    Licensed under the Apache License, Version 2.0 (the
@@ -61,7 +61,7 @@ import esdl.data.bvec: getByte, setByte;
 // and a specific bus transaction. 
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 19.2.1.1
+// @uvm-ieee 1800.2-2020 auto 19.2.1.1
 abstract class uvm_reg_adapter: uvm_object
 {
 
@@ -70,7 +70,7 @@ abstract class uvm_reg_adapter: uvm_object
   //
   // Create a new instance of this type, giving it the optional ~name~.
 
-  // @uvm-ieee 1800.2-2017 auto 19.2.1.2.1
+  // @uvm-ieee 1800.2-2020 auto 19.2.1.2.1
   public this(string name="") {
     super(name);
   }
@@ -114,7 +114,7 @@ abstract class uvm_reg_adapter: uvm_object
   // the corresponding members from the given generic ~rw~ bus operation, then
   // return it.
 
-  // @uvm-ieee 1800.2-2017 auto 19.2.1.2.5
+  // @uvm-ieee 1800.2-2020 auto 19.2.1.2.5
   public abstract uvm_sequence_item reg2bus(const ref uvm_reg_bus_op rw);
 
 
@@ -126,7 +126,7 @@ abstract class uvm_reg_adapter: uvm_object
   // is not allocated from scratch. This is to accommodate applications
   // where the bus response must be returned in the original request.
 
-  // @uvm-ieee 1800.2-2017 auto 19.2.1.2.6
+  // @uvm-ieee 1800.2-2020 auto 19.2.1.2.6
   public abstract void bus2reg(uvm_sequence_item bus_item,
 			       ref uvm_reg_bus_op rw);
 
@@ -135,7 +135,7 @@ abstract class uvm_reg_adapter: uvm_object
   private uvm_reg_item _m_item;
 
   
-  // @uvm-ieee 1800.2-2017 auto 19.2.1.2.7
+  // @uvm-ieee 1800.2-2020 auto 19.2.1.2.7
   public uvm_reg_item get_item() {
     synchronized(this) {
       return _m_item;
@@ -198,7 +198,7 @@ abstract class uvm_reg_adapter: uvm_object
 //
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 19.2.2.1
+// @uvm-ieee 1800.2-2020 auto 19.2.2.1
 class uvm_reg_tlm_adapter: uvm_reg_adapter
 {
 
@@ -212,7 +212,7 @@ class uvm_reg_tlm_adapter: uvm_reg_adapter
   //
   // Converts a <uvm_reg_bus_op> struct to a <uvm_tlm_gp> item.
 
-  // @uvm-ieee 1800.2-2017 auto 19.2.2.2.1
+  // @uvm-ieee 1800.2-2020 auto 19.2.2.2.1
   override uvm_sequence_item reg2bus(const ref uvm_reg_bus_op rw) {
     // rw is struct instance -- can not synchronize
     uvm_tlm_gp gp = uvm_tlm_gp.type_id.create("tlm_gp", null,
@@ -253,7 +253,7 @@ class uvm_reg_tlm_adapter: uvm_reg_adapter
   // into the provided ~rw~ transaction.
   //
 
-  // @uvm-ieee 1800.2-2017 auto 19.2.2.2.2
+  // @uvm-ieee 1800.2-2020 auto 19.2.2.2.2
   override public void bus2reg(uvm_sequence_item bus_item,
 		      ref uvm_reg_bus_op rw) {
     synchronized(this) {

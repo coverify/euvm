@@ -1,11 +1,12 @@
 // 
 // -------------------------------------------------------------
 // Copyright 2014-2021 Coverify Systems Technology
-// Copyright 2010-2011 Mentor Graphics Corporation
-// Copyright 2004-2010 Synopsys, Inc.
-// Copyright 2010-2018 Cadence Design Systems, Inc.
 // Copyright 2010 AMD
-// Copyright 2015 NVIDIA Corporation
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2015-2020 NVIDIA Corporation
+// Copyright 2020 Semifore
+// Copyright 2004-2010 Synopsys, Inc.
 //    All Rights Reserved Worldwide
 // 
 //    Licensed under the Apache License, Version 2.0 (the
@@ -65,7 +66,15 @@
 module uvm.reg.sequences.uvm_reg_access_seq;
 
 // import uvm.reg.sequences.uvm_mem_access_seq: uvm_mem_access_seq;
-import uvm.reg;
+import uvm.reg.uvm_reg_sequence: uvm_reg_sequence;
+import uvm.reg.uvm_reg_item: uvm_reg_item;
+import uvm.reg.uvm_reg: uvm_reg;
+import uvm.reg.uvm_reg_field: uvm_reg_field;
+import uvm.reg.uvm_reg_block: uvm_reg_block;
+import uvm.reg.uvm_reg_map: uvm_reg_map;
+import uvm.reg.uvm_reg_model: uvm_hier_e, uvm_door_e, uvm_status_e, uvm_reg_data_t,
+  uvm_check_e;
+
 import uvm.base.uvm_object_defines;
 import uvm.base.uvm_resource_db: uvm_resource_db;
 import uvm.base.uvm_object_globals: uvm_verbosity;
@@ -74,7 +83,7 @@ import uvm.seq.uvm_sequence: uvm_sequence;
 import esdl;
 import std.string: format;
 
-// @uvm-ieee 1800.2-2017 auto E.3.1.1
+// @uvm-ieee 1800.2-2020 auto E.3.1.1
 class uvm_reg_single_access_seq: uvm_reg_sequence!(uvm_sequence!(uvm_reg_item))
 {
 
@@ -84,7 +93,7 @@ class uvm_reg_single_access_seq: uvm_reg_sequence!(uvm_sequence!(uvm_reg_item))
 
   mixin uvm_object_utils;
 
-  // @uvm-ieee 1800.2-2017 auto E.3.1.3
+  // @uvm-ieee 1800.2-2020 auto E.3.1.3
   this(string name="uvm_reg_single_access_seq") {
     super(name);
   }
@@ -159,9 +168,9 @@ class uvm_reg_single_access_seq: uvm_reg_sequence!(uvm_sequence!(uvm_reg_item))
          
 	v = rg.get();
          
-	rg.write(status, ~v, UVM_FRONTDOOR, map, this);
+	rg.write(status, ~v, uvm_door_e.UVM_FRONTDOOR, map, this);
 
-	if (status != UVM_IS_OK) {
+	if (status != uvm_status_e.UVM_IS_OK) {
 	  uvm_error("uvm_reg_access_seq", "Status was '" ~ status.to!string() ~
 		    "' when writing '" ~ rg.get_full_name() ~
 		    "' through map '" ~ map.get_full_name() ~ "'");
@@ -169,22 +178,22 @@ class uvm_reg_single_access_seq: uvm_reg_sequence!(uvm_sequence!(uvm_reg_item))
 	// #1;
 	wait(1);
          
-	rg.mirror(status, UVM_CHECK, UVM_BACKDOOR, uvm_reg_map.backdoor(), this);
-	if (status != UVM_IS_OK) {
+	rg.mirror(status, uvm_check_e.UVM_CHECK, uvm_door_e.UVM_BACKDOOR, null, this);
+	if (status != uvm_status_e.UVM_IS_OK) {
 	  uvm_error("uvm_reg_access_seq", "Status was '" ~ status.to!string() ~
 		    "' when reading reset value of register '" ~
 		    rg.get_full_name() ~ "' through backdoor");
 	}
          
-	rg.write(status, v, UVM_BACKDOOR, map, this);
-	if (status != UVM_IS_OK) {
+	rg.write(status, v, uvm_door_e.UVM_BACKDOOR, map, this);
+	if (status != uvm_status_e.UVM_IS_OK) {
 	  uvm_error("uvm_reg_access_seq", "Status was '" ~ status.to!string() ~
 		    "' when writing '" ~ rg.get_full_name() ~
 		    "' through backdoor");
 	}
          
-	rg.mirror(status, UVM_CHECK, UVM_FRONTDOOR, map, this);
-	if (status != UVM_IS_OK) {
+	rg.mirror(status, uvm_check_e.UVM_CHECK, uvm_door_e.UVM_FRONTDOOR, map, this);
+	if (status != uvm_status_e.UVM_IS_OK) {
 	  uvm_error("uvm_reg_access_seq", "Status was '" ~ status.to!string() ~
 		    "' when reading reset value of register '" ~
 		    rg.get_full_name() ~ "' through map '" ~
@@ -214,7 +223,7 @@ class uvm_reg_single_access_seq: uvm_reg_sequence!(uvm_sequence!(uvm_reg_item))
 //
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto E.3.2.1
+// @uvm-ieee 1800.2-2020 auto E.3.2.1
 class uvm_reg_access_seq: uvm_reg_sequence!(uvm_sequence!(uvm_reg_item))
 {
   // Variable -- NODOCS -- model
@@ -232,13 +241,13 @@ class uvm_reg_access_seq: uvm_reg_sequence!(uvm_sequence!(uvm_reg_item))
    
   mixin uvm_object_utils;
 
-  // @uvm-ieee 1800.2-2017 auto E.3.2.3.1
+  // @uvm-ieee 1800.2-2020 auto E.3.2.3.1
   public this(string name="uvm_reg_access_seq") {
     super(name);
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto E.3.2.3.2
+  // @uvm-ieee 1800.2-2020 auto E.3.2.3.2
   override public void body() {
 
     if (model is null) {
@@ -275,7 +284,7 @@ class uvm_reg_access_seq: uvm_reg_sequence!(uvm_sequence!(uvm_reg_item))
     }
 
     // Iterate over all registers, checking accesses
-    blk.get_registers(regs, UVM_NO_HIER);
+    blk.get_registers(regs, uvm_hier_e.UVM_NO_HIER);
     foreach (reg; regs) {
       // Registers with some attributes are not to be tested
       if (uvm_resource_db!bool.get_by_name("REG::" ~ reg.get_full_name(),
@@ -297,7 +306,7 @@ class uvm_reg_access_seq: uvm_reg_sequence!(uvm_sequence!(uvm_reg_item))
 
     uvm_reg_block[] blks;
          
-    blk.get_blocks(blks);
+    blk.get_blocks(blks, uvm_hier_e.UVM_NO_HIER);
     foreach (blk_; blks) {
       do_block(blk_);
     }
@@ -337,12 +346,12 @@ class uvm_reg_access_seq: uvm_reg_sequence!(uvm_sequence!(uvm_reg_item))
 //
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto E.3.3.1
+// @uvm-ieee 1800.2-2020 auto E.3.3.1
 class uvm_reg_mem_access_seq: uvm_reg_sequence!(uvm_sequence!(uvm_reg_item))
 {
   mixin uvm_object_utils;
 
-  // @uvm-ieee 1800.2-2017 auto E.3.3.2
+  // @uvm-ieee 1800.2-2020 auto E.3.3.2
   public this(string name="uvm_reg_mem_access_seq") {
     super(name);
   }

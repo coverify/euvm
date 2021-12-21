@@ -1,14 +1,16 @@
 //
 // -------------------------------------------------------------
 // Copyright 2014-2021 Coverify Systems Technology
-// Copyright 2010-2020 Mentor Graphics Corporation
-// Copyright 2011-2014 Semifore
-// Copyright 2018 Intel Corporation
-// Copyright 2004-2018 Synopsys, Inc.
-// Copyright 2010-2018 Cadence Design Systems, Inc.
 // Copyright 2010 AMD
-// Copyright 2014-2018 NVIDIA Corporation
 // Copyright 2012 Accellera Systems Initiative
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2018 Intel Corporation
+// Copyright 2020 Marvell International Ltd.
+// Copyright 2010-2020 Mentor Graphics Corporation
+// Copyright 2014-2020 NVIDIA Corporation
+// Copyright 2011-2020 Semifore
+// Copyright 2004-2018 Synopsys, Inc.
+// Copyright 2020 Verific
 //    All Rights Reserved Worldwide
 //
 //    Licensed under the Apache License, Version 2.0 (the
@@ -66,7 +68,11 @@ import esdl.rand;
 
 import std.string: format;
 
-// @uvm-ieee 1800.2-2017 auto 18.4.1
+// Class: uvm_reg
+// This is an implementation of uvm_reg as described in 1800.2 with
+// the addition of API described below.
+
+// @uvm-ieee 1800.2-2020 auto 18.4.1
 class uvm_reg: uvm_object, rand.barrier
 {
   mixin uvm_sync;
@@ -120,7 +126,7 @@ class uvm_reg: uvm_object, rand.barrier
   //----------------------
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.2.1
+  // @uvm-ieee 1800.2-2020 auto 18.4.2.1
   this(string name, uint n_bits, int has_coverage) {
     synchronized(this) {
       super(name);
@@ -145,7 +151,7 @@ class uvm_reg: uvm_object, rand.barrier
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.2.2
+  // @uvm-ieee 1800.2-2020 auto 18.4.2.2
   final void configure (uvm_reg_block blk_parent,
 			uvm_reg_file regfile_parent=null,
 			string hdl_path = "") {
@@ -167,7 +173,7 @@ class uvm_reg: uvm_object, rand.barrier
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.2.3
+  // @uvm-ieee 1800.2-2020 auto 18.4.2.3
   void set_offset (uvm_reg_map    map,
 		   uvm_reg_addr_t offset,
 		   bool unmapped = false) {
@@ -229,10 +235,9 @@ class uvm_reg: uvm_object, rand.barrier
       if (idx < 0) {
 	_m_fields ~= field;
 	idx = _m_fields.length-1;
+	_m_n_used_bits = offset + field.get_n_bits();
       }
 
-      _m_n_used_bits += field.get_n_bits();
-   
       // Check if there are too many fields in the register
       if (_m_n_used_bits > _m_n_bits) {
 	uvm_error("RegModel",
@@ -279,7 +284,7 @@ class uvm_reg: uvm_object, rand.barrier
   }
 
   // remove the knowledge that the register resides in the map from the register instance
-  // @uvm-ieee 1800.2-2017 auto 18.4.2.5
+  // @uvm-ieee 1800.2-2020 auto 18.4.2.5
   void unregister(uvm_reg_map map) {
     synchronized(this) {
       _m_maps.remove(map);
@@ -316,7 +321,7 @@ class uvm_reg: uvm_object, rand.barrier
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.3.1
+  // @uvm-ieee 1800.2-2020 auto 18.4.3.1
   uvm_reg_block get_parent() {
     return get_block();
   }
@@ -327,7 +332,7 @@ class uvm_reg: uvm_object, rand.barrier
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.3.2
+  // @uvm-ieee 1800.2-2020 auto 18.4.3.2
   uvm_reg_file get_regfile() {
     synchronized(this) {
       return _m_regfile_parent;
@@ -335,14 +340,14 @@ class uvm_reg: uvm_object, rand.barrier
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.3.3
+  // @uvm-ieee 1800.2-2020 auto 18.4.3.3
   int get_n_maps() {
     synchronized(this) {
       return cast(int) _m_maps.length;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.3.4
+  // @uvm-ieee 1800.2-2020 auto 18.4.3.4
   bool is_in_map(uvm_reg_map map) {
     synchronized(this) {
       if (map in _m_maps) {
@@ -362,7 +367,7 @@ class uvm_reg: uvm_object, rand.barrier
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.3.5
+  // @uvm-ieee 1800.2-2020 auto 18.4.3.5
   void get_maps(ref uvm_reg_map[] maps) {
     synchronized(this) {
       foreach (map, unused; _m_maps) {
@@ -379,6 +384,7 @@ class uvm_reg: uvm_object, rand.barrier
     }
   }
 
+  // @uvm-ieee 1800.2-2020 auto 18.4.3.6
   uvm_reg_map get_local_map(uvm_reg_map map) {
     synchronized(this) {
       if (map is null) {
@@ -405,6 +411,15 @@ class uvm_reg: uvm_object, rand.barrier
     }
   }
 
+  // Function: get_default_map
+  //
+  // Returns default map for the register as follows:
+  //
+  // If the register is not associated with any map - returns null
+  // Else If the register is associated with only one map - return a handle to that map
+  // Else try to find the first default map in its parent blocks and return its handle
+  // If there are no default maps in the registers parent blocks return a handle to the first map in its map array 
+  //  
   uvm_reg_map get_default_map() {
     synchronized(this) {
       // if reg is not associated with any map, return null
@@ -439,7 +454,7 @@ class uvm_reg: uvm_object, rand.barrier
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.3.6
+  // @uvm-ieee 1800.2-2020 auto 18.4.3.7
   string get_rights(uvm_reg_map map = null) {
     synchronized(this) {
       uvm_reg_map_info info;
@@ -487,7 +502,7 @@ class uvm_reg: uvm_object, rand.barrier
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.3.10
+  // @uvm-ieee 1800.2-2020 auto 18.4.3.11
   void get_fields(ref uvm_reg_field[] fields) {
     synchronized(this) {
       foreach (field; _m_fields) {
@@ -502,7 +517,7 @@ class uvm_reg: uvm_object, rand.barrier
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.3.11
+  // @uvm-ieee 1800.2-2020 auto 18.4.3.12
   uvm_reg_field get_field_by_name(string name) {
     synchronized(this) {
       foreach (field; _m_fields) {
@@ -542,7 +557,7 @@ class uvm_reg: uvm_object, rand.barrier
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.3.12
+  // @uvm-ieee 1800.2-2020 auto 18.4.3.13
   uvm_reg_addr_t get_offset(uvm_reg_map map = null) {
     synchronized(this) {
       uvm_reg_map_info map_info;
@@ -567,7 +582,7 @@ class uvm_reg: uvm_object, rand.barrier
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.3.13
+  // @uvm-ieee 1800.2-2020 auto 18.4.3.14
   uvm_reg_addr_t get_address(uvm_reg_map map = null) {
     synchronized(this) {
       uvm_reg_addr_t[]  addr;
@@ -576,7 +591,7 @@ class uvm_reg: uvm_object, rand.barrier
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.3.14
+  // @uvm-ieee 1800.2-2020 auto 18.4.3.15
   int get_addresses(uvm_reg_map map, ref uvm_reg_addr_t[] addr) {
     synchronized(this) {
       uvm_reg_map_info map_info;
@@ -608,7 +623,7 @@ class uvm_reg: uvm_object, rand.barrier
   // Group -- NODOCS -- Access
   //--------------
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.4.2
+  // @uvm-ieee 1800.2-2020 auto 18.4.4.2
   void set(uvm_reg_data_t  value,
 	   string          fname = "",
 	   int             lineno = 0) {
@@ -619,12 +634,12 @@ class uvm_reg: uvm_object, rand.barrier
 
       foreach (field; _m_fields) {
 	field.set((value >> field.get_lsb_pos()) &
-		  ((1 << field.get_n_bits()) - 1));
+		  ((1L << field.get_n_bits()) - 1));
       }
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.4.1
+  // @uvm-ieee 1800.2-2020 auto 18.4.4.1
   uvm_reg_data_t  get(string  fname = "",
 		      int     lineno = 0) {
     synchronized(this) {
@@ -643,7 +658,7 @@ class uvm_reg: uvm_object, rand.barrier
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.4.3
+  // @uvm-ieee 1800.2-2020 auto 18.4.4.3
   uvm_reg_data_t  get_mirrored_value(string  fname = "",
 				     int     lineno = 0) {
     synchronized(this) {
@@ -660,7 +675,7 @@ class uvm_reg: uvm_object, rand.barrier
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.4.4
+  // @uvm-ieee 1800.2-2020 auto 18.4.4.4
   bool needs_update() {
     synchronized(this) {
       foreach (i, field; _m_fields) {
@@ -672,7 +687,7 @@ class uvm_reg: uvm_object, rand.barrier
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.4.5
+  // @uvm-ieee 1800.2-2020 auto 18.4.4.5
   void reset(string kind = "HARD") {
     synchronized(this) {
       foreach (field; _m_fields) {
@@ -693,7 +708,7 @@ class uvm_reg: uvm_object, rand.barrier
   // Return the reset value for this register
   // for the specified reset ~kind~.
   //
-  // @uvm-ieee 1800.2-2017 auto 18.4.4.6
+  // @uvm-ieee 1800.2-2020 auto 18.4.4.6
   uvm_reg_data_t get_reset(string kind = "HARD") {
     synchronized(this) {
       // Concatenate the value of the individual fields
@@ -708,7 +723,7 @@ class uvm_reg: uvm_object, rand.barrier
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.4.7
+  // @uvm-ieee 1800.2-2020 auto 18.4.4.7
   bool has_reset(string kind = "HARD",
 		 bool remove = false) {
     synchronized(this) {
@@ -730,7 +745,7 @@ class uvm_reg: uvm_object, rand.barrier
   // corresponding to the cause specified by ~kind~.
   //
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.4.8
+  // @uvm-ieee 1800.2-2020 auto 18.4.4.8
   void set_reset(uvm_reg_data_t value,
 		 string         kind = "HARD") {
     synchronized(this) {
@@ -753,8 +768,8 @@ class uvm_reg: uvm_object, rand.barrier
     write(status, value, door, map, parent, prior, extension, fname, lineno);
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.4.9
-  // @uvm-ieee 1800.2-2017 auto 18.8.5.3
+  // @uvm-ieee 1800.2-2020 auto 18.4.4.9
+  // @uvm-ieee 1800.2-2020 auto 18.8.5.3
   // task
   void write(out uvm_status_e  status,
 	     uvm_reg_data_t    value,
@@ -795,8 +810,8 @@ class uvm_reg: uvm_object, rand.barrier
 
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.4.10
-  // @uvm-ieee 1800.2-2017 auto 18.8.5.4
+  // @uvm-ieee 1800.2-2020 auto 18.4.4.10
+  // @uvm-ieee 1800.2-2020 auto 18.8.5.4
   // task
   void read(out uvm_status_e      status,
 	    out uvm_reg_data_t    value,
@@ -813,9 +828,7 @@ class uvm_reg: uvm_object, rand.barrier
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.4.11
-  // @uvm-ieee 1800.2-2017 auto 18.8.5.5
-  // @uvm-ieee 1800.2-2017 auto 18.8.5.6
+  // @uvm-ieee 1800.2-2020 auto 18.4.4.11
   // task
   void poke(out uvm_status_e  status,
 	    uvm_reg_data_t    value,
@@ -851,7 +864,7 @@ class uvm_reg: uvm_object, rand.barrier
       rw.set_element_kind(UVM_REG);
       rw.set_kind(UVM_WRITE);
       rw.set_bd_kind(kind);
-      rw.set_value(value & ((1 << _m_n_bits)-1), 0);
+      rw.set_value(value & ((1L << _m_n_bits)-1), 0);
       rw.set_parent_sequence(parent);
       rw.set_extension(extension);
       rw.set_fname(fname);
@@ -877,7 +890,7 @@ class uvm_reg: uvm_object, rand.barrier
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.4.12
+  // @uvm-ieee 1800.2-2020 auto 18.4.4.12
   // task
   void peek(out uvm_status_e      status,
 	    out uvm_reg_data_t    value,
@@ -937,7 +950,7 @@ class uvm_reg: uvm_object, rand.barrier
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.4.13
+  // @uvm-ieee 1800.2-2020 auto 18.4.4.13
   // task
   void update(out uvm_status_e      status,
 	      uvm_door_e            door = uvm_door_e.UVM_DEFAULT_DOOR,
@@ -965,8 +978,8 @@ class uvm_reg: uvm_object, rand.barrier
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.4.14
-  // @uvm-ieee 1800.2-2017 auto 18.8.5.8
+  // @uvm-ieee 1800.2-2020 auto 18.4.4.14
+  // @uvm-ieee 1800.2-2020 auto 18.8.5.6
   // task
   void mirror(out uvm_status_e   status,
 	      uvm_check_e        check = uvm_check_e.UVM_NO_CHECK,
@@ -988,8 +1001,11 @@ class uvm_reg: uvm_object, rand.barrier
       if (door == UVM_DEFAULT_DOOR)
 	door = _m_parent.get_default_door();
 
-      if (door == UVM_BACKDOOR && (bkdr !is null || has_hdl_path()))
-	map = uvm_reg_map.backdoor();
+      if (door == UVM_BACKDOOR && (bkdr !is null || has_hdl_path())) {
+	map = get_default_map();
+	if (map is null) 
+	  map = uvm_reg_map.backdoor();
+      }
       else
 	map = get_local_map(map);
 
@@ -1016,8 +1032,8 @@ class uvm_reg: uvm_object, rand.barrier
     XatomicX(false);
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.4.15
-  // @uvm-ieee 1800.2-2017 auto 18.8.5.9
+  // @uvm-ieee 1800.2-2020 auto 18.4.4.15
+  // @uvm-ieee 1800.2-2020 auto 18.8.5.7
   bool predict (uvm_reg_data_t    value,
 		uvm_reg_byte_en_t be =  -1,
 		uvm_predict_e     kind = uvm_predict_e.UVM_PREDICT_DIRECT,
@@ -1039,7 +1055,7 @@ class uvm_reg: uvm_object, rand.barrier
     else return true;
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.4.16
+  // @uvm-ieee 1800.2-2020 auto 18.4.4.16
   final bool is_busy() {
     synchronized(this) {
       return _m_is_busy;
@@ -1181,7 +1197,7 @@ class uvm_reg: uvm_object, rand.barrier
 	acc = acc[0..2];
 	if (! (field.get_compare() == UVM_NO_CHECK || acc == "WO")) {
 	  valid_bits_mask |=
-	    ((1 << field.get_n_bits())-1) << field.get_lsb_pos();
+	    ((1L << field.get_n_bits())-1) << field.get_lsb_pos();
 	}
       }
 
@@ -1200,7 +1216,7 @@ class uvm_reg: uvm_object, rand.barrier
 	acc = acc[0..2];
 	if (!(field.get_compare() == UVM_NO_CHECK ||
 	      acc == "WO")) {
-	  uvm_reg_data_t mask  = ((1 << field.get_n_bits())-1);
+	  uvm_reg_data_t mask  = ((1L << field.get_n_bits())-1);
 	  uvm_reg_data_t val   = actual   >> field.get_lsb_pos() & mask;
 	  uvm_reg_data_t exp   = expected >> field.get_lsb_pos() & mask;
 
@@ -1242,7 +1258,7 @@ class uvm_reg: uvm_object, rand.barrier
     m_write_in_progress = true;
  
     value = rw.get_value(0);
-    value &= ((1 << m_n_bits)-1);
+    value &= ((1L << m_n_bits)-1);
     rw.set_value(value, 0);
 
     rw.set_status(UVM_IS_OK);
@@ -1255,7 +1271,7 @@ class uvm_reg: uvm_object, rand.barrier
       uvm_reg_field_cb_iter lcbs = new uvm_reg_field_cb_iter(field);
       uvm_reg_field f = field;
       int lsb = f.get_lsb_pos();
-      msk = ((1 << f.get_n_bits())-1) << lsb;
+      msk = ((1L << f.get_n_bits())-1) << lsb;
       // rw.value[0] = (value & msk) >> lsb;
       rw.set_value((value & msk) >> lsb, 0);
       f.pre_write(rw);
@@ -1375,7 +1391,7 @@ class uvm_reg: uvm_object, rand.barrier
 	}
       }
       break;
-    default: assert(false);	// not there in SV version
+    default: break;
     }
 
     value = rw.get_value(0);
@@ -1483,7 +1499,7 @@ class uvm_reg: uvm_object, rand.barrier
          
       uvm_reg_map map = rw.get_local_map();
           
-      if (map.get_check_on_read()) exp = get();
+      if (map.get_check_on_read()) exp = get_mirrored_value();
       string rights = get_rights(rw.get_local_map());
       if (rights == "RW" || rights == "RO") {
 	if (bkdr !is null)
@@ -1563,7 +1579,7 @@ class uvm_reg: uvm_object, rand.barrier
       uvm_reg_map local_map = rw.get_local_map();
       uvm_reg_map system_map = local_map.get_root_map();
       m_is_busy = true;
-      if (rw.local_map.get_check_on_read()) exp = get();
+      if (rw.local_map.get_check_on_read()) exp = get_mirrored_value();
    
       // ...VIA USER FRONTDOOR
       if (map_info.frontdoor !is null) {
@@ -1598,16 +1614,16 @@ class uvm_reg: uvm_object, rand.barrier
       }
     }
       break;
-    default: assert(false);	// not part of SV version
+    default: break;
     }
-
-    value = rw.get_value(0); // preserve 
 
     // POST-READ CBS - REG
     for (uvm_reg_cbs cb = cbs.first(); cb !is null; cb = cbs.next())
       cb.post_read(rw);
 
     post_read(rw);
+
+    value = rw.get_value(0); // preserve 
 
     // POST-READ CBS - FIELDS
     foreach (field; get_fields()) {
@@ -1618,12 +1634,27 @@ class uvm_reg: uvm_object, rand.barrier
       rw.set_element_kind(UVM_FIELD);
       rw.set_value((value >> f.get_lsb_pos()) & ((1<<f.get_n_bits())-1), 0);
 
+      int top = (f.get_n_bits()+f.get_lsb_pos());      
+      
+      // Filter to remove field from value before ORing result of field CB/post_read back in
+      uvm_reg_data_t value_field_filter = -1;     
+      for (int i = f.get_lsb_pos(); i < top; i++) {
+         value_field_filter[i] = 0;
+      }
+   
       for (uvm_reg_cbs cb=cbsi.first(); cb !is null; cb=cbsi.next())
 	cb.post_read(rw);
       f.post_read(rw);
+
+      
+      // Recreate value based on field value and field filtered version of value
+      value = (value & value_field_filter) |
+	(~value_field_filter & (rw.get_value(0) << f.get_lsb_pos()));
+      
     }
 
-    rw.set_value(value, 0); // restore
+    rw.set_value(value, 0);
+   
     rw.set_element(this);
     rw.set_element_kind(UVM_REG);
 
@@ -1638,7 +1669,7 @@ class uvm_reg: uvm_object, rand.barrier
       else
 	path_s = (get_backdoor() !is null) ? "user backdoor" : "DPI backdoor";
 
-      value_s = format("=%0h", rw.get_value(0));
+      value_s = format("=0x%0h", rw.get_value(0));
 
       uvm_report_info("RegModel", "Read  register via " ~ path_s ~ ": " ~
 		      get_full_name() ~ value_s, uvm_verbosity.UVM_HIGH);
@@ -1666,7 +1697,7 @@ class uvm_reg: uvm_object, rand.barrier
    
       foreach (field; _m_fields) {
 	rw.set_value((reg_value >> field.get_lsb_pos()) &
-		     ((1 << field.get_n_bits())-1), 0);
+		     ((1L << field.get_n_bits())-1), 0);
 	field.do_predict(rw, kind, be>>(field.get_lsb_pos()/8));
       }
 
@@ -1680,7 +1711,7 @@ class uvm_reg: uvm_object, rand.barrier
   //-----------------
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.5.2
+  // @uvm-ieee 1800.2-2020 auto 18.4.5.2
   void set_frontdoor(uvm_reg_frontdoor ftdr,
 		     uvm_reg_map       map = null,
 		     string            fname = "",
@@ -1702,7 +1733,7 @@ class uvm_reg: uvm_object, rand.barrier
   }
     
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.5.1
+  // @uvm-ieee 1800.2-2020 auto 18.4.5.1
   uvm_reg_frontdoor get_frontdoor(uvm_reg_map map = null) {
     synchronized(this) {
       map = get_local_map(map);
@@ -1719,7 +1750,7 @@ class uvm_reg: uvm_object, rand.barrier
   //----------------
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.6.2
+  // @uvm-ieee 1800.2-2020 auto 18.4.6.2
   void set_backdoor(uvm_reg_backdoor bkdr,
 		    string           fname = "",
 		    int              lineno = 0) {
@@ -1735,7 +1766,7 @@ class uvm_reg: uvm_object, rand.barrier
   }
    
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.6.1
+  // @uvm-ieee 1800.2-2020 auto 18.4.6.1
   uvm_reg_backdoor get_backdoor(bool inherited = true) {
     synchronized(this) {
       if (_m_backdoor is null && inherited) {
@@ -1755,7 +1786,7 @@ class uvm_reg: uvm_object, rand.barrier
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.6.3
+  // @uvm-ieee 1800.2-2020 auto 18.4.6.3
   void clear_hdl_path(string kind = "RTL") {
     synchronized(this) {
       if (kind == "ALL") {
@@ -1779,7 +1810,7 @@ class uvm_reg: uvm_object, rand.barrier
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.6.4
+  // @uvm-ieee 1800.2-2020 auto 18.4.6.4
   void add_hdl_path(uvm_hdl_path_slice[] slices,
 		    string kind = "RTL") {
     synchronized(this) {
@@ -1791,7 +1822,7 @@ class uvm_reg: uvm_object, rand.barrier
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.6.5
+  // @uvm-ieee 1800.2-2020 auto 18.4.6.5
   void add_hdl_path_slice(string name,
 			  int offset,
 			  int size,
@@ -1812,7 +1843,7 @@ class uvm_reg: uvm_object, rand.barrier
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.6.6
+  // @uvm-ieee 1800.2-2020 auto 18.4.6.6
   bool  has_hdl_path(string kind = "") {
     synchronized(this) {
       if (kind == "") {
@@ -1828,7 +1859,7 @@ class uvm_reg: uvm_object, rand.barrier
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.6.7
+  // @uvm-ieee 1800.2-2020 auto 18.4.6.7
   void get_hdl_path(ref uvm_hdl_path_concat[] doors,
 		    string kind = "") {
     synchronized(this) {
@@ -1855,7 +1886,7 @@ class uvm_reg: uvm_object, rand.barrier
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.6.8
+  // @uvm-ieee 1800.2-2020 auto 18.4.6.8
   void get_hdl_path_kinds (out string[] kinds) {
     synchronized(this) {
       foreach (kind, unused; _m_hdl_paths_pool) {
@@ -1865,7 +1896,7 @@ class uvm_reg: uvm_object, rand.barrier
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.6.9
+  // @uvm-ieee 1800.2-2020 auto 18.4.6.9
   void get_full_hdl_path(ref uvm_hdl_path_concat[] doors,
 			 string kind = "",
 			 string separator = ".") {
@@ -1911,14 +1942,14 @@ class uvm_reg: uvm_object, rand.barrier
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.6.10
+  // @uvm-ieee 1800.2-2020 auto 18.4.6.10
   // task
   void backdoor_read (uvm_reg_item rw) {
     rw.set_status(backdoor_read_func(rw));
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.6.11
+  // @uvm-ieee 1800.2-2020 auto 18.4.6.11
   // task
   void backdoor_write(uvm_reg_item rw) {
     uvm_hdl_path_concat[] doors;
@@ -1935,7 +1966,7 @@ class uvm_reg: uvm_object, rand.barrier
 	  continue;
 	}
 	uvm_reg_data_t slice = rw.get_value(0) >> hdl_slice.offset;
-	slice &= (1 << hdl_slice.size)-1;
+	slice &= (1L << hdl_slice.size)-1;
 	ok &= uvm_hdl_deposit(hdl_slice.path, slice);
       }
     }
@@ -1978,7 +2009,7 @@ class uvm_reg: uvm_object, rand.barrier
 	  val |= (slice << hdl_slice.offset) & mask;
 	}
 
-	val &= (1 << _m_n_bits)-1;
+	val &= (1L << _m_n_bits)-1;
 
 	if (i == 0)
 	  rw.set_value(val, 0);
@@ -2007,7 +2038,7 @@ class uvm_reg: uvm_object, rand.barrier
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.6.12
+  // @uvm-ieee 1800.2-2020 auto 18.4.6.12
   // task
   void backdoor_watch() { }
 
@@ -2016,7 +2047,7 @@ class uvm_reg: uvm_object, rand.barrier
   //----------------
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.7.1
+  // @uvm-ieee 1800.2-2020 auto 18.4.7.1
   void include_coverage(string reg_scope,
 			uvm_reg_cvr_t models,
 			uvm_object accessor = null) {
@@ -2028,7 +2059,7 @@ class uvm_reg: uvm_object, rand.barrier
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.7.2
+  // @uvm-ieee 1800.2-2020 auto 18.4.7.2
   uvm_reg_cvr_t build_coverage(uvm_reg_cvr_t models) {
     synchronized(this) {
       uvm_reg_cvr_t retval = uvm_coverage_model_e.UVM_NO_COVERAGE;
@@ -2040,14 +2071,14 @@ class uvm_reg: uvm_object, rand.barrier
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.7.3
+  // @uvm-ieee 1800.2-2020 auto 18.4.7.3
   void add_coverage(uvm_reg_cvr_t models) {
     synchronized(this) {
       _m_has_cover |= models;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.7.4
+  // @uvm-ieee 1800.2-2020 auto 18.4.7.4
   bool has_coverage(uvm_reg_cvr_t models) {
     synchronized(this) {
       return ((_m_has_cover & models) == models);
@@ -2055,7 +2086,7 @@ class uvm_reg: uvm_object, rand.barrier
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.7.6
+  // @uvm-ieee 1800.2-2020 auto 18.4.7.6
   uvm_reg_cvr_t set_coverage(uvm_reg_cvr_t is_on) {
     synchronized(this) {
       if (is_on == cast(uvm_reg_cvr_t) uvm_coverage_model_e.UVM_NO_COVERAGE) {
@@ -2070,7 +2101,7 @@ class uvm_reg: uvm_object, rand.barrier
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.7.5
+  // @uvm-ieee 1800.2-2020 auto 18.4.7.5
   bool get_coverage(uvm_reg_cvr_t is_on) {
     synchronized(this) {
       if (has_coverage(is_on) == 0)
@@ -2079,14 +2110,14 @@ class uvm_reg: uvm_object, rand.barrier
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.7.7
+  // @uvm-ieee 1800.2-2020 auto 18.4.7.7
   protected void sample(uvm_reg_data_t  data,
 			uvm_reg_data_t  byte_en,
 			bool             is_read,
 			uvm_reg_map     map) { }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.7.8
+  // @uvm-ieee 1800.2-2020 auto 18.4.7.8
   void sample_values() { }
 
   void XsampleX(uvm_reg_data_t  data,
@@ -2105,22 +2136,22 @@ class uvm_reg: uvm_object, rand.barrier
   mixin uvm_register_cb!uvm_reg_cbs;
    
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.8.1
+  // @uvm-ieee 1800.2-2020 auto 18.4.8.1
   // task
   void pre_write(uvm_reg_item rw) {}
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.8.2
+  // @uvm-ieee 1800.2-2020 auto 18.4.8.2
   // task
   void post_write(uvm_reg_item rw) {}
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.8.3
+  // @uvm-ieee 1800.2-2020 auto 18.4.8.3
   // task
   void pre_read(uvm_reg_item rw) {}
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.4.8.4
+  // @uvm-ieee 1800.2-2020 auto 18.4.8.4
   // task
   void post_read(uvm_reg_item rw) {}
 
@@ -2161,10 +2192,10 @@ class uvm_reg: uvm_object, rand.barrier
 			      parent_map.get_submap_offset(this_map));
 	  prefix ~= "  ";
 	  uvm_endianness_e e = this_map.get_endian();
-	  retval = format("%sMapped in '%s' -- %d bytes, %s," ~
-				   " offset 'h%0h\n", prefix,
-				   this_map.get_full_name(),
-				   this_map.get_n_bytes(), e, offset);
+	  retval ~= format("%sMapped in '%s' -- %d bytes, %s," ~
+			   " offset 'h%0h\n", prefix,
+			   this_map.get_full_name(),
+			   this_map.get_n_bytes(), e, offset);
 	}
       }
       prefix = "  ";

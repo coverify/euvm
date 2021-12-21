@@ -1,11 +1,11 @@
 //
 //------------------------------------------------------------------------------
-// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2014-2021 Coverify Systems Technology
+// Copyright 2007-2018 Cadence Design Systems, Inc.
 // Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2014-2020 NVIDIA Corporation
 // Copyright 2014 Semifore
 // Copyright 2014-2018 Synopsys, Inc.
-// Copyright 2007-2018 Cadence Design Systems, Inc.
-// Copyright 2014-2018 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -66,7 +66,7 @@ class uvm_tlm_event
 //
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 12.2.8.1.1
+// @uvm-ieee 1800.2-2020 auto 12.2.8.1.1
 abstract class uvm_tlm_fifo_base(T=int): uvm_component, rand.disable
 {
 
@@ -186,9 +186,9 @@ abstract class uvm_tlm_fifo_base(T=int): uvm_component, rand.disable
   // statically elaborated construct (e.g., a module). The ~size~ indicates the
   // maximum size of the FIFO. A value of zero indicates no upper bound.
 
-  // @uvm-ieee 1800.2-2017 auto 12.2.8.1.7
-  // @uvm-ieee 1800.2-2017 auto 12.2.8.2.1
-  // @uvm-ieee 1800.2-2017 auto 12.2.8.3.2
+  // @uvm-ieee 1800.2-2020 auto 12.2.8.1.7
+  // @uvm-ieee 1800.2-2020 auto 12.2.8.2.1
+  // @uvm-ieee 1800.2-2020 auto 12.2.8.3.2
   public this(string name = null, uvm_component parent = null) {
     synchronized (this) {
       super(name, parent);
@@ -219,66 +219,66 @@ abstract class uvm_tlm_fifo_base(T=int): uvm_component, rand.disable
     return false;
   }
    
-  // @uvm-ieee 1800.2-2017 auto 12.2.8.2.6
+  // @uvm-ieee 1800.2-2020 auto 12.2.8.2.6
   override public void flush() {
     uvm_report_error("flush", UVM_TLM_FIFO_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
   }
 
-  // @uvm-ieee 1800.2-2017 auto 12.2.8.2.2
+  // @uvm-ieee 1800.2-2020 auto 12.2.8.2.2
   public size_t size() {
     uvm_report_error("size", UVM_TLM_FIFO_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return 0;
   }
 
   // task
-  // @uvm-ieee 1800.2-2017 auto 12.2.8.1.3
+  // @uvm-ieee 1800.2-2020 auto 12.2.8.1.3
   public void put(T t) {
     uvm_report_error("put", UVM_TLM_FIFO_TASK_ERROR, uvm_verbosity.UVM_NONE);
   }
 
   // task
-  // @uvm-ieee 1800.2-2017 auto 12.2.8.1.4
+  // @uvm-ieee 1800.2-2020 auto 12.2.8.1.4
   public void get(out T t) {
     uvm_report_error("get", UVM_TLM_FIFO_TASK_ERROR, uvm_verbosity.UVM_NONE);
   }
 
   // task
-  // @uvm-ieee 1800.2-2017 auto 12.2.8.1.4
+  // @uvm-ieee 1800.2-2020 auto 12.2.8.1.4
   public void peek(out T t) {
     uvm_report_error("peek", UVM_TLM_FIFO_TASK_ERROR, uvm_verbosity.UVM_NONE);
   }
 
-  // @uvm-ieee 1800.2-2017 auto 12.2.8.1.3
+  // @uvm-ieee 1800.2-2020 auto 12.2.8.1.3
   public bool try_put(T t) {
     uvm_report_error("try_put", UVM_TLM_FIFO_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return 0;
   }
 
-  // @uvm-ieee 1800.2-2017 auto 12.2.8.1.4
+  // @uvm-ieee 1800.2-2020 auto 12.2.8.1.4
   public bool try_get(out T t) {
     uvm_report_error("try_get", UVM_TLM_FIFO_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return 0;
   }
 
-  // @uvm-ieee 1800.2-2017 auto 12.2.8.1.4
+  // @uvm-ieee 1800.2-2020 auto 12.2.8.1.4
   public bool try_peek(out T t) {
     uvm_report_error("try_peek", UVM_TLM_FIFO_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return 0;
   }
 
-  // @uvm-ieee 1800.2-2017 auto 12.2.8.1.3
+  // @uvm-ieee 1800.2-2020 auto 12.2.8.1.3
   public bool can_put() {
     uvm_report_error("can_put", UVM_TLM_FIFO_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return 0;
   }
 
-  // @uvm-ieee 1800.2-2017 auto 12.2.8.1.4
+  // @uvm-ieee 1800.2-2020 auto 12.2.8.1.4
   public bool can_get() {
     uvm_report_error("can_get", UVM_TLM_FIFO_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return 0;
   }
 
-  // @uvm-ieee 1800.2-2017 auto 12.2.8.1.4
+  // @uvm-ieee 1800.2-2020 auto 12.2.8.1.4
   public bool can_peek() {
     uvm_report_error("can_peek", UVM_TLM_FIFO_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return 0;
@@ -299,19 +299,19 @@ abstract class uvm_tlm_fifo_base(T=int): uvm_component, rand.disable
     return null;
   }
 
-  // @uvm-ieee 1800.2-2017 auto 12.2.8.2.4
+  // @uvm-ieee 1800.2-2020 auto 12.2.8.2.4
   public bool is_empty() {
     uvm_report_error("is_empty", UVM_TLM_FIFO_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return 0;
   }
 
-  // @uvm-ieee 1800.2-2017 auto 12.2.8.2.5
+  // @uvm-ieee 1800.2-2020 auto 12.2.8.2.5
   public bool is_full() {
     uvm_report_error("is_full", UVM_TLM_FIFO_FUNCTION_ERROR);
     return 0;
   }
 
-  // @uvm-ieee 1800.2-2017 auto 12.2.8.2.3
+  // @uvm-ieee 1800.2-2020 auto 12.2.8.2.3
   public size_t used() {
     uvm_report_error("used", UVM_TLM_FIFO_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return 0;

@@ -3,7 +3,7 @@
 // Copyright 2012-2019 Coverify Systems Technology
 // Copyright 2007-2018 Cadence Design Systems, Inc.
 // Copyright 2007-2014 Mentor Graphics Corporation
-// Copyright 2013-2018 NVIDIA Corporation
+// Copyright 2013-2020 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -43,7 +43,7 @@ import uvm.meta.meta;
 
 import esdl.base.core: wait;
 
-// @uvm-ieee 1800.2-2017 auto 10.3.1
+// @uvm-ieee 1800.2-2020 auto 10.3.1
 class uvm_barrier: uvm_object
 {
   mixin (uvm_sync_string);
@@ -68,7 +68,7 @@ class uvm_barrier: uvm_object
   //
   // Creates a new barrier object.
 
-  // @uvm-ieee 1800.2-2017 auto 10.3.2.1
+  // @uvm-ieee 1800.2-2020 auto 10.3.2.1
   this(string name = "", int threshold = 0) {
     synchronized (this) {
       super(name);
@@ -87,7 +87,7 @@ class uvm_barrier: uvm_object
   //
   // The number of processes to wait for is set by the <set_threshold> method.
 
-  // @uvm-ieee 1800.2-2017 auto 10.3.2.2
+  // @uvm-ieee 1800.2-2020 auto 10.3.2.2
   // task
   void wait_for() {
     bool trigger = false;
@@ -122,7 +122,7 @@ class uvm_barrier: uvm_object
   // If the ~wakeup~ bit is set, any currently waiting processes will
   // be activated.
 
-  // @uvm-ieee 1800.2-2017 auto 10.3.2.3
+  // @uvm-ieee 1800.2-2020 auto 10.3.2.3
   void reset(bool wakeup=true) {
     synchronized (this) {
       _at_threshold = false;
@@ -148,7 +148,7 @@ class uvm_barrier: uvm_object
   // If auto reset is off, then once the threshold is achieved, new processes
   // pass through without being blocked until the barrier is reset.
 
-  // @uvm-ieee 1800.2-2017 auto 10.3.2.4
+  // @uvm-ieee 1800.2-2020 auto 10.3.2.4
   void set_auto_reset(bool value=true) {
     synchronized (this) {
       _at_threshold = false;
@@ -170,7 +170,7 @@ class uvm_barrier: uvm_object
   // waiting processes, then the barrier is reset and waiting processes are
   // activated.
 
-  // @uvm-ieee 1800.2-2017 auto 10.3.2.6
+  // @uvm-ieee 1800.2-2020 auto 10.3.2.6
   void set_threshold(int threshold) {
     synchronized (this) {
       _threshold = threshold;
@@ -184,7 +184,7 @@ class uvm_barrier: uvm_object
   //
   // Gets the current threshold setting for the barrier.
 
-  // @uvm-ieee 1800.2-2017 auto 10.3.2.5
+  // @uvm-ieee 1800.2-2020 auto 10.3.2.5
   int get_threshold() {
     synchronized (this) {
       return _threshold;
@@ -196,7 +196,7 @@ class uvm_barrier: uvm_object
   //
   // Returns the number of processes currently waiting at the barrier.
 
-  // @uvm-ieee 1800.2-2017 auto 10.3.2.7
+  // @uvm-ieee 1800.2-2020 auto 10.3.2.7
   int get_num_waiters() {
     synchronized (this) {
       return _num_waiters;
@@ -209,7 +209,7 @@ class uvm_barrier: uvm_object
   // Decrements the waiter count by one. This is used when a process that is
   // waiting on the barrier is killed or activated by some other means.
 
-  // @uvm-ieee 1800.2-2017 auto 10.3.2.8
+  // @uvm-ieee 1800.2-2020 auto 10.3.2.8
   void cancel() {
     synchronized (this) {
       m_event.cancel();

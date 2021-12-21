@@ -1,11 +1,11 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012-2019 Coverify Systems Technology
+// Copyright 2012-2021 Coverify Systems Technology
 // Copyright 2007-2018 Cadence Design Systems, Inc.
-// Copyright 2007-2014 Mentor Graphics Corporation
-// Copyright 2013-2018 NVIDIA Corporation
 // Copyright 2017-2018 Cisco Systems, Inc.
+// Copyright 2014-2020 Intel Corporation
+// Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2013-2020 NVIDIA Corporation
 // Copyright 2018 Qualcomm, Inc.
-// Copyright 2014 Intel Corporation
 // Copyright 2013-2018 Synopsys, Inc.
 //   All Rights Reserved Worldwide
 //
@@ -42,7 +42,7 @@ import uvm.base.uvm_object: uvm_object;
 import uvm.base.uvm_object_globals: uvm_recursion_policy_enum, uvm_severity,
   uvm_integral_t, uvm_radix_enum, uvm_bitstream_t, uvm_verbosity,
   uvm_field_flag_t, UVM_RADIX, UVM_RECURSION;
-import uvm.base.uvm_globals: uvm_warning, uvm_report_debug;
+import uvm.base.uvm_globals: uvm_warning, uvm_error, uvm_report_debug;
 import uvm.base.uvm_policy: uvm_policy;
 import uvm.base.uvm_field_op: uvm_field_op;
 import uvm.base.uvm_coreservice: uvm_coreservice_t;
@@ -54,15 +54,15 @@ import esdl.data.bvec;
 import std.traits;
 import std.string: format;
 
-// @uvm-ieee 1800.2-2017 auto 16.3.1
+// @uvm-ieee 1800.2-2020 auto 16.3.1
 class uvm_comparer: uvm_policy
 {
   mixin (uvm_sync_string);
-  // @uvm-ieee 1800.2-2017 auto 16.3.2.3
+  // @uvm-ieee 1800.2-2020 auto 16.3.2.3
   mixin uvm_object_essentials;
 
 
-  // @uvm-ieee 1800.2-2017 auto 16.3.2.2
+  // @uvm-ieee 1800.2-2020 auto 16.3.2.2
   override void flush() {
     synchronized (this) {
       _miscompares = "" ;
@@ -72,7 +72,7 @@ class uvm_comparer: uvm_policy
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.3.3.5
+  // @uvm-ieee 1800.2-2020 auto 16.3.3.5
   uvm_policy.recursion_state_e object_compared(uvm_object lhs,
 					       uvm_object rhs,
 					       uvm_recursion_policy_enum recursion,
@@ -91,7 +91,7 @@ class uvm_comparer: uvm_policy
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 16.3.3.8
+  // @uvm-ieee 1800.2-2020 auto 16.3.3.8
   string get_miscompares() {
     synchronized (this) {
       return _miscompares;
@@ -110,35 +110,35 @@ class uvm_comparer: uvm_policy
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.3.4.1
+  // @uvm-ieee 1800.2-2020 auto 16.3.4.1
   void set_recursion_policy(uvm_recursion_policy_enum policy) {
     synchronized (this) {
       _policy = policy;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.3.4.1
+  // @uvm-ieee 1800.2-2020 auto 16.3.4.1
   uvm_recursion_policy_enum get_recursion_policy() {
     synchronized (this) {
       return _policy ;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.3.4.2
+  // @uvm-ieee 1800.2-2020 auto 16.3.4.2
   void set_check_type(bool enabled) {
     synchronized (this) {
       _check_type = enabled ;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.3.4.2
+  // @uvm-ieee 1800.2-2020 auto 16.3.4.2
   bool get_check_type() {
     synchronized (this) {
       return _check_type;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.3.5.1
+  // @uvm-ieee 1800.2-2020 auto 16.3.5.1
   void set_show_max(uint show_max) {
     synchronized (this) {
       _show_max = show_max;
@@ -151,7 +151,7 @@ class uvm_comparer: uvm_policy
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.3.5.2
+  // @uvm-ieee 1800.2-2020 auto 16.3.5.2
   void set_verbosity(uint verbosity) {
     synchronized (this) {
       _verbosity = verbosity;
@@ -164,21 +164,21 @@ class uvm_comparer: uvm_policy
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.3.5.3
+  // @uvm-ieee 1800.2-2020 auto 16.3.5.3
   void set_severity(uvm_severity severity) {
     synchronized (this) {
       _sev = severity;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.3.5.3
+  // @uvm-ieee 1800.2-2020 auto 16.3.5.3
   uvm_severity get_severity() {
     synchronized (this) {
       return _sev ;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.3.6
+  // @uvm-ieee 1800.2-2020 auto 16.3.6
   void set_threshold(uint threshold) {
     synchronized (this) {
       _m_threshold = threshold;
@@ -215,7 +215,7 @@ class uvm_comparer: uvm_policy
   // Sets the maximum number of messages to send to the printer for miscompares
   // of an object.
 
-  @uvm_public_sync
+  @uvm_private_sync
   private uint _show_max = 1;
 
   // Variable -- NODOCS -- verbosity
@@ -225,7 +225,7 @@ class uvm_comparer: uvm_policy
   // The verbosity setting is used by the messaging mechanism to determine
   // whether messages should be suppressed or shown.
 
-  @uvm_public_sync
+  @uvm_private_sync
   private uint _verbosity = uvm_verbosity.UVM_LOW;
 
   // Variable -- NODOCS -- sev
@@ -235,7 +235,7 @@ class uvm_comparer: uvm_policy
   // The severity setting is used by the messaging mechanism for printing and
   // filtering messages.
 
-  @uvm_public_sync
+  @uvm_private_sync
   private uvm_severity _sev = uvm_severity.UVM_INFO;
 
   // Variable -- NODOCS -- miscompares
@@ -245,7 +245,7 @@ class uvm_comparer: uvm_policy
   // The string holds the last set of miscompares that occurred during a
   // comparison.
 
-  @uvm_public_sync
+  @uvm_private_sync
   private string _miscompares = "";
 
   // Variable -- NODOCS -- check_type
@@ -257,7 +257,7 @@ class uvm_comparer: uvm_policy
   // to set this to 0 when the two operands are related by inheritance but are
   // different types.
 
-  @uvm_public_sync
+  @uvm_private_sync
   private bool _check_type = true;
 
   // Variable -- NODOCS -- result
@@ -266,7 +266,7 @@ class uvm_comparer: uvm_policy
   // You can use the result to determine the number of miscompares that
   // were found.
 
-  @uvm_public_sync
+  @uvm_private_sync
   private uint _result = 0;
 
   public void incr_result() {
@@ -280,7 +280,7 @@ class uvm_comparer: uvm_policy
   private uint _m_threshold;
 
 
-  // @uvm-ieee 1800.2-2017 auto 16.3.2.1
+  // @uvm-ieee 1800.2-2020 auto 16.3.2.1
   this(string name="") {
     synchronized (this) {
       super(name);
@@ -289,13 +289,13 @@ class uvm_comparer: uvm_policy
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 16.3.2.4
+  // @uvm-ieee 1800.2-2020 auto 16.3.2.4
   static void set_default(uvm_comparer comparer) {
     uvm_coreservice_t coreservice = uvm_coreservice_t.get() ;
     coreservice.set_default_comparer(comparer);
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.3.2.5
+  // @uvm-ieee 1800.2-2020 auto 16.3.2.5
   static uvm_comparer get_default() {
     uvm_coreservice_t coreservice = uvm_coreservice_t.get();
     return coreservice.get_default_comparer();
@@ -567,7 +567,7 @@ class uvm_comparer: uvm_policy
   //
   // The radix is used for reporting purposes, the default radix is hex.
 
-  // @uvm-ieee 1800.2-2017 auto 16.3.3.1
+  // @uvm-ieee 1800.2-2020 auto 16.3.3.1
   bool compare_field(T)(string name, T lhs, T rhs,
 			uvm_radix_enum radix=uvm_radix_enum.UVM_NORADIX)
     if (isBitVector!T || isIntegral!T || isBoolean!T)
@@ -668,7 +668,7 @@ class uvm_comparer: uvm_policy
   // small integers, less than or equal to 64 bits. It is automatically called
   // by <compare_field> if the operand size is less than or equal to 64.
 
-  // @uvm-ieee 1800.2-2017 auto 16.3.3.2
+  // @uvm-ieee 1800.2-2020 auto 16.3.3.2
   bool compare_field_int(string name,
 			 uvm_integral_t lhs,
 			 uvm_integral_t rhs,
@@ -678,6 +678,14 @@ class uvm_comparer: uvm_policy
     synchronized (this) {
       LogicVec!64 mask;
       string msg;
+
+      if (size > 64) {
+	uvm_error("UVM/COMPARER/INT/BAD_SIZE",
+		  format("compare_field_int cannot be called with operand" ~
+			 " size of more than 64 bits. Input argument size=%0d",
+			 size));
+        return false;
+      }
 
       mask = -1;
       mask >>= (64-size);
@@ -727,7 +735,7 @@ class uvm_comparer: uvm_policy
   // This method is the same as <compare_field> except that the arguments are
   // real numbers.
 
-  // @uvm-ieee 1800.2-2017 auto 16.3.3.3
+  // @uvm-ieee 1800.2-2020 auto 16.3.3.3
   bool compare_field_real(string name,
 			  real lhs,
 			  real rhs) {
@@ -774,7 +782,7 @@ class uvm_comparer: uvm_policy
   // types match (the return from ~lhs.get_type_name()~ matches
   // ~rhs.get_type_name()~).
 
-  // @uvm-ieee 1800.2-2017 auto 16.3.3.4
+  // @uvm-ieee 1800.2-2020 auto 16.3.3.4
   bool compare_object(string name,
 		      uvm_object lhs,
 		      uvm_object rhs) {
@@ -939,7 +947,7 @@ class uvm_comparer: uvm_policy
   //
   // The ~lhs~ and ~rhs~ objects are the two objects used for comparison.
 
-  // @uvm-ieee 1800.2-2017 auto 16.3.3.6
+  // @uvm-ieee 1800.2-2020 auto 16.3.3.6
   bool compare_string(string name,
 		      string lhs,
 		      string rhs) {
@@ -958,7 +966,7 @@ class uvm_comparer: uvm_policy
   // is printed to standard-out using the current verbosity and severity
   // settings. See the <verbosity> and <sev> variables for more information.
 
-  // @uvm-ieee 1800.2-2017 auto 16.3.3.7
+  // @uvm-ieee 1800.2-2020 auto 16.3.3.7
   final void print_msg(string msg) {
     synchronized (this) {
       string tmp = m_current_context(msg);

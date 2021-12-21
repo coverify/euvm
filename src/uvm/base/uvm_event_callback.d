@@ -1,9 +1,9 @@
 //
 //------------------------------------------------------------------------------
-// Copyright 2012-2019 Coverify Systems Technology
-// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2012-2021 Coverify Systems Technology
 // Copyright 2007-2018 Cadence Design Systems, Inc.
-// Copyright 2013-2018 NVIDIA Corporation
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2013-2020 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -40,7 +40,7 @@ import uvm.base.uvm_callback: uvm_callback;
 //
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 10.2.1
+// @uvm-ieee 1800.2-2020 auto 10.2.1
 abstract class uvm_event_callback(T=uvm_object): uvm_callback
 {
 
@@ -51,7 +51,7 @@ abstract class uvm_event_callback(T=uvm_object): uvm_callback
   // new funciton not required -- since verlang uvm_object does not take
   // a name argument
 
-  // @uvm-ieee 1800.2-2017 auto 10.2.2.1
+  // @uvm-ieee 1800.2-2020 auto 10.2.2.1
   this(string name = "") {
     super(name);
   }
@@ -70,7 +70,7 @@ abstract class uvm_event_callback(T=uvm_object): uvm_callback
   // In the function, ~e~ is the <uvm_event#(T)> that is being triggered, and ~data~
   // is the optional data associated with the event trigger.
 
-  // @uvm-ieee 1800.2-2017 auto 10.2.2.2
+  // @uvm-ieee 1800.2-2020 auto 10.2.2.2
   bool pre_trigger (uvm_event!T e, T data = T.init) {
     return false;
   }
@@ -86,7 +86,7 @@ abstract class uvm_event_callback(T=uvm_object): uvm_callback
   // In the function, ~e~ is the <uvm_event#(T)> that is being triggered, and ~data~
   // is the optional data associated with the event trigger.
 
-  // @uvm-ieee 1800.2-2017 auto 10.2.2.3
+  // @uvm-ieee 1800.2-2020 auto 10.2.2.3
   void post_trigger (uvm_event!T e, T data = T.init) {
     return;
   }

@@ -1,10 +1,10 @@
 //
 //------------------------------------------------------------------------------
-// Copyright 2014-2019 Coverify Systems Technology
-// Copyright 2007-2011 Mentor Graphics Corporation
-// Copyright 2010-2012 Synopsys, Inc.
+// Copyright 2014-2021 Coverify Systems Technology
 // Copyright 2007-2018 Cadence Design Systems, Inc.
-// Copyright 2014-2018 NVIDIA Corporation
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2014-2020 NVIDIA Corporation
+// Copyright 2010-2012 Synopsys, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -50,7 +50,7 @@ import uvm.base.uvm_globals;
 import uvm.base.uvm_component_defines;
 import esdl.rand.misc: rand;
 
-// @uvm-ieee 1800.2-2017 auto 13.4.1
+// @uvm-ieee 1800.2-2020 auto 13.4.1
 abstract class uvm_agent: uvm_component, rand.barrier
 {
   uvm_active_passive_enum is_active = uvm_active_passive_enum.UVM_ACTIVE;
@@ -69,7 +69,7 @@ abstract class uvm_agent: uvm_component, rand.barrier
   //
   //| set_config_int("<path_to_agent>", "is_active", UVM_ACTIVE);
 
-  // @uvm-ieee 1800.2-2017 auto 13.4.2.1
+  // @uvm-ieee 1800.2-2020 auto 13.4.2.1
   this(string name=null, uvm_component parent=null) {
     super(name, parent);
   }
@@ -102,7 +102,7 @@ abstract class uvm_agent: uvm_component, rand.barrier
   // override this behavior if a more complex algorithm is needed to determine
   // the active/passive nature of the agent.
 
-  // @uvm-ieee 1800.2-2017 auto 13.4.2.2
+  // @uvm-ieee 1800.2-2020 auto 13.4.2.2
   uvm_active_passive_enum get_is_active() {
     synchronized(this) {
       return is_active;

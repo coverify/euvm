@@ -1,8 +1,8 @@
 //----------------------------------------------------------------------
-// Copyright 2019 Coverify Systems Technology
+// Copyright 2019-2021 Coverify Systems Technology
 // Copyright 2018 Cadence Design Systems, Inc.
-// Copyright 2018 NVIDIA Corporation
 // Copyright 2017-2018 Cisco Systems, Inc.
+// Copyright 2018-2020 NVIDIA Corporation
 // Copyright 2017-2018 Verific
 //   All Rights Reserved Worldwide
 //
@@ -28,9 +28,12 @@ import uvm.base.uvm_queue: uvm_queue;
 import uvm.base.uvm_object: uvm_object;
 import uvm.base.uvm_printer: uvm_printer;
 import uvm.base.uvm_resource: uvm_resource;
-import uvm.base.uvm_globals: uvm_is_match, uvm_info;
-import uvm.base.uvm_object_globals: uvm_verbosity;
+import uvm.base.uvm_globals: uvm_is_match, uvm_info, uvm_warning;
+import uvm.base.uvm_object_globals: uvm_verbosity, uvm_field_flag_t;
 import uvm.dpi.uvm_regex: uvm_glob_to_re;
+
+import std.traits: isArray, isStaticArray, isDynamicArray;
+import std.format: format;
 
 import esdl.base.core: SimTime, getSimTime, wait;
 import uvm.meta.misc;
@@ -232,7 +235,7 @@ class uvm_resource_options
 // documented in 1800.2.
 //----------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto C.2.3.1
+// @uvm-ieee 1800.2-2020 auto C.2.3.1
 abstract class uvm_resource_base: uvm_object
 {
 
@@ -255,7 +258,7 @@ abstract class uvm_resource_base: uvm_object
   // arguments, the name of the resource and a regular expression which
   // represents the set of scopes over which this resource is visible.
 
-  // @uvm-ieee 1800.2-2017 auto C.2.3.2.1
+  // @uvm-ieee 1800.2-2020 auto C.2.3.2.1
   this(string name = "") {
     synchronized (this) {
       super(name);
@@ -271,7 +274,7 @@ abstract class uvm_resource_base: uvm_object
   // Pure virtual function that returns the type handle of the resource
   // container.
 
-  // @uvm-ieee 1800.2-2017 auto C.2.3.2.2
+  // @uvm-ieee 1800.2-2020 auto C.2.3.2.2
   abstract uvm_resource_base get_type_handle();
 
 
@@ -284,7 +287,7 @@ abstract class uvm_resource_base: uvm_object
   // Establishes this resource as a read-only resource.  An attempt
   // to call <uvm_resource#(T)::write> on the resource will cause an error.
 
-  // @uvm-ieee 1800.2-2017 auto C.2.3.3.1
+  // @uvm-ieee 1800.2-2020 auto C.2.3.3.1
   void set_read_only() {
     synchronized (this) {
       _read_only = true;
@@ -307,7 +310,7 @@ abstract class uvm_resource_base: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto C.2.3.3.2
+  // @uvm-ieee 1800.2-2020 auto C.2.3.3.2
   bool is_read_only() {
     synchronized (this) {
       return _read_only;
@@ -328,7 +331,7 @@ abstract class uvm_resource_base: uvm_object
   // it can be called repeatedly.
 
   // task
-  // @uvm-ieee 1800.2-2017 auto C.2.3.4
+  // @uvm-ieee 1800.2-2020 auto C.2.3.4
   void wait_modified() {
     while (_modified.get() != true) {
       _modified.wait();
@@ -540,7 +543,7 @@ abstract class uvm_resource_base: uvm_object
 			   get_full_name(), name));
       }
       static if (isDynamicArray!E) {
-	if (name = rsrc_name) {
+	if (name == rsrc_name) {
 	  size_t size;
 	  bool success;
 	  uvm_resource_read(success, size, obj);
@@ -562,7 +565,7 @@ abstract class uvm_resource_base: uvm_object
       if (name == rsrc_name) {
 	bool success;
 	uvm_object local_obj;
-	this.uvm_resorce_read(success, local_obj, obj);
+	this.uvm_resource_read(success, local_obj, obj);
 	if (local_obj is null) {
 	  lhs = null;
 	  return;
@@ -578,7 +581,7 @@ abstract class uvm_resource_base: uvm_object
     else {
       if (name == rsrc_name) {
 	bool success;
-	this.uvm_resorce_read(success, lhs, obj);
+	this.uvm_resource_read(success, lhs, obj);
 	if (success is false) {
 	  uvm_warning("UVM/FIELDS/UVM_SET",
 		      format("Can't set field '%s' on '%s' with '%s' type",

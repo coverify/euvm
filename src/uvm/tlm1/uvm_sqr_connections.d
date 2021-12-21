@@ -1,12 +1,12 @@
 //
 //-----------------------------------------------------------------------------
-// Copyright 2014-2019 Coverify Systems Technology
-// Copyright 2007-2011 Mentor Graphics Corporation
-// Copyright 2010-2013 Synopsys, Inc.
-// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2014-2021 Coverify Systems Technology
 // Copyright 2011 AMD
-// Copyright 2015-2018 NVIDIA Corporation
 // Copyright 2012 Accellera Systems Initiative
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2015-2020 NVIDIA Corporation
+// Copyright 2010-2013 Synopsys, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -72,7 +72,7 @@ mixin template UVM_SEQ_ITEM_PULL_IMP(alias IMP, REQ, RSP)
 //
 //-----------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 15.2.2.1
+// @uvm-ieee 1800.2-2020 auto 15.2.2.1
 class uvm_seq_item_pull_port(REQ=int, RSP=REQ):
   uvm_port_base!(uvm_sqr_if_base!(REQ, RSP)), rand.disable
 {
@@ -102,7 +102,7 @@ class uvm_seq_item_pull_port(REQ=int, RSP=REQ):
 //
 //-----------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 15.2.2.2
+// @uvm-ieee 1800.2-2020 auto 15.2.2.2
 class uvm_seq_item_pull_export(REQ=int, RSP=REQ):
   uvm_port_base!(uvm_sqr_if_base!(REQ, RSP)), rand.disable
 {
@@ -131,7 +131,7 @@ class uvm_seq_item_pull_export(REQ=int, RSP=REQ):
 //
 //-----------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 15.2.2.3
+// @uvm-ieee 1800.2-2020 auto 15.2.2.3
 class uvm_seq_item_pull_imp(REQ=int, RSP=REQ, IMP=int):
   uvm_port_base!(uvm_sqr_if_base!(REQ, RSP)), rand.disable
 {

@@ -1,10 +1,10 @@
 //
 //----------------------------------------------------------------------
-// Copyright 2014-2019 Coverify Systems Technology
-// Copyright 2007-2011 Mentor Graphics Corporation
-// Copyright 2010 Synopsys, Inc.
+// Copyright 2014-2021 Coverify Systems Technology
 // Copyright 2007-2018 Cadence Design Systems, Inc.
-// Copyright 2015 NVIDIA Corporation
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2015-2020 NVIDIA Corporation
+// Copyright 2010 Synopsys, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -70,9 +70,10 @@ import esdl.rand.misc: rand;
 private alias Identity(alias A) = A;
 private alias parentOf(alias sym) = Identity!(__traits(parent, sym));
 
-// @uvm-ieee 1800.2-2017 auto 12.2.10.1.1
+// @uvm-ieee 1800.2-2020 auto 12.2.10.1.1
 class uvm_analysis_port(T): uvm_port_base!(uvm_tlm_if_base!(T,T)), rand.disable
 {
+  // @uvm-ieee 1800.2-2020 auto 12.2.10.1.3
   public this(string name=null, uvm_component parent=null) {
     synchronized (this) {
       super(name, parent, uvm_port_type_e.UVM_PORT, 0, UVM_UNBOUNDED_CONNECTIONS);
@@ -84,7 +85,7 @@ class uvm_analysis_port(T): uvm_port_base!(uvm_tlm_if_base!(T,T)), rand.disable
     return "uvm_analysis_port";
   }
 
-  // @uvm-ieee 1800.2-2017 auto 12.2.10.1.2
+  // @uvm-ieee 1800.2-2020 auto 12.2.10.1.4
   override public void write (T t) {
     synchronized (this) {
       uvm_tlm_if_base!(T, T) tif;
@@ -130,7 +131,7 @@ class uvm_analysis_port(T): uvm_port_base!(uvm_tlm_if_base!(T,T)), rand.disable
 //| endclass
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 12.2.10.2
+// @uvm-ieee 1800.2-2020 auto 12.2.10.2.1
 class uvm_analysis_imp(T, IMP, string F=""): uvm_port_base!(uvm_tlm_if_base !(T,T)), rand.disable
 if (is (IMP: uvm_component))
 {
@@ -148,6 +149,7 @@ if (is (IMP: uvm_component))
     return "uvm_analysis_imp";
   }
 
+  // @uvm-ieee 1800.2-2020 auto 12.2.10.2.2
   override public void write (T t) {
     static if (F == "") {
       m_imp.write(t);
@@ -235,11 +237,11 @@ private auto recreateDelegate(alias F, T)(T _entity)
 // Exports a lower-level <uvm_analysis_imp> to its parent.
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 12.2.10.3.1
+// @uvm-ieee 1800.2-2020 auto 12.2.10.3.1
 class uvm_analysis_export(T): uvm_port_base!(uvm_tlm_if_base!(T,T)), rand.disable
 {
 
-  // @uvm-ieee 1800.2-2017 auto 12.2.10.3.2
+  // @uvm-ieee 1800.2-2020 auto 12.2.10.3.2
   public this(string name=null, uvm_component parent = null) {
     synchronized (this) {
       super(name, parent, uvm_port_type_e.UVM_EXPORT, 1, UVM_UNBOUNDED_CONNECTIONS);

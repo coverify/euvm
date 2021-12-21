@@ -24,8 +24,6 @@ import std.conv: to;
 
 import std.traits: fullyQualifiedName;
 
-import std.traits: fullyQualifiedName;
-
 // alias qualifiedTypeName = fullyQualifiedName;
 
 template qualifiedTypeName(T) {

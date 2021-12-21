@@ -1,14 +1,16 @@
 //
 //------------------------------------------------------------------------------
-// Copyright 2012-2019 Coverify Systems Technology
+// Copyright 2012-2021 Coverify Systems Technology
+// Copyright 2010-2012 AMD
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2012-2018 Cisco Systems, Inc.
+// Copyright 2020 Marvell International Ltd.
 // Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2013-2020 NVIDIA Corporation
 // Copyright 2014 Semifore
 // Copyright 2010-2014 Synopsys, Inc.
-// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2020 Verific
 // Copyright 2013 Verilab
-// Copyright 2010-2012 AMD
-// Copyright 2013-2018 NVIDIA Corporation
-// Copyright 2012-2018 Cisco Systems, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -206,18 +208,9 @@ enum uvm_active_passive_enum: bool
 // UVM_READONLY  - Object field will NOT be automatically configured.
 
 enum uint UVM_MACRO_NUMFLAGS    = 19;
-//A=ABSTRACT Y=PHYSICAL
-//F=REFERENCE, S=SHALLOW, D=DEEP
-//K=PACK, R=RECORD, P=PRINT, M=COMPARE, C=COPY
-//--------------------------- AYFSD K R P M C
 
 enum uvm_field_auto_enum: uint
-{   UVM_DEFAULT     = 0b000010101010101,
-    UVM_ALL_ON      = 0b000000101010101,
-    UVM_FLAGS_ON    = 0b000000101010101,
-    UVM_FLAGS_OFF   = 0,
-
-    //Values are OR'ed into a 32 bit value
+{   //Values are OR'ed into a 32 bit value
     //and externally
     UVM_COPY         = (1 << 0),
     UVM_NOCOPY       = (1 << 1),
@@ -236,6 +229,11 @@ enum uvm_field_auto_enum: uint
     UVM_NODEFPRINT   = (1 << 15),
     UVM_BUILD        = (1 << 17),
     UVM_NOBUILD      = (1 << 18),
+    UVM_FLAGS_ON     = UVM_COPY | UVM_COMPARE | UVM_PRINT |
+    UVM_RECORD | UVM_PACK | UVM_UNPACK | UVM_SET,
+    UVM_FLAGS_OFF    = 0,
+    UVM_ALL_ON       = UVM_FLAGS_ON,
+    UVM_DEFAULT      = UVM_ALL_ON
     }
 
 //UVM_DEEP         = (1 << 10),
@@ -620,7 +618,7 @@ enum UVM_FILE UVM_STDERR = 0x8000_0002;
 
 // Type: uvm_core_state
 // Implementation of the uvm_core_state enumeration, as defined
-// in section F.2.10 of 1800.2-2017.
+// in section F.2.10 of 1800.2-2020.
 //
 // *Note:* In addition to the states defined in section F.2.10,
 // this implementation includes the following additional states.
@@ -638,11 +636,11 @@ enum UVM_FILE UVM_STDERR = 0x8000_0002;
 //                         <uvm_coreservice_t::get>.
 //
 // UVM_CORE_POST_INIT - Included for consistency, this is equivalent to
-//                      ~UVM_CORE_INITIALIZED~ in 1800.2-2017.
+//                      ~UVM_CORE_INITIALIZED~ in 1800.2-2020.
 //
 // @uvm-contrib Potential contribution to 1800.2
 
-// @uvm-ieee 1800.2-2017 manual F.2.10  
+// @uvm-ieee 1800.2-2020 manual F.2.10  
 enum uvm_core_state {
 	UVM_CORE_UNINITIALIZED,
         UVM_CORE_PRE_INIT,

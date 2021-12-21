@@ -1,10 +1,10 @@
 //
 //-----------------------------------------------------------------------------
-// Copyright 2014-2019 Coverify Systems Technology
-// Copyright 2007-2011 Mentor Graphics Corporation
-// Copyright 2014-2018 Synopsys, Inc.
+// Copyright 2014-2021 Coverify Systems Technology
 // Copyright 2007-2018 Cadence Design Systems, Inc.
-// Copyright 2015-2018 NVIDIA Corporation
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2015-2020 NVIDIA Corporation
+// Copyright 2014-2018 Synopsys, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -50,7 +50,7 @@ import esdl.rand.misc: rand;
 //
 //-----------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 12.2.4.1
+// @uvm-ieee 1800.2-2020 auto 12.2.4.1
 abstract class uvm_tlm_if_base(T1=int, T2=int): rand.disable
 {
 
@@ -66,7 +66,7 @@ abstract class uvm_tlm_if_base(T1=int, T2=int): rand.disable
   // it cannot immediately accept delivery of the transaction.
 
   // task
-  // @uvm-ieee 1800.2-2017 auto 12.2.4.2.1
+  // @uvm-ieee 1800.2-2020 auto 12.2.4.2.1
   public void put(T1 t) {
     uvm_report_error("put", UVM_TASK_ERROR, uvm_verbosity.UVM_NONE);
   }
@@ -85,7 +85,7 @@ abstract class uvm_tlm_if_base(T1=int, T2=int): rand.disable
   // Subsequent calls to get must return a different transaction instance.
 
   // task
-  // @uvm-ieee 1800.2-2017 auto 12.2.4.2.2
+  // @uvm-ieee 1800.2-2020 auto 12.2.4.2.2
   public void get(out T2 t) {
     uvm_report_error("get", UVM_TASK_ERROR, uvm_verbosity.UVM_NONE);
   }
@@ -105,7 +105,7 @@ abstract class uvm_tlm_if_base(T1=int, T2=int): rand.disable
   // return the same transaction.
 
   // task
-  // @uvm-ieee 1800.2-2017 auto 12.2.4.2.3
+  // @uvm-ieee 1800.2-2020 auto 12.2.4.2.3
   public void peek(out T2 t) {
     uvm_report_error("peek", UVM_TASK_ERROR, uvm_verbosity.UVM_NONE);
   }
@@ -120,7 +120,7 @@ abstract class uvm_tlm_if_base(T1=int, T2=int): rand.disable
   // If the component is ready to accept the transaction argument, then it does
   // so and returns 1, otherwise it returns 0.
 
-  // @uvm-ieee 1800.2-2017 auto 12.2.4.2.4
+  // @uvm-ieee 1800.2-2020 auto 12.2.4.2.4
   public bool try_put(T1 t) {
     uvm_report_error("try_put", UVM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return false;
@@ -131,7 +131,7 @@ abstract class uvm_tlm_if_base(T1=int, T2=int): rand.disable
   //
   // Returns 1 if the component is ready to accept the transaction; 0 otherwise.
 
-  // @uvm-ieee 1800.2-2017 auto 12.2.4.2.5
+  // @uvm-ieee 1800.2-2020 auto 12.2.4.2.5
   public bool can_put() {
     uvm_report_error("can_put", UVM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return false;
@@ -148,7 +148,7 @@ abstract class uvm_tlm_if_base(T1=int, T2=int): rand.disable
   // argument and 1 is returned. Otherwise, the output argument is not modified
   // and 0 is returned.
 
-  // @uvm-ieee 1800.2-2017 auto 12.2.4.2.6
+  // @uvm-ieee 1800.2-2020 auto 12.2.4.2.6
   public bool try_get(out T2 t) {
     uvm_report_error("try_get", UVM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return false;
@@ -160,7 +160,7 @@ abstract class uvm_tlm_if_base(T1=int, T2=int): rand.disable
   // Returns 1 if a new transaction can be provided immediately upon request,
   // 0 otherwise.
 
-  // @uvm-ieee 1800.2-2017 auto 12.2.4.2.7
+  // @uvm-ieee 1800.2-2020 auto 12.2.4.2.7
   public bool can_get() {
     uvm_report_error("can_get", UVM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return false;
@@ -178,7 +178,7 @@ abstract class uvm_tlm_if_base(T1=int, T2=int): rand.disable
   // transaction is not available, then the argument is unmodified and 0 is
   // returned.
 
-  // @uvm-ieee 1800.2-2017 auto 12.2.4.2.8
+  // @uvm-ieee 1800.2-2020 auto 12.2.4.2.8
   public bool try_peek(out T2 t) {
     uvm_report_error("try_peek", UVM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return false;
@@ -189,7 +189,7 @@ abstract class uvm_tlm_if_base(T1=int, T2=int): rand.disable
   //
   // Returns 1 if a new transaction is available; 0 otherwise.
 
-  // @uvm-ieee 1800.2-2017 auto 12.2.4.2.9
+  // @uvm-ieee 1800.2-2020 auto 12.2.4.2.9
   public bool can_peek() {
     uvm_report_error("can_ppeek", UVM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return false;
@@ -204,7 +204,7 @@ abstract class uvm_tlm_if_base(T1=int, T2=int): rand.disable
   // argument. The calling thread may block until the operation is complete.
 
   // task
-  // @uvm-ieee 1800.2-2017 auto 12.2.4.2.10
+  // @uvm-ieee 1800.2-2020 auto 12.2.4.2.10
   public void transport(T1 req , out T2 rsp) {
     uvm_report_error("transport", UVM_TASK_ERROR, uvm_verbosity.UVM_NONE);
   }
@@ -220,7 +220,7 @@ abstract class uvm_tlm_if_base(T1=int, T2=int): rand.disable
   // If for any reason the operation could not be executed immediately, then
   // a 0 must be returned; otherwise 1.
 
-  // @uvm-ieee 1800.2-2017 auto 12.2.4.2.11
+  // @uvm-ieee 1800.2-2020 auto 12.2.4.2.11
   public bool nb_transport(T1 req, out T2 rsp) {
     uvm_report_error("nb_transport", UVM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return false;
@@ -234,7 +234,7 @@ abstract class uvm_tlm_if_base(T1=int, T2=int): rand.disable
   // Broadcasts a user-defined transaction of type T to any number of listeners.
   // The operation must complete without blocking.
 
-  // @uvm-ieee 1800.2-2017 auto 12.2.4.2.12
+  // @uvm-ieee 1800.2-2020 auto 12.2.4.2.12
   public void write(T1 t) {
     uvm_report_error("write", UVM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
   }

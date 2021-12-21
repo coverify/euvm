@@ -1,11 +1,11 @@
 //
 //------------------------------------------------------------------------------
-// Copyright 2012-2019 Coverify Systems Technology
-// Copyright 2007-2014 Mentor Graphics Corporation
-// Copyright 2010-2014 Synopsys, Inc.
-// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2012-2021 Coverify Systems Technology
 // Copyright 2011 AMD
-// Copyright 2014-2018 NVIDIA Corporation
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2014-2020 NVIDIA Corporation
+// Copyright 2010-2014 Synopsys, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -51,7 +51,7 @@ import std.conv: to;
 // be allocated on demand, and passed and stored by reference.
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 11.2.1
+// @uvm-ieee 1800.2-2020 auto 11.2.1
 class uvm_pool(KEY=int, VAL=uvm_void): uvm_object, rand.disable
 {
 
@@ -83,7 +83,7 @@ class uvm_pool(KEY=int, VAL=uvm_void): uvm_object, rand.disable
   //
   // Creates a new pool with the given ~name~.
 
-  // @uvm-ieee 1800.2-2017 auto 11.2.2.1
+  // @uvm-ieee 1800.2-2020 auto 11.2.2.1
   this(string name="") {
     synchronized (this) {
       super(name);
@@ -185,7 +185,7 @@ class uvm_pool(KEY=int, VAL=uvm_void): uvm_object, rand.disable
   //
   // Returns the specified item instance from the global item pool.
 
-  // @uvm-ieee 1800.2-2017 auto 11.2.2.3
+  // @uvm-ieee 1800.2-2020 auto 11.2.2.3
   static VAL get_global(KEY key) {
     return m_global_pool.get(key);
   }
@@ -198,7 +198,7 @@ class uvm_pool(KEY=int, VAL=uvm_void): uvm_object, rand.disable
   // If no item exists by that key, a new item is created with that key
   // and returned.
 
-  // @uvm-ieee 1800.2-2017 auto 11.2.2.4
+  // @uvm-ieee 1800.2-2020 auto 11.2.2.4
   VAL get(KEY key) {
     synchronized (this) {
       VAL* vptr = key in _pool;
@@ -219,7 +219,7 @@ class uvm_pool(KEY=int, VAL=uvm_void): uvm_object, rand.disable
   // Adds the given (~key~, ~item~) pair to the pool. If an item already
   // exists at the given ~key~ it is overwritten with the new ~item~.
 
-  // @uvm-ieee 1800.2-2017 auto 11.2.2.5
+  // @uvm-ieee 1800.2-2020 auto 11.2.2.5
   void add(KEY key, VAL item) {
     synchronized (this) {
       _pool[key] = item;
@@ -231,7 +231,7 @@ class uvm_pool(KEY=int, VAL=uvm_void): uvm_object, rand.disable
   //
   // Returns the number of uniquely keyed items stored in the pool.
 
-  // @uvm-ieee 1800.2-2017 auto 11.2.2.6
+  // @uvm-ieee 1800.2-2020 auto 11.2.2.6
   size_t num() {
     synchronized (this) {
       return _pool.length;
@@ -244,7 +244,7 @@ class uvm_pool(KEY=int, VAL=uvm_void): uvm_object, rand.disable
   //
   // Removes the item with the given ~key~ from the pool.
 
-  // @uvm-ieee 1800.2-2017 auto 11.2.2.7
+  // @uvm-ieee 1800.2-2020 auto 11.2.2.7
   void remove(KEY key) {
     import uvm.base.uvm_globals;
     synchronized (this) {
@@ -275,7 +275,7 @@ class uvm_pool(KEY=int, VAL=uvm_void): uvm_object, rand.disable
   // Returns 1 if a item with the given ~key~ exists in the pool,
   // 0 otherwise.
 
-  // @uvm-ieee 1800.2-2017 auto 11.2.2.8
+  // @uvm-ieee 1800.2-2020 auto 11.2.2.8
   bool exists(KEY key) {
     synchronized (this) {
       if (key in _pool) return true;
@@ -298,7 +298,7 @@ class uvm_pool(KEY=int, VAL=uvm_void): uvm_object, rand.disable
   // If the pool is not empty, then ~key~ is key of the first item
   // and 1 is returned.
 
-  // @uvm-ieee 1800.2-2017 auto 11.2.2.9
+  // @uvm-ieee 1800.2-2020 auto 11.2.2.9
   int first(ref KEY key) {
     import std.algorithm;
     synchronized (this) {
@@ -327,7 +327,7 @@ class uvm_pool(KEY=int, VAL=uvm_void): uvm_object, rand.disable
   // If the pool is not empty, then ~key~ is set to the last key in
   // the pool and 1 is returned.
 
-  // @uvm-ieee 1800.2-2017 auto 11.2.2.10
+  // @uvm-ieee 1800.2-2020 auto 11.2.2.10
   int last(ref KEY key) {
     import std.algorithm;
     synchronized (this) {
@@ -356,7 +356,7 @@ class uvm_pool(KEY=int, VAL=uvm_void): uvm_object, rand.disable
   // If a next key is found, then ~key~ is updated with that key
   // and 1 is returned.
 
-  // @uvm-ieee 1800.2-2017 auto 11.2.2.11
+  // @uvm-ieee 1800.2-2020 auto 11.2.2.11
   int next(ref KEY key) {
     synchronized (this) {
       if (_keys.length == 0 ||
@@ -382,7 +382,7 @@ class uvm_pool(KEY=int, VAL=uvm_void): uvm_object, rand.disable
   // If a previous key is found, then ~key~ is updated with that key
   // and 1 is returned.
 
-  // @uvm-ieee 1800.2-2017 auto 11.2.2.12
+  // @uvm-ieee 1800.2-2020 auto 11.2.2.12
   int prev(ref KEY key) {
     synchronized (this) {
       if (_keys.length == 0 ||

@@ -1,6 +1,6 @@
 //
 //------------------------------------------------------------------------------
-// Copyright 2012-2020 Coverify Systems Technology
+// Copyright 2012-2021 Coverify Systems Technology
 // Copyright 2010-2018 AMD
 // Copyright 2015 Analog Devices, Inc.
 // Copyright 2010-2018 Cadence Design Systems, Inc.
@@ -50,7 +50,7 @@ import std.string: toUpper;
 // TITLE: Command Line Debug
 //
 // Debug command line plusargs that are available in the Accellera reference implementation
-// but not documented in the IEEE UVM 1800.2-2017 LRM
+// but not documented in the IEEE UVM 1800.2-2020 LRM
 //
 
 // Variable: +UVM_DUMP_CMDLINE_ARGS
@@ -86,12 +86,6 @@ import std.string: toUpper;
 // @uvm-accellera The details of this API are specific to the Accellera implementation, and are not being considered for contribution to 1800.2
 
 
-// @uvm-ieee 1800.2-2017 auto G.1
-uvm_cmdline_processor uvm_cmdline_proc() {
-  return uvm_cmdline_processor.get_inst();
-}
-
-
 // Class -- NODOCS -- uvm_cmdline_processor
 //
 // This class provides an interface to the command line arguments that
@@ -108,7 +102,7 @@ uvm_cmdline_processor uvm_cmdline_proc() {
 // in the Built-in UVM Aware Command Line Arguments section.
 //
 
-// @uvm-ieee 1800.2-2017 auto G.1.1
+// @uvm-ieee 1800.2-2020 auto G.1.1
 final class uvm_cmdline_processor: uvm_report_object
 {
   static class uvm_scope: uvm_scope_base
@@ -132,7 +126,7 @@ final class uvm_cmdline_processor: uvm_report_object
   //
   // Returns the singleton instance of the UVM command line processor.
 
-  // @uvm-ieee 1800.2-2017 auto G.1.2
+  // @uvm-ieee 1800.2-2020 auto G.1.2
   static uvm_cmdline_processor get_inst() {
     return m_inst;
   }
@@ -169,7 +163,7 @@ final class uvm_cmdline_processor: uvm_report_object
   // element 0 of the array will always be the name of the
   // executable which started the simulation.
 
-  // @uvm-ieee 1800.2-2017 auto G.1.3.1
+  // @uvm-ieee 1800.2-2020 auto G.1.3.1
   final void get_args (out string[] args) {
     args ~= _m_argv;
   }
@@ -188,7 +182,7 @@ final class uvm_cmdline_processor: uvm_report_object
   // command line, the third argument is unrelated); this is not
   // necessarily the case with vendor specific dash arguments.
 
-  // @uvm-ieee 1800.2-2017 auto G.1.3.2
+  // @uvm-ieee 1800.2-2020 auto G.1.3.2
   final void get_plusargs (out string[] args) {
     args ~= _m_plus_argv;
   }
@@ -205,7 +199,7 @@ final class uvm_cmdline_processor: uvm_report_object
   // the keyword UVM (case insensitive) as the first three
   // letters of the argument.
 
-  // @uvm-ieee 1800.2-2017 auto G.1.3.3
+  // @uvm-ieee 1800.2-2020 auto G.1.3.3
   final void get_uvm_args (out string[] args) {
     args ~= _m_uvm_argv;
   }
@@ -233,7 +227,7 @@ final class uvm_cmdline_processor: uvm_report_object
   //|                                                                   //and foo123.sv,
   //|                                                                   //not barfoo.sv.
 
-  // @uvm-ieee 1800.2-2017 auto G.1.3.4
+  // @uvm-ieee 1800.2-2020 auto G.1.3.4
   final size_t get_arg_matches (string gmatch, out string[] args) {
 
     bool match_is_regex = (gmatch.length > 2) && (gmatch[0] is '/') &&
@@ -263,7 +257,7 @@ final class uvm_cmdline_processor: uvm_report_object
   // the number of command line arguments that match the ~match~ string, and
   // ~value~ is the value of the first match.
 
-  // @uvm-ieee 1800.2-2017 auto G.1.4.1
+  // @uvm-ieee 1800.2-2020 auto G.1.4.1
   final int get_arg_value (string match, out string value) {
     auto chars = match.length;
     int get_arg_value_ = 0;
@@ -300,9 +294,9 @@ final class uvm_cmdline_processor: uvm_report_object
   //   1 - "5,no,off"
   //
   // Splitting the resultant string is left to user but using the
-  // uvm_split_string() function is recommended.
+  // uvm_string_split() function is recommended.
 
-  // @uvm-ieee 1800.2-2017 auto G.1.4.2
+  // @uvm-ieee 1800.2-2020 auto G.1.4.2
   final size_t get_arg_values (string match, out string[] values) {
     auto chars = match.length;
     foreach (arg; _m_argv) {
@@ -363,26 +357,4 @@ final class uvm_cmdline_processor: uvm_report_object
     }
   }
 
-
-
-  // The implementation of this is in uvm_root.
-  static bool m_convert_verb(string verb_str,
-			     out uvm_verbosity verb_enum) {
-    import uvm.base.uvm_object_globals;
-    switch (verb_str) {
-    case "NONE"       : verb_enum = uvm_verbosity.UVM_NONE;   return true;
-    case "UVM_NONE"   : verb_enum = uvm_verbosity.UVM_NONE;   return true;
-    case "LOW"        : verb_enum = uvm_verbosity.UVM_LOW;    return true;
-    case "UVM_LOW"    : verb_enum = uvm_verbosity.UVM_LOW;    return true;
-    case "MEDIUM"     : verb_enum = uvm_verbosity.UVM_MEDIUM; return true;
-    case "UVM_MEDIUM" : verb_enum = uvm_verbosity.UVM_MEDIUM; return true;
-    case "HIGH"       : verb_enum = uvm_verbosity.UVM_HIGH;   return true;
-    case "UVM_HIGH"   : verb_enum = uvm_verbosity.UVM_HIGH;   return true;
-    case "FULL"       : verb_enum = uvm_verbosity.UVM_FULL;   return true;
-    case "UVM_FULL"   : verb_enum = uvm_verbosity.UVM_FULL;   return true;
-    case "DEBUG"      : verb_enum = uvm_verbosity.UVM_DEBUG;  return true;
-    case "UVM_DEBUG"  : verb_enum = uvm_verbosity.UVM_DEBUG;  return true;
-    default           :                                       return false;
-    }
-  }
 }

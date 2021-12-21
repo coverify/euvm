@@ -1,15 +1,15 @@
 //
 //------------------------------------------------------------------------------
-// Copyright 2012-2019 Coverify Systems Technology
-// Copyright 2007-2014 Mentor Graphics Corporation
-// Copyright 2014 Semifore
-// Copyright 2010-2014 Synopsys, Inc.
-// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2012-2021 Coverify Systems Technology
 // Copyright 2010-2012 AMD
-// Copyright 2013-2018 NVIDIA Corporation
+// Copyright 2012 Accellera Systems Initiative
+// Copyright 2007-2018 Cadence Design Systems, Inc.
 // Copyright 2017 Cisco Systems, Inc.
 // Copyright 2011 Cypress Semiconductor Corp.
-// Copyright 2012 Accellera Systems Initiative
+// Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2013-2020 NVIDIA Corporation
+// Copyright 2014 Semifore
+// Copyright 2010-2014 Synopsys, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -82,7 +82,7 @@ alias uvm_sev_override_array = uvm_pool!(uvm_severity, uvm_severity);
 //
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 6.4.1
+// @uvm-ieee 1800.2-2020 auto 6.4.1
 class uvm_report_handler: uvm_object
 {
 
@@ -127,7 +127,7 @@ class uvm_report_handler: uvm_object
   //
   // Creates and initializes a new uvm_report_handler object.
 
-  // @uvm-ieee 1800.2-2017 auto 6.4.2.1
+  // @uvm-ieee 1800.2-2020 auto 6.4.2.1
   this(string name = "uvm_report_handler") {
     synchronized (this) {
       super(name);
@@ -157,7 +157,7 @@ class uvm_report_handler: uvm_object
   // |    [UVM_FATAL]             uvm_action          32    DISPLAY EXIT            
   // |  default_file_handle       int                 32    'h1                     
 
-  // @uvm-ieee 1800.2-2017 auto 6.4.2.2
+  // @uvm-ieee 1800.2-2020 auto 6.4.2.2
   override void do_print (uvm_printer printer) {
     synchronized (this) {
       // max verb
@@ -338,7 +338,7 @@ class uvm_report_handler: uvm_object
   // This is the common handler method used by the four core reporting methods
   // (e.g. <uvm_report_error>) in <uvm_report_object>.
 
-  // @uvm-ieee 1800.2-2017 auto 6.4.7
+  // @uvm-ieee 1800.2-2020 auto 6.4.7
   void process_report_message(uvm_report_message report_message) {
     import uvm.base.uvm_report_server;
     synchronized (this) {
@@ -455,7 +455,7 @@ class uvm_report_handler: uvm_object
   //
   // Internal method called by uvm_report_object.
 
-  // @uvm-ieee 1800.2-2017 auto 6.4.3.2
+  // @uvm-ieee 1800.2-2020 auto 6.4.3.2
   final void set_verbosity_level(int verbosity_level) {
     synchronized (this) {
       _m_max_verbosity_level = verbosity_level;
@@ -470,7 +470,7 @@ class uvm_report_handler: uvm_object
   // return that.  Else, if there is a verbosity associated with the ~id~, return
   // that.  Else, return the max verbosity setting.
 
-  // @uvm-ieee 1800.2-2017 auto 6.4.3.1
+  // @uvm-ieee 1800.2-2020 auto 6.4.3.1
   final int get_verbosity_level(uvm_severity severity=uvm_severity.UVM_INFO,
 				string id="" ) {
     synchronized (this) {
@@ -501,7 +501,7 @@ class uvm_report_handler: uvm_object
   // that.  Else, if there is an action associated with the ~severity~, return
   // that. Else, return the default action associated with the ~severity~.
 
-  // @uvm-ieee 1800.2-2017 auto 6.4.4.1
+  // @uvm-ieee 1800.2-2020 auto 6.4.4.1
   final uvm_action get_action(uvm_severity severity, string id) {
     synchronized (this) {
       uvm_id_actions_array array;
@@ -529,7 +529,7 @@ class uvm_report_handler: uvm_object
   // that. Else, if there is an file handle associated with the ~severity~, return
   // that. Else, return the default file handle.
 
-  // @uvm-ieee 1800.2-2017 auto 6.4.5.1
+  // @uvm-ieee 1800.2-2020 auto 6.4.5.1
   final UVM_FILE get_file_handle(uvm_severity severity, string id) {
     synchronized (this) {
       UVM_FILE file;
@@ -563,7 +563,7 @@ class uvm_report_handler: uvm_object
   //
   // Internal methods called by uvm_report_object.
 
-  // @uvm-ieee 1800.2-2017 auto 6.4.4.2
+  // @uvm-ieee 1800.2-2020 auto 6.4.4.2
   final void set_severity_action(in uvm_severity severity,
 				 in uvm_action action) {
     synchronized (this) {
@@ -571,14 +571,14 @@ class uvm_report_handler: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 6.4.4.2
+  // @uvm-ieee 1800.2-2020 auto 6.4.4.2
   final void set_id_action(in string id, in uvm_action action) {
     synchronized (this) {
       _id_actions.add(id, action);
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 6.4.4.2
+  // @uvm-ieee 1800.2-2020 auto 6.4.4.2
   final void set_severity_id_action(uvm_severity severity,
 				    string id,
 				    uvm_action action) {
@@ -589,14 +589,14 @@ class uvm_report_handler: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 6.4.3.3
+  // @uvm-ieee 1800.2-2020 auto 6.4.3.3
   final void set_id_verbosity(in string id, in int verbosity) {
     synchronized (this) {
       _id_verbosities.add(id, verbosity);
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 6.4.3.3
+  // @uvm-ieee 1800.2-2020 auto 6.4.3.3
   final void set_severity_id_verbosity(uvm_severity severity,
 				       string id,
 				       int verbosity) {
@@ -614,28 +614,28 @@ class uvm_report_handler: uvm_object
   //
   // Internal methods called by uvm_report_object.
 
-  // @uvm-ieee 1800.2-2017 auto 6.4.5.2
+  // @uvm-ieee 1800.2-2020 auto 6.4.5.2
   final void set_default_file (UVM_FILE file) {
     synchronized (this) {
       _default_file_handle = file;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 6.4.5.2
+  // @uvm-ieee 1800.2-2020 auto 6.4.5.2
   final void set_severity_file (uvm_severity severity, UVM_FILE file) {
     synchronized (this) {
       _severity_file_handles[severity] = file;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 6.4.5.2
+  // @uvm-ieee 1800.2-2020 auto 6.4.5.2
   final void set_id_file (string id, UVM_FILE file) {
     synchronized (this) {
       _id_file_handles.add(id, file);
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 6.4.5.2
+  // @uvm-ieee 1800.2-2020 auto 6.4.5.2
   final void set_severity_id_file(uvm_severity severity,
 				  string id, UVM_FILE file) {
     synchronized (this) {
@@ -645,7 +645,7 @@ class uvm_report_handler: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 6.4.6
+  // @uvm-ieee 1800.2-2020 auto 6.4.6
   final void set_severity_override(uvm_severity cur_severity,
 				   uvm_severity new_severity) {
     synchronized (this) {
@@ -653,7 +653,7 @@ class uvm_report_handler: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 6.4.6
+  // @uvm-ieee 1800.2-2020 auto 6.4.6
   final void set_severity_id_override(uvm_severity cur_severity,
 				      string id,
 				      uvm_severity new_severity) {

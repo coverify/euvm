@@ -1,14 +1,14 @@
 //
 //------------------------------------------------------------------------------
-// Copyright 2012-2019 Coverify Systems Technology
-// Copyright 2007-2014 Mentor Graphics Corporation
-// Copyright 2014 Semifore
-// Copyright 2018 Qualcomm, Inc.
-// Copyright 2014 Intel Corporation
-// Copyright 2018 Synopsys, Inc.
+// Copyright 2012-2021 Coverify Systems Technology
 // Copyright 2007-2018 Cadence Design Systems, Inc.
-// Copyright 2013-2018 NVIDIA Corporation
 // Copyright 2017-2018 Cisco Systems, Inc.
+// Copyright 2014 Intel Corporation
+// Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2013-2020 NVIDIA Corporation
+// Copyright 2018 Qualcomm, Inc.
+// Copyright 2014 Semifore
+// Copyright 2018 Synopsys, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -63,13 +63,13 @@ import std.traits;
 
 // Class: uvm_packer
 // Implementation of uvm_packer, as defined in section
-// 16.5.1 of 1800.2-2017
+// 16.5.1 of 1800.2-2020
 
-// @uvm-ieee 1800.2-2017 auto 16.5.1
+// @uvm-ieee 1800.2-2020 auto 16.5.1
 class uvm_packer: uvm_policy
 {
 
-  // @uvm-ieee 1800.2-2017 auto 16.5.2.3
+  // @uvm-ieee 1800.2-2020 auto 16.5.2.3
   mixin uvm_object_essentials;
   mixin (uvm_sync_string);
 
@@ -95,7 +95,6 @@ class uvm_packer: uvm_policy
   //| virtual function void set_packed_ints( ref int unsigned stream[] );
   //| virtual function void set_packed_longints( ref longint unsigned stream[] );
   //
-  // @uvm-contrib This API is being considered for potential contribution to 1800.2
    
   void set_packed(T)(ref T[] stream) {
     synchronized (this) {
@@ -103,35 +102,35 @@ class uvm_packer: uvm_policy
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.5.3.1
+  // @uvm-ieee 1800.2-2020 auto 16.5.3.1
   void set_packed_bits(ref bool[] stream) {
     synchronized (this) {
       _m_bits.setPacked(stream);
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.5.3.1
+  // @uvm-ieee 1800.2-2020 auto 16.5.3.1
   void set_packed_bytes(ref ubyte[] stream) {
     synchronized (this) {
       _m_bits.setPacked(stream);
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.5.3.1
+  // @uvm-ieee 1800.2-2020 auto 16.5.3.1
   void set_packed_ints(ref uint[] stream) {
     synchronized (this) {
       _m_bits.setPacked(stream);
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.5.3.1
+  // @uvm-ieee 1800.2-2020 auto 16.5.3.1
   void set_packed_longints(ref ulong[] stream) {
     synchronized (this) {
       _m_bits.setPacked(stream);
     }
   }
    
-  // Function: get_packed_*
+  // Function -- NODOCS -- get_packed_*
   // Implementation of P1800.2 16.5.3.2
   //
   // The LRM specifies the get_packed_* methods as being
@@ -146,7 +145,6 @@ class uvm_packer: uvm_policy
   //| virtual function void get_packed_ints( ref int unsigned stream[] );
   //| virtual function void get_packed_longints( ref longint unsigned stream[] );
   //
-  // @uvm-contrib This API is being considered for potential contribution to 1800.2
    
   void get_packed(T)(ref T[] stream) {
     synchronized (this) {
@@ -154,28 +152,28 @@ class uvm_packer: uvm_policy
     }
   }
   
-  // @uvm-ieee 1800.2-2017 auto 16.5.3.2
+  // @uvm-ieee 1800.2-2020 auto 16.5.3.2
   void get_packed_bits(ref bool[] stream) {
     synchronized (this) {
       _m_bits.getPacked(stream);
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.5.3.2
+  // @uvm-ieee 1800.2-2020 auto 16.5.3.2
   void get_packed_bytes(ref ubyte[] stream) {
     synchronized (this) {
       _m_bits.getPacked(stream);
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.5.3.2
+  // @uvm-ieee 1800.2-2020 auto 16.5.3.2
   void get_packed_ints(ref uint[] stream) {
     synchronized (this) {
       _m_bits.getPacked(stream);
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.5.3.2
+  // @uvm-ieee 1800.2-2020 auto 16.5.3.2
   void get_packed_longints(ref ulong[] stream) {
     synchronized (this) {
       _m_bits.getPacked(stream);
@@ -186,20 +184,20 @@ class uvm_packer: uvm_policy
   // Group -- NODOCS -- Packing //
   //----------------//
 
-  // @uvm-ieee 1800.2-2017 auto 16.5.2.4
+  // @uvm-ieee 1800.2-2020 auto 16.5.2.4
   static void set_default(uvm_packer packer) {
     uvm_coreservice_t coreservice = uvm_coreservice_t.get();
     coreservice.set_default_packer(packer);
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.5.2.5
+  // @uvm-ieee 1800.2-2020 auto 16.5.2.5
   static uvm_packer get_default() {
     uvm_coreservice_t coreservice = uvm_coreservice_t.get();
     return coreservice.get_default_packer();
   }
 
   
-  // @uvm-ieee 1800.2-2017 auto 16.5.2.2
+  // @uvm-ieee 1800.2-2020 auto 16.5.2.2
   override void flush() {
     synchronized (this) {
       // The iterators are spaced 64b from the beginning, enough to store
@@ -297,7 +295,7 @@ class uvm_packer: uvm_policy
   // Packs an integral value (less than or equal to 4096 bits) into the
   // packed array. ~size~ is the number of bits of ~value~ to pack.
 
-  // @uvm-ieee 1800.2-2017 auto 16.5.4.8
+  // @uvm-ieee 1800.2-2020 auto 16.5.4.8
   void pack_field(uvm_bitstream_t value, size_t size) {
     synchronized (this) {
       bool bit;
@@ -309,7 +307,7 @@ class uvm_packer: uvm_policy
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 16.5.2.1
+  // @uvm-ieee 1800.2-2020 auto 16.5.2.1
   this(string name="") {
     synchronized (this) {
       super(name);
@@ -324,7 +322,7 @@ class uvm_packer: uvm_policy
   // ~$bits~. This optimized version of <pack_field> is useful for sizes up
   // to 64 bits.
 
-  // @uvm-ieee 1800.2-2017 auto 16.5.4.9
+  // @uvm-ieee 1800.2-2020 auto 16.5.4.9
   void pack_field_int (uvm_integral_t value, size_t size) {
     synchronized (this) {
       for (size_t i = 0; i != size; ++i) {
@@ -360,13 +358,13 @@ class uvm_packer: uvm_policy
       }
     }
 
-  // @uvm-ieee 1800.2-2017 auto 16.5.4.1
+  // @uvm-ieee 1800.2-2020 auto 16.5.4.1
   alias pack_bits = pack;
   
-  // @uvm-ieee 1800.2-2017 auto 16.5.4.10
+  // @uvm-ieee 1800.2-2020 auto 16.5.4.10
   alias pack_bytes = pack;
 
-  // @uvm-ieee 1800.2-2017 auto 16.5.4.11
+  // @uvm-ieee 1800.2-2020 auto 16.5.4.11
   alias pack_ints = pack;
 
   // recursion functions
@@ -382,7 +380,7 @@ class uvm_packer: uvm_policy
   // This is useful for mixed language communication where unpacking may occur
   // outside of SystemVerilog UVM.
 
-  // @uvm-ieee 1800.2-2017 auto 16.5.4.5
+  // @uvm-ieee 1800.2-2020 auto 16.5.4.5
   void pack_string (string value) {
     this.pack(value);
     this.pack(0, 8);
@@ -393,7 +391,7 @@ class uvm_packer: uvm_policy
   //
   // Packs a time ~value~ as 64 bits into the pack array.
 
-  // @uvm-ieee 1800.2-2017 auto 16.5.4.6
+  // @uvm-ieee 1800.2-2020 auto 16.5.4.6
   void pack_time (SimTime value) {
     this.pack(value);
   }
@@ -406,7 +404,7 @@ class uvm_packer: uvm_policy
   // The real ~value~ is converted to a 6-bit scalar value using the function
   // $real2bits before it is packed into the array.
 
-  // @uvm-ieee 1800.2-2017 auto 16.5.4.7
+  // @uvm-ieee 1800.2-2020 auto 16.5.4.7
   void pack_real (real value) {
     this.pack(value);
   }
@@ -423,7 +421,7 @@ class uvm_packer: uvm_policy
   // This is useful for mixed-language communication where unpacking may occur
   // outside of SystemVerilog UVM.
 
-  // @uvm-ieee 1800.2-2017 auto 16.5.4.2
+  // @uvm-ieee 1800.2-2020 auto 16.5.4.2
   void pack_object (uvm_object value) {
     this.pack(value);
   }
@@ -472,7 +470,7 @@ class uvm_packer: uvm_policy
   // This is useful when unpacking objects, to decide whether a new object
   // needs to be allocated or not.
 
-  // @uvm-ieee 1800.2-2017 auto 16.5.4.3
+  // @uvm-ieee 1800.2-2020 auto 16.5.4.3
   bool is_null () {
     synchronized (this) {
       return (_m_bits.read!int(4) == 0);
@@ -583,7 +581,7 @@ class uvm_packer: uvm_policy
   // Unpacks bits from the pack array and returns the bit-stream that was
   // unpacked. ~size~ is the number of bits to unpack; the maximum is 4096 bits.
 
-  // @uvm-ieee 1800.2-2017 auto 16.5.4.16
+  // @uvm-ieee 1800.2-2020 auto 16.5.4.16
   uvm_bitstream_t unpack_field (int size) {
     synchronized (this) {
       uvm_bitstream_t retval;
@@ -608,7 +606,7 @@ class uvm_packer: uvm_policy
   // This is a more efficient variant than unpack_field when unpacking into
   // smaller vectors.
 
-  // @uvm-ieee 1800.2-2017 auto 16.5.4.17
+  // @uvm-ieee 1800.2-2020 auto 16.5.4.17
   uvm_integral_t unpack_field_int (int size) {
     synchronized (this) {
       uvm_integral_t retval;
@@ -651,18 +649,18 @@ class uvm_packer: uvm_policy
   //
   // Unpacks bits from the pack array into an unpacked array of bits.
   //
-  // @uvm-ieee 1800.2-2017 auto 16.5.4.18
+  // @uvm-ieee 1800.2-2020 auto 16.5.4.18
   alias unpack_bits = unpack;
 
   // Function -- NODOCS -- unpack_bytes
   //
   // Unpacks bits from the pack array into an unpacked array of bytes.
   //
-  // @uvm-ieee 1800.2-2017 auto 16.5.4.19
+  // @uvm-ieee 1800.2-2020 auto 16.5.4.19
   alias unpack_bytes = unpack;
 
 
-  // @uvm-ieee 1800.2-2017 auto 16.5.4.12
+  // @uvm-ieee 1800.2-2020 auto 16.5.4.12
   alias unpack_ints = unpack;
 
   // Function -- NODOCS -- unpack_string
@@ -672,7 +670,7 @@ class uvm_packer: uvm_policy
   // num_chars bytes are unpacked into a string. If num_chars is -1 then
   // unpacking stops on at the first ~null~ character that is encountered.
 
-  // @uvm-ieee 1800.2-2017 auto 16.5.4.13
+  // @uvm-ieee 1800.2-2020 auto 16.5.4.13
   string unpack_string () {
     synchronized (this) {
       char[] unpack_string_;
@@ -695,7 +693,7 @@ class uvm_packer: uvm_policy
   // Unpacks the next 64 bits of the pack array and places them into a
   // time variable.
 
-  // @uvm-ieee 1800.2-2017 auto 16.5.4.14
+  // @uvm-ieee 1800.2-2020 auto 16.5.4.14
   SimTime unpack_time () {
     SimTime t;
     this.unpack(t);
@@ -711,7 +709,7 @@ class uvm_packer: uvm_policy
   // The 64 bits of packed data are converted to a real using the $bits2real
   // system function.
 
-  // @uvm-ieee 1800.2-2017 auto 16.5.4.15
+  // @uvm-ieee 1800.2-2020 auto 16.5.4.15
   double unpack_real () {
     double f;
     this.unpack(f);
@@ -729,7 +727,7 @@ class uvm_packer: uvm_policy
   // The <is_null> function can be used to peek at the next four bits in
   // the pack array before calling this method.
 
-  // @uvm-ieee 1800.2-2017 auto 16.5.4.4
+  // @uvm-ieee 1800.2-2020 auto 16.5.4.4
   void unpack_object (uvm_object obj) {
     this.unpack(obj);
   }
@@ -774,7 +772,7 @@ class uvm_packer: uvm_policy
   //
   // Returns the number of bits that were packed.
 
-  // @uvm-ieee 1800.2-2017 auto 16.5.3.3
+  // @uvm-ieee 1800.2-2020 auto 16.5.3.3
   size_t get_packed_size() {
     synchronized (this) {
       return _m_bits.packIter - _m_bits.unpackIter;

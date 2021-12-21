@@ -1,15 +1,15 @@
 //----------------------------------------------------------------------
-// Copyright 2014-2019 Coverify Systems Technology
-// Copyright 2010-2011 Paradigm Works
-// Copyright 2010-2011 Mentor Graphics Corporation
-// Copyright 2015 Analog Devices, Inc.
-// Copyright 2017 Intel Corporation
-// Copyright 2010-2014 Synopsys, Inc.
-// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2014-2021 Coverify Systems Technology
 // Copyright 2011 AMD
-// Copyright 2014-2018 NVIDIA Corporation
+// Copyright 2015 Analog Devices, Inc.
+// Copyright 2010-2018 Cadence Design Systems, Inc.
 // Copyright 2017 Cisco Systems, Inc.
 // Copyright 2011 Cypress Semiconductor Corp.
+// Copyright 2017 Intel Corporation
+// Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2014-2020 NVIDIA Corporation
+// Copyright 2010-2011 Paradigm Works
+// Copyright 2010-2014 Synopsys, Inc.
 // Copyright 2017 Verific
 //   All Rights Reserved Worldwide
 //
@@ -65,11 +65,11 @@ import std.string;
 
 // Class: uvm_resource_db
 // Implementation of uvm_resource_db, as defined in section
-// C.3.2.1 of 1800.2-2017.
+// C.3.2.1 of 1800.2-2020.
 //
 //| class uvm_resource_db#(type T=uvm_object)
   
-// @uvm-ieee 1800.2-2017 auto C.3.2.1
+// @uvm-ieee 1800.2-2020 auto C.3.2.1
 class uvm_resource_db (T=uvm_object)
 {
 
@@ -83,7 +83,7 @@ class uvm_resource_db (T=uvm_object)
   // class parameter so the only argument to this function is the
   // ~scope~.
 
-  // @uvm-ieee 1800.2-2017 auto C.3.2.2.5
+  // @uvm-ieee 1800.2-2020 auto C.3.2.3.5
   static rsrc_t get_by_type(string rscope) {
     uvm_resource_pool rp = uvm_resource_pool.get();
     uvm_resource_base type_handle = rsrc_t.get_type();
@@ -110,7 +110,7 @@ class uvm_resource_db (T=uvm_object)
   // ~scope~. The ~rpterr~ flag indicates whether or not to generate
   // a warning if no matching resource is found.
 
-  // @uvm-ieee 1800.2-2017 auto C.3.2.2.4
+  // @uvm-ieee 1800.2-2020 auto C.3.2.3.4
   static rsrc_t get_by_name(string rscope,
 			    string name,
 			    bool rpterr = true) {
@@ -141,7 +141,7 @@ class uvm_resource_db (T=uvm_object)
   // written to so it will have its default value. The resource is
   // created using ~name~ and ~scope~ as the lookup parameters.
 
-  // @uvm-ieee 1800.2-2017 auto C.3.2.2.2
+  // @uvm-ieee 1800.2-2020 auto C.3.2.3.2
   static rsrc_t set_default(string rscope, string name) {
     uvm_resource_pool rp = uvm_resource_pool.get();
 
@@ -172,7 +172,7 @@ class uvm_resource_db (T=uvm_object)
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto C.3.2.2.1
+  // @uvm-ieee 1800.2-2020 auto C.3.2.3.1
   static void set(string rscope, string name,
 		  T val, uvm_object accessor = null) {
     uvm_resource_pool rp = uvm_resource_pool.get();
@@ -185,7 +185,7 @@ class uvm_resource_db (T=uvm_object)
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto C.3.2.2.3
+  // @uvm-ieee 1800.2-2020 auto C.3.2.3.3
   static void set_anonymous(string rscope,
 			    T val, uvm_object accessor = null) {
     uvm_resource_pool rp = uvm_resource_pool.get();
@@ -258,28 +258,7 @@ class uvm_resource_db (T=uvm_object)
 		 accessor, rsrc);
   }
 
-
-  // function -- NODOCS --  read_by_name
-  //
-  // Locates a resource by name and scope and reads its value. The value is returned through the inout argument
-  // val. The return value is a bit that indicates whether or not the read was successful. The accessor is available
-  // for an implementation to use for debug purposes only; its value shall have no functional effect on outcome
-  // of this method.
-  //
-  // *Note:*  This function deviates from IEEE 1800.2-2017 LRM as it defines the ~val~ argument as inout, 
-  // whereas the LRM defines it as an output.
-  //
-  //|   static function bit read_by_name(input string scope,
-  //|                                    input string name,
-  //|                                    inout T val, 
-  //|                                    input uvm_object accessor = null);
-  //
-  //  The implementation treats the argument as inout for cases where a read may fail 
-  //  and the value will not change from its original supplied value.
-  //
-  // @uvm-contrib This API is being considered for potential contribution to 1800.2
-
-  // @uvm-ieee 1800.2-2017 auto C.3.2.2.6
+  // @uvm-ieee 1800.2-2020 auto C.3.2.3.6
   static bool read_by_name(string rscope,
 			   string name,
 			   ref T val, uvm_object accessor = null) {
@@ -297,26 +276,7 @@ class uvm_resource_db (T=uvm_object)
     return true;
   }
 
-  // function -- NODOCS --  read_by_type
-  //
-  // Reads a value by type. The value is returned through the inout argument val. The scope is used for the
-  // lookup. The return value is a bit that indicates whether or not the read is successful. The accessor is
-  // available for an implementation to use for debug purposes only; its value shall have no functional effect on
-  // outcome of this method.
-  // 
-  // *Note:* This function deviates from IEEE 1800.2-2017 LRM as it defines the <val> argument as inout, whereas the
-  // LRM defines it as an output.
-  //
-  //|    static function bit read_by_type(input string scope,
-  //|                                     inout T val,
-  //|                                     input uvm_object accessor = null);
-  //
-  // The implementation treats the argument as inout for cases where a read may fail 
-  // and the value will not change from its original supplied value.
-  //
-  // @uvm-contrib This API is being considered for potential contribution to 1800.2
-
-  // @uvm-ieee 1800.2-2017 auto C.3.2.2.7
+  // @uvm-ieee 1800.2-2020 auto C.3.2.3.7
   static bool read_by_type(string rscope,
 			   ref T val,
 			   uvm_object accessor = null) {
@@ -335,7 +295,7 @@ class uvm_resource_db (T=uvm_object)
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto C.3.2.2.8
+  // @uvm-ieee 1800.2-2020 auto C.3.2.3.8
   static bool write_by_name(string rscope, string name,
 			    T val, uvm_object accessor = null) {
     rsrc_t rsrc = get_by_name(rscope, name);
@@ -353,7 +313,7 @@ class uvm_resource_db (T=uvm_object)
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto C.3.2.2.9
+  // @uvm-ieee 1800.2-2020 auto C.3.2.3.9
   static bool write_by_type(string rscope,
 			    T val, uvm_object accessor = null) {
     rsrc_t rsrc = get_by_type(rscope);

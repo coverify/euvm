@@ -1,15 +1,15 @@
 //
 //------------------------------------------------------------------------------
-// Copyright 2012-2019 Coverify Systems Technology
-// Copyright 2007-2018 Mentor Graphics Corporation
-// Copyright 2014 Semifore
-// Copyright 2017 Intel Corporation
-// Copyright 2010-2014 Synopsys, Inc.
-// Copyright 2007-2018 Cadence Design Systems, Inc.
-// Copyright 2013 Verilab
+// Copyright 2012-2021 Coverify Systems Technology
 // Copyright 2012 AMD
-// Copyright 2013-2018 NVIDIA Corporation
+// Copyright 2007-2018 Cadence Design Systems, Inc.
 // Copyright 2014-2018 Cisco Systems, Inc.
+// Copyright 2017 Intel Corporation
+// Copyright 2007-2018 Mentor Graphics Corporation
+// Copyright 2013-2020 NVIDIA Corporation
+// Copyright 2014 Semifore
+// Copyright 2010-2014 Synopsys, Inc.
+// Copyright 2013 Verilab
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -64,7 +64,7 @@ import std.range: ElementType;
 
 interface uvm_void_if { }
 
-// @uvm-ieee 1800.2-2017 auto 5.2
+// @uvm-ieee 1800.2-2020 auto 5.2
 abstract class uvm_void: uvm_void_if
 {
   // Randomization mixin is in uvm_object class

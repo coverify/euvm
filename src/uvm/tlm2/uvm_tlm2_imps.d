@@ -1,10 +1,10 @@
 //----------------------------------------------------------------------
-// Copyright 2016-2019 Coverify Systems Technology
+// Copyright 2016-2021 Coverify Systems Technology
+// Copyright 2010-2018 Cadence Design Systems, Inc.
 // Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2014-2020 NVIDIA Corporation
 // Copyright 2014 Semifore
 // Copyright 2010-2018 Synopsys, Inc.
-// Copyright 2010-2018 Cadence Design Systems, Inc.
-// Copyright 2014-2018 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -169,7 +169,7 @@ mixin template UVM_TLM_B_TRANSPORT_IMP(alias imp, T)
 // imp is instantiated the implementation object is bound.
 //----------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 12.3.8.1
+// @uvm-ieee 1800.2-2020 auto 12.3.8.1
 class uvm_tlm_b_transport_imp(T=uvm_tlm_generic_payload,
 			      IMP=int): 
   uvm_port_base!(uvm_tlm_if!T)
@@ -186,7 +186,7 @@ class uvm_tlm_b_transport_imp(T=uvm_tlm_generic_payload,
 // imp is instantiated the implementation object is bound.
 //----------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 12.3.8.2
+// @uvm-ieee 1800.2-2020 auto 12.3.8.2
 class uvm_tlm_nb_transport_fw_imp(T=uvm_tlm_generic_payload,
 				  P=uvm_tlm_phase_e,
 				  IMP=int)
@@ -205,7 +205,7 @@ class uvm_tlm_nb_transport_fw_imp(T=uvm_tlm_generic_payload,
 // imp is instantiated the implementation object is bound.
 //----------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 12.3.8.3
+// @uvm-ieee 1800.2-2020 auto 12.3.8.3
 class uvm_tlm_nb_transport_bw_imp(T=uvm_tlm_generic_payload,
 				  P=uvm_tlm_phase_e,
 				  IMP=int)

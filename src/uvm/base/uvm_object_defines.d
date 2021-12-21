@@ -34,6 +34,14 @@ public import uvm.base.uvm_registry: uvm_object_registry,
 
 import uvm.base.uvm_field_op: uvm_field_op;
 
+import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_copier: uvm_copier;
+import uvm.base.uvm_comparer: uvm_comparer;
+import uvm.base.uvm_printer: uvm_printer;
+import uvm.base.uvm_recorder: uvm_recorder;
+import uvm.base.uvm_packer: uvm_packer;
+import uvm.base.uvm_resource_base: uvm_resource_base;
+
 template HasDefaultConstructor(T) {
   enum HasDefaultConstructor =
     HasDefaultConstructor!(__traits(getOverloads, T, "__ctor"));
@@ -90,6 +98,27 @@ mixin template uvm_object_utils(T=void)
     // else {
     //   this() {}
     // }
+  }
+}
+
+mixin template uvm_object_essentials(T=void)
+{
+  import uvm.meta.meta;
+  static if (is (T == void)) {
+    alias U = typeof(this);
+  }
+  else {
+    alias U = T;
+  }
+  mixin uvm_object_registry_mixin!(U, qualifiedTypeName!U);
+  mixin m_uvm_object_create_func!(U);
+  mixin m_uvm_get_type_name_func!(U);
+  // mixin m_uvm_object_auto_utils!(U);
+  // `uvm_field_utils_begin(U)
+
+  // Add a defaultConstructor for Object.factory to work
+  static if (! HasDefaultConstructor!U) {
+    this() {this("");}
   }
 }
 
@@ -152,27 +181,6 @@ mixin template uvm_abstract_object_utils(T=void)
     // else {
     //   this() {}
     // }
-  }
-}
-
-mixin template uvm_object_essentials(T=void)
-{
-  import uvm.meta.meta;
-  static if (is (T == void)) {
-    alias U = typeof(this);
-  }
-  else {
-    alias U = T;
-  }
-  mixin uvm_object_registry_mixin!(U, qualifiedTypeName!U);
-  mixin m_uvm_object_create_func!(U);
-  mixin m_uvm_get_type_name_func!(U);
-  // mixin m_uvm_object_auto_utils!(U);
-  // `uvm_field_utils_begin(U)
-
-  // Add a defaultConstructor for Object.factory to work
-  static if (! HasDefaultConstructor!U) {
-    this() {this("");}
   }
 }
 
@@ -412,14 +420,6 @@ void uvm_struct_do_execute_op(T)(T lhs, T rhs, uvm_field_op op) if (is (T == str
   }
 }
 
-import uvm.base.uvm_object: uvm_object;
-import uvm.base.uvm_copier: uvm_copier;
-import uvm.base.uvm_comparer: uvm_comparer;
-import uvm.base.uvm_printer: uvm_printer;
-import uvm.base.uvm_recorder: uvm_recorder;
-import uvm.base.uvm_packer: uvm_packer;
-import uvm.base.uvm_resource_base: uvm_resource_base;
-
 void uvm_struct_do_execute_op(T)(T t, uvm_field_op op) if (is (T == struct)) {
   import uvm.base.uvm_copier: uvm_copier;
   import uvm.base.uvm_comparer: uvm_comparer;
@@ -460,10 +460,11 @@ void uvm_struct_do_execute_op(T)(T t, uvm_field_op op) if (is (T == struct)) {
     _m_uvm_execute_unpack!0(t, packer);
     break;
   case uvm_field_auto_enum.UVM_SET:
-    uvm_resource_base rsrc = cast (uvm_resource_base) op.get_rhs();
-    if (rsrc is null) return;
-    _m_uvm_execute_set!0(t, rsrc);
-    break;
+    assert (false, "uvm_set_element not supported for structs");
+    // uvm_resource_base rsrc = cast (uvm_resource_base) op.get_rhs();
+    // if (rsrc is null) return;
+    // _m_uvm_execute_set!0(t, rsrc);
+    // break;
   default: break;
   }
 }
@@ -554,7 +555,8 @@ void _m_uvm_execute_record(int I, T)(T t, uvm_recorder recorder)
      }
   
 void _m_uvm_execute_set(int I, T)(T t, uvm_resource_base rsrc)
-     if (is (T: uvm_object) || is (T == struct)) {
+     if (is (T: uvm_object) // || is (T == struct)
+	 ) {
        import uvm.base.uvm_object_globals;
        static if (I < t.tupleof.length) {
 	 enum FLAGS = uvm_field_auto_get_flags!(t, I);

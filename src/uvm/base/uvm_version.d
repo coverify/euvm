@@ -29,10 +29,10 @@ module uvm.base.uvm_version;
 
 import std.conv: to;
 
-enum string UVM_STANDARD = "Accellera:1800.2-2017";
+enum string UVM_STANDARD = "Accellera:1800.2-2020";
 enum string UVM_NAME     = "UVM";
 enum uint UVM_MAJOR_REV  = 1;
-enum uint UVM_MINOR_REV  = 1;
+enum uint UVM_MINOR_REV  = 0;
 enum string UVM_FIX_REV  = "";
 
 enum string UVM_VERSION_STRING = UVM_STANDARD ~ ":" ~ UVM_NAME ~ ":" ~

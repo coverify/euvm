@@ -1,9 +1,9 @@
 //----------------------------------------------------------------------
-// Copyright 2019 Coverify Systems Technology
-// Copyright 2018 Synopsys, Inc.
+// Copyright 2019-2021 Coverify Systems Technology
 // Copyright 2018 Cadence Design Systems, Inc.
-// Copyright 2018 NVIDIA Corporation
 // Copyright 2018 Cisco Systems, Inc.
+// Copyright 2018-2020 NVIDIA Corporation
+// Copyright 2018 Synopsys, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -40,14 +40,10 @@ import uvm.meta.meta;
 // uvm_field_op is the UVM class for describing all operations supported by the do_execute_op function
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 5.3.13.2.1
+// @uvm-ieee 1800.2-2020 auto 5.7.1
 class uvm_field_op: uvm_object
 {
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.4.5
-  // @uvm-ieee 1800.2-2017 auto 5.3.4.6
-  // @uvm-ieee 1800.2-2017 auto 5.3.4.7
-  // @uvm-ieee 1800.2-2017 auto 5.3.5.1
   mixin uvm_object_essentials;
   mixin (uvm_sync_string);
   
@@ -70,8 +66,7 @@ class uvm_field_op: uvm_object
   // Creates a policy with the specified instance name. If name is not provided, then the policy instance is
   // unnamed.
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.13.2.3
-  // @uvm-ieee 1800.2-2017 auto 5.3.2
+  // @uvm-ieee 1800.2-2020 auto 5.7.2.1
   this(string name="") {
     synchronized (this) {
       super(name);
@@ -81,7 +76,7 @@ class uvm_field_op: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.13.2.4
+  // @uvm-ieee 1800.2-2020 auto 5.7.2.2
   void set(uvm_field_flag_t op_type, uvm_policy policy = null, uvm_object rhs = null) {
     synchronized (this) {
       string[] matching_ops;
@@ -134,7 +129,7 @@ class uvm_field_op: uvm_object
     }
   }
 
-   // @uvm-ieee 1800.2-2017 auto 5.3.13.2.5
+  // @uvm-ieee 1800.2-2020 auto 5.7.2.3
   string get_op_name() {
     synchronized (this) {
       switch (_m_op_type) {
@@ -150,7 +145,7 @@ class uvm_field_op: uvm_object
     }
   }
 
-   // @uvm-ieee 1800.2-2017 auto 5.3.13.2.6
+  // @uvm-ieee 1800.2-2020 auto 5.7.2.4
   uvm_field_flag_t get_op_type() {
     synchronized (this) {
       if (_m_is_set is true) {
@@ -165,7 +160,7 @@ class uvm_field_op: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.13.2.7
+  // @uvm-ieee 1800.2-2020 auto 5.7.2.5
   uvm_policy get_policy() {
     synchronized (this) {
       if (_m_is_set is true) {
@@ -179,7 +174,7 @@ class uvm_field_op: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.13.2.8
+  // @uvm-ieee 1800.2-2020 auto 5.7.2.6
   uvm_object get_rhs() {
     synchronized (this) {
       if (_m_is_set is true) {
@@ -193,7 +188,7 @@ class uvm_field_op: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.13.2.9
+  // @uvm-ieee 1800.2-2020 auto 5.7.2.7
   bool user_hook_enabled() {
     synchronized (this) {
       if (_m_is_set is true) {
@@ -207,7 +202,7 @@ class uvm_field_op: uvm_object
     }
   }
 
-   // @uvm-ieee 1800.2-2017 auto 5.3.13.2.10
+  // @uvm-ieee 1800.2-2020 auto 5.7.2.8
   void disable_user_hook() {
     synchronized (this) {
       _m_user_hook = true;
@@ -222,7 +217,7 @@ class uvm_field_op: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.13.2.11
+  // @uvm-ieee 1800.2-2020 auto 5.7.2.9
   void flush() {
     synchronized (this) {
       _m_policy = null;

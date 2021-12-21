@@ -1,10 +1,10 @@
 //----------------------------------------------------------------------
-// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2014-2021 Coverify Systems Technology
+// Copyright 2007-2018 Cadence Design Systems, Inc.
 // Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2013-2020 NVIDIA Corporation
 // Copyright 2014 Semifore
 // Copyright 2010-2014 Synopsys, Inc.
-// Copyright 2007-2018 Cadence Design Systems, Inc.
-// Copyright 2013-2015 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -46,7 +46,6 @@ enum uvm_heartbeat_modes
   }
 
 
-// @uvm-ieee 1800.2-2017 auto D.4.2
 alias uvm_heartbeat_cbs_t =
   uvm_callbacks!(uvm_objection, uvm_heartbeat_callback);
 
@@ -70,7 +69,7 @@ alias uvm_heartbeat_cbs_t =
 
 // typedef class uvm_objection_callback;
 
-// @uvm-ieee 1800.2-2017 auto 10.6.1
+// @uvm-ieee 1800.2-2020 auto 10.6.1
 class uvm_heartbeat: uvm_object
 {
   import uvm.base.uvm_component: uvm_component;
@@ -109,7 +108,7 @@ class uvm_heartbeat: uvm_object
   //|    ...
   //| endclass
 
-  // @uvm-ieee 1800.2-2017 auto 10.6.2.1
+  // @uvm-ieee 1800.2-2020 auto 10.6.2.1
   this(string name, uvm_component cntxt, uvm_objection objection = null) {
     import uvm.base.uvm_coreservice;
     synchronized (this) {
@@ -134,7 +133,7 @@ class uvm_heartbeat: uvm_object
   // mode is returned. If an argument is specified to change the mode then the
   // mode is changed to the new value.
 
-  // @uvm-ieee 1800.2-2017 auto 10.6.2.2
+  // @uvm-ieee 1800.2-2020 auto 10.6.2.2
   final uvm_heartbeat_modes set_mode(uvm_heartbeat_modes mode
 				     = uvm_heartbeat_modes.UVM_NO_HB_MODE) {
     synchronized (this) {
@@ -161,7 +160,7 @@ class uvm_heartbeat: uvm_object
   // trigger event, then the monitoring is not started. Monitoring can be
   // started by explicitly calling <start>.
 
-  // @uvm-ieee 1800.2-2017 auto 10.6.2.3
+  // @uvm-ieee 1800.2-2020 auto 10.6.2.3
   final void set_heartbeat(uvm_event!uvm_object e, // ref
 			   Queue!uvm_component comps) {
     synchronized (m_cb) {
@@ -206,7 +205,7 @@ class uvm_heartbeat: uvm_object
   // to the list of components and will be expected to participate
   // in the currently active event window.
 
-  // @uvm-ieee 1800.2-2017 auto 10.6.2.4
+  // @uvm-ieee 1800.2-2020 auto 10.6.2.4
   final void add (uvm_component comp) {
     synchronized (m_cb) {
       uvm_object c = comp;
@@ -224,7 +223,7 @@ class uvm_heartbeat: uvm_object
   // Monitoring is not stopped, even if the last component has been
   // removed (an explicit stop is required).
 
-  // @uvm-ieee 1800.2-2017 auto 10.6.2.5
+  // @uvm-ieee 1800.2-2020 auto 10.6.2.5
   final void remove (uvm_component comp) {
     synchronized (m_cb) {
       uvm_object c = comp;
@@ -242,7 +241,7 @@ class uvm_heartbeat: uvm_object
   // running and ~e~ is specifying a different trigger event from the
   // current event.
 
-  // @uvm-ieee 1800.2-2017 auto 10.6.2.6
+  // @uvm-ieee 1800.2-2020 auto 10.6.2.6
   final void start (uvm_event!uvm_object e = null) {
     import uvm.base.uvm_object_globals;
     synchronized (this) {
@@ -275,7 +274,7 @@ class uvm_heartbeat: uvm_object
   // that if <start> is called again the process will wait for the first
   // event trigger to start the monitoring.
 
-  // @uvm-ieee 1800.2-2017 auto 10.6.2.7
+  // @uvm-ieee 1800.2-2020 auto 10.6.2.7
   final void stop () {
     synchronized (this) {
       _m_started = 0;

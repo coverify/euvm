@@ -1,13 +1,14 @@
 //
 //-----------------------------------------------------------------------------
-// Copyright 2012-2019 Coverify Systems Technology
+// Copyright 2012-2021 Coverify Systems Technology
+// Copyright 2010-2012 AMD
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2017-2018 Cisco Systems, Inc.
+// Copyright 2020 Marvell International Ltd.
 // Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2013-2020 NVIDIA Corporation
 // Copyright 2014 Semifore
 // Copyright 2010-2018 Synopsys, Inc.
-// Copyright 2007-2018 Cadence Design Systems, Inc.
-// Copyright 2010-2012 AMD
-// Copyright 2013-2018 NVIDIA Corporation
-// Copyright 2017-2018 Cisco Systems, Inc.
 // Copyright 2017 Verific
 //   All Rights Reserved Worldwide
 //
@@ -88,7 +89,7 @@ import std.string: format;
 import std.random: uniform;
 import std.range: ElementType;
 
-// @uvm-ieee 1800.2-2017 auto 5.3.1
+// @uvm-ieee 1800.2-2020 auto 5.3.1
 abstract class uvm_object: uvm_void, rand.barrier
 {
   static class uvm_scope: uvm_scope_base
@@ -114,6 +115,7 @@ abstract class uvm_object: uvm_void, rand.barrier
   // Creates a new uvm_object with the given instance ~name~. If ~name~ is not
   // supplied, the object is unnamed.
 
+  // @uvm-ieee 1800.2-2020 auto 5.3.2
   this(string name="") {
     int inst_id;
     synchronized (_uvm_scope_inst) {
@@ -127,22 +129,9 @@ abstract class uvm_object: uvm_void, rand.barrier
 
   // Group -- NODOCS -- Seeding
 
-  // Variable -- NODOCS -- use_uvm_seeding
-  //
-  // This bit enables or disables the UVM seeding mechanism. It globally affects
-  // the operation of the <reseed> method.
-  //
-  // When enabled, UVM-based objects are seeded based on their type and full
-  // hierarchical name rather than allocation order. This improves random
-  // stability for objects whose instance names are unique across each type.
-  // The <uvm_component> class is an example of a type that has a unique
-  // instance name.
+  // Function -- NODOCS -- get_uvm_seeding
 
-  // Moved to _uvm_scope_inst
-  // shared static bool use_uvm_seeding = true;
-
-
-  // @uvm-ieee 1800.2-2017 auto 5.3.3.1
+  // @uvm-ieee 1800.2-2020 auto 5.3.3.1
   static bool get_uvm_seeding() {
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     return cs.get_uvm_seeding();
@@ -151,7 +140,7 @@ abstract class uvm_object: uvm_void, rand.barrier
       
   // Function -- NODOCS -- set_uvm_seeding
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.3.2
+  // @uvm-ieee 1800.2-2020 auto 5.3.3.2
   static void set_uvm_seeding(bool enable) {
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     cs.set_uvm_seeding(enable);
@@ -173,7 +162,7 @@ abstract class uvm_object: uvm_void, rand.barrier
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.3.3
+  // @uvm-ieee 1800.2-2020 auto 5.3.3.3
   final void reseed () {
     import uvm.base.uvm_misc: uvm_create_random_seed;
     synchronized (this) {
@@ -187,30 +176,30 @@ abstract class uvm_object: uvm_void, rand.barrier
     }
   }
 
-  // In SV every class object is randomizable by default. Seeding in
-  // SV happens right at the time when an object is created.
-  // In EUVM, seeding is lazy. It happens only when a randomize (or
-  // the related function like srandom) is called.
-  // This is the hookup function in EUVM to ensure randomization stability
-  void _esdl__seedRandom() {
-    version (UVM_NO_RAND) {}
-    else {
-      if (! _esdl__isRandSeeded()) {
-	auto proc = Procedure.self;
-	if (proc !is null) {
-	  auto seed = uniform!int(proc.getRandGen());
-	  debug(SEED) {
-	    import std.stdio;
-	    auto thread = PoolThread.self;
-	    writeln("Procedure ", thread ? thread.getPoolIndex : -1, " : ",
-      		    proc.getFullName);
-	    writeln("Setting ", get_full_name, " seed: ", seed);
-	  }
-	  this.reseed(seed);
-	}
-      }
-    }
-  }
+  // // In SV every class object is randomizable by default. Seeding in
+  // // SV happens right at the time when an object is created.
+  // // In EUVM, seeding is lazy. It happens only when a randomize (or
+  // // the related function like srandom) is called.
+  // // This is the hookup function in EUVM to ensure randomization stability
+  // void _esdl__seedRandom() {
+  //   version (UVM_NO_RAND) {}
+  //   else {
+  //     if (! _esdl__isRandSeeded()) {
+  // 	auto proc = Procedure.self;
+  // 	if (proc !is null) {
+  // 	  auto seed = uniform!int(proc.getRandGen().getGen());
+  // 	  debug(SEED) {
+  // 	    import std.stdio;
+  // 	    auto thread = PoolThread.self;
+  // 	    writeln("Procedure ", thread ? thread.getPoolIndex : -1, " : ",
+  //     		    proc.getFullName);
+  // 	    writeln("Setting ", get_full_name, " seed: ", seed);
+  // 	  }
+  // 	  this.reseed(seed);
+  // 	}
+  //     }
+  //   }
+  // }
 
   // // Group -- NODOCS -- Identification
 
@@ -219,7 +208,7 @@ abstract class uvm_object: uvm_void, rand.barrier
   // // Sets the instance name of this object, overwriting any previously
   // // given name.
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.4.1
+  // @uvm-ieee 1800.2-2020 auto 5.3.4.1
   void set_name(string name) {
     synchronized (this) {
       _m_leaf_name = name;
@@ -232,7 +221,7 @@ abstract class uvm_object: uvm_void, rand.barrier
   // Returns the name of the object, as provided by the ~name~ argument in the
   // <new> constructor or <set_name> method.
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.4.2
+  // @uvm-ieee 1800.2-2020 auto 5.3.4.2
   string get_name() {
     synchronized (this) {
       return _m_leaf_name;
@@ -254,7 +243,7 @@ abstract class uvm_object: uvm_void, rand.barrier
   // full name concatenated with the sequence's name. This provides the sequence
   // a full context, which is useful when debugging.
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.4.3
+  // @uvm-ieee 1800.2-2020 auto 5.3.4.3
   string get_full_name() {
     return get_name();
   }
@@ -265,7 +254,7 @@ abstract class uvm_object: uvm_void, rand.barrier
   //
   // Returns the object's unique, numeric instance identifier.
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.4.4
+  // @uvm-ieee 1800.2-2020 auto 5.3.4.4
   int get_inst_id() {
     return _m_inst_id; // effectively immutable
   }
@@ -311,6 +300,7 @@ abstract class uvm_object: uvm_void, rand.barrier
   //
   // This function is implemented by the `uvm_*_utils macros, if employed.
 
+  // @uvm-ieee 1800.2-2020 auto 5.3.4.5
   static uvm_object_wrapper get_type() {
     import uvm.base.uvm_object_globals;
     import uvm.base.uvm_globals;
@@ -349,6 +339,7 @@ abstract class uvm_object: uvm_void, rand.barrier
   //
   // This function is implemented by the `uvm_*_utils macros, if employed.
 
+  // @uvm-ieee 1800.2-2020 auto 5.3.4.6
   uvm_object_wrapper get_object_type() {
     import uvm.base.uvm_coreservice;
     import uvm.base.uvm_factory;
@@ -389,9 +380,9 @@ abstract class uvm_object: uvm_void, rand.barrier
   // auto oci = typeid(this);
   // return oci.to!string();
   // it will then be available via UFCS
-  string get_type_name() {
-    return "<unknown>";
-  }
+
+  // @uvm-ieee 1800.2-2020 auto 5.3.4.7
+  string get_type_name() { return "<unknown>"; }
 
   // Group -- NODOCS -- Creation
 
@@ -410,9 +401,8 @@ abstract class uvm_object: uvm_void, rand.barrier
   //|      return t;
   //|    endfunction
 
-  uvm_object create(string name = "") {
-    return null;
-  }
+  // @uvm-ieee 1800.2-2020 auto 5.3.5.1
+  uvm_object create(string name = "") { return null; }
 
   // Function -- NODOCS -- clone
   //
@@ -421,7 +411,7 @@ abstract class uvm_object: uvm_void, rand.barrier
   // The default implementation calls <create> followed by <copy>. As clone is
   // virtual, derived classes may override this implementation if desired.
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.5.2
+  // @uvm-ieee 1800.2-2020 auto 5.3.5.2
   uvm_object clone() {
     import uvm.base.uvm_object_globals;
     import uvm.base.uvm_globals;
@@ -467,7 +457,7 @@ abstract class uvm_object: uvm_void, rand.barrier
   // must override the <do_print> method and use the provided printer policy
   // class to format the output.
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.6.1
+  // @uvm-ieee 1800.2-2020 auto 5.3.6.1
   final void print(uvm_printer printer = null) {
     if (printer is null) printer = uvm_printer.get_default();
     vfdisplay(printer.get_file(), sprint(printer)); 
@@ -485,7 +475,7 @@ abstract class uvm_object: uvm_void, rand.barrier
   // class to format the output. The printer policy will manage all string
   // concatenations and provide the string to ~sprint~ to return to the caller.
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.6.2
+  // @uvm-ieee 1800.2-2020 auto 5.3.6.2
   final string sprint(uvm_printer printer=null) {
     if (printer is null) printer = uvm_printer.get_default();
     synchronized (printer) {
@@ -539,7 +529,7 @@ abstract class uvm_object: uvm_void, rand.barrier
   //
   // See <uvm_printer> for information about the printer API.
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.6.3
+  // @uvm-ieee 1800.2-2020 auto 5.3.6.3
   void do_print(uvm_printer printer) {
     return;
   }
@@ -609,7 +599,7 @@ abstract class uvm_object: uvm_void, rand.barrier
     return "";
   }
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.6.4
+  // @uvm-ieee 1800.2-2020 auto 5.3.6.4
   string convert2string() {
     return this.to!string();
   }
@@ -689,7 +679,7 @@ abstract class uvm_object: uvm_void, rand.barrier
   //   }
   // }
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.7.1
+  // @uvm-ieee 1800.2-2020 auto 5.3.7.1
   final void record(uvm_recorder recorder=null) {
     if (recorder is null)
       return;
@@ -719,7 +709,7 @@ abstract class uvm_object: uvm_void, rand.barrier
   //|     recorder.record_object("data", data);
   //|   endfunction
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.7.2
+  // @uvm-ieee 1800.2-2020 auto 5.3.7.2
   void do_record(uvm_recorder recorder) { }
 
 
@@ -734,7 +724,7 @@ abstract class uvm_object: uvm_void, rand.barrier
   // the <do_copy> method.
 
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.8.1
+  // @uvm-ieee 1800.2-2020 auto 5.3.8.1
   final void copy(uvm_object rhs, uvm_copier copier=null) {
     import uvm.base.uvm_object_globals;
     import uvm.base.uvm_globals;
@@ -784,7 +774,7 @@ abstract class uvm_object: uvm_void, rand.barrier
   // The implementation must call ~super.do_copy~, and it must $cast the rhs
   // argument to the derived type before copying.
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.8.2
+  // @uvm-ieee 1800.2-2020 auto 5.3.8.2
   void do_copy(uvm_object rhs) {
     return;
   }
@@ -810,7 +800,7 @@ abstract class uvm_object: uvm_void, rand.barrier
 
   // void uvm_field_auto_compare(uvm_object rhs) { }
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.9.1
+  // @uvm-ieee 1800.2-2020 auto 5.3.9.1
   final bool compare(uvm_object rhs, uvm_comparer comparer = null) {
     if (comparer is null) comparer = uvm_comparer.get_default();
     synchronized (comparer) {
@@ -850,7 +840,7 @@ abstract class uvm_object: uvm_void, rand.barrier
   // class to customize how comparisons are performed and how much miscompare
   // information is collected. See uvm_comparer for more details.
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.9.2
+  // @uvm-ieee 1800.2-2020 auto 5.3.9.2
   bool do_compare(uvm_object rhs, uvm_comparer comparer) {
     return true;
   }
@@ -864,7 +854,7 @@ abstract class uvm_object: uvm_void, rand.barrier
   // 		       "no uvm_object_utils", uvm_verbosity.UVM_NONE);
   // }
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.10.1
+  // @uvm-ieee 1800.2-2020 auto 5.3.10.1
   final size_t pack(ref bool[] bitstream, uvm_packer packer=null) {
     m_pack(packer);
     packer.get_packed_bits(bitstream);
@@ -873,7 +863,7 @@ abstract class uvm_object: uvm_void, rand.barrier
 
   // Function -- NODOCS -- pack_bytes
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.10.1
+  // @uvm-ieee 1800.2-2020 auto 5.3.10.1
   final size_t pack_bytes(ref ubyte[] bytestream,
 			  uvm_packer packer=null) {
     m_pack(packer);
@@ -896,7 +886,7 @@ abstract class uvm_object: uvm_void, rand.barrier
   // Use the array's built-in ~size~ method to get the number of bytes or ints
   // consumed during the packing process.
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.10.1
+  // @uvm-ieee 1800.2-2020 auto 5.3.10.1
   final size_t pack_ints(ref uint[] intstream,
 			 uvm_packer packer=null) {
     m_pack(packer);
@@ -905,7 +895,7 @@ abstract class uvm_object: uvm_void, rand.barrier
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.10.1
+  // @uvm-ieee 1800.2-2020 auto 5.3.10.1
   final size_t pack_longints(ref ulong[] longintstream,
 			  uvm_packer packer=null) {
     m_pack(packer);
@@ -964,7 +954,7 @@ abstract class uvm_object: uvm_void, rand.barrier
   // Packing order does not need to match declaration order. However, unpacking
   // order must match packing order.
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.10.2
+  // @uvm-ieee 1800.2-2020 auto 5.3.10.2
   void do_pack(uvm_packer packer) {
     if (packer is null)
       uvm_error("UVM/OBJ/PACK/NULL",
@@ -982,7 +972,7 @@ abstract class uvm_object: uvm_void, rand.barrier
   // 		       "no uvm_object_utils", uvm_verbosity.UVM_NONE);
   // }
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.11.1
+  // @uvm-ieee 1800.2-2020 auto 5.3.11.1
   final size_t unpack(ref bool[] bitstream,
 		      uvm_packer packer = null) {
     m_unpack_pre(packer);
@@ -992,7 +982,7 @@ abstract class uvm_object: uvm_void, rand.barrier
 
   // Function -- NODOCS -- unpack_bytes
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.11.1
+  // @uvm-ieee 1800.2-2020 auto 5.3.11.1
   final size_t unpack_bytes(ref ubyte[] bytestream,
 			    uvm_packer packer = null) {
     m_unpack_pre(packer);
@@ -1019,7 +1009,7 @@ abstract class uvm_object: uvm_void, rand.barrier
   //
   // The return value is the actual number of bits unpacked from the given array.
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.11.1
+  // @uvm-ieee 1800.2-2020 auto 5.3.11.1
   final size_t unpack_ints(ref uint[] intstream,
 			   uvm_packer packer=null) {
     m_unpack_pre(packer);
@@ -1027,7 +1017,7 @@ abstract class uvm_object: uvm_void, rand.barrier
     return m_unpack_post(packer);
   }
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.11.1
+  // @uvm-ieee 1800.2-2020 auto 5.3.11.1
   int unpack_longints(ref ulong[] longintstream,
 		      uvm_packer packer=null) {
     m_unpack_pre(packer);
@@ -1076,7 +1066,7 @@ abstract class uvm_object: uvm_void, rand.barrier
   //   the next property, if any. If the least significant bit is 1, then the
   //   target object should be allocated and its properties unpacked.
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.11.2
+  // @uvm-ieee 1800.2-2020 auto 5.3.11.2
   void do_unpack(uvm_packer packer) {
     if (packer is null)
       uvm_error("UVM/OBJ/UNPACK/NULL",
@@ -1084,7 +1074,7 @@ abstract class uvm_object: uvm_void, rand.barrier
     return;
   }
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.13.1
+  // @uvm-ieee 1800.2-2020 auto 5.3.13.1
   void do_execute_op(uvm_field_op op) { }
 
   void m_uvm_execute_field_op(uvm_field_op op) { }
@@ -1093,7 +1083,7 @@ abstract class uvm_object: uvm_void, rand.barrier
 
   void do_vpi_get(uvm_vpi_iter iter) { }
   
-  // @uvm-ieee 1800.2-2017 auto 5.3.12
+  // @uvm-ieee 1800.2-2020 auto 5.3.12
   void  set_local(uvm_resource_base rsrc) {
     if (rsrc is null) {
       return;

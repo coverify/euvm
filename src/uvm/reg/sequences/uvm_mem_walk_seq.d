@@ -1,11 +1,11 @@
 // 
 // -------------------------------------------------------------
 // Copyright 2014-2021 Coverify Systems Technology
-// Copyright 2010-2011 Mentor Graphics Corporation
-// Copyright 2004-2010 Synopsys, Inc.
-// Copyright 2010-2018 Cadence Design Systems, Inc.
 // Copyright 2010 AMD
-// Copyright 2014-2018 NVIDIA Corporation
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2014-2020 NVIDIA Corporation
+// Copyright 2004-2010 Synopsys, Inc.
 //    All Rights Reserved Worldwide
 // 
 //    Licensed under the Apache License, Version 2.0 (the
@@ -63,7 +63,13 @@
 
 module uvm.reg.sequences.uvm_mem_walk_seq;
 
-import uvm.reg;
+import uvm.reg.uvm_reg_sequence: uvm_reg_sequence;
+import uvm.reg.uvm_reg_item: uvm_reg_item;
+import uvm.reg.uvm_mem: uvm_mem;
+import uvm.reg.uvm_reg_block: uvm_reg_block;
+import uvm.reg.uvm_reg_map: uvm_reg_map;
+import uvm.reg.uvm_reg_model: uvm_hier_e, uvm_door_e, uvm_status_e, uvm_reg_data_t;
+
 import uvm.base.uvm_object_defines;
 import uvm.base.uvm_resource_db: uvm_resource_db;
 import uvm.base.uvm_object_globals: uvm_verbosity;
@@ -73,7 +79,7 @@ import esdl;
 import std.string: format;
 
 
-// @uvm-ieee 1800.2-2017 auto E.6.1.1
+// @uvm-ieee 1800.2-2020 auto E.6.1.1
 class uvm_mem_single_walk_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
 {
   mixin uvm_object_utils;
@@ -90,7 +96,7 @@ class uvm_mem_single_walk_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
   //
   // Creates a new instance of the class with the given name.
 
-  // @uvm-ieee 1800.2-2017 auto E.6.1.3.1
+  // @uvm-ieee 1800.2-2020 auto E.6.1.3.1
   public this(string name="uvm_mem_walk_seq") {
     super(name);
   }
@@ -101,7 +107,7 @@ class uvm_mem_single_walk_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
   // Performs the walking-ones algorithm on each map of the memory
   // specifed in <mem>.
 
-  // @uvm-ieee 1800.2-2017 auto E.6.1.3.2
+  // @uvm-ieee 1800.2-2020 auto E.6.1.3.2
   // task
   override public void body() {
     uvm_reg_map[] maps;
@@ -146,17 +152,17 @@ class uvm_mem_single_walk_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
       // - Write k-1 at k-1
       // - Read k and expect ~k if k == last address
       for (int k = 0; k < mem.get_size(); k++) {
-	mem.write(status, k, cast(uvm_reg_data_t) ~k, UVM_FRONTDOOR, map, this);
+	mem.write(status, k, cast(uvm_reg_data_t) ~k, uvm_door_e.UVM_FRONTDOOR, map, this);
 
-	if (status != UVM_IS_OK) {
+	if (status != uvm_status_e.UVM_IS_OK) {
 	  uvm_error("uvm_mem_walk_seq",
 		    format("Status was %s when writing \"%s[%0d]\" through map \"%s\".",
 			   status, mem.get_full_name(), k, map.get_full_name()));
 	}
             
 	if (k > 0) {
-	  mem.read(status, k-1, val, UVM_FRONTDOOR, map, this);
-	  if (status != UVM_IS_OK) {
+	  mem.read(status, k-1, val, uvm_door_e.UVM_FRONTDOOR, map, this);
+	  if (status != uvm_status_e.UVM_IS_OK) {
 	    uvm_error("uvm_mem_walk_seq",
 		      format("Status was %s when reading \"%s[%0d]\" through map \"%s\".",
 			     status, mem.get_full_name(), k, map.get_full_name()));
@@ -173,8 +179,8 @@ class uvm_mem_single_walk_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
 	    }
 	  }
                
-	  mem.write(status, k-1, cast(uvm_reg_data_t) (k-1), UVM_FRONTDOOR, map, this);
-	  if (status != UVM_IS_OK) {
+	  mem.write(status, k-1, cast(uvm_reg_data_t) (k-1), uvm_door_e.UVM_FRONTDOOR, map, this);
+	  if (status != uvm_status_e.UVM_IS_OK) {
 	    uvm_error("uvm_mem_walk_seq",
 		      format("Status was %s when writing \"%s[%0d-1]\" through map \"%s\".",
 			     status, mem.get_full_name(), k, map.get_full_name()));
@@ -182,8 +188,8 @@ class uvm_mem_single_walk_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
 	}
             
 	if (k == mem.get_size() - 1) {
-	  mem.read(status, k, val, UVM_FRONTDOOR, map, this);
-	  if (status != UVM_IS_OK) {
+	  mem.read(status, k, val, uvm_door_e.UVM_FRONTDOOR, map, this);
+	  if (status != uvm_status_e.UVM_IS_OK) {
 	    uvm_error("uvm_mem_walk_seq",
 		      format("Status was %s when reading \"%s[%0d]\" through map \"%s\".",
 			     status, mem.get_full_name(), k, map.get_full_name()));
@@ -223,7 +229,7 @@ class uvm_mem_single_walk_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
 //
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto E.6.2.1
+// @uvm-ieee 1800.2-2020 auto E.6.2.1
 class uvm_mem_walk_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
 {
 
@@ -242,7 +248,7 @@ class uvm_mem_walk_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
 
   mixin uvm_object_utils;
 
-  // @uvm-ieee 1800.2-2017 auto E.6.3.1
+  // @uvm-ieee 1800.2-2020 auto E.6.3.1
   public this(string name="uvm_mem_walk_seq") {
     super(name);
   }
@@ -254,7 +260,7 @@ class uvm_mem_walk_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
   // Do not call directly. Use seq.start() instead.
   //
 
-  // @uvm-ieee 1800.2-2017 auto E.6.3.2
+  // @uvm-ieee 1800.2-2020 auto E.6.3.2
   // task
   override public void body() {
     if (model is null) {
@@ -291,7 +297,7 @@ class uvm_mem_walk_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
       return;
       
     // Iterate over all memories, checking accesses
-    blk.get_memories(mems, UVM_NO_HIER);
+    blk.get_memories(mems, uvm_hier_e.UVM_NO_HIER);
     foreach (mem; mems) {
       // Memories with some attributes are not to be tested
       if (uvm_resource_db!bool.get_by_name("REG::" ~ mem.get_full_name(),

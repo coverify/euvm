@@ -1,14 +1,16 @@
 //
 // -------------------------------------------------------------
 // Copyright 2014-2021 Coverify Systems Technology
-// Copyright 2010-2020 Mentor Graphics Corporation
-// Copyright 2012-2014 Semifore
-// Copyright 2018 Qualcomm, Inc.
-// Copyright 2004-2018 Synopsys, Inc.
-// Copyright 2010-2018 Cadence Design Systems, Inc.
 // Copyright 2010 AMD
-// Copyright 2014-2018 NVIDIA Corporation
 // Copyright 2012 Accellera Systems Initiative
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2020 Intel Corporation
+// Copyright 2020 Marvell International Ltd.
+// Copyright 2010-2020 Mentor Graphics Corporation
+// Copyright 2014-2020 NVIDIA Corporation
+// Copyright 2018 Qualcomm, Inc.
+// Copyright 2012-2014 Semifore
+// Copyright 2004-2018 Synopsys, Inc.
 //    All Rights Reserved Worldwide
 //
 //    Licensed under the Apache License, Version 2.0 (the
@@ -61,8 +63,11 @@ import std.conv: to;
 
 import std.string: format;
 
+// Class: uvm_reg_field
+// This is an implementation of uvm_reg_field as described in 1800.2 with
+// the addition of API described below.
 
-// @uvm-ieee 1800.2-2017 auto 18.5.1
+// @uvm-ieee 1800.2-2020 auto 18.5.1
 class uvm_reg_field: uvm_object
 {
   mixin uvm_sync;
@@ -128,13 +133,11 @@ class uvm_reg_field: uvm_object
     bool define_access(string name) {
       synchronized(this) {
 	if (!_m_predefined) _m_predefined = m_predefine_policies();
-
 	name = name.toUpper();
 
-	bool* policy_name = name in _m_policy_names;
-	if (policy_name) return false;
+	if (name in _m_policy_names) return false;
 	
-	*policy_name = true;
+	_m_policy_names[name] = true;
 	return true;
       }
     }
@@ -185,7 +188,7 @@ class uvm_reg_field: uvm_object
   Constraint!q{
     if (UVM_REG_DATA_WIDTH > _m_size) {
       // _value < (UVM_REG_DATA_WIDTH'h1 << _m_size);
-      _value < (1 << _m_size);
+      _value < (1L << _m_size);
     }
   } uvm_reg_field_valid;
 
@@ -196,7 +199,7 @@ class uvm_reg_field: uvm_object
   //----------------------
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.5.3.1
+  // @uvm-ieee 1800.2-2020 auto 18.5.3.1
   this(string name = "uvm_reg_field") {
     super(name);
   }
@@ -217,7 +220,7 @@ class uvm_reg_field: uvm_object
 	      has_reset, is_rand, individually_accessible);
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.5.3.2
+  // @uvm-ieee 1800.2-2020 auto 18.5.3.2
   void configure(uvm_reg        parent,
 		 uint           size,
 		 uint           lsb_pos,
@@ -273,8 +276,7 @@ class uvm_reg_field: uvm_object
       }
 
       if (! is_rand) {
-	uvm_info("RANDMODE", "TBD -- implement rand_mode", uvm_verbosity.UVM_NONE);
-	// _value.rand_mode(0);
+	set_rand_mode(false);
       }
     }
   }
@@ -305,7 +307,7 @@ class uvm_reg_field: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.5.4.1
+  // @uvm-ieee 1800.2-2020 auto 18.5.4.1
   uvm_reg get_parent() {
     synchronized(this) {
       return _m_parent;
@@ -358,7 +360,7 @@ class uvm_reg_field: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.5.4.6
+  // @uvm-ieee 1800.2-2020 auto 18.5.4.6
   string set_access(string mode) {
     synchronized(this) {
       string retval = _m_access;
@@ -374,7 +376,23 @@ class uvm_reg_field: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.5.4.7
+  // Function: set_rand_mode
+  // Modifies the ~rand_mode~ for the field instance to the specified one
+  //
+  // @uvm-contrib This API is being considered for potential contribution to 1800.2
+  void set_rand_mode(bool mode) {
+    rand_mode!q{_value}(mode);
+  }
+
+  // Function: get_rand_mode
+  // Returns the rand_mode of the field instance
+  //
+  // @uvm-contrib This API is being considered for potential contribution to 1800.2
+  bool get_rand_mode() {
+    return rand_mode!q{_value}();
+  }
+
+  // @uvm-ieee 1800.2-2020 auto 18.5.4.7
   static bool define_access(string name) {
     return _uvm_scope_inst.define_access(name);
   }
@@ -384,7 +402,7 @@ class uvm_reg_field: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.5.4.5
+  // @uvm-ieee 1800.2-2020 auto 18.5.4.5
   string get_access(uvm_reg_map map = null) {
     synchronized(this) {
       string field_access = _m_access;
@@ -435,7 +453,7 @@ class uvm_reg_field: uvm_object
 	case "WSRC" : field_access = "WS"; break;
 	case "RO","RC","RS": field_access = "NOACCESS"; break;
 	  // No change for the other modes
-	default: assert(false);
+	default: break;
 	}
 	break;
       default:
@@ -450,7 +468,7 @@ class uvm_reg_field: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.5.4.8
+  // @uvm-ieee 1800.2-2020 auto 18.5.4.8
   bool is_known_access(uvm_reg_map map = null) {
     synchronized(this) {
       string acc = get_access(map);
@@ -464,14 +482,14 @@ class uvm_reg_field: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.5.4.9
+  // @uvm-ieee 1800.2-2020 auto 18.5.4.9
   void set_volatility(bool is_volatile) {
     synchronized(this) {
       _m_volatile = is_volatile;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.5.4.10
+  // @uvm-ieee 1800.2-2020 auto 18.5.4.10
   bool is_volatile() {
     synchronized(this) {
       return _m_volatile;
@@ -483,7 +501,7 @@ class uvm_reg_field: uvm_object
   //--------------
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.5.5.2
+  // @uvm-ieee 1800.2-2020 auto 18.5.5.2
   void set(uvm_reg_data_t  value,
 	   string          fname = "",
 	   int             lineno = 0) {
@@ -543,7 +561,7 @@ class uvm_reg_field: uvm_object
   }
 
  
-  // @uvm-ieee 1800.2-2017 auto 18.5.5.1
+  // @uvm-ieee 1800.2-2020 auto 18.5.5.1
   uvm_reg_data_t  get(string  fname = "",
 		      int     lineno = 0) {
     synchronized(this) {
@@ -554,7 +572,7 @@ class uvm_reg_field: uvm_object
   }
  
 
-  // @uvm-ieee 1800.2-2017 auto 18.5.5.3
+  // @uvm-ieee 1800.2-2020 auto 18.5.5.3
   uvm_reg_data_t  get_mirrored_value(string  fname = "",
 				     int     lineno = 0) {
     synchronized(this) {
@@ -565,7 +583,7 @@ class uvm_reg_field: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.5.5.4
+  // @uvm-ieee 1800.2-2020 auto 18.5.5.4
   void reset(string kind = "HARD") {
     synchronized(this) {
       if (kind !in _m_reset) return;
@@ -579,7 +597,7 @@ class uvm_reg_field: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.5.5.6
+  // @uvm-ieee 1800.2-2020 auto 18.5.5.6
   uvm_reg_data_t get_reset(string kind = "HARD") {
     synchronized(this) {
       if (kind !in _m_reset) return _m_desired;
@@ -588,7 +606,7 @@ class uvm_reg_field: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.5.5.5
+  // @uvm-ieee 1800.2-2020 auto 18.5.5.5
   bool has_reset(string kind = "HARD",
 		 bool   remove = false) {
     synchronized(this) {
@@ -600,7 +618,7 @@ class uvm_reg_field: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.5.5.7
+  // @uvm-ieee 1800.2-2020 auto 18.5.5.7
   void set_reset(uvm_reg_data_t value,
 		 string kind = "HARD") {
     synchronized(this) {
@@ -608,7 +626,7 @@ class uvm_reg_field: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.5.5.8
+  // @uvm-ieee 1800.2-2020 auto 18.5.5.8
   bool needs_update() {
     synchronized(this) {
       return (_m_mirrored != _m_desired) | _m_volatile;
@@ -630,7 +648,7 @@ class uvm_reg_field: uvm_object
     write(status, value, door, map, parent, prior, extension, fname, lineno);
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.5.5.9
+  // @uvm-ieee 1800.2-2020 auto 18.5.5.9
   // task
   void write(out uvm_status_e   status,
 	     uvm_reg_data_t     value,
@@ -666,7 +684,7 @@ class uvm_reg_field: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.5.5.10
+  // @uvm-ieee 1800.2-2020 auto 18.5.5.10
   // task
   void read(out uvm_status_e   status,
 	    out uvm_reg_data_t value,
@@ -703,7 +721,7 @@ class uvm_reg_field: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.5.5.11
+  // @uvm-ieee 1800.2-2020 auto 18.5.5.11
   // task
   void poke(out uvm_status_e  status,
 	    uvm_reg_data_t    value,
@@ -751,7 +769,7 @@ class uvm_reg_field: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.5.5.12
+  // @uvm-ieee 1800.2-2020 auto 18.5.5.12
   // task
   void peek(out uvm_status_e      status,
 	    out uvm_reg_data_t    value,
@@ -771,7 +789,7 @@ class uvm_reg_field: uvm_object
   }
                
 
-  // @uvm-ieee 1800.2-2017 auto 18.5.5.13
+  // @uvm-ieee 1800.2-2020 auto 18.5.5.13
   // task
   void mirror(out uvm_status_e  status,
 	      uvm_check_e       check = uvm_check_e.UVM_NO_CHECK,
@@ -792,7 +810,7 @@ class uvm_reg_field: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.5.5.15
+  // @uvm-ieee 1800.2-2020 auto 18.5.5.15
   void set_compare(uvm_check_e check = uvm_check_e.UVM_CHECK) {
     synchronized(this) {
       _m_check = check;
@@ -800,7 +818,7 @@ class uvm_reg_field: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.5.5.14
+  // @uvm-ieee 1800.2-2020 auto 18.5.5.14
   uvm_check_e get_compare() {
     synchronized(this) {
       return _m_check;
@@ -808,7 +826,7 @@ class uvm_reg_field: uvm_object
   }
    
 
-  // @uvm-ieee 1800.2-2017 auto 18.5.5.16
+  // @uvm-ieee 1800.2-2020 auto 18.5.5.16
   final bool is_indv_accessible(uvm_door_e  door,
 				uvm_reg_map local_map) {
     synchronized(this) {
@@ -913,7 +931,7 @@ class uvm_reg_field: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.5.5.17
+  // @uvm-ieee 1800.2-2020 auto 18.5.5.17
   bool predict (uvm_reg_data_t    value,
 		uvm_reg_byte_en_t be =  -1,
 		uvm_predict_e     kind = uvm_predict_e.UVM_PREDICT_DIRECT,
@@ -1224,7 +1242,7 @@ class uvm_reg_field: uvm_object
 	bad_side_effect = true;
 	m_parent.do_read(rw);
 	uvm_reg_data_t value = rw.get_value(0);
-	rw.set_value((value >> m_lsb) & ((1 << m_size))-1, 0);
+	rw.set_value((value >> m_lsb) & ((1L << m_size))-1, 0);
       }
       else {
 
@@ -1297,7 +1315,7 @@ class uvm_reg_field: uvm_object
 		  uvm_reg_byte_en_t be =  -1) {
     synchronized(this) {
       // uvm_reg_data_t field_val = rw.value[0] & ((1 << _m_size)-1);
-      uvm_reg_data_t field_val = rw.get_value(0) & ((1 << _m_size)-1);
+      uvm_reg_data_t field_val = rw.get_value(0) & ((1L << _m_size)-1);
 
       if (rw.get_status() != UVM_NOT_OK)
 	rw.set_status(UVM_IS_OK);
@@ -1403,19 +1421,19 @@ class uvm_reg_field: uvm_object
   mixin uvm_register_cb!(uvm_reg_cbs);
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.5.6.1
+  // @uvm-ieee 1800.2-2020 auto 18.5.6.1
   // task
   void pre_write(uvm_reg_item rw) { }
 
-  // @uvm-ieee 1800.2-2017 auto 18.5.6.2
+  // @uvm-ieee 1800.2-2020 auto 18.5.6.2
   // task
   void post_write(uvm_reg_item rw) {}
 
-  // @uvm-ieee 1800.2-2017 auto 18.5.6.3
+  // @uvm-ieee 1800.2-2020 auto 18.5.6.3
   // task
   void pre_read (uvm_reg_item rw) {}
 
-  // @uvm-ieee 1800.2-2017 auto 18.5.6.4
+  // @uvm-ieee 1800.2-2020 auto 18.5.6.4
   // task
   void post_read  (uvm_reg_item rw) {}
 

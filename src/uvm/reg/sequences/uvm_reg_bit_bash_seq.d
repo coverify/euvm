@@ -1,12 +1,12 @@
 // 
 // -------------------------------------------------------------
 // Copyright 2014-2021 Coverify Systems Technology
+// Copyright 2010 AMD
+// Copyright 2010-2018 Cadence Design Systems, Inc.
 // Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2014-2020 NVIDIA Corporation
 // Copyright 2013 Semifore
 // Copyright 2004-2010 Synopsys, Inc.
-// Copyright 2010-2018 Cadence Design Systems, Inc.
-// Copyright 2010 AMD
-// Copyright 2014-2018 NVIDIA Corporation
 //    All Rights Reserved Worldwide
 // 
 //    Licensed under the Apache License, Version 2.0 (the
@@ -58,7 +58,16 @@
 
 module uvm.reg.sequences.uvm_reg_bit_bash_seq;
 
-import uvm.reg;
+import uvm.reg.uvm_reg_sequence: uvm_reg_sequence;
+import uvm.reg.uvm_reg_defines: UVM_REG_DATA_WIDTH;
+import uvm.reg.uvm_reg_item: uvm_reg_item;
+import uvm.reg.uvm_reg: uvm_reg;
+import uvm.reg.uvm_reg_field: uvm_reg_field;
+import uvm.reg.uvm_reg_block: uvm_reg_block;
+import uvm.reg.uvm_reg_map: uvm_reg_map;
+import uvm.reg.uvm_reg_model: uvm_hier_e, uvm_door_e, uvm_status_e, uvm_reg_data_t,
+  uvm_check_e;
+
 import uvm.base.uvm_object_defines;
 import uvm.base.uvm_resource_db: uvm_resource_db;
 import uvm.base.uvm_object_globals: uvm_verbosity;
@@ -68,7 +77,7 @@ import esdl;
 import std.string: format;
 
 
-// @uvm-ieee 1800.2-2017 auto E.2.1.1
+// @uvm-ieee 1800.2-2020 auto E.2.1.1
 class uvm_reg_single_bit_bash_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
 {
 
@@ -78,7 +87,7 @@ class uvm_reg_single_bit_bash_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
 
   mixin uvm_object_utils;
 
-  // @uvm-ieee 1800.2-2017 auto E.2.1.3
+  // @uvm-ieee 1800.2-2020 auto E.2.1.3
   public this(string name="uvm_reg_single_bit_bash_seq") {
     super(name);
   }
@@ -123,7 +132,7 @@ class uvm_reg_single_bit_bash_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
       foreach(field; fields) {
 
 	string field_access = field.get_access(map);
-	bool dc = (field.get_compare() == UVM_NO_CHECK);
+	bool dc = (field.get_compare() == uvm_check_e.UVM_NO_CHECK);
 	int lsb = field.get_lsb_pos();
 	int w   = field.get_n_bits();
 	// Ignore Write-only fields because
@@ -180,16 +189,16 @@ class uvm_reg_single_bit_bash_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
       val[k] = ~val[k];
       bit_val = val[k];
          
-      rg.write(status, val, UVM_FRONTDOOR, map, this);
-      if (status != UVM_IS_OK) {
+      rg.write(status, val, uvm_door_e.UVM_FRONTDOOR, map, this);
+      if (status != uvm_status_e.UVM_IS_OK) {
 	uvm_error("uvm_reg_bit_bash_seq",
 		  format("Status was %s when writing to register \"%s\" through map \"%s\".",
 			 status, rg.get_full_name(), map.get_full_name()));
       }
          
       exp = rg.get() & ~dc_mask;
-      rg.read(status, val, UVM_FRONTDOOR, map, this);
-      if (status != UVM_IS_OK) {
+      rg.read(status, val, uvm_door_e.UVM_FRONTDOOR, map, this);
+      if (status != uvm_status_e.UVM_IS_OK) {
 	uvm_error("uvm_reg_bit_bash_seq",
 		  format("Status was %s when reading register \"%s\" through map \"%s\".",
 			 status, rg.get_full_name(), map.get_full_name()));
@@ -224,7 +233,7 @@ class uvm_reg_single_bit_bash_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
 //
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto E.2.2.1
+// @uvm-ieee 1800.2-2020 auto E.2.2.1
 class uvm_reg_bit_bash_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
 {
 
@@ -243,7 +252,7 @@ class uvm_reg_bit_bash_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
    
   mixin uvm_object_utils;
 
-  // @uvm-ieee 1800.2-2017 auto E.2.2.3.1
+  // @uvm-ieee 1800.2-2020 auto E.2.2.3.1
   public this(string name="uvm_reg_bit_bash_seq") {
     super(name);
   }
@@ -255,7 +264,7 @@ class uvm_reg_bit_bash_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
   // Do not call directly. Use seq.start() instead.
   //
 
-  // @uvm-ieee 1800.2-2017 auto E.2.2.3.2
+  // @uvm-ieee 1800.2-2020 auto E.2.2.3.2
   // task
   override public void body() {
       
@@ -291,7 +300,7 @@ class uvm_reg_bit_bash_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
       return;
 
     // Iterate over all registers, checking accesses
-    blk.get_registers(regs, UVM_NO_HIER);
+    blk.get_registers(regs, uvm_hier_e.UVM_NO_HIER);
     foreach (reg; regs) {
       // Registers with some attributes are not to be tested
       if (uvm_resource_db!bool.get_by_name("REG::" ~ reg.get_full_name(),
