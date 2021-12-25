@@ -922,8 +922,9 @@ class uvm_default_report_server: uvm_report_server
 	report_object_name = l_report_handler.get_full_name();
       }
 
-      return sev_string ~ verbosity_str ~ " " ~ filename_line_string ~
-	"@ " ~ time_str ~ trace_str ~ ": " ~ report_object_name ~ context_str ~ " [" ~
+      return sev_string ~ trace_str ~ verbosity_str ~ " " ~
+	filename_line_string ~ "@ " ~ time_str ~ ": " ~
+	report_object_name ~ context_str ~ " [" ~
 	report_message.get_id() ~ "] " ~ msg_body_str ~ terminator_str;
     }
   }
