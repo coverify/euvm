@@ -1,13 +1,13 @@
 //
 // -------------------------------------------------------------
 // Copyright 2014-2021 Coverify Systems Technology
-// Copyright 2010-2011 Mentor Graphics Corporation
-// Copyright 2014 Semifore
-// Copyright 2014 Intel Corporation
-// Copyright 2004-2010 Synopsys, Inc.
-// Copyright 2010-2018 Cadence Design Systems, Inc.
 // Copyright 2010 AMD
-// Copyright 2015-2018 NVIDIA Corporation
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2014 Intel Corporation
+// Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2015-2020 NVIDIA Corporation
+// Copyright 2014 Semifore
+// Copyright 2004-2010 Synopsys, Inc.
 //    All Rights Reserved Worldwide
 //
 //    Licensed under the Apache License, Version 2.0 (the
@@ -439,6 +439,7 @@ mixin(declareEnums!uvm_reg_mem_tests_e());
 //
 //------------------------------------------------------------------------------
 
+// @uvm-ieee 1800.2-2020 auto 17.2.3.2
 class uvm_hdl_path_concat
 {
 
@@ -470,6 +471,7 @@ class uvm_hdl_path_concat
 
   // Function -- NODOCS -- add_slice
   // Append the specified ~slice~ literal to the path concatenation
+  // @uvm-ieee 1800.2-2020 auto 17.2.3.3.4
   void add_slice(uvm_hdl_path_slice slice) {
     synchronized(this) {
       _slices ~= slice;

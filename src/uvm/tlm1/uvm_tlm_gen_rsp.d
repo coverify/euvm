@@ -1,11 +1,11 @@
 //
 //----------------------------------------------------------------------
-// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2014-2021 Coverify Systems Technology
+// Copyright 2007-2018 Cadence Design Systems, Inc.
 // Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2014-2020 NVIDIA Corporation
 // Copyright 2014 Semifore
 // Copyright 2010-2018 Synopsys, Inc.
-// Copyright 2007-2018 Cadence Design Systems, Inc.
-// Copyright 2014-2018 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -55,10 +55,10 @@ import uvm.tlm1.uvm_tlm_fifos;
 
 import uvm.base;
 
-import esdl.rand.misc: _esdl__Norand;
+import esdl.rand.misc: rand;
 
-// @uvm-ieee 1800.2-2017 auto 12.2.9.1.1
-class uvm_tlm_gen_rsp_channel(RSP): uvm_component, _esdl__Norand
+// @uvm-ieee 1800.2-2020 auto 12.2.9.1.1
+class uvm_tlm_gen_rsp_channel(RSP): uvm_component, rand.disable
 {
   mixin uvm_component_essentials;
   
@@ -174,7 +174,7 @@ class uvm_tlm_gen_rsp_channel(RSP): uvm_component, _esdl__Norand
   // arguments specify the generate and response FIFO sizes, which have default
   // values of 1.
 
-  // @uvm-ieee 1800.2-2017 auto 12.2.9.1.11
+  // @uvm-ieee 1800.2-2020 auto 12.2.9.1.11
   this(string name=null, uvm_component parent=null,
        int generate_fifo_size=1,
        int response_fifo_size=1) {
@@ -242,9 +242,9 @@ class uvm_tlm_gen_rsp_channel(RSP): uvm_component, _esdl__Norand
 //
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 12.2.9.2.1
+// @uvm-ieee 1800.2-2020 auto 12.2.9.2.1
 class uvm_tlm_transport_channel(REQ, RSP=REQ):
-  uvm_tlm_req_rsp_channel!(REQ, RSP), _esdl__Norand
+  uvm_tlm_req_rsp_channel!(REQ, RSP), rand.disable
 {
 
   mixin uvm_component_essentials;
@@ -273,7 +273,7 @@ class uvm_tlm_transport_channel(REQ, RSP=REQ):
   // statically elaborated construct such as a module, program block, or
   // interface.
 
-  // @uvm-ieee 1800.2-2017 auto 12.2.9.2.3
+  // @uvm-ieee 1800.2-2020 auto 12.2.9.2.3
   this(string name, uvm_component parent=null) {
     synchronized (this) {
       super(name, parent, true, true);
@@ -283,13 +283,13 @@ class uvm_tlm_transport_channel(REQ, RSP=REQ):
   }
 
   // task
-  // @uvm-ieee 1800.2-2017 auto 12.2.9.2.2
+  // @uvm-ieee 1800.2-2020 auto 12.2.9.2.2
   void transport(REQ request, out RSP response) {
     this.m_request_fifo.put(request);
     this.m_response_fifo.get(response);
   }
 
-  // @uvm-ieee 1800.2-2017 auto 12.2.9.2.2
+  // @uvm-ieee 1800.2-2020 auto 12.2.9.2.2
   bool nb_transport(REQ req, out RSP rsp) {
     synchronized (this) {
     if (this.m_request_fifo.try_put(req))
@@ -301,7 +301,7 @@ class uvm_tlm_transport_channel(REQ, RSP=REQ):
 }
 
 class uvm_tlm_gen_rsp_vpi_channel(RSP):
-  uvm_component, _esdl__Norand
+  uvm_component, rand.disable
 {
   mixin uvm_component_essentials;
 

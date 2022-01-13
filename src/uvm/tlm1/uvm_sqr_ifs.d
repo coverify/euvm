@@ -1,13 +1,13 @@
 //
 //------------------------------------------------------------------------------
-// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2014-2021 Coverify Systems Technology
+// Copyright 2011 AMD
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2014 Cisco Systems, Inc.
 // Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2013-2020 NVIDIA Corporation
 // Copyright 2014 Semifore
 // Copyright 2010-2013 Synopsys, Inc.
-// Copyright 2007-2018 Cadence Design Systems, Inc.
-// Copyright 2011 AMD
-// Copyright 2013-2015 NVIDIA Corporation
-// Copyright 2014 Cisco Systems, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -28,7 +28,7 @@ module uvm.tlm1.uvm_sqr_ifs;
 
 import uvm.base.uvm_globals;
 import uvm.base.uvm_object_globals;
-import esdl.rand.misc: _esdl__Norand;
+import esdl.rand.misc: rand;
 
 //------------------------------------------------------------------------------
 //
@@ -40,8 +40,8 @@ import esdl.rand.misc: _esdl__Norand;
 //
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 15.2.1.1
-abstract class uvm_sqr_if_base(T1=uvm_object, T2=T1): _esdl__Norand
+// @uvm-ieee 1800.2-2020 auto 15.2.1.1
+abstract class uvm_sqr_if_base(T1=uvm_object, T2=T1): rand.disable
 {
 
   enum string UVM_SEQ_ITEM_TASK_ERROR =
@@ -69,7 +69,7 @@ abstract class uvm_sqr_if_base(T1=uvm_object, T2=T1): _esdl__Norand
   // item from the sequencer fifo.
 
   // task
-  // @uvm-ieee 1800.2-2017 auto 15.2.1.2.1
+  // @uvm-ieee 1800.2-2020 auto 15.2.1.2.1
   public void get_next_item(out T1 t) {
     uvm_report_error("get_next_item", UVM_SEQ_ITEM_TASK_ERROR, uvm_verbosity.UVM_NONE);
   }
@@ -95,7 +95,7 @@ abstract class uvm_sqr_if_base(T1=uvm_object, T2=T1): _esdl__Norand
   // item from the sequencer fifo.
 
   // task
-  // @uvm-ieee 1800.2-2017 auto 15.2.1.2.2
+  // @uvm-ieee 1800.2-2020 auto 15.2.1.2.2
   public void try_next_item(out T1 t) {
     uvm_report_error("try_next_item", UVM_SEQ_ITEM_TASK_ERROR, uvm_verbosity.UVM_NONE);
   }
@@ -119,7 +119,7 @@ abstract class uvm_sqr_if_base(T1=uvm_object, T2=T1): _esdl__Norand
   // item that was obtained by <get_next_item>.  After <item_done> is called, peek
   // will cause the sequencer to arbitrate for a new item.
 
-  // @uvm-ieee 1800.2-2017 auto 15.2.1.2.3
+  // @uvm-ieee 1800.2-2020 auto 15.2.1.2.3
   public void item_done(T2 t = null) {
     uvm_report_error("item_done", UVM_SEQ_ITEM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
   }
@@ -135,7 +135,7 @@ abstract class uvm_sqr_if_base(T1=uvm_object, T2=T1): _esdl__Norand
   // application-specific implementation.
 
   // task
-  // @uvm-ieee 1800.2-2017 auto 15.2.1.2.4
+  // @uvm-ieee 1800.2-2020 auto 15.2.1.2.4
   public void wait_for_sequences() {
     uvm_report_error("wait_for_sequences", UVM_SEQ_ITEM_TASK_ERROR, uvm_verbosity.UVM_NONE);
   }
@@ -146,7 +146,7 @@ abstract class uvm_sqr_if_base(T1=uvm_object, T2=T1): _esdl__Norand
   // Indicates whether a sequence item is available for immediate processing.
   // Implementations should return 1 if an item is available, 0 otherwise.
 
-  // @uvm-ieee 1800.2-2017 auto 15.2.1.2.5
+  // @uvm-ieee 1800.2-2020 auto 15.2.1.2.5
   public bool has_do_available() {
     uvm_report_error("has_do_available", UVM_SEQ_ITEM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
     return false;
@@ -178,7 +178,7 @@ abstract class uvm_sqr_if_base(T1=uvm_object, T2=T1): _esdl__Norand
   // <put>, or uvm_driver::rsp_port.write().
 
   // task
-  // @uvm-ieee 1800.2-2017 auto 15.2.1.2.6
+  // @uvm-ieee 1800.2-2020 auto 15.2.1.2.6
   public void get(out T1 t) {
     uvm_report_error("get", UVM_SEQ_ITEM_TASK_ERROR, uvm_verbosity.UVM_NONE);
   }
@@ -204,7 +204,7 @@ abstract class uvm_sqr_if_base(T1=uvm_object, T2=T1): _esdl__Norand
   // the fifo until either get or <item_done> is called.
 
   // task
-  // @uvm-ieee 1800.2-2017 auto 15.2.1.2.7
+  // @uvm-ieee 1800.2-2020 auto 15.2.1.2.7
   public void peek(out T1 t) {
     uvm_report_error("peek", UVM_SEQ_ITEM_TASK_ERROR, uvm_verbosity.UVM_NONE);
   }
@@ -224,7 +224,7 @@ abstract class uvm_sqr_if_base(T1=uvm_object, T2=T1): _esdl__Norand
   // sequence response handler.
 
   // task
-  // @uvm-ieee 1800.2-2017 auto 15.2.1.2.8
+  // @uvm-ieee 1800.2-2020 auto 15.2.1.2.8
   public void put(T2 t) {
     uvm_report_error("put", UVM_SEQ_ITEM_TASK_ERROR, uvm_verbosity.UVM_NONE);
   }
@@ -234,7 +234,7 @@ abstract class uvm_sqr_if_base(T1=uvm_object, T2=T1): _esdl__Norand
   //
   // Internal method.
 
-  // @uvm-ieee 1800.2-2017 auto 15.2.1.2.9
+  // @uvm-ieee 1800.2-2020 auto 15.2.1.2.9
   public void put_response(T2 t) {
     uvm_report_error("put_response", UVM_SEQ_ITEM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
   }
@@ -255,7 +255,7 @@ abstract class uvm_sqr_if_base(T1=uvm_object, T2=T1): _esdl__Norand
   // For backward-compatibility, automatic item recording can be globally
   // turned off at compile time by defining UVM_DISABLE_AUTO_ITEM_RECORDING
 
-  // @uvm-ieee 1800.2-2017 auto 15.2.1.2.10
+  // @uvm-ieee 1800.2-2020 auto 15.2.1.2.10
   void disable_auto_item_recording() {
     uvm_report_error("disable_auto_item_recording",
 		     UVM_SEQ_ITEM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);
@@ -265,7 +265,7 @@ abstract class uvm_sqr_if_base(T1=uvm_object, T2=T1): _esdl__Norand
   //
   // Return TRUE if automatic item recording is enabled for this port instance.
 
-  // @uvm-ieee 1800.2-2017 auto 15.2.1.2.11
+  // @uvm-ieee 1800.2-2020 auto 15.2.1.2.11
   bool is_auto_item_recording_enabled() {
     uvm_report_error("is_auto_item_recording_enabled",
 		     UVM_SEQ_ITEM_FUNCTION_ERROR, uvm_verbosity.UVM_NONE);

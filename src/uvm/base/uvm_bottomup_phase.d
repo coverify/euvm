@@ -1,10 +1,10 @@
 //
 //----------------------------------------------------------------------
-// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2014-2021 Coverify Systems Technology
+// Copyright 2011 AMD
 // Copyright 2007-2018 Cadence Design Systems, Inc.
 // Copyright 2007-2011 Mentor Graphics Corporation
-// Copyright 2011 AMD
-// Copyright 2015 NVIDIA Corporation
+// Copyright 2015-2020 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -44,19 +44,19 @@ import uvm.base.uvm_object_globals: uvm_phase_state, uvm_verbosity;
 import std.conv: to;
 import std.string: format;
 
-// @uvm-ieee 1800.2-2017 auto 9.5.1
+// @uvm-ieee 1800.2-2020 auto 9.5.1
 abstract class uvm_bottomup_phase: uvm_phase
 {
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.5.2.1
+  // @uvm-ieee 1800.2-2020 auto 9.5.2.1
   this(string name) {
     import uvm.base.uvm_object_globals;
     super(name, uvm_phase_type.UVM_PHASE_IMP);
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.5.2.2
+  // @uvm-ieee 1800.2-2020 auto 9.5.2.2
   override void traverse(uvm_component comp,
 			 uvm_phase phase,
 			 uvm_phase_state state) {
@@ -106,7 +106,7 @@ abstract class uvm_bottomup_phase: uvm_phase
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.5.2.3
+  // @uvm-ieee 1800.2-2020 auto 9.5.2.3
   override void execute(uvm_component comp, uvm_phase phase) {
     import esdl.base.core: Process;
     import uvm.base.uvm_misc: uvm_create_random_seed;

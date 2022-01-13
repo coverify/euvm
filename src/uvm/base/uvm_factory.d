@@ -1,16 +1,16 @@
 //
 //------------------------------------------------------------------------------
-// Copyright 2014-2019 Coverify Systems Technology
-// Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2014-2021 Coverify Systems Technology
 // Copyright 2015 Analog Devices, Inc.
-// Copyright 2014 Semifore
-// Copyright 2017 Intel Corporation
-// Copyright 2018 Qualcomm, Inc.
-// Copyright 2011 Synopsys, Inc.
 // Copyright 2007-2018 Cadence Design Systems, Inc.
-// Copyright 2013 Verilab
-// Copyright 2013-2018 NVIDIA Corporation
 // Copyright 2017 Cisco Systems, Inc.
+// Copyright 2017 Intel Corporation
+// Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2013-2020 NVIDIA Corporation
+// Copyright 2018 Qualcomm, Inc.
+// Copyright 2014 Semifore
+// Copyright 2011 Synopsys, Inc.
+// Copyright 2013 Verilab
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -199,7 +199,7 @@ final class uvm_factory_queue_class
 // See <uvm_default_factory::Usage> section for details on configuring and using the factory.
 //
 
-// @uvm-ieee 1800.2-2017 auto 8.3.1.1
+// @uvm-ieee 1800.2-2020 auto 8.3.1.1
 abstract class uvm_factory
 {
   static class uvm_scope: uvm_scope_base
@@ -220,7 +220,7 @@ abstract class uvm_factory
 
 
          
-  // @uvm-ieee 1800.2-2017 auto 8.3.1.2.1
+  // @uvm-ieee 1800.2-2020 auto 8.3.1.2.1
   static  uvm_factory get() {
     import uvm.base.uvm_coreservice;
     uvm_coreservice_t s = uvm_coreservice_t.get();
@@ -228,7 +228,7 @@ abstract class uvm_factory
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 8.3.1.2.2
+  // @uvm-ieee 1800.2-2020 auto 8.3.1.2.2
   static void set(uvm_factory f) {
     import uvm.base.uvm_coreservice;
     uvm_coreservice_t s = uvm_coreservice_t.get();
@@ -250,7 +250,7 @@ abstract class uvm_factory
   // If the proxy object's ~get_type_name~ method returns the empty string,
   // name-based lookup is effectively disabled.
 
-  // @uvm-ieee 1800.2-2017 auto 8.3.1.3
+  // @uvm-ieee 1800.2-2020 auto 8.3.1.3
   abstract void register(uvm_object_wrapper obj);
 
 
@@ -258,7 +258,7 @@ abstract class uvm_factory
 
   // Function -- NODOCS -- set_inst_override_by_type
 
-  // @uvm-ieee 1800.2-2017 auto 8.3.1.4.1
+  // @uvm-ieee 1800.2-2020 auto 8.3.1.4.1
   abstract void set_inst_override_by_type(uvm_object_wrapper original_type,
 					  uvm_object_wrapper override_type,
 					  string full_inst_path);
@@ -291,7 +291,7 @@ abstract class uvm_factory
   // match prevails. Thus, more specific overrides should be registered
   // first, followed by more general overrides.
 
-  // @uvm-ieee 1800.2-2017 auto 8.3.1.4.1
+  // @uvm-ieee 1800.2-2020 auto 8.3.1.4.1
   abstract void set_inst_override_by_name(string original_type_name,
 					  string override_type_name,
 					  string full_inst_path);
@@ -300,7 +300,7 @@ abstract class uvm_factory
   // Function -- NODOCS -- set_type_override_by_type
 
 
-  // @uvm-ieee 1800.2-2017 auto 8.3.1.4.2
+  // @uvm-ieee 1800.2-2020 auto 8.3.1.4.2
   abstract void set_type_override_by_type(uvm_object_wrapper original_type,
 					  uvm_object_wrapper override_type,
 					  bool replace = true);
@@ -328,7 +328,7 @@ abstract class uvm_factory
   // set_type_override_by_name
   // -------------------------
 
-  // @uvm-ieee 1800.2-2017 auto 8.3.1.4.2
+  // @uvm-ieee 1800.2-2020 auto 8.3.1.4.2
   abstract void set_type_override_by_name(string original_type_name,
 					  string override_type_name,
 					  bool replace = true);
@@ -338,7 +338,7 @@ abstract class uvm_factory
 
   // Function -- NODOCS -- create_object_by_type
 
-  // @uvm-ieee 1800.2-2017 auto 8.3.1.5
+  // @uvm-ieee 1800.2-2020 auto 8.3.1.5
   abstract uvm_object create_object_by_type(uvm_object_wrapper requested_type,
 					    string parent_inst_path="",
 					    string name="");
@@ -346,7 +346,7 @@ abstract class uvm_factory
 
   // Function -- NODOCS -- create_component_by_type
 
-  // @uvm-ieee 1800.2-2017 auto 8.3.1.5
+  // @uvm-ieee 1800.2-2020 auto 8.3.1.5
   abstract uvm_component create_component_by_type(uvm_object_wrapper requested_type,
 						  string parent_inst_path,
 						  string name,
@@ -354,7 +354,7 @@ abstract class uvm_factory
 
   // Function -- NODOCS -- create_object_by_name
 
-  // @uvm-ieee 1800.2-2017 auto 8.3.1.5
+  // @uvm-ieee 1800.2-2020 auto 8.3.1.5
   abstract uvm_object create_object_by_name(string requested_type_name,
 					    string parent_inst_path="",
 					    string name="");
@@ -362,13 +362,13 @@ abstract class uvm_factory
 
    // Function -- NODOCS -- is_type_name_registered
     
-  // @uvm-ieee 1800.2-2017 auto 8.3.1.7.3
+  // @uvm-ieee 1800.2-2020 auto 8.3.1.7.3
   abstract bool is_type_name_registered(string type_name);
 
  
    // Function -- NODOCS -- is_type_registered 
 
-  // @uvm-ieee 1800.2-2017 auto 8.3.1.7.4
+  // @uvm-ieee 1800.2-2020 auto 8.3.1.7.4
   abstract bool is_type_registered(uvm_object_wrapper obj); 
 
   // Function -- NODOCS -- create_component_by_name
@@ -407,7 +407,7 @@ abstract class uvm_factory
   // that which formed the loop. Using the previous example, if ~bar~
   // overrides ~xyz~, then ~bar~ is returned after the error is issued.
 
-  // @uvm-ieee 1800.2-2017 auto 8.3.1.5
+  // @uvm-ieee 1800.2-2020 auto 8.3.1.5
   abstract uvm_component create_component_by_name(string requested_type_name,
 						  string parent_inst_path,
 						  string name,
@@ -418,7 +418,7 @@ abstract class uvm_factory
   
   // Function -- NODOCS -- set_type_alias
 
-  // @uvm-ieee 1800.2-2017 auto 8.3.1.6.1
+  // @uvm-ieee 1800.2-2020 auto 8.3.1.6.1
   abstract void set_type_alias(string alias_type_name, 
 			       uvm_object_wrapper original_type); 
   
@@ -427,7 +427,7 @@ abstract class uvm_factory
   
   // Function -- NODOCS -- set_inst_alias
 
-  // @uvm-ieee 1800.2-2017 auto 8.3.1.6.2
+  // @uvm-ieee 1800.2-2020 auto 8.3.1.6.2
   abstract void set_inst_alias(string alias_type_name,
 			       uvm_object_wrapper original_type,
 			       string full_inst_path);
@@ -466,7 +466,7 @@ abstract class uvm_factory
   // find_override_by_type
   // ---------------------
 
-  // @uvm-ieee 1800.2-2017 auto 8.3.1.7.1
+  // @uvm-ieee 1800.2-2020 auto 8.3.1.7.1
   abstract uvm_object_wrapper find_override_by_type(uvm_object_wrapper requested_type,
 						    string full_inst_path);
 
@@ -480,7 +480,7 @@ abstract class uvm_factory
   // find_override_by_name
   // ---------------------
 
-  // @uvm-ieee 1800.2-2017 auto 8.3.1.7.1
+  // @uvm-ieee 1800.2-2020 auto 8.3.1.7.1
   abstract uvm_object_wrapper find_override_by_name(string requested_type_name,
 						    string full_inst_path);
 
@@ -493,7 +493,7 @@ abstract class uvm_factory
   // find_wrapper_by_name
   // ------------
 
-  // @uvm-ieee 1800.2-2017 auto 8.3.1.7.2
+  // @uvm-ieee 1800.2-2020 auto 8.3.1.7.2
   abstract uvm_object_wrapper find_wrapper_by_name(string type_name);
 
 
@@ -511,7 +511,7 @@ abstract class uvm_factory
   // print
   // -----
 
-  // @uvm-ieee 1800.2-2017 auto 8.3.1.7.5
+  // @uvm-ieee 1800.2-2020 auto 8.3.1.7.5
   abstract void print(int all_types=1);
 
 }
@@ -525,7 +525,7 @@ abstract class uvm_factory
 // Default implementation of the UVM factory.  The library implements the
 // following public API beyond what is documented in IEEE 1800.2.
    
-// @uvm-ieee 1800.2-2017 auto 8.3.3
+// @uvm-ieee 1800.2-2020 auto 8.3.3
 class uvm_default_factory: uvm_factory
 {
 
@@ -2286,7 +2286,7 @@ class uvm_default_factory: uvm_factory
 //
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 8.3.2.1
+// @uvm-ieee 1800.2-2020 auto 8.3.2.1
 abstract class uvm_object_wrapper
 {
   // Function -- NODOCS -- create_object
@@ -2295,7 +2295,7 @@ abstract class uvm_object_wrapper
   // An object proxy (e.g., <uvm_object_registry #(T,Tname)>) implements this
   // method to create an object of a specific type, T.
 
-  // @uvm-ieee 1800.2-2017 auto 8.3.2.2.1
+  // @uvm-ieee 1800.2-2020 auto 8.3.2.2.1
   uvm_object create_object(string name="") {
     return null;
   }
@@ -2307,7 +2307,7 @@ abstract class uvm_object_wrapper
   // ~parent~. A component proxy (e.g. <uvm_component_registry #(T,Tname)>)
   // implements this method to create a component of a specific type, T.
 
-  // @uvm-ieee 1800.2-2017 auto 8.3.2.2.2
+  // @uvm-ieee 1800.2-2020 auto 8.3.2.2.2
   uvm_component create_component(string name,
 				 uvm_component parent) {
     return null;
@@ -2320,7 +2320,7 @@ abstract class uvm_object_wrapper
   // created by <create_component> or <create_object>. The factory uses this
   // name when matching against the requested type in name-based lookups.
 
-  // @uvm-ieee 1800.2-2017 auto 8.3.2.2.3
+  // @uvm-ieee 1800.2-2020 auto 8.3.2.2.3
   abstract string get_type_name();
 
   void initialize() { }

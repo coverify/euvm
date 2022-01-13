@@ -1,12 +1,12 @@
 //
 //-----------------------------------------------------------------------------
-// Copyright 2016-2019 Coverify Systems Technology
-// Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2016-2021 Coverify Systems Technology
 // Copyright 2015 Analog Devices, Inc.
-// Copyright 2014 Intel Corporation
 // Copyright 2007-2018 Cadence Design Systems, Inc.
-// Copyright 2013-2015 NVIDIA Corporation
 // Copyright 2017 Cisco Systems, Inc.
+// Copyright 2014 Intel Corporation
+// Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2013-2020 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -65,7 +65,7 @@ import std.random;
 // <uvm_text_tr_database> class.
 //
 
-// @uvm-ieee 1800.2-2017 auto 7.1.1
+// @uvm-ieee 1800.2-2020 auto 7.1.1
 abstract class uvm_tr_database: uvm_object
 {
 
@@ -78,7 +78,7 @@ abstract class uvm_tr_database: uvm_object
   private bool[uvm_tr_stream] _m_streams;
 
 
-   // @uvm-ieee 1800.2-2017 auto 7.1.2
+   // @uvm-ieee 1800.2-2020 auto 7.1.2
   this(string name="unnamed-uvm_tr_database") {
     super(name);
   }
@@ -86,7 +86,7 @@ abstract class uvm_tr_database: uvm_object
   // Group -- NODOCS -- Database API
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.1.3.1
+  // @uvm-ieee 1800.2-2020 auto 7.1.3.1
   bool open_db() {
     synchronized (this) {
       if (!_m_is_opened) {
@@ -97,7 +97,7 @@ abstract class uvm_tr_database: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.1.3.2
+  // @uvm-ieee 1800.2-2020 auto 7.1.3.2
   bool close_db() {
     synchronized (this) {
       if (_m_is_opened) {
@@ -110,7 +110,7 @@ abstract class uvm_tr_database: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.1.3.3
+  // @uvm-ieee 1800.2-2020 auto 7.1.3.3
   bool is_open() {
     synchronized (this) {
       return _m_is_opened;
@@ -120,7 +120,7 @@ abstract class uvm_tr_database: uvm_object
   // Group -- NODOCS -- Stream API
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.1.4.1
+  // @uvm-ieee 1800.2-2020 auto 7.1.4.1
   uvm_tr_stream open_stream(string name,
 			    string hscope="",
 			    string type_name="") {
@@ -130,13 +130,6 @@ abstract class uvm_tr_database: uvm_object
 	return null;
       }
       else {
-
-	version (PRESERVE_RANDSTATE) {
-	  Process p = Process.self;
-	  Random s;
-	  if (p !is null)
-	    p.getRandState(s);
-	}
 
 	open_stream_ = do_open_stream(name, hscope, type_name);
 
@@ -166,7 +159,7 @@ abstract class uvm_tr_database: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.1.4.2
+  // @uvm-ieee 1800.2-2020 auto 7.1.4.2
   uint get_streams(out uvm_tr_stream[] q) {
     synchronized (this) {
       // Clear out the queue first...
@@ -182,7 +175,7 @@ abstract class uvm_tr_database: uvm_object
   // Group -- NODOCS -- Link API
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.1.5
+  // @uvm-ieee 1800.2-2020 auto 7.1.5
   void establish_link(uvm_link_base link) {
     import uvm.base.uvm_recorder;
     import uvm.base.uvm_globals;
@@ -252,21 +245,21 @@ abstract class uvm_tr_database: uvm_object
   //
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.1.6.1
+  // @uvm-ieee 1800.2-2020 auto 7.1.6.1
   protected abstract bool do_open_db();
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.1.6.2
+  // @uvm-ieee 1800.2-2020 auto 7.1.6.2
   protected abstract bool do_close_db();
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.1.6.3
+  // @uvm-ieee 1800.2-2020 auto 7.1.6.3
   protected abstract uvm_tr_stream do_open_stream(string name,
 						  string hscope,
 						  string type_name);
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.1.6.4
+  // @uvm-ieee 1800.2-2020 auto 7.1.6.4
   protected abstract void do_establish_link(uvm_link_base link);
 
 }

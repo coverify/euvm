@@ -1,11 +1,11 @@
 //------------------------------------------------------------------------------
-// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2014-2021 Coverify Systems Technology
+// Copyright 2012 Accellera Systems Initiative
+// Copyright 2007-2018 Cadence Design Systems, Inc.
 // Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2013-2020 NVIDIA Corporation
 // Copyright 2014 Semifore
 // Copyright 2010-2014 Synopsys, Inc.
-// Copyright 2007-2018 Cadence Design Systems, Inc.
-// Copyright 2013-2018 NVIDIA Corporation
-// Copyright 2012 Accellera Systems Initiative
 // Copyright 2017 Verific
 //   All Rights Reserved Worldwide
 //
@@ -58,9 +58,8 @@ import std.string: format;
 // request (REQ) and response (RSP) types.
 //------------------------------------------------------------------------------
 
-@rand(false)
 abstract class uvm_sequencer_param_base (REQ = uvm_sequence_item,
-					 RSP = REQ): uvm_sequencer_base
+					 RSP = REQ): uvm_sequencer_base, rand.barrier
   if (is (REQ: uvm_sequence_item) && is (RSP: uvm_sequence_item))
 {
   mixin (uvm_sync_string);
@@ -412,6 +411,7 @@ abstract class uvm_sequencer_param_base (REQ = uvm_sequence_item,
   // put_response
   // ------------
 
+  // @uvm-ieee 1800.2-2020 auto 15.5.2.9
   final void put_response (RSP t) {
     synchronized (this) {
 

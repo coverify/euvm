@@ -1,12 +1,12 @@
 //
 // -------------------------------------------------------------
-// Copyright 2021 Coverify Systems Technology
+// Copyright 2015-2021 Coverify Systems Technology
+// Copyright 2012 Accellera Systems Initiative
+// Copyright 2010-2018 Cadence Design Systems, Inc.
 // Copyright 2020 Mentor Graphics Corporation
+// Copyright 2014-2020 NVIDIA Corporation
 // Copyright 2014 Semifore
 // Copyright 2004-2011 Synopsys, Inc.
-// Copyright 2010-2018 Cadence Design Systems, Inc.
-// Copyright 2014-2018 NVIDIA Corporation
-// Copyright 2012 Accellera Systems Initiative
 //    All Rights Reserved Worldwide
 //
 //    Licensed under the Apache License, Version 2.0 (the

@@ -1,9 +1,9 @@
 //-----------------------------------------------------------------------------
 // Copyright 2019 Coverify Systems Technology
+// Copyright 2018 Cadence Design Systems, Inc.
+// Copyright 2018-2020 NVIDIA Corporation
 // Copyright 2018 Qualcomm, Inc.
 // Copyright 2018 Synopsys, Inc.
-// Copyright 2018 Cadence Design Systems, Inc.
-// Copyright 2018 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -33,6 +33,8 @@ import uvm.base.uvm_field_op: uvm_field_op;
 import uvm.base.uvm_globals: uvm_error, uvm_fatal, uvm_warning;
 import uvm.base.uvm_coreservice: uvm_coreservice_t;
 import std.traits: isIntegral, isBoolean, isArray, isDynamicArray, isStaticArray;
+import esdl.data.bvec: isBitVector;
+
 import uvm.base.uvm_scope;
 
 //------------------------------------------------------------------------------
@@ -49,12 +51,12 @@ import uvm.base.uvm_scope;
 
 // Class: uvm_copier
 // Implementation of the uvm_copier class, as defined in section
-// 16.6.1 of 1800.2-2017
+// 16.6.1 of 1800.2-2020
 
-// @uvm-ieee 1800.2-2017 auto 16.6.1
+// @uvm-ieee 1800.2-2020 auto 16.6.1
 class uvm_copier: uvm_policy
 {
-  // @uvm-ieee 1800.2-2017 auto 16.6.2.2
+  // @uvm-ieee 1800.2-2020 auto 16.6.2.2
   mixin uvm_object_essentials;
   // Variable -- NODOCS -- policy
   //
@@ -63,7 +65,7 @@ class uvm_copier: uvm_policy
   uvm_recursion_policy_enum _policy = uvm_recursion_policy_enum.UVM_DEFAULT_POLICY;
 
 
-   // @uvm-ieee 1800.2-2017 auto 16.6.2.1
+   // @uvm-ieee 1800.2-2020 auto 16.6.2.1
   this(string name="uvm_copier") {
     synchronized (this) {
       super(name);
@@ -93,7 +95,7 @@ class uvm_copier: uvm_policy
   // types match (the return from ~lhs.get_type_name()~ matches
   // ~rhs.get_type_name()~).
 
-  // @uvm-ieee 1800.2-2017 auto 16.6.4.1
+  // @uvm-ieee 1800.2-2020 auto 16.6.4.1
   void copy_object (uvm_object lhs,
 		    uvm_object rhs) {
     synchronized (this) {
@@ -124,7 +126,22 @@ class uvm_copier: uvm_policy
     }
   }
   
-  // @uvm-ieee 1800.2-2017 auto 16.6.4.2
+  void copy_struct(T)(ref T lhs, ref T rhs) {
+    synchronized (this) {
+      uvm_field_op field_op;
+      field_op = uvm_field_op.m_get_available_op() ;
+      field_op.set(uvm_field_auto_enum.UVM_COPY, this);
+      uvm_struct_do_execute_op(lhs, rhs, field_op);
+      if (field_op.user_hook_enabled()) {
+	static if (__traits(compiles, lhs.do_print(rhs))) {
+	  lhs.do_copy(rhs);
+	}
+      }
+      field_op.m_recycle();
+    }
+  }
+  
+  // @uvm-ieee 1800.2-2020 auto 16.6.4.2
   recursion_state_e object_copied(uvm_object lhs,
 				  uvm_object rhs,
 				  uvm_recursion_policy_enum recursion) {
@@ -144,14 +161,14 @@ class uvm_copier: uvm_policy
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.6.3
+  // @uvm-ieee 1800.2-2020 auto 16.6.3
   void set_recursion_policy (uvm_recursion_policy_enum policy) {
     synchronized (this) {
       this._policy = policy;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.6.3
+  // @uvm-ieee 1800.2-2020 auto 16.6.3
   uvm_recursion_policy_enum get_recursion_policy() {
     synchronized (this) {
       return _policy;
@@ -247,13 +264,13 @@ class uvm_copier: uvm_policy
   // // @uvm-contrib This API is being considered for potential contribution to 1800.2
   // `uvm_copier_get_function(prev)
 
-  // @uvm-ieee 1800.2-2017 auto 16.6.2.3
+  // @uvm-ieee 1800.2-2020 auto 16.6.2.3
   static void set_default(uvm_copier copier) {
     uvm_coreservice_t coreservice = uvm_coreservice_t.get();
     coreservice.set_default_copier(copier);
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.6.2.4
+  // @uvm-ieee 1800.2-2020 auto 16.6.2.4
   static uvm_copier get_default() {
     uvm_coreservice_t coreservice = uvm_coreservice_t.get();
     return coreservice.get_default_copier() ;
@@ -296,9 +313,16 @@ class uvm_copier: uvm_policy
 	m_uvm_copy_element(name, lhs[i], rhs[i], flags);
       }
     }
+    else static if (isBitVector!E || isIntegral!E || isBoolean!E) {
+      lhs = rhs;
+    }
     else static if (is (E: uvm_object)) {
       auto policy = cast (uvm_recursion_policy_enum) (UVM_RECURSION && flags);
       uvm_copy_object(name, lhs, rhs, policy);
+    }
+    else static if (is (E == struct)) {
+      auto policy = cast (uvm_recursion_policy_enum) (UVM_RECURSION && flags);
+      this.copy_struct(lhs, rhs);
     }
     else {
       lhs = rhs;

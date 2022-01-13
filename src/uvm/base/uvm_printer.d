@@ -1,16 +1,16 @@
 //
 //------------------------------------------------------------------------------
 // Copyright 2012-2021 Coverify Systems Technology
-// Copyright 2007-2018 Mentor Graphics Corporation
-// Copyright 2014 Semifore
-// Copyright 2018 Qualcomm, Inc.
-// Copyright 2014 Intel Corporation
-// Copyright 2018 Synopsys, Inc.
-// Copyright 2007-2018 Cadence Design Systems, Inc.
-// Copyright 2020 Marvell International Ltd.
 // Copyright 2012 AMD
-// Copyright 2013-2018 NVIDIA Corporation
+// Copyright 2007-2018 Cadence Design Systems, Inc.
 // Copyright 2014-2018 Cisco Systems, Inc.
+// Copyright 2014 Intel Corporation
+// Copyright 2020 Marvell International Ltd.
+// Copyright 2007-2018 Mentor Graphics Corporation
+// Copyright 2013-2020 NVIDIA Corporation
+// Copyright 2018 Qualcomm, Inc.
+// Copyright 2014 Semifore
+// Copyright 2018 Synopsys, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -61,7 +61,7 @@ import std.traits: isIntegral, isBoolean, isArray;
 
 // File: uvm_printer
   
-// @uvm-ieee 1800.2-2017 auto 16.2.1
+// @uvm-ieee 1800.2-2020 auto 16.2.1
 abstract class uvm_printer: uvm_policy
 {
 
@@ -126,16 +126,39 @@ abstract class uvm_printer: uvm_policy
   //           print the leaf name of a field.  Typical values for the separator
   //           are . (dot) or [ (open bracket).
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.3.8
+  // @uvm-ieee 1800.2-2020 auto 16.2.3.8
   void print(T)(string          name,
 		T               value,
 		uvm_radix_enum  radix=uvm_radix_enum.UVM_NORADIX,
 		char            scope_separator='.',
 		string          type_name="")
-    if (isBitVector!T || isIntegral!T || is (T: bool)) {
+    if (isBitVector!T || isIntegral!T) {
       print_integral!T(name, value, -1, radix, scope_separator, type_name);
     }
 
+  void print(T)(string          name,
+		T               value,
+		uvm_radix_enum  radix=uvm_radix_enum.UVM_NORADIX,
+		char            scope_separator='.',
+		string          type_name="")
+    if (is (T: bool)) {
+      print_bool(name, value, 1, radix, scope_separator, type_name);
+    }
+
+  void print_field(T)(string          name,
+		      T               value,
+		      ptrdiff_t       size = -1,
+		      uvm_radix_enum  radix=uvm_radix_enum.UVM_NORADIX,
+		      char            scope_separator='.',
+		      string          type_name="") {
+    static if (isBoolean!T)
+      print_bool(name, value, 1, radix, scope_separator, type_name);
+    else static if (isIntegral!T || isBitVector!T)
+      print_integral(name, value, -1, radix, scope_separator, type_name);
+    else
+      static assert(false, "print_field works for only bools, integrals, and bvecs");
+  }
+  
 
   void print_integral(T)(string          name,
 			 T               value,
@@ -143,7 +166,7 @@ abstract class uvm_printer: uvm_policy
 			 uvm_radix_enum  radix=uvm_radix_enum.UVM_NORADIX,
 			 char            scope_separator='.',
 			 string          type_name="")
-    if (isBitVector!T || isIntegral!T || is (T: bool)) {
+    if (isBitVector!T || isIntegral!T) {
       import std.conv: to;
       synchronized (this) {
 	if (type_name == "") {
@@ -153,10 +176,10 @@ abstract class uvm_printer: uvm_policy
 							 " (enum)";
 	  else {
 	    static if (isBitVector!T) {
-	      static if (! T.ISSIGNED) type_name = "U";
+	      static if (! T.ISSIGNED) type_name = "u";
 	      enum int SIZE = cast (int) T.SIZE;
-	      static if (T.IS4STATE) type_name ~= "Logic!" ~ SIZE.stringof;
-	      else type_name ~= "Bit!" ~ SIZE.stringof;
+	      static if (T.IS4STATE) type_name ~= "lvec!" ~ SIZE.stringof;
+	      else type_name ~= "bvec!" ~ SIZE.stringof;
 	    }
 	    else {
 	      type_name = qualifiedTypeName!T;
@@ -166,10 +189,7 @@ abstract class uvm_printer: uvm_policy
 
 
 	if (size < 0) {
-	  static if (is (T: bool)) {
-	    size = 1;
-	  }
-	  else static if (isBitVector!T) {
+	  static if (isBitVector!T) {
 	    size = T.SIZE;
 	  }
 	  else static if (isIntegral!T) {
@@ -200,9 +220,36 @@ abstract class uvm_printer: uvm_policy
       }
     }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.3.9
-  alias print_field_int = print_integral;
-  alias print_field = print_integral;
+  void print_bool(string          name,
+		  bool            value,
+		  ptrdiff_t       size = -1,
+		  uvm_radix_enum  radix=uvm_radix_enum.UVM_NORADIX,
+		  char            scope_separator='.',
+		  string          type_name="") {
+      import std.conv: to;
+      synchronized (this) {
+	if (type_name != "") type_name = "bool";
+
+	if (size < 0) {
+	  size = 1;
+	}
+
+	if (size != 1) assert (false, "bool value encountered with size: " ~ size.to!string());
+
+	string sz_str = size.to!string;
+
+	name = uvm_leaf_scope(name, scope_separator);
+
+	if (value) push_element(name, type_name, sz_str, "true");
+	else push_element(name, type_name, sz_str, "false");
+
+	pop_element();
+      }
+    }
+
+  // @uvm-ieee 1800.2-2020 auto 16.2.3.9
+  alias print_field_int = print_field;
+
 
   // Function -- NODOCS -- print_object
   //
@@ -251,8 +298,31 @@ abstract class uvm_printer: uvm_policy
       }
     }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.3.1
+  // @uvm-ieee 1800.2-2020 auto 16.2.3.1
   alias print_object = print;
+
+  void print(T)(string     name,
+		T          value,
+		char       scope_separator='.')
+       if (is (T == struct) && ! is (T == SimTime)) {
+	 import uvm.base.uvm_component;
+	 synchronized (this) {
+	   print_object_header(name, value, scope_separator); // calls push_element
+
+	   uvm_field_op field_op = uvm_field_op.m_get_available_op() ;
+	   field_op.set(uvm_field_auto_enum.UVM_PRINT, this, null);
+	   uvm_struct_do_execute_op(value, field_op);
+	   if (field_op.user_hook_enabled()) {
+	     static if (__traits(compiles, value.do_print(this))) {
+	       value.do_print(this);
+	     }
+	   }
+	   field_op.m_recycle();
+
+	   pop_element() ; // matches push in print_object_header
+
+	 }
+       }
 
 
   void print_object_header (string name,
@@ -267,6 +337,20 @@ abstract class uvm_printer: uvm_policy
 		   (value !is null) ?  value.get_type_name() : "object",
 		   "-",
 		   get_id_enabled() ? uvm_object_value_str(value) : "-");
+    }
+  }
+
+  void print_object_header(T) (string name,
+			       T value,
+			       char scope_separator='.') if (is (T == struct)) {
+    synchronized (this) {
+      if (name == "") {
+	name = "<unnamed>";
+      }
+
+      push_element(name,
+		   "struct(" ~ T.stringof ~ ")",
+		   "-", "-");
     }
   }
 
@@ -288,13 +372,13 @@ abstract class uvm_printer: uvm_policy
       }
     }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.3.10
+  // @uvm-ieee 1800.2-2020 auto 16.2.3.10
   alias print_string = print;
 
   private
   uvm_policy.recursion_state_e[uvm_recursion_policy_enum][uvm_object] _m_recur_states;
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.3.2
+  // @uvm-ieee 1800.2-2020 auto 16.2.3.2
   uvm_policy.recursion_state_e object_printed(uvm_object value,
 					      uvm_recursion_policy_enum recursion) {
     synchronized (this) {
@@ -321,7 +405,7 @@ abstract class uvm_printer: uvm_policy
       }
     }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.3.11
+  // @uvm-ieee 1800.2-2020 auto 16.2.3.11
   alias print_time = print;
 
   // Function -- NODOCS -- print_real
@@ -338,14 +422,14 @@ abstract class uvm_printer: uvm_policy
       }
     }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.3.12
+  // @uvm-ieee 1800.2-2020 auto 16.2.3.12
   alias print_real = print;
 
   // Function -- NODOCS -- print_generic
   //
   // Prints a field having the given ~name~, ~type_name~, ~size~, and ~value~.
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.3.3
+  // @uvm-ieee 1800.2-2020 auto 16.2.3.3
   void print_generic(string name, string type_name, size_t size,
 		     string value, char scope_separator='.') {
     synchronized (this) {
@@ -357,7 +441,7 @@ abstract class uvm_printer: uvm_policy
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.3.4
+  // @uvm-ieee 1800.2-2020 auto 16.2.3.4
   void print_generic_element(string  name, string  type_name,
 			     string  size, string  value) {
     synchronized (this) {
@@ -402,76 +486,76 @@ abstract class uvm_printer: uvm_policy
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.5.1
+  // @uvm-ieee 1800.2-2020 auto 16.2.5.1
   void set_name_enabled(bool enabled) {
     synchronized (this) {
       _knobs.identifier = enabled;
     }
   }
-  // @uvm-ieee 1800.2-2017 auto 16.2.5.1
+  // @uvm-ieee 1800.2-2020 auto 16.2.5.1
   bool get_name_enabled() {
     synchronized (this) {
       return _knobs.identifier;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.5.2
+  // @uvm-ieee 1800.2-2020 auto 16.2.5.2
   void set_type_name_enabled(bool enabled) {
     synchronized (this) {
       _knobs.type_name = enabled;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.5.2
+  // @uvm-ieee 1800.2-2020 auto 16.2.5.2
   bool get_type_name_enabled() {
     synchronized (this) {
       return _knobs.type_name;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.5.3
+  // @uvm-ieee 1800.2-2020 auto 16.2.5.3
   void set_size_enabled(bool enabled) {
     synchronized (this) {
       _knobs.size = enabled;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.5.3
+  // @uvm-ieee 1800.2-2020 auto 16.2.5.3
   bool get_size_enabled() {
     synchronized (this) {
       return _knobs.size;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.5.4
+  // @uvm-ieee 1800.2-2020 auto 16.2.5.4
   void set_id_enabled(bool enabled) {
     synchronized (this) {
       _knobs.reference = enabled;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.5.4
+  // @uvm-ieee 1800.2-2020 auto 16.2.5.4
   bool get_id_enabled() {
     synchronized (this) {
       return _knobs.reference;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.5.5
+  // @uvm-ieee 1800.2-2020 auto 16.2.5.5
   void set_radix_enabled(bool enabled) {
     synchronized (this) {
       _knobs.show_radix = enabled;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.5.5
+  // @uvm-ieee 1800.2-2020 auto 16.2.5.5
   bool get_radix_enabled() {
     synchronized (this) {
       return _knobs.show_radix;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.5.6
+  // @uvm-ieee 1800.2-2020 auto 16.2.5.6
   void set_radix_string(uvm_radix_enum radix, string prefix) {
     synchronized (this) {
       if (radix == uvm_radix_enum.UVM_DEC) _knobs.dec_radix = prefix ;
@@ -484,7 +568,7 @@ abstract class uvm_printer: uvm_policy
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.5.6
+  // @uvm-ieee 1800.2-2020 auto 16.2.5.6
   string get_radix_string(uvm_radix_enum radix) {
     synchronized (this) {
       if (radix == uvm_radix_enum.UVM_DEC) return _knobs.dec_radix ;
@@ -496,112 +580,112 @@ abstract class uvm_printer: uvm_policy
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.5.7
+  // @uvm-ieee 1800.2-2020 auto 16.2.5.7
   void set_default_radix(uvm_radix_enum radix) {
     synchronized (this) {
       _knobs.default_radix = radix;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.5.7
+  // @uvm-ieee 1800.2-2020 auto 16.2.5.7
   uvm_radix_enum get_default_radix() {
     synchronized (this) {
       return _knobs.default_radix;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.5.8
+  // @uvm-ieee 1800.2-2020 auto 16.2.5.8
   void set_root_enabled(bool enabled) {
     synchronized (this) {
       _knobs.show_root = enabled;
     }
   }
   
-  // @uvm-ieee 1800.2-2017 auto 16.2.5.8
+  // @uvm-ieee 1800.2-2020 auto 16.2.5.8
   bool get_root_enabled() {
     synchronized (this) {
       return _knobs.show_root;
     }
   }
   
-  // @uvm-ieee 1800.2-2017 auto 16.2.5.9
+  // @uvm-ieee 1800.2-2020 auto 16.2.5.9
   void set_recursion_policy(uvm_recursion_policy_enum policy) {
     synchronized (this) {
       _knobs.recursion_policy = policy;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.5.9
+  // @uvm-ieee 1800.2-2020 auto 16.2.5.9
   uvm_recursion_policy_enum get_recursion_policy() {
     synchronized (this) {
       return _knobs.recursion_policy;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.5.10
+  // @uvm-ieee 1800.2-2020 auto 16.2.5.10
   void set_max_depth(int depth) {
     synchronized (this) {
       _knobs.depth = depth;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.5.10
+  // @uvm-ieee 1800.2-2020 auto 16.2.5.10
   int get_max_depth() {
     synchronized (this) {
       return _knobs.depth;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.5.11
+  // @uvm-ieee 1800.2-2020 auto 16.2.5.11
   void set_file(UVM_FILE fl) {
     synchronized (this) {
       _knobs.mcd = fl;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.5.11
+  // @uvm-ieee 1800.2-2020 auto 16.2.5.11
   UVM_FILE get_file() {
     synchronized (this) {
       return _knobs.mcd;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.5.12
+  // @uvm-ieee 1800.2-2020 auto 16.2.5.12
   void set_line_prefix(string prefix) {
     synchronized (this) {
       _knobs.prefix = prefix;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.5.12
+  // @uvm-ieee 1800.2-2020 auto 16.2.5.12
   string get_line_prefix() {
     synchronized (this) {
       return _knobs.prefix;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.6
+  // @uvm-ieee 1800.2-2020 auto 16.2.6
   void set_begin_elements(int elements = 5) {
     synchronized (this) {
       _knobs.begin_elements = elements;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.6
+  // @uvm-ieee 1800.2-2020 auto 16.2.6
   int get_begin_elements() {
     synchronized (this) {
       return _knobs.begin_elements;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.6
+  // @uvm-ieee 1800.2-2020 auto 16.2.6
   void set_end_elements(int elements = 5) {
     synchronized (this) {
       _knobs.end_elements = elements;
     }
   }
   
-  // @uvm-ieee 1800.2-2017 auto 16.2.6
+  // @uvm-ieee 1800.2-2020 auto 16.2.6
   int get_end_elements() {
     synchronized (this) {
       return _knobs.end_elements;
@@ -616,7 +700,7 @@ abstract class uvm_printer: uvm_policy
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.7.1
+  // @uvm-ieee 1800.2-2020 auto 16.2.7.1
   protected uvm_printer_element get_bottom_element() {
     synchronized (this) {
       if (_m_element_stack.length > 0) {
@@ -626,7 +710,7 @@ abstract class uvm_printer: uvm_policy
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.7.2
+  // @uvm-ieee 1800.2-2020 auto 16.2.7.2
   protected uvm_printer_element get_top_element() {
     synchronized (this) {
       if (_m_element_stack.length > 0) {
@@ -636,7 +720,7 @@ abstract class uvm_printer: uvm_policy
     }
   }
   
-  // @uvm-ieee 1800.2-2017 auto 16.2.7.3
+  // @uvm-ieee 1800.2-2020 auto 16.2.7.3
   void push_element(string name, string type_name,
 		    string size, string value="") {
     synchronized (this) {
@@ -648,7 +732,7 @@ abstract class uvm_printer: uvm_policy
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.7.4
+  // @uvm-ieee 1800.2-2020 auto 16.2.7.4
   void pop_element () {
     synchronized (this) {
       if (_m_element_stack.length > 1) {
@@ -682,7 +766,7 @@ abstract class uvm_printer: uvm_policy
   // individual element is printed. <print_array_footer> is called to mark the
   // completion of array printing.
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.3.5
+  // @uvm-ieee 1800.2-2020 auto 16.2.3.5
   void print_array_header(string name, size_t size,
 			  string arraytype="array", char scope_separator='.') {
     synchronized (this) {
@@ -699,7 +783,7 @@ abstract class uvm_printer: uvm_policy
   // This function should be called after begin_elements have been printed
   // and before end_elements have been printed.
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.3.6
+  // @uvm-ieee 1800.2-2020 auto 16.2.3.6
   void print_array_range (int min, int max) {
     // string tmpstr; // redundant -- declared in the SV version
     if (min == -1 && max == -1) {
@@ -724,7 +808,7 @@ abstract class uvm_printer: uvm_policy
   // print. Generally, there is no output associated with the array footer, but
   // this method lets the printer know that the array printing is complete.
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.3.7
+  // @uvm-ieee 1800.2-2020 auto 16.2.3.7
   void print_array_footer (size_t size=0) {
     synchronized (this) {
       pop_element() ;
@@ -829,18 +913,18 @@ abstract class uvm_printer: uvm_policy
   }
 }
 
-// @uvm-ieee 1800.2-2017 auto 16.2.8.1
+// @uvm-ieee 1800.2-2020 auto 16.2.8.1
 class uvm_printer_element: uvm_object
 {
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.8.2.1
+  // @uvm-ieee 1800.2-2020 auto 16.2.8.2.1
   this(string name="") {
     synchronized (this) {
       super(name);
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.8.2.2
+  // @uvm-ieee 1800.2-2020 auto 16.2.8.2.2
   void set(string element_name = "", string element_type_name = "",
 	   string element_size = "", string element_value = "") {
     synchronized (this) {
@@ -851,56 +935,56 @@ class uvm_printer_element: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.8.2.3
+  // @uvm-ieee 1800.2-2020 auto 16.2.8.2.3
   void set_element_name (string element_name) {
     synchronized (this) {
       _m_name = element_name;
     }
   }
     
-  // @uvm-ieee 1800.2-2017 auto 16.2.8.2.3
+  // @uvm-ieee 1800.2-2020 auto 16.2.8.2.3
   string get_element_name () {
     synchronized (this) {
       return _m_name;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.8.2.4
+  // @uvm-ieee 1800.2-2020 auto 16.2.8.2.4
   void set_element_type_name (string element_type_name) {
     synchronized (this) {
       _m_type_name = element_type_name;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.8.2.4
+  // @uvm-ieee 1800.2-2020 auto 16.2.8.2.4
   string get_element_type_name () {
     synchronized (this) {
       return _m_type_name;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.8.2.5
+  // @uvm-ieee 1800.2-2020 auto 16.2.8.2.5
   void set_element_size (string element_size) {
     synchronized (this) {
       _m_size = element_size;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.8.2.5
+  // @uvm-ieee 1800.2-2020 auto 16.2.8.2.5
   string get_element_size () {
     synchronized (this) {
       return _m_size;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.8.2.6
+  // @uvm-ieee 1800.2-2020 auto 16.2.8.2.6
   void set_element_value (string element_value) {
     synchronized (this) {
       _m_value = element_value;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.8.2.6
+  // @uvm-ieee 1800.2-2020 auto 16.2.8.2.6
   string get_element_value () {
     synchronized (this) {
       return _m_value;
@@ -937,16 +1021,16 @@ class uvm_printer_element: uvm_object
   private uvm_printer_element[] _m_children;
 }
 
-// @uvm-ieee 1800.2-2017 auto 16.2.9.1
+// @uvm-ieee 1800.2-2020 auto 16.2.9.1
 class uvm_printer_element_proxy: uvm_structure_proxy!(uvm_printer_element)
 {
-  // @uvm-ieee 1800.2-2017 auto 16.2.9.2.1
+  // @uvm-ieee 1800.2-2020 auto 16.2.9.2.1
   this (string name="") {
     synchronized (this) {
       super(name);
     }
   }
-  // @uvm-ieee 1800.2-2017 auto 16.2.9.2.2
+  // @uvm-ieee 1800.2-2020 auto 16.2.9.2.2
   static void get_immediate_children(uvm_printer_element s,
 				     ref uvm_printer_element[] children) {
     s.get_children(children, false);
@@ -978,16 +1062,16 @@ class uvm_printer_element_proxy: uvm_structure_proxy!(uvm_printer_element)
 //
 // @uvm-accellera The details of this API are specific to the Accellera implementation, and are not being considered for contribution to 1800.2
 
-// @uvm-ieee 1800.2-2017 auto 16.2.10.1
+// @uvm-ieee 1800.2-2020 auto 16.2.10.1
 class uvm_table_printer: uvm_printer
 {
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.10.2.2
+  // @uvm-ieee 1800.2-2020 auto 16.2.10.2.2
   mixin uvm_object_essentials;
 
   mixin (uvm_sync_string);
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.10.2.1
+  // @uvm-ieee 1800.2-2020 auto 16.2.10.2.1
   this(string name="") {
     synchronized (this) {
       super(name);
@@ -1098,26 +1182,14 @@ class uvm_table_printer: uvm_printer
 
   private char[] _m_space;
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.10.2.3
+  // @uvm-ieee 1800.2-2020 auto 16.2.10.2.3
   static void set_default(uvm_table_printer printer) {
     synchronized (_uvm_scope_inst) {
       _m_default_table_printer = printer;
     }
   }
 
-  // Function: get_default
-  // Implementation of uvm_table_printer::get_default as defined in
-  // section 16.2.10.2.3 of 1800.2-2017.
-  //
-  // *Note:*
-  // The library implements get_default as described in IEEE 1800.2-2017
-  // with the exception that this implementation will instance a
-  // uvm_table_printer if the most recent call to set_default() used an
-  // argument value of null.
-  //
-  // @uvm-contrib This API is being considered for potential contribution to 1800.2
-
-  // @uvm-ieee 1800.2-2017 auto 16.2.10.2.4
+  // @uvm-ieee 1800.2-2020 auto 16.2.10.2.4
   static uvm_table_printer get_default() {
     synchronized (_uvm_scope_inst) {
       if (_uvm_scope_inst._m_default_table_printer is null) {
@@ -1129,7 +1201,7 @@ class uvm_table_printer: uvm_printer
   }
     
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.10.3
+  // @uvm-ieee 1800.2-2020 auto 16.2.10.3
   void set_indent(int indent) {
     synchronized (this) {
       m_uvm_printer_knobs knobs = get_knobs();
@@ -1137,7 +1209,7 @@ class uvm_table_printer: uvm_printer
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.10.3
+  // @uvm-ieee 1800.2-2020 auto 16.2.10.3
   int get_indent() {
     synchronized (this) {
       m_uvm_printer_knobs knobs = get_knobs();
@@ -1220,7 +1292,7 @@ class uvm_table_printer: uvm_printer
 //
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 16.2.11.1
+// @uvm-ieee 1800.2-2020 auto 16.2.11.1
 class uvm_tree_printer: uvm_printer
 {
   mixin (uvm_sync_string);
@@ -1237,14 +1309,14 @@ class uvm_tree_printer: uvm_printer
     private uvm_tree_printer _m_default_tree_printer ;
   }
   
-  // @uvm-ieee 1800.2-2017 auto 16.2.11.2.2
+  // @uvm-ieee 1800.2-2020 auto 16.2.11.2.2
   mixin uvm_object_essentials;
 
   // Variable -- NODOCS -- new
   //
   // Creates a new instance of ~uvm_tree_printer~.
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.11.2.1
+  // @uvm-ieee 1800.2-2020 auto 16.2.11.2.1
   this(string name="") {
     synchronized (this) {
       super(name);
@@ -1253,26 +1325,14 @@ class uvm_tree_printer: uvm_printer
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.11.2.3
+  // @uvm-ieee 1800.2-2020 auto 16.2.11.2.3
   static void set_default(uvm_tree_printer printer) {
     synchronized (_uvm_scope_inst) {
       _uvm_scope_inst._m_default_tree_printer = printer ;
     }
   }
 
-  // Function: get_default
-  // Implementation of uvm_tree_printer::get_default as defined in
-  // section 16.2.11.2.4 of 1800.2-2017.
-  //
-  // *Note:*
-  // The library implements get_default as described in IEEE 1800.2-2017
-  // with the exception that this implementation will instance a
-  // uvm_tree_printer if the most recent call to set_default() used an
-  // argument value of null.
-  //
-  // @uvm-contrib This API is being considered for potential contribution to 1800.2
-
-  // @uvm-ieee 1800.2-2017 auto 16.2.11.2.4
+  // @uvm-ieee 1800.2-2020 auto 16.2.11.2.4
   static uvm_tree_printer get_default() {
     synchronized (_uvm_scope_inst) {
       if (_uvm_scope_inst._m_default_tree_printer is null) {
@@ -1283,7 +1343,7 @@ class uvm_tree_printer: uvm_printer
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.11.3.1
+  // @uvm-ieee 1800.2-2020 auto 16.2.11.3.1
   void set_indent(int indent) {
     synchronized (this) {
       m_uvm_printer_knobs knobs = get_knobs();
@@ -1291,7 +1351,7 @@ class uvm_tree_printer: uvm_printer
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.11.3.1
+  // @uvm-ieee 1800.2-2020 auto 16.2.11.3.1
   int get_indent() {
     synchronized (this) {
       m_uvm_printer_knobs knobs = get_knobs();
@@ -1299,7 +1359,7 @@ class uvm_tree_printer: uvm_printer
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.11.3.2
+  // @uvm-ieee 1800.2-2020 auto 16.2.11.3.2
   void set_separators(string separators) {
     synchronized (this) {
       m_uvm_printer_knobs knobs = get_knobs();
@@ -1307,7 +1367,7 @@ class uvm_tree_printer: uvm_printer
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.11.3.2
+  // @uvm-ieee 1800.2-2020 auto 16.2.11.3.2
   string get_separators() {
     synchronized (this) {
       m_uvm_printer_knobs knobs = get_knobs();
@@ -1323,7 +1383,7 @@ class uvm_tree_printer: uvm_printer
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.4.1
+  // @uvm-ieee 1800.2-2020 auto 16.2.4.1
   override final string emit() {
     synchronized (this) {
 
@@ -1335,7 +1395,7 @@ class uvm_tree_printer: uvm_printer
       if (!_m_flushed) {
 	uvm_error("UVM/PRINT/NO_FLUSH",
 		  "printer emit() method called twice without intervening uvm_printer::flush()");
-	  }
+      }
       else {
 	_m_flushed = false;
       }
@@ -1431,12 +1491,12 @@ class uvm_tree_printer: uvm_printer
 //| c1: (container@1013) { d1: (mydata@1022) { v1: 'hcb8f1c97 e1: THREE str: hi } value: 'h2d }
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 16.2.12.1
+// @uvm-ieee 1800.2-2020 auto 16.2.12.1
 class uvm_line_printer: uvm_tree_printer {
 
   mixin (uvm_sync_string);
   mixin (uvm_scope_sync_string);
-  // @uvm-ieee 1800.2-2017 auto 16.2.12.2.2
+  // @uvm-ieee 1800.2-2020 auto 16.2.12.2.2
   mixin uvm_object_essentials;
 
   // Variable -- NODOCS -- new
@@ -1445,8 +1505,8 @@ class uvm_line_printer: uvm_tree_printer {
   // <uvm_tree_printer> only in that the output contains no line-feeds
   // and indentation.
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.12.2.1
-  // @uvm-ieee 1800.2-2017 auto 16.2.2.1
+  // @uvm-ieee 1800.2-2020 auto 16.2.12.2.1
+  // @uvm-ieee 1800.2-2020 auto 16.2.2.1
   this(string name="") {
     synchronized (this) {
       super(name);
@@ -1462,27 +1522,15 @@ class uvm_line_printer: uvm_tree_printer {
     private uvm_line_printer _m_default_line_printer ;
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.12.2.3
-  // @uvm-ieee 1800.2-2017 auto 16.2.2.2
+  // @uvm-ieee 1800.2-2020 auto 16.2.12.2.3
+  // @uvm-ieee 1800.2-2020 auto 16.2.2.2
   static void set_default(uvm_line_printer printer) {
     synchronized (_uvm_scope_inst) {
       _uvm_scope_inst._m_default_line_printer = printer ;
     }
   }
 
-  // Function: get_default
-  // Implementation of uvm_line_printer::get_default as defined in
-  // section 16.2.12.2.3 of 1800.2-2017.
-  //
-  // *Note:*
-  // The library implements get_default as described in IEEE 1800.2-2017
-  // with the exception that this implementation will instance a
-  // uvm_line_printer if the most recent call to set_default() used an
-  // argument value of null.
-  //
-  // @uvm-contrib This API is being considered for potential contribution to 1800.2
-
-  // @uvm-ieee 1800.2-2017 auto 16.2.2.3
+  // @uvm-ieee 1800.2-2020 auto 16.2.2.3
   static uvm_line_printer get_default() {
     synchronized (_uvm_scope_inst) {
       if (_uvm_scope_inst._m_default_line_printer is null) {
@@ -1493,7 +1541,7 @@ class uvm_line_printer: uvm_tree_printer {
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.12.3
+  // @uvm-ieee 1800.2-2020 auto 16.2.12.3
   override void set_separators(string separators) {
     synchronized (this) {
       m_uvm_printer_knobs knobs = get_knobs();
@@ -1506,7 +1554,7 @@ class uvm_line_printer: uvm_tree_printer {
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.12.3
+  // @uvm-ieee 1800.2-2020 auto 16.2.12.3
   override string get_separators() {
     synchronized (this) {
       m_uvm_printer_knobs knobs = get_knobs();
@@ -1514,7 +1562,7 @@ class uvm_line_printer: uvm_tree_printer {
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.2.4.2
+  // @uvm-ieee 1800.2-2020 auto 16.2.4.2
   override void flush() {
     synchronized (this) {
       super.flush() ;

@@ -1,14 +1,14 @@
 // -------------------------------------------------------------
 // Copyright 2016-2021 Coverify Systems Technology
-// Copyright 2010-2020 Mentor Graphics Corporation
-// Copyright 2014 Semifore
-// Copyright 2014-2017 Intel Corporation
-// Copyright 2004-2018 Synopsys, Inc.
-// Copyright 2010-2018 Cadence Design Systems, Inc.
 // Copyright 2010 AMD
-// Copyright 2014-2020 NVIDIA Corporation
-// Copyright 2017 Cisco Systems, Inc.
 // Copyright 2012 Accellera Systems Initiative
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2017 Cisco Systems, Inc.
+// Copyright 2014-2017 Intel Corporation
+// Copyright 2010-2020 Mentor Graphics Corporation
+// Copyright 2014-2020 NVIDIA Corporation
+// Copyright 2014 Semifore
+// Copyright 2004-2018 Synopsys, Inc.
 //    All Rights Reserved Worldwide
 //
 //    Licensed under the Apache License, Version 2.0 (the
@@ -92,8 +92,7 @@ class uvm_reg_map_info
 
 
 // Class -- NODOCS -- uvm_reg_transaction_order_policy
-@rand(false)
-abstract class uvm_reg_transaction_order_policy: uvm_object
+abstract class uvm_reg_transaction_order_policy: uvm_object, rand.barrier
 {
   this(string name = "policy") {
     super(name);
@@ -137,9 +136,8 @@ class uvm_reg_seq_base: uvm_sequence_base
 // method.
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 18.2.1
-@rand(false)
-class uvm_reg_map: uvm_object
+// @uvm-ieee 1800.2-2020 auto 18.2.1
+class uvm_reg_map: uvm_object, rand.barrier
 {
   mixin uvm_object_essentials;
 
@@ -206,7 +204,7 @@ class uvm_reg_map: uvm_object
 
   mixin (uvm_scope_sync_string);
 
-  // @uvm-ieee 1800.2-2017 auto 18.2.2
+  // @uvm-ieee 1800.2-2020 auto 18.2.2
   public static uvm_reg_map backdoor() {
     synchronized (_uvm_scope_inst) {
       return _m_backdoor;
@@ -398,7 +396,7 @@ class uvm_reg_map: uvm_object
   //----------------------
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.2.3.1
+  // @uvm-ieee 1800.2-2020 auto 18.2.3.1
   this(string name = "uvm_reg_map") {
     synchronized (this) {
       super((name == "") ? "default_map" : name);
@@ -408,7 +406,7 @@ class uvm_reg_map: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.2.3.2
+  // @uvm-ieee 1800.2-2020 auto 18.2.3.2
   public void configure(uvm_reg_block    parent,
 			uvm_reg_addr_t   base_addr,
 			uint             n_bytes,
@@ -424,7 +422,7 @@ class uvm_reg_map: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.2.3.3
+  // @uvm-ieee 1800.2-2020 auto 18.2.3.3
   public void add_reg(uvm_reg rg, 
 		      uvm_reg_addr_t offset,
 		      string rights = "RW",
@@ -461,7 +459,7 @@ class uvm_reg_map: uvm_object
 
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.2.3.4
+  // @uvm-ieee 1800.2-2020 auto 18.2.3.4
   public void add_mem(uvm_mem mem,
 		      uvm_reg_addr_t offset,
 		      string rights = "RW",
@@ -500,7 +498,7 @@ class uvm_reg_map: uvm_object
   // also AddressUnitBits needs to match which means essentially that within a block there can only be one 
   // AddressUnitBits
    
-  // @uvm-ieee 1800.2-2017 auto 18.2.3.5
+  // @uvm-ieee 1800.2-2020 auto 18.2.3.5
   public void add_submap (uvm_reg_map child_map,
 			  uvm_reg_addr_t offset) {
     synchronized (this) {
@@ -546,7 +544,7 @@ class uvm_reg_map: uvm_object
   // Set the sequencer and adapter associated with this map. This method
   // ~must~ be called before starting any sequences based on uvm_reg_sequence.
 
-  // @uvm-ieee 1800.2-2017 auto 18.2.3.6
+  // @uvm-ieee 1800.2-2020 auto 18.2.3.6
   public void set_sequencer(uvm_sequencer_base sequencer,
 			    uvm_reg_adapter adapter=null) {
     synchronized (this) {
@@ -573,7 +571,7 @@ class uvm_reg_map: uvm_object
   //
   // Set the offset of the given ~submap~ to ~offset~.
 
-  // @uvm-ieee 1800.2-2017 auto 18.2.3.8
+  // @uvm-ieee 1800.2-2020 auto 18.2.3.8
   public void set_submap_offset(uvm_reg_map submap, uvm_reg_addr_t offset) {
     synchronized (this) {
       if (submap is null) {
@@ -593,7 +591,7 @@ class uvm_reg_map: uvm_object
   //
   // Return the offset of the given ~submap~.
 
-  // @uvm-ieee 1800.2-2017 auto 18.2.3.7
+  // @uvm-ieee 1800.2-2020 auto 18.2.3.7
   public uvm_reg_addr_t get_submap_offset(uvm_reg_map submap) {
     synchronized (this) {
       if (submap is null) {
@@ -614,7 +612,7 @@ class uvm_reg_map: uvm_object
   //
   // Set the base address of this map.
 
-  // @uvm-ieee 1800.2-2017 auto 18.2.3.9
+  // @uvm-ieee 1800.2-2020 auto 18.2.3.9
   public void set_base_addr(uvm_reg_addr_t offset) {
     synchronized (this) {
       if (_m_parent_map !is null) {
@@ -631,7 +629,7 @@ class uvm_reg_map: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.2.3.10
+  // @uvm-ieee 1800.2-2020 auto 18.2.3.10
   public void reset(string kind = "SOFT") {
     synchronized (this) {
       uvm_reg[] regs;
@@ -924,14 +922,14 @@ class uvm_reg_map: uvm_object
 
   
 
-  // @uvm-ieee 1800.2-2017 auto 18.2.4.1
+  // @uvm-ieee 1800.2-2020 auto 18.2.4.1
   public uvm_reg_map get_root_map() {
     synchronized (this) {
       return (_m_parent_map is null) ? this : _m_parent_map.get_root_map();
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.2.4.2
+  // @uvm-ieee 1800.2-2020 auto 18.2.4.2
   public uvm_reg_block get_parent() {
     synchronized (this) {
       return _m_parent;
@@ -939,7 +937,7 @@ class uvm_reg_map: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.2.4.3
+  // @uvm-ieee 1800.2-2020 auto 18.2.4.3
   public uvm_reg_map get_parent_map() {
     synchronized (this) {
       return _m_parent_map;
@@ -947,7 +945,7 @@ class uvm_reg_map: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.2.4.4
+  // @uvm-ieee 1800.2-2020 auto 18.2.4.4
   public uvm_reg_addr_t  get_base_addr(uvm_hier_e hier = uvm_hier_e.UVM_HIER) {
     synchronized (this) {
       if (hier == uvm_hier_e.UVM_NO_HIER || _m_parent_map is null)
@@ -990,7 +988,7 @@ class uvm_reg_map: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.2.4.7
+  // @uvm-ieee 1800.2-2020 auto 18.2.4.7
   public uvm_endianness_e get_endian(uvm_hier_e hier = uvm_hier_e.UVM_HIER) {
     synchronized (this) {
       if (hier == uvm_hier_e.UVM_NO_HIER || _m_parent_map is null)
@@ -1001,7 +999,7 @@ class uvm_reg_map: uvm_object
 
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.2.4.8
+  // @uvm-ieee 1800.2-2020 auto 18.2.4.8
   public uvm_sequencer_base get_sequencer(uvm_hier_e hier=uvm_hier_e.UVM_HIER) {
     synchronized (this) {
       if (hier == uvm_hier_e.UVM_NO_HIER || _m_parent_map is null)
@@ -1012,7 +1010,7 @@ class uvm_reg_map: uvm_object
 
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.2.4.9
+  // @uvm-ieee 1800.2-2020 auto 18.2.4.9
   public uvm_reg_adapter get_adapter(uvm_hier_e hier = uvm_hier_e.UVM_HIER) {
     synchronized (this) {
       if (hier == uvm_hier_e.UVM_NO_HIER || _m_parent_map is null)
@@ -1022,7 +1020,7 @@ class uvm_reg_map: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.2.4.10
+  // @uvm-ieee 1800.2-2020 auto 18.2.4.10
   public void get_submaps(ref uvm_reg_map[] maps,
 			  uvm_hier_e hier = uvm_hier_e.UVM_HIER) {
     synchronized (this) {
@@ -1036,7 +1034,7 @@ class uvm_reg_map: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.2.4.11
+  // @uvm-ieee 1800.2-2020 auto 18.2.4.11
   public void get_registers(ref uvm_reg[] regs,
 			    uvm_hier_e hier = uvm_hier_e.UVM_HIER) {
     synchronized (this) {
@@ -1051,7 +1049,7 @@ class uvm_reg_map: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.2.4.12
+  // @uvm-ieee 1800.2-2020 auto 18.2.4.12
   public void get_fields(ref uvm_reg_field[] fields,
 			 uvm_hier_e hier = uvm_hier_e.UVM_HIER) {
     synchronized (this) {
@@ -1067,7 +1065,7 @@ class uvm_reg_map: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.2.4.13
+  // @uvm-ieee 1800.2-2020 auto 18.2.4.13
   public void get_memories(ref uvm_mem[] mems,
 			   uvm_hier_e hier = uvm_hier_e.UVM_HIER) {
     synchronized (this) {
@@ -1082,7 +1080,7 @@ class uvm_reg_map: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.2.4.14
+  // @uvm-ieee 1800.2-2020 auto 18.2.4.14
   public void get_virtual_registers(ref uvm_vreg[] regs,
 				    uvm_hier_e hier = uvm_hier_e.UVM_HIER) {
     synchronized (this) {
@@ -1095,7 +1093,7 @@ class uvm_reg_map: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.2.4.15
+  // @uvm-ieee 1800.2-2020 auto 18.2.4.15
   public void get_virtual_fields(ref uvm_vreg_field[] fields,
 				 uvm_hier_e           hier = uvm_hier_e.UVM_HIER) {
     synchronized (this) {
@@ -1170,7 +1168,7 @@ class uvm_reg_map: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.2.4.16
+  // @uvm-ieee 1800.2-2020 auto 18.2.4.16
   public int get_physical_addresses(uvm_reg_addr_t base_addr,
 				    uvm_reg_addr_t mem_offset,
 				    uint n_bytes,
@@ -1182,7 +1180,7 @@ class uvm_reg_map: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.2.4.17
+  // @uvm-ieee 1800.2-2020 auto 18.2.4.17
   public uvm_reg get_reg_by_offset(uvm_reg_addr_t offset,
 				   bool           read = true) {
     synchronized (this) {
@@ -1205,7 +1203,7 @@ class uvm_reg_map: uvm_object
   }
 
 
-   // @uvm-ieee 1800.2-2017 auto 18.2.4.18
+   // @uvm-ieee 1800.2-2020 auto 18.2.4.18
   public uvm_mem get_mem_by_offset(uvm_reg_addr_t offset) {
     synchronized (this) {
       if (! _m_parent.is_locked()) {
@@ -1226,7 +1224,7 @@ class uvm_reg_map: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.2.5.2
+  // @uvm-ieee 1800.2-2020 auto 18.2.5.2
   public void set_auto_predict(bool on=true) {
     synchronized (this) {
       _m_auto_predict = on;
@@ -1234,7 +1232,7 @@ class uvm_reg_map: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.2.5.1
+  // @uvm-ieee 1800.2-2020 auto 18.2.5.1
   public bool  get_auto_predict() {
     synchronized (this) {
       return _m_auto_predict;
@@ -1242,7 +1240,7 @@ class uvm_reg_map: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.2.5.3
+  // @uvm-ieee 1800.2-2020 auto 18.2.5.3
   public void set_check_on_read(bool on=true) {
     synchronized (this) {
       _m_check_on_read = on;
@@ -1546,14 +1544,14 @@ class uvm_reg_map: uvm_object
     //... and so on
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.2.5.5
+  // @uvm-ieee 1800.2-2020 auto 18.2.5.5
   void set_transaction_order_policy(uvm_reg_transaction_order_policy pol) {
     synchronized (this) {
       _policy = pol;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.2.5.4
+  // @uvm-ieee 1800.2-2020 auto 18.2.5.4
   uvm_reg_transaction_order_policy get_transaction_order_policy() {
     synchronized (this) {
       return _policy;
@@ -2000,7 +1998,7 @@ class uvm_reg_map: uvm_object
   // it is NOT expected that this leads to a fresh new map 
   // it rather removes all knowledge of this map from other objects 
   // so that they can be reused with a fresh map instance
-  // @uvm-ieee 1800.2-2017 auto 18.2.3.11
+  // @uvm-ieee 1800.2-2020 auto 18.2.3.11
   void unregister() {
     synchronized (this) {
       uvm_reg_block[] q;

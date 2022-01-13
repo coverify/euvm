@@ -1,11 +1,11 @@
 //
 //--------------------------------------------------------------
 // Copyright 2015-2021 Coverify Systems Technology
-// Copyright 2010-2020 Mentor Graphics Corporation
-// Copyright 2004-2018 Synopsys, Inc.
-// Copyright 2010-2018 Cadence Design Systems, Inc.
 // Copyright 2010 AMD
-// Copyright 2014-2018 NVIDIA Corporation
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2010-2020 Mentor Graphics Corporation
+// Copyright 2014-2020 NVIDIA Corporation
+// Copyright 2004-2018 Synopsys, Inc.
 //    All Rights Reserved Worldwide
 //
 //    Licensed under the Apache License, Version 2.0 (the
@@ -60,11 +60,11 @@ import std.string: format;
 // wishes to implement a custom address translation algorithm.
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 19.1.1.1
+// @uvm-ieee 1800.2-2020 auto 19.1.1.1
 class uvm_reg_item: uvm_sequence_item
 {
   import esdl.rand;
-  mixin uvm_object_essentials;
+  mixin uvm_object_utils;
 
   mixin (uvm_sync_string);
 
@@ -202,7 +202,7 @@ class uvm_reg_item: uvm_sequence_item
   @uvm_public_sync
   private int _lineno;
 
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.3.1
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.3.1
   this(string name="") {
     synchronized(this) {
       super(name);
@@ -210,7 +210,7 @@ class uvm_reg_item: uvm_sequence_item
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.3.2
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.3.2
   override string convert2string() {
     synchronized(this) {
       string s = "kind=" ~ kind.to!string ~
@@ -279,46 +279,46 @@ class uvm_reg_item: uvm_sequence_item
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.1
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.1
   void set_element_kind(uvm_elem_kind_e element_kind) {
     synchronized(this) {
       this._element_kind = element_kind;
     }
   }
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.1
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.1
   uvm_elem_kind_e get_element_kind() {
     synchronized(this) {
       return _element_kind;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.2
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.2
   void set_element(uvm_object element) {
     synchronized(this) {
       this._element = element;
     }
   }
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.2
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.2
   uvm_object get_element() {
     synchronized(this) {
       return _element;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.3
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.3
   void set_kind(uvm_access_e kind) {
     synchronized(this) {
       this._kind = kind;
     }
   }
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.3
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.3
   uvm_access_e get_kind() {
     synchronized(this) {
       return _kind;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.4
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.4
   void get_value_array(ref uvm_reg_data_t[] value) {
     synchronized(this) {
       value = _value.dup;
@@ -330,14 +330,14 @@ class uvm_reg_item: uvm_sequence_item
     }
   }
   
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.4
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.4
   uvm_reg_data_t get_value(size_t idx) {
     synchronized(this) {
       return _value[idx];
     }
   }
   
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.4
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.4
   void set_value_array(uvm_reg_data_t[] value) {
     synchronized(this) {
       this._value = value.dup;
@@ -350,21 +350,21 @@ class uvm_reg_item: uvm_sequence_item
     }
   }
   
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.4
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.4
   void set_value(uvm_reg_data_t val, size_t idx) {
     synchronized(this) {
       _value[idx] = val;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.4
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.4
   void set_value_size(size_t sz) {
     synchronized(this) {
       this._value.length = sz;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.4
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.4
   size_t get_value_size() {
     synchronized(this) {
       return this._value.length;
@@ -372,143 +372,143 @@ class uvm_reg_item: uvm_sequence_item
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.5
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.5
   void set_offset(uvm_reg_addr_t offset) {
     synchronized(this) {
       this._offset = offset;
     }
   }
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.5
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.5
   uvm_reg_addr_t get_offset() {
     synchronized(this) {
       return _offset;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.6
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.6
   void set_status(uvm_status_e status) {
     synchronized(this) {
       this._status = status;
     }
   }
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.6
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.6
   uvm_status_e get_status() {
     synchronized(this) {
       return _status;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.7
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.7
   void set_local_map(uvm_reg_map map) {
     synchronized(this) {
-      this._local_map = local_map;
+      this._local_map = map;
     }
   }
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.7
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.7
   uvm_reg_map get_local_map() {
     synchronized(this) {
       return _local_map;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.8
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.8
   void set_map(uvm_reg_map map) {
     synchronized(this) {
       this._map = map;
     }
   }
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.8
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.8
   uvm_reg_map get_map() {
     synchronized(this) {
       return _map;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.9
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.9
   void set_door(uvm_door_e door) {
     synchronized(this) {
       this._door = door;
     }
   }
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.9
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.9
   uvm_door_e get_door() {
     synchronized(this) {
       return _door;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.10
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.10
   override void set_parent_sequence(uvm_sequence_base parent) {
     synchronized(this) {
       this._parent = parent;
     }
   }
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.10
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.10
   override uvm_sequence_base get_parent_sequence() {
     synchronized(this) {
       return _parent;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.11
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.11
   void set_priority(int value) {
     synchronized(this) {
       this._prior = value;
     }
   }
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.11
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.11
   int get_priority() {
     synchronized(this) {
       return _prior;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.12
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.12
   void set_extension(uvm_object extension) {
     synchronized(this) {
       this._extension = extension;
     }
   }
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.12
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.12
   uvm_object get_extension() {
     synchronized(this) {
       return _extension;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.13
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.13
   void set_bd_kind(string bd_kind) {
     synchronized(this) {
       this._bd_kind = bd_kind;
     }
   }
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.13
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.13
   string get_bd_kind() {
     synchronized(this) {
       return _bd_kind;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.14
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.14
   void set_fname(string fname) {
     synchronized(this) {
       this._fname = fname;
     }
   }
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.14
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.14
   string get_fname() {
     synchronized(this) {
       return _fname;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.15
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.15
   void set_line(int line) {
     synchronized(this) {
       this._lineno = line;
     }
   }
-  // @uvm-ieee 1800.2-2017 auto 19.1.1.2.15
+  // @uvm-ieee 1800.2-2020 auto 19.1.1.2.15
   int get_line() {
     synchronized(this) {
       return _lineno;

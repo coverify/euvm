@@ -1,11 +1,11 @@
 //
 // -------------------------------------------------------------
 // Copyright 2015-2021 Coverify Systems Technology
-// Copyright 2010-2011 Mentor Graphics Corporation
-// Copyright 2004-2018 Synopsys, Inc.
-// Copyright 2010-2018 Cadence Design Systems, Inc.
 // Copyright 2010 AMD
-// Copyright 2014-2018 NVIDIA Corporation
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2014-2020 NVIDIA Corporation
+// Copyright 2004-2018 Synopsys, Inc.
 //    All Rights Reserved Worldwide
 //
 //    Licensed under the Apache License, Version 2.0 (the
@@ -80,9 +80,8 @@ import esdl.base.core: sleep, wait;
 // Note- The convenience API not yet implemented.
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 19.4.1.1
-@rand(false)
-class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
+// @uvm-ieee 1800.2-2020 auto 19.4.1.1
+class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE, rand.barrier
 {
   
   mixin uvm_object_essentials;
@@ -117,7 +116,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
   // Block abstraction this sequence executes on, defined only when this
   // sequence is a user-defined test sequence.
   //
-  @uvm_public_sync @rand(false)
+  @uvm_public_sync
   private uvm_reg_block _model;
 
 
@@ -127,7 +126,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
   // and physical bus transactions, defined only when this sequence is a
   // translation sequence.
   //
-  @uvm_public_sync @rand(false)
+  @uvm_public_sync
   private uvm_reg_adapter _adapter;
 
 
@@ -139,16 +138,16 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
   // and physical bus transactions. Defined only when this sequence is a
   // translation sequence, and we want to "pull" from an upstream sequencer.
   //
-  @uvm_public_sync @rand(false)
+  @uvm_public_sync
   private uvm_sequencer!(uvm_reg_item) _reg_seqr;
 
 
-  // @uvm-ieee 1800.2-2017 auto 19.4.1.4.1
+  // @uvm-ieee 1800.2-2020 auto 19.4.1.4.1
   this(string name="uvm_reg_sequence_inst") {
     super(name);
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.4.1.4.2
+  // @uvm-ieee 1800.2-2020 auto 19.4.1.4.2
   // task
   override void body() {
     if (m_sequencer is null) {
@@ -189,7 +188,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
   private uvm_sequence_base _upstream_parent;
 
 
-  // @uvm-ieee 1800.2-2017 auto 19.4.1.4.3
+  // @uvm-ieee 1800.2-2020 auto 19.4.1.4.3
   // task
   void do_reg_item(uvm_reg_item rw) {
     if (m_sequencer is null)
@@ -231,7 +230,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
   //
 
 
-  // @uvm-ieee 1800.2-2017 auto 19.4.1.5.1
+  // @uvm-ieee 1800.2-2020 auto 19.4.1.5.1
   // task
   void write_reg(ref uvm_reg       rg,
 		 out uvm_status_e  status,
@@ -248,7 +247,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
       rg.write(status, value, path, map, this, prior, extension, fname, lineno);
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.4.1.5.2
+  // @uvm-ieee 1800.2-2020 auto 19.4.1.5.2
   // task
   void read_reg(ref uvm_reg           rg,
 		out uvm_status_e      status,
@@ -265,7 +264,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
       rg.read(status, value, path, map, this, prior, extension, fname, lineno);
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.4.1.5.3
+  // @uvm-ieee 1800.2-2020 auto 19.4.1.5.3
   // task
   void poke_reg(ref uvm_reg       rg,
 		out uvm_status_e  status,
@@ -280,7 +279,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
       rg.poke(status, value, kind, this, extension, fname, lineno);
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.4.1.5.4
+  // @uvm-ieee 1800.2-2020 auto 19.4.1.5.4
   // task
   void peek_reg(ref uvm_reg           rg,
 		out uvm_status_e      status,
@@ -295,7 +294,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
       rg.peek(status,value,kind,this,extension,fname,lineno);
   }
    
-  // @uvm-ieee 1800.2-2017 auto 19.4.1.5.5
+  // @uvm-ieee 1800.2-2020 auto 19.4.1.5.5
   // task
   void update_reg(ref uvm_reg       rg,
 		  out uvm_status_e  status,
@@ -311,7 +310,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
       rg.update(status,path,map,this,prior,extension,fname,lineno);
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.4.1.5.6
+  // @uvm-ieee 1800.2-2020 auto 19.4.1.5.6
   // task
   void mirror_reg(ref uvm_reg       rg,
 		  out uvm_status_e  status,
@@ -328,7 +327,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
       rg.mirror(status, check, path, map, this, prior, extension, fname, lineno);
   }
   
-  // @uvm-ieee 1800.2-2017 auto 19.4.1.5.7
+  // @uvm-ieee 1800.2-2020 auto 19.4.1.5.7
   // task
   void write_mem(ref uvm_mem       mem,
 		 out uvm_status_e  status,
@@ -346,7 +345,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
       mem.write(status, offset, value, path, map, this, prior, extension, fname, lineno);
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.4.1.5.8
+  // @uvm-ieee 1800.2-2020 auto 19.4.1.5.8
   // task
   void read_mem(ref uvm_mem        mem,
 		out uvm_status_e   status,
@@ -364,7 +363,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
       mem.read(status, offset, value, path, map, this, prior, extension, fname, lineno);
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.4.1.5.9
+  // @uvm-ieee 1800.2-2020 auto 19.4.1.5.9
   // task
   void poke_mem(ref uvm_mem       mem,
 		out uvm_status_e  status,
@@ -380,7 +379,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
       mem.poke(status, offset, value, kind, this, extension, fname, lineno);
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.4.1.5.10
+  // @uvm-ieee 1800.2-2020 auto 19.4.1.5.10
   // task
   void peek_mem(ref uvm_mem        mem,
 		out uvm_status_e   status,
@@ -407,7 +406,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE
   }
 }
 
-// @uvm-ieee 1800.2-2017 auto 19.4.2.1
+// @uvm-ieee 1800.2-2020 auto 19.4.2.1
 abstract class uvm_reg_frontdoor: uvm_reg_sequence!(uvm_sequence!(uvm_sequence_item))
 {
 
@@ -428,7 +427,7 @@ abstract class uvm_reg_frontdoor: uvm_reg_sequence!(uvm_sequence!(uvm_sequence_i
   @uvm_public_sync
   private uvm_sequencer_base _sequencer;
 
-  // @uvm-ieee 1800.2-2017 auto 19.4.2.3
+  // @uvm-ieee 1800.2-2020 auto 19.4.2.3
   this(string name="") {
     super(name);
   }

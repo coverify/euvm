@@ -1,9 +1,9 @@
 //
 //------------------------------------------------------------------------------
-// Copyright 2014-2019 Coverify Systems Technology
-// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2014-2021 Coverify Systems Technology
 // Copyright 2007-2018 Cadence Design Systems, Inc.
-// Copyright 2015-2018 NVIDIA Corporation
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2015-2020 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -46,11 +46,10 @@ import std.string;
 //
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 13.8.1
+// @uvm-ieee 1800.2-2020 auto 13.8.1
 
-@rand(false)
 class uvm_push_driver(REQ=uvm_sequence_item,
-		      RSP=REQ): uvm_component
+		      RSP=REQ): uvm_component, rand.barrier
 {
   mixin uvm_component_essentials;
   mixin uvm_type_name_decl;

@@ -1,11 +1,11 @@
 //----------------------------------------------------------------------
-// Copyright 2014-2019 Coverify Systems Technology
-// Copyright 2007-2011 Mentor Graphics Corporation
-// Copyright 2010-2014 Synopsys, Inc.
-// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2014-2021 Coverify Systems Technology
 // Copyright 2010-2011 AMD
-// Copyright 2014-2018 NVIDIA Corporation
+// Copyright 2007-2018 Cadence Design Systems, Inc.
 // Copyright 2014 Cisco Systems, Inc.
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2014-2020 NVIDIA Corporation
+// Copyright 2010-2014 Synopsys, Inc.
 // Copyright 2017 Verific
 //   All Rights Reserved Worldwide
 //
@@ -45,16 +45,17 @@ import uvm.meta.misc;
 import uvm.meta.meta;
 import esdl.rand.misc: rand;
 
+import std.format: format;
+
 //------------------------------------------------------------------------------
 //
 // CLASS -- NODOCS -- uvm_sequencer #(REQ,RSP)
 //
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 15.5.1
-@rand(false)
+// @uvm-ieee 1800.2-2020 auto 15.5.1
 class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
-  uvm_sequencer_param_base!(REQ, RSP)
+  uvm_sequencer_param_base!(REQ, RSP), rand.barrier
 {
   mixin (uvm_sync_string);
 
@@ -68,7 +69,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   mixin uvm_component_essentials;
 
 
-  // @uvm-ieee 1800.2-2017 auto 15.5.2.2
+  // @uvm-ieee 1800.2-2020 auto 15.5.2.1
   this(string name, uvm_component parent = null) {
     synchronized (this) {
       super(name, parent);
@@ -136,6 +137,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   // Retrieves the next available item from a sequence.
   //
   // task
+  // @uvm-ieee 1800.2-2020 auto 15.5.2.3
   void get_next_item(out REQ t) {
     // declared in SV -- but does not seem to be used
     // REQ req_item;
@@ -166,7 +168,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   // Task -- NODOCS -- try_next_item
   // Retrieves the next available item from a sequence if one is available.
   //
-
+  // @uvm-ieee 1800.2-2020 auto 15.5.2.4
   void try_next_item(out REQ t) {
 
     // declared in SV version, but nowhere used
@@ -178,21 +180,29 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
       return;
     }
 
+    int selected_sequence;
+
     // allow state from last transaction to settle such that sequences'
     // relevancy can be determined with up-to-date information
-    wait_for_sequences();
+    for (size_t i=0; i!=m_wait_for_sequences_count; ++i) {
+      wait_for_sequences();
+
+      // choose the sequence based on relevancy
+      selected_sequence = m_choose_next_request();
+
+      // return if none available
+      if (selected_sequence is -1)
+	break;
+    }
+
+    // return if none available
+    if (selected_sequence == -1) {
+      t = null;
+      return;
+    }
 
     uvm_sequence_base seq;
     synchronized (this) {
-      // choose the sequence based on relevancy
-      int selected_sequence = m_choose_next_request();
-
-      // return if none available
-      if (selected_sequence is -1) {
-	t = null;
-	return;
-      }
-
       // _arb_sequence_q is in the base class -- keep it under guard
       // now, allow chosen sequence to resume
       m_set_arbitration_completed(_arb_sequence_q[selected_sequence].request_id);
@@ -204,18 +214,23 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
       _get_next_item_called = true;
     }
 
-    // give it one NBA to put a new item in the fifo
-    wait_for_sequences();
+    bool found_item;
+    for (size_t i=0; i!=m_wait_for_sequences_count; ++i) {
+      // give it one NBA to put a new item in the fifo
+      wait_for_sequences();
 
-    // attempt to get the item; if it fails, produce an error and return
-    if (!m_req_fifo.try_peek(t))
-      uvm_report_error("TRY_NEXT_BLOCKED",
-		       "try_next_item: the selected sequence '" ~
-		       seq.get_full_name() ~ "' did not produce an item" ~
-		       " within an NBA delay. Sequences should not consume" ~
-		       " time between calls to start_item and finish_item. " ~
-		       "Returning null item.", uvm_verbosity.UVM_NONE);
-
+      // attempt to get the item; if it fails, produce an error and return
+      found_item = m_req_fifo.try_peek(t);
+      if (found_item)
+	break;
+    }
+  
+    if (!found_item) {
+      string msg = "try_next_item: the selected sequence '%s' did not produce an item within %0d wait_for_sequences call%s.  If the sequence requires more deltas/NBA within this time step, then the wait_for_sequences_count value for this sequencer should be increased.  Note that sequences should not consume non-delta/NBA time between calls to start_item and finish_item.  Returning null item.";
+      uvm_error("TRY_NEXT_BLOCKED",
+		format(msg, seq.get_full_name(), m_wait_for_sequences_count,
+		       (m_wait_for_sequences_count>1) ? "s" : ""));
+    }
   }
 
 
@@ -223,6 +238,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   // Indicates that the request is completed.
   //
 
+  // @uvm-ieee 1800.2-2020 auto 15.5.2.5
   void item_done(RSP item = null) {
     synchronized (this) {
 
@@ -257,6 +273,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   //
 
   // task
+  // @uvm-ieee 1800.2-2020 auto 15.5.2.8
   void put (RSP t) {
     put_response(t);
   }
@@ -266,6 +283,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   //
 
   // task
+  // @uvm-ieee 1800.2-2020 auto 15.5.2.6
   void get(out REQ t) {
     if (sequence_item_requested is false) {
       m_select_sequence();
@@ -288,6 +306,7 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
   //
 
   // task
+  // @uvm-ieee 1800.2-2020 auto 15.5.2.7
   void peek(out REQ t) {
     if (sequence_item_requested is false) {
       m_select_sequence();

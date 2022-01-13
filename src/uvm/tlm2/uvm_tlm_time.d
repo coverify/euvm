@@ -1,11 +1,11 @@
 //----------------------------------------------------------------------
-// Copyright 2016-2019 Coverify Systems Technology
-// Copyright 2011-2014 Mentor Graphics Corporation
-// Copyright 2014 Semifore
-// Copyright 2014 Intel Corporation
-// Copyright 2010-2018 Synopsys, Inc.
+// Copyright 2016-2021 Coverify Systems Technology
 // Copyright 2011-2018 Cadence Design Systems, Inc.
-// Copyright 2014-2018 NVIDIA Corporation
+// Copyright 2014 Intel Corporation
+// Copyright 2011-2014 Mentor Graphics Corporation
+// Copyright 2014-2020 NVIDIA Corporation
+// Copyright 2014 Semifore
+// Copyright 2010-2018 Synopsys, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -40,7 +40,7 @@ import uvm.base.uvm_globals;
 import uvm.base.uvm_scope;
 import uvm.meta.misc;
 
-// @uvm-ieee 1800.2-2017 auto 5.6.1
+// @uvm-ieee 1800.2-2020 auto 5.6.1
 class uvm_time
 {
   static class uvm_scope: uvm_scope_base
@@ -88,7 +88,7 @@ class uvm_time
   // the default resolution,
   // as specified by <set_time_resolution()>,
   // is used.
-  // @uvm-ieee 1800.2-2017 auto 5.6.2.1
+  // @uvm-ieee 1800.2-2020 auto 5.6.2.1
   this(string name = "uvm_tlm_time", real res = 0) {
     synchronized (this) {
       _m_name = name;
@@ -101,7 +101,7 @@ class uvm_time
   // Function -- NODOCS -- get_name
   // Return the name of this instance
   //
-  // @uvm-ieee 1800.2-2017 auto 5.6.2.3
+  // @uvm-ieee 1800.2-2020 auto 5.6.2.3
   string get_name() {
     // _m_name is effectively immutable since it is set only in the
     // constructor
@@ -111,7 +111,7 @@ class uvm_time
 
   // Function -- NODOCS -- reset
   // Reset the value to 0
-  // @uvm-ieee 1800.2-2017 auto 5.6.2.4
+  // @uvm-ieee 1800.2-2020 auto 5.6.2.4
   void reset() {
     synchronized (this) {
       _m_time = 0;
@@ -141,7 +141,7 @@ class uvm_time
   //| #(delay.get_realtime(1ns));
   //| #(delay.get_realtime(1fs, 1.0e-15));
   //
-  // @uvm-ieee 1800.2-2017 auto 5.6.2.5
+  // @uvm-ieee 1800.2-2020 auto 5.6.2.5
   real get_realtime(Time scaled, real secs = 1.0e-9) {
     synchronized (this) {
       return _m_time * scaled.to!real * _m_res/secs;
@@ -162,7 +162,7 @@ class uvm_time
   //| delay.incr(1.5ns, 1ns);
   //| delay.incr(1.5ns, 1ps, 1.0e-12);
   //
-  // @uvm-ieee 1800.2-2017 auto 5.6.2.6
+  // @uvm-ieee 1800.2-2020 auto 5.6.2.6
   void incr(real t, Time scaled, real secs = 1.0e-9) {
     synchronized (this) {
       if (t < 0.0) {
@@ -193,7 +193,7 @@ class uvm_time
   //
   //| delay.decr(200ps, 1ns);
   //
-  // @uvm-ieee 1800.2-2017 auto 5.6.2.7
+  // @uvm-ieee 1800.2-2020 auto 5.6.2.7
   void decr(real t, Time scaled, real secs) {
     synchronized (this) {
       if (t < 0.0) {
@@ -229,7 +229,7 @@ class uvm_time
   //
   //| $write("%.3f ps\n", delay.get_abstime(1e-12));
   //
-  // @uvm-ieee 1800.2-2017 auto 5.6.2.8
+  // @uvm-ieee 1800.2-2020 auto 5.6.2.8
   real get_abstime(real secs) {
     synchronized (this) {
       return _m_time * _m_res/secs;
@@ -247,7 +247,7 @@ class uvm_time
   //
   //| delay.set_abstime(1.5, 1e-12));
   //
-  // @uvm-ieee 1800.2-2017 auto 5.6.2.9
+  // @uvm-ieee 1800.2-2020 auto 5.6.2.9
   void set_abstime(real t, real secs) {
     synchronized (this) {
       _m_time = cast (long) (t * secs/_m_res);

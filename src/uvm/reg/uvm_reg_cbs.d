@@ -1,12 +1,12 @@
 //
 // -------------------------------------------------------------
 // Copyright 2015-2021 Coverify Systems Technology
-// Copyright 2010-2020 Mentor Graphics Corporation
-// Copyright 2004-2018 Synopsys, Inc.
-// Copyright 2010-2018 Cadence Design Systems, Inc.
 // Copyright 2010 AMD
-// Copyright 2014-2018 NVIDIA Corporation
+// Copyright 2010-2018 Cadence Design Systems, Inc.
 // Copyright 2014 Cisco Systems, Inc.
+// Copyright 2010-2020 Mentor Graphics Corporation
+// Copyright 2014-2020 NVIDIA Corporation
+// Copyright 2004-2018 Synopsys, Inc.
 //    All Rights Reserved Worldwide
 //
 //    Licensed under the Apache License, Version 2.0 (the
@@ -62,32 +62,32 @@ import esdl.rand;
 // access callback methods.
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 18.11.1
+// @uvm-ieee 1800.2-2020 auto 18.11.1
 class uvm_reg_cbs: uvm_callback
 {
 
   mixin uvm_object_utils;
   
-  // @uvm-ieee 1800.2-2017 auto 18.11.2.1
+  // @uvm-ieee 1800.2-2020 auto 18.11.2.1
   this(string name = "uvm_reg_cbs") {
     super(name);
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.11.2.2
+  // @uvm-ieee 1800.2-2020 auto 18.11.2.2
   void pre_write(uvm_reg_item rw) { }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.11.2.3
+  // @uvm-ieee 1800.2-2020 auto 18.11.2.3
   void post_write(uvm_reg_item rw) { }
 
-  // @uvm-ieee 1800.2-2017 auto 18.11.2.4
+  // @uvm-ieee 1800.2-2020 auto 18.11.2.4
   void pre_read(uvm_reg_item rw) { }
 
-  // @uvm-ieee 1800.2-2017 auto 18.11.2.5
+  // @uvm-ieee 1800.2-2020 auto 18.11.2.5
   void post_read(uvm_reg_item rw) { }
 
-  // @uvm-ieee 1800.2-2017 auto 18.11.2.6
+  // @uvm-ieee 1800.2-2020 auto 18.11.2.6
   void post_predict(in  uvm_reg_field  fld,
 		    in  uvm_reg_data_t previous,
 		    ref uvm_reg_data_t value,
@@ -96,11 +96,11 @@ class uvm_reg_cbs: uvm_callback
 		    in  uvm_reg_map    map) { }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.11.2.7
+  // @uvm-ieee 1800.2-2020 auto 18.11.2.7
   void encode(ref uvm_reg_data_t[] data) { }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.11.2.8
+  // @uvm-ieee 1800.2-2020 auto 18.11.2.8
   // FIXME SV version has ref and the callback is supposed to modify the data
   // Since this can not be done safely in multicore, we have to find
   // alternative ways
@@ -121,7 +121,7 @@ class uvm_reg_cbs: uvm_callback
 // the more verbose parameterized class
 //
 
-alias uvm_reg_cb = uvm_callbacks!(uvm_reg, uvm_reg_cbs)  /* @uvm-ieee 1800.2-2017 auto D.4.6.1*/ ;
+alias uvm_reg_cb = uvm_callbacks!(uvm_reg, uvm_reg_cbs)  /* @uvm-ieee 1800.2-2020 auto D.4.5.1*/ ;
 
 
 // Type -- NODOCS -- uvm_reg_cb_iter
@@ -132,7 +132,7 @@ alias uvm_reg_cb = uvm_callbacks!(uvm_reg, uvm_reg_cbs)  /* @uvm-ieee 1800.2-201
 // rather than the more verbose parameterized class
 //
 
-alias uvm_reg_cb_iter = uvm_callback_iter!(uvm_reg, uvm_reg_cbs)  /* @uvm-ieee 1800.2-2017 auto D.4.6.2*/ ;
+alias uvm_reg_cb_iter = uvm_callback_iter!(uvm_reg, uvm_reg_cbs)  /* @uvm-ieee 1800.2-2020 auto D.4.5.2*/ ;
 
 
 // Type -- NODOCS -- uvm_reg_bd_cb
@@ -143,7 +143,7 @@ alias uvm_reg_cb_iter = uvm_callback_iter!(uvm_reg, uvm_reg_cbs)  /* @uvm-ieee 1
 // the more verbose parameterized class
 //
 
-alias uvm_reg_bd_cb = uvm_callbacks!(uvm_reg_backdoor, uvm_reg_cbs)  /* @uvm-ieee 1800.2-2017 auto D.4.6.3*/ ;
+alias uvm_reg_bd_cb = uvm_callbacks!(uvm_reg_backdoor, uvm_reg_cbs)  /* @uvm-ieee 1800.2-2020 auto D.4.5.3*/ ;
 
 
 // Type -- NODOCS -- uvm_reg_bd_cb_iter
@@ -152,7 +152,7 @@ alias uvm_reg_bd_cb = uvm_callbacks!(uvm_reg_backdoor, uvm_reg_cbs)  /* @uvm-iee
 // Use this declaration to iterate over registered register backdoor callbacks
 // rather than the more verbose parameterized class
 //
-alias uvm_reg_bd_cb_iter = uvm_callback_iter!(uvm_reg_backdoor, uvm_reg_cbs)  /* @uvm-ieee 1800.2-2017 auto D.4.6.4*/  ;
+alias uvm_reg_bd_cb_iter = uvm_callback_iter!(uvm_reg_backdoor, uvm_reg_cbs)  /* @uvm-ieee 1800.2-2020 auto D.4.5.4*/  ;
 
 // Type -- NODOCS -- uvm_mem_cb
 //
@@ -161,7 +161,7 @@ alias uvm_reg_bd_cb_iter = uvm_callback_iter!(uvm_reg_backdoor, uvm_reg_cbs)  /*
 // Use this declaration to register memory callbacks rather than
 // the more verbose parameterized class
 //
-alias uvm_mem_cb = uvm_callbacks!(uvm_mem, uvm_reg_cbs)  /* @uvm-ieee 1800.2-2017 auto D.4.6.5*/  ;
+alias uvm_mem_cb = uvm_callbacks!(uvm_mem, uvm_reg_cbs)  /* @uvm-ieee 1800.2-2020 auto D.4.5.5*/  ;
 
 // Type -- NODOCS -- uvm_mem_cb_iter
 //
@@ -170,7 +170,7 @@ alias uvm_mem_cb = uvm_callbacks!(uvm_mem, uvm_reg_cbs)  /* @uvm-ieee 1800.2-201
 // Use this declaration to iterate over registered memory callbacks
 // rather than the more verbose parameterized class
 //
-alias uvm_mem_cb_iter = uvm_callback_iter!(uvm_mem, uvm_reg_cbs)  /* @uvm-ieee 1800.2-2017 auto D.4.6.6*/  ;
+alias uvm_mem_cb_iter = uvm_callback_iter!(uvm_mem, uvm_reg_cbs)  /* @uvm-ieee 1800.2-2020 auto D.4.5.6*/  ;
 
 
 // Type -- NODOCS -- uvm_reg_field_cb
@@ -180,7 +180,7 @@ alias uvm_mem_cb_iter = uvm_callback_iter!(uvm_mem, uvm_reg_cbs)  /* @uvm-ieee 1
 // Use this declaration to register field callbacks rather than
 // the more verbose parameterized class
 //
-alias uvm_reg_field_cb = uvm_callbacks!(uvm_reg_field, uvm_reg_cbs)  /* @uvm-ieee 1800.2-2017 auto D.4.6.7*/ ;
+alias uvm_reg_field_cb = uvm_callbacks!(uvm_reg_field, uvm_reg_cbs)  /* @uvm-ieee 1800.2-2020 auto D.4.5.7*/ ;
 
 
 // Type -- NODOCS -- uvm_reg_field_cb_iter
@@ -190,7 +190,7 @@ alias uvm_reg_field_cb = uvm_callbacks!(uvm_reg_field, uvm_reg_cbs)  /* @uvm-iee
 // Use this declaration to iterate over registered field callbacks
 // rather than the more verbose parameterized class
 //
-alias uvm_reg_field_cb_iter = uvm_callback_iter!(uvm_reg_field, uvm_reg_cbs)  /* @uvm-ieee 1800.2-2017 auto D.4.6.8*/ ;
+alias uvm_reg_field_cb_iter = uvm_callback_iter!(uvm_reg_field, uvm_reg_cbs)  /* @uvm-ieee 1800.2-2020 auto D.4.5.8*/ ;
 
 
 //-----------------------------
@@ -205,7 +205,7 @@ alias uvm_reg_field_cb_iter = uvm_callback_iter!(uvm_reg_field, uvm_reg_cbs)  /*
 //
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 18.11.4.1
+// @uvm-ieee 1800.2-2020 auto 18.11.4.1
 class uvm_reg_read_only_cbs: uvm_reg_cbs
 {
   // SEE MANTIS 6040. This is supposed to be Virtual, but cannot since an instance is 
@@ -218,7 +218,7 @@ class uvm_reg_read_only_cbs: uvm_reg_cbs
   mixin uvm_object_essentials;
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.11.4.2.1
+  // @uvm-ieee 1800.2-2020 auto 18.11.4.2.1
   // task
   override void pre_write(uvm_reg_item rw) {
     string name = rw.get_element().get_full_name();
@@ -265,7 +265,7 @@ class uvm_reg_read_only_cbs: uvm_reg_cbs
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.11.4.2.2
+  // @uvm-ieee 1800.2-2020 auto 18.11.4.2.2
   static void add(uvm_reg rg) {
     synchronized(_uvm_scope_inst) {
       uvm_reg_cb.add(rg, get());
@@ -281,7 +281,7 @@ class uvm_reg_read_only_cbs: uvm_reg_cbs
   //
   // Remove this callback from the specified register and its contained fields.
   //
-  // @uvm-ieee 1800.2-2017 auto 18.11.4.2.3
+  // @uvm-ieee 1800.2-2020 auto 18.11.4.2.3
   static void remove(uvm_reg rg) {
     uvm_reg_cb_iter cbs = new uvm_reg_cb_iter(rg);
 
@@ -309,20 +309,20 @@ class uvm_reg_read_only_cbs: uvm_reg_cbs
 //------------------------------------------------------------------------------
 
 
-// @uvm-ieee 1800.2-2017 auto 18.11.5.1
+// @uvm-ieee 1800.2-2020 auto 18.11.5.1
 class uvm_reg_write_only_cbs: uvm_reg_cbs
 {
   // SEE MANTIS 6040. This is supposed to be Virtual, but cannot since an instance is 
   // created.  leaving NON virtual for now. 
 
-  // @uvm-ieee 1800.2-2017 auto 18.1.2.1
+  // @uvm-ieee 1800.2-2020 auto 18.1.2.1
   this(string name = "uvm_reg_write_only_cbs") {
     super(name);
   }
 
   mixin uvm_object_essentials;
 
-  // @uvm-ieee 1800.2-2017 auto 18.11.5.2.1
+  // @uvm-ieee 1800.2-2020 auto 18.11.5.2.1
   // task
   override void pre_read(uvm_reg_item rw) {
     string name = rw.get_element().get_full_name();
@@ -365,7 +365,7 @@ class uvm_reg_write_only_cbs: uvm_reg_cbs
     return m_me;
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.11.5.2.2
+  // @uvm-ieee 1800.2-2020 auto 18.11.5.2.2
   static void add(uvm_reg rg) {
     synchronized(_uvm_scope_inst) {
       uvm_reg_cb.add(rg, get());
@@ -378,7 +378,7 @@ class uvm_reg_write_only_cbs: uvm_reg_cbs
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.11.5.2.3
+  // @uvm-ieee 1800.2-2020 auto 18.11.5.2.3
   static void remove(uvm_reg rg) {
     uvm_reg_cb_iter cbs = new uvm_reg_cb_iter(rg);
 

@@ -1,7 +1,7 @@
 //----------------------------------------------------------------------
-// Copyright 2016-2019 Coverify Systems Technology
+// Copyright 2016-2021 Coverify Systems Technology
 // Copyright 2010-2018 Cadence Design Systems, Inc.
-// Copyright 2014-2018 NVIDIA Corporation
+// Copyright 2014-2020 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -23,7 +23,7 @@ module uvm.base.uvm_traversal;
 
 import uvm.base.uvm_object: uvm_object;
 import uvm.base.uvm_component: uvm_component;
-import esdl.rand.misc: _esdl__Norand;
+import esdl.rand.misc: rand;
 
 
 import std.regex;
@@ -38,8 +38,8 @@ import std.regex;
 // 
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto F.5.1.1
-abstract class uvm_visitor(NODE=uvm_component): uvm_object, _esdl__Norand
+// @uvm-ieee 1800.2-2020 auto F.5.1.1
+abstract class uvm_visitor(NODE=uvm_component): uvm_object, rand.disable
 {
   this(string name = "") {
     super(name);
@@ -49,17 +49,17 @@ abstract class uvm_visitor(NODE=uvm_component): uvm_object, _esdl__Norand
   //
   // This method will be invoked by the visitor before the first NODE is visited
 	
-  // @uvm-ieee 1800.2-2017 auto F.5.1.2.1
+  // @uvm-ieee 1800.2-2020 auto F.5.1.2.1
   void begin_v() { }
 	
   // Function -- NODOCS -- end_v
   //
   // This method will be invoked by the visitor after the last NODE is visited
 		
-  // @uvm-ieee 1800.2-2017 auto F.5.1.2.2
+  // @uvm-ieee 1800.2-2020 auto F.5.1.2.2
   void end_v() { }
 
-  // @uvm-ieee 1800.2-2017 auto F.5.1.2.3
+  // @uvm-ieee 1800.2-2020 auto F.5.1.2.3
   abstract void visit(NODE node);
 };
 
@@ -73,10 +73,10 @@ abstract class uvm_visitor(NODE=uvm_component): uvm_object, _esdl__Norand
 // 
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto F.5.2.1
+// @uvm-ieee 1800.2-2020 auto F.5.2.1
 abstract class uvm_structure_proxy(STRUCTURE=uvm_component): uvm_object
 {
-  // @uvm-ieee 1800.2-2017 auto F.5.2.2.1
+  // @uvm-ieee 1800.2-2020 auto F.5.2.2.1
   this(string name = "") {
     super(name);
   }
@@ -85,7 +85,7 @@ abstract class uvm_structure_proxy(STRUCTURE=uvm_component): uvm_object
   //
   // This method will be return in ~children~ a set of the direct subelements of ~s~
 		
-  // @uvm-ieee 1800.2-2017 auto F.5.2.2.2
+  // @uvm-ieee 1800.2-2020 auto F.5.2.2.2
   abstract void get_immediate_children(STRUCTURE s, STRUCTURE[] children);
 };
 
@@ -97,7 +97,7 @@ abstract class uvm_structure_proxy(STRUCTURE=uvm_component): uvm_object
 // 
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto F.5.3.1
+// @uvm-ieee 1800.2-2020 auto F.5.3.1
 abstract class uvm_visitor_adapter(STRUCTURE=uvm_component,
 				   VISITOR=uvm_visitor!STRUCTURE): uvm_object
 {
@@ -108,12 +108,12 @@ abstract class uvm_visitor_adapter(STRUCTURE=uvm_component,
   // by invoking ~p~.get_immediate_children().~invoke_begin_end~ determines whether the visitors begin/end functions 
   // should be invoked prior to traversal.
 	
-  // @uvm-ieee 1800.2-2017 auto F.5.3.2.2
+  // @uvm-ieee 1800.2-2020 auto F.5.3.2.2
   abstract void accept(STRUCTURE s, VISITOR v,
 		       uvm_structure_proxy!STRUCTURE p,
 		       bool invoke_begin_end=true);
 
-  // @uvm-ieee 1800.2-2017 auto F.5.3.2.1
+  // @uvm-ieee 1800.2-2020 auto F.5.3.2.1
   this (string name = "") {
     super(name);
   }
@@ -128,13 +128,13 @@ abstract class uvm_visitor_adapter(STRUCTURE=uvm_component,
 // 
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto F.5.4.1
+// @uvm-ieee 1800.2-2020 auto F.5.4.1
 class uvm_top_down_visitor_adapter(STRUCTURE=uvm_component,
 				   VISITOR=uvm_visitor!STRUCTURE):
   uvm_visitor_adapter!(STRUCTURE,VISITOR)
 {
 
-  // @uvm-ieee 1800.2-2017 auto F.5.4.2
+  // @uvm-ieee 1800.2-2020 auto F.5.4.2
   this(string name = "") {
     super(name);
   }      
@@ -170,13 +170,13 @@ class uvm_top_down_visitor_adapter(STRUCTURE=uvm_component,
 // 
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto F.5.5.1
+// @uvm-ieee 1800.2-2020 auto F.5.5.1
 class uvm_bottom_up_visitor_adapter(STRUCTURE=uvm_component,
 				    VISITOR=uvm_visitor!STRUCTURE):
   uvm_visitor_adapter!(STRUCTURE,VISITOR)
 {
 
-  // @uvm-ieee 1800.2-2017 auto F.5.5.2
+  // @uvm-ieee 1800.2-2020 auto F.5.5.2
   this(string name = "") {
     super(name);
   }
@@ -211,13 +211,13 @@ class uvm_bottom_up_visitor_adapter(STRUCTURE=uvm_component,
 // During traversal will visit all direct children of ~s~ before all grand-children are visited. 
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto F.5.6.1
+// @uvm-ieee 1800.2-2020 auto F.5.6.1
 class uvm_by_level_visitor_adapter(STRUCTURE=uvm_component,
 				   VISITOR=uvm_visitor!STRUCTURE):
   uvm_visitor_adapter!(STRUCTURE,VISITOR)
 {
 
-  // @uvm-ieee 1800.2-2017 auto F.5.6.2
+  // @uvm-ieee 1800.2-2020 auto F.5.6.2
   this(string name = "") {
     super(name);
   }
@@ -258,7 +258,7 @@ class uvm_by_level_visitor_adapter(STRUCTURE=uvm_component,
 // The class is providing the proxy to extract the direct subcomponents of ~s~ 
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto F.5.7.1
+// @uvm-ieee 1800.2-2020 auto F.5.7.1
 class uvm_component_proxy: uvm_structure_proxy!uvm_component
 {
   override void get_immediate_children(uvm_component s,
@@ -266,7 +266,7 @@ class uvm_component_proxy: uvm_structure_proxy!uvm_component
     s.get_children(children);
   }
 
-  // @uvm-ieee 1800.2-2017 auto F.5.7.2
+  // @uvm-ieee 1800.2-2020 auto F.5.7.2
   this(string name = "") {
     super(name);
   }

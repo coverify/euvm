@@ -1,11 +1,12 @@
 //
 // -------------------------------------------------------------
 // Copyright 2015-2021 Coverify Systems Technology
-// Copyright 2010-2020 Mentor Graphics Corporation
-// Copyright 2004-2018 Synopsys, Inc.
-// Copyright 2010-2018 Cadence Design Systems, Inc.
 // Copyright 2010 AMD
-// Copyright 2015-2018 NVIDIA Corporation
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2010-2020 Mentor Graphics Corporation
+// Copyright 2015-2020 NVIDIA Corporation
+// Copyright 2004-2018 Synopsys, Inc.
+// Copyright 2020 Verific
 //    All Rights Reserved Worldwide
 //
 //    Licensed under the Apache License, Version 2.0 (the
@@ -59,26 +60,26 @@ import std.string: format;
 // or that are not accessible using the default DPI backdoor mechanism.
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 19.5.1
+// @uvm-ieee 1800.2-2020 auto 19.5.1
 abstract class uvm_reg_backdoor: uvm_object
 {
   mixin(uvm_sync_string);
   
   mixin uvm_abstract_object_utils;
 
-  // @uvm-ieee 1800.2-2017 auto 19.5.2.1
+  // @uvm-ieee 1800.2-2020 auto 19.5.2.1
   this(string name = "") {
     super(name);
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.5.2.2
+  // @uvm-ieee 1800.2-2020 auto 19.5.2.2
   // task
   void do_pre_read(uvm_reg_item rw) {
     pre_read(rw);
     uvm_do_callbacks((uvm_reg_cbs cb) {cb.pre_read(rw);});
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.5.2.3
+  // @uvm-ieee 1800.2-2020 auto 19.5.2.3
   // task
   protected void do_post_read(uvm_reg_item rw) {
     uvm_reg_data_t[] value_array;
@@ -90,7 +91,7 @@ abstract class uvm_reg_backdoor: uvm_object
     post_read(rw);
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.5.2.4
+  // @uvm-ieee 1800.2-2020 auto 19.5.2.4
   // task
   protected void do_pre_write(uvm_reg_item rw) {
     pre_write(rw);
@@ -101,20 +102,20 @@ abstract class uvm_reg_backdoor: uvm_object
       });
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.5.2.5
+  // @uvm-ieee 1800.2-2020 auto 19.5.2.5
   // task
   protected void do_post_write(uvm_reg_item rw) {
     uvm_do_callbacks((uvm_reg_cbs cb) {cb.post_write(rw);});
     post_write(rw);
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.5.2.6
+  // @uvm-ieee 1800.2-2020 auto 19.5.2.6
   // task
   void write(uvm_reg_item rw) {
     uvm_fatal("RegModel", "uvm_reg_backdoor::write() method has not been overloaded");
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.5.2.7
+  // @uvm-ieee 1800.2-2020 auto 19.5.2.7
   // task
   void read(uvm_reg_item rw) {
     do_pre_read(rw);
@@ -122,19 +123,17 @@ abstract class uvm_reg_backdoor: uvm_object
     do_post_read(rw);
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.5.2.8
+  // @uvm-ieee 1800.2-2020 auto 19.5.2.8
   void read_func(uvm_reg_item rw) {
     uvm_fatal("RegModel", "uvm_reg_backdoor::read_func() method has not been overloaded");
     // SV version has this -- would it ever be executed after uvm_fatal
     rw.set_status(UVM_NOT_OK);
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.5.2.9
   bool is_auto_updated(uvm_reg_field field) {
     return false;
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.5.2.10
   // task
   private void wait_for_change(uvm_object element) {
     uvm_fatal("RegModel", "uvm_reg_backdoor::wait_for_change() method has not been overloaded");
@@ -175,7 +174,7 @@ abstract class uvm_reg_backdoor: uvm_object
 	  foreach (field; fields) {
 	    if (this.is_auto_updated(field)) {
 	      uvm_reg_data_t tmp = (val >> field.get_lsb_pos()) &
-		((1 << field.get_n_bits())-1);
+		((1L << field.get_n_bits())-1);
 	      r_item.set_value(tmp, 0);
 	      field.do_predict(r_item);
 	    }
@@ -206,19 +205,19 @@ abstract class uvm_reg_backdoor: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 19.5.2.11
+  // @uvm-ieee 1800.2-2020 auto 19.5.2.9
   // task
   void pre_read(uvm_reg_item rw) { }
 
-  // @uvm-ieee 1800.2-2017 auto 19.5.2.12
+  // @uvm-ieee 1800.2-2020 auto 19.5.2.10
   // task
   void post_read(uvm_reg_item rw) { }
 
-  // @uvm-ieee 1800.2-2017 auto 19.5.2.13
+  // @uvm-ieee 1800.2-2020 auto 19.5.2.11
   // task
   void pre_write(uvm_reg_item rw) { }
 
-  // @uvm-ieee 1800.2-2017 auto 19.5.2.14
+  // @uvm-ieee 1800.2-2020 auto 19.5.2.12
   // task
   void post_write(uvm_reg_item rw) { }
 

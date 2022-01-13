@@ -1,10 +1,10 @@
 //
 // -------------------------------------------------------------
 // Copyright 2015-2021 Coverify Systems Technology
-// Copyright 2010-2011 Mentor Graphics Corporation
-// Copyright 2014 Semifore
 // Copyright 2010-2018 Cadence Design Systems, Inc.
-// Copyright 2014-2018 NVIDIA Corporation
+// Copyright 2010-2020 Mentor Graphics Corporation
+// Copyright 2014-2020 NVIDIA Corporation
+// Copyright 2014 Semifore
 //    All Rights Reserved Worldwide
 //
 //    Licensed under the Apache License, Version 2.0 (the
@@ -53,9 +53,10 @@ import esdl.rand;
 
 import std.string: format;
 
-// @uvm-ieee 1800.2-2017 auto 18.8.1
+// @uvm-ieee 1800.2-2020 auto 18.8.1
 class uvm_reg_fifo: uvm_reg
 {
+  mixin Randomization;
   mixin uvm_sync;
   
   @uvm_private_sync
@@ -101,7 +102,7 @@ class uvm_reg_fifo: uvm_reg
   //----------------------
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.8.3.1
+  // @uvm-ieee 1800.2-2020 auto 18.8.3.1
   this(string name,
        uint size,
        uint n_bits,
@@ -126,7 +127,7 @@ class uvm_reg_fifo: uvm_reg
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.8.3.2
+  // @uvm-ieee 1800.2-2020 auto 18.8.3.2
   void set_compare(uvm_check_e check=UVM_CHECK) {
     synchronized(this) {
       _value.set_compare(check);
@@ -182,13 +183,13 @@ class uvm_reg_fifo: uvm_reg
   //  enabled, the frontmost value in abstract FIFO is popped.
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.8.5.2
+  // @uvm-ieee 1800.2-2020 auto 18.8.5.2
   override void set(uvm_reg_data_t  value,
 		    string          fname = "",
 		    int             lineno = 0) {
     synchronized(this) {
       // emulate write, with intention of update
-      value &= ((1 << get_n_bits())-1);
+      value &= ((1L << get_n_bits())-1);
       if (_fifo.length == _m_size) {
 	return;
       }
@@ -199,7 +200,7 @@ class uvm_reg_fifo: uvm_reg
   }
     
 
-  // @uvm-ieee 1800.2-2017 auto 18.8.5.7
+  // @uvm-ieee 1800.2-2020 auto 18.8.5.5
   // task
   override void update(out uvm_status_e  status,
 		       uvm_door_e        door = UVM_DEFAULT_DOOR,
@@ -233,7 +234,7 @@ class uvm_reg_fifo: uvm_reg
   // <set_compare()>.
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.8.5.1
+  // @uvm-ieee 1800.2-2020 auto 18.8.5.1
   override uvm_reg_data_t get(string fname="", int lineno=0) {
     synchronized(this) {
       //return fifo.pop_front();
@@ -274,7 +275,7 @@ class uvm_reg_fifo: uvm_reg
 	  _fifo ~= this._value.get_value();
 	break;
       case UVM_PREDICT_READ:
-	uvm_reg_data_t value = rw.get_value(0) & ((1 << get_n_bits())-1);
+	uvm_reg_data_t value = rw.get_value(0) & ((1L << get_n_bits())-1);
 	uvm_reg_data_t mirror_val;
 	if (_fifo.length == 0) {
 	  return;

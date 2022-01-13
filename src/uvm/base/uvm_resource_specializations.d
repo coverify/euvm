@@ -1,8 +1,8 @@
 //----------------------------------------------------------------------
-// Copyright 2014-2019 Coverify Systems Technology
-// Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2014-2021 Coverify Systems Technology
 // Copyright 2010-2018 Cadence Design Systems, Inc.
-// Copyright 2018 NVIDIA Corporation
+// Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2018-2020 NVIDIA Corporation
 // Copyright 2017 Verific
 //   All Rights Reserved Worldwide
 //

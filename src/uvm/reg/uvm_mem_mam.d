@@ -1,13 +1,13 @@
 //
 // -------------------------------------------------------------
 // Copyright 2014-2021 Coverify Systems Technology
-// Copyright 2010-2011 Mentor Graphics Corporation
-// Copyright 2014 Semifore
-// Copyright 2004-2014 Synopsys, Inc.
-// Copyright 2010-2018 Cadence Design Systems, Inc.
 // Copyright 2010 AMD
-// Copyright 2014-2018 NVIDIA Corporation
+// Copyright 2010-2018 Cadence Design Systems, Inc.
 // Copyright 2018 Cisco Systems, Inc.
+// Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2014-2020 NVIDIA Corporation
+// Copyright 2014-2020 Semifore
+// Copyright 2004-2014 Synopsys, Inc.
 //    All Rights Reserved Worldwide
 //
 //    Licensed under the Apache License, Version 2.0 (the
@@ -83,7 +83,7 @@ import std.string: format;
 // contiguous address space.
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 18.12.1
+// @uvm-ieee 1800.2-2020 auto 18.12.1
 class uvm_mem_mam
 {
 
@@ -122,10 +122,10 @@ class uvm_mem_mam
   // Region allocation policy
   //
   // This object is repeatedly randomized when allocating new regions.
-  @uvm_private_sync @rand(false)
+  @uvm_private_sync
   private uvm_mem_mam_policy _default_alloc;
   
-  @uvm_private_sync @rand(false)
+  @uvm_private_sync
   private uvm_mem _memory;
 
   @uvm_private_sync
@@ -470,15 +470,15 @@ class uvm_mem_mam
 // methods.
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 18.12.7.1
+// @uvm-ieee 1800.2-2020 auto 18.12.7.1
 class uvm_mem_region
 {
 
   mixin(uvm_sync_string);
   @uvm_private_sync
-  private ulong _Xstart_offsetX;  // Can't be local since function
+  private uvm_reg_addr_t _Xstart_offsetX;  // Can't be local since function
   @uvm_private_sync
-  private ulong _Xend_offsetX;    // calls not supported in constraints
+  private uvm_reg_addr_t _Xend_offsetX;    // calls not supported in constraints
   @uvm_private_sync
   private uint         _len;
   @uvm_private_sync
@@ -492,8 +492,8 @@ class uvm_mem_region
   @uvm_private_sync
   /*local*/ private uvm_vreg _XvregX;
 
-  public this (ulong start_offset,
-	       ulong end_offset,
+  public this (uvm_reg_addr_t start_offset,
+	       uvm_reg_addr_t end_offset,
 	       uint len,
 	       uint n_bytes,
 	       uvm_mem_mam parent) {
@@ -515,7 +515,8 @@ class uvm_mem_region
   // Return the address offset, within the memory,
   // where this memory region starts.
   //
-  public ulong get_start_offset() {
+  // @uvm-ieee 1800.2-2020 auto 18.12.7.2.1
+  public uvm_reg_addr_t get_start_offset() {
     synchronized(this) {
       return this._Xstart_offsetX;
     }
@@ -528,7 +529,8 @@ class uvm_mem_region
   // Return the address offset, within the memory,
   // where this memory region ends.
   //
-  public ulong get_end_offset() {
+  // @uvm-ieee 1800.2-2020 auto 18.12.7.2.2
+  public uvm_reg_addr_t get_end_offset() {
     synchronized(this) {
       return this._Xend_offsetX;
     }
@@ -562,18 +564,18 @@ class uvm_mem_region
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.12.7.2.5
+  // @uvm-ieee 1800.2-2020 auto 18.12.7.2.5
   public void release_region() {
     this.parent.release_region(this);
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.12.7.2.6
+  // @uvm-ieee 1800.2-2020 auto 18.12.7.2.6
   public uvm_mem get_memory() {
     return this.parent.get_memory();
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.12.7.2.7
+  // @uvm-ieee 1800.2-2020 auto 18.12.7.2.7
   public uvm_vreg get_virtual_registers() {
     synchronized(this) {
       return this._XvregX;
@@ -581,7 +583,7 @@ class uvm_mem_region
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.12.7.2.8
+  // @uvm-ieee 1800.2-2020 auto 18.12.7.2.8
   // task
   public void write(out uvm_status_e   status,
 		    uvm_reg_addr_t     offset,
@@ -622,7 +624,7 @@ class uvm_mem_region
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.12.7.2.9
+  // @uvm-ieee 1800.2-2020 auto 18.12.7.2.9
   // task
   public void read(out uvm_status_e   status,
 		   uvm_reg_addr_t     offset,
@@ -662,7 +664,7 @@ class uvm_mem_region
 	     path, map, parent, prior, extension);
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.12.7.2.10
+  // @uvm-ieee 1800.2-2020 auto 18.12.7.2.10
   // task
   public void burst_write(out uvm_status_e   status,
 			  uvm_reg_addr_t     offset,
@@ -704,7 +706,7 @@ class uvm_mem_region
 
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.12.7.2.11
+  // @uvm-ieee 1800.2-2020 auto 18.12.7.2.11
   // task
   public void burst_read(out uvm_status_e       status,
 			 uvm_reg_addr_t         offset,
@@ -745,7 +747,7 @@ class uvm_mem_region
 
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.12.7.2.12
+  // @uvm-ieee 1800.2-2020 auto 18.12.7.2.12
   // task
   public void poke(out uvm_status_e   status,
 		   uvm_reg_addr_t     offset,
@@ -783,7 +785,7 @@ class uvm_mem_region
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.12.7.2.13
+  // @uvm-ieee 1800.2-2020 auto 18.12.7.2.13
   // task
   public void peek(out uvm_status_e   status,
 		   uvm_reg_addr_t     offset,
@@ -844,7 +846,7 @@ class uvm_mem_region
 // it can be implemented in the pre/post_randomize() method.
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 18.12.8.1
+// @uvm-ieee 1800.2-2020 auto 18.12.8.1
 class uvm_mem_mam_policy
 {
   mixin(uvm_sync_string);
@@ -858,21 +860,21 @@ class uvm_mem_mam_policy
   // variable -- NODOCS -- start_offset
   // The starting offset of the region
   @uvm_private_sync
-  @rand private ulong _start_offset;
+  @rand private uvm_reg_addr_t _start_offset;
 
   // variable -- NODOCS -- min_offset
   // Minimum address offset in the managed address space
   @uvm_private_sync
-  private ulong _min_offset;
+  private uvm_reg_addr_t _min_offset;
 
   // variable -- NODOCS -- max_offset
   // Maximum address offset in the managed address space
   @uvm_private_sync
-  private ulong _max_offset;
+  private uvm_reg_addr_t _max_offset;
 
   // variable -- NODOCS -- in_use
   // Regions already allocated in the managed address space
-  @uvm_private_sync
+  @uvm_private_sync // @rand(false)
   private uvm_mem_region[] _in_use;
 
   Constraint!q{
@@ -891,7 +893,7 @@ class uvm_mem_mam_policy
 
 
 
-// @uvm-ieee 1800.2-2017 auto 18.12.9.1
+// @uvm-ieee 1800.2-2020 auto 18.12.9.1
 class uvm_mem_mam_cfg
 {
   mixin(uvm_sync_string);
@@ -906,12 +908,12 @@ class uvm_mem_mam_cfg
   // variable -- NODOCS -- start_offset
   // Lowest address of managed space
   @uvm_public_sync
-  @rand private ulong _start_offset;
+  @rand private uvm_reg_addr_t _start_offset;
 
   // variable -- NODOCS -- end_offset
   // Last address of managed space
   @uvm_public_sync
-  @rand private ulong _end_offset;
+  @rand private uvm_reg_addr_t _end_offset;
 
   // variable -- NODOCS -- mode
   // Region allocation mode

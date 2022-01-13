@@ -1,15 +1,15 @@
 //
 //------------------------------------------------------------------------------
-// Copyright 2012-2019 Coverify Systems Technology
-// Copyright 2007-2018 Mentor Graphics Corporation
+// Copyright 2012-2021 Coverify Systems Technology
+// Copyright 2010-2012 AMD
 // Copyright 2015 Analog Devices, Inc.
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2014-2017 Cisco Systems, Inc.
+// Copyright 2007-2020 Mentor Graphics Corporation
+// Copyright 2014-2020 NVIDIA Corporation
 // Copyright 2014 Semifore
 // Copyright 2010-2018 Synopsys, Inc.
-// Copyright 2007-2018 Cadence Design Systems, Inc.
 // Copyright 2013 Verilab
-// Copyright 2010-2012 AMD
-// Copyright 2014-2018 NVIDIA Corporation
-// Copyright 2014-2017 Cisco Systems, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -52,6 +52,7 @@ import uvm.meta.meta;
 import uvm.meta.misc;
 
 import uvm.base.uvm_object: uvm_object;
+import uvm.base.uvm_root: uvm_root;
 import uvm.base.uvm_report_object: uvm_report_object;
 import uvm.base.uvm_report_message: uvm_report_message,
   uvm_report_message_element_container;
@@ -72,7 +73,7 @@ import std.conv: to;
 //  }
 
 
-// @uvm-ieee 1800.2-2017 auto 6.5.1
+// @uvm-ieee 1800.2-2020 auto 6.5.1.1
 class uvm_report_server:  uvm_object
 {
   mixin (uvm_sync_string);
@@ -82,53 +83,54 @@ class uvm_report_server:  uvm_object
     return qualifiedTypeName!(typeof(this));
   }
 
+  // @uvm-ieee 1800.2-2020 auto 6.5.1.2.1
   this(string name="base") {
     super(name);
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 6.5.1.2
+  // @uvm-ieee 1800.2-2020 auto 6.5.1.2.3
   abstract void set_max_quit_count(int count, bool overridable = true);
 
-  // @uvm-ieee 1800.2-2017 auto 6.5.1.1
+  // @uvm-ieee 1800.2-2020 auto 6.5.1.2.2
   abstract int get_max_quit_count();
 
-  // @uvm-ieee 1800.2-2017 auto 6.5.1.4
+  // @uvm-ieee 1800.2-2020 auto 6.5.1.2.5
   abstract void set_quit_count(int quit_count);
 
-  // @uvm-ieee 1800.2-2017 auto 6.5.1.3
+  // @uvm-ieee 1800.2-2020 auto 6.5.1.2.4
   abstract int get_quit_count();
 
-  // @uvm-ieee 1800.2-2017 auto 6.5.1.6
+  // @uvm-ieee 1800.2-2020 auto 6.5.1.2.7
   abstract void set_severity_count(uvm_severity severity, int count);
 
-  // @uvm-ieee 1800.2-2017 auto 6.5.1.5
+  // @uvm-ieee 1800.2-2020 auto 6.5.1.2.6
   abstract int get_severity_count(uvm_severity severity);
 
   // Function -- NODOCS -- set_id_count
   // sets the count of already passed messages with ~id~ to ~count~
   abstract void set_id_count(string id, int count);
 
-  // @uvm-ieee 1800.2-2017 auto 6.5.1.7
+  // @uvm-ieee 1800.2-2020 auto 6.5.1.2.8
   abstract int get_id_count(string id);
 
 
-  // @uvm-ieee 1800.2-2017 auto 6.5.1.8
+  // @uvm-ieee 1800.2-2020 auto 6.5.1.2.9
   abstract void get_id_set(out string[] q);
 
 
-  // @uvm-ieee 1800.2-2017 auto 6.5.1.9
+  // @uvm-ieee 1800.2-2020 auto 6.5.1.2.10
   abstract void get_severity_set(out uvm_severity[] q);
 
 
-  // @uvm-ieee 1800.2-2017 auto 6.5.1.11
+  // @uvm-ieee 1800.2-2020 auto 6.5.1.2.12
   abstract void set_message_database(uvm_tr_database database);
 
-  // @uvm-ieee 1800.2-2017 auto 6.5.1.12
+  // @uvm-ieee 1800.2-2020 auto 6.5.1.2.11
   abstract uvm_tr_database get_message_database();
 
 
-  // @uvm-ieee 1800.2-2017 auto 6.5.1.12
+  // @uvm-ieee 1800.2-2020 auto 6.5.1.2.13
   override void do_copy (uvm_object rhs) {
     import uvm.base.uvm_globals;
     synchronized (this) {
@@ -161,7 +163,7 @@ class uvm_report_server:  uvm_object
   //
   // Main entry for uvm_report_server, combines execute_report_message and compose_report_message
 
-  // @uvm-ieee 1800.2-2017 auto 6.5.1.13
+  // @uvm-ieee 1800.2-2020 auto 6.5.1.2.14
   abstract void process_report_message(uvm_report_message report_message);
 
 
@@ -171,7 +173,7 @@ class uvm_report_server:  uvm_object
   //
   // Expert users can overload this method to customize action processing.
 
-  // @uvm-ieee 1800.2-2017 auto 6.5.1.15
+  // @uvm-ieee 1800.2-2020 auto 6.5.1.2.16
   abstract void execute_report_message(uvm_report_message report_message,
 				       string composed_message);
 
@@ -183,7 +185,7 @@ class uvm_report_server:  uvm_object
   //
   // Expert users can overload this method to customize report formatting.
 
-  // @uvm-ieee 1800.2-2017 auto 6.5.1.14
+  // @uvm-ieee 1800.2-2020 auto 6.5.1.2.15
   abstract string compose_report_message(uvm_report_message report_message,
 					 string report_object_name = "");
 
@@ -196,7 +198,7 @@ class uvm_report_server:  uvm_object
   //
   // The <run_test> method in uvm_top calls this method.
 
-  // @uvm-ieee 1800.2-2017 auto 6.5.1.16
+  // @uvm-ieee 1800.2-2020 auto 6.5.1.2.17
   abstract void report_summarize(UVM_FILE file = UVM_STDOUT);
 
   // Function -- NODOCS -- set_server
@@ -219,7 +221,7 @@ class uvm_report_server:  uvm_object
   // | // Not using the uvm_coreservice_t:
   // | uvm_report_server::set_server(your_server);
 
-  // @uvm-ieee 1800.2-2017 auto 6.5.1.18
+  // @uvm-ieee 1800.2-2020 auto 6.5.1.2.19
   static void set_server(uvm_report_server server) {
     import uvm.base.uvm_coreservice;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
@@ -247,7 +249,7 @@ class uvm_report_server:  uvm_object
   // | rs = uvm_report_server::get_server();
   //
 
-  // @uvm-ieee 1800.2-2017 auto 6.5.1.17
+  // @uvm-ieee 1800.2-2020 auto 6.5.1.2.18
   static uvm_report_server get_server() {
     import uvm.base.uvm_coreservice;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
@@ -260,10 +262,10 @@ class uvm_report_server:  uvm_object
 // CLASS: uvm_default_report_server
 //
 // Default implementation of the UVM report server, as defined in section
-// 6.5.2 of 1800.2-2017
+// 6.5.2 of 1800.2-2020
 //
 
-// @uvm-ieee 1800.2-2017 auto 6.5.2
+// @uvm-ieee 1800.2-2020 auto 6.5.2
 class uvm_default_report_server: uvm_report_server
 {
   mixin (uvm_sync_string);
@@ -863,6 +865,8 @@ class uvm_default_report_server: uvm_report_server
       string verbosity_str;
       string terminator_str;
       string msg_body_str;
+      string trace_str;
+      
       uvm_report_handler l_report_handler;
 
       uvm_severity l_severity = report_message.get_severity();
@@ -876,6 +880,10 @@ class uvm_default_report_server: uvm_report_server
 
       // Make definable in terms of units.
       string time_str = format("%0s", getRootEntity.getSimTime);
+
+      if (l_severity == uvm_severity.UVM_TRACE) {
+	trace_str = format(" [%0.6f]", getRootEntity.getRunTime()/1000000.0);
+      }
 
       if (report_message.get_context() != "") {
 	context_str = "@@" ~ report_message.get_context();
@@ -914,8 +922,9 @@ class uvm_default_report_server: uvm_report_server
 	report_object_name = l_report_handler.get_full_name();
       }
 
-      return sev_string ~ verbosity_str ~ " " ~ filename_line_string ~
-	"@ " ~ time_str ~ ": " ~ report_object_name ~ context_str ~ " [" ~
+      return sev_string ~ trace_str ~ verbosity_str ~ " " ~
+	filename_line_string ~ "@ " ~ time_str ~ ": " ~
+	report_object_name ~ context_str ~ " [" ~
 	report_message.get_id() ~ "] " ~ msg_body_str ~ terminator_str;
     }
   }
@@ -936,7 +945,7 @@ class uvm_default_report_server: uvm_report_server
     synchronized (this) {
       string q;
 
-      uvm_report_catcher.summarize();
+      uvm_report_catcher.summarize(file);
       q ~= "\n--- UVM Report Summary ---\n\n";
 
       if (_m_max_quit_count != 0) {
@@ -958,7 +967,18 @@ class uvm_default_report_server: uvm_report_server
 	  q ~= format("[%s] %5d\n", l_id, l_count);
 	}
       }
-      uvm_info("UVM/REPORT/SERVER", q, uvm_verbosity.UVM_NONE);
+      if (file == UVM_STDOUT) {
+	uvm_info("UVM/REPORT/SERVER", q, uvm_verbosity.UVM_NONE);
+      }
+      else {
+	// Re-route the output for the message to the file by changing the action, restoring to original setting after message reported
+	uvm_root root = uvm_root.get();
+	uvm_action action = root.get_report_action(uvm_severity.UVM_INFO, "UVM/REPORT/SERVER");
+	root.set_report_id_action("UVM/REPORT/SERVER", uvm_action_type.UVM_LOG);
+	root.set_report_id_file("UVM/REPORT/SERVER", file);
+	uvm_info("UVM/REPORT/SERVER", q, uvm_verbosity.UVM_NONE);
+	root.set_report_id_action("UVM/REPORT/SERVER", action);
+      }
     }
   }
 

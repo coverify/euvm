@@ -24,7 +24,8 @@ import esdl.base.core: Event, Process, NamedComp;
 import esdl.data.queue: Queue;
 // This file lists D routines required for coding UVM
 
-import std.traits: isNumeric;
+import std.traits: isNumeric, BaseClassesTuple;
+import std.typetuple: staticIndexOf;
 
 static string declareEnums (alias E)()
 {
@@ -690,4 +691,40 @@ uint bitCount(V)(V v) {
 bool inside(T)(T t, T[] args ...) {
   foreach (arg; args) if (t == arg) return true;
   return false;
+}
+
+extern (C) Object _d_newclass(TypeInfo_Class ci);
+
+T staticCast(T, F)(const F from)
+  // if (is (F == class) && is (T == class)
+  //    // make sure that F is indeed amongst the base classes of T
+  //    && staticIndexOf!(F, BaseClassesTuple!T) != -1
+  //    )
+     in {
+       // assert statement will not be compiled for production release
+       assert((from is null) || cast(T)from !is null);
+     }
+do {
+  return cast(T) cast(void*) from;
+ }
+
+
+// Object dup(Object obj) {
+//   if (obj is null) return null;
+//   ClassInfo ci = obj.classinfo;
+//   Object clone = _d_newclass(ci);
+//   size_t start = Object.classinfo.init.length;
+//   size_t end   = ci.init.length;
+//   (cast(void*) clone)[start..end] = (cast(void*) obj)[start..end];
+//   return clone;
+// }
+
+T shallowCopy(T)(T obj) if (is (T == class)) {
+  if (obj is null) return null;
+  ClassInfo ci = obj.classinfo;
+  Object clone = _d_newclass(ci);
+  size_t start = Object.classinfo.m_init.length;
+  size_t end   = ci.m_init.length;
+  (cast(void*) clone)[start..end] = (cast(void*) obj)[start..end];
+  return staticCast!T(clone);
 }

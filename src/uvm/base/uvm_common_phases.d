@@ -1,11 +1,11 @@
 //----------------------------------------------------------------------
-// Copyright 2014-2019 Coverify Systems Technology
-// Copyright 2007-2018 Cadence Design Systems, Inc.
-// Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2014-2021 Coverify Systems Technology
 // Copyright 2011 AMD
-// Copyright 2014-2018 NVIDIA Corporation
-// Copyright 2013 Cisco Systems, Inc.
 // Copyright 2012 Accellera Systems Initiative
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2013 Cisco Systems, Inc.
+// Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2014-2020 NVIDIA Corporation
 // Copyright 2018 Synopsys, Inc.
 //   All Rights Reserved Worldwide
 //
@@ -80,7 +80,7 @@ import uvm.base.uvm_scope;
 import uvm.meta.misc;
 import uvm.meta.meta;
 
-// @uvm-ieee 1800.2-2017 auto 9.8.1.1
+// @uvm-ieee 1800.2-2020 auto 9.8.1.1
 final class uvm_build_phase: uvm_topdown_phase
 {
   static class uvm_scope: uvm_scope_base
@@ -144,7 +144,7 @@ final class uvm_build_phase: uvm_topdown_phase
 // - All independent phase domains are set.
 //
 
-// @uvm-ieee 1800.2-2017 auto 9.8.1.2
+// @uvm-ieee 1800.2-2020 auto 9.8.1.2
 final class uvm_connect_phase: uvm_bottomup_phase
 {
   static class uvm_scope: uvm_scope_base
@@ -236,7 +236,7 @@ final class uvm_setup_phase: uvm_topdown_phase
 // Exit Criteria:
 // - None.
 
-// @uvm-ieee 1800.2-2017 auto 9.8.1.3
+// @uvm-ieee 1800.2-2020 auto 9.8.1.3
 final class uvm_end_of_elaboration_phase: uvm_bottomup_phase
 {
   static class uvm_scope: uvm_scope_base
@@ -294,7 +294,7 @@ final class uvm_end_of_elaboration_phase: uvm_bottomup_phase
 // - None.
 
 
-// @uvm-ieee 1800.2-2017 auto 9.8.1.4
+// @uvm-ieee 1800.2-2020 auto 9.8.1.4
 final class uvm_start_of_simulation_phase: uvm_bottomup_phase
 {
   static class uvm_scope: uvm_scope_base
@@ -329,7 +329,7 @@ final class uvm_start_of_simulation_phase: uvm_bottomup_phase
 }
 
 
-// @uvm-ieee 1800.2-2017 auto 9.8.1.5
+// @uvm-ieee 1800.2-2020 auto 9.8.1.5
 final class uvm_run_phase: uvm_task_phase
 {
   static class uvm_scope: uvm_scope_base
@@ -365,7 +365,7 @@ final class uvm_run_phase: uvm_task_phase
 
 
 
-// @uvm-ieee 1800.2-2017 auto 9.8.1.6
+// @uvm-ieee 1800.2-2020 auto 9.8.1.6
 final class uvm_extract_phase: uvm_bottomup_phase
 {
   static class uvm_scope: uvm_scope_base
@@ -400,7 +400,7 @@ final class uvm_extract_phase: uvm_bottomup_phase
 }
 
 
-// @uvm-ieee 1800.2-2017 auto 9.8.1.7
+// @uvm-ieee 1800.2-2020 auto 9.8.1.7
 final class uvm_check_phase: uvm_bottomup_phase
 {
   static class uvm_scope: uvm_scope_base
@@ -435,7 +435,7 @@ final class uvm_check_phase: uvm_bottomup_phase
 }
 
 
-// @uvm-ieee 1800.2-2017 auto 9.8.1.8
+// @uvm-ieee 1800.2-2020 auto 9.8.1.8
 final class uvm_report_phase: uvm_bottomup_phase
 {
   static class uvm_scope: uvm_scope_base
@@ -488,7 +488,7 @@ final class uvm_report_phase: uvm_bottomup_phase
 // - Ready to exit simulator.
 //
 
-// @uvm-ieee 1800.2-2017 auto 9.8.1.9
+// @uvm-ieee 1800.2-2020 auto 9.8.1.9
 final class uvm_final_phase: uvm_topdown_phase
 {
   static class uvm_scope: uvm_scope_base

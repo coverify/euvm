@@ -1,11 +1,11 @@
 //
 // -------------------------------------------------------------
 // Copyright 2014-2021 Coverify Systems Technology
-// Copyright 2010-2011 Mentor Graphics Corporation
-// Copyright 2010 Synopsys, Inc.
-// Copyright 2010-2018 Cadence Design Systems, Inc.
 // Copyright 2010 AMD
-// Copyright 2015-2018 NVIDIA Corporation
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2015-2020 NVIDIA Corporation
+// Copyright 2010 Synopsys, Inc.
 //    All Rights Reserved Worldwide
 // 
 //    Licensed under the Apache License, Version 2.0 (the
@@ -34,7 +34,17 @@
 
 module uvm.reg.sequences.uvm_reg_mem_built_in_seq;
 
-import uvm.reg;
+import uvm.reg.uvm_reg_sequence: uvm_reg_sequence;
+import uvm.reg.uvm_reg_item: uvm_reg_item;
+import uvm.reg.uvm_reg: uvm_reg;
+import uvm.reg.uvm_reg_field: uvm_reg_field;
+import uvm.reg.uvm_reg_block: uvm_reg_block;
+import uvm.reg.uvm_reg_map: uvm_reg_map;
+import uvm.reg.uvm_reg_model: uvm_hier_e, uvm_door_e, uvm_status_e, uvm_reg_data_t,
+  uvm_check_e, UVM_DO_ALL_REG_MEM_TESTS, UVM_DO_REG_HW_RESET, UVM_DO_REG_BIT_BASH,
+  UVM_DO_REG_ACCESS, UVM_DO_MEM_ACCESS, UVM_DO_SHARED_ACCESS, UVM_DO_MEM_WALK;
+
+
 import uvm.base.uvm_object_defines;
 import uvm.base.uvm_resource_db: uvm_resource_db;
 import uvm.base.uvm_object_globals: uvm_verbosity;
@@ -52,13 +62,13 @@ import uvm.reg.sequences.uvm_reg_mem_shared_access_seq: uvm_reg_mem_shared_acces
 
 // import uvm.reg.sequences.uvm_reg_mem_hdl_paths_seq;
 
-// @uvm-ieee 1800.2-2017 auto E.8.1
+// @uvm-ieee 1800.2-2020 auto E.8.1
 class uvm_reg_mem_built_in_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
 {
 
   mixin uvm_object_utils;
 
-  // @uvm-ieee 1800.2-2017 auto E.8.3.1
+  // @uvm-ieee 1800.2-2020 auto E.8.3.1
   this(string name="uvm_reg_mem_built_in_seq") {
     super(name);
   }
@@ -82,7 +92,7 @@ class uvm_reg_mem_built_in_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
   // Executes any or all the built-in register and memory sequences.
   // Do not call directly. Use seq.start() instead.
    
-  // @uvm-ieee 1800.2-2017 auto E.8.3.2
+  // @uvm-ieee 1800.2-2020 auto E.8.3.2
   // task
   override public void body() {
 

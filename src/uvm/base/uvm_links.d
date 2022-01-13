@@ -1,10 +1,10 @@
 //
 //-----------------------------------------------------------------------------
-// Copyright 2016-2019 Coverify Systems Technology
-// Copyright 2007-2009 Mentor Graphics Corporation
-// Copyright 2014 Intel Corporation
+// Copyright 2016-2021 Coverify Systems Technology
 // Copyright 2007-2018 Cadence Design Systems, Inc.
-// Copyright 2013-2018 NVIDIA Corporation
+// Copyright 2014 Intel Corporation
+// Copyright 2007-2009 Mentor Graphics Corporation
+// Copyright 2013-2020 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -37,11 +37,11 @@ import uvm.base.uvm_object_defines;
 //
 
 
-// @uvm-ieee 1800.2-2017 auto 7.3.1.1
+// @uvm-ieee 1800.2-2020 auto 7.3.1.1
 abstract class uvm_link_base: uvm_object
 {
 
-  // @uvm-ieee 1800.2-2017 auto 7.3.1.2
+  // @uvm-ieee 1800.2-2020 auto 7.3.1.2
   this(string name="unnamed-uvm_link_base") {
     super(name);
   }
@@ -49,31 +49,31 @@ abstract class uvm_link_base: uvm_object
   // Group -- NODOCS --  Accessors
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.3.1.3.2
+  // @uvm-ieee 1800.2-2020 auto 7.3.1.3.2
   void set_lhs(uvm_object lhs) {
     do_set_lhs(lhs);
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.3.1.3.1
+  // @uvm-ieee 1800.2-2020 auto 7.3.1.3.1
   uvm_object get_lhs() {
     return do_get_lhs();
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.3.1.3.4
+  // @uvm-ieee 1800.2-2020 auto 7.3.1.3.4
   void set_rhs(uvm_object rhs) {
     do_set_rhs(rhs);
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.3.1.3.3
+  // @uvm-ieee 1800.2-2020 auto 7.3.1.3.3
   uvm_object get_rhs() {
     return do_get_rhs();
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.3.1.3.5
+  // @uvm-ieee 1800.2-2020 auto 7.3.1.3.5
   void set(uvm_object lhs, uvm_object rhs) {
     synchronized (this) {
       do_set_lhs(lhs);
@@ -84,19 +84,19 @@ abstract class uvm_link_base: uvm_object
   // Group -- NODOCS -- Implementation Callbacks
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.3.1.4.2
+  // @uvm-ieee 1800.2-2020 auto 7.3.1.4.2
   abstract void do_set_lhs(uvm_object lhs);
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.3.1.4.1
+  // @uvm-ieee 1800.2-2020 auto 7.3.1.4.1
   abstract uvm_object do_get_lhs();
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.3.1.4.4
+  // @uvm-ieee 1800.2-2020 auto 7.3.1.4.4
   abstract void do_set_rhs(uvm_object rhs);
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.3.1.4.3
+  // @uvm-ieee 1800.2-2020 auto 7.3.1.4.3
   abstract uvm_object do_get_rhs();
 
 }
@@ -109,7 +109,7 @@ abstract class uvm_link_base: uvm_object
 // between two objects.
 //
 
-// @uvm-ieee 1800.2-2017 auto 7.3.2.1
+// @uvm-ieee 1800.2-2020 auto 7.3.2.1
 class uvm_parent_child_link: uvm_link_base
 {
 
@@ -122,13 +122,13 @@ class uvm_parent_child_link: uvm_link_base
   mixin uvm_object_essentials;
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.3.2.2.1
+  // @uvm-ieee 1800.2-2020 auto 7.3.2.2.1
   this(string name="unnamed-uvm_parent_child_link") {
     super(name);
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.3.2.2.2
+  // @uvm-ieee 1800.2-2020 auto 7.3.2.2.2
   static uvm_parent_child_link get_link(uvm_object lhs,
 					uvm_object rhs,
 					string name="pc_link") {
@@ -184,7 +184,7 @@ class uvm_parent_child_link: uvm_link_base
 // between two objects.
 //
 
-// @uvm-ieee 1800.2-2017 auto 7.3.3.1
+// @uvm-ieee 1800.2-2020 auto 7.3.3.1
 class uvm_cause_effect_link: uvm_link_base
 {
 
@@ -197,13 +197,13 @@ class uvm_cause_effect_link: uvm_link_base
   mixin uvm_object_essentials;
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.3.3.2.1
+  // @uvm-ieee 1800.2-2020 auto 7.3.3.2.1
   this(string name="unnamed-uvm_cause_effect_link") {
     super(name);
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.3.3.2.2
+  // @uvm-ieee 1800.2-2020 auto 7.3.3.2.2
   static uvm_cause_effect_link get_link(uvm_object lhs,
 					uvm_object rhs,
 					string name="ce_link") {
@@ -259,7 +259,7 @@ class uvm_cause_effect_link: uvm_link_base
 // between two objects.
 //
 
-// @uvm-ieee 1800.2-2017 auto 7.3.4.1
+// @uvm-ieee 1800.2-2020 auto 7.3.4.1
 class uvm_related_link: uvm_link_base
 {
 
@@ -272,13 +272,13 @@ class uvm_related_link: uvm_link_base
   mixin uvm_object_essentials;
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.3.4.2.1
+  // @uvm-ieee 1800.2-2020 auto 7.3.4.2.1
   this(string name="unnamed-uvm_related_link") {
     super(name);
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.3.4.2.2
+  // @uvm-ieee 1800.2-2020 auto 7.3.4.2.2
   static uvm_related_link get_link(uvm_object lhs,
 				   uvm_object rhs,
 				   string name="ce_link") {

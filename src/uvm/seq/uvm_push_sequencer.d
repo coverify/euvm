@@ -1,9 +1,9 @@
 //------------------------------------------------------------------------------
-// Copyright 2014-2019 Coverify Systems Technology
-// Copyright 2007-2011 Mentor Graphics Corporation
-// Copyright 2018 Synopsys, Inc.
+// Copyright 2014-2021 Coverify Systems Technology
 // Copyright 2007-2018 Cadence Design Systems, Inc.
-// Copyright 2014-2018 NVIDIA Corporation
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2014-2020 NVIDIA Corporation
+// Copyright 2018 Synopsys, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -39,10 +39,9 @@ import esdl.rand.misc: rand;
 //
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 15.6.1
-@rand(false)
+// @uvm-ieee 1800.2-2020 auto 15.6.1
 class uvm_push_sequencer(REQ=uvm_sequence_item, RSP=REQ):
-  uvm_sequencer_param_base!(REQ, RSP)
+  uvm_sequencer_param_base!(REQ, RSP), rand.barrier
 {
   mixin(uvm_sync_string);
 
@@ -58,7 +57,7 @@ class uvm_push_sequencer(REQ=uvm_sequence_item, RSP=REQ):
     private uvm_blocking_put_port!REQ _req_port;
 
 
-  // @uvm-ieee 1800.2-2017 auto 15.6.3.2
+  // @uvm-ieee 1800.2-2020 auto 15.6.3.2
   this(string name, uvm_component parent = null) {
     synchronized(this) {
       super(name, parent);
@@ -75,6 +74,7 @@ class uvm_push_sequencer(REQ=uvm_sequence_item, RSP=REQ):
   // <uvm_push_driver #(REQ,RSP)>, which would be responsible for
   // executing the item.
   //
+  // @uvm-ieee 1800.2-2020 auto 15.6.3.3
   override void run_phase(uvm_phase phase) {
 
     // viriable selected_sequence declared in SV version -- but seems unused

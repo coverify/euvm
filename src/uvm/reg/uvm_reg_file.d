@@ -1,12 +1,12 @@
 //
 // -------------------------------------------------------------
 // Copyright 2015-2021 Coverify Systems Technology
+// Copyright 2010 AMD
+// Copyright 2010-2018 Cadence Design Systems, Inc.
 // Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2015-2020 NVIDIA Corporation
 // Copyright 2014 Semifore
 // Copyright 2010-2018 Synopsys, Inc.
-// Copyright 2010-2018 Cadence Design Systems, Inc.
-// Copyright 2010 AMD
-// Copyright 2015 NVIDIA Corporation
 //    All Rights Reserved Worldwide
 //
 //    Licensed under the Apache License, Version 2.0 (the
@@ -41,9 +41,8 @@ import uvm.base.uvm_object_defines;
 import uvm.meta.misc;
 import esdl.rand: rand;
 
-// @uvm-ieee 1800.2-2017 auto 18.3.1
-@rand(false)
-class uvm_reg_file: uvm_object
+// @uvm-ieee 1800.2-2020 auto 18.3.1
+class uvm_reg_file: uvm_object, rand.barrier
 {
   mixin uvm_sync;
   
@@ -63,7 +62,7 @@ class uvm_reg_file: uvm_object
   // Group -- NODOCS -- Initialization
   //----------------------
 
-  // @uvm-ieee 1800.2-2017 auto 18.3.2.1
+  // @uvm-ieee 1800.2-2020 auto 18.3.2.1
   this(string name="") {
     synchronized(this) {
       super(name);
@@ -71,7 +70,7 @@ class uvm_reg_file: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.3.2.2
+  // @uvm-ieee 1800.2-2020 auto 18.3.2.2
   void configure(uvm_reg_block blk_parent,
 		 uvm_reg_file regfile_parent,
 		 string hdl_path = "") {
@@ -124,7 +123,7 @@ class uvm_reg_file: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.3.3.1
+  // @uvm-ieee 1800.2-2020 auto 18.3.3.1
   uvm_reg_block get_parent() {
     return get_block();
   }
@@ -135,7 +134,7 @@ class uvm_reg_file: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.3.3.2
+  // @uvm-ieee 1800.2-2020 auto 18.3.3.2
   uvm_reg_file get_regfile() {
     synchronized(this) {
       return _m_rf;
@@ -147,7 +146,7 @@ class uvm_reg_file: uvm_object
   // Group -- NODOCS -- Backdoor
   //----------------
 
-  // @uvm-ieee 1800.2-2017 auto 18.3.4.1
+  // @uvm-ieee 1800.2-2020 auto 18.3.4.1
   void clear_hdl_path(string kind = "RTL") {
     synchronized(this) {
       if (kind == "ALL") {
@@ -172,7 +171,7 @@ class uvm_reg_file: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.3.4.2
+  // @uvm-ieee 1800.2-2020 auto 18.3.4.2
   void add_hdl_path(string path, string kind = "RTL") {
     synchronized(this) {
       uvm_queue!(string) paths;
@@ -183,7 +182,7 @@ class uvm_reg_file: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.3.4.3
+  // @uvm-ieee 1800.2-2020 auto 18.3.4.3
   bool has_hdl_path(string kind = "") {
     synchronized(this) {
       if (kind == "") {
@@ -196,7 +195,7 @@ class uvm_reg_file: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.3.4.4
+  // @uvm-ieee 1800.2-2020 auto 18.3.4.4
   void get_hdl_path(ref string[] paths, string kind = "") {
     synchronized(this) {
       uvm_queue!string hdl_paths;
@@ -222,7 +221,7 @@ class uvm_reg_file: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.3.4.5
+  // @uvm-ieee 1800.2-2020 auto 18.3.4.5
   void get_full_hdl_path(out string[] paths,
 			 string kind = "",
 			 string separator = ".") {
@@ -266,7 +265,7 @@ class uvm_reg_file: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.3.4.7
+  // @uvm-ieee 1800.2-2020 auto 18.3.4.7
   void set_default_hdl_path(string kind) {
     synchronized(this) {
       if (kind == "") {
@@ -284,7 +283,7 @@ class uvm_reg_file: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.3.4.6
+  // @uvm-ieee 1800.2-2020 auto 18.3.4.6
   string get_default_hdl_path() {
     synchronized(this) {
       if (_default_hdl_path == "") {

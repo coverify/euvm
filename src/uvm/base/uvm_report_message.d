@@ -1,12 +1,12 @@
 //
 //------------------------------------------------------------------------------
-// Copyright 2016-2019 Coverify Systems Technology
-// Copyright 2007-2014 Mentor Graphics Corporation
-// Copyright 2013 Synopsys, Inc.
-// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2016-2021 Coverify Systems Technology
 // Copyright 2012 AMD
-// Copyright 2013-2018 NVIDIA Corporation
+// Copyright 2007-2018 Cadence Design Systems, Inc.
 // Copyright 2014-2018 Cisco Systems, Inc.
+// Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2013-2020 NVIDIA Corporation
+// Copyright 2013 Synopsys, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -656,13 +656,6 @@ class uvm_report_message_element_container: uvm_object
 	// FIXME Vlang does not change the rand_state when creating a
 	// non-rand class object
 
-	version (PRESERVE_RANDSTATE) {
-	  Process p = Process.self();
-	  Random rand_state;
-	  if (p !is null)
-	    p.getRandState(rand_state);
-	}
-
 	urme = new uvm_report_message_int_element!T();
 
 	version (PRESERVE_RANDSTATE) {
@@ -683,13 +676,6 @@ class uvm_report_message_element_container: uvm_object
     if (isIntegral!T || isBitVector!T) {
       synchronized (this) {
 	uvm_report_message_int_element!T urme;
-
-	version (PRESERVE_RANDSTATE) {
-	  Process p = Process.self();
-	  Random rand_state;
-	  if (p !is null)
-	    p.getRandState(rand_state);
-	}
 
 	urme = new uvm_report_message_element!T();
 
@@ -720,13 +706,6 @@ class uvm_report_message_element_container: uvm_object
       synchronized (this) {
 	uvm_report_message_string_element urme;
 
-	version (PRESERVE_RANDSTATE) {
-	  Random rand_state;
-	  Process p = Process.self();
-	  if (p !is null)
-	    p.getRandState(rand_state);
-	}
-
 	urme = new uvm_report_message_element!T();
 
 	version (PRESERVE_RANDSTATE) {
@@ -755,13 +734,6 @@ class uvm_report_message_element_container: uvm_object
     if (is (T: uvm_object)) {
       synchronized (this) {
 	uvm_report_message_object_element urme;
-
-	version (PRESERVE_RANDSTATE) {
-	  Random rand_state;
-	  Process p = Process.self();
-	  if (p !is null)
-	    p.getRandState(rand_state);
-	}
 
 	urme = new uvm_report_message_element!T();
 
@@ -801,13 +773,6 @@ class uvm_report_message_element_container: uvm_object
 				       uvm_action_type.UVM_RM_RECORD)) {
     synchronized (this) {
       uvm_report_message_object_element urme;
-
-      version (PRESERVE_RANDSTATE) {
-	Random rand_state;
-	Process p = Process.self();
-	if (p !is null)
-	  p.getRandState(rand_state);
-      }
 
       urme = new uvm_report_message_object_element();
 
@@ -875,7 +840,7 @@ class uvm_report_message_element_container: uvm_object
 //------------------------------------------------------------------------------
 
 
-// @uvm-ieee 1800.2-2017 auto 6.2.1
+// @uvm-ieee 1800.2-2020 auto 6.2.1
 class uvm_report_message: uvm_object
 {
 
@@ -902,7 +867,7 @@ class uvm_report_message: uvm_object
   // Creates a new uvm_report_message object.
   //
 
-  // @uvm-ieee 1800.2-2017 auto 6.2.2.1
+  // @uvm-ieee 1800.2-2020 auto 6.2.2.1
   this(string name = "uvm_report_message") {
     synchronized (this) {
       super(name);
@@ -918,18 +883,11 @@ class uvm_report_message: uvm_object
   // This function is the same as new(), but keeps the random stability.
   //
 
-  // @uvm-ieee 1800.2-2017 auto 6.2.2.2
+  // @uvm-ieee 1800.2-2020 auto 6.2.2.2
   static uvm_report_message
   new_report_message(string name = "uvm_report_message") {
     uvm_report_message result;
 
-    version (PRESERVE_RANDSTATE) {
-      Random rand_state;
-      Process p = Process.self();
-      if (p !is null)
-	p.getRandState(rand_state);
-    }
-    
     result = new uvm_report_message(name);
 
     version (PRESERVE_RANDSTATE) {
@@ -966,7 +924,7 @@ class uvm_report_message: uvm_object
   //|     bar             string              8     hi there
 
 
-  // @uvm-ieee 1800.2-2017 auto 6.2.2.3
+  // @uvm-ieee 1800.2-2020 auto 6.2.2.3
   override void do_print(uvm_printer printer) {
     synchronized (this) {
 
@@ -1042,7 +1000,7 @@ class uvm_report_message: uvm_object
 
   // Function -- NODOCS -- get_report_object
 
-  // @uvm-ieee 1800.2-2017 auto 6.2.3.1
+  // @uvm-ieee 1800.2-2020 auto 6.2.3.1
   uvm_report_object get_report_object() {
     synchronized (this) {
       return _report_object;
@@ -1053,7 +1011,7 @@ class uvm_report_message: uvm_object
   //
   // Get or set the uvm_report_object that originated the message.
 
-  // @uvm-ieee 1800.2-2017 auto 6.2.3.1
+  // @uvm-ieee 1800.2-2020 auto 6.2.3.1
   void set_report_object(uvm_report_object ro) {
     synchronized (this) {
       _report_object = ro;
@@ -1063,7 +1021,7 @@ class uvm_report_message: uvm_object
 
   // Function -- NODOCS -- get_report_handler
 
-  // @uvm-ieee 1800.2-2017 auto 6.2.3.2
+  // @uvm-ieee 1800.2-2020 auto 6.2.3.2
   uvm_report_handler get_report_handler() {
     synchronized (this) {
       return _report_handler;
@@ -1076,7 +1034,7 @@ class uvm_report_message: uvm_object
   // Get or set the uvm_report_handler that is responsible for checking
   // whether the message is enabled, should be upgraded/downgraded, etc.
 
-  // @uvm-ieee 1800.2-2017 auto 6.2.3.2
+  // @uvm-ieee 1800.2-2020 auto 6.2.3.2
   void set_report_handler(uvm_report_handler rh) {
     synchronized (this) {
       _report_handler = rh;
@@ -1086,7 +1044,7 @@ class uvm_report_message: uvm_object
 
   // Function -- NODOCS -- get_report_server
 
-  // @uvm-ieee 1800.2-2017 auto 6.2.3.3
+  // @uvm-ieee 1800.2-2020 auto 6.2.3.3
   uvm_report_server get_report_server() {
     synchronized (this) {
       return _report_server;
@@ -1099,7 +1057,7 @@ class uvm_report_message: uvm_object
   // Get or set the uvm_report_server that is responsible for servicing
   // the message's actions.
 
-  // @uvm-ieee 1800.2-2017 auto 6.2.3.3
+  // @uvm-ieee 1800.2-2020 auto 6.2.3.3
   void set_report_server(uvm_report_server rs) {
     synchronized (this) {
       _report_server = rs;
@@ -1114,7 +1072,7 @@ class uvm_report_message: uvm_object
 
   // Function -- NODOCS -- get_severity
 
-  // @uvm-ieee 1800.2-2017 auto 6.2.4.1
+  // @uvm-ieee 1800.2-2020 auto 6.2.4.1
   uvm_severity get_severity() {
     synchronized (this) {
       return _severity;
@@ -1127,7 +1085,7 @@ class uvm_report_message: uvm_object
   // UVM_FATAL) of the message.  The value of this field is determined via
   // the API used (`uvm_info(), `uvm_waring(), etc.) and populated for the user.
 
-  // @uvm-ieee 1800.2-2017 auto 6.2.4.1
+  // @uvm-ieee 1800.2-2020 auto 6.2.4.1
   void set_severity(uvm_severity sev) {
     synchronized (this) {
       _severity = sev;
@@ -1137,7 +1095,7 @@ class uvm_report_message: uvm_object
 
   // Function -- NODOCS -- get_id
 
-  // @uvm-ieee 1800.2-2017 auto 6.2.4.2
+  // @uvm-ieee 1800.2-2020 auto 6.2.4.2
   string get_id() {
     synchronized (this) {
       return _id;
@@ -1151,7 +1109,7 @@ class uvm_report_message: uvm_object
   // consistent convention.  Settings in the uvm_report_handler allow various
   // messaging controls based on this field.  See <uvm_report_handler>.
 
-  // @uvm-ieee 1800.2-2017 auto 6.2.4.2
+  // @uvm-ieee 1800.2-2020 auto 6.2.4.2
   void set_id(string id) {
     synchronized (this) {
       _id = id;
@@ -1161,7 +1119,7 @@ class uvm_report_message: uvm_object
 
   // Function -- NODOCS -- get_message
 
-  // @uvm-ieee 1800.2-2017 auto 6.2.4.3
+  // @uvm-ieee 1800.2-2020 auto 6.2.4.3
   string get_message() {
     synchronized (this) {
       return _message;
@@ -1172,7 +1130,7 @@ class uvm_report_message: uvm_object
   //
   // Get or set the user message content string.
 
-  // @uvm-ieee 1800.2-2017 auto 6.2.4.3
+  // @uvm-ieee 1800.2-2020 auto 6.2.4.3
   void set_message(string msg) {
     synchronized (this) {
       _message = msg;
@@ -1182,7 +1140,7 @@ class uvm_report_message: uvm_object
 
   // Function -- NODOCS -- get_verbosity
 
-  // @uvm-ieee 1800.2-2017 auto 6.2.4.4
+  // @uvm-ieee 1800.2-2020 auto 6.2.4.4
   int get_verbosity() {
     synchronized (this) {
       return _verbosity;
@@ -1195,7 +1153,7 @@ class uvm_report_message: uvm_object
   // against settings in the <uvm_report_handler> to determine whether this
   // message should be executed.
 
-  // @uvm-ieee 1800.2-2017 auto 6.2.4.4
+  // @uvm-ieee 1800.2-2020 auto 6.2.4.4
   void set_verbosity(int ver) {
     synchronized (this) {
       _verbosity = ver;
@@ -1205,7 +1163,7 @@ class uvm_report_message: uvm_object
 
   // Function -- NODOCS -- get_filename
 
-  // @uvm-ieee 1800.2-2017 auto 6.2.4.5
+  // @uvm-ieee 1800.2-2020 auto 6.2.4.5
   string get_filename() {
     synchronized (this) {
       return _filename;
@@ -1217,7 +1175,7 @@ class uvm_report_message: uvm_object
   // Get or set the file from which the message originates.  This value
   // is automatically populated by the messaging macros.
 
-  // @uvm-ieee 1800.2-2017 auto 6.2.4.5
+  // @uvm-ieee 1800.2-2020 auto 6.2.4.5
   void set_filename(string fname) {
     synchronized (this) {
       _filename = fname;
@@ -1227,7 +1185,7 @@ class uvm_report_message: uvm_object
 
   // Function -- NODOCS -- get_line
 
-  // @uvm-ieee 1800.2-2017 auto 6.2.4.6
+  // @uvm-ieee 1800.2-2020 auto 6.2.4.6
   size_t get_line() {
     synchronized (this) {
       return _line;
@@ -1239,7 +1197,7 @@ class uvm_report_message: uvm_object
   // Get or set the line in the ~file~ from which the message originates.
   // This value is automatically populate by the messaging macros.
 
-  // @uvm-ieee 1800.2-2017 auto 6.2.4.6
+  // @uvm-ieee 1800.2-2020 auto 6.2.4.6
   void set_line(size_t ln) {
     synchronized (this) {
       _line = ln;
@@ -1249,7 +1207,7 @@ class uvm_report_message: uvm_object
 
   // Function -- NODOCS -- get_context
 
-  // @uvm-ieee 1800.2-2017 auto 6.2.4.7
+  // @uvm-ieee 1800.2-2020 auto 6.2.4.7
   string get_context() {
     synchronized (this) {
       return _context_name;
@@ -1262,7 +1220,7 @@ class uvm_report_message: uvm_object
   // the context of the message.  It can be useful in scopes that are not
   // inherently UVM like modules, interfaces, etc.
 
-  // @uvm-ieee 1800.2-2017 auto 6.2.4.7
+  // @uvm-ieee 1800.2-2020 auto 6.2.4.7
   void set_context(string cn) {
     synchronized (this) {
       _context_name = cn;
@@ -1272,7 +1230,7 @@ class uvm_report_message: uvm_object
 
   // Function -- NODOCS -- get_action
 
-  // @uvm-ieee 1800.2-2017 auto 6.2.4.8
+  // @uvm-ieee 1800.2-2020 auto 6.2.4.8
   uvm_action get_action() {
     synchronized (this) {
       return _action;
@@ -1285,7 +1243,7 @@ class uvm_report_message: uvm_object
   // for this message.  This field is populated by the uvm_report_handler during
   // message execution flow.
 
-  // @uvm-ieee 1800.2-2017 auto 6.2.4.8
+  // @uvm-ieee 1800.2-2020 auto 6.2.4.8
   void set_action(uvm_action act) {
     synchronized (this) {
       _action = act;
@@ -1295,7 +1253,7 @@ class uvm_report_message: uvm_object
 
   // Function -- NODOCS -- get_file
 
-  // @uvm-ieee 1800.2-2017 auto 6.2.4.9
+  // @uvm-ieee 1800.2-2020 auto 6.2.4.9
   UVM_FILE get_file() {
     synchronized (this) {
       return _file;
@@ -1308,7 +1266,7 @@ class uvm_report_message: uvm_object
   // message's action is UVM_LOG.  This field is populated by the
   // uvm_report_handler during message execution flow.
 
-  // @uvm-ieee 1800.2-2017 auto 6.2.4.9
+  // @uvm-ieee 1800.2-2020 auto 6.2.4.9
   void set_file(UVM_FILE fl) {
     synchronized (this) {
       _file = fl;
@@ -1330,7 +1288,7 @@ class uvm_report_message: uvm_object
   // Set all the common fields of the report message in one shot.
   //
 
-  // @uvm-ieee 1800.2-2017 auto 6.2.4.10
+  // @uvm-ieee 1800.2-2020 auto 6.2.4.10
   void set_report_message(uvm_severity severity,
 			  string id,
 			  lazy string message,
