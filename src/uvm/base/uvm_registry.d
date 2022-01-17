@@ -52,9 +52,9 @@ import uvm.base.uvm_factory: uvm_object_wrapper;
 // @uvm-ieee 1800.2-2020 auto 8.2.3.1
 template uvm_component_registry(T, bool NAMED=true)
 {
-  import std.traits: fullyQualifiedName;
+  import uvm.meta.meta: qualifiedTypeName;
   static if (NAMED)
-    alias uvm_component_registry = uvm_component_registry!(T, fullyQualifiedName!T);
+    alias uvm_component_registry = uvm_component_registry!(T, qualifiedTypeName!T);
   else alias uvm_component_registry = uvm_component_registry!(T, "<unknown>");
 }
 
@@ -189,9 +189,9 @@ class uvm_component_registry(T, string Tname): uvm_object_wrapper
 // @uvm-ieee 1800.2-2020 auto 8.2.4.1
 template uvm_object_registry(T, bool NAMED=true)
 {
-  import std.traits: fullyQualifiedName;
+  import uvm.meta.meta: qualifiedTypeName;
   static if (NAMED)
-    alias uvm_object_registry = uvm_object_registry!(T, fullyQualifiedName!T);
+    alias uvm_object_registry = uvm_object_registry!(T, qualifiedTypeName!T);
   else alias uvm_object_registry = uvm_object_registry!(T, "<unknown>");
 }
 
@@ -331,9 +331,9 @@ class uvm_object_registry(T, string Tname): uvm_object_wrapper
 // @uvm-ieee 1800.2-2020 auto 8.2.5.1.1
 template uvm_abstract_component_registry(T, bool NAMED=true)
 {
-  import std.traits: fullyQualifiedName;
+  import uvm.meta.meta: qualifiedTypeName;
   static if (NAMED)
-    alias uvm_abstract_component_registry = uvm_abstract_component_registry!(T, fullyQualifiedName!T);
+    alias uvm_abstract_component_registry = uvm_abstract_component_registry!(T, qualifiedTypeName!T);
   else alias uvm_abstract_component_registry = uvm_abstract_component_registry!(T, "<unknown>");
 }
 
@@ -475,9 +475,9 @@ class uvm_abstract_component_registry(T, string Tname):
 // @uvm-ieee 1800.2-2020 auto 8.2.5.2.1
 template uvm_abstract_object_registry(T, bool NAMED=true)
 {
-  import std.traits: fullyQualifiedName;
+  import uvm.meta.meta: qualifiedTypeName;
   static if (NAMED)
-    alias uvm_abstract_object_registry = uvm_abstract_object_registry!(T, fullyQualifiedName!T);
+    alias uvm_abstract_object_registry = uvm_abstract_object_registry!(T, qualifiedTypeName!T);
   else alias uvm_abstract_object_registry = uvm_abstract_object_registry!(T, "<unknown>");
 }
 

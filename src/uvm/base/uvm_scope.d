@@ -20,7 +20,7 @@
 
 module uvm.base.uvm_scope;
 
-import std.traits: fullyQualifiedName;
+import uvm.meta.meta: qualifiedTypeName;
 
 class uvm_scope_base
 {
@@ -38,7 +38,7 @@ class uvm_root_scope
   uvm_scope_base[ClassInfo] _uvm_scope_pool;
   
   static string get_instance_name(T)() {
-    char[] name = (fullyQualifiedName!T).dup;
+    char[] name = (qualifiedTypeName!T).dup;
     foreach (ref c; name) {
       if (c == '.') {
 	c = '_';

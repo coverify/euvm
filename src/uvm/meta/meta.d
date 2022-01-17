@@ -22,19 +22,9 @@ module uvm.meta.meta;
 import std.stdio: stderr;
 import std.conv: to;
 
-import std.traits: fullyQualifiedName;
-
-// alias qualifiedTypeName = fullyQualifiedName;
-
-template qualifiedTypeName(T) {
-  // pragma(msg, typeid(T).stringof);
-  // pragma(msg, T.stringof);
-  // pragma(msg, fullyQualifiedName!T);
-  // pragma(msg, typeid(T).stringof[7..$-1]);
-  // typeid(T).stringof returns string of the form "&typeid(qualifiedTypeName)"
-  // enum string qualifiedTypeName = typeid(T).stringof[7..$-1];
-  enum string qualifiedTypeName = fullyQualifiedName!T;
-}
+// import std.traits: fullyQualifiedName;
+import uvm.meta.fqn: fullyQualifiedName;
+alias qualifiedTypeName = fullyQualifiedName;
 
 version (X86_64) {
   extern (C) void* thread_stackBottom();
