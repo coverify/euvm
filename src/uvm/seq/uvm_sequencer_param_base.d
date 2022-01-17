@@ -143,7 +143,7 @@ abstract class uvm_sequencer_param_base (REQ = uvm_sequence_item,
 	    try {
 	      randomize(param_t);
 	    }
-	    catch {
+	    catch (Throwable) {
 	      uvm_report_warning("SQRSNDREQ", "Failed to rerandomize sequence" ~
 				 " item in send_request");
 	    }

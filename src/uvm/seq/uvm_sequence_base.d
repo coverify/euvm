@@ -1654,7 +1654,7 @@ abstract class uvm_sequence_base: uvm_sequence_item, rand.barrier
 	  try {
 	    SEQ_OR_ITEM.randomizeWith!(CONSTRAINTS)(values);
 	  }
-	  catch {
+	  catch (Throwable) {
 	    uvm_warning("RNDFLD",
 			"Randomization failed in uvm_do_with action");
 	  }
@@ -1771,7 +1771,7 @@ abstract class uvm_sequence_base: uvm_sequence_item, rand.barrier
 	try {
 	  SEQ_OR_ITEM.randomizeWith!(CONSTRAINTS)(values);
 	}
-	catch {
+	catch (Throwable) {
 	  uvm_warning("RNDFLD",
 		      "Randomization failed in uvm_rand_send_with action");
 	}

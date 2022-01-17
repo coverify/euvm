@@ -110,7 +110,7 @@ class uvm_random_stimulus(T=uvm_transaction): uvm_component, rand.barrier
 	try {
 	  t.randomize();
 	}
-	catch {
+	catch (Throwable) {
 	  uvm_report_warning("RANDFL",
 			     "Randomization failed in generate_stimulus");
 	}
