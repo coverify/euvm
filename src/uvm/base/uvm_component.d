@@ -2524,8 +2524,9 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   private void m_set_full_name() {
     synchronized (this) {
       uvm_root top = cast (uvm_root) _m_parent;
+      // eUVM has a name for the uvm_root as well since uvm_root is not singleton
       if (top !is null || _m_parent is null) {
-	_m_name = get_name();
+	_m_name = uvm_root.get().get_full_name() ~ "." ~ get_name();
       }
       else {
 	_m_name = _m_parent.get_full_name() ~ "." ~ get_name();
