@@ -52,7 +52,7 @@ final class uvm_scope_domain_globals: uvm_scope_base
   private uvm_phase _report_ph;
 }
 
-mixin (uvm_scope_sync_string!(uvm_scope_domain_globals, "uvm_scope_domain_globals"));
+mixin (uvm_scope_sync_string!(uvm_scope_domain_globals, "_uvm_scope_domain_globals"));
 
 //------------------------------------------------------------------------------
 //

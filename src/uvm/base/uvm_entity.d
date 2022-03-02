@@ -37,8 +37,19 @@ import core.sync.semaphore: Semaphore;
 // singleton, we can have multiple instances of uvm_root, but each
 // ESDL RootEntity could have only one instance of uvm_root.
 
+// void wait_for_uvm_elaboration() {
+//   foreach (root; getAllRoots()) {
+//     uvm_harness harness = cast (uvm_harness) root;
+//     if (harness !is null) {
+//       harness.wait_for_end_of_elaboration();
+//     }
+//   }
+// }
+
 class uvm_harness: RootEntity
 {
+  bool _init_done = false;
+  
   override size_t _esdl__defProcStackSize() {
     return 1024 * 1024;		// Todo use lower values if limited available memory
   }
@@ -46,13 +57,8 @@ class uvm_harness: RootEntity
   void config_stack(size_t size) {
     _esdl__configStack(size);
   }
-  
-  ubyte start() {
-    return super.simulate();
-  }
 
-  void start_bg() {
-    super.forkSim();
+  void wait_for_end_of_elaboration() {
     foreach (child; getChildComps()) {
       auto entity = cast (uvm_entity_base) child;
       if (entity !is null) {
@@ -60,9 +66,38 @@ class uvm_harness: RootEntity
       }
     }
   }
+
+  void initialize() {
+    if (_init_done) assert (false, "initialize() called twice!!");
+    super.forkSim();
+    foreach (child; getChildComps()) {
+      auto entity = cast (uvm_entity_base) child;
+      if (entity !is null) {
+	entity.wait_for_init();
+      }
+    }
+    _init_done = true;
+  }
+
+  ubyte start() {
+    this.start_bg();
+    super.joinSim();
+    return getExitStatus();
+  }
+
+  void start_bg() {
+    if (_init_done == false) this.initialize();
+    foreach (child; getChildComps()) {
+      auto entity = cast (uvm_entity_base) child;
+      if (entity !is null) {
+	entity._start_uvm();
+      }
+    }
+    wait_for_end_of_elaboration();
+  }
 }
 
-class uvm_tb_root: uvm_root
+class uvm_root_plain: uvm_root
 {
   override void initial() {
     run_test();
@@ -73,17 +108,45 @@ alias uvm_testbench = uvm_tb;
 
 class uvm_tb: uvm_harness
 {
-  uvm_entity!(uvm_tb_root) root_entity;
+  uvm_entity!(uvm_root_plain) uvm_dock;
   void set_seed(uint seed) {
-    root_entity.set_seed(seed);
+    uvm_dock.set_seed(seed);
+  }
+  uvm_entity_base get_uvm_entity() {
+    return uvm_dock;
+  }
+  uvm_root get_uvm_root() {
+    return uvm_dock.get_uvm_root();
+  }
+  void exec_in_uvm_context(DelegateThunk thunk) {
+    if (! _init_done)
+      assert (false, "exec_in_uvm_context can not be called before tb.initialize()");
+    uvm_dock.exec_in_context(thunk);
+  }
+  void exec_in_uvm_context(FunctionThunk thunk) {
+    uvm_dock.exec_in_context(thunk);
   }
 }
 
 class uvm_tb_custom_root(ROOT) if (is (ROOT: uvm_root)) : uvm_harness
 {
-  uvm_entity!(ROOT) root_entity;
+  uvm_entity!(ROOT) uvm_dock;
   void set_seed(uint seed) {
-    root_entity.set_seed(seed);
+    uvm_dock.set_seed(seed);
+  }
+  uvm_entity_base get_uvm_entity() {
+    return uvm_dock;
+  }
+  uvm_root get_uvm_root() {
+    return uvm_dock.get_uvm_root();
+  }
+  void exec_in_uvm_context(DelegateThunk thunk) {
+    if (! _init_done)
+      assert (false, "exec_in_uvm_context can not be called before tb.initialize()");
+    uvm_dock.exec_in_context(thunk);
+  }
+  void exec_in_uvm_context(FunctionThunk thunk) {
+    uvm_dock.exec_in_context(thunk);
   }
 }
 
@@ -93,6 +156,7 @@ abstract class uvm_entity_base: Entity
   this() {
     synchronized (this) {
       _uvm_root_init_semaphore = new Semaphore(); // count 0
+      _uvm_root_start_semaphore = new Semaphore(); // count 0
       // uvm_scope has some events etc that need to know the context for init
       set_thread_context();
       _root_scope = new uvm_root_scope();
@@ -103,11 +167,14 @@ abstract class uvm_entity_base: Entity
   @uvm_immutable_sync
   private Semaphore _uvm_root_init_semaphore;
 
+  @uvm_immutable_sync
+  private Semaphore _uvm_root_start_semaphore;
+
   // effectively immutable
-  // @uvm_immutable_sync
+  @uvm_immutable_sync
   private uvm_root_scope _root_scope;
   
-  uvm_root_scope root_scope() {
+  uvm_root_scope get_root_scope() {
     return _root_scope;
   }
 
@@ -121,9 +188,11 @@ abstract class uvm_entity_base: Entity
     return null;
   }
 
+  abstract void _start_uvm();
+  abstract void wait_for_init();
   abstract void wait_for_end_of_elaboration();
   abstract uvm_root _get_uvm_root();
-  abstract uvm_root get_root();
+  abstract uvm_root get_uvm_root();
   abstract uint get_seed();
   abstract void set_seed(uint seed);
   // The randomization seed passed from the top.
@@ -140,6 +209,12 @@ abstract class uvm_entity_base: Entity
 	     _entity.getFullName());
     }
     this.setThreadContext();
+  }
+  void exec_in_context(DelegateThunk thunk) {
+    this.execInContext(thunk);
+  }
+  void exec_in_context(FunctionThunk thunk) {
+    this.execInContext(thunk);
   }
 }
 
@@ -170,7 +245,7 @@ class uvm_entity(T): uvm_entity_base if (is (T: uvm_root))
       // _uvm_root_instance = new T();
       // _uvm_root_instance.initialize(this);
       */
-      resetThreadContext();
+      // resetThreadContext();
       _seed = uniform!int;
     }
   }
@@ -187,19 +262,31 @@ class uvm_entity(T): uvm_entity_base if (is (T: uvm_root))
   // this is part of the public API
   // Make the uvm_root available only after the simulaion has
   // started and the uvm_root is ready to use
-  override T get_root() {
+  override T get_uvm_root() {
     // expose the root_instance to the external world only after
     // elaboration is done
-    this.wait_for_end_of_elaboration();
+    // this.wait_for_end_of_elaboration();
     return uvm_root_instance;
   }
 
-  override void wait_for_end_of_elaboration() {
+  override void wait_for_init() {
     while (uvm_root_initialized is false) {
       uvm_root_init_semaphore.wait();
       uvm_root_init_semaphore.notify();
     }
+  }
+
+  override void wait_for_end_of_elaboration() {
+    // while (uvm_root_initialized is false) {
+    //   uvm_root_init_semaphore.wait();
+    //   uvm_root_init_semaphore.notify();
+    // }
+    wait_for_init();
     uvm_root_instance.wait_for_end_of_elaboration();
+  }
+
+  override void _start_uvm() {
+    uvm_root_start_semaphore.notify();
   }
 
   void initial() {
@@ -212,8 +299,9 @@ class uvm_entity(T): uvm_entity_base if (is (T: uvm_root))
     // we do not set the uvm_root name as "__top__" because
     // we can have multiple uvm_root instances with different names
     _uvm_root_instance = new T();
-    _uvm_root_instance.set_name(getFullName() ~ ".(" ~
-				qualifiedTypeName!T ~ ")");
+    _uvm_root_instance.set_name(getFullName() ~ ".root" // "(" ~
+				// qualifiedTypeName!T ~ ")"
+				);
     _uvm_root_instance.initialize(this);
 
     uvm_init();
@@ -225,6 +313,7 @@ class uvm_entity(T): uvm_entity_base if (is (T: uvm_root))
     uvm_root_initialized = true;
     uvm_root_init_semaphore.notify();
     uvm_seed_map.set_seed(_seed);
+    uvm_root_start_semaphore.wait();
     _uvm_root_instance.initial();
   }
 
