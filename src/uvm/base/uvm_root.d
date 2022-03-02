@@ -833,7 +833,7 @@ class uvm_root: uvm_component, uvm_root_intf, rand.disable
 
     uvm_cmdline_set_verbosity.check(this);
   
-    if (clp.get_arg_matches("+UVM_DUMP_REPORT_ARGS", dump_args)) {
+    if (clp.get_arg_matches(`+UVM_DUMP_REPORT_ARGS`, dump_args)) {
       string[] msgs;
 
       version(UVM_CMDLINE_NO_DPI) {
@@ -902,12 +902,12 @@ class uvm_root: uvm_component, uvm_root_intf, rand.disable
   void m_do_factory_settings() {
     string[] args;
 
-    clp.get_arg_matches("/^\\+(UVM_SET_INST_OVERRIDE|uvm_set_inst_override)=/",
+    clp.get_arg_matches(`/^\+(UVM_SET_INST_OVERRIDE|uvm_set_inst_override)=/`,
 			args);
     foreach (i, arg; args) {
       m_process_inst_override(arg[23..$]);
     }
-    clp.get_arg_matches("/^\\+(UVM_SET_TYPE_OVERRIDE|uvm_set_type_override)=/",
+    clp.get_arg_matches(`/^\+(UVM_SET_TYPE_OVERRIDE|uvm_set_type_override)=/`,
 			args);
     foreach (i, arg; args) {
       m_process_type_override(arg[23..$]);
@@ -980,18 +980,18 @@ class uvm_root: uvm_component, uvm_root_intf, rand.disable
 
   void m_do_config_settings() {
     string[] args;
-    clp.get_arg_matches("/^\\+(UVM_SET_CONFIG_INT|uvm_set_config_int)=/",
+    clp.get_arg_matches(`/^\+(UVM_SET_CONFIG_INT|uvm_set_config_int)=/`,
 			args);
     foreach (i, arg; args) {
       m_process_config(arg[20..$], true);
     }
-    clp.get_arg_matches("/^\\+(UVM_SET_CONFIG_STRING|uvm_set_config_string)=/",
+    clp.get_arg_matches(`/^\+(UVM_SET_CONFIG_STRING|uvm_set_config_string)=/`,
 			args);
     foreach (i, arg; args) {
       m_process_config(arg[23..$], false);
     }
 
-    clp.get_arg_matches("/^\\+(UVM_SET_DEFAULT_SEQUENCE|uvm_set_default_sequence)=/", args);
+    clp.get_arg_matches(`/^\+(UVM_SET_DEFAULT_SEQUENCE|uvm_set_default_sequence)=/`, args);
     foreach (i, arg; args) {
       m_process_default_sequence(arg[26..$]);
     }
@@ -1003,7 +1003,7 @@ class uvm_root: uvm_component, uvm_root_intf, rand.disable
     import uvm.base.uvm_object_globals;
     uvm_report_server srvr = uvm_report_server.get_server();
     string[] max_quit_settings;
-    size_t max_quit_count = clp.get_arg_values("+UVM_MAX_QUIT_COUNT=",
+    size_t max_quit_count = clp.get_arg_values(`+UVM_MAX_QUIT_COUNT=`,
 					       max_quit_settings);
     if (max_quit_count is 0)
       return;
@@ -1043,7 +1043,7 @@ class uvm_root: uvm_component, uvm_root_intf, rand.disable
     import uvm.base.uvm_object_globals;
     string[] dump_args;
     string[] all_args;
-    if (clp.get_arg_matches(`\+UVM_DUMP_CMDLINE_ARGS`, dump_args)) {
+    if (clp.get_arg_matches(`+UVM_DUMP_CMDLINE_ARGS`, dump_args)) {
       clp.get_args(all_args);
       foreach (idx, arg; all_args) {
 	uvm_report_info("DUMPARGS", format("idx=%0d arg=[%s]",
@@ -1223,7 +1223,7 @@ class uvm_root: uvm_component, uvm_root_intf, rand.disable
       srvr = uvm_report_server.get_server();
       clp = uvm_cmdline_processor.get_inst();
 
-      if (clp.get_arg_matches("\\+UVM_NO_RELNOTES", args)) return;
+      if (clp.get_arg_matches(`+UVM_NO_RELNOTES`, args)) return;
 
       if (! _m_relnotes_done) {
 	q ~= "\n  ***********       IMPORTANT RELEASE NOTES         ************\n";
@@ -1304,7 +1304,8 @@ class uvm_root: uvm_component, uvm_root_intf, rand.disable
   @uvm_private_sync
   bool _elab_done;
 
-  override void phase_ended(uvm_phase phase) {
+  // normally no one is going to extend uvm_root class
+  final override void phase_ended(uvm_phase phase) {
     import uvm.base.uvm_domain;
     if (phase is end_of_elaboration_ph) {
       synchronized (this) {

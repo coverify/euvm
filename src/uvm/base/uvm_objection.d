@@ -256,7 +256,7 @@ class uvm_objection: uvm_report_object, rand.disable
 
       // Get the command line trace mode setting
       uvm_cmdline_processor clp = uvm_cmdline_processor.get_inst();
-      if (clp.get_arg_matches("+UVM_OBJECTION_TRACE", trace_args)) {
+      if (clp.get_arg_matches(`+UVM_OBJECTION_TRACE`, trace_args)) {
 	_m_trace_mode = true;
       }
 

@@ -53,6 +53,7 @@ import uvm.base.uvm_factory: uvm_object_wrapper;
 import uvm.base.uvm_object_globals: uvm_bitstream_t;
 import uvm.base.uvm_resource: uvm_resource, uvm_resource_pool;
 import uvm.base.uvm_resource_base:  uvm_resource_types, uvm_resource_base;
+// import uvm.base.uvm_entity: uvm_entity_base;
 import uvm.base.uvm_scope;
 
 import uvm.meta.misc;
@@ -448,7 +449,7 @@ package class uvm_config_db_options
 
   static void turn_on_tracing() {
     synchronized (_uvm_scope_inst) {
-      if (!_uvm_scope_inst._ready) init_trace();
+      if (! _uvm_scope_inst._ready) init_trace();
       _uvm_scope_inst._tracing = true;
     }
   }
@@ -462,7 +463,7 @@ package class uvm_config_db_options
 
   static void turn_off_tracing() {
     synchronized (_uvm_scope_inst) {
-      if (!_uvm_scope_inst._ready) init_trace();
+      if (! _uvm_scope_inst._ready) init_trace();
       _uvm_scope_inst._tracing = false;
     }
   }
@@ -476,10 +477,17 @@ package class uvm_config_db_options
 
   static bool is_tracing() {
     synchronized (_uvm_scope_inst) {
-      if (!_uvm_scope_inst._ready) init_trace();
+      if (! _uvm_scope_inst._ready) init_trace();
       return _uvm_scope_inst._tracing;
     }
   }
+
+  // static bool is_tracing(uvm_entity_base entity) {
+  //   synchronized (_uvm_scope_inst(entity)) {
+  //     if (! _uvm_scope_inst(entity)._ready) init_trace(entity);
+  //     return _uvm_scope_inst(entity)._tracing;
+  //   }
+  // }
 
 
   static private void init_trace() {
@@ -488,11 +496,24 @@ package class uvm_config_db_options
 
       uvm_cmdline_processor clp = uvm_cmdline_processor.get_inst();
 
-      if (clp.get_arg_matches(`\+UVM_CONFIG_DB_TRACE`, trace_args)) {
+      if (clp.get_arg_matches(`+UVM_CONFIG_DB_TRACE`, trace_args)) {
 	_uvm_scope_inst._tracing = true;
       }
       _uvm_scope_inst._ready = true;
     }
   }
+
+  // static private void init_trace(uvm_entity_base entity) {
+  //   synchronized (_uvm_scope_inst(entity)) {
+  //     string[] trace_args;
+
+  //     uvm_cmdline_processor clp = uvm_cmdline_processor.get_inst(entity);
+
+  //     if (clp.get_arg_matches(`+UVM_CONFIG_DB_TRACE`, trace_args)) {
+  // 	_uvm_scope_inst._tracing = true;
+  //     }
+  //     _uvm_scope_inst._ready = true;
+  //   }
+  // }
 
 }

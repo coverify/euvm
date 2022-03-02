@@ -120,7 +120,7 @@ class uvm_resource_db_options
      
       clp = uvm_cmdline_processor.get_inst();
 
-      if (clp.get_arg_matches("+UVM_RESOURCE_DB_TRACE", trace_args)) {
+      if (clp.get_arg_matches(`+UVM_RESOURCE_DB_TRACE`, trace_args)) {
 	_uvm_scope_inst._tracing = true;
       }
 
