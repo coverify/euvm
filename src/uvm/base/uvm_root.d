@@ -768,7 +768,7 @@ class uvm_root: uvm_component, uvm_root_intf, rand.disable
   // }
 
   override ParContext _esdl__parInheritFrom() {
-    return Process.self().getParentEntity();
+    return EntityIntf.getContextEntity();
   }
 
   private void m_do_cl_init() {

@@ -20,7 +20,7 @@
 //------------------------------------------------------------------------------
 module uvm.meta.misc;
 
-import esdl.base.core: Event, Process, NamedComp;
+import esdl.base.core: Event, Process, NamedComp, EntityIntf;
 import esdl.data.queue: Queue;
 // This file lists D routines required for coding UVM
 
@@ -118,7 +118,7 @@ class QueueWithEvent(T)
 
   this(string name) {
     synchronized(this) {
-      _event.initialize(name, Process.self);
+      _event.initialize(name, EntityIntf.getContextParent);
     }
   }
 
@@ -157,7 +157,7 @@ class AssocWithEvent(K, V)
   }
 
   this(string name) {
-    _event.initialize(name, Process.self);
+    _event.initialize(name, EntityIntf.getContextParent);
   }
 }
 
@@ -173,10 +173,10 @@ class WithEvent(T) {
 
   this(string name, T val, NamedComp parent=null) {
     synchronized(this) {
-      if(parent is null) {
-	parent = Process.self;
+      if (parent is null) {
+	parent = EntityIntf.getContextParent();
       }
-      assert(parent !is null);
+      assert (parent !is null);
       _event.initialize(name, parent);
       _val = val;
     }
@@ -184,8 +184,8 @@ class WithEvent(T) {
 
   this(string name, NamedComp parent=null) {
     synchronized(this) {
-      if(parent is null) {
-	parent = Process.self;
+      if (parent is null) {
+	parent = EntityIntf.getContextParent();
       }
       assert(parent !is null);
       _event.initialize(name, parent);
@@ -193,7 +193,7 @@ class WithEvent(T) {
   }
 
   // void initialize() {
-  //   _event.initialize(Process.self);
+  //   _event.initialize(EntityIntf.getContextParent);
   // }
 
   T get() {

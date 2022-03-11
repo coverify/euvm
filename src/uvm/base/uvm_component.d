@@ -3426,7 +3426,7 @@ void uvm__config_parallelism(T)(T t, ref _esdl__Multicore linfo)
       MulticoreConfig pconf;
       
       if (parent is null || parent is t) { // this is uvm_root
-	pconf = Process.self().getParentEntity()._esdl__getMulticoreConfig();
+	pconf = EntityIntf.getContextEntity()._esdl__getMulticoreConfig();
 	assert (pconf !is null);
       }
       else {

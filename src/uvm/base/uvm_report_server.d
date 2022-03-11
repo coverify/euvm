@@ -632,7 +632,7 @@ class uvm_default_report_server: uvm_report_server
     import uvm.base.uvm_report_catcher;
     synchronized (this) {
       uvm_report_handler l_report_handler = report_message.get_report_handler();
-      Process p = Process.self();
+      // Process p = Process.self();
       bool report_ok = true;
 
       // Set the report server for this message
@@ -687,7 +687,7 @@ class uvm_default_report_server: uvm_report_server
     import uvm.base.uvm_recorder;
     import uvm.base.uvm_report_handler;
     synchronized (this) {
-      Process p = Process.self();
+      // Process p = Process.self();
 
       // Update counts
       incr_severity_count(report_message.get_severity());
