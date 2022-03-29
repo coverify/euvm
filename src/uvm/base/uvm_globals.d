@@ -999,6 +999,16 @@ string uvm_bits_to_string(bstr str) {
 // @uvm-accellera The details of this API are specific to the Accellera implementation, and are not being considered for contribution to 1800.2
 //----------------------------------------------------------------------------
 
+// eUVM does not used uvm_wait_for_nba_region -- it instead defines
+// method wait_for_nba_region in uvm_phase class and uses that. This
+// is done for the following reasons:
+// 1. This function is used in uvm_phase class only
+// 2. The function instantiates a Signal, which can be made an element
+// of the uvm_phase class, thus doing away with creating the Signal
+// object every time the function is called. Note that in SV global
+// functions have static scoping by default
+
+
 enum size_t UVM_POUND_ZERO_COUNT=1;
 void uvm_wait_for_nba_region() {
   version (UVM_NO_WAIT_FOR_NBA) {
@@ -1011,8 +1021,10 @@ void uvm_wait_for_nba_region() {
     import esdl.base.core: Signal, wait;
 
     // These are not declared static in the SV version
-    Signal!int nba;
-    int next_nba;
+    static Signal!int nba;
+    static int next_nba;
+
+    // if (nba is null) nba = new Signal!int;
 
     //If `included directly in a program block, can't use a non-blocking assign,
     //but it isn't needed since program blocks are in a separate region.

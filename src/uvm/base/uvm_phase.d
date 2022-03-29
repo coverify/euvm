@@ -165,6 +165,8 @@ import esdl.rand.misc: rand;
 class uvm_phase: uvm_object, rand.disable
 {
   import uvm.base.uvm_component: uvm_component;
+  import esdl.base.core: Signal, wait;
+
 
   mixin (uvm_sync_string);
   mixin (uvm_scope_sync_string);
@@ -273,6 +275,8 @@ class uvm_phase: uvm_object, rand.disable
 	_m_end_node.add_predecessor(this);
       }
       _max_ready_to_end_iters = get_default_max_ready_to_end_iterations();
+
+      _m_nba.initialize();
     }
   }
 
@@ -1302,6 +1306,12 @@ class uvm_phase: uvm_object, rand.disable
   @uvm_public_sync
   private int                       _m_num_procs_not_yet_returned;
 
+  // used by wait_for_nba_region
+  @uvm_private_sync
+  private Signal!int                _m_nba;
+  private int                       _m_next_nba;
+
+  
   final void inc_m_num_procs_not_yet_returned() {
     synchronized (this) {
       ++_m_num_procs_not_yet_returned;
@@ -1918,7 +1928,7 @@ class uvm_phase: uvm_object, rand.disable
 	    sleep();
 	  });
 
-	uvm_wait_for_nba_region(); //Give sequences, etc. a chance to object
+	wait_for_nba_region(); //Give sequences, etc. a chance to object
 
 	// Now wait for one of three criterion for end-of-phase.
 	// Fork guard = join({
@@ -1955,7 +1965,7 @@ class uvm_phase: uvm_object, rand.disable
 
 	    bool do_ready_to_end = true; // bit used for ready_to_end iterations
 	    while (do_ready_to_end) {
-	      uvm_wait_for_nba_region(); // Let all siblings see no objections before traverse might raise another
+	      wait_for_nba_region(); // Let all siblings see no objections before traverse might raise another
 	      UVM_PH_TRACE("PH_READY_TO_END","PHASE READY TO END",
 			   this, uvm_verbosity.UVM_DEBUG);
 	      synchronized (this) {
@@ -1971,7 +1981,7 @@ class uvm_phase: uvm_object, rand.disable
 		m_imp.traverse(top, this, uvm_phase_state.UVM_PHASE_READY_TO_END);
 	      }
 
-	      uvm_wait_for_nba_region(); // Give traverse targets a chance to object
+	      wait_for_nba_region(); // Give traverse targets a chance to object
 
 	      wait_for_self_and_siblings_to_drop();
 
@@ -2434,6 +2444,40 @@ class uvm_phase: uvm_object, rand.disable
     }
   }
   
+  // SV has this function defined as a global function in uvm_globals module
+  
+  //----------------------------------------------------------------------------
+  //
+  // Task: wait_for_nba_region
+  //
+  // This task will block until SystemVerilog's NBA region (or Re-NBA region if 
+  // called from a program context).  The purpose is to continue the calling 
+  // process only after allowing other processes any number of delta cycles (#0) 
+  // to settle out.
+  //
+  // @uvm-accellera The details of this API are specific to the Accellera implementation, and are not being considered for contribution to 1800.2
+  //----------------------------------------------------------------------------
+
+  enum size_t UVM_POUND_ZERO_COUNT=1;
+  void wait_for_nba_region() {
+    // SV version has UVM_NO_WAIT_FOR_NBA, but for eUVM it may be more
+    // efficient to just have that as default
+    version (UVM_NO_WAIT_FOR_NBA) {
+      // repeat(UVM_POUND_ZERO_COUNT) #0;
+      for (size_t i=0; i!=UVM_POUND_ZERO_COUNT; ++i) {
+        wait(0);
+      }
+    }
+    else {
+      // These are not declared static in the SV version
+      // If `included directly in a program block, can't use a non-blocking assign,
+      //but it isn't needed since program blocks are in a separate region.
+      _m_next_nba++;
+      _m_nba = _m_next_nba;
+      wait(_m_nba);
+    }
+  }
+
 }
 
 //------------------------------------------------------------------------------
