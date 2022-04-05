@@ -1,13 +1,13 @@
 //
 //-----------------------------------------------------------------------------
-// Copyright 2012-2019 Coverify Systems Technology
-// Copyright 2007-2014 Mentor Graphics Corporation
-// Copyright 2015 Analog Devices, Inc.
-// Copyright 2011-2018 Synopsys, Inc.
-// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2012-2021 Coverify Systems Technology
 // Copyright 2012 AMD
-// Copyright 2013-2018 NVIDIA Corporation
+// Copyright 2015 Analog Devices, Inc.
+// Copyright 2007-2018 Cadence Design Systems, Inc.
 // Copyright 2017-2018 Cisco Systems, Inc.
+// Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2013-2020 NVIDIA Corporation
+// Copyright 2011-2018 Synopsys, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -82,7 +82,7 @@ import std.traits: isNumeric, isFloatingPoint, isIntegral, isBoolean, isArray;
 import std.random;
 
 
-// @uvm-ieee 1800.2-2017 auto 16.4.1
+// @uvm-ieee 1800.2-2020 auto 16.4.1
 abstract class uvm_recorder: uvm_policy
 {
 
@@ -184,25 +184,25 @@ abstract class uvm_recorder: uvm_policy
   //
   // The default policy is deep (which means to recurse an object).
 
-  @uvm_public_sync
+  @uvm_private_sync
   private uvm_recursion_policy_enum _policy =
     uvm_recursion_policy_enum.UVM_DEFAULT_POLICY;
 
-  // @uvm-ieee 1800.2-2017 auto 16.4.2.1
+  // @uvm-ieee 1800.2-2020 auto 16.4.2.1
   void set_recursion_policy(uvm_recursion_policy_enum policy) {
     synchronized (this) {
       this._policy  = policy;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.4.2.1
+  // @uvm-ieee 1800.2-2020 auto 16.4.2.1
   uvm_recursion_policy_enum get_recursion_policy() {
     synchronized (this) {
       return this._policy;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 16.4.4.1
+  // @uvm-ieee 1800.2-2020 auto 16.4.4.1
   override  void flush() {
     synchronized (this) {
       _policy      = uvm_recursion_policy_enum.UVM_DEFAULT_POLICY;
@@ -234,7 +234,7 @@ abstract class uvm_recorder: uvm_policy
   // Group -- NODOCS -- Configuration API
 
 
-  // @uvm-ieee 1800.2-2017 auto 16.4.3
+  // @uvm-ieee 1800.2-2020 auto 16.4.3
   uvm_tr_stream get_stream() {
     import uvm.base.uvm_globals;
     synchronized (this) {
@@ -264,7 +264,7 @@ abstract class uvm_recorder: uvm_policy
   //
 
 
-  // @uvm-ieee 1800.2-2017 auto 16.4.4.2
+  // @uvm-ieee 1800.2-2020 auto 16.4.4.2
   void close(SimTime close_time = 0) {
     synchronized (this) {
       if (close_time == 0) {
@@ -284,7 +284,7 @@ abstract class uvm_recorder: uvm_policy
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 16.4.4.3
+  // @uvm-ieee 1800.2-2020 auto 16.4.4.3
   void free(SimTime close_time = 0) {
     synchronized (this) {
       if (!is_open() && !is_closed()) {
@@ -301,13 +301,6 @@ abstract class uvm_recorder: uvm_policy
       uvm_tr_stream stream = get_stream();
 
       _m_is_closed = false;
-
-      version (PRESERVE_RANDSTATE) {
-	Process p = Process.self();
-	Random s;
-	if (p !is null)
-	  p.getRandState(s);
-      }
 
       _m_stream_dap = new uvm_set_before_get_dap!uvm_tr_stream("stream_dap");
 
@@ -333,7 +326,7 @@ abstract class uvm_recorder: uvm_policy
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 16.4.4.4
+  // @uvm-ieee 1800.2-2020 auto 16.4.4.4
   bool is_open() {
     synchronized (this) {
       return _m_is_opened;
@@ -341,7 +334,7 @@ abstract class uvm_recorder: uvm_policy
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 16.4.4.5
+  // @uvm-ieee 1800.2-2020 auto 16.4.4.5
   SimTime get_open_time() {
     synchronized (this) {
       return _m_open_time;
@@ -349,7 +342,7 @@ abstract class uvm_recorder: uvm_policy
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 16.4.4.6
+  // @uvm-ieee 1800.2-2020 auto 16.4.4.6
   bool is_closed() {
     synchronized (this) {
       return _m_is_closed;
@@ -357,7 +350,7 @@ abstract class uvm_recorder: uvm_policy
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 16.4.4.7
+  // @uvm-ieee 1800.2-2020 auto 16.4.4.7
   SimTime get_close_time() {
     synchronized (this) {
       return _m_close_time;
@@ -433,7 +426,7 @@ abstract class uvm_recorder: uvm_policy
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 16.4.5.1
+  // @uvm-ieee 1800.2-2020 auto 16.4.5.1
   int get_handle() {
     if (!is_open() && !is_closed()) {
       return 0;
@@ -457,7 +450,7 @@ abstract class uvm_recorder: uvm_policy
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 16.4.5.2
+  // @uvm-ieee 1800.2-2020 auto 16.4.5.2
   static uvm_recorder get_recorder_from_handle(int id) {
     synchronized (_uvm_scope_inst) {
       if (id == 0) {
@@ -477,7 +470,7 @@ abstract class uvm_recorder: uvm_policy
   // Group -- NODOCS -- Attribute Recording
 
 
-  // @uvm-ieee 1800.2-2017 auto 16.4.6.1
+  // @uvm-ieee 1800.2-2020 auto 16.4.6.1
   alias record_field = record;
   void record(T)(string name, T value, size_t size,
 		 uvm_radix_enum radix=uvm_radix_enum.UVM_NORADIX)
@@ -501,7 +494,7 @@ abstract class uvm_recorder: uvm_policy
     }
 
 
-  // @uvm-ieee 1800.2-2017 auto 16.4.6.2
+  // @uvm-ieee 1800.2-2020 auto 16.4.6.2
   alias record_field_int = record;
   void record(T)(string name, T value, uvm_radix_enum radix=uvm_radix_enum.UVM_NORADIX)
     if (isIntegral!T || (isBitVector!T && T.SIZE <= 64) || isBoolean!T) {
@@ -518,7 +511,7 @@ abstract class uvm_recorder: uvm_policy
     }
 
 
-  // @uvm-ieee 1800.2-2017 auto 16.4.6.3
+  // @uvm-ieee 1800.2-2020 auto 16.4.6.3
   void record(T)(string name, T value)
     if (isFloatingPoint!T) {
       synchronized (this) {
@@ -531,7 +524,7 @@ abstract class uvm_recorder: uvm_policy
 
   alias record_field_real = record;
 
-  // @uvm-ieee 1800.2-2017 auto 16.4.6.4
+  // @uvm-ieee 1800.2-2020 auto 16.4.6.4
   void record(T)(string name, T value)
     if (is (T: uvm_object)) {
       synchronized (this) {
@@ -550,7 +543,18 @@ abstract class uvm_recorder: uvm_policy
 
   alias record_object = record;
 
-  // @uvm-ieee 1800.2-2017 auto 16.4.6.5
+  void record(T)(string name,
+		 T value)
+    if (is (T == struct)  && ! (isBitVector!T) && ! is (T == SimTime)) {
+      synchronized (this) {
+	if (get_stream() is null) {
+	  return;
+	}
+	do_record_struct(name, value);
+      }
+    }
+
+  // @uvm-ieee 1800.2-2020 auto 16.4.6.5
   void record(T)(string name,
 		 T value)
     if (is (T: string)) {
@@ -565,7 +569,7 @@ abstract class uvm_recorder: uvm_policy
 
   alias record_string = record;
 
-  // @uvm-ieee 1800.2-2017 auto 16.4.6.6
+  // @uvm-ieee 1800.2-2020 auto 16.4.6.6
   void record(T)(string name,
 		 T value)
     if (is (T: SimTime)) {
@@ -581,7 +585,7 @@ abstract class uvm_recorder: uvm_policy
   alias record_time = record;
 
 
-  // @uvm-ieee 1800.2-2017 auto 16.4.6.7
+  // @uvm-ieee 1800.2-2020 auto 16.4.6.7
   void record_generic(string name,
 		      string value,
 		      string type_name="") {
@@ -595,13 +599,13 @@ abstract class uvm_recorder: uvm_policy
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 16.4.6.8
+  // @uvm-ieee 1800.2-2020 auto 16.4.6.8
   bool use_record_attribute() {
     return false;
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 16.4.6.9
+  // @uvm-ieee 1800.2-2020 auto 16.4.6.9
   int get_record_attribute_handle() {
     return get_handle();
   }
@@ -609,34 +613,34 @@ abstract class uvm_recorder: uvm_policy
   // Group -- NODOCS -- Implementation Agnostic API
 
 
-  // @uvm-ieee 1800.2-2017 auto 16.4.7.1
+  // @uvm-ieee 1800.2-2020 auto 16.4.7.1
   protected void do_open(uvm_tr_stream stream, SimTime open_time,
 			 string type_name) { }
 
 
-  // @uvm-ieee 1800.2-2017 auto 16.4.7.2
+  // @uvm-ieee 1800.2-2020 auto 16.4.7.2
   protected void do_close(SimTime close_time) { }
 
 
-  // @uvm-ieee 1800.2-2017 auto 16.4.7.3
+  // @uvm-ieee 1800.2-2020 auto 16.4.7.3
   protected void do_free() { }
 
 
-  // @uvm-ieee 1800.2-2017 auto 16.4.7.4
+  // @uvm-ieee 1800.2-2020 auto 16.4.7.4
   abstract protected  void do_record_field(string name,
 					   uvm_bitstream_t value,
 					   size_t size,
 					   uvm_radix_enum radix);
 
 
-  // @uvm-ieee 1800.2-2017 auto 16.4.7.5
+  // @uvm-ieee 1800.2-2020 auto 16.4.7.5
   abstract protected void do_record_field_int(string name,
 					      uvm_integral_t value,
 					      size_t size,
 					      uvm_radix_enum radix);
 
 
-  // @uvm-ieee 1800.2-2017 auto 16.4.7.6
+  // @uvm-ieee 1800.2-2020 auto 16.4.7.6
   abstract protected void do_record_field_real(string name,
 					       double value);
 
@@ -646,7 +650,7 @@ abstract class uvm_recorder: uvm_policy
   // virtual.  The implemented signature is:
   // virtual protected function void do_record_object(string name, uvm_object value);
   
-  // @uvm-ieee 1800.2-2017 auto 16.4.7.7
+  // @uvm-ieee 1800.2-2020 auto 16.4.7.7
   protected void do_record_object(string name,
 				  uvm_object value) {
     if ((get_recursion_policy() != uvm_recursion_policy_enum.UVM_REFERENCE) &&
@@ -660,18 +664,30 @@ abstract class uvm_recorder: uvm_policy
     }
   }
 
+  protected void do_record_struct(T)(string name,
+				     T value) {
+    uvm_field_op field_op = uvm_field_op.m_get_available_op();
+    field_op.set(uvm_field_auto_enum.UVM_RECORD, this, null);
+    uvm_struct_do_execute_op(value, field_op);
+    if (field_op.user_hook_enabled())
+      static if (__traits(compiles, value.do_record(this))) {
+	value.do_record(this);
+      }
+    field_op.m_recycle();
+  }
 
-  // @uvm-ieee 1800.2-2017 auto 16.4.7.9
+
+  // @uvm-ieee 1800.2-2020 auto 16.4.7.9
   abstract protected void do_record_string(string name,
 					   string value);
 
 
-  // @uvm-ieee 1800.2-2017 auto 16.4.7.10
+  // @uvm-ieee 1800.2-2020 auto 16.4.7.10
   abstract protected void do_record_time(string name,
 					 SimTime value);
 
 
-  // @uvm-ieee 1800.2-2017 auto 16.4.7.11
+  // @uvm-ieee 1800.2-2020 auto 16.4.7.11
   abstract protected void do_record_generic(string name,
 					    string value,
 					    string type_name);

@@ -1,8 +1,8 @@
 //----------------------------------------------------------------------
-// Copyright 2019 Coverify Systems Technology
+// Copyright 2019-2021 Coverify Systems Technology
 // Copyright 2018 Cadence Design Systems, Inc.
-// Copyright 2018 NVIDIA Corporation
 // Copyright 2017 Cisco Systems, Inc.
+// Copyright 2018 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -120,7 +120,7 @@ class uvm_resource_db_options
      
       clp = uvm_cmdline_processor.get_inst();
 
-      if (clp.get_arg_matches("+UVM_RESOURCE_DB_TRACE", trace_args)) {
+      if (clp.get_arg_matches(`+UVM_RESOURCE_DB_TRACE`, trace_args)) {
 	_uvm_scope_inst._tracing = true;
       }
 

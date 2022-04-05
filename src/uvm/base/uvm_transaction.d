@@ -1,13 +1,13 @@
 //
 //-----------------------------------------------------------------------------
 // Copyright 2014-2021 Coverify Systems Technology
-// Copyright 2007-2014 Mentor Graphics Corporation
-// Copyright 2010-2013 Synopsys, Inc.
-// Copyright 2007-2018 Cadence Design Systems, Inc.
-// Copyright 2020 Marvell International Ltd.
 // Copyright 2010 AMD
-// Copyright 2013-2018 NVIDIA Corporation
+// Copyright 2007-2018 Cadence Design Systems, Inc.
 // Copyright 2014-2017 Cisco Systems, Inc.
+// Copyright 2020 Marvell International Ltd.
+// Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2013-2020 NVIDIA Corporation
+// Copyright 2010-2013 Synopsys, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -145,10 +145,9 @@ alias uvm_event_pool = uvm_object_string_pool!(uvm_event!(uvm_object));
 //
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 5.4.1
+// @uvm-ieee 1800.2-2020 auto 5.4.1
 
-@rand(false)
-abstract class uvm_transaction: uvm_object
+abstract class uvm_transaction: uvm_object, rand.barrier
 {
   import uvm.base.uvm_component;
   mixin (uvm_sync_string);
@@ -161,7 +160,7 @@ abstract class uvm_transaction: uvm_object
   // new
   // ---
 
-  // @uvm-ieee 1800.2-2017 auto 5.4.2.1
+  // @uvm-ieee 1800.2-2020 auto 5.4.2.1
   this(string name = "", uvm_component initiator = null) {
     synchronized (this) {
       super(name);
@@ -199,7 +198,7 @@ abstract class uvm_transaction: uvm_object
   // accept_tr
   // ---------
 
-  // @uvm-ieee 1800.2-2017 auto 5.4.2.2
+  // @uvm-ieee 1800.2-2020 auto 5.4.2.2
   final void accept_tr (SimTime accept_time = 0) {
     synchronized (this) {
       uvm_event!uvm_object e;
@@ -228,7 +227,7 @@ abstract class uvm_transaction: uvm_object
   // event is triggered. Implementations should call ~super.do_accept_tr~ to
   // ensure correct operation.
 
-  // @uvm-ieee 1800.2-2017 auto 5.4.2.3
+  // @uvm-ieee 1800.2-2020 auto 5.4.2.3
   void do_accept_tr() {
     return;
   }
@@ -266,16 +265,9 @@ abstract class uvm_transaction: uvm_object
   // recording is enabled. The meaning of the handle is implementation specific.
 
 
-  // @uvm-ieee 1800.2-2017 auto 5.4.2.4
-  version(UVM_1800_2_2020_EA) {
-    final int begin_tr(SimTime begin_time = 0, int parent_handle = 0) {
-      return m_begin_tr(begin_time, parent_handle);
-    }
-  }
-  else {
-    final int begin_tr(SimTime begin_time = 0) {
-      return m_begin_tr(begin_time);
-    }
+  // @uvm-ieee 1800.2-2020 auto 5.4.2.4
+  final int begin_tr(SimTime begin_time = 0, int parent_handle = 0) {
+    return m_begin_tr(begin_time, parent_handle);
   }
   
   // Function -- NODOCS -- begin_child_tr
@@ -310,8 +302,6 @@ abstract class uvm_transaction: uvm_object
   // The return value is a transaction handle, which is valid (non-zero) only if
   // recording is enabled. The meaning of the handle is implementation specific.
 
-  // @uvm-ieee 1800.2-2017 auto 5.4.2.5
-  //Use a parent handle of zero to link to the parent after begin
   final int begin_child_tr (SimTime begin_time = 0,
 			    int parent_handle = 0) {
     return m_begin_tr(begin_time, parent_handle);
@@ -323,7 +313,7 @@ abstract class uvm_transaction: uvm_object
   // before the begin event is triggered. Implementations should call
   // ~super.do_begin_tr~ to ensure correct operation.
 
-  // @uvm-ieee 1800.2-2017 auto 5.4.2.6
+  // @uvm-ieee 1800.2-2020 auto 5.4.2.5
   protected void do_begin_tr() {
     return;
   }
@@ -360,7 +350,7 @@ abstract class uvm_transaction: uvm_object
   // - The transaction's internal end event is triggered. Any processes waiting
   //   on this event will resume in the next delta cycle.
 
-  // @uvm-ieee 1800.2-2017 auto 5.4.2.7
+  // @uvm-ieee 1800.2-2020 auto 5.4.2.6
   final void end_tr(SimTime end_time = 0, bool free_handle = true) {
     synchronized (this) {
       _end_time = (end_time == 0) ? getRootEntity.getSimTime : end_time;
@@ -391,7 +381,7 @@ abstract class uvm_transaction: uvm_object
   // is triggered. Implementations should call ~super.do_end_tr~ to ensure correct
   // operation.
 
-  // @uvm-ieee 1800.2-2017 auto 5.4.2.8
+  // @uvm-ieee 1800.2-2020 auto 5.4.2.7
   void do_end_tr() {
     return;
   }
@@ -401,7 +391,7 @@ abstract class uvm_transaction: uvm_object
   // Returns the handle associated with the transaction, as set by a previous
   // call to <begin_child_tr> or <begin_tr> with transaction recording enabled.
 
-  // @uvm-ieee 1800.2-2017 auto 5.4.2.9
+  // @uvm-ieee 1800.2-2020 auto 5.4.2.8
   int get_tr_handle () {
     synchronized (this) {
       if (_tr_recorder !is null) {
@@ -418,7 +408,7 @@ abstract class uvm_transaction: uvm_object
   // Turns off recording for the transaction stream. This method does not
   // effect a <uvm_component>'s recording streams.
 
-  // @uvm-ieee 1800.2-2017 auto 5.4.2.11
+  // @uvm-ieee 1800.2-2020 auto 5.4.2.10
   final void disable_recording () {
     synchronized (this) {
       _stream_handle = null;
@@ -426,7 +416,7 @@ abstract class uvm_transaction: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 5.4.2.10
+  // @uvm-ieee 1800.2-2020 auto 5.4.2.9
   final void enable_recording (uvm_tr_stream stream) {
     synchronized (this) {
       _stream_handle = stream;
@@ -437,7 +427,7 @@ abstract class uvm_transaction: uvm_object
   //
   // Returns 1 if recording is currently on, 0 otherwise.
 
-  // @uvm-ieee 1800.2-2017 auto 5.4.2.12
+  // @uvm-ieee 1800.2-2020 auto 5.4.2.11
   final bool is_recording_enabled () {
     synchronized (this) {
       return (_stream_handle !is null);
@@ -449,7 +439,7 @@ abstract class uvm_transaction: uvm_object
   // Returns 1 if the transaction has been started but has not yet been ended.
   // Returns 0 if the transaction has not been started.
 
-  // @uvm-ieee 1800.2-2017 auto 5.4.2.13
+  // @uvm-ieee 1800.2-2020 auto 5.4.2.12
   final bool is_active() {
     synchronized (this) {
       return (_end_time == -1);
@@ -464,7 +454,7 @@ abstract class uvm_transaction: uvm_object
   // Events can also be added by derivative objects. An event pool is a
   // specialization of <uvm_pool #(KEY,T)>, e.g. a ~uvm_pool#(uvm_event)~.
 
-  // @uvm-ieee 1800.2-2017 auto 5.4.2.14
+  // @uvm-ieee 1800.2-2020 auto 5.4.2.13
   final uvm_event_pool get_event_pool() {
     // _events is effectively immutable
     // synchronization guard can be removed
@@ -481,7 +471,7 @@ abstract class uvm_transaction: uvm_object
   // also be the component that started the transaction. This or any other
   // usage is up to the transaction designer.
 
-  // @uvm-ieee 1800.2-2017 auto 5.4.2.15
+  // @uvm-ieee 1800.2-2020 auto 5.4.2.14
   final void set_initiator(uvm_component initiator) {
     synchronized (this) {
       _initiator = initiator;
@@ -493,7 +483,7 @@ abstract class uvm_transaction: uvm_object
   // Returns the component that produced or started the transaction, as set by
   // a previous call to set_initiator.
 
-  // @uvm-ieee 1800.2-2017 auto 5.4.2.16
+  // @uvm-ieee 1800.2-2020 auto 5.4.2.15
   final uvm_component get_initiator() {
     synchronized (this) {
       return _initiator;
@@ -502,7 +492,7 @@ abstract class uvm_transaction: uvm_object
 
   // Function -- NODOCS -- get_accept_time
 
-  // @uvm-ieee 1800.2-2017 auto 5.4.2.17
+  // @uvm-ieee 1800.2-2020 auto 5.4.2.16
   final SimTime get_accept_time () {
     synchronized (this) {
       return _accept_time;
@@ -512,7 +502,7 @@ abstract class uvm_transaction: uvm_object
 
   // Function -- NODOCS -- get_begin_time
 
-  // @uvm-ieee 1800.2-2017 auto 5.4.2.17
+  // @uvm-ieee 1800.2-2020 auto 5.4.2.16
   final SimTime get_begin_time () {
     synchronized (this) {
       return _begin_time;
@@ -524,7 +514,7 @@ abstract class uvm_transaction: uvm_object
   // Returns the time at which this transaction was accepted, begun, or ended,
   // as by a previous call to <accept_tr>, <begin_tr>, <begin_child_tr>, or <end_tr>.
 
-  // @uvm-ieee 1800.2-2017 auto 5.4.2.17
+  // @uvm-ieee 1800.2-2020 auto 5.4.2.16
   final SimTime get_end_time () {
     synchronized (this) {
       return _end_time;
@@ -540,7 +530,7 @@ abstract class uvm_transaction: uvm_object
   // with the sequence ID to route responses in sequencers and to correlate
   // responses to requests.
 
-  // @uvm-ieee 1800.2-2017 auto 5.4.2.18
+  // @uvm-ieee 1800.2-2020 auto 5.4.2.17
   final void set_transaction_id(int id) {
     synchronized (this) {
       _m_transaction_id = id;
@@ -558,7 +548,7 @@ abstract class uvm_transaction: uvm_object
   // with the sequence ID to route responses in sequencers and to correlate
   // responses to requests.
 
-  // @uvm-ieee 1800.2-2017 auto 5.4.2.19
+  // @uvm-ieee 1800.2-2020 auto 5.4.2.18
   final int get_transaction_id() {
     synchronized (this) {
       return _m_transaction_id;

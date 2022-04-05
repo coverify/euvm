@@ -1,11 +1,11 @@
 //
 //------------------------------------------------------------------------------
-// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2014-2021 Coverify Systems Technology
+// Copyright 2007-2018 Cadence Design Systems, Inc.
 // Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2014-2020 NVIDIA Corporation
 // Copyright 2014 Semifore
 // Copyright 2010-2018 Synopsys, Inc.
-// Copyright 2007-2018 Cadence Design Systems, Inc.
-// Copyright 2014-2018 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -36,7 +36,7 @@ import uvm.base.uvm_component_defines;
 
 import uvm.meta.mailbox;
 
-import esdl.rand.misc: _esdl__Norand;
+import esdl.rand.misc: rand;
 
 //------------------------------------------------------------------------------
 //
@@ -60,8 +60,10 @@ import esdl.rand.misc: _esdl__Norand;
 //------------------------------------------------------------------------------
 
 class uvm_tlm_fifo_common(T=int, size_t N=0):
-  uvm_tlm_fifo_base!(T), _esdl__Norand
+  uvm_tlm_fifo_base!(T), rand.disable
 {
+  import esdl.base.core: Process;
+
   mixin uvm_component_essentials;
 
   // _m is effectively immutable
@@ -76,7 +78,13 @@ class uvm_tlm_fifo_common(T=int, size_t N=0):
     return _m_size;
   }
 
-  protected int m_pending_blocked_gets;
+  version(UVM_USE_PROCESS_CONTAINER) {
+    import uvm.base.uvm_misc: process_container_c;
+    protected bool[process_container_c] _m_pending_blocked_gets;
+  }
+  else {
+    protected bool[Process] _m_pending_blocked_gets;
+  }
 
 
   // Function -- NODOCS -- new
@@ -148,14 +156,28 @@ class uvm_tlm_fifo_common(T=int, size_t N=0):
 
   // task
   override public void get(out T t) {
-    synchronized (this) {
-      m_pending_blocked_gets++;
+    version (UVM_USE_PROCESS_CONTAINER) {
+      process_container_c pid = new process_container_c(Process.self);
+      synchronized (this) {
+	_m_pending_blocked_gets[pid] = true;
+      }
+      m.get(t);
+      synchronized (this) {
+	_m_pending_blocked_gets.remove(pid);
+      }
+      get_ap.write(t);
     }
-    m.get(t);
-    synchronized (this) {
-      m_pending_blocked_gets--;
+    else {
+      Process pid = Process.self;
+      synchronized (this) {
+	_m_pending_blocked_gets[pid] = true;
+      }
+      m.get(t);
+      synchronized (this) {
+	_m_pending_blocked_gets.remove(pid);
+      }
+      get_ap.write(t);
     }
-    get_ap.write(t);
   }
 
   // task
@@ -198,9 +220,34 @@ class uvm_tlm_fifo_common(T=int, size_t N=0):
     }
   }
 
+  // undocumented function for clearing zombie gets
+  protected void m_clear_zombie_gets() {
+    version (UVM_USE_PROCESS_CONTAINER) {
+      process_container_c[] zombie_gets;
+      foreach (proc, b; _m_pending_blocked_gets)
+	if (proc.p.isKilled()) zombie_gets ~= proc;
+      foreach (proc; zombie_gets) {
+	synchronized (this) {
+	  _m_pending_blocked_gets.remove(proc);
+	}
+      }
+    }
+    else {
+      Process[] zombie_gets;
+      foreach (proc, b; _m_pending_blocked_gets)
+	if (proc.isKilled()) zombie_gets ~= proc;
+      foreach (proc; zombie_gets) {
+	synchronized (this) {
+	  _m_pending_blocked_gets.remove(proc);
+	}
+      }
+    }
+  }
+  
   override public bool can_get() {
+    m_clear_zombie_gets();
     synchronized (this) {
-      return m.num() > 0 && m_pending_blocked_gets == 0;
+      return m.num() > 0 && _m_pending_blocked_gets.length == 0;
     }
   }
 
@@ -218,24 +265,26 @@ class uvm_tlm_fifo_common(T=int, size_t N=0):
 
   override public void flush() {
     synchronized (this) {
-      T t;
-      bool r;
-
-      r = true;
-      while (r) r = try_get(t) ;
-
-      if (m.num() > 0 && m_pending_blocked_gets != 0) {
+      m_clear_zombie_gets();
+      
+      if (m.num() > 0 && _m_pending_blocked_gets.length != 0) {
 	uvm_report_error("flush failed" ,
 			 "there are blocked gets preventing the flush",
 			 uvm_verbosity.UVM_NONE);
+	return;
       }
+
+      T t;
+      bool r = true;
+      while (r) r = try_get(t) ;
+
     }
   }
 }
 
-// @uvm-ieee 1800.2-2017 auto 18.2.8.2
+// @uvm-ieee 1800.2-2020 auto 18.2.8.2
 class uvm_tlm_fifo(T=int, size_t N=0):
-  uvm_tlm_fifo_common!(T, N), _esdl__Norand
+  uvm_tlm_fifo_common!(T, N), rand.disable
 {
   mixin uvm_component_essentials;
   // mixin uvm_type_name_decl;
@@ -249,7 +298,7 @@ class uvm_tlm_fifo(T=int, size_t N=0):
 }
 
 class uvm_tlm_async_pull_fifo(T=int, size_t N=0):
-  uvm_tlm_fifo_common!(T, N), _esdl__Norand
+  uvm_tlm_fifo_common!(T, N), rand.disable
 {
   mixin uvm_component_essentials;
   public this(string name=null, uvm_component parent = null, int size = 1) {
@@ -261,7 +310,7 @@ class uvm_tlm_async_pull_fifo(T=int, size_t N=0):
 }
 
 class uvm_tlm_async_push_fifo(T=int, size_t N=0):
-  uvm_tlm_fifo_common!(T, N), _esdl__Norand
+  uvm_tlm_fifo_common!(T, N), rand.disable
 {
   mixin uvm_component_essentials;
   public this(string name=null, uvm_component parent = null, int size = 1) {
@@ -273,7 +322,7 @@ class uvm_tlm_async_push_fifo(T=int, size_t N=0):
 }
 
 class uvm_tlm_async_fifo(T=int, size_t N=0):
-  uvm_tlm_fifo_common!(T, N), _esdl__Norand
+  uvm_tlm_fifo_common!(T, N), rand.disable
 {
   mixin uvm_component_essentials;
   public this(string name=null, uvm_component parent = null, int size = 1) {
@@ -285,7 +334,7 @@ class uvm_tlm_async_fifo(T=int, size_t N=0):
 }
 
 class uvm_tlm_vpi_pull_fifo(T=int, size_t N=0):
-  uvm_tlm_fifo_common!(T, N), _esdl__Norand
+  uvm_tlm_fifo_common!(T, N), rand.disable
 {
   mixin uvm_component_essentials;
   public this(string name=null, uvm_component parent = null, int size = 1) {
@@ -297,7 +346,7 @@ class uvm_tlm_vpi_pull_fifo(T=int, size_t N=0):
 }
 
 class uvm_tlm_vpi_push_fifo(T=int, size_t N=0):
-  uvm_tlm_fifo_common!(T, N), _esdl__Norand
+  uvm_tlm_fifo_common!(T, N), rand.disable
 {
   mixin uvm_component_essentials;
   public this(string name=null, uvm_component parent = null, int size = 1) {
@@ -320,7 +369,7 @@ class uvm_tlm_vpi_push_fifo(T=int, size_t N=0):
 //------------------------------------------------------------------------------
 
 class uvm_tlm_analysis_fifo(T=int):
-  uvm_tlm_fifo!T, _esdl__Norand
+  uvm_tlm_fifo!T, rand.disable
 {
 
   mixin uvm_component_essentials;

@@ -1,10 +1,10 @@
 //----------------------------------------------------------------------
-// Copyright 2016-2019 Coverify Systems Technology
-// Copyright 2010-2011 Mentor Graphics Corporation
-// Copyright 2010-2018 Synopsys, Inc.
+// Copyright 2016-2021 Coverify Systems Technology
 // Copyright 2010-2018 Cadence Design Systems, Inc.
-// Copyright 2015-2018 NVIDIA Corporation
 // Copyright 2014 Cisco Systems, Inc.
+// Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2015-2020 NVIDIA Corporation
+// Copyright 2010-2018 Synopsys, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -36,7 +36,7 @@ module uvm.tlm2.uvm_tlm2_ports;
 // The port can be bound to one export.
 // There is no backward path for the blocking transport.
 
-// @uvm-ieee 1800.2-2017 auto 12.3.6.1
+// @uvm-ieee 1800.2-2020 auto 12.3.6.1
 class uvm_tlm_b_transport_port(T=uvm_tlm_generic_payload)
   : uvm_port_base!(uvm_tlm_if!(T))
   {
@@ -73,7 +73,7 @@ class uvm_tlm_b_transport_port(T=uvm_tlm_generic_payload)
 // The port can be bound to one export.
 //
   
-// @uvm-ieee 1800.2-2017 auto 12.3.6.2
+// @uvm-ieee 1800.2-2020 auto 12.3.6.2
 class uvm_tlm_nb_transport_fw_port(T=uvm_tlm_generic_payload,
 				   P=uvm_tlm_phase_e)
   : uvm_port_base!(uvm_tlm_if!(T,P))
@@ -109,7 +109,7 @@ class uvm_tlm_nb_transport_fw_port(T=uvm_tlm_generic_payload,
 // The port can be bound to one export.
 //
   
-// @uvm-ieee 1800.2-2017 auto 12.3.6.3
+// @uvm-ieee 1800.2-2020 auto 12.3.6.3
 class uvm_tlm_nb_transport_bw_port(T=uvm_tlm_generic_payload,
 				   P=uvm_tlm_phase_e)
   : uvm_port_base!(uvm_tlm_if!(T,P))

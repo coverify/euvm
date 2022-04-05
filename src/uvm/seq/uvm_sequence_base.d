@@ -1,15 +1,15 @@
 //----------------------------------------------------------------------
-// Copyright 2014-2019 Coverify Systems Technology
-// Copyright 2007-2017 Mentor Graphics Corporation
-// Copyright 2014 Semifore
-// Copyright 2014-2017 Intel Corporation
-// Copyright 2010-2014 Synopsys, Inc.
-// Copyright 2007-2018 Cadence Design Systems, Inc.
-// Copyright 2013 Verilab
+// Copyright 2014-2021 Coverify Systems Technology
 // Copyright 2010-2012 AMD
-// Copyright 2012-2018 NVIDIA Corporation
-// Copyright 2014 Cisco Systems, Inc.
 // Copyright 2012 Accellera Systems Initiative
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2014 Cisco Systems, Inc.
+// Copyright 2014-2017 Intel Corporation
+// Copyright 2007-2017 Mentor Graphics Corporation
+// Copyright 2012-2020 NVIDIA Corporation
+// Copyright 2014 Semifore
+// Copyright 2010-2014 Synopsys, Inc.
+// Copyright 2013 Verilab
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -167,9 +167,8 @@ import std.string;
 //------------------------------------------------------------------------------
 
 
-// @uvm-ieee 1800.2-2017 auto 14.2.1
-@rand(false)
-abstract class uvm_sequence_base: uvm_sequence_item
+// @uvm-ieee 1800.2-2020 auto 14.2.1
+abstract class uvm_sequence_base: uvm_sequence_item, rand.barrier
 {
   mixin uvm_abstract_object_essentials;
   
@@ -264,7 +263,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   private bool _wait_rel_default;
 
 
-  // @uvm-ieee 1800.2-2017 auto 14.2.2.1
+  // @uvm-ieee 1800.2-2020 auto 14.2.2.1
   this(string name = "uvm_sequence") {
     synchronized (this) {
       super(name);
@@ -283,7 +282,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 14.2.2.3
+  // @uvm-ieee 1800.2-2020 auto 14.2.2.3
   void set_randomize_enabled(bool enable) {
     synchronized (this) {
       _do_not_randomize = !enable;
@@ -307,7 +306,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   //
   //| wait(get_sequence_state() & (UVM_STOPPED|UVM_FINISHED));
 
-  // @uvm-ieee 1800.2-2017 auto 14.2.2.4
+  // @uvm-ieee 1800.2-2020 auto 14.2.2.4
   uvm_sequence_state get_sequence_state() {
     synchronized (this) {
       return _m_sequence_state;
@@ -323,7 +322,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   //| wait_for_sequence_state(UVM_STOPPED|UVM_FINISHED);
 
   // task
-  // @uvm-ieee 1800.2-2017 auto 14.2.2.5
+  // @uvm-ieee 1800.2-2020 auto 14.2.2.5
   void wait_for_sequence_state(uvm_sequence_state state_mask) {
     while ((m_sequence_state.get & state_mask) == 0) {
       m_sequence_state.getEvent.wait();
@@ -376,7 +375,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   // <body> is called.
 
   // task
-  // @uvm-ieee 1800.2-2017 auto 14.2.3.1
+  // @uvm-ieee 1800.2-2020 auto 14.2.3.1
   void start(uvm_sequencer_base sequencer,
 	     uvm_sequence_base parent_sequence = null,
 	     int this_priority = -1,
@@ -568,7 +567,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   // This method should not be called directly by the user.
 
   // task
-  // @uvm-ieee 1800.2-2017 auto 14.2.3.2
+  // @uvm-ieee 1800.2-2020 auto 14.2.3.2
   void pre_start() {
     return;
   }
@@ -582,7 +581,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   // called.
   // This method should not be called directly by the user.
 
-  // @uvm-ieee 1800.2-2017 auto 14.2.3.3
+  // @uvm-ieee 1800.2-2020 auto 14.2.3.3
   // task
   void pre_body() {
     return;
@@ -602,7 +601,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   // This method should not be called directly by the user.
 
   // task
-  // @uvm-ieee 1800.2-2017 auto 14.2.3.4
+  // @uvm-ieee 1800.2-2020 auto 14.2.3.4
   void pre_do(bool is_item) {
     return;
   }
@@ -614,7 +613,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   // the sequence item has been randomized, and just before the item is sent
   // to the driver.  This method should not be called directly by the user.
 
-  // @uvm-ieee 1800.2-2017 auto 14.2.3.5
+  // @uvm-ieee 1800.2-2020 auto 14.2.3.5
   void mid_do(uvm_sequence_item this_item) {
     return;
   }
@@ -626,7 +625,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   // This method should not be called directly by the user.
 
   // task
-  // @uvm-ieee 1800.2-2017 auto 14.2.3.6
+  // @uvm-ieee 1800.2-2020 auto 14.2.3.6
   void body() {
     uvm_report_warning("uvm_sequence_base", "Frame definition undefined");
     return;
@@ -639,7 +638,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   // this item_done or put methods. This method should not be called directly
   // by the user.
 
-  // @uvm-ieee 1800.2-2017 auto 14.2.3.7
+  // @uvm-ieee 1800.2-2020 auto 14.2.3.7
   void post_do(uvm_sequence_item this_item) {
     return;
   }
@@ -656,7 +655,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   // This method should not be called directly by the user.
 
   // task
-  // @uvm-ieee 1800.2-2017 auto 14.2.3.8
+  // @uvm-ieee 1800.2-2020 auto 14.2.3.8
   void post_body() {
     return;
   }
@@ -669,7 +668,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   // This method should not be called directly by the user.
 
   // task
-  // @uvm-ieee 1800.2-2017 auto 14.2.3.9
+  // @uvm-ieee 1800.2-2020 auto 14.2.3.9
   void post_start() {
     return;
   }
@@ -718,28 +717,28 @@ abstract class uvm_sequence_base: uvm_sequence_item
   // its execution (either via natural termination, or being killed),
   // then the starting phase value can be modified again.
   //
-  // @uvm-ieee 1800.2-2017 auto 14.2.4.1
+  // @uvm-ieee 1800.2-2020 auto 14.2.4.1
   uvm_phase get_starting_phase() {
     synchronized (this) {
       return _m_starting_phase_dap.get();
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 14.2.4.2
+  // @uvm-ieee 1800.2-2020 auto 14.2.4.2
   void set_starting_phase(uvm_phase phase) {
     synchronized (this) {
       _m_starting_phase_dap.set(phase);
     }
   }
    
-  // @uvm-ieee 1800.2-2017 auto 14.2.4.4
+  // @uvm-ieee 1800.2-2020 auto 14.2.4.4
   void set_automatic_phase_objection(bool value) {
     synchronized (this) {
       _m_automatic_phase_objection_dap.set(value);
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 14.2.4.3
+  // @uvm-ieee 1800.2-2020 auto 14.2.4.3
   bool get_automatic_phase_objection() {
     synchronized (this) {
       return _m_automatic_phase_objection_dap.get();
@@ -776,7 +775,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   // The default priority value for a sequence is 100.  Higher values result
   // in higher priorities.
 
-  // @uvm-ieee 1800.2-2017 auto 14.2.5.2
+  // @uvm-ieee 1800.2-2020 auto 14.2.5.2
   void set_priority (int value) {
     synchronized (this) {
       _m_priority = value;
@@ -788,7 +787,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   //
   // This function returns the current priority of the sequence.
 
-  // @uvm-ieee 1800.2-2017 auto 14.2.5.1
+  // @uvm-ieee 1800.2-2020 auto 14.2.5.1
   int get_priority() {
     synchronized (this) {
       return _m_priority;
@@ -816,7 +815,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   // wait_for_relevant so that the sequencer has a way to wait for a
   // sequence to become relevant.
 
-  // @uvm-ieee 1800.2-2017 auto 14.2.5.3
+  // @uvm-ieee 1800.2-2020 auto 14.2.5.3
   bool is_relevant() {
     synchronized (this) {
       _is_rel_default = true;
@@ -840,7 +839,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   // a wait_for_relevant method.
 
   // task
-  // @uvm-ieee 1800.2-2017 auto 14.2.5.4
+  // @uvm-ieee 1800.2-2020 auto 14.2.5.4
   void wait_for_relevant() {
     synchronized (this) {
       _wait_rel_default = true;
@@ -866,7 +865,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   // The lock call will return when the lock has been granted.
 
   // task
-  // @uvm-ieee 1800.2-2017 auto 14.2.5.5
+  // @uvm-ieee 1800.2-2020 auto 14.2.5.5
   void lock(uvm_sequencer_base sequencer = null) {
     if (sequencer is null) {
       sequencer = m_sequencer;
@@ -892,7 +891,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   // The grab call will return when the grab has been granted.
 
   // task
-  // @uvm-ieee 1800.2-2017 auto 14.2.5.6
+  // @uvm-ieee 1800.2-2020 auto 14.2.5.6
   void grab(uvm_sequencer_base sequencer = null) {
     if (sequencer is null) {
       if (m_sequencer is null) {
@@ -912,7 +911,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   // sequencer. If sequencer is ~null~, then the unlock will be done on the
   // current default sequencer.
 
-  // @uvm-ieee 1800.2-2017 auto 14.2.5.7
+  // @uvm-ieee 1800.2-2020 auto 14.2.5.7
   void  unlock(uvm_sequencer_base sequencer = null) {
     synchronized (this) {
       if (sequencer is null) {
@@ -933,7 +932,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   // sequencer. If sequencer is ~null~, then the unlock will be done on the
   // current default sequencer.
 
-  // @uvm-ieee 1800.2-2017 auto 14.2.5.8
+  // @uvm-ieee 1800.2-2020 auto 14.2.5.8
   void  ungrab(uvm_sequencer_base sequencer = null) {
     unlock(sequencer);
   }
@@ -948,7 +947,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   // is possible for another sequence to issue a lock or grab before this
   // sequence can issue a request.
 
-  // @uvm-ieee 1800.2-2017 auto 14.2.5.9
+  // @uvm-ieee 1800.2-2020 auto 14.2.5.9
   bool is_blocked() {
     synchronized (this) {
       return _m_sequencer.is_blocked(this);
@@ -964,7 +963,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   // a lock, in which case the sequence is still blocked from issuing
   // operations on the sequencer.
 
-  // @uvm-ieee 1800.2-2017 auto 14.2.5.10
+  // @uvm-ieee 1800.2-2020 auto 14.2.5.10
   bool has_lock() {
     synchronized (this) {
       return _m_sequencer.has_lock(this);
@@ -983,7 +982,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   // with the other sequencer(s) using the sequencer unregister_sequence()
   // method.
 
-  // @uvm-ieee 1800.2-2017 auto 14.2.5.11
+  // @uvm-ieee 1800.2-2020 auto 14.2.5.11
   void kill() {
     synchronized (this) {
       if (_m_sequence_process !is null) {
@@ -1009,19 +1008,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
     }
   }
 
-  // Function -- NODOCS -- do_kill
-  //
-  // Implementation of the do_kill method, as described in P1800.2-2017
-  // section 14.2.6.12.
-  // 
-  // NOTE:  do_kill is documented in error in the P1800.2-2017
-  // LRM as a non-virtual function, whereas it is implemented as a virtual function
-  //
-  // | virtual function void do_kill()
-  //
-  // @uvm-contrib This API is being considered for potential contribution to 1800.2
-  
-  // @uvm-ieee 1800.2-2017 auto 14.2.5.12
+  // @uvm-ieee 1800.2-2020 auto 14.2.5.12
   void do_kill() {
     return;
   }
@@ -1055,7 +1042,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   // using the factory.  The sequence_item or sequence will be initialized
   // to communicate with the specified sequencer.
 
-  // @uvm-ieee 1800.2-2017 auto 14.2.6.1
+  // @uvm-ieee 1800.2-2020 auto 14.2.6.1
   protected uvm_sequence_item create_item(uvm_object_wrapper type_var,
 					  uvm_sequencer_base l_sequencer,
 					  string name) {
@@ -1080,7 +1067,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   //
 
   // task
-  // @uvm-ieee 1800.2-2017 auto 14.2.6.2
+  // @uvm-ieee 1800.2-2020 auto 14.2.6.2
   void start_item (uvm_sequence_item item,
 			  int set_priority=-1,
 			  uvm_sequencer_base sequencer=null) {
@@ -1141,7 +1128,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   //
 
   // task
-  // @uvm-ieee 1800.2-2017 auto 14.2.6.3
+  // @uvm-ieee 1800.2-2020 auto 14.2.6.3
   void finish_item (uvm_sequence_item item,
 			   int set_priority = -1) {
     uvm_sequencer_base sequencer = item.get_sequencer();
@@ -1178,7 +1165,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   // item to be sent via the send_request call.
 
   // task
-  // @uvm-ieee 1800.2-2017 auto 14.2.6.4
+  // @uvm-ieee 1800.2-2020 auto 14.2.6.4
   void wait_for_grant(int item_priority = -1, bool lock_request = false) {
     if (m_sequencer is null) {
       uvm_report_fatal("WAITGRANT", "Null m_sequencer reference", uvm_verbosity.UVM_NONE);
@@ -1194,7 +1181,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   // it to the driver. If the rerandomize bool is set, the item will be
   // randomized before being sent to the driver.
 
-  // @uvm-ieee 1800.2-2017 auto 14.2.6.5
+  // @uvm-ieee 1800.2-2020 auto 14.2.6.5
   void send_request(uvm_sequence_item request, bool rerandomize = false) {
     synchronized (this) {
       if (_m_sequencer is null) {
@@ -1218,7 +1205,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   // will hang, having missed the earlier notification.
 
   // task
-  // @uvm-ieee 1800.2-2017 auto 14.2.6.6
+  // @uvm-ieee 1800.2-2020 auto 14.2.6.6
   void wait_for_item_done(int transaction_id = -1) {
     if (m_sequencer is null) {
       uvm_report_fatal("WAITITEMDONE", "Null m_sequencer reference", uvm_verbosity.UVM_NONE);
@@ -1242,7 +1229,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   // An alternative method is for the sequencer to call the response_handler
   // function with each response.
 
-  // @uvm-ieee 1800.2-2017 auto 14.2.7.1
+  // @uvm-ieee 1800.2-2020 auto 14.2.7.1
   void use_response_handler(bool enable) {
     synchronized (this) {
       _m_use_response_handler = enable;
@@ -1254,7 +1241,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   //
   // Returns the state of the use_response_handler bool.
 
-  // @uvm-ieee 1800.2-2017 auto 14.2.7.2
+  // @uvm-ieee 1800.2-2020 auto 14.2.7.2
   bool get_use_response_handler() {
     synchronized (this) {
       return _m_use_response_handler;
@@ -1267,7 +1254,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   // When the use_response_handler bool is set to 1, this virtual task is called
   // by the sequencer for each response that arrives for this sequence.
 
-  // @uvm-ieee 1800.2-2017 auto 14.2.7.3
+  // @uvm-ieee 1800.2-2020 auto 14.2.7.3
   void response_handler(uvm_sequence_item response) {
     return;
   }
@@ -1282,7 +1269,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   // Setting the value to '0' disables these errors, while setting it to
   // '1' enables them.
 
-  // @uvm-ieee 1800.2-2017 auto 14.2.7.5
+  // @uvm-ieee 1800.2-2020 auto 14.2.7.5
   void set_response_queue_error_report_enabled(bool value) {
     synchronized (this) {
       _response_queue_error_report_enabled = value;
@@ -1295,7 +1282,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   // the response queue overflows.  When this bit is '0', no such error
   // reports are generated.
 
-  // @uvm-ieee 1800.2-2017 auto 14.2.7.4
+  // @uvm-ieee 1800.2-2020 auto 14.2.7.4
   bool get_response_queue_error_report_enabled() {
     synchronized (this) {
       return _response_queue_error_report_enabled;
@@ -1311,7 +1298,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   // Setting the response_queue_depth to -1 indicates an arbitrarily deep
   // response queue.  No checking is done.
 
-  // @uvm-ieee 1800.2-2017 auto 14.2.7.7
+  // @uvm-ieee 1800.2-2020 auto 14.2.7.7
   void set_response_queue_depth(int value) {
     synchronized (this) {
       _response_queue_depth = value;
@@ -1323,7 +1310,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   //
   // Returns the current depth setting for the response queue.
 
-  // @uvm-ieee 1800.2-2017 auto 14.2.7.6
+  // @uvm-ieee 1800.2-2020 auto 14.2.7.6
   int get_response_queue_depth() {
     synchronized (this) {
       return _response_queue_depth;
@@ -1335,7 +1322,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
   //
   // Empties the response queue for this sequence.
 
-  // @uvm-ieee 1800.2-2017 auto 14.2.7.8
+  // @uvm-ieee 1800.2-2020 auto 14.2.7.8
   void clear_response_queue() {
     synchronized (this) {
       _response_queue.clear();
@@ -1667,7 +1654,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
 	  try {
 	    SEQ_OR_ITEM.randomizeWith!(CONSTRAINTS)(values);
 	  }
-	  catch {
+	  catch (Throwable) {
 	    uvm_warning("RNDFLD",
 			"Randomization failed in uvm_do_with action");
 	  }
@@ -1784,7 +1771,7 @@ abstract class uvm_sequence_base: uvm_sequence_item
 	try {
 	  SEQ_OR_ITEM.randomizeWith!(CONSTRAINTS)(values);
 	}
-	catch {
+	catch (Throwable) {
 	  uvm_warning("RNDFLD",
 		      "Randomization failed in uvm_rand_send_with action");
 	}

@@ -1,13 +1,13 @@
 //
 //----------------------------------------------------------------------
-// Copyright 2014-2019 Coverify Systems Technology
+// Copyright 2014-2021 Coverify Systems Technology
+// Copyright 2011-2012 AMD
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2012-2017 Cisco Systems, Inc.
 // Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2013-2020 NVIDIA Corporation
 // Copyright 2014 Semifore
 // Copyright 2010-2014 Synopsys, Inc.
-// Copyright 2007-2018 Cadence Design Systems, Inc.
-// Copyright 2011-2012 AMD
-// Copyright 2013-2018 NVIDIA Corporation
-// Copyright 2012-2017 Cisco Systems, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -68,7 +68,7 @@ import std.conv: to;
 import esdl.base.core: Process;
 import esdl.data.queue;
 
-import esdl.rand.misc: _esdl__Norand;
+import esdl.rand.misc: rand;
 
 
 //------------------------------------------------------------------------------
@@ -161,10 +161,12 @@ import esdl.rand.misc: _esdl__Norand;
 // used (eg. <uvm_run_phase::get()>) in APIs. For those APIs that need to look
 // up that phase in the graph, this is done automatically.
 
-// @uvm-ieee 1800.2-2017 auto 9.3.1.2
-class uvm_phase: uvm_object, _esdl__Norand
+// @uvm-ieee 1800.2-2020 auto 9.3.1.2
+class uvm_phase: uvm_object, rand.disable
 {
   import uvm.base.uvm_component: uvm_component;
+  import esdl.base.core: Signal, wait;
+
 
   mixin (uvm_sync_string);
   mixin (uvm_scope_sync_string);
@@ -182,7 +184,7 @@ class uvm_phase: uvm_object, _esdl__Norand
     private immutable bool _m_use_ovm_run_semantic;
 
     @uvm_private_sync
-    private int            _m_default_max_ready_to_end_iters = 20;    // 20 is the initial value defined by 1800.2-2017 9.3.1.3.5
+    private int            _m_default_max_ready_to_end_iters = 20;    // 20 is the initial value defined by 1800.2-2020 9.3.1.3.5
 
     this() {
       import uvm.base.uvm_cmdline_processor;
@@ -240,7 +242,7 @@ class uvm_phase: uvm_object, _esdl__Norand
   //--------------------
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.3.1
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.3.1
   this(string name="uvm_phase",
        uvm_phase_type phase_type=uvm_phase_type.UVM_PHASE_SCHEDULE,
        uvm_phase parent=null) {
@@ -273,11 +275,13 @@ class uvm_phase: uvm_object, _esdl__Norand
 	_m_end_node.add_predecessor(this);
       }
       _max_ready_to_end_iters = get_default_max_ready_to_end_iterations();
+
+      _m_nba.initialize();
     }
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.3.2
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.3.2
   final uvm_phase_type get_phase_type() {
     synchronized (this) {
       return _m_phase_type;
@@ -285,21 +289,21 @@ class uvm_phase: uvm_object, _esdl__Norand
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.3.3
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.3.3
   void set_max_ready_to_end_iterations(int max) {
     synchronized (this) {
       _max_ready_to_end_iters = max;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.3.4
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.3.4
   int get_max_ready_to_end_iterations() {
     synchronized (this) {
       return _max_ready_to_end_iters;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.3.5
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.3.5
   static void set_default_max_ready_to_end_iterations(int max) {
     synchronized (_uvm_scope_inst) {
       _uvm_scope_inst._m_default_max_ready_to_end_iters = max;
@@ -307,7 +311,7 @@ class uvm_phase: uvm_object, _esdl__Norand
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.3.6
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.3.6
   static int get_default_max_ready_to_end_iterations() {
     synchronized (_uvm_scope_inst) {
       return _uvm_scope_inst._m_default_max_ready_to_end_iters;
@@ -319,7 +323,7 @@ class uvm_phase: uvm_object, _esdl__Norand
   //-------------
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.4.1
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.4.1
   final uvm_phase_state get_state() {
     synchronized (this) {
       return _m_state;
@@ -327,7 +331,7 @@ class uvm_phase: uvm_object, _esdl__Norand
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.4.2
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.4.2
   final int get_run_count() {
     synchronized (this) {
       return _m_run_count;
@@ -336,7 +340,7 @@ class uvm_phase: uvm_object, _esdl__Norand
 
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.4.3
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.4.3
   final uvm_phase find_by_name(string name, bool stay_in_scope = true) {
     // TBD full search
     //$display({"\nFIND node named '", name,"' within ", get_name()," (scope ", m_phase_type.name(),")", (stay_in_scope) ? " staying within scope" : ""});
@@ -352,7 +356,7 @@ class uvm_phase: uvm_object, _esdl__Norand
 
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.4.4
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.4.4
   uvm_phase find(uvm_phase phase, bool stay_in_scope = true) {
     // TBD full search
     //$display({"\nFIND node '", phase.get_name(),"' within ", get_name()," (scope ", m_phase_type.name(),")", (stay_in_scope) ? " staying within scope" : ""});
@@ -374,7 +378,7 @@ class uvm_phase: uvm_object, _esdl__Norand
   // keyword in dlang, we name this function "is_same" here.
   /////////////////////////////////////////////////////////////////
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.4.5
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.4.5
   final bool is_same(uvm_phase phase) {
     synchronized (this) {
       return (_m_imp is phase || this is phase);
@@ -383,7 +387,7 @@ class uvm_phase: uvm_object, _esdl__Norand
 
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.4.6
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.4.6
   final bool is_before(uvm_phase phase) {
     synchronized (this) {
       //$display("this=%s is before phase=%s?", get_name(), phase.get_name());
@@ -394,7 +398,7 @@ class uvm_phase: uvm_object, _esdl__Norand
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.4.7
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.4.7
   final bool is_after(uvm_phase phase) {
     synchronized (this) {
       //$display("this=%s is after phase=%s?", get_name(), phase.get_name());
@@ -410,13 +414,13 @@ class uvm_phase: uvm_object, _esdl__Norand
   //-----------------
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.5.1
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.5.1
   void exec_func(uvm_component comp, uvm_phase phase) { }
 
 
   // task
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.5.2
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.5.2
   void exec_task(uvm_component comp, uvm_phase phase) { }
 
 
@@ -425,7 +429,7 @@ class uvm_phase: uvm_object, _esdl__Norand
   //----------------
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.6.1
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.6.1
   final void add(uvm_phase phase,
 		 uvm_phase with_phase = null,
 		 uvm_phase after_phase = null,
@@ -709,7 +713,7 @@ class uvm_phase: uvm_object, _esdl__Norand
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.6.2
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.6.2
   final uvm_phase get_parent() {
     synchronized (this) {
       return _m_parent;
@@ -718,7 +722,7 @@ class uvm_phase: uvm_object, _esdl__Norand
 
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.6.3
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.6.3
   override string get_full_name() {
     import uvm.base.uvm_object_globals;
     synchronized (this) {
@@ -741,7 +745,7 @@ class uvm_phase: uvm_object, _esdl__Norand
 
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.6.4
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.6.4
   final uvm_phase get_schedule(bool hier = false) {
     import uvm.base.uvm_object_globals;
     uvm_phase sched = this;
@@ -765,7 +769,7 @@ class uvm_phase: uvm_object, _esdl__Norand
 
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.6.5
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.6.5
   final string get_schedule_name(bool hier = 0) {
     import uvm.base.uvm_object_globals;
     uvm_phase sched = get_schedule(hier);
@@ -783,7 +787,7 @@ class uvm_phase: uvm_object, _esdl__Norand
 
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.6.6
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.6.6
   final uvm_domain get_domain() {
     import uvm.base.uvm_globals;
     import uvm.base.uvm_object_globals;
@@ -804,7 +808,7 @@ class uvm_phase: uvm_object, _esdl__Norand
 
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.6.7
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.6.7
   final uvm_phase get_imp() {
     synchronized (this) {
       return _m_imp;
@@ -812,7 +816,7 @@ class uvm_phase: uvm_object, _esdl__Norand
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.6.8
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.6.8
   final string get_domain_name() {
     uvm_domain domain = get_domain();
     if (domain is null) {
@@ -822,7 +826,7 @@ class uvm_phase: uvm_object, _esdl__Norand
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.6.9
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.6.9
   final void get_adjacent_predecessor_nodes(out uvm_phase[] pred) {
     import uvm.base.uvm_object_globals;
 
@@ -856,7 +860,7 @@ class uvm_phase: uvm_object, _esdl__Norand
 
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.6.10
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.6.10
   final void get_adjacent_successor_nodes(out uvm_phase[] succ) {
     import uvm.base.uvm_object_globals;
     bool done;
@@ -937,7 +941,7 @@ class uvm_phase: uvm_object, _esdl__Norand
   }
                         
    
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.7.2
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.7.2
   final void raise_objection(uvm_object obj,
 			     string description="",
 			     int count=1) {
@@ -951,7 +955,7 @@ class uvm_phase: uvm_object, _esdl__Norand
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.7.3
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.7.3
   final void drop_objection(uvm_object obj,
 			    string description="",
 			    int count=1) {
@@ -966,7 +970,7 @@ class uvm_phase: uvm_object, _esdl__Norand
 
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.7.4
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.7.4
   int get_objection_count (uvm_object obj=null) {
     uvm_objection phase_done = get_objection();
     if (phase_done !is null) {
@@ -1011,7 +1015,7 @@ class uvm_phase: uvm_object, _esdl__Norand
 
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.8.1
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.8.1
   final void sync(uvm_domain target,
 		  uvm_phase phase = null,
 		  uvm_phase with_phase = null) {
@@ -1066,7 +1070,7 @@ class uvm_phase: uvm_object, _esdl__Norand
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.8.2
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.8.2
   final void unsync(uvm_domain target,
 		    uvm_phase phase = null,
 		    uvm_phase with_phase = null) {
@@ -1123,7 +1127,7 @@ class uvm_phase: uvm_object, _esdl__Norand
 
   // task
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.8.3
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.8.3
   final void wait_for_state(uvm_phase_state state,
 			    uvm_wait_op op = uvm_wait_op.UVM_EQ) {
     import uvm.base.uvm_object_globals;
@@ -1181,14 +1185,14 @@ class uvm_phase: uvm_object, _esdl__Norand
   // that share a phase to jump to that phase.
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.9.1
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.9.1
   void jump(uvm_phase phase) {
     set_jump_phase(phase) ;
     end_prematurely();
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.9.2
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.9.2
   void set_jump_phase(uvm_phase phase) {
     import uvm.base.uvm_object_globals;
     import uvm.base.uvm_globals;
@@ -1241,7 +1245,7 @@ class uvm_phase: uvm_object, _esdl__Norand
   }
   
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.9.3
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.9.3
   void end_prematurely() {
     synchronized (this) {
       _m_premature_end = true;
@@ -1261,7 +1265,7 @@ class uvm_phase: uvm_object, _esdl__Norand
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.9.4
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.9.4
   final uvm_phase get_jump_target() {
     synchronized (this) {
       return _m_jump_phase;
@@ -1294,14 +1298,20 @@ class uvm_phase: uvm_object, _esdl__Norand
   private int                       _m_run_count; // num times this phase has executed
 
   @uvm_private_sync
-  private Process                 _m_phase_proc;
+  private Process                   _m_phase_proc;
 
   @uvm_private_sync
-  private int                   _max_ready_to_end_iters;
+  private int                       _max_ready_to_end_iters;
 
   @uvm_public_sync
   private int                       _m_num_procs_not_yet_returned;
 
+  // used by wait_for_nba_region
+  @uvm_private_sync
+  private Signal!int                _m_nba;
+  private int                       _m_next_nba;
+
+  
   final void inc_m_num_procs_not_yet_returned() {
     synchronized (this) {
       ++_m_num_procs_not_yet_returned;
@@ -1918,7 +1928,7 @@ class uvm_phase: uvm_object, _esdl__Norand
 	    sleep();
 	  });
 
-	uvm_wait_for_nba_region(); //Give sequences, etc. a chance to object
+	wait_for_nba_region(); //Give sequences, etc. a chance to object
 
 	// Now wait for one of three criterion for end-of-phase.
 	// Fork guard = join({
@@ -1955,7 +1965,7 @@ class uvm_phase: uvm_object, _esdl__Norand
 
 	    bool do_ready_to_end = true; // bit used for ready_to_end iterations
 	    while (do_ready_to_end) {
-	      uvm_wait_for_nba_region(); // Let all siblings see no objections before traverse might raise another
+	      wait_for_nba_region(); // Let all siblings see no objections before traverse might raise another
 	      UVM_PH_TRACE("PH_READY_TO_END","PHASE READY TO END",
 			   this, uvm_verbosity.UVM_DEBUG);
 	      synchronized (this) {
@@ -1971,7 +1981,7 @@ class uvm_phase: uvm_object, _esdl__Norand
 		m_imp.traverse(top, this, uvm_phase_state.UVM_PHASE_READY_TO_END);
 	      }
 
-	      uvm_wait_for_nba_region(); // Give traverse targets a chance to object
+	      wait_for_nba_region(); // Give traverse targets a chance to object
 
 	      wait_for_self_and_siblings_to_drop();
 
@@ -2416,7 +2426,7 @@ class uvm_phase: uvm_object, _esdl__Norand
 
   
   
-  // @uvm-ieee 1800.2-2017 auto 9.3.1.7.1
+  // @uvm-ieee 1800.2-2020 auto 9.3.1.7.1
   uvm_objection get_objection() {
     synchronized (this) {
       uvm_phase imp = get_imp();
@@ -2433,8 +2443,41 @@ class uvm_phase: uvm_object, _esdl__Norand
       return phase_done;
     }
   }
-
   
+  // SV has this function defined as a global function in uvm_globals module
+  
+  //----------------------------------------------------------------------------
+  //
+  // Task: wait_for_nba_region
+  //
+  // This task will block until SystemVerilog's NBA region (or Re-NBA region if 
+  // called from a program context).  The purpose is to continue the calling 
+  // process only after allowing other processes any number of delta cycles (#0) 
+  // to settle out.
+  //
+  // @uvm-accellera The details of this API are specific to the Accellera implementation, and are not being considered for contribution to 1800.2
+  //----------------------------------------------------------------------------
+
+  enum size_t UVM_POUND_ZERO_COUNT=1;
+  void wait_for_nba_region() {
+    // SV version has UVM_NO_WAIT_FOR_NBA, but for eUVM it may be more
+    // efficient to just have that as default
+    version (UVM_NO_WAIT_FOR_NBA) {
+      // repeat(UVM_POUND_ZERO_COUNT) #0;
+      for (size_t i=0; i!=UVM_POUND_ZERO_COUNT; ++i) {
+        wait(0);
+      }
+    }
+    else {
+      // These are not declared static in the SV version
+      // If `included directly in a program block, can't use a non-blocking assign,
+      //but it isn't needed since program blocks are in a separate region.
+      _m_next_nba++;
+      _m_nba = _m_next_nba;
+      wait(_m_nba);
+    }
+  }
+
 }
 
 //------------------------------------------------------------------------------
@@ -2448,7 +2491,7 @@ class uvm_phase: uvm_object, _esdl__Norand
 // <uvm_phase_cb::phase_state_changed()> callback to be invoked.
 //
 
-// @uvm-ieee 1800.2-2017 auto 9.3.2.1
+// @uvm-ieee 1800.2-2020 auto 9.3.2.1
 class uvm_phase_state_change: uvm_object
 {
 
@@ -2469,7 +2512,7 @@ class uvm_phase_state_change: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.2.2.1
+  // @uvm-ieee 1800.2-2020 auto 9.3.2.2.1
   uvm_phase_state get_state() {
     synchronized (this) {
       return _m_phase.get_state();
@@ -2477,7 +2520,7 @@ class uvm_phase_state_change: uvm_object
   }
   
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.2.2.2
+  // @uvm-ieee 1800.2-2020 auto 9.3.2.2.2
   uvm_phase_state get_prev_state() {
     synchronized (this) {
       return _m_prev_state;
@@ -2485,7 +2528,7 @@ class uvm_phase_state_change: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.2.2.3
+  // @uvm-ieee 1800.2-2020 auto 9.3.2.2.3
   uvm_phase jump_to() {
     synchronized (this) {
       return _m_jump_to;
@@ -2506,18 +2549,18 @@ class uvm_phase_state_change: uvm_object
 // are not natively phase-aware with the UVM phasing.
 //
 
-// @uvm-ieee 1800.2-2017 auto 9.3.3.1
+// @uvm-ieee 1800.2-2020 auto 9.3.3.1
 class uvm_phase_cb: uvm_callback
 {
 
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.3.2.1
+  // @uvm-ieee 1800.2-2020 auto 9.3.3.2.1
   this(string name="unnamed-uvm_phase_cb") {
     super(name);
   }
    
 
-  // @uvm-ieee 1800.2-2017 auto 9.3.3.2.2
+  // @uvm-ieee 1800.2-2020 auto 9.3.3.2.2
   void phase_state_change(uvm_phase phase,
 			  uvm_phase_state_change change) {}
 }
@@ -2531,7 +2574,7 @@ class uvm_phase_cb: uvm_callback
 // Convenience type for the uvm_callbacks#(uvm_phase, uvm_phase_cb) class.
 //
 
-// @uvm-ieee 1800.2-2017 auto D.4.1
+// @uvm-ieee 1800.2-2020 auto D.4.1
 alias uvm_phase_cb_pool = uvm_callbacks!(uvm_phase, uvm_phase_cb);
 
 

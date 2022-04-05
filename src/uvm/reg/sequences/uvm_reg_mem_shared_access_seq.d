@@ -1,11 +1,11 @@
 // 
 // -------------------------------------------------------------
 // Copyright 2014-2021 Coverify Systems Technology
-// Copyright 2010-2011 Mentor Graphics Corporation
-// Copyright 2004-2010 Synopsys, Inc.
-// Copyright 2010-2018 Cadence Design Systems, Inc.
 // Copyright 2010 AMD
-// Copyright 2015-2018 NVIDIA Corporation
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2010-2020 Mentor Graphics Corporation
+// Copyright 2015-2020 NVIDIA Corporation
+// Copyright 2004-2010 Synopsys, Inc.
 //    All Rights Reserved Worldwide
 // 
 //    Licensed under the Apache License, Version 2.0 (the
@@ -60,29 +60,41 @@
 
 module uvm.reg.sequences.uvm_reg_mem_shared_access_seq;
 
-import uvm.reg;
+import uvm.reg.uvm_reg_sequence: uvm_reg_sequence;
+import uvm.reg.uvm_reg_item: uvm_reg_item;
+import uvm.reg.uvm_reg: uvm_reg;
+import uvm.reg.uvm_mem: uvm_mem;
+import uvm.reg.uvm_reg_field: uvm_reg_field;
+import uvm.reg.uvm_reg_block: uvm_reg_block;
+import uvm.reg.uvm_reg_map: uvm_reg_map;
+import uvm.reg.uvm_reg_model: uvm_hier_e, uvm_door_e, uvm_status_e, uvm_reg_data_t,
+  uvm_check_e;
+
+
 import uvm.base.uvm_object_defines;
 import uvm.base.uvm_resource_db: uvm_resource_db;
 import uvm.base.uvm_object_globals: uvm_verbosity;
 import uvm.seq.uvm_sequence: uvm_sequence;
+import uvm.reg.sequences.uvm_reg_randval;
 
 import esdl;
 import std.string: format;
 
-// @uvm-ieee 1800.2-2017 auto E.4.1.1
+// @uvm-ieee 1800.2-2020 auto E.4.1.1
 class uvm_reg_shared_access_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
 {
 
   // Variable -- NODOCS -- rg
   // The register to be tested
-  @rand(false)
-    uvm_reg rg;
+  uvm_reg rg;
+  @rand uvm_reg_randval rand_reg_val;
 
   mixin uvm_object_utils;
 
-  // @uvm-ieee 1800.2-2017 auto E.4.1.3
+  // @uvm-ieee 1800.2-2020 auto E.4.1.3
   public this(string name="uvm_reg_shared_access_seq") {
     super(name);
+    rand_reg_val = new uvm_reg_randval();
   }
 
 
@@ -151,7 +163,8 @@ class uvm_reg_shared_access_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
 	uvm_reg_data_t prev = rg.get();
          
 	// Write a random value, except in those "don't touch" fields
-	uvm_reg_data_t v = (urandom!uvm_reg_data_t() & ~other_mask) | (prev & other_mask);
+	rand_reg_val.randomize();
+	uvm_reg_data_t v = (rand_reg_val.randval & ~other_mask) | (prev & other_mask);
          
 	uvm_info("uvm_reg_shared_access_seq",
 		 format("Writing register %s via map \"%s\"...",
@@ -160,8 +173,8 @@ class uvm_reg_shared_access_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
 	uvm_info("uvm_reg_shared_access_seq",
 		 format("Writing 'h%h over 'h%h", v, prev), uvm_verbosity.UVM_DEBUG);
          
-	rg.write(status, v, UVM_FRONTDOOR, map, this);
-	if (status != UVM_IS_OK) {
+	rg.write(status, v, uvm_door_e.UVM_FRONTDOOR, map, this);
+	if (status != uvm_status_e.UVM_IS_OK) {
 	  uvm_error("uvm_reg_shared_access_seq",
 		    format("Status was %s when writing register \"%s\" through map \"%s\".",
 			   status, rg.get_full_name(), map.get_full_name()));
@@ -176,8 +189,8 @@ class uvm_reg_shared_access_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
 	  // Was it what we expected?
 	  exp = rg.get() & ~wo_mask[k];
             
-	  rg.read(status, actual, UVM_FRONTDOOR, map_, this);
-	  if (status != UVM_IS_OK) {
+	  rg.read(status, actual, uvm_door_e.UVM_FRONTDOOR, map_, this);
+	  if (status != uvm_status_e.UVM_IS_OK) {
 	    uvm_error("uvm_reg_shared_access_seq",
 		      format("Status was %s when reading register \"%s\" through map \"%s\".",
 			     status, rg.get_full_name(), map_.get_full_name()));
@@ -221,20 +234,21 @@ class uvm_reg_shared_access_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
 //
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto E.4.2.1
+// @uvm-ieee 1800.2-2020 auto E.4.2.1
 class uvm_mem_shared_access_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
 {
 
   // variable -- NODOCS -- mem
   // The memory to be tested
-  @rand(false)
-    uvm_mem mem;
+  uvm_mem mem;
+  @rand uvm_reg_randval rand_reg_val;
 
   mixin uvm_object_utils;
 
-  // @uvm-ieee 1800.2-2017 auto E.4.2.3
+  // @uvm-ieee 1800.2-2020 auto E.4.2.3
   public this(string name="uvm_mem_shared_access_seq") {
     super(name);
+    rand_reg_val = new uvm_reg_randval();
   }
 
   // task
@@ -297,15 +311,15 @@ class uvm_mem_shared_access_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
 	  // Read the initial value
 	  if (mem.get_backdoor() !is null) {
 	    mem.peek(status, offset, prev);
-	    if (status != UVM_IS_OK) {
+	    if (status != uvm_status_e.UVM_IS_OK) {
 	      uvm_error("uvm_mem_shared_access_seq",
 			format("Status was %s when reading initial value of \"%s\"[%0d] through backdoor.",
 			       status, mem.get_full_name(), offset));
 	    }
 	  }
 	  else {
-	    mem.read(status, offset, prev, UVM_FRONTDOOR, maps[read_from], this);
-	    if (status != UVM_IS_OK) {
+	    mem.read(status, offset, prev, uvm_door_e.UVM_FRONTDOOR, maps[read_from], this);
+	    if (status != uvm_status_e.UVM_IS_OK) {
 	      uvm_error("uvm_mem_shared_access_seq",
 			format("Status was %s when reading initial value of \"%s\"[%0d] through map \"%s\".",
 			       status, mem.get_full_name(),
@@ -315,10 +329,11 @@ class uvm_mem_shared_access_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
             
             
 	  // Write a random value,
-	  v = urandom!uvm_reg_data_t();
+	  rand_reg_val.randomize();
+	  v = rand_reg_val.randval;
             
-	  mem.write(status, offset, v, UVM_FRONTDOOR, map, this);
-	  if (status != UVM_IS_OK) {
+	  mem.write(status, offset, v, uvm_door_e.UVM_FRONTDOOR, map, this);
+	  if (status != uvm_status_e.UVM_IS_OK) {
 	    uvm_error("uvm_mem_shared_access_seq",
 		      format("Status was %s when writing \"%s\"[%0d] through map \"%s\".",
 			     status, mem.get_full_name(), offset, map.get_full_name()));
@@ -328,8 +343,8 @@ class uvm_mem_shared_access_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
 	  foreach (map_; maps) {
 	    uvm_reg_data_t  actual, exp;
                
-	    mem.read(status, offset, actual, UVM_FRONTDOOR, map_, this);
-	    if (status != UVM_IS_OK) {
+	    mem.read(status, offset, actual, uvm_door_e.UVM_FRONTDOOR, map_, this);
+	    if (status != uvm_status_e.UVM_IS_OK) {
 	      uvm_error("uvm_mem_shared_access_seq",
 			format("Status was %s when reading %s[%0d] through map \"%s\".",
 			       status, mem.get_full_name(), offset,
@@ -345,7 +360,7 @@ class uvm_mem_shared_access_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
 	      exp = 0;
 	    }
 	    // Trim to number of bits
-	    exp &= (1 << mem.get_n_bits()) - 1;
+	    exp &= (1L << mem.get_n_bits()) - 1;
 	    if (actual !is exp) {
 	      uvm_error("uvm_mem_shared_access_seq",
 			format("%s[%0d] through map \"%s\" is 'h%h instead of 'h%h after writing 'h%h via map \"%s\" over 'h%h.",
@@ -381,7 +396,7 @@ class uvm_mem_shared_access_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
 //
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto E.4.3.1
+// @uvm-ieee 1800.2-2020 auto E.4.3.1
 class uvm_reg_mem_shared_access_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
 {
 
@@ -407,13 +422,13 @@ class uvm_reg_mem_shared_access_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item
    
   mixin uvm_object_utils;
 
-  // @uvm-ieee 1800.2-2017 auto E.4.3.3.1
+  // @uvm-ieee 1800.2-2020 auto E.4.3.3.1
   public this(string name="uvm_reg_mem_shared_access_seq") {
     super(name);
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto E.4.3.3.2
+  // @uvm-ieee 1800.2-2020 auto E.4.3.3.2
   // task
   override public void body() {
 
@@ -458,7 +473,7 @@ class uvm_reg_mem_shared_access_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item
     model.reset();
 
     // Iterate over all registers, checking accesses
-    blk.get_registers(regs, UVM_NO_HIER);
+    blk.get_registers(regs, uvm_hier_e.UVM_NO_HIER);
     foreach (reg; regs) {
       // Registers with some attributes are not to be tested
       if (uvm_resource_db!bool.get_by_name("REG::" ~ reg.get_full_name(),
@@ -471,7 +486,7 @@ class uvm_reg_mem_shared_access_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item
     }
 
     // Iterate over all memories, checking accesses
-    blk.get_memories(mems, UVM_NO_HIER);
+    blk.get_memories(mems, uvm_hier_e.UVM_NO_HIER);
     foreach (mem; mems) {
       // Registers with some attributes are not to be tested
       if (uvm_resource_db!bool.get_by_name("REG::" ~ mem.get_full_name(),

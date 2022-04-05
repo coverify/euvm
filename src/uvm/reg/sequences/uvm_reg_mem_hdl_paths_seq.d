@@ -1,10 +1,10 @@
 // 
 // -------------------------------------------------------------
 // Copyright 2014-2021 Coverify Systems Technology
-// Copyright 2010-2011 Mentor Graphics Corporation
-// Copyright 2010 Synopsys, Inc.
 // Copyright 2010-2018 Cadence Design Systems, Inc.
-// Copyright 2015-2018 NVIDIA Corporation
+// Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2015-2020 NVIDIA Corporation
+// Copyright 2010 Synopsys, Inc.
 //    All Rights Reserved Worldwide
 // 
 //    Licensed under the Apache License, Version 2.0 (the
@@ -50,7 +50,16 @@
 
 module uvm.reg.sequences.uvm_reg_mem_hdl_paths_seq;
 
-import uvm.reg;
+import uvm.reg.uvm_reg_sequence: uvm_reg_sequence;
+import uvm.reg.uvm_reg_item: uvm_reg_item;
+import uvm.reg.uvm_reg: uvm_reg;
+import uvm.reg.uvm_mem: uvm_mem;
+import uvm.reg.uvm_reg_field: uvm_reg_field;
+import uvm.reg.uvm_reg_block: uvm_reg_block;
+import uvm.reg.uvm_reg_map: uvm_reg_map;
+import uvm.reg.uvm_reg_model: uvm_hier_e, uvm_door_e, uvm_status_e, uvm_reg_data_t,
+  uvm_check_e, uvm_hdl_path_concat;
+
 import uvm.base.uvm_object_defines;
 import uvm.base.uvm_resource_db: uvm_resource_db;
 import uvm.base.uvm_object_globals: uvm_verbosity;
@@ -62,7 +71,7 @@ import uvm.dpi.uvm_hdl: uvm_hdl_check_path, uvm_hdl_read;
 import esdl;
 import std.string: format;
 
-// @uvm-ieee 1800.2-2017 auto E.7.1
+// @uvm-ieee 1800.2-2020 auto E.7.1
 class uvm_reg_mem_hdl_paths_seq: uvm_reg_sequence !(uvm_sequence!uvm_reg_item)
 {
   // Variable -- NODOCS -- abstractions
@@ -75,7 +84,7 @@ class uvm_reg_mem_hdl_paths_seq: uvm_reg_sequence !(uvm_sequence!uvm_reg_item)
     
   mixin uvm_object_utils;
     
-  // @uvm-ieee 1800.2-2017 auto E.7.3
+  // @uvm-ieee 1800.2-2020 auto E.7.3
   this(string name="uvm_reg_mem_hdl_paths_seq") {
     super(name);
   }
@@ -121,12 +130,12 @@ class uvm_reg_mem_hdl_paths_seq: uvm_reg_sequence !(uvm_sequence!uvm_reg_item)
 
     // Iterate over all registers, checking accesses
     uvm_reg[]       regs;
-    blk.get_registers(regs, UVM_NO_HIER);
+    blk.get_registers(regs, uvm_hier_e.UVM_NO_HIER);
     foreach (reg; regs)
       check_reg(reg, kind);
        
     uvm_mem[]       mems;
-    blk.get_memories(mems, UVM_NO_HIER);
+    blk.get_memories(mems, uvm_hier_e.UVM_NO_HIER);
     foreach (mem; mems)
       check_mem(mem, kind);
     

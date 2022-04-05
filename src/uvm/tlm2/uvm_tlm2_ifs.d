@@ -1,10 +1,10 @@
 //----------------------------------------------------------------------
-// Copyright 2016-2019 Coverify Systems Technology
+// Copyright 2016-2021 Coverify Systems Technology
+// Copyright 2010-2018 Cadence Design Systems, Inc.
 // Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2014-2020 NVIDIA Corporation
 // Copyright 2014 Semifore
 // Copyright 2010-2018 Synopsys, Inc.
-// Copyright 2010-2018 Cadence Design Systems, Inc.
-// Copyright 2014-2018 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -101,7 +101,7 @@ enum string UVM_TLM_FUNCTION_ERROR  =
 //  - <b_transport>
 //
 
-// @uvm-ieee 1800.2-2017 auto 12.3.2.1
+// @uvm-ieee 1800.2-2020 auto 12.3.2.1
 class uvm_tlm_if (T = uvm_tlm_generic_payload,
 		  P = uvm_tlm_phase_e)
 {
@@ -131,8 +131,8 @@ class uvm_tlm_if (T = uvm_tlm_generic_payload,
    
   // virtual function uvm_tlm_sync_e nb_transport_fw(T t, ref P p, input uvm_tlm_time delay);
 
-  // @uvm-ieee 1800.2-2017 auto 12.3.2.2.1
-  // @uvm-ieee 1800.2-2017 auto 12.3.5.3
+  // @uvm-ieee 1800.2-2020 auto 12.3.2.2.1
+  // @uvm-ieee 1800.2-2020 auto 12.3.5.3
   public uvm_tlm_sync_e nb_transport_fw(T t, ref P p,
 					in uvm_tlm_time delay) {
     uvm_error("nb_transport_fw", UVM_TLM_FUNCTION_ERROR);
@@ -178,7 +178,7 @@ class uvm_tlm_if (T = uvm_tlm_generic_payload,
    
   // virtual function uvm_tlm_sync_e nb_transport_bw(T t, ref P p, input uvm_tlm_time delay);
   
-  // @uvm-ieee 1800.2-2017 auto 12.3.2.2.2
+  // @uvm-ieee 1800.2-2020 auto 12.3.2.2.2
   public uvm_tlm_sync_e nb_transport_bw(T t, ref P p,
 					in uvm_tlm_time delay) {
     uvm_error("nb_transport_bw", UVM_TLM_FUNCTION_ERROR);
@@ -204,7 +204,7 @@ class uvm_tlm_if (T = uvm_tlm_generic_payload,
   // at which the task call and return are executed.
    
   // task
-  // @uvm-ieee 1800.2-2017 auto 12.3.2.2.3
+  // @uvm-ieee 1800.2-2020 auto 12.3.2.2.3
   public void b_transport(T t, uvm_tlm_time delay) {
     uvm_error("b_transport", UVM_TLM_TASK_ERROR);
   }

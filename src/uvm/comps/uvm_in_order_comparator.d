@@ -1,12 +1,12 @@
 //
 //------------------------------------------------------------------------------
-// Copyright 2014-2019 Coverify Systems Technology
-// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2014-2021 Coverify Systems Technology
 // Copyright 2015 Analog Devices, Inc.
-// Copyright 2011 Synopsys, Inc.
 // Copyright 2007-2018 Cadence Design Systems, Inc.
-// Copyright 2014-2018 NVIDIA Corporation
 // Copyright 2017 Cisco Systems, Inc.
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2014-2018 NVIDIA Corporation
+// Copyright 2011 Synopsys, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -79,11 +79,10 @@ import esdl.rand.misc: rand;
 //
 //------------------------------------------------------------------------------
 
-@rand(false)
 class uvm_in_order_comparator (T = int ,
 			       comp_type = uvm_built_in_comp!T ,
 			       convert = uvm_built_in_converter!T ,
-			       pair_type = uvm_built_in_pair!T ):  uvm_component
+			       pair_type = uvm_built_in_pair!T ): uvm_component, rand.barrier
 {
   alias uvm_in_order_comparator!(T,comp_type,convert,pair_type) this_type;
   mixin uvm_component_essentials;

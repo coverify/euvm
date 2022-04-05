@@ -1,14 +1,14 @@
 //----------------------------------------------------------------------
-// Copyright 2014-2019 Coverify Systems Technology
-// Copyright 2010-2014 Mentor Graphics Corporation
-// Copyright 2015 Analog Devices, Inc.
-// Copyright 2014 Semifore
-// Copyright 2010-2014 Synopsys, Inc.
-// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2014-2021 Coverify Systems Technology
 // Copyright 2011-2012 AMD
-// Copyright 2012-2018 NVIDIA Corporation
+// Copyright 2015 Analog Devices, Inc.
+// Copyright 2010-2018 Cadence Design Systems, Inc.
 // Copyright 2014-2017 Cisco Systems, Inc.
 // Copyright 2011 Cypress Semiconductor Corp.
+// Copyright 2010-2014 Mentor Graphics Corporation
+// Copyright 2012-2020 NVIDIA Corporation
+// Copyright 2014 Semifore
+// Copyright 2010-2014 Synopsys, Inc.
 // Copyright 2017 Verific
 //   All Rights Reserved Worldwide
 //
@@ -53,14 +53,13 @@ import uvm.base.uvm_factory: uvm_object_wrapper;
 import uvm.base.uvm_object_globals: uvm_bitstream_t;
 import uvm.base.uvm_resource: uvm_resource, uvm_resource_pool;
 import uvm.base.uvm_resource_base:  uvm_resource_types, uvm_resource_base;
+// import uvm.base.uvm_entity: uvm_entity_base;
 import uvm.base.uvm_scope;
 
 import uvm.meta.misc;
 import uvm.dpi.uvm_regex: uvm_re_match, uvm_glob_to_re;
 
 import esdl.base.core;
-
-import std.random: Random;
 
 final private class m_uvm_waiter
 {
@@ -88,7 +87,7 @@ final private class m_uvm_waiter
 // typedef class uvm_config_db_options;
 
 
-// @uvm-ieee 1800.2-2017 auto C.4.2.1
+// @uvm-ieee 1800.2-2020 auto C.4.2.1
 class uvm_config_db (T = int): uvm_resource_db!T
 {
   
@@ -136,7 +135,7 @@ class uvm_config_db (T = int): uvm_resource_db!T
   //| get_config_string(...) => uvm_config_db!(string).get(cntxt,...)
   //| get_config_object(...) => uvm_config_db!(uvm_object).get(cntxt,...)
 
-  // @uvm-ieee 1800.2-2017 auto C.4.2.2.2
+  // @uvm-ieee 1800.2-2020 auto C.4.2.2.2
   static bool get(uvm_component cntxt,
 		  string inst_name,
 		  string field_name,
@@ -202,7 +201,7 @@ class uvm_config_db (T = int): uvm_resource_db!T
   //| set_config_string(...) => uvm_config_db!(string).set(cntxt,...)
   //| set_config_object(...) => uvm_config_db!(uvm_object).set(cntxt,...)
 
-  // @uvm-ieee 1800.2-2017 auto C.4.2.2.1
+  // @uvm-ieee 1800.2-2020 auto C.4.2.2.1
   static void set(uvm_component cntxt,
 		  string inst_name,
 		  string field_name,
@@ -221,14 +220,6 @@ class uvm_config_db (T = int): uvm_resource_db!T
     uvm_resource_pool rp = cs.get_resource_pool();
     uint precedence;
     
-    // take care of random stability during allocation
-    version (PRESERVE_RANDSTATE) {
-      Random rstate;
-      Process p = Process.self();
-      if (p !is null)
-	p.getRandState(rstate);
-    }
-
     uvm_root top = cs.get_root();
     uvm_phase curr_phase = top.m_current_phase;
 
@@ -312,7 +303,7 @@ class uvm_config_db (T = int): uvm_resource_db!T
   // returns 1 if a config parameter exists and 0 if it doesn't exist.
   //
 
-  // @uvm-ieee 1800.2-2017 auto C.4.2.2.3
+  // @uvm-ieee 1800.2-2020 auto C.4.2.2.3
   static bool exists(uvm_component cntxt, string inst_name,
 		     string field_name, bool spell_chk = false) {
     import uvm.base.uvm_coreservice;
@@ -334,19 +325,13 @@ class uvm_config_db (T = int): uvm_resource_db!T
   // in ~cntxt~ and ~inst_name~. The task blocks until a new configuration
   // setting is applied that effects the specified field.
 
-  // @uvm-ieee 1800.2-2017 auto C.4.2.2.4
+  // @uvm-ieee 1800.2-2020 auto C.4.2.2.4
   // task
   static void wait_modified(uvm_component cntxt, string inst_name,
 			    string field_name) {
     import uvm.base.uvm_array;
     import uvm.base.uvm_coreservice;
     uvm_coreservice_t cs = uvm_coreservice_t.get();
-
-    version (PRESERVE_RANDSTATE) {
-      Process p = Process.self();
-      Random rstate;
-      p.getRandState(rstate);
-    }
 
     if (cntxt is null)
       cntxt = cs.get_root();
@@ -395,7 +380,7 @@ class uvm_config_db (T = int): uvm_resource_db!T
 //
 //| typedef uvm_config_db#(uvm_bitstream_t) uvm_config_int;
 
-/* @uvm-ieee 1800.2-2017 auto C.4.2.3.1*/
+/* @uvm-ieee 1800.2-2020 auto C.4.2.3.1*/
 alias uvm_config_int = uvm_config_db!uvm_bitstream_t;
 
 //----------------------------------------------------------------------
@@ -405,7 +390,7 @@ alias uvm_config_int = uvm_config_db!uvm_bitstream_t;
 //
 //| typedef uvm_config_db#(string) uvm_config_string;
 
-/* @uvm-ieee 1800.2-2017 auto C.4.2.3.2*/ 
+/* @uvm-ieee 1800.2-2020 auto C.4.2.3.2*/ 
 alias uvm_config_string = uvm_config_db!string;
 
 //----------------------------------------------------------------------
@@ -415,7 +400,7 @@ alias uvm_config_string = uvm_config_db!string;
 //
 //| typedef uvm_config_db#(uvm_object) uvm_config_object;
 
-/* @uvm-ieee 1800.2-2017 auto C.4.2.3.3*/
+/* @uvm-ieee 1800.2-2020 auto C.4.2.3.3*/
 alias uvm_config_object = uvm_config_db!uvm_object;
 
 //----------------------------------------------------------------------
@@ -425,7 +410,7 @@ alias uvm_config_object = uvm_config_db!uvm_object;
 //
 //| typedef uvm_config_db#(uvm_object_wrapper) uvm_config_wrapper;
 
-/* @uvm-ieee 1800.2-2017 auto C.4.2.3.4*/
+/* @uvm-ieee 1800.2-2020 auto C.4.2.3.4*/
 alias uvm_config_wrapper = uvm_config_db!uvm_object_wrapper;
 
 
@@ -464,7 +449,7 @@ package class uvm_config_db_options
 
   static void turn_on_tracing() {
     synchronized (_uvm_scope_inst) {
-      if (!_uvm_scope_inst._ready) init_trace();
+      if (! _uvm_scope_inst._ready) init_trace();
       _uvm_scope_inst._tracing = true;
     }
   }
@@ -478,7 +463,7 @@ package class uvm_config_db_options
 
   static void turn_off_tracing() {
     synchronized (_uvm_scope_inst) {
-      if (!_uvm_scope_inst._ready) init_trace();
+      if (! _uvm_scope_inst._ready) init_trace();
       _uvm_scope_inst._tracing = false;
     }
   }
@@ -492,10 +477,17 @@ package class uvm_config_db_options
 
   static bool is_tracing() {
     synchronized (_uvm_scope_inst) {
-      if (!_uvm_scope_inst._ready) init_trace();
+      if (! _uvm_scope_inst._ready) init_trace();
       return _uvm_scope_inst._tracing;
     }
   }
+
+  // static bool is_tracing(uvm_entity_base entity) {
+  //   synchronized (_uvm_scope_inst(entity)) {
+  //     if (! _uvm_scope_inst(entity)._ready) init_trace(entity);
+  //     return _uvm_scope_inst(entity)._tracing;
+  //   }
+  // }
 
 
   static private void init_trace() {
@@ -504,11 +496,24 @@ package class uvm_config_db_options
 
       uvm_cmdline_processor clp = uvm_cmdline_processor.get_inst();
 
-      if (clp.get_arg_matches(`\+UVM_CONFIG_DB_TRACE`, trace_args)) {
+      if (clp.get_arg_matches(`+UVM_CONFIG_DB_TRACE`, trace_args)) {
 	_uvm_scope_inst._tracing = true;
       }
       _uvm_scope_inst._ready = true;
     }
   }
+
+  // static private void init_trace(uvm_entity_base entity) {
+  //   synchronized (_uvm_scope_inst(entity)) {
+  //     string[] trace_args;
+
+  //     uvm_cmdline_processor clp = uvm_cmdline_processor.get_inst(entity);
+
+  //     if (clp.get_arg_matches(`+UVM_CONFIG_DB_TRACE`, trace_args)) {
+  // 	_uvm_scope_inst._tracing = true;
+  //     }
+  //     _uvm_scope_inst._ready = true;
+  //   }
+  // }
 
 }

@@ -1,6 +1,8 @@
 //------------------------------------------------------------------------------
-//   Copyright 2014 Synopsys, Inc.
-//   Copyright 2016-2019 Coverify Systems Technology
+// Copyright 2016-2021 Coverify Systems Technology
+// Copyright 2010-2018 Cadence Design Systems, Inc.
+// Copyright 2015-2020 NVIDIA Corporation
+// Copyright 2014 Synopsys, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -40,6 +42,7 @@ enum UVM_MAX_STREAMBITS=4096;
 // Defines the maximum bytes to allocate for packing an object using
 // the <uvm_packer>. Default is <`UVM_MAX_STREAMBITS>, in ~bytes~.
 
+// @uvm-ieee 1800.2-2020 manual B.6.2
 enum UVM_PACKER_MAX_BYTES=UVM_MAX_STREAMBITS;
 
 //------------------------

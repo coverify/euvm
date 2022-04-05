@@ -1,11 +1,11 @@
 //
 //----------------------------------------------------------------------
-// Copyright 2012-2019 Coverify Systems Technology
-// Copyright 2007-2018 Mentor Graphics Corporation
-// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2012-2021 Coverify Systems Technology
 // Copyright 2011 AMD
-// Copyright 2015-2018 NVIDIA Corporation
 // Copyright 2012 Accellera Systems Initiative
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2007-2018 Mentor Graphics Corporation
+// Copyright 2015-2020 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -52,7 +52,7 @@ final class uvm_scope_domain_globals: uvm_scope_base
   private uvm_phase _report_ph;
 }
 
-mixin (uvm_scope_sync_string!(uvm_scope_domain_globals, "uvm_scope_domain_globals"));
+mixin (uvm_scope_sync_string!(uvm_scope_domain_globals, "_uvm_scope_domain_globals"));
 
 //------------------------------------------------------------------------------
 //
@@ -64,7 +64,7 @@ mixin (uvm_scope_sync_string!(uvm_scope_domain_globals, "uvm_scope_domain_global
 // Handle used to assign domains to components or hierarchies in the testbench
 //
 
-// @uvm-ieee 1800.2-2017 auto 9.4.1
+// @uvm-ieee 1800.2-2020 auto 9.4.1
 class uvm_domain: uvm_phase
 {
   import std.string: format;
@@ -80,7 +80,7 @@ class uvm_domain: uvm_phase
 
   mixin (uvm_scope_sync_string);
 
-  // @uvm-ieee 1800.2-2017 auto 9.4.2.2
+  // @uvm-ieee 1800.2-2020 auto 9.4.2.2
   static void get_domains(out uvm_domain[string] domains) {
     synchronized (_uvm_scope_inst) {
       domains = _uvm_scope_inst._m_domains.dup;
@@ -163,7 +163,7 @@ class uvm_domain: uvm_phase
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 9.4.2.3
+  // @uvm-ieee 1800.2-2020 auto 9.4.2.3
   static void add_uvm_phases(uvm_phase schedule) {
     import uvm.base.uvm_runtime_phases;
     assert (schedule !is null);
@@ -200,7 +200,7 @@ class uvm_domain: uvm_phase
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 9.4.2.1
+  // @uvm-ieee 1800.2-2020 auto 9.4.2.1
   this(string name="") {
     import uvm.base.uvm_globals;
     import uvm.base.uvm_object_globals;
@@ -214,7 +214,7 @@ class uvm_domain: uvm_phase
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 9.4.2.4
+  // @uvm-ieee 1800.2-2020 auto 9.4.2.4
   override void jump(uvm_phase phase) {
     import uvm.base.uvm_object_globals;
     import std.algorithm;	// filter

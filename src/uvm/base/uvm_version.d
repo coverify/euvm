@@ -1,13 +1,13 @@
 //----------------------------------------------------------------------
 // Copyright 2012-2019 Coverify Systems Technology LLP
-// Copyright 2012 Paradigm Works
-// Copyright 2007-2013 Mentor Graphics Corporation
-// Copyright 2010-2011 Synopsys, Inc.
-// Copyright 2007-2018 Cadence Design Systems, Inc.
 // Copyright 2010 AMD
-// Copyright 2013-2018 NVIDIA Corporation
+// Copyright 2007-2018 Cadence Design Systems, Inc.
 // Copyright 2017 Cisco Systems, Inc.
 // Copyright 2011-2012 Cypress Semiconductor Corp.
+// Copyright 2007-2013 Mentor Graphics Corporation
+// Copyright 2013-2020 NVIDIA Corporation
+// Copyright 2012 Paradigm Works
+// Copyright 2010-2011 Synopsys, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -29,10 +29,10 @@ module uvm.base.uvm_version;
 
 import std.conv: to;
 
-enum string UVM_STANDARD = "Accellera:1800.2-2017";
+enum string UVM_STANDARD = "Accellera:1800.2-2020";
 enum string UVM_NAME     = "UVM";
 enum uint UVM_MAJOR_REV  = 1;
-enum uint UVM_MINOR_REV  = 1;
+enum uint UVM_MINOR_REV  = 0;
 enum string UVM_FIX_REV  = "";
 
 enum string UVM_VERSION_STRING = UVM_STANDARD ~ ":" ~ UVM_NAME ~ ":" ~

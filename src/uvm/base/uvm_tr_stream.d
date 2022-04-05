@@ -1,11 +1,11 @@
 //
 //-----------------------------------------------------------------------------
-// Copyright 2016-2019 Coverify Systems Technology
-// Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2016-2021 Coverify Systems Technology
 // Copyright 2015 Analog Devices, Inc.
 // Copyright 2007-2018 Cadence Design Systems, Inc.
-// Copyright 2013-2015 NVIDIA Corporation
 // Copyright 2017 Cisco Systems, Inc.
+// Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2013-2020 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -60,7 +60,7 @@ class m_uvm_tr_stream_cfg
 
 
 
-// @uvm-ieee 1800.2-2017 auto 7.2.1
+// @uvm-ieee 1800.2-2020 auto 7.2.1
 abstract class uvm_tr_stream: uvm_object
 {
 
@@ -110,7 +110,7 @@ abstract class uvm_tr_stream: uvm_object
 
   // !m_is_opened && !m_is_closed == m_is_freed
 
-  // @uvm-ieee 1800.2-2017 auto 7.2.2
+  // @uvm-ieee 1800.2-2020 auto 7.2.2
   this(string name="unnamed-uvm_tr_stream") {
     synchronized (this) {
       super(name);
@@ -122,7 +122,7 @@ abstract class uvm_tr_stream: uvm_object
   // Group -- NODOCS -- Configuration API
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.2.3.1
+  // @uvm-ieee 1800.2-2020 auto 7.2.3.1
   uvm_tr_database get_db() {
     import uvm.base.uvm_globals;
     import std.string: format;
@@ -142,7 +142,7 @@ abstract class uvm_tr_stream: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.2.3.2
+  // @uvm-ieee 1800.2-2020 auto 7.2.3.2
   string get_scope() {
     import uvm.base.uvm_globals;
     import std.string: format;
@@ -162,7 +162,7 @@ abstract class uvm_tr_stream: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.2.3.3
+  // @uvm-ieee 1800.2-2020 auto 7.2.3.3
   string get_stream_type_name() {
     import uvm.base.uvm_globals;
     import std.string: format;
@@ -194,7 +194,7 @@ abstract class uvm_tr_stream: uvm_object
   //
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.2.4.1
+  // @uvm-ieee 1800.2-2020 auto 7.2.4.1
   void close() {
     synchronized (this) {
       if (!is_open()) {
@@ -215,7 +215,7 @@ abstract class uvm_tr_stream: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.2.4.2
+  // @uvm-ieee 1800.2-2020 auto 7.2.4.2
   void free() {
     synchronized (this) {
       uvm_tr_database db;
@@ -236,13 +236,6 @@ abstract class uvm_tr_stream: uvm_object
       // Clear out internal state
       db = get_db();
       _m_is_closed = false;
-
-      version (PRESERVE_RANDSTATE) {
-	Process p = Process.self();
-	Random s;
-	if (p !is null)
-	  p.getRandState(s);
-      }
 
       _m_cfg_dap =  new uvm_set_before_get_dap!m_uvm_tr_stream_cfg("cfg_dap");
 
@@ -316,7 +309,7 @@ abstract class uvm_tr_stream: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.2.4.3
+  // @uvm-ieee 1800.2-2020 auto 7.2.4.3
   bool is_open() {
     synchronized (this) {
       return _m_is_opened;
@@ -324,7 +317,7 @@ abstract class uvm_tr_stream: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.2.4.4
+  // @uvm-ieee 1800.2-2020 auto 7.2.4.4
   bool is_closed() {
     synchronized (this) {
       return _m_is_closed;
@@ -359,7 +352,7 @@ abstract class uvm_tr_stream: uvm_object
   // request will be ignored, and ~null~ will be returned.
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.2.5.1
+  // @uvm-ieee 1800.2-2020 auto 7.2.5.1
   uvm_recorder open_recorder(string name,
 			     SimTime open_time = 0,
 			     string type_name="") {
@@ -372,13 +365,6 @@ abstract class uvm_tr_stream: uvm_object
 	return null;
       }
       else {
-
-	version (PRESERVE_RANDSTATE) {
-	  Process p = Process.self;
-	  Random s;
-	  if (p !is null)
-	    p.getRandState(s);
-	}
 
 	result = do_open_recorder(name, m_time, type_name);
 
@@ -407,7 +393,7 @@ abstract class uvm_tr_stream: uvm_object
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.2.5.2
+  // @uvm-ieee 1800.2-2020 auto 7.2.5.2
   uint get_recorders(/*ref*/ out uvm_recorder[] q) {
     synchronized (this) {
       // Clear out the queue first...
@@ -431,7 +417,7 @@ abstract class uvm_tr_stream: uvm_object
   // and no longer has a valid ID.
   //
 
-  // @uvm-ieee 1800.2-2017 auto 7.2.6.1
+  // @uvm-ieee 1800.2-2020 auto 7.2.6.1
   int get_handle() {
     int handle;
     synchronized (this) {
@@ -458,7 +444,7 @@ abstract class uvm_tr_stream: uvm_object
     return handle;
   }
 
-  // @uvm-ieee 1800.2-2017 auto 7.2.6.2
+  // @uvm-ieee 1800.2-2020 auto 7.2.6.2
   static uvm_tr_stream get_stream_from_handle(int id) {
     if (id == 0) {
       return null;
@@ -497,21 +483,21 @@ abstract class uvm_tr_stream: uvm_object
   //
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.2.7.1
+  // @uvm-ieee 1800.2-2020 auto 7.2.7.1
   protected void do_open(uvm_tr_database db,
 			 string hscope,
 			 string stream_type_name) { }
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.2.7.2
+  // @uvm-ieee 1800.2-2020 auto 7.2.7.2
   protected void do_close() { }
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.2.7.3
+  // @uvm-ieee 1800.2-2020 auto 7.2.7.3
   protected void do_free() { }
 
 
-  // @uvm-ieee 1800.2-2017 auto 7.2.7.4
+  // @uvm-ieee 1800.2-2020 auto 7.2.7.4
   protected uvm_recorder do_open_recorder(string name,
 					  SimTime open_time,
 					  string type_name) {

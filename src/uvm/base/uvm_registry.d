@@ -1,14 +1,14 @@
 //
 //------------------------------------------------------------------------------
-// Copyright 2014-2019 Coverify Systems Technology
-// Copyright 2007-2014 Mentor Graphics Corporation
-// Copyright 2018 Qualcomm, Inc.
-// Copyright 2014 Intel Corporation
-// Copyright 2011-2014 Synopsys, Inc.
-// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2014-2021 Coverify Systems Technology
 // Copyright 2011 AMD
-// Copyright 2014-2018 NVIDIA Corporation
+// Copyright 2007-2018 Cadence Design Systems, Inc.
 // Copyright 2018 Cisco Systems, Inc.
+// Copyright 2014 Intel Corporation
+// Copyright 2007-2020 Mentor Graphics Corporation
+// Copyright 2014-2020 NVIDIA Corporation
+// Copyright 2018 Qualcomm, Inc.
+// Copyright 2011-2014 Synopsys, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -47,14 +47,14 @@ import uvm.base.uvm_factory: uvm_object_wrapper;
 
 // Class: uvm_component_registry#(T,Tname)
 // Implementation of uvm_component_registry#(T,Tname), as defined by section
-// 8.2.3.1 of 1800.2-2017.
+// 8.2.3.1 of 1800.2-2020.
   
-// @uvm-ieee 1800.2-2017 auto 8.2.3.1
+// @uvm-ieee 1800.2-2020 auto 8.2.3.1
 template uvm_component_registry(T, bool NAMED=true)
 {
-  import std.traits: fullyQualifiedName;
+  import uvm.meta.meta: qualifiedTypeName;
   static if (NAMED)
-    alias uvm_component_registry = uvm_component_registry!(T, fullyQualifiedName!T);
+    alias uvm_component_registry = uvm_component_registry!(T, qualifiedTypeName!T);
   else alias uvm_component_registry = uvm_component_registry!(T, "<unknown>");
 }
 
@@ -72,7 +72,7 @@ class uvm_component_registry(T, string Tname): uvm_object_wrapper
   // called by the factory after determining the type of object to create.
   // You should not call this method directly. Call <create> instead.
 
-  // @uvm-ieee 1800.2-2017 auto 8.2.3.2.1
+  // @uvm-ieee 1800.2-2020 auto 8.2.3.2.1
   override uvm_component create_component (string name,
 				  uvm_component parent) {
     T obj = new T(name, parent);
@@ -88,7 +88,7 @@ class uvm_component_registry(T, string Tname): uvm_object_wrapper
   // Returns the value given by the string parameter, ~Tname~. This method
   // overrides the method in <uvm_object_wrapper>.
 
-  // @uvm-ieee 1800.2-2017 auto 8.2.3.2.2
+  // @uvm-ieee 1800.2-2020 auto 8.2.3.2.2
   override string get_type_name() {
     common_type common = common_type.get();
     return common.get_type_name();
@@ -111,7 +111,7 @@ class uvm_component_registry(T, string Tname): uvm_object_wrapper
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 8.2.3.2.7
+  // @uvm-ieee 1800.2-2020 auto 8.2.3.2.7
   override void initialize() {
     common_type common = common_type.get();
     common.initialize();
@@ -125,7 +125,7 @@ class uvm_component_registry(T, string Tname): uvm_object_wrapper
   // ~parent~'s context. The new instance will have the given leaf ~name~
   // and ~parent~.
 
-  // @uvm-ieee 1800.2-2017 auto 8.2.3.2.4
+  // @uvm-ieee 1800.2-2020 auto 8.2.3.2.4
   static T create(string name, uvm_component parent, string contxt="") {
     return common_type.create(name, parent, contxt);
   }
@@ -138,7 +138,7 @@ class uvm_component_registry(T, string Tname): uvm_object_wrapper
   // ~T~, represented by this proxy, provided no instance override applies. The
   // original type, ~T~, is typically a super class of the override type.
 
-  // @uvm-ieee 1800.2-2017 auto 8.2.3.2.5
+  // @uvm-ieee 1800.2-2020 auto 8.2.3.2.5
   static void set_type_override (uvm_object_wrapper override_type,
 				 bool replace=1) {
     common_type.set_type_override(override_type, replace);
@@ -160,7 +160,7 @@ class uvm_component_registry(T, string Tname): uvm_object_wrapper
   // registered with the override. The ~inst_path~ may contain wildcards for
   // matching against multiple contexts.
 
-  // @uvm-ieee 1800.2-2017 auto 8.2.3.2.6
+  // @uvm-ieee 1800.2-2020 auto 8.2.3.2.6
   static void set_inst_override(uvm_object_wrapper override_type,
 				string inst_path,
 				uvm_component parent=null) {
@@ -184,14 +184,14 @@ class uvm_component_registry(T, string Tname): uvm_object_wrapper
 
 // Class: uvm_object_registry#(T,Tname)
 // Implementation of uvm_object_registry#(T,Tname), as defined by section
-// 8.2.4.1 of 1800.2-2017.
+// 8.2.4.1 of 1800.2-2020.
 
-// @uvm-ieee 1800.2-2017 auto 8.2.4.1
+// @uvm-ieee 1800.2-2020 auto 8.2.4.1
 template uvm_object_registry(T, bool NAMED=true)
 {
-  import std.traits: fullyQualifiedName;
+  import uvm.meta.meta: qualifiedTypeName;
   static if (NAMED)
-    alias uvm_object_registry = uvm_object_registry!(T, fullyQualifiedName!T);
+    alias uvm_object_registry = uvm_object_registry!(T, qualifiedTypeName!T);
   else alias uvm_object_registry = uvm_object_registry!(T, "<unknown>");
 }
 
@@ -209,7 +209,7 @@ class uvm_object_registry(T, string Tname): uvm_object_wrapper
   // It is called by the factory after determining the type of object to create.
   // You should not call this method directly. Call <create> instead.
 
-  // @uvm-ieee 1800.2-2017 auto 8.2.4.2.1
+  // @uvm-ieee 1800.2-2020 auto 8.2.4.2.1
   override uvm_object create_object(string name="") {
     T obj;
     if (name == "") obj = new T();
@@ -226,7 +226,7 @@ class uvm_object_registry(T, string Tname): uvm_object_wrapper
   // Returns the value given by the string parameter, ~Tname~. This method
   // overrides the method in <uvm_object_wrapper>.
 
-  // @uvm-ieee 1800.2-2017 auto 8.2.4.2.2
+  // @uvm-ieee 1800.2-2020 auto 8.2.4.2.2
   override string get_type_name() {
     common_type common = common_type.get();
     return common.get_type_name();
@@ -262,7 +262,7 @@ class uvm_object_registry(T, string Tname): uvm_object_wrapper
   // ~parent~'s context. The new instance will have the given leaf ~name~,
   // if provided.
 
-  // @uvm-ieee 1800.2-2017 auto 8.2.4.2.4
+  // @uvm-ieee 1800.2-2020 auto 8.2.4.2.4
   static T create(string name="", uvm_component parent=null,
 		  string contxt="") {
     return common_type.create(name, parent, contxt);
@@ -276,7 +276,7 @@ class uvm_object_registry(T, string Tname): uvm_object_wrapper
   // represented by this proxy, provided no instance override applies. The
   // original type, ~T~, is typically a super class of the override type.
 
-  // @uvm-ieee 1800.2-2017 auto 8.2.4.2.5
+  // @uvm-ieee 1800.2-2020 auto 8.2.4.2.5
   static void set_type_override(uvm_object_wrapper override_type,
 				bool replace=true) {
     common_type.set_type_override(override_type, replace);
@@ -298,7 +298,7 @@ class uvm_object_registry(T, string Tname): uvm_object_wrapper
   // registered with the override. The ~inst_path~ may contain wildcards for
   // matching against multiple contexts.
 
-  // @uvm-ieee 1800.2-2017 auto 8.2.4.2.6
+  // @uvm-ieee 1800.2-2020 auto 8.2.4.2.6
   static void set_inst_override(uvm_object_wrapper override_type,
 				string inst_path,
 				uvm_component parent=null) {
@@ -317,7 +317,7 @@ class uvm_object_registry(T, string Tname): uvm_object_wrapper
     return true;
   }
 
-  // @uvm-ieee 1800.2-2017 auto 8.2.4.2.7
+  // @uvm-ieee 1800.2-2020 auto 8.2.4.2.7
   override void initialize() {
     common_type common = common_type.get();
     common.initialize();
@@ -326,14 +326,14 @@ class uvm_object_registry(T, string Tname): uvm_object_wrapper
 
 // Class: uvm_abstract_component_registry#(T,Tname)
 // Implementation of uvm_abstract_component_registry#(T,Tname), as defined by section
-// 8.2.5.1.1 of 1800.2-2017.
+// 8.2.5.1.1 of 1800.2-2020.
 
-// @uvm-ieee 1800.2-2017 auto 8.2.5.1.1
+// @uvm-ieee 1800.2-2020 auto 8.2.5.1.1
 template uvm_abstract_component_registry(T, bool NAMED=true)
 {
-  import std.traits: fullyQualifiedName;
+  import uvm.meta.meta: qualifiedTypeName;
   static if (NAMED)
-    alias uvm_abstract_component_registry = uvm_abstract_component_registry!(T, fullyQualifiedName!T);
+    alias uvm_abstract_component_registry = uvm_abstract_component_registry!(T, qualifiedTypeName!T);
   else alias uvm_abstract_component_registry = uvm_abstract_component_registry!(T, "<unknown>");
 }
 
@@ -352,7 +352,7 @@ class uvm_abstract_component_registry(T, string Tname):
   // called by the factory after determining the type of object to create.
   // You should not call this method directly. Call <create> instead.
 
-  // @uvm-ieee 1800.2-2017 auto 8.2.5.1.2
+  // @uvm-ieee 1800.2-2020 auto 8.2.5.1.2
   override uvm_component create_component (string name,
 					   uvm_component parent) {
     import std.string: format;
@@ -470,14 +470,14 @@ class uvm_abstract_component_registry(T, string Tname):
 
 // Class: uvm_abstract_object_registry#(T,Tname)
 // Implementation of uvm_abstract_object_registry#(T,Tname), as defined by section
-// 8.2.5.2.1 of 1800.2-2017.
+// 8.2.5.2.1 of 1800.2-2020.
 
-// @uvm-ieee 1800.2-2017 auto 8.2.5.2.1
+// @uvm-ieee 1800.2-2020 auto 8.2.5.2.1
 template uvm_abstract_object_registry(T, bool NAMED=true)
 {
-  import std.traits: fullyQualifiedName;
+  import uvm.meta.meta: qualifiedTypeName;
   static if (NAMED)
-    alias uvm_abstract_object_registry = uvm_abstract_object_registry!(T, fullyQualifiedName!T);
+    alias uvm_abstract_object_registry = uvm_abstract_object_registry!(T, qualifiedTypeName!T);
   else alias uvm_abstract_object_registry = uvm_abstract_object_registry!(T, "<unknown>");
 }
 
@@ -496,7 +496,7 @@ class uvm_abstract_object_registry(T, string Tname):
   // It is called by the factory after determining the type of object to create.
   // You should not call this method directly. Call <create> instead.
 
-  // @uvm-ieee 1800.2-2017 auto 8.2.5.2.2
+  // @uvm-ieee 1800.2-2020 auto 8.2.5.2.2
   override uvm_object create_object(string name="") {
     import std.string: format;
     import uvm.base.uvm_globals: uvm_error;

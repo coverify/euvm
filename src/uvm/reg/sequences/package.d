@@ -1,5 +1,6 @@
 module uvm.reg.sequences;
 
+import uvm.reg.sequences.uvm_reg_randval;
 import uvm.reg.sequences.uvm_reg_hw_reset_seq;
 import uvm.reg.sequences.uvm_reg_access_seq;
 import uvm.reg.sequences.uvm_mem_access_seq;

@@ -1,13 +1,14 @@
 //
 //-----------------------------------------------------------------------------
-// Copyright 2012-2019 Coverify Systems Technology
+// Copyright 2012-2021 Coverify Systems Technology
+// Copyright 2010-2012 AMD
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2017-2018 Cisco Systems, Inc.
+// Copyright 2020 Marvell International Ltd.
 // Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2013-2020 NVIDIA Corporation
 // Copyright 2014 Semifore
 // Copyright 2010-2018 Synopsys, Inc.
-// Copyright 2007-2018 Cadence Design Systems, Inc.
-// Copyright 2010-2012 AMD
-// Copyright 2013-2018 NVIDIA Corporation
-// Copyright 2017-2018 Cisco Systems, Inc.
 // Copyright 2017 Verific
 //   All Rights Reserved Worldwide
 //
@@ -88,9 +89,8 @@ import std.string: format;
 import std.random: uniform;
 import std.range: ElementType;
 
-// @uvm-ieee 1800.2-2017 auto 5.3.1
-@rand(false)
-abstract class uvm_object: uvm_void
+// @uvm-ieee 1800.2-2020 auto 5.3.1
+abstract class uvm_object: uvm_void, rand.barrier
 {
   static class uvm_scope: uvm_scope_base
   {
@@ -115,6 +115,7 @@ abstract class uvm_object: uvm_void
   // Creates a new uvm_object with the given instance ~name~. If ~name~ is not
   // supplied, the object is unnamed.
 
+  // @uvm-ieee 1800.2-2020 auto 5.3.2
   this(string name="") {
     int inst_id;
     synchronized (_uvm_scope_inst) {
@@ -128,22 +129,9 @@ abstract class uvm_object: uvm_void
 
   // Group -- NODOCS -- Seeding
 
-  // Variable -- NODOCS -- use_uvm_seeding
-  //
-  // This bit enables or disables the UVM seeding mechanism. It globally affects
-  // the operation of the <reseed> method.
-  //
-  // When enabled, UVM-based objects are seeded based on their type and full
-  // hierarchical name rather than allocation order. This improves random
-  // stability for objects whose instance names are unique across each type.
-  // The <uvm_component> class is an example of a type that has a unique
-  // instance name.
+  // Function -- NODOCS -- get_uvm_seeding
 
-  // Moved to _uvm_scope_inst
-  // shared static bool use_uvm_seeding = true;
-
-
-  // @uvm-ieee 1800.2-2017 auto 5.3.3.1
+  // @uvm-ieee 1800.2-2020 auto 5.3.3.1
   static bool get_uvm_seeding() {
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     return cs.get_uvm_seeding();
@@ -152,7 +140,7 @@ abstract class uvm_object: uvm_void
       
   // Function -- NODOCS -- set_uvm_seeding
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.3.2
+  // @uvm-ieee 1800.2-2020 auto 5.3.3.2
   static void set_uvm_seeding(bool enable) {
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     cs.set_uvm_seeding(enable);
@@ -174,7 +162,7 @@ abstract class uvm_object: uvm_void
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.3.3
+  // @uvm-ieee 1800.2-2020 auto 5.3.3.3
   final void reseed () {
     import uvm.base.uvm_misc: uvm_create_random_seed;
     synchronized (this) {
@@ -188,30 +176,30 @@ abstract class uvm_object: uvm_void
     }
   }
 
-  // In SV every class object is randomizable by default. Seeding in
-  // SV happens right at the time when an object is created.
-  // In EUVM, seeding is lazy. It happens only when a randomize (or
-  // the related function like srandom) is called.
-  // This is the hookup function in EUVM to ensure randomization stability
-  void _esdl__seedRandom() {
-    version (UVM_NO_RAND) {}
-    else {
-      if (! _esdl__isRandSeeded()) {
-	auto proc = Procedure.self;
-	if (proc !is null) {
-	  auto seed = uniform!int(proc.getRandGen());
-	  debug(SEED) {
-	    import std.stdio;
-	    auto thread = PoolThread.self;
-	    writeln("Procedure ", thread ? thread.getPoolIndex : -1, " : ",
-      		    proc.getFullName);
-	    writeln("Setting ", get_full_name, " seed: ", seed);
-	  }
-	  this.reseed(seed);
-	}
-      }
-    }
-  }
+  // // In SV every class object is randomizable by default. Seeding in
+  // // SV happens right at the time when an object is created.
+  // // In EUVM, seeding is lazy. It happens only when a randomize (or
+  // // the related function like srandom) is called.
+  // // This is the hookup function in EUVM to ensure randomization stability
+  // void _esdl__seedRandom() {
+  //   version (UVM_NO_RAND) {}
+  //   else {
+  //     if (! _esdl__isRandSeeded()) {
+  // 	auto proc = Procedure.self;
+  // 	if (proc !is null) {
+  // 	  auto seed = uniform!int(proc.getRandGen().getGen());
+  // 	  debug(SEED) {
+  // 	    import std.stdio;
+  // 	    auto thread = PoolThread.self;
+  // 	    writeln("Procedure ", thread ? thread.getPoolIndex : -1, " : ",
+  //     		    proc.getFullName);
+  // 	    writeln("Setting ", get_full_name, " seed: ", seed);
+  // 	  }
+  // 	  this.reseed(seed);
+  // 	}
+  //     }
+  //   }
+  // }
 
   // // Group -- NODOCS -- Identification
 
@@ -220,7 +208,7 @@ abstract class uvm_object: uvm_void
   // // Sets the instance name of this object, overwriting any previously
   // // given name.
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.4.1
+  // @uvm-ieee 1800.2-2020 auto 5.3.4.1
   void set_name(string name) {
     synchronized (this) {
       _m_leaf_name = name;
@@ -233,7 +221,7 @@ abstract class uvm_object: uvm_void
   // Returns the name of the object, as provided by the ~name~ argument in the
   // <new> constructor or <set_name> method.
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.4.2
+  // @uvm-ieee 1800.2-2020 auto 5.3.4.2
   string get_name() {
     synchronized (this) {
       return _m_leaf_name;
@@ -255,7 +243,7 @@ abstract class uvm_object: uvm_void
   // full name concatenated with the sequence's name. This provides the sequence
   // a full context, which is useful when debugging.
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.4.3
+  // @uvm-ieee 1800.2-2020 auto 5.3.4.3
   string get_full_name() {
     return get_name();
   }
@@ -266,7 +254,7 @@ abstract class uvm_object: uvm_void
   //
   // Returns the object's unique, numeric instance identifier.
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.4.4
+  // @uvm-ieee 1800.2-2020 auto 5.3.4.4
   int get_inst_id() {
     return _m_inst_id; // effectively immutable
   }
@@ -312,6 +300,7 @@ abstract class uvm_object: uvm_void
   //
   // This function is implemented by the `uvm_*_utils macros, if employed.
 
+  // @uvm-ieee 1800.2-2020 auto 5.3.4.5
   static uvm_object_wrapper get_type() {
     import uvm.base.uvm_object_globals;
     import uvm.base.uvm_globals;
@@ -350,6 +339,7 @@ abstract class uvm_object: uvm_void
   //
   // This function is implemented by the `uvm_*_utils macros, if employed.
 
+  // @uvm-ieee 1800.2-2020 auto 5.3.4.6
   uvm_object_wrapper get_object_type() {
     import uvm.base.uvm_coreservice;
     import uvm.base.uvm_factory;
@@ -390,9 +380,9 @@ abstract class uvm_object: uvm_void
   // auto oci = typeid(this);
   // return oci.to!string();
   // it will then be available via UFCS
-  string get_type_name() {
-    return "<unknown>";
-  }
+
+  // @uvm-ieee 1800.2-2020 auto 5.3.4.7
+  string get_type_name() { return "<unknown>"; }
 
   // Group -- NODOCS -- Creation
 
@@ -411,9 +401,8 @@ abstract class uvm_object: uvm_void
   //|      return t;
   //|    endfunction
 
-  uvm_object create(string name = "") {
-    return null;
-  }
+  // @uvm-ieee 1800.2-2020 auto 5.3.5.1
+  uvm_object create(string name = "") { return null; }
 
   // Function -- NODOCS -- clone
   //
@@ -422,7 +411,7 @@ abstract class uvm_object: uvm_void
   // The default implementation calls <create> followed by <copy>. As clone is
   // virtual, derived classes may override this implementation if desired.
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.5.2
+  // @uvm-ieee 1800.2-2020 auto 5.3.5.2
   uvm_object clone() {
     import uvm.base.uvm_object_globals;
     import uvm.base.uvm_globals;
@@ -438,6 +427,19 @@ abstract class uvm_object: uvm_void
     return tmp;
   }
 
+  uvm_object dup() {
+    import uvm.base.uvm_object_globals;
+    import uvm.base.uvm_globals;
+    uvm_report_warning("CRFLD",
+		       format("The create method failed for %s,  " ~
+			      "object cannot be \"dup\"licated", get_name()),
+			 uvm_verbosity.UVM_NONE);
+    uvm_report_warning("CRFLD",
+		       format("Consider adding mixin uvm_object_utils to " ~
+			      "the objects class", get_name()),
+		       uvm_verbosity.UVM_NONE);
+    assert (false);
+  }
 
   // Group -- NODOCS -- Printing
 
@@ -455,7 +457,7 @@ abstract class uvm_object: uvm_void
   // must override the <do_print> method and use the provided printer policy
   // class to format the output.
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.6.1
+  // @uvm-ieee 1800.2-2020 auto 5.3.6.1
   final void print(uvm_printer printer = null) {
     if (printer is null) printer = uvm_printer.get_default();
     vfdisplay(printer.get_file(), sprint(printer)); 
@@ -473,7 +475,7 @@ abstract class uvm_object: uvm_void
   // class to format the output. The printer policy will manage all string
   // concatenations and provide the string to ~sprint~ to return to the caller.
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.6.2
+  // @uvm-ieee 1800.2-2020 auto 5.3.6.2
   final string sprint(uvm_printer printer=null) {
     if (printer is null) printer = uvm_printer.get_default();
     synchronized (printer) {
@@ -527,7 +529,7 @@ abstract class uvm_object: uvm_void
   //
   // See <uvm_printer> for information about the printer API.
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.6.3
+  // @uvm-ieee 1800.2-2020 auto 5.3.6.3
   void do_print(uvm_printer printer) {
     return;
   }
@@ -597,7 +599,7 @@ abstract class uvm_object: uvm_void
     return "";
   }
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.6.4
+  // @uvm-ieee 1800.2-2020 auto 5.3.6.4
   string convert2string() {
     return this.to!string();
   }
@@ -677,7 +679,7 @@ abstract class uvm_object: uvm_void
   //   }
   // }
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.7.1
+  // @uvm-ieee 1800.2-2020 auto 5.3.7.1
   final void record(uvm_recorder recorder=null) {
     if (recorder is null)
       return;
@@ -707,7 +709,7 @@ abstract class uvm_object: uvm_void
   //|     recorder.record_object("data", data);
   //|   endfunction
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.7.2
+  // @uvm-ieee 1800.2-2020 auto 5.3.7.2
   void do_record(uvm_recorder recorder) { }
 
 
@@ -722,7 +724,7 @@ abstract class uvm_object: uvm_void
   // the <do_copy> method.
 
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.8.1
+  // @uvm-ieee 1800.2-2020 auto 5.3.8.1
   final void copy(uvm_object rhs, uvm_copier copier=null) {
     import uvm.base.uvm_object_globals;
     import uvm.base.uvm_globals;
@@ -772,7 +774,7 @@ abstract class uvm_object: uvm_void
   // The implementation must call ~super.do_copy~, and it must $cast the rhs
   // argument to the derived type before copying.
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.8.2
+  // @uvm-ieee 1800.2-2020 auto 5.3.8.2
   void do_copy(uvm_object rhs) {
     return;
   }
@@ -798,7 +800,7 @@ abstract class uvm_object: uvm_void
 
   // void uvm_field_auto_compare(uvm_object rhs) { }
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.9.1
+  // @uvm-ieee 1800.2-2020 auto 5.3.9.1
   final bool compare(uvm_object rhs, uvm_comparer comparer = null) {
     if (comparer is null) comparer = uvm_comparer.get_default();
     synchronized (comparer) {
@@ -838,7 +840,7 @@ abstract class uvm_object: uvm_void
   // class to customize how comparisons are performed and how much miscompare
   // information is collected. See uvm_comparer for more details.
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.9.2
+  // @uvm-ieee 1800.2-2020 auto 5.3.9.2
   bool do_compare(uvm_object rhs, uvm_comparer comparer) {
     return true;
   }
@@ -852,7 +854,7 @@ abstract class uvm_object: uvm_void
   // 		       "no uvm_object_utils", uvm_verbosity.UVM_NONE);
   // }
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.10.1
+  // @uvm-ieee 1800.2-2020 auto 5.3.10.1
   final size_t pack(ref bool[] bitstream, uvm_packer packer=null) {
     m_pack(packer);
     packer.get_packed_bits(bitstream);
@@ -861,7 +863,7 @@ abstract class uvm_object: uvm_void
 
   // Function -- NODOCS -- pack_bytes
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.10.1
+  // @uvm-ieee 1800.2-2020 auto 5.3.10.1
   final size_t pack_bytes(ref ubyte[] bytestream,
 			  uvm_packer packer=null) {
     m_pack(packer);
@@ -884,7 +886,7 @@ abstract class uvm_object: uvm_void
   // Use the array's built-in ~size~ method to get the number of bytes or ints
   // consumed during the packing process.
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.10.1
+  // @uvm-ieee 1800.2-2020 auto 5.3.10.1
   final size_t pack_ints(ref uint[] intstream,
 			 uvm_packer packer=null) {
     m_pack(packer);
@@ -893,7 +895,7 @@ abstract class uvm_object: uvm_void
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.10.1
+  // @uvm-ieee 1800.2-2020 auto 5.3.10.1
   final size_t pack_longints(ref ulong[] longintstream,
 			  uvm_packer packer=null) {
     m_pack(packer);
@@ -952,7 +954,7 @@ abstract class uvm_object: uvm_void
   // Packing order does not need to match declaration order. However, unpacking
   // order must match packing order.
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.10.2
+  // @uvm-ieee 1800.2-2020 auto 5.3.10.2
   void do_pack(uvm_packer packer) {
     if (packer is null)
       uvm_error("UVM/OBJ/PACK/NULL",
@@ -970,7 +972,7 @@ abstract class uvm_object: uvm_void
   // 		       "no uvm_object_utils", uvm_verbosity.UVM_NONE);
   // }
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.11.1
+  // @uvm-ieee 1800.2-2020 auto 5.3.11.1
   final size_t unpack(ref bool[] bitstream,
 		      uvm_packer packer = null) {
     m_unpack_pre(packer);
@@ -980,7 +982,7 @@ abstract class uvm_object: uvm_void
 
   // Function -- NODOCS -- unpack_bytes
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.11.1
+  // @uvm-ieee 1800.2-2020 auto 5.3.11.1
   final size_t unpack_bytes(ref ubyte[] bytestream,
 			    uvm_packer packer = null) {
     m_unpack_pre(packer);
@@ -1007,7 +1009,7 @@ abstract class uvm_object: uvm_void
   //
   // The return value is the actual number of bits unpacked from the given array.
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.11.1
+  // @uvm-ieee 1800.2-2020 auto 5.3.11.1
   final size_t unpack_ints(ref uint[] intstream,
 			   uvm_packer packer=null) {
     m_unpack_pre(packer);
@@ -1015,7 +1017,7 @@ abstract class uvm_object: uvm_void
     return m_unpack_post(packer);
   }
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.11.1
+  // @uvm-ieee 1800.2-2020 auto 5.3.11.1
   int unpack_longints(ref ulong[] longintstream,
 		      uvm_packer packer=null) {
     m_unpack_pre(packer);
@@ -1064,7 +1066,7 @@ abstract class uvm_object: uvm_void
   //   the next property, if any. If the least significant bit is 1, then the
   //   target object should be allocated and its properties unpacked.
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.11.2
+  // @uvm-ieee 1800.2-2020 auto 5.3.11.2
   void do_unpack(uvm_packer packer) {
     if (packer is null)
       uvm_error("UVM/OBJ/UNPACK/NULL",
@@ -1072,7 +1074,7 @@ abstract class uvm_object: uvm_void
     return;
   }
 
-  // @uvm-ieee 1800.2-2017 auto 5.3.13.1
+  // @uvm-ieee 1800.2-2020 auto 5.3.13.1
   void do_execute_op(uvm_field_op op) { }
 
   void m_uvm_execute_field_op(uvm_field_op op) { }
@@ -1081,7 +1083,7 @@ abstract class uvm_object: uvm_void
 
   void do_vpi_get(uvm_vpi_iter iter) { }
   
-  // @uvm-ieee 1800.2-2017 auto 5.3.12
+  // @uvm-ieee 1800.2-2020 auto 5.3.12
   void  set_local(uvm_resource_base rsrc) {
     if (rsrc is null) {
       return;
@@ -1128,14 +1130,14 @@ abstract class uvm_object: uvm_void
   // The print_matches bit causes an informative message to be printed
   // when a field is set using one of the set methods.
 
-  @rand(false) @uvm_private_sync
+  @uvm_private_sync
   private string _m_leaf_name;
 
   // // uvm_sync_private _m_leaf_name string
   // final private string m_leaf_name() {synchronized (this) return this._m_leaf_name;}
   // final private void m_leaf_name(string val) {synchronized (this) this._m_leaf_name = val;}
 
-  @rand(false) @uvm_immutable_sync
+  @uvm_immutable_sync
   private int _m_inst_id;
 
   // // uvm_sync_private _m_inst_id int
@@ -1147,156 +1149,164 @@ abstract class uvm_object: uvm_void
   }
 
   
-  static void _m_uvm_execute_copy(int I, T)(T t, T rhs, uvm_copier copier)
-    if (is (T: uvm_object)) {
-      import uvm.base.uvm_object_globals;
-      static if (I < t.tupleof.length) {
-	enum FLAGS = uvm_field_auto_get_flags!(t, I);
-	static if (!(FLAGS & uvm_field_auto_enum.UVM_NOCOPY) &&
-		   FLAGS & uvm_field_auto_enum.UVM_COPY) {
-	  copier.uvm_copy_element(t.tupleof[I].stringof[2..$],
-				  t.tupleof[I], rhs.tupleof[I], FLAGS);
-	}
-	_m_uvm_execute_copy!(I+1)(t, rhs, copier);
-      }
-    }
+  // static void _m_uvm_execute_copy(int I, T)(T t, T rhs, uvm_copier copier)
+  //   if (is (T: uvm_object)) {
+  //     import uvm.base.uvm_object_globals;
+  //     static if (I < t.tupleof.length) {
+  // 	enum FLAGS = uvm_field_auto_get_flags!(t, I);
+  // 	static if (!(FLAGS & uvm_field_auto_enum.UVM_NOCOPY) &&
+  // 		   FLAGS & uvm_field_auto_enum.UVM_COPY) {
+  // 	  copier.uvm_copy_element(t.tupleof[I].stringof[2..$],
+  // 				  t.tupleof[I], rhs.tupleof[I], FLAGS);
+  // 	}
+  // 	_m_uvm_execute_copy!(I+1)(t, rhs, copier);
+  //     }
+  //   }
   
-  static void _m_uvm_execute_compare(int I, T)(T t, T rhs,
-					       uvm_comparer comparer)
-    if (is (T: uvm_object)) {
-      import uvm.base.uvm_object_globals;
-      static if (I < t.tupleof.length) {
-	enum FLAGS = uvm_field_auto_get_flags!(t, I);
-	static if (!(FLAGS & uvm_field_auto_enum.UVM_NOCOMPARE) &&
-		   FLAGS & uvm_field_auto_enum.UVM_COMPARE) {
-	  comparer.uvm_compare_element(t.tupleof[I].stringof[2..$],
-				  t.tupleof[I], rhs.tupleof[I], FLAGS);
-	}
-	_m_uvm_execute_compare!(I+1)(t, rhs, comparer);
-      }
-    }
+  // static void _m_uvm_execute_compare(int I, T)(T t, T rhs,
+  // 					       uvm_comparer comparer)
+  //   if (is (T: uvm_object)) {
+  //     import uvm.base.uvm_object_globals;
+  //     static if (I < t.tupleof.length) {
+  // 	enum FLAGS = uvm_field_auto_get_flags!(t, I);
+  // 	static if (!(FLAGS & uvm_field_auto_enum.UVM_NOCOMPARE) &&
+  // 		   FLAGS & uvm_field_auto_enum.UVM_COMPARE) {
+  // 	  comparer.uvm_compare_element(t.tupleof[I].stringof[2..$],
+  // 				  t.tupleof[I], rhs.tupleof[I], FLAGS);
+  // 	}
+  // 	_m_uvm_execute_compare!(I+1)(t, rhs, comparer);
+  //     }
+  //   }
   
-  static void _m_uvm_execute_print(int I, T)(T t, uvm_printer printer)
-    if (is (T: uvm_object)) {
-      import uvm.base.uvm_object_globals;
-      static if (I < t.tupleof.length) {
-	enum FLAGS = uvm_field_auto_get_flags!(t, I);
-	static if (!(FLAGS & uvm_field_auto_enum.UVM_NOPRINT) &&
-		   FLAGS & uvm_field_auto_enum.UVM_PRINT) {
-	  printer.uvm_print_element(t.tupleof[I].stringof[2..$],
-				    t.tupleof[I], FLAGS);
-	}
-	_m_uvm_execute_print!(I+1)(t, printer);
-      }
-    }
+  // static void _m_uvm_execute_print(int I, T)(T t, uvm_printer printer)
+  //   if (is (T: uvm_object)) {
+  //     import uvm.base.uvm_object_globals;
+  //     static if (I < t.tupleof.length) {
+  // 	enum FLAGS = uvm_field_auto_get_flags!(t, I);
+  // 	static if (!(FLAGS & uvm_field_auto_enum.UVM_NOPRINT) &&
+  // 		   FLAGS & uvm_field_auto_enum.UVM_PRINT) {
+  // 	  printer.uvm_print_element(t.tupleof[I].stringof[2..$],
+  // 				    t.tupleof[I], FLAGS);
+  // 	}
+  // 	_m_uvm_execute_print!(I+1)(t, printer);
+  //     }
+  //   }
   
-  static void _m_uvm_execute_pack(int I, T)(T t, uvm_packer packer)
-    if (is (T: uvm_object)) {
-      import uvm.base.uvm_object_globals;
-      static if (I < t.tupleof.length) {
-	enum FLAGS = uvm_field_auto_get_flags!(t, I);
-	static if (!(FLAGS & uvm_field_auto_enum.UVM_NOPACK) &&
-		   FLAGS & uvm_field_auto_enum.UVM_PACK) {
-	  packer.uvm_pack_element(t.tupleof[I].stringof[2..$],
-				    t.tupleof[I], FLAGS);
-	}
-	_m_uvm_execute_pack!(I+1)(t, packer);
-      }
-    }
+  // static void _m_uvm_execute_pack(int I, T)(T t, uvm_packer packer)
+  //   if (is (T: uvm_object)) {
+  //     import uvm.base.uvm_object_globals;
+  //     static if (I < t.tupleof.length) {
+  // 	enum FLAGS = uvm_field_auto_get_flags!(t, I);
+  // 	static if (!(FLAGS & uvm_field_auto_enum.UVM_NOPACK) &&
+  // 		   FLAGS & uvm_field_auto_enum.UVM_PACK) {
+  // 	  packer.uvm_pack_element(t.tupleof[I].stringof[2..$],
+  // 				    t.tupleof[I], FLAGS);
+  // 	}
+  // 	_m_uvm_execute_pack!(I+1)(t, packer);
+  //     }
+  //   }
   
-  static void _m_uvm_execute_unpack(int I, T)(T t, uvm_packer packer)
-    if (is (T: uvm_object)) {
-      import uvm.base.uvm_object_globals;
-      static if (I < t.tupleof.length) {
-	enum FLAGS = uvm_field_auto_get_flags!(t, I);
-	static if (!(FLAGS & uvm_field_auto_enum.UVM_NOUNPACK) &&
-		   FLAGS & uvm_field_auto_enum.UVM_UNPACK) {
-	  packer.uvm_unpack_element(t.tupleof[I].stringof[2..$],
-				    t.tupleof[I], FLAGS);
-	}
-	_m_uvm_execute_unpack!(I+1)(t, packer);
-      }
-    }
+  // static void _m_uvm_execute_unpack(int I, T)(T t, uvm_packer packer)
+  //   if (is (T: uvm_object)) {
+  //     import uvm.base.uvm_object_globals;
+  //     static if (I < t.tupleof.length) {
+  // 	enum FLAGS = uvm_field_auto_get_flags!(t, I);
+  // 	static if (!(FLAGS & uvm_field_auto_enum.UVM_NOUNPACK) &&
+  // 		   FLAGS & uvm_field_auto_enum.UVM_UNPACK) {
+  // 	  packer.uvm_unpack_element(t.tupleof[I].stringof[2..$],
+  // 				    t.tupleof[I], FLAGS);
+  // 	}
+  // 	_m_uvm_execute_unpack!(I+1)(t, packer);
+  //     }
+  //   }
   
-  static void _m_uvm_execute_record(int I, T)(T t, uvm_recorder recorder)
-    if (is (T: uvm_object)) {
-      import uvm.base.uvm_object_globals;
-      static if (I < t.tupleof.length) {
-	enum FLAGS = uvm_field_auto_get_flags!(t, I);
-	static if (!(FLAGS & uvm_field_auto_enum.UVM_NORECORD) &&
-		   FLAGS & uvm_field_auto_enum.UVM_RECORD) {
-	  recorder.uvm_record_element(t.tupleof[I].stringof[2..$],
-				      t.tupleof[I], FLAGS);
-	}
-	_m_uvm_execute_record!(I+1)(t, recorder);
-      }
-    }
+  // static void _m_uvm_execute_record(int I, T)(T t, uvm_recorder recorder)
+  //   if (is (T: uvm_object)) {
+  //     import uvm.base.uvm_object_globals;
+  //     static if (I < t.tupleof.length) {
+  // 	enum FLAGS = uvm_field_auto_get_flags!(t, I);
+  // 	static if (!(FLAGS & uvm_field_auto_enum.UVM_NORECORD) &&
+  // 		   FLAGS & uvm_field_auto_enum.UVM_RECORD) {
+  // 	  recorder.uvm_record_element(t.tupleof[I].stringof[2..$],
+  // 				      t.tupleof[I], FLAGS);
+  // 	}
+  // 	_m_uvm_execute_record!(I+1)(t, recorder);
+  //     }
+  //   }
   
-  static void _m_uvm_execute_set(int I, T)(T t, uvm_resource_base rsrc)
-    if (is (T: uvm_object)) {
-      import uvm.base.uvm_object_globals;
-      static if (I < t.tupleof.length) {
-	enum FLAGS = uvm_field_auto_get_flags!(t, I);
-	static if (!(FLAGS & uvm_field_auto_enum.UVM_NOSET) &&
-		   FLAGS & uvm_field_auto_enum.UVM_SET) {
-	  rsrc.uvm_set_element(t.tupleof[I].stringof[2..$],
-			       t.tupleof[I], t, FLAGS);
-	}
-	_m_uvm_execute_set!(I+1)(t, rsrc);
-      }
-    }
+  // static void _m_uvm_execute_set(int I, T)(T t, uvm_resource_base rsrc)
+  //   if (is (T: uvm_object)) {
+  //     import uvm.base.uvm_object_globals;
+  //     static if (I < t.tupleof.length) {
+  // 	enum FLAGS = uvm_field_auto_get_flags!(t, I);
+  // 	static if (!(FLAGS & uvm_field_auto_enum.UVM_NOSET) &&
+  // 		   FLAGS & uvm_field_auto_enum.UVM_SET) {
+  // 	  rsrc.uvm_set_element(t.tupleof[I].stringof[2..$],
+  // 			       t.tupleof[I], t, FLAGS);
+  // 	}
+  // 	_m_uvm_execute_set!(I+1)(t, rsrc);
+  //     }
+  //   }
   
-  static void _m_uvm_object_automation(int I, T)(T          t,
-						 T          rhs,
-						 int        what, 
-						 string     str)
-    if (is (T: uvm_object)) {
-      import uvm.base.uvm_object_globals;
-      import uvm.base.uvm_misc: UVM_ELEMENT_TYPE;
-      static if (I < t.tupleof.length) {
-	enum FLAGS = uvm_field_auto_get_flags!(t, I);
-	alias EE = UVM_ELEMENT_TYPE!(typeof(t.tupleof[I]));
-	static if (FLAGS != 0 &&
-		   (isIntegral!EE || isBitVector!EE || isBoolean!EE ||
-		    is (EE: uvm_object) || is (EE == string))) {
-	  if (what == uvm_field_auto_enum.UVM_COMPARE ||
-	      what == uvm_field_auto_enum.UVM_COPY) {
-	    assert (rhs !is null);
-	    _m_uvm_object_automation(t.tupleof[I], rhs.tupleof[I], what, str,
-				     t.tupleof[I].stringof[2..$],
-				     FLAGS);
-	  }
-	  else {
-	    _m_uvm_object_automation(t.tupleof[I], typeof(t.tupleof[I]).init,
-				     what, str, t.tupleof[I].stringof[2..$],
-				     FLAGS);
-	  }
-	}
-	_m_uvm_object_automation!(I+1)(t, rhs, what, str);
-      }
-    }
+  // static void _m_uvm_object_automation(int I, T)(T          t,
+  // 						 T          rhs,
+  // 						 int        what, 
+  // 						 string     str)
+  //   if (is (T: uvm_object)) {
+  //     import uvm.base.uvm_object_globals;
+  //     import uvm.base.uvm_misc: UVM_ELEMENT_TYPE;
+  //     static if (I < t.tupleof.length) {
+  // 	enum FLAGS = uvm_field_auto_get_flags!(t, I);
+  // 	alias EE = UVM_ELEMENT_TYPE!(typeof(t.tupleof[I]));
+  // 	static if (FLAGS != 0 &&
+  // 		   (isIntegral!EE || isBitVector!EE || isBoolean!EE ||
+  // 		    is (EE: uvm_object) || is (EE == string))) {
+  // 	  if (what == uvm_field_auto_enum.UVM_COMPARE ||
+  // 	      what == uvm_field_auto_enum.UVM_COPY) {
+  // 	    assert (rhs !is null);
+  // 	    _m_uvm_object_automation(t.tupleof[I], rhs.tupleof[I], what, str,
+  // 				     t.tupleof[I].stringof[2..$],
+  // 				     FLAGS);
+  // 	  }
+  // 	  else {
+  // 	    _m_uvm_object_automation(t.tupleof[I], typeof(t.tupleof[I]).init,
+  // 				     what, str, t.tupleof[I].stringof[2..$],
+  // 				     FLAGS);
+  // 	  }
+  // 	}
+  // 	_m_uvm_object_automation!(I+1)(t, rhs, what, str);
+  //     }
+  //   }
+
+  // static void _m_uvm_object_automation(int I, T)(T          t,
+  // 						 T          rhs,
+  // 						 int        what, 
+  // 						 string     str)
+  //      if (is (T == struct)) {
+  // 	 import uvm.base.uvm_object_globals;
+  // 	 import uvm.base.uvm_misc: UVM_ELEMENT_TYPE;
+  // 	 static if (I < t.tupleof.length) {
+  // 	   enum FLAGS = uvm_field_auto_get_flags!(t, I);
+  // 	   alias EE = UVM_ELEMENT_TYPE!(typeof(t.tupleof[I]));
+  // 	   static if (FLAGS != 0 &&
+  // 		      (isIntegral!EE || isBitVector!EE || isBoolean!EE ||
+  // 		       is (EE: uvm_object) || is (EE == string))) {
+  // 	     if (what == uvm_field_auto_enum.UVM_COMPARE ||
+  // 		 what == uvm_field_auto_enum.UVM_COPY) {
+  // 	       assert (rhs !is null);
+  // 	       _m_uvm_object_automation(t.tupleof[I], rhs.tupleof[I], what, str,
+  // 					t.tupleof[I].stringof[2..$],
+  // 					FLAGS);
+  // 	     }
+  // 	     else {
+  // 	       _m_uvm_object_automation(t.tupleof[I], typeof(t.tupleof[I]).init,
+  // 					what, str, t.tupleof[I].stringof[2..$],
+  // 					FLAGS);
+  // 	     }
+  // 	   }
+  // 	   _m_uvm_object_automation!(I+1)(t, rhs, what, str);
+  // 	 }
+  //      }
+  
 }
 
-template uvm_field_auto_get_flags(alias t, size_t I)
-{
-  enum int uvm_field_auto_get_flags =
-    uvm_field_auto_acc_flags!(__traits(getAttributes, t.tupleof[I]));
-}
-
-template uvm_field_auto_acc_flags(A...)
-{
-  import uvm.base.uvm_object_globals: uvm_recursion_policy_enum,
-    uvm_field_auto_enum, uvm_radix_enum;
-  static if (A.length is 0) {
-    enum int uvm_field_auto_acc_flags = 0;
-  }
-  else static if (is (typeof(A[0]) == uvm_recursion_policy_enum) ||
-		 is (typeof(A[0]) == uvm_field_auto_enum) ||
-		 is (typeof(A[0]) == uvm_radix_enum)) {
-      enum int uvm_field_auto_acc_flags = A[0] |
-	uvm_field_auto_acc_flags!(A[1..$]);
-    }
-    else {
-      enum int uvm_field_auto_acc_flags = uvm_field_auto_acc_flags!(A[1..$]);
-    }
-}

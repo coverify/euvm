@@ -1,12 +1,13 @@
 //
 //------------------------------------------------------------------------------
-// Copyright 2012-2019 Coverify Systems Technology
-// Copyright 2007-2011 Mentor Graphics Corporation
-// Copyright 2011 Synopsys, Inc.
-// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2012-2021 Coverify Systems Technology
 // Copyright 2011 AMD
-// Copyright 2013-2018 NVIDIA Corporation
+// Copyright 2007-2018 Cadence Design Systems, Inc.
 // Copyright 2014 Cisco Systems, Inc.
+// Copyright 2020 Marvell International Ltd.
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2013-2020 NVIDIA Corporation
+// Copyright 2011 Synopsys, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -54,7 +55,7 @@ import esdl.rand;
 
 import std.string: format;
 
-// @uvm-ieee 1800.2-2017 auto 10.1.1.1
+// @uvm-ieee 1800.2-2020 auto 10.1.1.1
 abstract class uvm_event_base: uvm_object
 {
   mixin (uvm_sync_string);
@@ -87,7 +88,7 @@ abstract class uvm_event_base: uvm_object
   //
   // Creates a new event object.
 
-  // @uvm-ieee 1800.2-2017 auto 10.1.1.2.1
+  // @uvm-ieee 1800.2-2020 auto 10.1.1.2.1
   this (string name="") {
     synchronized (this) {
       super(name);
@@ -112,7 +113,7 @@ abstract class uvm_event_base: uvm_object
   // Once an event has been triggered, it will be remain "on" until the event
   // is <reset>.
 
-  // @uvm-ieee 1800.2-2017 auto 10.1.1.2.2
+  // @uvm-ieee 1800.2-2020 auto 10.1.1.2.2
   // task
   void wait_on (bool delta=false) {
     if (delta) {
@@ -139,7 +140,7 @@ abstract class uvm_event_base: uvm_object
   // before returning. This prevents the caller from returning before
   // previously waiting processes have had a chance to resume.
 
-  // @uvm-ieee 1800.2-2017 auto 10.1.1.2.3
+  // @uvm-ieee 1800.2-2020 auto 10.1.1.2.3
   // task
   void wait_off (bool delta=false) {
     if (delta) {
@@ -165,7 +166,7 @@ abstract class uvm_event_base: uvm_object
   // occurs after the trigger, this method will not return until the next
   // trigger, which may never occur and thus cause deadlock.
 
-  // @uvm-ieee 1800.2-2017 auto 10.1.1.2.4
+  // @uvm-ieee 1800.2-2020 auto 10.1.1.2.4
   // task
   void wait_trigger () {
     synchronized (this) {
@@ -182,7 +183,7 @@ abstract class uvm_event_base: uvm_object
   // certain race conditions. If this method is called after the trigger but
   // within the same time-slice, the caller returns immediately.
 
-  // @uvm-ieee 1800.2-2017 auto 10.1.1.2.5
+  // @uvm-ieee 1800.2-2020 auto 10.1.1.2.5
   // task
   void wait_ptrigger () {
     synchronized (this) {
@@ -199,7 +200,7 @@ abstract class uvm_event_base: uvm_object
   // Gets the time that this event was last triggered. If the event has not been
   // triggered, or the event has been reset, then the trigger time will be 0.
 
-  // @uvm-ieee 1800.2-2017 auto 10.1.1.2.6
+  // @uvm-ieee 1800.2-2020 auto 10.1.1.2.6
   SimTime get_trigger_time () {
     synchronized (this) {
       return _trigger_time;
@@ -216,7 +217,7 @@ abstract class uvm_event_base: uvm_object
   //
   // A return of 1 indicates that the event has triggered.
 
-  // @uvm-ieee 1800.2-2017 auto 10.1.1.2.7
+  // @uvm-ieee 1800.2-2020 auto 10.1.1.2.7
   bool is_on () {
     synchronized (this) {
       return _on;
@@ -242,7 +243,7 @@ abstract class uvm_event_base: uvm_object
   //
   // No callbacks are called during a reset.
 
-  // @uvm-ieee 1800.2-2017 auto 10.1.1.2.8
+  // @uvm-ieee 1800.2-2020 auto 10.1.1.2.8
   void reset (bool wakeup = false) {
     synchronized (this) {
       if (wakeup) {
@@ -270,7 +271,7 @@ abstract class uvm_event_base: uvm_object
   // This is used if a process that is waiting on an event is disabled or
   // activated by some other means.
 
-  // @uvm-ieee 1800.2-2017 auto 10.1.1.2.9
+  // @uvm-ieee 1800.2-2020 auto 10.1.1.2.9
   void cancel () {
     synchronized (this) {
       if (_num_waiters > 0) {
@@ -283,7 +284,7 @@ abstract class uvm_event_base: uvm_object
   //
   // Returns the number of processes waiting on the event.
 
-  // @uvm-ieee 1800.2-2017 auto 10.1.1.2.10
+  // @uvm-ieee 1800.2-2020 auto 10.1.1.2.10
   int get_num_waiters () {
     synchronized (this) {
       return _num_waiters;
@@ -318,22 +319,20 @@ abstract class uvm_event_base: uvm_object
 } //endclass  -- NODOCS -- uvm_event
 
 
-//------------------------------------------------------------------------------
-//
-// CLASS -- NODOCS -- uvm_event#(T)
-//
-// The uvm_event class is an extension of the abstract uvm_event_base class.
-//
-// The optional parameter ~T~ allows the user to define a data type which
-// can be passed during an event trigger.
-//------------------------------------------------------------------------------
+// Class: uvm_event#(T)
+// This is an implementation of uvm_event#(T) as described in 1800.2 with
+// the addition of API described below.
 
-// @uvm-ieee 1800.2-2017 auto 10.1.2.1
-@rand(false)
-class uvm_event(T=uvm_object): uvm_event_base
+// @uvm-ieee 1800.2-2020 auto 10.1.2.1
+class uvm_event(T=uvm_object): uvm_event_base, rand.barrier
 {
   alias this_type = uvm_event!(T);
   alias cb_type = uvm_event_callback!(T);
+
+  // Type: cbs_type
+  // Callback typedef for this event type.
+  //
+  // @uvm-contrib Potential Contribution to 1800.2
   alias cbs_type = uvm_callbacks!(this_type, cb_type);
    
   // Not using `uvm_register_cb(this_type, cb_type)
@@ -366,7 +365,7 @@ class uvm_event(T=uvm_object): uvm_event_base
   //
   // Creates a new event object.
 
-  // @uvm-ieee 1800.2-2017 auto 10.1.2.2.1
+  // @uvm-ieee 1800.2-2020 auto 10.1.2.2.1
   this(string name="") {
     super(name);
   }
@@ -381,11 +380,22 @@ class uvm_event(T=uvm_object): uvm_event_base
     }
   }
 
+  // Function -- NODOCS -- reset
+  //
+  // Resets the event to its off state and clears trigger data to its default state.
+
+  override void reset (bool wakeup = false) {
+    synchronized (this) {
+      trigger_data = get_default_data();
+      super.reset(wakeup);
+    }
+  }
+
   // Task -- NODOCS -- wait_trigger_data
   //
   // This method calls <wait_trigger> followed by <get_trigger_data>.
 
-  // @uvm-ieee 1800.2-2017 auto 10.1.2.2.2
+  // @uvm-ieee 1800.2-2020 auto 10.1.2.2.2
   // task
   void wait_trigger_data (out T data) {
     wait_trigger();
@@ -398,7 +408,7 @@ class uvm_event(T=uvm_object): uvm_event_base
   //
   // This method calls <wait_ptrigger> followed by <get_trigger_data>.
 
-  // @uvm-ieee 1800.2-2017 auto 10.1.2.2.3
+  // @uvm-ieee 1800.2-2020 auto 10.1.2.2.3
   // task
   void wait_ptrigger_data (out T data) {
     wait_ptrigger();
@@ -419,7 +429,7 @@ class uvm_event(T=uvm_object): uvm_event_base
   // An optional ~data~ argument can be supplied with the enable to provide
   // trigger-specific information.
 
-  // @uvm-ieee 1800.2-2017 auto 10.1.2.2.4
+  // @uvm-ieee 1800.2-2020 auto 10.1.2.2.4
   void trigger(T data=null) {
     synchronized (this) {
       bool skip = false;
@@ -428,17 +438,17 @@ class uvm_event(T=uvm_object): uvm_event_base
 	skip = skip || cb.pre_trigger(this, data);
       }
       if (skip is false) {
-	m_event.notify();
-	foreach (cb; cb_q) {
-	  cb.post_trigger(this, data);
-	}
-	_num_waiters = 0;
 	if (_on !is true) {
 	  _on = true;
 	  _on_event.notify();
 	}
 	_trigger_time = getRootEntity().getSimTime();
 	_trigger_data = data;
+	m_event.notify();
+	foreach (cb; cb_q) {
+	  cb.post_trigger(this, data);
+	}
+	_num_waiters = 0;
       }
     }
   }
@@ -447,7 +457,7 @@ class uvm_event(T=uvm_object): uvm_event_base
   //
   // Gets the data, if any, provided by the last call to <trigger>.
 
-  // @uvm-ieee 1800.2-2017 auto 10.1.2.2.5
+  // @uvm-ieee 1800.2-2020 auto 10.1.2.2.5
   T get_trigger_data () {
     synchronized (this) {
       return _trigger_data;
@@ -456,14 +466,14 @@ class uvm_event(T=uvm_object): uvm_event_base
 
   // Function -- NODOCS -- default data
 
-  // @uvm-ieee 1800.2-2017 auto 10.1.2.2.6
+  // @uvm-ieee 1800.2-2020 auto 10.1.2.2.6
   T get_default_data() {
     synchronized (this) {
       return _default_data;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 10.1.2.2.6
+  // @uvm-ieee 1800.2-2020 auto 10.1.2.2.6
   void set_default_data(T data) {
     synchronized (this) {
       _default_data = data;

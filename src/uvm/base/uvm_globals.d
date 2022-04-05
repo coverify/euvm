@@ -1,13 +1,13 @@
 //
 //------------------------------------------------------------------------------
-// Copyright 2012-2019 Coverify Systems Technology
-// Copyright 2007-2014 Mentor Graphics Corporation
-// Copyright 2014 Intel Corporation
-// Copyright 2010-2014 Synopsys, Inc.
-// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2012-2021 Coverify Systems Technology
 // Copyright 2010-2012 AMD
-// Copyright 2013-2018 NVIDIA Corporation
+// Copyright 2007-2018 Cadence Design Systems, Inc.
 // Copyright 2017 Cisco Systems, Inc.
+// Copyright 2014 Intel Corporation
+// Copyright 2007-2014 Mentor Graphics Corporation
+// Copyright 2013-2020 NVIDIA Corporation
+// Copyright 2010-2014 Synopsys, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -65,6 +65,9 @@ interface uvm_report_intf
   bool uvm_report_enabled(int verbosity, uvm_severity severity=uvm_severity.UVM_INFO,
 			  string id="");
   void uvm_process_report_message(uvm_report_message msg);
+  void uvm_report_trace(string id, lazy string message, int verbosity, string filename,
+			size_t line, string context_name = "",
+			bool report_enabled_checked = false);
   void uvm_report_info(string id, lazy string message, int verbosity, string filename,
 		       size_t line, string context_name = "",
 		       bool report_enabled_checked = false);
@@ -88,6 +91,35 @@ interface uvm_report_intf
     }
   }
   
+  // MACRO: `uvm_trace
+  //
+  //| `uvm_trace(ID,MSG,VERBOSITY)
+  //
+  // Calls uvm_report_trace if ~VERBOSITY~ is lower than the configured verbosity of
+  // the associated reporter. ~ID~ is given as the message tag and ~MSG~ is given as
+  // the message text. The file and line are also sent to the uvm_report_trace call.
+  //
+
+  void uvm_trace(string file=__FILE__, size_t line=__LINE__)
+    (string id, lazy string message, uvm_verbosity verbosity) {
+    if (uvm_report_enabled(verbosity, uvm_severity.UVM_TRACE, id))
+      uvm_report_trace(id, message, verbosity, file, line);
+  }
+
+  void uvm_trace(string file=__FILE__, size_t line=__LINE__, MF...)
+    (string id, lazy string message, uvm_verbosity verbosity, MF mf)
+    if (MF.length > 0 && is (MF[0]: uvm_report_message_element_base)) {
+      uvm_report_message rm;
+      uvm_message(uvm_severity.UVM_TRACE, id, message, verbosity, file, line, rm, mf);
+    }
+
+  void uvm_trace(string file=__FILE__, size_t line=__LINE__, MF...)
+    (string id, lazy string message, uvm_verbosity verbosity,
+     ref uvm_report_message rm, MF mf)
+    if (MF.length == 0 || is (MF[0]: uvm_report_message_element_base)) {
+      uvm_message(uvm_severity.UVM_TRACE, id, message, verbosity, file, line, rm, mf);
+    }
+
   // MACRO: `uvm_info
   //
   //| `uvm_info(ID,MSG,VERBOSITY)
@@ -224,6 +256,35 @@ void uvm_message(MF...)(uvm_severity severity, string id, lazy string message,
   }
 }
   
+// MACRO: `uvm_trace
+//
+//| `uvm_trace(ID,MSG,VERBOSITY)
+//
+// Calls uvm_report_trace if ~VERBOSITY~ is lower than the configured verbosity of
+// the associated reporter. ~ID~ is given as the message tag and ~MSG~ is given as
+// the message text. The file and line are also sent to the uvm_report_trace call.
+//
+
+void uvm_trace(string file=__FILE__, size_t line=__LINE__)
+  (string id, lazy string message, uvm_verbosity verbosity) {
+  if (uvm_report_enabled(verbosity, uvm_severity.UVM_TRACE, id))
+    uvm_report_trace(id, message, verbosity, file, line);
+}
+
+void uvm_trace(string file=__FILE__, size_t line=__LINE__, MF...)
+  (string id, lazy string message, uvm_verbosity verbosity, MF mf)
+  if (MF.length > 0 && is (MF[0]: uvm_report_message_element_base)) {
+    uvm_report_message rm;
+    uvm_message(uvm_severity.UVM_TRACE, id, message, verbosity, file, line, rm, mf);
+  }
+
+void uvm_trace(string file=__FILE__, size_t line=__LINE__, MF...)
+  (string id, lazy string message, uvm_verbosity verbosity,
+   ref uvm_report_message rm, MF mf)
+  if (MF.length == 0 || is (MF[0]: uvm_report_message_element_base)) {
+    uvm_message(uvm_severity.UVM_TRACE, id, message, verbosity, file, line, rm, mf);
+  }
+
 // MACRO: `uvm_info
 //
 //| `uvm_info(ID,MSG,VERBOSITY)
@@ -355,6 +416,38 @@ static void uvm_message_context(MF...)(uvm_severity severity, string id,
     ro.uvm_process_report_message(rm);
   }
 }
+
+// MACRO: `uvm_trace_context
+//
+//| `uvm_trace_context(ID,MSG,VERBOSITY,CNTXT)
+//
+// Operates identically to `uvm_trace but requires that the
+// context, or <uvm_report_object>, in which the message is printed be
+// explicitly supplied as a macro argument.
+
+static void uvm_trace_context(string file=__FILE__, size_t line=__LINE__)
+  (string id, lazy string message, uvm_verbosity verbosity, uvm_report_object ro) {
+  if (ro.uvm_report_enabled(verbosity, uvm_severity.UVM_TRACE, id)) {
+    ro.uvm_report_trace(id, message, verbosity, file, line);
+  }
+}
+
+static void uvm_trace_context(string file=__FILE__, size_t line=__LINE__, MF...)
+  (string id, lazy string message, uvm_verbosity verbosity,
+   uvm_report_object ro, MF mf)
+  if (MF.length > 0 && is (MF[0]: uvm_report_message_element_base)) {
+    uvm_report_message rm;
+    uvm_message_context(uvm_severity.UVM_TRACE, id, message, verbosity,
+			file, line, ro, rm, mf);
+  }
+
+static void uvm_trace_context(string file=__FILE__, size_t line=__LINE__, MF...)
+  (string id, lazy string message, uvm_verbosity verbosity,
+   uvm_report_object ro, ref uvm_report_message rm, MF mf)
+  if (MF.length == 0 || is (MF[0]: uvm_report_message_element_base)) {
+    uvm_message_context(uvm_severity.UVM_TRACE, id, message, verbosity,
+			file, line, ro, rm, mf);
+  }
 
 // MACRO: `uvm_info_context
 //
@@ -494,7 +587,7 @@ static void uvm_fatal_context(string file=__FILE__, size_t line=__LINE__, MF...)
 // Convenience function for uvm_top.run_test(). See <uvm_root> for more
 // information.
 
-// @uvm-ieee 1800.2-2017 auto F.3.1.2
+// @uvm-ieee 1800.2-2020 auto F.3.1.2
 void run_test (string test_name = "") {
   import uvm.base.uvm_coreservice;
   import uvm.base.uvm_root;
@@ -512,7 +605,7 @@ void run_test (string test_name = "") {
 
 
 
-// @uvm-ieee 1800.2-2017 auto F.3.2.1
+// @uvm-ieee 1800.2-2020 auto F.3.2.1
 uvm_report_object uvm_get_report_object() {
   import uvm.base.uvm_coreservice;
   import uvm.base.uvm_root;
@@ -534,7 +627,7 @@ uvm_report_object uvm_get_report_object() {
 // the <uvm_report_object::uvm_report_enabled>, which is non-static.
 // Static methods cannot call non-static methods of the same class.
 
-// @uvm-ieee 1800.2-2017 auto F.3.2.2
+// @uvm-ieee 1800.2-2020 auto F.3.2.2
 int uvm_report_enabled (int verbosity,
 			uvm_severity severity = uvm_severity.UVM_INFO,
 			string id = "") {
@@ -558,7 +651,7 @@ void uvm_report_debug(string file=__FILE__,
 
 // Function -- NODOCS -- uvm_report
 
-// @uvm-ieee 1800.2-2017 auto F.3.2.3
+// @uvm-ieee 1800.2-2020 auto F.3.2.3
 void uvm_report(uvm_severity severity,
 		string id,
 		lazy string message,
@@ -581,9 +674,37 @@ void uvm_report(uvm_severity severity,
 		 context_name, report_enabled_checked);
 }
 
+// Function -- NODOCS -- uvm_report_trace
+
+// @uvm-ieee 1800.2-2020 auto F.3.2.3
+void uvm_report_trace(string file=__FILE__,
+		      size_t line=__LINE__)(string id,
+					    lazy string message,
+					    int verbosity=uvm_verbosity.UVM_MEDIUM,
+					    string context_name = "",
+					    bool report_enabled_checked = false) {
+  uvm_report_trace(id, message, verbosity, file, line,
+		   context_name, report_enabled_checked);
+}
+
+void uvm_report_trace(string id,
+		      lazy string message,
+		      int verbosity = uvm_verbosity.UVM_MEDIUM,
+		      string filename = "",
+		      size_t line = 0,
+		      string context_name = "",
+		      bool report_enabled_checked = false) {
+  import uvm.base.uvm_coreservice;
+  import uvm.base.uvm_root;
+  uvm_coreservice_t cs = uvm_coreservice_t.get();
+  uvm_root top = cs.get_root();
+  top.uvm_report_trace(id, message, verbosity, filename, line,
+		       context_name, report_enabled_checked);
+}
+
 // Function -- NODOCS -- uvm_report_info
 
-// @uvm-ieee 1800.2-2017 auto F.3.2.3
+// @uvm-ieee 1800.2-2020 auto F.3.2.3
 void uvm_report_info(string file=__FILE__,
 		     size_t line=__LINE__)(string id,
 					   lazy string message,
@@ -611,7 +732,7 @@ void uvm_report_info(string id,
 
 // Function -- NODOCS -- uvm_report_warning
 
-// @uvm-ieee 1800.2-2017 auto F.3.2.3
+// @uvm-ieee 1800.2-2020 auto F.3.2.3
 void uvm_report_warning(string file=__FILE__,
 			size_t line=__LINE__)(string id,
 					      lazy string message,
@@ -639,7 +760,7 @@ void uvm_report_warning(string id,
 
 // Function -- NODOCS -- uvm_report_error
 
-// @uvm-ieee 1800.2-2017 auto F.3.2.3
+// @uvm-ieee 1800.2-2020 auto F.3.2.3
 void uvm_report_error(string file=__FILE__,
 		      size_t line=__LINE__)(string id,
 					    lazy string message,
@@ -676,7 +797,7 @@ void uvm_report_error(string id,
 // do not inadvertently filter them out. It remains in the methods for backward
 // compatibility.
 
-// @uvm-ieee 1800.2-2017 auto F.3.2.3
+// @uvm-ieee 1800.2-2020 auto F.3.2.3
 void uvm_report_fatal(string file=__FILE__,
 		      size_t line=__LINE__)(string id,
 					    lazy string message,
@@ -709,7 +830,7 @@ void uvm_report_fatal(string id,
 // used in module-based code to use the same reporting mechanism as class-based
 // components. See <uvm_report_object> for details on the reporting mechanism.
 
-// @uvm-ieee 1800.2-2017 auto F.3.2.3
+// @uvm-ieee 1800.2-2020 auto F.3.2.3
 void uvm_process_report_message(uvm_report_message report_message) {
   import uvm.base.uvm_coreservice;
   import uvm.base.uvm_root;
@@ -734,7 +855,7 @@ bool uvm_string_to_severity (string sev_str, out uvm_severity sev) {
 
 bool uvm_string_to_action (string action_str, out uvm_action action) {
   string[] actions;
-  uvm_split_string(action_str,'|',actions);
+  uvm_string_split(action_str,'|',actions);
   bool retval = true;
   // action = 0; // taken care since action is of type "out"
   foreach (a; actions[]) {
@@ -753,6 +874,23 @@ bool uvm_string_to_action (string action_str, out uvm_action action) {
   return retval;
 }
 
+bool uvm_string_to_verbosity(string verb_str, out uvm_verbosity verb_enum) {
+  switch (verb_str) {
+  case "NONE"       : verb_enum = uvm_verbosity.UVM_NONE;   return true;
+  case "UVM_NONE"   : verb_enum = uvm_verbosity.UVM_NONE;   return true;
+  case "LOW"        : verb_enum = uvm_verbosity.UVM_LOW;    return true;
+  case "UVM_LOW"    : verb_enum = uvm_verbosity.UVM_LOW;    return true;
+  case "MEDIUM"     : verb_enum = uvm_verbosity.UVM_MEDIUM; return true;
+  case "UVM_MEDIUM" : verb_enum = uvm_verbosity.UVM_MEDIUM; return true;
+  case "HIGH"       : verb_enum = uvm_verbosity.UVM_HIGH;   return true;
+  case "UVM_HIGH"   : verb_enum = uvm_verbosity.UVM_HIGH;   return true;
+  case "FULL"       : verb_enum = uvm_verbosity.UVM_FULL;   return true;
+  case "UVM_FULL"   : verb_enum = uvm_verbosity.UVM_FULL;   return true;
+  case "DEBUG"      : verb_enum = uvm_verbosity.UVM_DEBUG;  return true;
+  case "UVM_DEBUG"  : verb_enum = uvm_verbosity.UVM_DEBUG;  return true;
+  default           :                                       return false;
+  }
+}
 
 //----------------------------------------------------------------------------
 //
@@ -762,7 +900,7 @@ bool uvm_string_to_action (string action_str, out uvm_action action) {
 // what is documented in IEEE 1800.2.
 //----------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto F.3.3.1
+// @uvm-ieee 1800.2-2020 auto F.3.3.1
 bool uvm_is_match (string expr, string str) {
   auto s = uvm_glob_to_re(expr);
   return uvm_re_match(s, str);
@@ -794,14 +932,14 @@ bstr uvm_string_to_bits(string str) {
   return uvm_string_to_bits_;
 }
 
-// @uvm-ieee 1800.2-2017 auto F.3.1.1
+// @uvm-ieee 1800.2-2020 auto F.3.1.1
 uvm_core_state get_core_state() {
   return m_uvm_core_state;
 }
 
 // Function: uvm_init
 // Implementation of uvm_init, as defined in section
-// F.3.1.3 in 1800.2-2017.
+// F.3.1.3 in 1800.2-2020.
 //
 // *Note:* The LRM states that subsequent calls to <uvm_init> after
 // the first are silently ignored, however there are scenarios wherein
@@ -819,7 +957,7 @@ uvm_core_state get_core_state() {
 //
 // @uvm-contrib This API represents a potential contribution to IEEE 1800.2
   
-// @uvm-ieee 1800.2-2017 auto F.3.1.3
+// @uvm-ieee 1800.2-2020 auto F.3.1.3
 void uvm_init() {
   uvm_root top = uvm_root.get();
   // These next calls were moved to uvm_init from uvm_root,
@@ -861,6 +999,16 @@ string uvm_bits_to_string(bstr str) {
 // @uvm-accellera The details of this API are specific to the Accellera implementation, and are not being considered for contribution to 1800.2
 //----------------------------------------------------------------------------
 
+// eUVM does not used uvm_wait_for_nba_region -- it instead defines
+// method wait_for_nba_region in uvm_phase class and uses that. This
+// is done for the following reasons:
+// 1. This function is used in uvm_phase class only
+// 2. The function instantiates a Signal, which can be made an element
+// of the uvm_phase class, thus doing away with creating the Signal
+// object every time the function is called. Note that in SV global
+// functions have static scoping by default
+
+
 enum size_t UVM_POUND_ZERO_COUNT=1;
 void uvm_wait_for_nba_region() {
   version (UVM_NO_WAIT_FOR_NBA) {
@@ -873,8 +1021,10 @@ void uvm_wait_for_nba_region() {
     import esdl.base.core: Signal, wait;
 
     // These are not declared static in the SV version
-    Signal!int nba;
-    int next_nba;
+    static Signal!int nba;
+    static int next_nba;
+
+    // if (nba is null) nba = new Signal!int;
 
     //If `included directly in a program block, can't use a non-blocking assign,
     //but it isn't needed since program blocks are in a separate region.
@@ -887,42 +1037,46 @@ void uvm_wait_for_nba_region() {
 
 //----------------------------------------------------------------------------
 //
-// Function -- NODOCS -- uvm_split_string
+// Function -- NODOCS -- uvm_string_split
 //
 // Returns a queue of strings, ~values~, that is the result of the ~str~ split
 // based on the ~sep~.  For example:
 //
-//| uvm_split_string("1,on,false", ",", splits);
+//| uvm_string_split("1,on,false", ",", splits);
 //
 // Results in the 'splits' queue containing the three elements: 1, on and
 // false.
 //----------------------------------------------------------------------------
 
-void uvm_split_string (string str, char sep, out string[] values) {
+void uvm_string_split (string str, char sep, out string[] values) {
   int s = 0;
   int e = 0;
-  // values.length = 0; // this is taken care of since values is "out"
-  while (e < str.length) {
-    for (s = e; e < str.length; ++e)
-      if (str[e] == sep) break;
-    if (s !is e)
+
+  size_t limit = str.length + 1;
+  
+  do {
+      for (s=e; e < str.length; ++e)
+        if (str[e] == sep) break;
       values ~= str[s..e];
-    e += 1;
+      e += 1;
   }
+  while(e < limit);
 }
 
-string[] uvm_split_string (string str, char sep) {
+string[] uvm_string_split (string str, char sep) {
   string[] values;
   int s = 0;
   int e = 0;
-  // values.length = 0; // this is taken care of since values is "out"
-  while (e < str.length) {
-    for (s = e; e < str.length; ++e)
-      if (str[e] is sep) break;
-    if (s !is e)
+
+  size_t limit = str.length + 1;
+  
+  do {
+      for (s=e; e < str.length; ++e)
+        if (str[e] == sep) break;
       values ~= str[s..e];
-    e += 1;
+      e += 1;
   }
+  while(e < limit);
   return values;
 }
 
@@ -937,14 +1091,14 @@ string[] uvm_split_string (string str, char sep) {
 
 // No synchronized blocks required since all data is thread local
 // all functions are static
-// @uvm-ieee 1800.2-2017 auto F.3.4.1
+// @uvm-ieee 1800.2-2020 auto F.3.4.1
 struct uvm_enum_wrapper(T) if (is (T == enum))
 {
   alias this_type = uvm_enum_wrapper!T;
 
   private static T[string] _map;
 
-  // @uvm-ieee 1800.2-2017 auto F.3.4.2
+  // @uvm-ieee 1800.2-2020 auto F.3.4.2
   static bool from_name(string name, ref T value) {
     if (_map.length == 0)
 	m_init_map();

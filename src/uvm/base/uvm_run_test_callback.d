@@ -1,8 +1,8 @@
 //
 //----------------------------------------------------------------------
-// Copyright 2019 Coverify Sysmtems Technology
+// Copyright 2019-2021 Coverify Sysmtems Technology
 // Copyright 2018 Cadence Design Systems, Inc.
-// Copyright 2018 NVIDIA Corporation
+// Copyright 2018-2020 NVIDIA Corporation
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -28,7 +28,7 @@ import uvm.base.uvm_callback;
 import std.algorithm.searching: canFind;
 import std.algorithm.mutation: removeItem = remove;
 
-// @uvm-ieee 1800.2-2017 auto F.6.1
+// @uvm-ieee 1800.2-2020 auto F.6.1
 abstract class uvm_run_test_callback: uvm_callback
 {
 
@@ -40,22 +40,22 @@ abstract class uvm_run_test_callback: uvm_callback
 
   mixin (uvm_scope_sync_string);
   
-  // @uvm-ieee 1800.2-2017 auto F.6.2.1
-  // @uvm-ieee 1800.2-2017 auto F.7.1.1
+  // @uvm-ieee 1800.2-2020 auto F.6.2.1
+  // @uvm-ieee 1800.2-2020 auto F.7.1.1
   this( string name="uvm_run_test_callback") {
     super(name);
   }
 
-  // @uvm-ieee 1800.2-2017 auto F.6.2.2
+  // @uvm-ieee 1800.2-2020 auto F.6.2.2
   void pre_run_test() {}
 
-  // @uvm-ieee 1800.2-2017 auto F.6.2.3
+  // @uvm-ieee 1800.2-2020 auto F.6.2.3
   void post_run_test() {}
 
-  // @uvm-ieee 1800.2-2017 auto F.6.2.4
+  // @uvm-ieee 1800.2-2020 auto F.6.2.4
   void pre_abort() {}
 
-  // @uvm-ieee 1800.2-2017 auto F.6.2.5
+  // @uvm-ieee 1800.2-2020 auto F.6.2.5
   static bool add(uvm_run_test_callback cb) {
     synchronized (_uvm_scope_inst) {
       if (cb is null || canFind(_uvm_scope_inst._m_registered_cbs, cb))
@@ -65,7 +65,7 @@ abstract class uvm_run_test_callback: uvm_callback
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto F.6.2.6
+  // @uvm-ieee 1800.2-2020 auto F.6.2.6
   static bool remove(uvm_run_test_callback cb) { // delete is a keyword
     synchronized (_uvm_scope_inst) {
       if (cb !is null && canFind(_uvm_scope_inst._m_registered_cbs, cb)) {

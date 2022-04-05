@@ -1,12 +1,12 @@
 //
 //------------------------------------------------------------------------------
-// Copyright 2014-2019 Coverify Systems Technology
-// Copyright 2007-2011 Mentor Graphics Corporation
-// Copyright 2017 Intel Corporation
-// Copyright 2010 Synopsys, Inc.
-// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2014-2021 Coverify Systems Technology
 // Copyright 2010 AMD
-// Copyright 2015-2018 NVIDIA Corporation
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2017 Intel Corporation
+// Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2015-2020 NVIDIA Corporation
+// Copyright 2010 Synopsys, Inc.
 //   All Rights Reserved Worldwide
 //
 //   Licensed under the Apache License, Version 2.0 (the
@@ -49,7 +49,7 @@ import std.conv;
 import std.string: format;
 
 
-// @uvm-ieee 1800.2-2017 auto 11.3.1
+// @uvm-ieee 1800.2-2020 auto 11.3.1
 class uvm_queue (T=int): uvm_object
 {
   // enum string type_name = "uvm_queue";
@@ -79,7 +79,7 @@ class uvm_queue (T=int): uvm_object
   //
   // Creates a new queue with the given ~name~.
 
-  // @uvm-ieee 1800.2-2017 auto 11.3.2.1
+  // @uvm-ieee 1800.2-2020 auto 11.3.2.1
   this (string name = "") {
     synchronized (this) {
       super(name);
@@ -121,7 +121,7 @@ class uvm_queue (T=int): uvm_object
   //
   // Returns the specified item instance from the global item queue.
 
-  // @uvm-ieee 1800.2-2017 auto 11.3.2.3
+  // @uvm-ieee 1800.2-2020 auto 11.3.2.3
   static T get_global (ptrdiff_t index) {
     return m_global_queue.get(index);
   }
@@ -235,7 +235,7 @@ class uvm_queue (T=int): uvm_object
   // If no item exists by that key, a new item is created with that key
   // and returned.
 
-  // @uvm-ieee 1800.2-2017 auto 11.3.2.4
+  // @uvm-ieee 1800.2-2020 auto 11.3.2.4
   T get (ptrdiff_t index) {
     import uvm.base.uvm_globals;
     synchronized (this) {
@@ -256,7 +256,7 @@ class uvm_queue (T=int): uvm_object
   //
   // Returns the number of items stored in the queue.
 
-  // @uvm-ieee 1800.2-2017 auto 11.3.2.5
+  // @uvm-ieee 1800.2-2020 auto 11.3.2.5
   size_t length () const {
     synchronized (this) {
       return _queue.length();
@@ -268,7 +268,7 @@ class uvm_queue (T=int): uvm_object
   //
   // Inserts the item at the given ~index~ in the queue.
 
-  // @uvm-ieee 1800.2-2017 auto 11.3.2.5
+  // @uvm-ieee 1800.2-2020 auto 11.3.2.5
   void insert (ptrdiff_t index, T item) {
     import uvm.base.uvm_globals;
     synchronized (this) {
@@ -293,7 +293,7 @@ class uvm_queue (T=int): uvm_object
   // it is named delete in systemverilog version -- but D reserves
   // delete as a keyword
 
-  // @uvm-ieee 1800.2-2017 auto 11.3.2.7
+  // @uvm-ieee 1800.2-2020 auto 11.3.2.7
   void remove (ptrdiff_t index=-1) {
     import uvm.base.uvm_globals;
     synchronized (this) {
@@ -322,7 +322,7 @@ class uvm_queue (T=int): uvm_object
   // Returns the first element in the queue (index=0),
   // or ~null~ if the queue is empty.
 
-  // @uvm-ieee 1800.2-2017 auto 11.3.2.8
+  // @uvm-ieee 1800.2-2020 auto 11.3.2.8
   T pop_front() {
     synchronized (this) {
       auto ret = _queue.front();
@@ -337,7 +337,7 @@ class uvm_queue (T=int): uvm_object
   // Returns the first element in the queue (index=0),
   // or ~null~ if the queue is empty.
 
-  // @uvm-ieee 1800.2-2017 auto 11.3.2.9
+  // @uvm-ieee 1800.2-2020 auto 11.3.2.9
   void pop_front(ref T t) {
     synchronized (this) {
       t = _queue.front();
@@ -352,7 +352,7 @@ class uvm_queue (T=int): uvm_object
   // Returns the last element in the queue (index=size()-1),
   // or ~null~ if the queue is empty.
 
-  // @uvm-ieee 1800.2-2017 auto 11.3.2.9
+  // @uvm-ieee 1800.2-2020 auto 11.3.2.9
   T pop_back() {
     synchronized (this) {
       auto ret = _queue.back();
@@ -368,7 +368,7 @@ class uvm_queue (T=int): uvm_object
   // Returns the last element in the queue (index=size()-1),
   // or ~null~ if the queue is empty.
 
-  // @uvm-ieee 1800.2-2017 auto 11.3.2.9
+  // @uvm-ieee 1800.2-2020 auto 11.3.2.9
   void pop_back(ref T t) {
     synchronized (this) {
       t = _queue.back();
@@ -382,7 +382,7 @@ class uvm_queue (T=int): uvm_object
   //
   // Inserts the given ~item~ at the front of the queue.
 
-  // @uvm-ieee 1800.2-2017 auto 11.3.2.10
+  // @uvm-ieee 1800.2-2020 auto 11.3.2.10
   void push_front(T item) {
     synchronized (this) {
       _queue.pushFront(item);
@@ -394,7 +394,7 @@ class uvm_queue (T=int): uvm_object
   //
   // Inserts the given ~item~ at the back of the queue.
 
-  // @uvm-ieee 1800.2-2017 auto 11.3.2.11
+  // @uvm-ieee 1800.2-2020 auto 11.3.2.11
   void push_back(T item) {
     synchronized (this) {
       _queue.pushBack(item);
@@ -427,7 +427,7 @@ class uvm_queue (T=int): uvm_object
   //
   // Blocks until not empty
 
-  // @uvm-ieee 1800.2-2017 auto 11.3.2.12
+  // @uvm-ieee 1800.2-2020 auto 11.3.2.12
   // virtual task
   void wait_until_not_empty() {
     while (_queue.length > 0) {

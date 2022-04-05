@@ -1,14 +1,14 @@
 //
 //------------------------------------------------------------------------------
-// Copyright 2012-2019 Coverify Systems Technology
+// Copyright 2012-2021 Coverify Systems Technology
+// Copyright 2010-2012 AMD
+// Copyright 2012 Accellera Systems Initiative
+// Copyright 2007-2018 Cadence Design Systems, Inc.
+// Copyright 2012-2018 Cisco Systems, Inc.
 // Copyright 2007-2011 Mentor Graphics Corporation
+// Copyright 2012-2020 NVIDIA Corporation
 // Copyright 2014 Semifore
 // Copyright 2010-2018 Synopsys, Inc.
-// Copyright 2007-2018 Cadence Design Systems, Inc.
-// Copyright 2010-2012 AMD
-// Copyright 2012-2018 NVIDIA Corporation
-// Copyright 2012-2018 Cisco Systems, Inc.
-// Copyright 2012 Accellera Systems Initiative
 // Copyright 2017 Verific
 //   All Rights Reserved Worldwide
 //
@@ -79,13 +79,16 @@ import uvm.base.uvm_report_handler: uvm_report_handler;
 import uvm.base.uvm_entity: uvm_entity_base;
 import uvm.base.uvm_printer: uvm_printer;
 import uvm.base.uvm_object_globals: UVM_FILE, m_uvm_core_state,
-  uvm_core_state;
+  uvm_core_state, uvm_verbosity;
 import uvm.base.uvm_objection: uvm_objection;
 import uvm.base.uvm_phase: uvm_phase;
 import uvm.base.uvm_run_test_callback: uvm_run_test_callback;
 import uvm.base.uvm_global_defines;
 import uvm.base.uvm_object_defines;
 import uvm.base.uvm_version;
+import uvm.base.uvm_cmdline_report: uvm_cmdline_set_verbosity,
+  uvm_cmdline_set_action, uvm_cmdline_set_severity,
+  uvm_cmdline_verbosity;
 
 import uvm.meta.misc;
 import uvm.meta.meta;
@@ -93,11 +96,12 @@ import uvm.meta.meta;
 import esdl.base.core;
 import esdl.data.queue;
 
-import esdl.rand.misc: _esdl__Norand;
+import esdl.rand.misc: rand;
 
 import std.conv;
-import std.format;
-import std.string: format;
+import std.format: format, formattedRead;
+import std.algorithm: sort;
+import std.array: join;
 
 import core.sync.semaphore: Semaphore;
 
@@ -128,10 +132,9 @@ interface uvm_root_intf
 //| class uvm_root extends uvm_component
 //
 // Implementation of the uvm_root class, as defined
-// in 1800.2-2017 Section F.7
+// in 1800.2-2020 Section F.7
 
-//@uvm-ieee 1800.2-2017 manual F.7
-class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
+class uvm_root: uvm_component, uvm_root_intf, rand.disable
 {
   // adding the mixin here results in gotchas if the user does not add
   // the mixin in the derived classes
@@ -186,6 +189,9 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
 
       // _m_domain is declared in uvm_component
       m_domain = uvm_domain.get_uvm_domain();
+
+      m_do_cl_init();
+      m_set_cl_msg_args();
     }
   }
   
@@ -418,6 +424,8 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
 
     uvm_run_test_callback.m_do_post_run_test();
 
+    m_do_cmdline_checks();
+  
     l_rs.report_summarize();
 
     m_uvm_core_state = uvm_core_state.UVM_CORE_FINISHED;
@@ -450,21 +458,28 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
 
   void die() {
     import uvm.base.uvm_report_server;
+
+          // Only die once...
+    if (m_uvm_core_state.inside(uvm_core_state.UVM_CORE_PRE_ABORT,
+				uvm_core_state.UVM_CORE_ABORTED))
+      return;
+          
     uvm_report_server l_rs = uvm_report_server.get_server();
     // do the pre_abort callbacks
-    
-
+          
     m_uvm_core_state = uvm_core_state.UVM_CORE_PRE_ABORT;
-
-
+          
+          
     m_do_pre_abort();
-
+          
     uvm_run_test_callback.m_do_pre_abort();
-
+          
+    m_do_cmdline_checks();
+          
     l_rs.report_summarize();
-
-    m_uvm_core_state = uvm_core_state.UVM_CORE_ABORTED;
-    
+          
+    m_uvm_core_state=uvm_core_state.UVM_CORE_ABORTED;
+          
     this.finalize();
 
     unlockStage();
@@ -739,8 +754,6 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
 
     super.build_phase(phase);
 
-    m_set_cl_msg_args();
-
     m_do_verbosity_settings();
     m_do_timeout_settings();
     m_do_factory_settings();
@@ -755,7 +768,23 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
   // }
 
   override ParContext _esdl__parInheritFrom() {
-    return Process.self().getParentEntity();
+    return EntityIntf.getContextEntity();
+  }
+
+  private void m_do_cl_init() {
+    uvm_cmdline_set_verbosity.initialize(this);
+    foreach (setting; uvm_cmdline_set_verbosity.settings) {
+      if (setting.phase == "time" &&
+	  setting.offset != 0) {
+	synchronized(this) {
+	  _m_time_settings ~= setting;
+	}
+      }
+    }
+
+    uvm_cmdline_set_action.initialize(this);
+
+    uvm_cmdline_set_severity.initialize(this);
   }
 
   void m_do_verbosity_settings() {
@@ -765,29 +794,63 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
     string[] set_verbosity_settings;
     string[] split_vals;
 
-    // Retrieve them all into set_verbosity_settings
-    clp.get_arg_values("+uvm_set_verbosity=", set_verbosity_settings);
-
-    foreach (i, setting; set_verbosity_settings) {
-      uvm_split_string(setting, ',', split_vals);
-      if (split_vals.length < 4 || split_vals.length > 5) {
-	uvm_report_warning("INVLCMDARGS",
-			   format("Invalid number of arguments found on " ~
-				  "the command line for setting " ~
-				  "'+uvm_set_verbosity=%s'.  Setting ignored.",
-				  setting), uvm_verbosity.UVM_NONE); // , "", "");
-      }
-      uvm_verbosity tmp_verb;
-      // Invalid verbosity
-      if (!clp.m_convert_verb(split_vals[2], tmp_verb)) {
-	uvm_report_warning("INVLCMDVERB",
-			   format("Invalid verbosity found on the command " ~
-				  "line for setting '%s'.",
-				  setting), uvm_verbosity.UVM_NONE); // , "", "");
-      }
-    }
+    // do time based command line verbosity settings
+    fork ({
+	SimTime last_time = SimTime(0);
+	synchronized (this) {
+	  if (_m_time_settings.length > 0) {
+	    uvm_cmdline_verbosity[] _m_time_settings;
+	    int[] test;
+	    sort// !((uvm_cmdline_set_verbosity a,
+				 //    uvm_cmdline_set_verbosity b)
+				 //   {return a.offset < b.offset;})
+	      (_m_time_settings);
+	  }
+	}
+	foreach (setting; m_time_settings) {
+	  uvm_component[] comps;
+	  find_all(setting.comp, comps);
+	  wait (setting.offset - last_time);
+	  last_time = setting.offset;
+	  if (setting.id == "_ALL_") {
+	    foreach (comp; comps) {
+	      setting.used[comp] = true;
+	      comp.set_report_verbosity_level(setting.verbosity);
+	    }
+	  }
+	  else {
+	    foreach (comp; comps) {
+	      setting.used[comp] = true;
+	      comp.set_report_id_verbosity(setting.id, setting.verbosity);
+	    }
+	  }
+	}
+      });
   }
 
+  private void m_do_cmdline_checks() {
+    string[] dump_args;
+
+    uvm_cmdline_set_verbosity.check(this);
+  
+    if (clp.get_arg_matches(`+UVM_DUMP_REPORT_ARGS`, dump_args)) {
+      string[] msgs;
+
+      version(UVM_CMDLINE_NO_DPI) {
+	msgs ~= "\n!!! UVM_CMDLINE_NO_DPI IS DEFINED !!!";
+      }
+
+      msgs ~= uvm_cmdline_verbosity.dump();
+      msgs ~= uvm_cmdline_set_verbosity.dump();
+      msgs ~= uvm_cmdline_set_action.dump();
+      msgs ~= uvm_cmdline_set_severity.dump();
+     
+      uvm_report_info("REPORTARGS", 
+		      format("\n--- UVM Reporting Argument Summary ---\n%s\n", 
+			     msgs.join()),
+		      uvm_verbosity.UVM_NONE);
+    }
+  }
 
 
   void m_do_timeout_settings() {
@@ -839,12 +902,12 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
   void m_do_factory_settings() {
     string[] args;
 
-    clp.get_arg_matches("/^\\+(UVM_SET_INST_OVERRIDE|uvm_set_inst_override)=/",
+    clp.get_arg_matches(`/^\+(UVM_SET_INST_OVERRIDE|uvm_set_inst_override)=/`,
 			args);
     foreach (i, arg; args) {
       m_process_inst_override(arg[23..$]);
     }
-    clp.get_arg_matches("/^\\+(UVM_SET_TYPE_OVERRIDE|uvm_set_type_override)=/",
+    clp.get_arg_matches(`/^\+(UVM_SET_TYPE_OVERRIDE|uvm_set_type_override)=/`,
 			args);
     foreach (i, arg; args) {
       m_process_type_override(arg[23..$]);
@@ -862,7 +925,7 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     uvm_factory factory = cs.get_factory();
 
-    uvm_split_string(ovr, ',', split_val);
+    uvm_string_split(ovr, ',', split_val);
 
     if (split_val.length !is 3 ) {
       uvm_report_error("UVM_CMDLINE_PROC",
@@ -885,7 +948,7 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
     uvm_coreservice_t cs = uvm_coreservice_t.get();
     uvm_factory factory = cs.get_factory();
 
-    uvm_split_string(ovr, ',', split_val);
+    uvm_string_split(ovr, ',', split_val);
 
     if (split_val.length > 3 || split_val.length < 2) {
       uvm_report_error("UVM_CMDLINE_PROC",
@@ -917,18 +980,18 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
 
   void m_do_config_settings() {
     string[] args;
-    clp.get_arg_matches("/^\\+(UVM_SET_CONFIG_INT|uvm_set_config_int)=/",
+    clp.get_arg_matches(`/^\+(UVM_SET_CONFIG_INT|uvm_set_config_int)=/`,
 			args);
     foreach (i, arg; args) {
       m_process_config(arg[20..$], true);
     }
-    clp.get_arg_matches("/^\\+(UVM_SET_CONFIG_STRING|uvm_set_config_string)=/",
+    clp.get_arg_matches(`/^\+(UVM_SET_CONFIG_STRING|uvm_set_config_string)=/`,
 			args);
     foreach (i, arg; args) {
       m_process_config(arg[23..$], false);
     }
 
-    clp.get_arg_matches("/^\\+(UVM_SET_DEFAULT_SEQUENCE|uvm_set_default_sequence)=/", args);
+    clp.get_arg_matches(`/^\+(UVM_SET_DEFAULT_SEQUENCE|uvm_set_default_sequence)=/`, args);
     foreach (i, arg; args) {
       m_process_default_sequence(arg[26..$]);
     }
@@ -940,7 +1003,7 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
     import uvm.base.uvm_object_globals;
     uvm_report_server srvr = uvm_report_server.get_server();
     string[] max_quit_settings;
-    size_t max_quit_count = clp.get_arg_values("+UVM_MAX_QUIT_COUNT=",
+    size_t max_quit_count = clp.get_arg_values(`+UVM_MAX_QUIT_COUNT=`,
 					       max_quit_settings);
     if (max_quit_count is 0)
       return;
@@ -966,7 +1029,7 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
 			     "command line is being applied.", max_quit),
 		      uvm_verbosity.UVM_NONE);
       string[] split_max_quit;
-      uvm_split_string(max_quit, ',', split_max_quit);
+      uvm_string_split(max_quit, ',', split_max_quit);
       int max_quit_int = parse!int(split_max_quit[0]); // .atoi();
       switch (split_max_quit[1]) {
       case "YES": srvr.set_max_quit_count(max_quit_int, 1); break;
@@ -980,7 +1043,7 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
     import uvm.base.uvm_object_globals;
     string[] dump_args;
     string[] all_args;
-    if (clp.get_arg_matches(`\+UVM_DUMP_CMDLINE_ARGS`, dump_args)) {
+    if (clp.get_arg_matches(`+UVM_DUMP_CMDLINE_ARGS`, dump_args)) {
       clp.get_args(all_args);
       foreach (idx, arg; all_args) {
 	uvm_report_info("DUMPARGS", format("idx=%0d arg=[%s]",
@@ -998,7 +1061,7 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
     int v;
     string[] split_val;
 
-    uvm_split_string(cfg, ',', split_val);
+    uvm_string_split(cfg, ',', split_val);
     if (split_val.length is 1) {
       uvm_report_error("UVM_CMDLINE_PROC",
 		       "Invalid +uvm_set_config command\"" ~ cfg ~
@@ -1065,6 +1128,11 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
   // m_process_default_sequence
   // ----------------
 
+  @uvm_private_sync
+  private string[] _m_uvm_verbosity_settings;
+  @uvm_private_sync
+  private uvm_cmdline_set_verbosity[] _m_time_settings;
+
   void m_process_default_sequence(string cfg) {
     import uvm.base.uvm_coreservice;
     import uvm.base.uvm_config_db;
@@ -1078,7 +1146,7 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
       uvm_factory f = cs.get_factory();
       uvm_object_wrapper w;
 
-      uvm_split_string(cfg, ',', split_val);
+      uvm_string_split(cfg, ',', split_val);
       if (split_val.length == 1) {
 	uvm_report_error("UVM_CMDLINE_PROC",
 			 "Invalid +uvm_set_default_sequence command\"" ~
@@ -1125,76 +1193,15 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
   void m_check_verbosity() {
     import uvm.base.uvm_object_globals;
 
-    string verb_string;
-    string[] verb_settings;
-    int plusarg;
-    uvm_verbosity verbosity = uvm_verbosity.UVM_MEDIUM;
-
-    // Retrieve the verbosities provided on the command line.
-    size_t verb_count = clp.get_arg_values(`+UVM_VERBOSITY=`, verb_settings);
-
-    // If none provided, provide message about the default being used.
-    //if (verb_count is 0)
-    //  uvm_report_info("DEFVERB", ("No verbosity specified on the
-    //  command line.  Using the default: UVM_MEDIUM"), UVM_NONE);
-
-    // If at least one, use the first.
-    if (verb_count > 0) {
-      verb_string = verb_settings[0];
-      plusarg = 1;
-    }
-
-    // If more than one, provide the warning stating how many, which one will
-    // be used and the complete list.
-    if (verb_count > 1) {
-      string verb_list;
-      string sep;
-      foreach (i, setting; verb_settings) {
-	if (i !is 0)
-	  sep = ", ";
-	verb_list ~= sep ~ setting;
-      }
-
-      uvm_report_warning("MULTVERB",
-			 format("Multiple (%0d) +UVM_VERBOSITY arguments " ~
-				"provided on the command line.  '%s' " ~
-				"will be used.  Provided list: %s.",
-				verb_count, verb_string, verb_list),
-			 uvm_verbosity.UVM_NONE);
-    }
-
-    if (plusarg is 1) {
-      switch (verb_string) {
-      case "UVM_NONE"    : verbosity = uvm_verbosity.UVM_NONE; break;
-      case "NONE"        : verbosity = uvm_verbosity.UVM_NONE; break;
-      case "UVM_LOW"     : verbosity = uvm_verbosity.UVM_LOW; break;
-      case "LOW"         : verbosity = uvm_verbosity.UVM_LOW; break;
-      case "UVM_MEDIUM"  : verbosity = uvm_verbosity.UVM_MEDIUM; break;
-      case "MEDIUM"      : verbosity = uvm_verbosity.UVM_MEDIUM; break;
-      case "UVM_HIGH"    : verbosity = uvm_verbosity.UVM_HIGH; break;
-      case "HIGH"        : verbosity = uvm_verbosity.UVM_HIGH; break;
-      case "UVM_FULL"    : verbosity = uvm_verbosity.UVM_FULL; break;
-      case "FULL"        : verbosity = uvm_verbosity.UVM_FULL; break;
-      case "UVM_DEBUG"   : verbosity = uvm_verbosity.UVM_DEBUG; break;
-      case "DEBUG"       : verbosity = uvm_verbosity.UVM_DEBUG; break;
-      default       : {
-	verbosity = cast (uvm_verbosity) parse!int(verb_string); // .atoi();
-	if (verbosity > 0) {
-	  uvm_report_info("NSTVERB",
-			  format("Non-standard verbosity value, using " ~
-				 "provided '%0d'.", verbosity), uvm_verbosity.UVM_NONE);
-	}
-	if (verbosity is 0) {
-	  verbosity = uvm_verbosity.UVM_MEDIUM;
-	  uvm_report_warning("ILLVERB",
-			     "Illegal verbosity value, using default " ~
-			     "of UVM_MEDIUM.", uvm_verbosity.UVM_NONE);
-	}
-      }
-      }
-    }
-
-    set_report_verbosity_level_hier(verbosity);
+    int verbosity = uvm_verbosity.UVM_MEDIUM;
+  
+    uvm_cmdline_verbosity.initialize(this);
+    uvm_cmdline_verbosity.check(this);
+  
+    if (uvm_cmdline_verbosity.settings.length > 0)
+      verbosity = uvm_cmdline_verbosity.settings[0].verbosity;
+  
+    set_report_verbosity_level_hier(cast(uvm_verbosity) verbosity);
 
   }
 
@@ -1216,13 +1223,13 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
       srvr = uvm_report_server.get_server();
       clp = uvm_cmdline_processor.get_inst();
 
-      if (clp.get_arg_matches("\\+UVM_NO_RELNOTES", args)) return;
+      if (clp.get_arg_matches(`+UVM_NO_RELNOTES`, args)) return;
 
       if (! _m_relnotes_done) {
 	q ~= "\n  ***********       IMPORTANT RELEASE NOTES         ************\n";
 	_m_relnotes_done = true;
 
-	q ~= "\n  This implementation of the UVM Library deviates from the 1800.2-2017\n";
+	q ~= "\n  This implementation of the UVM Library deviates from the 1800.2-2020\n";
 	q ~= "  standard.  See the DEVIATIONS.md file contained in the release\n";
 	q ~= "  for more details.\n";
       
@@ -1258,25 +1265,10 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
   // task
   override void run_phase(uvm_phase phase) {
     // check that the commandline are took effect
-    foreach (idx, cl_action; m_uvm_applied_cl_action) {
-      if (cl_action.used == 0) {
-	uvm_warning("INVLCMDARGS",
-		    format("\"+uvm_set_action=%s\" never took effect" ~
-			   " due to a mismatching component pattern",
-			   cl_action.arg));
-      }
-    }
+    uvm_cmdline_set_action.check(this);
+    uvm_cmdline_set_severity.check(this);
 
-    foreach (idx, cl_sev; m_uvm_applied_cl_sev) {
-      if (cl_sev.used == 0) {
-	uvm_warning("INVLCMDARGS",
-		    format("\"+uvm_set_severity=%s\" never took effect" ~
-			   " due to a mismatching component pattern",
-			   cl_sev.arg));
-      }
-    }
-    
-    if (getRootEntity().getSimTime() > 0) {
+    if (getSimTime() > 0) {
       uvm_fatal("RUNPHSTIME",
 		"The run phase must start at time 0, current time is " ~
 		format("%s", getRootEntity().getSimTime()) ~
@@ -1312,7 +1304,8 @@ class uvm_root: uvm_component, uvm_root_intf, _esdl__Norand
   @uvm_private_sync
   bool _elab_done;
 
-  override void phase_ended(uvm_phase phase) {
+  // normally no one is going to extend uvm_root class
+  final override void phase_ended(uvm_phase phase) {
     import uvm.base.uvm_domain;
     if (phase is end_of_elaboration_ph) {
       synchronized (this) {

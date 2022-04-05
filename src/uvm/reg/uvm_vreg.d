@@ -1,12 +1,12 @@
 //
 // -------------------------------------------------------------
 // Copyright 2015-2021 Coverify Systems Technology
+// Copyright 2010 AMD
+// Copyright 2010-2018 Cadence Design Systems, Inc.
 // Copyright 2010-2011 Mentor Graphics Corporation
+// Copyright 2014-2020 NVIDIA Corporation
 // Copyright 2014 Semifore
 // Copyright 2004-2018 Synopsys, Inc.
-// Copyright 2010-2018 Cadence Design Systems, Inc.
-// Copyright 2010 AMD
-// Copyright 2014-2018 NVIDIA Corporation
 //    All Rights Reserved Worldwide
 //
 //    Licensed under the Apache License, Version 2.0 (the
@@ -91,9 +91,8 @@ import std.string: format;
 //
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 18.9.1
-@rand(false)
-class uvm_vreg: uvm_object
+// @uvm-ieee 1800.2-2020 auto 18.9.1
+class uvm_vreg: uvm_object, rand.barrier
 {
   mixin uvm_sync;
 
@@ -141,7 +140,7 @@ class uvm_vreg: uvm_object
   //
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.9.1.1.1
+  // @uvm-ieee 1800.2-2020 auto 18.9.1.1.1
   this(string name, uint n_bits) {
     synchronized(this) {
       super(name);
@@ -166,7 +165,7 @@ class uvm_vreg: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.9.1.1.2
+  // @uvm-ieee 1800.2-2020 auto 18.9.1.1.2
   public void configure(uvm_reg_block      parent,
 			uvm_mem            mem = null,
 			uint               size = 0,
@@ -191,7 +190,7 @@ class uvm_vreg: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.9.1.1.3
+  // @uvm-ieee 1800.2-2020 auto 18.9.1.1.3
   bool implement(uint           n,
 		 uvm_mem        mem = null,
 		 uvm_reg_addr_t offset = 0,
@@ -283,7 +282,7 @@ class uvm_vreg: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.9.1.1.4
+  // @uvm-ieee 1800.2-2020 auto 18.9.1.1.4
   uvm_mem_region allocate(uint n, uvm_mem_mam mam,
 			  uvm_mem_mam_policy alloc=null) {
     synchronized(this) {
@@ -369,14 +368,14 @@ class uvm_vreg: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.9.1.1.5
+  // @uvm-ieee 1800.2-2020 auto 18.9.1.1.5
   uvm_mem_region get_region() {
     synchronized(this) {
       return this._region;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.9.1.1.6
+  // @uvm-ieee 1800.2-2020 auto 18.9.1.1.6
   void release_region() {
     synchronized(this) {
       if (this._is_static) {
@@ -531,7 +530,7 @@ class uvm_vreg: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.9.1.2.1
+  // @uvm-ieee 1800.2-2020 auto 18.9.1.2.1
   uvm_reg_block get_parent() {
     synchronized(this) {
       return this._parent;
@@ -544,14 +543,14 @@ class uvm_vreg: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.9.1.2.2
+  // @uvm-ieee 1800.2-2020 auto 18.9.1.2.2
   uvm_mem get_memory() {
     synchronized(this) {
       return this._mem;
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.9.1.2.3
+  // @uvm-ieee 1800.2-2020 auto 18.9.1.2.3
   int get_n_maps() {
     synchronized(this) {
       if (this._mem is null) {
@@ -564,7 +563,7 @@ class uvm_vreg: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.9.1.2.4
+  // @uvm-ieee 1800.2-2020 auto 18.9.1.2.4
   bool is_in_map(uvm_reg_map map) {
     synchronized(this) {
       if (this._mem is null) {
@@ -578,7 +577,7 @@ class uvm_vreg: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.9.1.2.5
+  // @uvm-ieee 1800.2-2020 auto 18.9.1.2.5
   void get_maps(ref uvm_reg_map[] maps) {
     synchronized(this) {
       if (this._mem is null) {
@@ -591,7 +590,7 @@ class uvm_vreg: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.9.1.2.6
+  // @uvm-ieee 1800.2-2020 auto 18.9.1.2.6
   string get_rights(uvm_reg_map map = null) {
     synchronized(this) {
       if (this._mem is null) {
@@ -605,7 +604,7 @@ class uvm_vreg: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.9.1.2.7
+  // @uvm-ieee 1800.2-2020 auto 18.9.1.2.7
   string get_access(uvm_reg_map map = null) {
     synchronized(this) {
       if (this._mem is null) {
@@ -688,7 +687,7 @@ class uvm_vreg: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.9.1.2.12
+  // @uvm-ieee 1800.2-2020 auto 18.9.1.2.12
   void get_fields(ref uvm_vreg_field[] fields) {
     synchronized(this) {
       foreach(field; this._fields) {
@@ -708,7 +707,7 @@ class uvm_vreg: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.9.1.2.13
+  // @uvm-ieee 1800.2-2020 auto 18.9.1.2.13
   uvm_vreg_field get_field_by_name(string name) {
     synchronized(this) {
       foreach(field; this._fields) {
@@ -723,7 +722,7 @@ class uvm_vreg: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.9.1.2.14
+  // @uvm-ieee 1800.2-2020 auto 18.9.1.2.14
   uvm_reg_addr_t get_offset_in_memory(ulong idx) {
     synchronized(this) {
       if (this._mem is null) {
@@ -737,7 +736,7 @@ class uvm_vreg: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.9.1.2.15
+  // @uvm-ieee 1800.2-2020 auto 18.9.1.2.15
   uvm_reg_addr_t get_address(ulong idx,
 			     uvm_reg_map map = null) {
     synchronized(this) {
@@ -756,7 +755,7 @@ class uvm_vreg: uvm_object
   // Group -- NODOCS -- HDL Access
   //
 
-  // @uvm-ieee 1800.2-2017 auto 18.9.1.3.1
+  // @uvm-ieee 1800.2-2020 auto 18.9.1.3.1
   // task
   void write(ulong              idx,
 	     out uvm_status_e   status,
@@ -870,7 +869,7 @@ class uvm_vreg: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.9.1.3.2
+  // @uvm-ieee 1800.2-2020 auto 18.9.1.3.2
   // task
   void read(ulong              idx,
 	    out uvm_status_e   status,
@@ -978,7 +977,7 @@ class uvm_vreg: uvm_object
     }
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.9.1.3.3
+  // @uvm-ieee 1800.2-2020 auto 18.9.1.3.3
   // task
   void poke(ulong             idx,
 	    out uvm_status_e  status,
@@ -1021,7 +1020,7 @@ class uvm_vreg: uvm_object
 
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.9.1.3.4
+  // @uvm-ieee 1800.2-2020 auto 18.9.1.3.4
   // task
   void peek(ulong              idx,
 	    out uvm_status_e   status,
@@ -1067,7 +1066,7 @@ class uvm_vreg: uvm_object
 
   }
 
-  // @uvm-ieee 1800.2-2017 auto 18.9.1.3.5
+  // @uvm-ieee 1800.2-2020 auto 18.9.1.3.5
   void reset(string kind = "HARD") {
     synchronized(this) {
       // Put back a key in the semaphore if it is checked out
@@ -1083,14 +1082,14 @@ class uvm_vreg: uvm_object
   // Group -- NODOCS -- Callbacks
   //
 
-  // @uvm-ieee 1800.2-2017 auto 18.9.1.4.1
+  // @uvm-ieee 1800.2-2020 auto 18.9.1.4.1
   // task
   void pre_write(ulong     idx,
 		 ref uvm_reg_data_t   wdat,
 		 ref uvm_door_e  path,
 		 ref uvm_reg_map      map) { }
 
-  // @uvm-ieee 1800.2-2017 auto 18.9.1.4.2
+  // @uvm-ieee 1800.2-2020 auto 18.9.1.4.2
   // task
   void post_write(ulong       idx,
 		  uvm_reg_data_t         wdat,
@@ -1098,13 +1097,13 @@ class uvm_vreg: uvm_object
 		  uvm_reg_map            map,
 		  ref uvm_status_e  status) { }
 
-  // @uvm-ieee 1800.2-2017 auto 18.9.1.4.3
+  // @uvm-ieee 1800.2-2020 auto 18.9.1.4.3
   // task
   void pre_read(ulong     idx,
 		ref uvm_door_e  path,
 		ref uvm_reg_map      map) { }
 
-  // @uvm-ieee 1800.2-2017 auto 18.9.1.4.4
+  // @uvm-ieee 1800.2-2020 auto 18.9.1.4.4
   //task
   void post_read(ulong              idx,
 		 ref uvm_reg_data_t rdat,
@@ -1175,7 +1174,7 @@ class uvm_vreg: uvm_object
 //
 //------------------------------------------------------------------------------
 
-// @uvm-ieee 1800.2-2017 auto 18.9.2.1
+// @uvm-ieee 1800.2-2020 auto 18.9.2.1
 abstract class uvm_vreg_cbs: uvm_callback
 {
 
@@ -1195,7 +1194,7 @@ abstract class uvm_vreg_cbs: uvm_callback
   }
 
 
-  // @uvm-ieee 1800.2-2017 auto 18.9.2.2.1
+  // @uvm-ieee 1800.2-2020 auto 18.9.2.2.1
   // task
   void pre_write(uvm_vreg           rg,
 		 ulong              idx,
@@ -1203,7 +1202,7 @@ abstract class uvm_vreg_cbs: uvm_callback
 		 ref uvm_door_e     path,
 		 ref uvm_reg_map    map) { }
 
-  // @uvm-ieee 1800.2-2017 auto 18.9.2.2.2
+  // @uvm-ieee 1800.2-2020 auto 18.9.2.2.2
   void post_write(uvm_vreg           rg,
 		  ulong              idx,
 		  uvm_reg_data_t     wdat,
@@ -1211,14 +1210,14 @@ abstract class uvm_vreg_cbs: uvm_callback
 		  uvm_reg_map        map,
 		  ref uvm_status_e   status) { }
 
-  // @uvm-ieee 1800.2-2017 auto 18.9.2.2.3
+  // @uvm-ieee 1800.2-2020 auto 18.9.2.2.3
   // task
   void pre_read(uvm_vreg         rg,
 		ulong            idx,
 		ref uvm_door_e   path,
 		ref uvm_reg_map  map) { }
 
-  // @uvm-ieee 1800.2-2017 auto 18.9.2.2.4
+  // @uvm-ieee 1800.2-2020 auto 18.9.2.2.4
   // task
   void post_read(uvm_vreg           rg,
 		 ulong              idx,
@@ -1236,7 +1235,7 @@ abstract class uvm_vreg_cbs: uvm_callback
 // Use this declaration to register virtual register callbacks rather than
 // the more verbose parameterized class
 //
-alias uvm_vreg_cb = uvm_callbacks!(uvm_vreg, uvm_vreg_cbs);  /* @uvm-ieee 1800.2-2017 auto D.4.6.9*/
+alias uvm_vreg_cb = uvm_callbacks!(uvm_vreg, uvm_vreg_cbs);  /* @uvm-ieee 1800.2-2020 auto D.4.5.9*/
 
 //
 // Type -- NODOCS -- uvm_vreg_cb_iter
@@ -1245,4 +1244,4 @@ alias uvm_vreg_cb = uvm_callbacks!(uvm_vreg, uvm_vreg_cbs);  /* @uvm-ieee 1800.2
 // Use this declaration to iterate over registered virtual register callbacks
 // rather than the more verbose parameterized class
 //
-alias uvm_vreg_cb_iter = uvm_callback_iter!(uvm_vreg, uvm_vreg_cbs); /* @uvm-ieee 1800.2-2017 auto D.4.6.10*/
+alias uvm_vreg_cb_iter = uvm_callback_iter!(uvm_vreg, uvm_vreg_cbs); /* @uvm-ieee 1800.2-2020 auto D.4.5.10*/
