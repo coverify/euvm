@@ -81,6 +81,7 @@ mixin(declareEnums!uvm_radix_enum());
 mixin(declareEnums!uvm_recursion_policy_enum());
 mixin(declareEnums!uvm_active_passive_enum());
 mixin(declareEnums!uvm_field_auto_enum());
+mixin(declareEnums!uvm_comp_auto_enum());
 mixin(declareEnums!uvm_objection_event());
 mixin(declareEnums!uvm_wait_op());
 mixin(declareEnums!uvm_phase_state());

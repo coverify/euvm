@@ -227,8 +227,6 @@ enum uvm_field_auto_enum: uint
     UVM_SET          = (1 << 11),
     UVM_NOSET        = (1 << 12),
     UVM_NODEFPRINT   = (1 << 15),
-    UVM_BUILD        = (1 << 17),
-    UVM_NOBUILD      = (1 << 18),
     UVM_FLAGS_ON     = UVM_COPY | UVM_COMPARE | UVM_PRINT |
     UVM_RECORD | UVM_PACK | UVM_UNPACK | UVM_SET,
     UVM_FLAGS_OFF    = 0,
@@ -256,9 +254,16 @@ enum uvm_field_xtra_enum: uint
       // UVM_SETINT         = UVM_SET,             // TBD
       // UVM_SETOBJ         = UVM_START_FUNCS + 2, // TBD
       // UVM_SETSTR         = UVM_START_FUNCS + 3, // TBD
-      UVM_PARALLELIZE    = UVM_START_FUNCS + 4,
-      UVM_END_FUNCS      = UVM_START_FUNCS + 5
+      UVM_END_FUNCS      = UVM_START_FUNCS + 1
       }
+
+enum uvm_comp_auto_enum: uint
+  {
+    UVM_BUILD             = (1 << 0),
+    UVM_BUILD_IF_ACTIVE   = (1 << 1),
+    UVM_NOBUILD           = (1 << 2),
+    UVM_PARALLELIZE       = (1 << 3),
+  }
 
 
 // Global string variables
