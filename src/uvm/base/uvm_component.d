@@ -34,7 +34,7 @@ module uvm.base.uvm_component;
 
 import uvm.base.uvm_object_globals;
 import uvm.base.uvm_object: uvm_object;
-import uvm.base.uvm_object_defines: uvm_field_auto_get_flags;
+import uvm.base.uvm_component_defines: uvm_comp_auto_get_flags;
 import uvm.base.uvm_phase: uvm_phase;
 import uvm.base.uvm_domain: uvm_domain;
 import uvm.base.uvm_common_phases: uvm_build_phase, uvm_run_phase;
@@ -699,21 +699,22 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   @uvm_public_sync
   private bool _uvm__parallelize_done = false;
 
-  void uvm__auto_build() {
+  void uvm__auto_build () {
     debug(UVM_AUTO) {
       import std.stdio;
       writeln("Building .... : ", get_full_name);
     }
     // super is called in m_uvm_component_automation
     // super.uvm__auto_build(); --
-    m_uvm_component_automation(uvm_field_auto_enum.UVM_BUILD);
+    m_uvm_component_automation(uvm_comp_auto_enum.UVM_BUILD);
+    m_uvm_component_automation(uvm_comp_auto_enum.UVM_BUILD_IF_ACTIVE);
     // .uvm__auto_build!(0, typeof(this))(this);
   }
 
   void uvm__parallelize() {
     // super is called in m_uvm_component_automation
     // super.uvm__parallelize();
-    m_uvm_component_automation(uvm_field_xtra_enum.UVM_PARALLELIZE);
+    m_uvm_component_automation(uvm_comp_auto_enum.UVM_PARALLELIZE);
     // .uvm__auto_build!(0, typeof(this))(this);
   }
 
@@ -3038,14 +3039,14 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
 						P parent)
     if (isArray!E && !is (E == string)) {
       switch (what) {
-      case uvm_field_xtra_enum.UVM_PARALLELIZE:
+      case uvm_comp_auto_enum.UVM_PARALLELIZE:
 	for (size_t i=0; i!=e.length; ++i) {
 	  _m_uvm_component_automation(e[i], what,
 				      name ~ format("[%d]", i),
 				      flags, pflags, parent);
 	}
 	break;
-      case uvm_field_auto_enum.UVM_BUILD:
+      case uvm_comp_auto_enum.UVM_BUILD, uvm_comp_auto_enum.UVM_BUILD_IF_ACTIVE:
 	for (size_t i=0; i!=e.length; ++i) {
 	  _m_uvm_component_automation(e[i], what,
 				      name ~ format("[%d]", i),
@@ -3053,7 +3054,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
 	}
 	break;
       default:
-	uvm.base.uvm_globals.uvm_error("UVMUTLS",
+	uvm.base.uvm_globals.uvm_error("UVM_UTILS",
 				       format("UVM UTILS uknown utils " ~
 					      "functionality: %s/%s",
 					      cast (uvm_field_auto_enum) what,
@@ -3071,28 +3072,23 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
     if (is (E: uvm_component)) {
       import uvm.base.uvm_globals;
       switch (what) {
-      case uvm_field_xtra_enum.UVM_PARALLELIZE:
-	static if (is (E: uvm_component)) {
-	  if (e !is null) {
-	    e._set_id();
-	    uvm__config_parallelism(e, pflags);
-	  }
+      case uvm_comp_auto_enum.UVM_PARALLELIZE:
+	static assert (is (E: uvm_component));
+	if (e !is null) {
+	  e._set_id();
+	  uvm__config_parallelism(e, pflags);
 	}
 	break;
-      case uvm_field_auto_enum.UVM_BUILD:
-        if (! (flags & uvm_field_auto_enum.UVM_NOBUILD) && flags & uvm_field_auto_enum.UVM_BUILD) {
-	  if (e is null) {
-	    e = cast(E) E.type_id.create(name, parent);
-	    if (e is null) assert (false, "Can not create uvm_component using UVM_BUILD");
-	  }
+      case uvm_comp_auto_enum.UVM_BUILD, uvm_comp_auto_enum.UVM_BUILD_IF_ACTIVE:
+	if (e is null) {
+	  e = cast(E) E.type_id.create(name, parent);
+	  if (e is null) assert (false, "Can not create uvm_component using UVM_BUILD");
 	}
 	break;
       default:
-	uvm.base.uvm_globals.uvm_error("UVMUTLS",
-				       format("UVM UTILS uknown utils" ~
-					      " functionality: %s/%s",
-					      cast (uvm_field_auto_enum) what,
-					      cast (uvm_field_xtra_enum) what));
+	uvm.base.uvm_globals.uvm_error("UVM_UTILS",
+				       format("UVM UTILS uknown utils functionality: %s",
+					      cast (uvm_comp_auto_enum) what));
 	break;
 	  
       }
@@ -3104,47 +3100,66 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
 						int flags,
 						_esdl__Multicore pflags,
 						P parent)
-  if (is (E: uvm_port_base!IF, IF)) {
-    import uvm.base.uvm_port_base;
-
-      switch (what) {
-      case uvm_field_auto_enum.UVM_BUILD:
-        if (! (flags & uvm_field_auto_enum.UVM_NOBUILD) && flags & uvm_field_auto_enum.UVM_BUILD) {
-	  static if (is (E: uvm_port_base!IF, IF)) {
-	    e = new E(name, parent);
-	  }
-	}
-	break;
-      default:
-	break;
-      }
-    }
+       if (is (E: uvm_port_base!IF, IF)) {
+	 import uvm.base.uvm_port_base;
+	 import uvm.base.uvm_globals;
+	 switch (what) {
+	 case uvm_comp_auto_enum.UVM_BUILD, uvm_comp_auto_enum.UVM_BUILD_IF_ACTIVE:
+	   static assert (is (E: uvm_port_base!IF, IF));
+	   if (e is null) {
+	     e = new E(name, parent);
+	   }
+	   break;
+	 case uvm_comp_auto_enum.UVM_PARALLELIZE:
+	   uvm.base.uvm_globals.uvm_info("UVM_UTILS", format("%s is not a uvm_component",
+							     E.stringof), uvm_verbosity.UVM_NONE);
+	   uvm.base.uvm_globals.uvm_error("UVM_UTILS", "UVM_PARALLELIZE can be on only a uvm_component!");
+	   break;
+	 default:
+	   break;
+	 }
+       }
 
   static void _m_uvm_component_automation(int I, T)(T          t,
 						    int        what)
     if (is (T: uvm_component)) {
+      import uvm.base.uvm_globals: uvm_info, uvm_error;
       static if (I < t.tupleof.length) {
 	import uvm.comps.uvm_agent;
-	enum FLAGS = uvm_field_auto_get_flags!(t, I);
+	import uvm.base.uvm_globals;
+	enum FLAGS = uvm_comp_auto_get_flags!(t, I);
 	alias EE = UVM_ELEMENT_TYPE!(typeof(t.tupleof[I]));
 	static if ((is (EE: uvm_component) ||
 		    is (EE: uvm_port_base!IF, IF)) &&
 		   FLAGS != 0) {
 	  _esdl__Multicore pflags;
-	  if (what == uvm_field_auto_enum.UVM_BUILD) {
-	    bool is_active = true; // if not uvm_agent, everything is active
-	    static if (is (T: uvm_agent)) {
-	      is_active = t.get_is_active();
-	    }
-	    bool active_flag =
-	      UVM_IN_TUPLE!(0, uvm_active_passive_enum.UVM_ACTIVE, __traits(getAttributes, t.tupleof[I]));
-	    if (! active_flag || is_active) {
-	      _m_uvm_component_automation(t.tupleof[I], what,
+	  if (what == uvm_comp_auto_enum.UVM_BUILD &&
+	      ((! (FLAGS & uvm_comp_auto_enum.UVM_NOBUILD)) &&
+	       (FLAGS & uvm_comp_auto_enum.UVM_BUILD))) {
+	    _m_uvm_component_automation(t.tupleof[I], what,
 					  t.tupleof[I].stringof[2..$],
 					  FLAGS, pflags, t);
+	  }
+	  else if (what == uvm_comp_auto_enum.UVM_BUILD_IF_ACTIVE &&
+		   ((! (FLAGS & uvm_comp_auto_enum.UVM_NOBUILD)) &&
+		    (FLAGS & uvm_comp_auto_enum.UVM_BUILD_IF_ACTIVE))) {
+	    static if (is (T: uvm_agent)) {
+	      if (t.get_is_active()) {
+		_m_uvm_component_automation(t.tupleof[I], what,
+					    t.tupleof[I].stringof[2..$],
+					    FLAGS, pflags, t);
+	      }
+	    }
+	    else {
+	      uvm.base.uvm_globals.uvm_info("UVM_UTILS",
+					    format("%s(%s) is not a uvm_agent",
+						   T.stringof, t.get_full_name()), uvm_verbosity.UVM_NONE);
+	      uvm.base.uvm_globals.uvm_error("UVM_UTILS",
+					     "UVM_BUILD_IF_ACTIVE can be used only inside a uvm_agent!");
 	    }
 	  }
-	  else if (what == uvm_field_xtra_enum.UVM_PARALLELIZE) {
+	  else if (what == uvm_comp_auto_enum.UVM_PARALLELIZE &&
+		   (FLAGS & uvm_comp_auto_enum.UVM_PARALLELIZE)) {
 	    pflags = _esdl__uda!(_esdl__Multicore, T, I);
 	    _m_uvm_component_automation(t.tupleof[I], what,
 					t.tupleof[I].stringof[2..$],

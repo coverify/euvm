@@ -266,3 +266,24 @@ mixin template m_uvm_component_auto_utils(T)
     _m_uvm_component_automation!0(this, what); // defined in uvm_object
   }  
 }
+
+template uvm_comp_auto_get_flags(alias t, size_t I)
+{
+  enum int uvm_comp_auto_get_flags =
+    uvm_comp_auto_acc_flags!(__traits(getAttributes, t.tupleof[I]));
+}
+
+template uvm_comp_auto_acc_flags(A...)
+{
+  import uvm.base.uvm_object_globals: uvm_comp_auto_enum;
+  static if (A.length is 0) {
+    enum int uvm_comp_auto_acc_flags = 0;
+  }
+  else static if (is (typeof(A[0]) == uvm_comp_auto_enum)) {
+    enum int uvm_comp_auto_acc_flags = A[0] |
+      uvm_comp_auto_acc_flags!(A[1..$]);
+  }
+  else {
+    enum int uvm_comp_auto_acc_flags = uvm_comp_auto_acc_flags!(A[1..$]);
+  }
+}
