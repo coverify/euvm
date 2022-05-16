@@ -3082,7 +3082,8 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
       case uvm_field_auto_enum.UVM_BUILD:
         if (! (flags & uvm_field_auto_enum.UVM_NOBUILD) && flags & uvm_field_auto_enum.UVM_BUILD) {
 	  if (e is null) {
-	    e = E.type_id.create(name, parent);
+	    e = cast(E) E.type_id.create(name, parent);
+	    if (e is null) assert (false, "Can not create uvm_component using UVM_BUILD");
 	  }
 	}
 	break;
