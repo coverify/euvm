@@ -108,7 +108,7 @@ class uvm_reg_item: uvm_sequence_item
   
 
   // TODO -- NODOCS -- parameterize
-  Constraint! q{
+  constraint! q{
     _value.length > 0 && _value.length < 1000;
   } max_values;
 

@@ -44,5 +44,5 @@ class uvm_reg_randval
   mixin Randomization;
   @rand uvm_reg_data_t randval;
 
-  alias randval this;
+  // alias randval this;
 }

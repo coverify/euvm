@@ -185,7 +185,7 @@ class uvm_reg_field: uvm_object
   }
   
 
-  Constraint!q{
+  constraint!q{
     if (UVM_REG_DATA_WIDTH > _m_size) {
       // _value < (UVM_REG_DATA_WIDTH'h1 << _m_size);
       _value < (1L << _m_size);

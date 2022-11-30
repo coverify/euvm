@@ -131,7 +131,7 @@ class uvm_mem_mam
   @uvm_private_sync
   private uvm_mem_mam_cfg _cfg;
 
-  private uvm_mem_region[] _in_use;
+  public uvm_mem_region[] _in_use;
 
   @uvm_private_sync
   private int _for_each_idx = -1;
@@ -850,7 +850,7 @@ class uvm_mem_region
 class uvm_mem_mam_policy
 {
   mixin(uvm_sync_string);
-  mixin Randomization;
+  mixin randomization;
 
   // variable -- NODOCS -- len
   // Number of addresses required
@@ -875,14 +875,14 @@ class uvm_mem_mam_policy
   // variable -- NODOCS -- in_use
   // Regions already allocated in the managed address space
   @uvm_private_sync // @rand(false)
-  private uvm_mem_region[] _in_use;
+  public uvm_mem_region[] _in_use;
 
-  Constraint!q{
+  constraint!q{
     _start_offset >= _min_offset;
     _start_offset <= _max_offset - _len + 1;
   } uvm_mem_mam_policy_valid;
 
-  Constraint!q{
+  constraint!q{
     foreach (iu; _in_use) {
       _start_offset > iu._Xend_offsetX ||
 	_start_offset + _len - 1 < iu._Xstart_offsetX;
@@ -925,7 +925,7 @@ class uvm_mem_mam_cfg
   @uvm_public_sync
   @rand private uvm_mem_mam.locality_e _locality;
 
-  Constraint!q{
+  constraint!q{
     _end_offset > _start_offset;
     _n_bytes < 64;
   } uvm_mem_mam_cfg_valid;

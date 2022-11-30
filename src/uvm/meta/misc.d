@@ -764,3 +764,24 @@ T shallowCopy(T)(T obj) if (is (T == class)) {
   (cast(void*) clone)[start..end] = (cast(void*) obj)[start..end];
   return staticCast!T(clone);
 }
+
+T shallowCopy(T, Allocator)(T obj, auto ref Allocator alloc)
+if (is (T == class)) {
+  import std.algorithm: max;
+  import std.experimental.allocator.common: stateSize;
+  import std.format: format;
+  if (obj is null) return null;
+  ClassInfo ci = obj.classinfo;
+  auto init = ci.initializer;
+  // auto m = alloc.allocate(max(stateSize!T, 1)); // as in std.allocator.make
+  auto m = alloc.allocate(init.length); // as in _d_newclass
+  if (!m.ptr) return null;
+  assert (m.length == init.length, format("m.length(%s) != init.length(%s)",
+					  m.length, init.length));
+  m[0 .. $] = init[];
+  Object clone = cast(Object) m.ptr;
+  size_t start = Object.classinfo.m_init.length;
+  size_t end   = ci.m_init.length;
+  (cast(void*) clone)[0..end] = (cast(void*) obj)[0..end];
+  return staticCast!T(clone);
+ }
