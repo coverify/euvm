@@ -82,7 +82,12 @@ mixin template uvm_object_utils(T=void)
     import uvm.meta.misc: shallowCopy;
     return shallowCopy(this);
   }
-  
+
+  U dup(Allocator)(auto ref Allocator alloc) {
+    import uvm.meta.misc: shallowCopy;
+    return shallowCopy(this, alloc);
+  }
+
   version (UVM_NO_RAND) {}
   else {
     import esdl.rand;
