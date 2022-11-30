@@ -92,7 +92,7 @@ class uvm_reg_fifo: uvm_reg
     }
   }
 
-  Constraint!q{
+  constraint!q{
     _fifo.length <= _m_size;
   }  valid_fifo_size;
 
