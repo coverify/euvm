@@ -205,7 +205,12 @@ mixin template uvm_abstract_object_utils(T=void)
 
 mixin template uvm_object_registry_mixin(T, string S)
 {
+  import esdl.base.factory: Factory;
   import uvm.base.uvm_factory: uvm_object_wrapper;
+  pragma(crt_constructor)
+  extern(C) static void _esdl__registerWithFactory() {
+    Factory!q{UVM}.register!(typeof(this))();
+  }
   alias type_id = uvm_object_registry!(T,S);
   static type_id get_type() {
     return type_id.get();

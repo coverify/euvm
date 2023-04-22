@@ -159,6 +159,8 @@ class uvm_root: uvm_component, uvm_root_intf, rand.disable
   // after calling uvm_root constructor
   void initialize(uvm_entity_base base) {
     import uvm.base.uvm_domain;
+    // import uvm.base.uvm_factory;
+
     synchronized (this) {
 
       // For error reporting purposes, we need to construct this first.
