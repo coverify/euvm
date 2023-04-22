@@ -268,3 +268,9 @@ private template fqnType(T,
     // In case something is forgotten
     static assert(0, "Unrecognized type " ~ T.stringof ~ ", can't convert to fully qualified string");
 }
+
+// just to make everything compile
+int _dummy;
+string _dummy_fqn() {
+  return fullyQualifiedName!_dummy;
+}
