@@ -351,9 +351,9 @@ final class uvm_cmdline_processor: uvm_report_object
 	  }
 	}
       }
-      _m_argv ~= argv;
-      _m_plus_argv ~= plus_argv;
-      _m_uvm_argv ~= uvm_argv;
+      _m_argv = argv.dup;
+      _m_plus_argv = plus_argv.dup;
+      _m_uvm_argv = uvm_argv.dup;
     }
   }
 
