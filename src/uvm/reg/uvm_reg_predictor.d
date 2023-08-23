@@ -33,6 +33,11 @@ import uvm.reg.uvm_reg_model;
 
 import uvm.base.uvm_component: uvm_component;
 import uvm.base.uvm_component_defines;
+import uvm.tlm1.uvm_analysis_port: uvm_analysis_imp, uvm_analysis_port;
+import uvm.reg.uvm_reg_map: uvm_reg_map;
+import uvm.reg.uvm_reg_adapter: uvm_reg_adapter;
+import uvm.reg.uvm_reg: uvm_reg;
+import uvm.base.uvm_phase: uvm_phase;
 
 import std.string: format;
 
@@ -70,7 +75,7 @@ class uvm_predict_s
 class uvm_reg_predictor(BUSTYPE): uvm_component
 {
 
-  mixin uvm_component_param_utils;
+  mixin uvm_component_utils;
 
   // Variable -- NODOCS -- bus_in
   //
