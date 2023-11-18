@@ -814,7 +814,7 @@ T shallowCopy(T)(T obj) if (is (T == class)) {
 T shallowCopy(T, Allocator)(T obj, auto ref Allocator alloc)
 if (is (T == class)) {
   import std.algorithm: max;
-  import std.experimental.allocator.common: stateSize;
+  // import std.experimental.allocator.common: stateSize;
   import std.format: format;
   if (obj is null) return null;
   ClassInfo ci = obj.classinfo;

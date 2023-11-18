@@ -46,7 +46,7 @@ import uvm.meta.misc;
 import uvm.meta.mcd;
 
 import std.string: format;
-import std.traits: isIntegral;
+import std.traits: isIntegral, isBoolean;
 import esdl.data.bvec: isBitVector;
 import esdl.base.core: Process;
 
@@ -336,8 +336,9 @@ abstract class uvm_report_catcher: uvm_callback, uvm_report_intf
 			       T value,
 			       uvm_radix_enum radix,
 			       uvm_action action =
-			       (uvm_action_type.UVM_LOG|uvm_action_type.UVM_RM_RECORD))
-    if (isBitVector!T || isIntegral!T) {
+			       (uvm_action_type.UVM_LOG |
+				uvm_action_type.UVM_RM_RECORD))
+    if (isBitVector!T || isIntegral!T || isBoolean!T) {
       _m_modified_report_message.add(name, value, radix, action);
     }
 

@@ -141,7 +141,7 @@ abstract class uvm_printer: uvm_policy
 		uvm_radix_enum  radix=uvm_radix_enum.UVM_NORADIX,
 		char            scope_separator='.',
 		string          type_name="")
-    if (is (T: bool)) {
+    if (is (T: bool) && (! isBitVector!T /* avoid bvec!1 */)) {
       print_bool(name, value, 1, radix, scope_separator, type_name);
     }
 

@@ -1391,6 +1391,10 @@ class uvm_root: uvm_component, uvm_root_intf, rand.disable
 
   final void finalize() {
     synchronized (this) {
+      if (_elab_done is false) {
+	_elab_done = true;
+	_elab_done_semaphore.notify();
+      }
       foreach (lock; _async_locks) {
 	lock.disable();
       }

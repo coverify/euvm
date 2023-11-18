@@ -240,7 +240,7 @@ string uvm_instance_scope() {
 //
 
 string uvm_object_value_str(uvm_object v) {
-  import std.conv;
+  import std.conv: to;
   if (v is null) return "<null>";
   else return "@" ~ (v.get_inst_id()).to!string();
 }
@@ -337,16 +337,17 @@ string uvm_bitvec_to_string(T)(T value, size_t size,
 
   // TODO $countbits(value,'z) would be even better
   static if (isBitVector!T) {
+    import esdl.data.bvec: to;
     if (size < T.SIZE) {
       if (value.isX()) {
-	T t_ = 0;
+	T t_ = cast(T) 0.to!T;
 	for (int idx=0 ; idx<size; idx++) {
 	  t_[idx] = value[idx];
 	}
 	value = t_;
       }
       else {
-	T t_ = 1;
+	T t_ = cast(T) 1.to!T;
 	value &= ((t_ << size) - 1);
       }
     }
@@ -360,6 +361,7 @@ string uvm_bitvec_to_string(T)(T value, size_t size,
   }
 
   switch (radix) {
+    import std.conv: to;
   case uvm_radix_enum.UVM_BIN:      return format("%0s%0" ~ size.to!string ~ "b",
 						  radix_str, value);
   case uvm_radix_enum.UVM_OCT:      return format("%0s%0" ~
