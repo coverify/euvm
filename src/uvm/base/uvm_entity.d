@@ -79,6 +79,9 @@ class uvm_harness: RootEntity
     _init_done = true;
   }
 
+  // to be overridden by end-user
+  void initial() {}
+    
   ubyte start() {
     this.start_bg();
     super.joinSim();
@@ -227,7 +230,7 @@ class uvm_entity(T): uvm_entity_base if (is (T: uvm_root))
   @uvm_private_sync
     private bool _uvm_root_initialized;
 
-  // The uvm_root instance corresponding to this RootEntity.
+  // The uvm_root instance corresponding to this Entity.
   // effectively immutable
   @uvm_immutable_sync
     private T _uvm_root_instance;
@@ -314,6 +317,11 @@ class uvm_entity(T): uvm_entity_base if (is (T: uvm_root))
     uvm_root_init_semaphore.notify();
     uvm_seed_map.set_seed(_seed);
     uvm_root_start_semaphore.wait();
+    uvm_harness harness = cast (uvm_harness) getRoot();
+    if (harness is null) {
+      assert(false, "Could not determine UVM Harness");
+    }
+    harness.initial(); // execute user setup code from harness
     _uvm_root_instance.initial();
   }
 
