@@ -41,7 +41,6 @@ public string[][] uvm_dpi_get_args() {
   // use the esdl commandline arguments if we are not using Verilog
   // Note that command line arguments have to be passed at the time of
   // RootEntity elaboration
-  string[] esdlArgv = getRootEntity().getArgv();
 
   uint argc;
 
@@ -50,6 +49,7 @@ public string[][] uvm_dpi_get_args() {
     if (vlogArgv is null) return argvs;
   }
   else {
+    string[] esdlArgv = getRootEntity().getArgv();
     argc = cast(uint) esdlArgv.length;
   }
 
@@ -63,6 +63,7 @@ public string[][] uvm_dpi_get_args() {
       arg = (vlogArg++).to!string;
     }
     else {
+      string[] esdlArgv = getRootEntity().getArgv();
       arg = esdlArgv[i];
     }
     
