@@ -420,7 +420,7 @@ mixin template uvm_sync() {
   mixin(uvm_sync_string!(typeof(this)));
 }
 
-string uvm_sync_string() {
+string uvm_sync_string()() {
   return "mixin(uvm_sync_string!(typeof(this)));\n";
 }
 
@@ -597,7 +597,7 @@ mixin template uvm_scope_sync() {
   mixin(uvm_scope_sync_string!(uvm_scope, typeof(this)));
 }
 
-string uvm_scope_sync_string() {
+string uvm_scope_sync_string()() {
   return "mixin(uvm_scope_sync_string!(uvm_scope));\n";
 }
 
