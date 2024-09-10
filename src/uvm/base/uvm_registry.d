@@ -52,9 +52,9 @@ import uvm.base.uvm_factory: uvm_object_wrapper;
 // @uvm-ieee 1800.2-2020 auto 8.2.3.1
 template uvm_component_registry(T, bool NAMED=true)
 {
-  import uvm.meta.meta: qualifiedTypeName;
+  import std.traits: fullyQualifiedName;
   static if (NAMED)
-    alias uvm_component_registry = uvm_component_registry!(T, qualifiedTypeName!T);
+    alias uvm_component_registry = uvm_component_registry!(T, fullyQualifiedName!T);
   else alias uvm_component_registry = uvm_component_registry!(T, "<unknown>");
 }
 
@@ -189,9 +189,9 @@ class uvm_component_registry(T, string Tname): uvm_object_wrapper
 // @uvm-ieee 1800.2-2020 auto 8.2.4.1
 template uvm_object_registry(T, bool NAMED=true)
 {
-  import uvm.meta.meta: qualifiedTypeName;
+  import std.traits: fullyQualifiedName;
   static if (NAMED)
-    alias uvm_object_registry = uvm_object_registry!(T, qualifiedTypeName!T);
+    alias uvm_object_registry = uvm_object_registry!(T, fullyQualifiedName!T);
   else alias uvm_object_registry = uvm_object_registry!(T, "<unknown>");
 }
 
