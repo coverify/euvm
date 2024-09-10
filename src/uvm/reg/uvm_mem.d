@@ -863,7 +863,7 @@ class uvm_mem: uvm_object, rand.barrier
       status = rw.get_status();
     }
 
-    uvm_info("RegModel", format("Poked memory '%s[%0d]' with value 'h%h",
+    uvm_info("RegModel", format("Poked memory '%s[%0d]' with value 0x%x",
 				get_full_name(), offset, value), uvm_verbosity.UVM_HIGH);
   }
 
@@ -916,7 +916,7 @@ class uvm_mem: uvm_object, rand.barrier
       value  = rw.get_value(0);
     }
 
-    uvm_info("RegModel", format("Peeked memory '%s[%0d]' has value 'h%h",
+    uvm_info("RegModel", format("Peeked memory '%s[%0d]' has value 0x%x",
 				get_full_name(), offset, value), uvm_verbosity.UVM_HIGH);
   }
 
@@ -926,7 +926,7 @@ class uvm_mem: uvm_object, rand.barrier
     synchronized(rw) {
       if (rw.get_offset() >= _m_size) {
 	uvm_error(get_type_name(), 
-		  format("Offset 'h%0h exceeds size of memory, 'h%0h",
+		  format("Offset 0x%0x exceeds size of memory, 0x%0x",
 			 rw.get_offset(), _m_size));
 	rw.set_status(UVM_NOT_OK);
 	return false;
@@ -1097,12 +1097,12 @@ class uvm_mem: uvm_object, rand.barrier
 	value_s = "='{";
 	pre_s = "Burst ";
 	foreach (i, val; rw.get_value())
-	  value_s = value_s ~ format("%0h,", val);
+	  value_s = value_s ~ format("%0x,", val);
 	value_s = value_s[0..$-1] ~ '}';
 	range_s = format("[%0d:%0d]", rw.get_offset(), rw.get_offset()+rw.get_value_size());
       }
       else {
-	value_s = format("=%0h", rw.get_value(0));
+	value_s = format("=%0x", rw.get_value(0));
 	range_s = format("[%0d]", rw.get_offset());
       }
 
@@ -1206,12 +1206,12 @@ class uvm_mem: uvm_object, rand.barrier
 	value_s = "='{";
 	pre_s = "Burst ";
 	foreach (i, v; rw.get_value())
-	  value_s = value_s ~ format("%0h,", v);
+	  value_s = value_s ~ format("%0x,", v);
 	value_s = value_s[0..$-1] ~ '}';
 	range_s = format("[%0d:%0d]", rw.get_offset(), (rw.get_offset() + rw_value_size));
       }
       else {
-	value_s = format("=%0h", rw.get_value(0));
+	value_s = format("=%0x", rw.get_value(0));
 	range_s = format("[%0d]", rw.get_offset());
       }
 
@@ -1535,7 +1535,7 @@ class uvm_mem: uvm_object, rand.barrier
 	  if (val != v) {
 	    uvm_error("RegModel", format("Backdoor read of register %s with" ~
 					 " multiple HDL copies: values are not" ~
-					 " the same: %0h at path '%s', and %0h" ~
+					 " the same: %0x at path '%s', and %0x" ~
 					 " at path '%s'. Returning first value.",
 					 // get_full_name(), rw.value[mem_idx],
 					 get_full_name(), rw.get_value(mem_idx),
@@ -1676,7 +1676,7 @@ class uvm_mem: uvm_object, rand.barrier
 	    parent_map.get_submap_offset(this_map);
 	  prefix ~= "  ";
 	  retval = format("%sMapped in '%s' -- buswidth %0d bytes, %s, " ~
-			  "offset 'h%0h, size 'h%0h, %s\n", prefix,
+			  "offset 0x%0x, size 0x%0x, %s\n", prefix,
 			  this_map.get_full_name(), this_map.get_n_bytes(),
 			  endian_name, offset, get_size(),
 			  get_access(this_map));

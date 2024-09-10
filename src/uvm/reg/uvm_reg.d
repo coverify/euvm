@@ -880,7 +880,7 @@ class uvm_reg: uvm_object, rand.barrier
       status = rw.get_status();
     }
 
-    uvm_info("RegModel", format("Poked register \"%s\": 'h%h",
+    uvm_info("RegModel", format("Poked register \"%s\": 0x%x",
 				get_full_name(), value),uvm_verbosity.UVM_HIGH);
 
     do_predict(rw, UVM_PREDICT_WRITE);
@@ -940,7 +940,7 @@ class uvm_reg: uvm_object, rand.barrier
     status = rw.get_status();
     value = rw.get_value(0);
     
-    uvm_info("RegModel", format("Peeked register \"%s\": 'h%h",
+    uvm_info("RegModel", format("Peeked register \"%s\": 0x%x",
 				get_full_name(), value),uvm_verbosity.UVM_HIGH);
 
     do_predict(rw, UVM_PREDICT_READ);
@@ -1205,9 +1205,9 @@ class uvm_reg: uvm_object, rand.barrier
 	return true;
    
       uvm_error("RegModel",
-		format("Register \"%s\" value read from DUT (0x%h)" ~
-		       " does not match mirrored value (0x%h) " ~
-		       "(valid bit mask = 0x%h)",
+		format("Register \"%s\" value read from DUT (0x%x)" ~
+		       " does not match mirrored value (0x%x) " ~
+		       "(valid bit mask = 0x%x)",
 		       get_full_name(), actual,
 		       expected, valid_bits_mask));
                                      
@@ -1222,7 +1222,7 @@ class uvm_reg: uvm_object, rand.barrier
 
 	  if (val !is exp) {
 	    uvm_info("RegModel",
-		     format("Field %s (%s[%0d:%0d]) mismatch read=%0d'h%0h mirrored=%0d'h%0h ",
+		     format("Field %s (%s[%0d:%0d]) mismatch read=(%0d)%0x mirrored=%(0d)%0x ",
 			    field.get_name(), get_full_name(),
 			    field.get_lsb_pos() + field.get_n_bits() - 1,
 			    field.get_lsb_pos(),
@@ -1429,7 +1429,7 @@ class uvm_reg: uvm_object, rand.barrier
       }
       else
 	path_s = (get_backdoor() !is null) ? "user backdoor" : "DPI backdoor";
-      string value_s = format("=0x%0h",rw.get_value(0));
+      string value_s = format("=0x%0x",rw.get_value(0));
 
       uvm_report_info("RegModel", "Wrote register via " ~ path_s ~ ": " ~
 		      get_full_name() ~ value_s, uvm_verbosity.UVM_HIGH);
@@ -1669,7 +1669,7 @@ class uvm_reg: uvm_object, rand.barrier
       else
 	path_s = (get_backdoor() !is null) ? "user backdoor" : "DPI backdoor";
 
-      value_s = format("=0x%0h", rw.get_value(0));
+      value_s = format("=0x%0x", rw.get_value(0));
 
       uvm_report_info("RegModel", "Read  register via " ~ path_s ~ ": " ~
 		      get_full_name() ~ value_s, uvm_verbosity.UVM_HIGH);
@@ -2018,7 +2018,7 @@ class uvm_reg: uvm_object, rand.barrier
 	  uvm_error("RegModel",
 		    format("Backdoor read of register %s with " ~
 			   "multiple HDL copies: values are not" ~
-			   " the same: %0h at path '%s', and %0h" ~
+			   " the same: %0x at path '%s', and %0x" ~
 			   " at path '%s'. Returning first value.",
 			   get_full_name(),
 			   rw.get_value(0), uvm_hdl_concat2string(doors[0]),
@@ -2174,7 +2174,7 @@ class uvm_reg: uvm_object, rand.barrier
 
       string prefix;
 
-      string retval = format("Register %s -- %0d bytes, mirror value:'h%h",
+      string retval = format("Register %s -- %0d bytes, mirror value:0x%x",
 			     get_full_name(), get_n_bytes(),get());
 
       if (_m_maps.length == 0)
@@ -2193,7 +2193,7 @@ class uvm_reg: uvm_object, rand.barrier
 	  prefix ~= "  ";
 	  uvm_endianness_e e = this_map.get_endian();
 	  retval ~= format("%sMapped in '%s' -- %d bytes, %s," ~
-			   " offset 'h%0h\n", prefix,
+			   " offset 0x%0x\n", prefix,
 			   this_map.get_full_name(),
 			   this_map.get_n_bytes(), e, offset);
 	}

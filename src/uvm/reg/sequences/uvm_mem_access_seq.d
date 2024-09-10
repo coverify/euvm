@@ -171,7 +171,7 @@ class uvm_mem_single_access_seq: uvm_reg_sequence!(uvm_sequence!(uvm_reg_item))
 	  }
 	  else {
 	    if (val !is exp) {
-	      uvm_error("uvm_mem_access_seq", format("Backdoor \"%s[%0d]\" read back as 'h%h instead of 'h%h.",
+	      uvm_error("uvm_mem_access_seq", format("Backdoor \"%s[%0d]\" read back as 0x%x instead of 0x%x.",
 						     mem.get_full_name(), k, val, exp));
 	    }
 	  }
@@ -191,13 +191,13 @@ class uvm_mem_single_access_seq: uvm_reg_sequence!(uvm_sequence!(uvm_reg_item))
 	  else {
 	    if (mode == "WO") {
 	      if (val !is uvm_reg_data_t(0)) {
-		uvm_error("uvm_mem_access_seq", format("Front door \"%s[%0d]\" read back as 'h%h instead of 'h%h.",
+		uvm_error("uvm_mem_access_seq", format("Front door \"%s[%0d]\" read back as 0x%x instead of 0x%x.",
 						       mem.get_full_name(), k, val, 0));
 	      }
 	    }
 	    else {
 	      if (val !is exp) {
-		uvm_error("uvm_mem_access_seq", format("Front door \"%s[%0d]\" read back as 'h%h instead of 'h%h.",
+		uvm_error("uvm_mem_access_seq", format("Front door \"%s[%0d]\" read back as 0x%x instead of 0x%x.",
 						       mem.get_full_name(), k, val, exp));
 	      }
 	    }

@@ -207,7 +207,7 @@ class uvm_reg_single_bit_bash_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
       val &= ~dc_mask;
       if (val != exp) {
 	uvm_error("uvm_reg_bit_bash_seq",
-		  format("Writing a %b in bit #%0d of register \"%s\" with initial value 'h%h yielded 'h%h instead of 'h%h",
+		  format("Writing a %b in bit #%0d of register \"%s\" with initial value 0x%x yielded 0x%x instead of 0x%x",
 			 bit_val, k, rg.get_full_name(), v, val, exp));
       }
     }

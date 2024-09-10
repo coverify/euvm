@@ -260,7 +260,7 @@ class uvm_vreg_field: uvm_object
     this.parent.XatomicX(1);
 
     if (value >> this.size) {
-      uvm_warning("RegModel", format("Writing value 'h%h that is greater" ~
+      uvm_warning("RegModel", format("Writing value 0x%x that is greater" ~
 				     " than field \"%s\" size (%0d bits)",
 				     value, this.get_full_name(),
 				     this.get_n_bits()));
@@ -354,7 +354,7 @@ class uvm_vreg_field: uvm_object
 
 
     uvm_info("RegModel", format("Wrote virtual field \"%s\"[%0d] via %s" ~
-				" with: 'h%h", this.get_full_name(), idx,
+				" with: 0x%x", this.get_full_name(), idx,
 				(path == UVM_FRONTDOOR) ? "frontdoor" : "backdoor",
 				value),uvm_verbosity.UVM_MEDIUM);
 
@@ -456,7 +456,7 @@ class uvm_vreg_field: uvm_object
 
     this.parent.XatomicX(0);
 
-    uvm_info("RegModel", format("Read virtual field \"%s\"[%0d] via %s: 'h%h",
+    uvm_info("RegModel", format("Read virtual field \"%s\"[%0d] via %s: 0x%x",
 				this.get_full_name(), idx,
 				(path == UVM_FRONTDOOR) ? "frontdoor" : "backdoor",
 				value),uvm_verbosity.UVM_MEDIUM);
@@ -495,7 +495,7 @@ class uvm_vreg_field: uvm_object
     this.parent.XatomicX(1);
 
     if (value >> this.size) {
-      uvm_warning("RegModel", format("Writing value 'h%h that is greater " ~
+      uvm_warning("RegModel", format("Writing value 0x%x that is greater " ~
 				     "than field \"%s\" size (%0d bits)",
 				     value, this.get_full_name(),
 				     this.get_n_bits()));
@@ -566,7 +566,7 @@ class uvm_vreg_field: uvm_object
 
     this.parent.XatomicX(0);
 
-    uvm_info("RegModel", format("Wrote virtual field \"%s\"[%0d] with: 'h%h",
+    uvm_info("RegModel", format("Wrote virtual field \"%s\"[%0d] with: 0x%x",
 				this.get_full_name(), idx, value),uvm_verbosity.UVM_MEDIUM);
 
     this.fname = "";
@@ -635,7 +635,7 @@ class uvm_vreg_field: uvm_object
     this.parent.XatomicX(0);
 
     uvm_info("RegModel",
-	     format("Peeked virtual field \"%s\"[%0d]: 'h%h",
+	     format("Peeked virtual field \"%s\"[%0d]: 0x%x",
 		    this.get_full_name(), idx, value),uvm_verbosity.UVM_MEDIUM);
 
     this.fname = "";

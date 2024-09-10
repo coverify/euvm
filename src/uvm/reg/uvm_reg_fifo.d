@@ -283,7 +283,7 @@ class uvm_reg_fifo: uvm_reg
 	_fifo.popFront(mirror_val);
 	if (this.value.get_compare() == UVM_CHECK && mirror_val != value) {
 	  uvm_warning("MIRROR_MISMATCH",
-		      format("Observed DUT read value 'h%0h != mirror value 'h%0h",
+		      format("Observed DUT read value 0x%0x != mirror value 0x%0x",
 			     value, mirror_val));
 	}
       }

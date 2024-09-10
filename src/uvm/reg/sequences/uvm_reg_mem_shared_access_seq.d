@@ -171,7 +171,7 @@ class uvm_reg_shared_access_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
 			rg.get_full_name(), map.get_full_name), uvm_verbosity.UVM_LOW);
          
 	uvm_info("uvm_reg_shared_access_seq",
-		 format("Writing 'h%h over 'h%h", v, prev), uvm_verbosity.UVM_DEBUG);
+		 format("Writing 0x%x over 0x%x", v, prev), uvm_verbosity.UVM_DEBUG);
          
 	rg.write(status, v, uvm_door_e.UVM_FRONTDOOR, map, this);
 	if (status != uvm_status_e.UVM_IS_OK) {
@@ -196,12 +196,12 @@ class uvm_reg_shared_access_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
 			     status, rg.get_full_name(), map_.get_full_name()));
 	  }
             
-	  uvm_info("uvm_reg_shared_access_seq", format("Read 'h%h, expecting 'h%h",
+	  uvm_info("uvm_reg_shared_access_seq", format("Read 0x%x, expecting 0x%x",
 			  actual, exp),uvm_verbosity.UVM_DEBUG);
             
 	  if (actual != exp) {
 	    uvm_error("uvm_reg_shared_access_seq",
-		      format("Register \"%s\" through map \"%s\" is 'h%h instead of 'h%h after writing 'h%h via map \"%s\" over 'h%h.",
+		      format("Register \"%s\" through map \"%s\" is 0x%x instead of 0x%x after writing 0x%x via map \"%s\" over 0x%x.",
 			     rg.get_full_name(), map_.get_full_name(), actual, exp, v, map_.get_full_name(), prev));
 	  }
 	}
@@ -363,7 +363,7 @@ class uvm_mem_shared_access_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
 	    exp &= (1L << mem.get_n_bits()) - 1;
 	    if (actual !is exp) {
 	      uvm_error("uvm_mem_shared_access_seq",
-			format("%s[%0d] through map \"%s\" is 'h%h instead of 'h%h after writing 'h%h via map \"%s\" over 'h%h.",
+			format("%s[%0d] through map \"%s\" is 0x%x instead of 0x%x after writing 0x%x via map \"%s\" over 0x%x.",
 			       mem.get_full_name(), offset, map_.get_full_name(), actual, exp, v, map.get_full_name(), prev));
 	    }
 	  }

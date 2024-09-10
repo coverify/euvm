@@ -239,13 +239,13 @@ class uvm_reg_predictor(BUSTYPE): uvm_component
               rg.do_predict(reg_item, predict_kind, rw.byte_en);
               if (reg_item.get_kind() == UVM_WRITE)
                 uvm_info("REG_PREDICT", "Observed WRITE transaction to register " ~
-			 ir.get_full_name() ~ ": value='h" ~
-			 format("%0h",reg_item.get_value(0)) ~ " : updated value = 'h" ~
-			 format("%0h",ir.get()), UVM_HIGH);
+			 ir.get_full_name() ~ ": value=0x" ~
+			 format("%0x",reg_item.get_value(0)) ~ " : updated value = 0x" ~
+			 format("%0x",ir.get()), UVM_HIGH);
               else
                 uvm_info("REG_PREDICT", "Observed READ transaction to register " ~
-			 ir.get_full_name() ~ ": value='h" ~
-			 format("%0h",reg_item.get_value(0)), UVM_HIGH);
+			 ir.get_full_name() ~ ": value=0x" ~
+			 format("%0x",reg_item.get_value(0)), UVM_HIGH);
               reg_ap.write(reg_item);
               _m_pending.remove(rg);
 	    }

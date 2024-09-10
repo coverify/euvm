@@ -222,17 +222,17 @@ class uvm_reg_item: uvm_sequence_item
 	  uvm_report_enabled(uvm_verbosity.UVM_HIGH, uvm_severity.UVM_INFO, "RegModel")) {
 	value_s = cast(char[]) "'{";
 	foreach (v; _value) {
-	  value_s ~= cast(char[]) format("%0h,", v);
+	  value_s ~= cast(char[]) format("%0x,", v);
 	}
 	value_s[$-1] = '}';
       }
       else {
-	value_s = cast(char[]) format("%0h", _value[0]);
+	value_s = cast(char[]) format("%0x", _value[0]);
       }
       s ~= " value=" ~ value_s;
 
       if (_element_kind == UVM_MEM) {
-	s ~= format(" offset=%0h", _offset);
+	s ~= format(" offset=%0x", _offset);
       }
       s ~= " map=" ~ (_map is null ? "null" : _map.get_full_name()) ~
 	" path=" ~ _door.to!string;

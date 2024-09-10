@@ -514,7 +514,7 @@ class uvm_reg_field: uvm_object
       _m_lineno = lineno;
       if (value >> _m_size) {
 	uvm_warning("RegModel",
-		    format("Specified value (0x%h) greater than field \"%s\" size (%0d bits)",
+		    format("Specified value (0x%x) greater than field \"%s\" size (%0d bits)",
 			   value, get_name(), _m_size));
 	value &= mask;
       }
@@ -1451,7 +1451,9 @@ class uvm_reg_field: uvm_object
       string prefix;
       uvm_reg reg_=get_register();
 
-      string fmt = format("%0d'h%%%0dh", get_n_bits(),
+      // string fmt = format("%0d'h%%%0dh", get_n_bits(),
+      // 			  (get_n_bits()-1)/4 + 1);
+      string fmt = format("0x%%%0dx", // get_n_bits(),
 			  (get_n_bits()-1)/4 + 1);
       retval = format("%s %s %s[%0d:%0d]=" ~ fmt ~ "%s", prefix,
 			       get_access(),

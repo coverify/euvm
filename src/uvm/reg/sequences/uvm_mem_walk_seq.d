@@ -172,8 +172,8 @@ class uvm_mem_single_walk_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
 	    exp = ~kk & mask;
 	    if (val != exp) {
 	      uvm_error("uvm_mem_walk_seq",
-			format("\"%s[%0d-1]\" read back as 'h%h" ~
-			       " instead of 'h%h.",
+			format("\"%s[%0d-1]\" read back as 0x%x" ~
+			       " instead of 0x%x.",
 			       mem.get_full_name(), k, val, exp));
                      
 	    }
@@ -199,7 +199,7 @@ class uvm_mem_single_walk_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
 	    exp = ~kk & mask;
 	    if (val !is exp) {
 	      uvm_error("uvm_mem_walk_seq",
-			format("\"%s[%0d]\" read back as 'h%h instead of 'h%h.",
+			format("\"%s[%0d]\" read back as 0x%x instead of 0x%x.",
 			       mem.get_full_name(), k, val, exp));
 	    }
 	  }
