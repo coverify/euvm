@@ -58,6 +58,10 @@ class uvm_vpi_driver(REQ, string VPI_PREFIX): uvm_driver!REQ, rand.barrier
     return "$" ~ vpi_task_prefix ~ "_item_done";
   }
 
+  string vpi_update_task() {	// for full duplex implementation
+    return "$" ~ vpi_task_prefix ~ "_update";
+  }
+
   override void build_phase(uvm_phase phase) {
     super.build_phase(phase);
     req_fifo = new uvm_tlm_vpi_push_fifo!(REQ)("req_fifo", this,
@@ -142,6 +146,42 @@ class uvm_vpi_driver(REQ, string VPI_PREFIX): uvm_driver!REQ, rand.barrier
     }
   }
 
+  static int vpi_update_task_calltf(char* user_data) {
+    try {
+      DRIVER drv = cast(DRIVER) user_data;
+      assert(drv !is null);
+      assert(drv._vpi_iter !is null);
+      drv._vpi_systf_handle = vpi_handle(vpiSysTfCall, null);
+      assert(drv._vpi_systf_handle !is null);
+      drv._vpi_arg_iterator = vpi_iterate(vpiArgument, drv._vpi_systf_handle);
+      assert(drv._vpi_arg_iterator !is null);
+      drv._vpi_iter.assign(drv._vpi_arg_iterator, drv.vpi_update_task);
+      drv._vpi_req.do_vpi_get(drv._vpi_iter);
+      vpiReturnVal(VpiStatus.SUCCESS);
+      return 0;
+    }
+    catch (SimTerminatedException) {
+      import std.stdio;
+      stderr.writeln(" > Sending vpiFinish signal to the Verilog Simulator");
+      vpi_control(vpiFinish, 1);
+      vpiReturnVal(VpiStatus.FINISHED);
+      return 0;
+    }
+    catch (AsyncLockDisabledException) {
+      // import std.stdio;
+      // stderr.writeln(" > Sending vpiFinish signal to the Verilog Simulator");
+      // vpi_control(vpiFinish, 1);
+      vpiReturnVal(VpiStatus.DISABLED);
+      return 0;
+    }
+    catch (Throwable e) {
+      import std.stdio: stderr;
+      stderr.writeln("VPI Task call threw exception: ", e);
+      vpiReturnVal(VpiStatus.UNKNOWN);
+      return 0;
+    }
+  }
+  
   static int vpi_item_done_calltf(char* user_data) {
     try {
       DRIVER drv = cast(DRIVER) user_data;
@@ -202,6 +242,20 @@ class uvm_vpi_driver(REQ, string VPI_PREFIX): uvm_driver!REQ, rand.barrier
       tf_data.sizetf      = null;
       tf_data.tfname = cast(char*) vpi_item_done_task.toStringz;
       tf_data.calltf = &vpi_item_done_calltf;
+      // tf_data.compiletf = &pull_avmm_compiletf;
+      tf_data.user_data = cast(char*) this;
+      vpi_register_systf(&tf_data);
+    }
+    {
+      s_vpi_systf_data tf_data;
+      uvm_info("VPIREG", "Registering vpi system task: " ~
+	       vpi_update_task, uvm_verbosity.UVM_DEBUG);
+      tf_data.type = vpiSysFunc;
+      tf_data.sysfunctype = vpiIntFunc;
+      tf_data.compiletf   = null;
+      tf_data.sizetf      = null;
+      tf_data.tfname = cast(char*) vpi_update_task.toStringz;
+      tf_data.calltf = &vpi_update_task_calltf;
       // tf_data.compiletf = &pull_avmm_compiletf;
       tf_data.user_data = cast(char*) this;
       vpi_register_systf(&tf_data);
