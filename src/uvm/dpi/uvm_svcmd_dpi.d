@@ -33,7 +33,8 @@ public string[][] uvm_dpi_get_args() {
   string[] argv;
   string[][] argvs;
 
-  bool vpiUsable = cast(bool) vpi_get_vlog_info(&info);
+  bool use_vpi_args = cast(bool) vpi_get_vlog_info(&info) &&
+                      vpiGetProduct() != "Verilator";
 
   auto vlogArgv = info.argv;
   auto vlogArgc = info.argc;
@@ -44,7 +45,7 @@ public string[][] uvm_dpi_get_args() {
 
   uint argc;
 
-  if(vpiUsable) {
+  if(use_vpi_args) {
     argc = vlogArgc;
     if (vlogArgv is null) return argvs;
   }
@@ -58,7 +59,7 @@ public string[][] uvm_dpi_get_args() {
   for (size_t i=0; i != argc; ++i) {
 
     string arg;
-    if(vpiUsable) {
+    if(use_vpi_args) {
       char* vlogArg = *(vlogArgv+i);
       arg = (vlogArg++).to!string;
     }
