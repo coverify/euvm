@@ -3130,15 +3130,13 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
 	enum FLAGS = uvm_comp_auto_get_flags!(t, I);
 	alias EE = UVM_ELEMENT_TYPE!(typeof(t.tupleof[I]));
 	static if ((is (EE: uvm_component) ||
-		    is (EE: uvm_port_base!IF, IF)) &&
-		   FLAGS != 0) {
-	  _esdl__Multicore pflags;
+		    is (EE: uvm_port_base!IF, IF))) {
 	  if (what == uvm_comp_auto_enum.UVM_BUILD &&
 	      ((! (FLAGS & uvm_comp_auto_enum.UVM_NOBUILD)) &&
 	       (FLAGS & uvm_comp_auto_enum.UVM_BUILD))) {
 	    _m_uvm_component_automation(t.tupleof[I], what,
 					  t.tupleof[I].stringof[2..$],
-					  FLAGS, pflags, t);
+					  FLAGS, _esdl__Multicore.init, t);
 	  }
 	  else if (what == uvm_comp_auto_enum.UVM_BUILD_IF_ACTIVE &&
 		   ((! (FLAGS & uvm_comp_auto_enum.UVM_NOBUILD)) &&
@@ -3147,7 +3145,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
 	      if (t.get_is_active()) {
 		_m_uvm_component_automation(t.tupleof[I], what,
 					    t.tupleof[I].stringof[2..$],
-					    FLAGS, pflags, t);
+					    FLAGS, _esdl__Multicore.init, t);
 	      }
 	    }
 	    else {
@@ -3161,7 +3159,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
 	  else if (what == uvm_comp_auto_enum.UVM_PARALLELIZE//  &&
 		   // (FLAGS & uvm_comp_auto_enum.UVM_PARALLELIZE)
 		   ) {
-	    pflags = _esdl__uda!(_esdl__Multicore, T, I);
+	    _esdl__Multicore pflags = _esdl__uda!(_esdl__Multicore, T, I);
 	    _m_uvm_component_automation(t.tupleof[I], what,
 					t.tupleof[I].stringof[2..$],
 					FLAGS, pflags, null);
