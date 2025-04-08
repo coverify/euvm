@@ -291,7 +291,7 @@ class uvm_reg_block: uvm_object, rand.barrier
   // It is also the implciit address map for a block with a single,
   // unamed address map because it has only one physical interface.
   //
-  @uvm_protected_sync
+  @uvm_public_sync
   private uvm_reg_map _default_map;
 
 
