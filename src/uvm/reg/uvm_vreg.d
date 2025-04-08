@@ -795,7 +795,7 @@ class uvm_vreg: uvm_object, rand.barrier
       uvm_vreg_field f = field;
 
       lsb = f.get_lsb_pos_in_register();
-      msk = ((1<<f.get_n_bits())-1) << lsb;
+      msk = ((UVM_REG_DATA_1 << f.get_n_bits())-1) << lsb;
       tmp = (value & msk) >> lsb;
 
       f.pre_write(idx, tmp, path, map);
@@ -823,7 +823,7 @@ class uvm_vreg: uvm_object, rand.barrier
     for (int i = 0; i < this.get_n_memlocs(); i++) {
       uvm_status_e s;
 
-      msk = ((1<<(this.mem.get_n_bytes()*8))-1) << lsb;
+      msk = ((UVM_REG_DATA_1 << (this.mem.get_n_bytes()*8)) - 1) << lsb;
       tmp = (value & msk) >> lsb;
       this.mem.write(s, (addr + i), tmp, path,
 		     map, parent, -1, extension, fname, lineno);
@@ -843,7 +843,7 @@ class uvm_vreg: uvm_object, rand.barrier
       uvm_vreg_field f = field;
 
       lsb = f.get_lsb_pos_in_register();
-      msk = ((1<<f.get_n_bits())-1) << lsb;
+      msk = ((UVM_REG_DATA_1 << f.get_n_bits()) - 1) << lsb;
       tmp = (value & msk) >> lsb;
 
       for (uvm_vreg_field_cbs cb = fcbs.first(); cb !is null;
@@ -951,7 +951,7 @@ class uvm_vreg: uvm_object, rand.barrier
 
       lsb = f.get_lsb_pos_in_register();
 
-      msk = ((1<<f.get_n_bits())-1) << lsb;
+      msk = ((UVM_REG_DATA_1 << f.get_n_bits()) - 1) << lsb;
       tmp = (value & msk) >> lsb;
 
       for (uvm_vreg_field_cbs cb = fcbs.first(); cb !is null;
@@ -1003,7 +1003,7 @@ class uvm_vreg: uvm_object, rand.barrier
     for (int i = 0; i < this.get_n_memlocs(); i++) {
       uvm_status_e s;
 
-      uvm_reg_data_t  msk = ((1<<(this.mem.get_n_bytes() * 8))-1) << lsb;
+      uvm_reg_data_t  msk = ((UVM_REG_DATA_1 << (this.mem.get_n_bytes() * 8)) - 1) << lsb;
       uvm_reg_data_t  tmp = (value & msk) >> lsb;
 
       this.mem.poke(status, addr + i, tmp,

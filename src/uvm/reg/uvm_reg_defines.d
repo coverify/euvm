@@ -22,6 +22,7 @@
 //----------------------------------------------------------------------
 
 module uvm.reg.uvm_reg_defines;
+import esdl.data.bvec: ubvec, UBVEC;
 
 //------------------------
 // Group -- NODOCS -- Register Defines
@@ -45,6 +46,7 @@ enum int UVM_REG_ADDR_WIDTH = 64;
 //
 // @uvm-ieee 1800.2-2020 auto B.6.5
 enum int UVM_REG_DATA_WIDTH = 64;
+enum ubvec!UVM_REG_DATA_WIDTH UVM_REG_DATA_1 = UBVEC!(UVM_REG_DATA_WIDTH, 1);
 
 
 // Macro -- NODOCS -- `UVM_REG_BYTENABLE_WIDTH

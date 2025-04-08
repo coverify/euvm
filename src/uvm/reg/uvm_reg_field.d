@@ -188,7 +188,7 @@ class uvm_reg_field: uvm_object
   constraint!q{
     if (UVM_REG_DATA_WIDTH > _m_size) {
       // _value < (UVM_REG_DATA_WIDTH'h1 << _m_size);
-      _value < (1L << _m_size);
+      _value < (UVM_REG_DATA_1 << _m_size);
     }
   } uvm_reg_field_valid;
 
@@ -622,7 +622,7 @@ class uvm_reg_field: uvm_object
   void set_reset(uvm_reg_data_t value,
 		 string kind = "HARD") {
     synchronized(this) {
-      _m_reset[kind] = value & ((1L << _m_size) - 1);
+      _m_reset[kind] = value & ((UVM_REG_DATA_1 << _m_size) - 1);
     }
   }
 
@@ -738,7 +738,7 @@ class uvm_reg_field: uvm_object
 	uvm_warning("RegModel",
 		    "poke(): Value exceeds size of field '" ~
 		    get_name() ~ "'");
-	value &= value & ((1<<_m_size)-1);
+	value &= value & ((UVM_REG_DATA_1 << _m_size) - 1);
       }
     }
     m_parent.XatomicX(1);
@@ -760,7 +760,7 @@ class uvm_reg_field: uvm_object
       
 
     // Force the value for this field then poke the resulting value
-    tmp &= ~(((1<<m_size)-1) << m_lsb);
+    tmp &= ~(((UVM_REG_DATA_1 << m_size) - 1) << m_lsb);
     tmp |= value << m_lsb;
     m_parent.poke(status, tmp, kind, parent, extension, fname, lineno);
 
@@ -785,7 +785,7 @@ class uvm_reg_field: uvm_object
     }
 
     m_parent.peek(status, reg_value, kind, parent, extension, fname, lineno);
-    value = (reg_value >> m_lsb) & ((1L << m_size))-1;
+    value = (reg_value >> m_lsb) & ((UVM_REG_DATA_1 << m_size)) - 1;
   }
                
 
@@ -955,7 +955,7 @@ class uvm_reg_field: uvm_object
 			    uvm_reg_data_t wr_val,
 			    uvm_reg_map    map) {
     synchronized(this) {
-      uvm_reg_data_t mask = (1L << _m_size)-1;
+      uvm_reg_data_t mask = (UVM_REG_DATA_1 << _m_size) - 1;
    
       switch (get_access(map)) {
       case "RO":    return cur_val;
@@ -1026,7 +1026,7 @@ class uvm_reg_field: uvm_object
       case "WO1":   retval = _m_desired; break;
       default: retval = _m_desired; break;
       }
-      retval &= (1L << _m_size) - 1;
+      retval &= (UVM_REG_DATA_1 << _m_size) - 1;
       return retval;
     }
   }
@@ -1107,7 +1107,7 @@ class uvm_reg_field: uvm_object
 	uvm_warning("RegModel", "write(): Value greater than field '" ~ 
 		    get_full_name() ~ "'");
 	uvm_reg_data_t tmp_value = rw.get_value(0);
-	tmp_value &= ((1<<m_size)-1);
+	tmp_value &= ((UVM_REG_DATA_1 << m_size) - 1);
 	rw.set_value(tmp_value, 0);
       }
 
@@ -1132,7 +1132,7 @@ class uvm_reg_field: uvm_object
 	  // These...
 	case "W0C", "W0S", "W0T", "W0SRC", "W0CRS":
 	  // Use all 1's
-	  value_adjust |= ((1<<fields[i].get_n_bits())-1) << fields[i].get_lsb_pos();
+	  value_adjust |= ((UVM_REG_DATA_1 << fields[i].get_n_bits()) - 1) << fields[i].get_lsb_pos();
 	  break;
 
 	  // These might have side effects! Bad!
@@ -1231,7 +1231,7 @@ class uvm_reg_field: uvm_object
       rw.set_element_kind(UVM_REG);
       rw.set_element(_m_parent);
       m_parent.do_read(rw);
-      rw.set_value((rw.get_value(0) >> m_lsb) & ((1<<m_size))-1, 0);
+      rw.set_value((rw.get_value(0) >> m_lsb) & ((UVM_REG_DATA_1 << m_size)) - 1, 0);
       bad_side_effect = true;
     }
     else {
@@ -1242,7 +1242,7 @@ class uvm_reg_field: uvm_object
 	bad_side_effect = true;
 	m_parent.do_read(rw);
 	uvm_reg_data_t value = rw.get_value(0);
-	rw.set_value((value >> m_lsb) & ((1L << m_size))-1, 0);
+	rw.set_value((value >> m_lsb) & ((UVM_REG_DATA_1 << m_size)) - 1, 0);
       }
       else {
 
@@ -1315,7 +1315,7 @@ class uvm_reg_field: uvm_object
 		  uvm_reg_byte_en_t be =  -1) {
     synchronized(this) {
       // uvm_reg_data_t field_val = rw.value[0] & ((1 << _m_size)-1);
-      uvm_reg_data_t field_val = rw.get_value(0) & ((1L << _m_size)-1);
+      uvm_reg_data_t field_val = rw.get_value(0) & ((UVM_REG_DATA_1 << _m_size) - 1);
 
       if (rw.get_status() != UVM_NOT_OK)
 	rw.set_status(UVM_IS_OK);
@@ -1341,7 +1341,7 @@ class uvm_reg_field: uvm_object
 	  cb.post_predict(this, _m_mirrored, field_val, 
 			  UVM_PREDICT_WRITE, rw.get_door(), rw.get_map());
 
-	field_val &= (1L << _m_size)-1;
+	field_val &= (UVM_REG_DATA_1 << _m_size) - 1;
 	break;
 
       case UVM_PREDICT_READ:
@@ -1363,7 +1363,7 @@ class uvm_reg_field: uvm_object
 		   acc == "WCRS" ||
 		   acc == "W1CRS" ||
 		   acc == "W0CRS")
-	    field_val = (1L << _m_size)-1; // all 1's (set)
+	    field_val = (UVM_REG_DATA_1 << _m_size) - 1; // all 1's (set)
 
 	  else if (acc == "WO" ||
 		   acc == "WOC" ||
@@ -1377,7 +1377,7 @@ class uvm_reg_field: uvm_object
 	  cb.post_predict(this, _m_mirrored, field_val,
 			  UVM_PREDICT_READ, rw.get_door(), rw.get_map());
 	}
-	field_val &= (1L << _m_size)-1;
+	field_val &= (UVM_REG_DATA_1 << _m_size) - 1;
 	break;
 
       case UVM_PREDICT_DIRECT:

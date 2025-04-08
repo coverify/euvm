@@ -264,7 +264,7 @@ class uvm_vreg_field: uvm_object
 				     " than field \"%s\" size (%0d bits)",
 				     value, this.get_full_name(),
 				     this.get_n_bits()));
-      value &= ((1<<this.size)-1);
+      value &= ((UVM_REG_DATA_1 << this.size) - 1);
     }
     uvm_reg_data_t  tmp = 0;
 
@@ -307,7 +307,7 @@ class uvm_vreg_field: uvm_object
 	return;
       }
 
-      value = (value << rmwbits) | (tmp & ((1<<rmwbits)-1));
+      value = (value << rmwbits) | (tmp & ((UVM_REG_DATA_1 << rmwbits) - 1));
     }
 
     // Any bits on the MSB side we need to RMW?
@@ -328,7 +328,7 @@ class uvm_vreg_field: uvm_object
 	  return;
 	}
       }
-      value |= (tmp & ~((1<<rmwbits)-1)) << ((segn-1)*segsiz);
+      value |= (tmp & ~((UVM_REG_DATA_1 << rmwbits) - 1)) << ((segn-1)*segsiz);
     }
 
     // Now write each of the segments
@@ -442,7 +442,7 @@ class uvm_vreg_field: uvm_object
     value = value >> lsb;
 
     // Any bits on the MSB side we need to get rid of?
-    value &= (1<<this.get_n_bits()) - 1;
+    value &= (UVM_REG_DATA_1 << this.get_n_bits()) - 1;
 
     this.post_read(idx, value, path, map, status);
     for (uvm_vreg_field_cbs cb = cbs.first(); cb !is null;
@@ -499,7 +499,7 @@ class uvm_vreg_field: uvm_object
 				     "than field \"%s\" size (%0d bits)",
 				     value, this.get_full_name(),
 				     this.get_n_bits()));
-      value &= value & ((1<<this.size)-1);
+      value &= value & ((UVM_REG_DATA_1 << this.size) - 1);
     }
     uvm_reg_data_t  tmp = 0;
 
@@ -530,7 +530,7 @@ class uvm_vreg_field: uvm_object
 	return;
       }
 
-      value = (value << rmwbits) | (tmp & ((1<<rmwbits)-1));
+      value = (value << rmwbits) | (tmp & ((UVM_REG_DATA_1 << rmwbits) - 1));
     }
 
     // Any bits on the MSB side we need to RMW?
@@ -551,7 +551,7 @@ class uvm_vreg_field: uvm_object
 	  return;
 	}
       }
-      value |= (tmp & ~((1<<rmwbits)-1)) << ((segn-1)*segsiz);
+      value |= (tmp & ~((UVM_REG_DATA_1 << rmwbits) - 1)) << ((segn-1)*segsiz);
     }
 
     // Now write each of the segments
@@ -630,7 +630,7 @@ class uvm_vreg_field: uvm_object
     value = value >> lsb;
 
     // Any bits on the MSB side we need to get rid of?
-    value &= (1<<this.get_n_bits()) - 1;
+    value &= (UVM_REG_DATA_1 << this.get_n_bits()) - 1;
 
     this.parent.XatomicX(0);
 

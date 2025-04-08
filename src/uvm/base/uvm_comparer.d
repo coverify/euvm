@@ -688,7 +688,7 @@ class uvm_comparer: uvm_policy
       }
 
       mask = -1;
-      mask >>= (64-size);
+      mask >>= (64 - size);
       if ((lhs & mask) != (rhs & mask)) {
 	switch (radix) {
 	  import std.string: format;

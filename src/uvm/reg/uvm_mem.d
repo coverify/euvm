@@ -57,6 +57,7 @@ import uvm.reg.uvm_vreg: uvm_vreg;
 import uvm.reg.uvm_vreg_field: uvm_vreg_field;
 import uvm.reg.uvm_mem_mam: uvm_mem_mam, uvm_mem_mam_cfg;
 import uvm.reg.uvm_reg_model;
+import uvm.reg.uvm_reg_defines: UVM_REG_DATA_1;
 
 import uvm.base.uvm_object: uvm_object;
 import uvm.base.uvm_printer: uvm_printer;
@@ -844,7 +845,7 @@ class uvm_mem: uvm_object, rand.barrier
       rw.set_element_kind(UVM_MEM);
       rw.set_kind(UVM_WRITE);
       rw.set_offset(offset);
-      rw.set_value(value & ((1L << _m_n_bits)-1), 0);
+      rw.set_value(value & ((UVM_REG_DATA_1 << _m_n_bits)-1), 0);
       rw.set_bd_kind(kind);
       rw.set_parent_sequence(parent);
       rw.set_extension(extension);
@@ -1476,7 +1477,7 @@ class uvm_mem: uvm_object, rand.barrier
 	    continue;
 	  }
 	  uvm_reg_data_t slice = v >> sl.offset;
-	  slice &= (1L << sl.size)-1;
+	  slice &= (UVM_REG_DATA_1 << sl.size) - 1;
 	  ok &= uvm_hdl_deposit(sl.path ~ "[" ~ idx ~ "]", slice);
 	}
       }
@@ -1527,7 +1528,7 @@ class uvm_mem: uvm_object, rand.barrier
 	  }
   
 
-	  val &= (1L << _m_n_bits)-1;
+	  val &= (UVM_REG_DATA_1 << _m_n_bits) - 1;
 
 	  if (i == 0)
 	    v = val;

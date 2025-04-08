@@ -145,7 +145,7 @@ class uvm_reg_single_bit_bash_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
 	while (next_lsb < lsb) mode[next_lsb++] = "RO";
             
 	for (size_t repeat=0; repeat!=w; ++repeat) {
-	  mode[next_lsb] = field.get_access(map);
+	  mode[next_lsb] = field_access;
 	  dc_mask[next_lsb] = dc;
 	  next_lsb++;
 	}

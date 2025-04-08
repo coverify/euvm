@@ -32,6 +32,7 @@ import uvm.reg.uvm_reg_item: uvm_reg_item;
 import uvm.reg.uvm_reg_model;
 import uvm.reg.uvm_reg_cbs: uvm_reg_cbs;
 import uvm.reg.uvm_reg: uvm_reg;
+import uvm.reg.uvm_reg_defines: UVM_REG_DATA_1;
 
 import uvm.base.uvm_callback: uvm_register_cb;
 import uvm.base.uvm_object: uvm_object;
@@ -174,7 +175,7 @@ abstract class uvm_reg_backdoor: uvm_object
 	  foreach (field; fields) {
 	    if (this.is_auto_updated(field)) {
 	      uvm_reg_data_t tmp = (val >> field.get_lsb_pos()) &
-		((1L << field.get_n_bits())-1);
+		((UVM_REG_DATA_1 << field.get_n_bits()) - 1);
 	      r_item.set_value(tmp, 0);
 	      field.do_predict(r_item);
 	    }

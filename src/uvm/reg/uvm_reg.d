@@ -55,6 +55,7 @@ import uvm.base.uvm_queue: uvm_queue;
 import uvm.base.uvm_entity: uvm_entity_base;
 
 import uvm.seq.uvm_sequence_base: uvm_sequence_base;
+import uvm.reg.uvm_reg_defines: UVM_REG_DATA_1;
 
 import uvm.dpi.uvm_hdl;
 
@@ -634,7 +635,7 @@ class uvm_reg: uvm_object, rand.barrier
 
       foreach (field; _m_fields) {
 	field.set((value >> field.get_lsb_pos()) &
-		  ((1L << field.get_n_bits()) - 1));
+		  ((UVM_REG_DATA_1 << field.get_n_bits()) - 1));
       }
     }
   }
@@ -864,7 +865,7 @@ class uvm_reg: uvm_object, rand.barrier
       rw.set_element_kind(UVM_REG);
       rw.set_kind(UVM_WRITE);
       rw.set_bd_kind(kind);
-      rw.set_value(value & ((1L << _m_n_bits)-1), 0);
+      rw.set_value(value & ((UVM_REG_DATA_1 << _m_n_bits) - 1), 0);
       rw.set_parent_sequence(parent);
       rw.set_extension(extension);
       rw.set_fname(fname);
@@ -1197,7 +1198,7 @@ class uvm_reg: uvm_object, rand.barrier
 	acc = acc[0..2];
 	if (! (field.get_compare() == UVM_NO_CHECK || acc == "WO")) {
 	  valid_bits_mask |=
-	    ((1L << field.get_n_bits())-1) << field.get_lsb_pos();
+	    ((UVM_REG_DATA_1 << field.get_n_bits()) - 1) << field.get_lsb_pos();
 	}
       }
 
@@ -1216,7 +1217,7 @@ class uvm_reg: uvm_object, rand.barrier
 	acc = acc[0..2];
 	if (!(field.get_compare() == UVM_NO_CHECK ||
 	      acc == "WO")) {
-	  uvm_reg_data_t mask  = ((1L << field.get_n_bits())-1);
+	  uvm_reg_data_t mask  = ((UVM_REG_DATA_1 << field.get_n_bits())-1);
 	  uvm_reg_data_t val   = actual   >> field.get_lsb_pos() & mask;
 	  uvm_reg_data_t exp   = expected >> field.get_lsb_pos() & mask;
 
@@ -1258,7 +1259,7 @@ class uvm_reg: uvm_object, rand.barrier
     m_write_in_progress = true;
  
     value = rw.get_value(0);
-    value &= ((1L << m_n_bits)-1);
+    value &= ((UVM_REG_DATA_1 << m_n_bits) - 1);
     rw.set_value(value, 0);
 
     rw.set_status(UVM_IS_OK);
@@ -1271,7 +1272,7 @@ class uvm_reg: uvm_object, rand.barrier
       uvm_reg_field_cb_iter lcbs = new uvm_reg_field_cb_iter(field);
       uvm_reg_field f = field;
       int lsb = f.get_lsb_pos();
-      msk = ((1L << f.get_n_bits())-1) << lsb;
+      msk = ((UVM_REG_DATA_1 << f.get_n_bits()) - 1) << lsb;
       // rw.value[0] = (value & msk) >> lsb;
       rw.set_value((value & msk) >> lsb, 0);
       f.pre_write(rw);
@@ -1333,8 +1334,8 @@ class uvm_reg: uvm_object, rand.barrier
 	  uvm_reg_data_t field_val;
 	  int lsb = field.get_lsb_pos();
 	  int sz  = field.get_n_bits();
-	  field_val = field.XpredictX((rw.get_value(0) >> lsb) & ((1<<sz)-1),
-				      (value >> lsb) & ((1<<sz)-1),
+	  field_val = field.XpredictX((rw.get_value(0) >> lsb) & ((UVM_REG_DATA_1 << sz) - 1),
+				      (value >> lsb) & ((UVM_REG_DATA_1 << sz) - 1),
 				      rw.get_local_map);
 	  final_val |= field_val << lsb;
 	}
@@ -1408,7 +1409,7 @@ class uvm_reg: uvm_object, rand.barrier
       
       rw.set_element(f);
       rw.set_element_kind(UVM_FIELD);
-      rw.set_value((value >> f.get_lsb_pos()) & ((1<<f.get_n_bits())-1), 0);
+      rw.set_value((value >> f.get_lsb_pos()) & ((UVM_REG_DATA_1 << f.get_n_bits()) - 1), 0);
       
       for (uvm_reg_cbs cb=lcbs.first(); cb !is null; cb=lcbs.next())
 	cb.post_write(rw);
@@ -1525,7 +1526,7 @@ class uvm_reg: uvm_object, rand.barrier
 	      acc == "WSRC" ||
 	      acc == "W1SRC" ||
 	      acc == "W0SRC") {
-	    value &= ~(((1<<field.get_n_bits())-1)
+	    value &= ~(((UVM_REG_DATA_1 << field.get_n_bits()) - 1)
 		       << field.get_lsb_pos());
 	  }
 	  else if (acc == "RS" ||
@@ -1533,14 +1534,14 @@ class uvm_reg: uvm_object, rand.barrier
 		   acc == "WCRS" ||
 		   acc == "W1CRS" ||
 		   acc == "W0CRS") {
-	    value |= (((1<<field.get_n_bits())-1)
+	    value |= (((UVM_REG_DATA_1 << field.get_n_bits()) - 1)
 		      << field.get_lsb_pos());
 	  }
 	  else if (acc == "WO" ||
 		   acc == "WOC" ||
 		   acc == "WOS" ||
 		   acc == "WO1") {
-	    wo_mask |= ((1<<field.get_n_bits())-1)
+	    wo_mask |= ((UVM_REG_DATA_1 << field.get_n_bits()) - 1)
 	      << field.get_lsb_pos();
 	  }
 	}
@@ -1632,7 +1633,7 @@ class uvm_reg: uvm_object, rand.barrier
 
       rw.set_element(f);
       rw.set_element_kind(UVM_FIELD);
-      rw.set_value((value >> f.get_lsb_pos()) & ((1<<f.get_n_bits())-1), 0);
+      rw.set_value((value >> f.get_lsb_pos()) & ((UVM_REG_DATA_1 << f.get_n_bits()) - 1), 0);
 
       int top = (f.get_n_bits()+f.get_lsb_pos());      
       
@@ -1697,8 +1698,8 @@ class uvm_reg: uvm_object, rand.barrier
    
       foreach (field; _m_fields) {
 	rw.set_value((reg_value >> field.get_lsb_pos()) &
-		     ((1L << field.get_n_bits())-1), 0);
-	field.do_predict(rw, kind, be>>(field.get_lsb_pos()/8));
+		     ((UVM_REG_DATA_1 << field.get_n_bits()) - 1), 0);
+	field.do_predict(rw, kind, be >> (field.get_lsb_pos() / 8));
       }
 
       rw.set_value(reg_value, 0);
@@ -1966,7 +1967,7 @@ class uvm_reg: uvm_object, rand.barrier
 	  continue;
 	}
 	uvm_reg_data_t slice = rw.get_value(0) >> hdl_slice.offset;
-	slice &= (1L << hdl_slice.size)-1;
+	slice &= (UVM_REG_DATA_1 << hdl_slice.size) - 1;
 	ok &= uvm_hdl_deposit(hdl_slice.path, slice);
       }
     }
@@ -2009,7 +2010,7 @@ class uvm_reg: uvm_object, rand.barrier
 	  val |= (slice << hdl_slice.offset) & mask;
 	}
 
-	val &= (1L << _m_n_bits)-1;
+	val &= (UVM_REG_DATA_1 << _m_n_bits) - 1;
 
 	if (i == 0)
 	  rw.set_value(val, 0);

@@ -76,6 +76,7 @@ import uvm.base.uvm_resource_db: uvm_resource_db;
 import uvm.base.uvm_object_globals: uvm_verbosity;
 import uvm.seq.uvm_sequence: uvm_sequence;
 import uvm.reg.sequences.uvm_reg_randval;
+import uvm.reg.uvm_reg_defines: UVM_REG_DATA_WIDTH, UVM_REG_DATA_1;
 
 import esdl;
 import std.string: format;
@@ -360,7 +361,7 @@ class uvm_mem_shared_access_seq: uvm_reg_sequence!(uvm_sequence!uvm_reg_item)
 	      exp = 0;
 	    }
 	    // Trim to number of bits
-	    exp &= (1L << mem.get_n_bits()) - 1;
+	    exp &= (UVM_REG_DATA_1 << mem.get_n_bits()) - 1;
 	    if (actual !is exp) {
 	      uvm_error("uvm_mem_shared_access_seq",
 			format("%s[%0d] through map \"%s\" is 0x%x instead of 0x%x after writing 0x%x via map \"%s\" over 0x%x.",
