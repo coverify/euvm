@@ -260,11 +260,11 @@ class uvm_vreg_field: uvm_object
     this.parent.XatomicX(1);
 
     if (value >> this.size) {
-      uvm_warning("RegModel", format("Writing value 'h%h that is greater" ~
+      uvm_warning("RegModel", format("Writing value 0x%x that is greater" ~
 				     " than field \"%s\" size (%0d bits)",
 				     value, this.get_full_name(),
 				     this.get_n_bits()));
-      value &= ((1<<this.size)-1);
+      value &= ((UVM_REG_DATA_1 << this.size) - 1);
     }
     uvm_reg_data_t  tmp = 0;
 
@@ -307,7 +307,7 @@ class uvm_vreg_field: uvm_object
 	return;
       }
 
-      value = (value << rmwbits) | (tmp & ((1<<rmwbits)-1));
+      value = (value << rmwbits) | (tmp & ((UVM_REG_DATA_1 << rmwbits) - 1));
     }
 
     // Any bits on the MSB side we need to RMW?
@@ -328,7 +328,7 @@ class uvm_vreg_field: uvm_object
 	  return;
 	}
       }
-      value |= (tmp & ~((1<<rmwbits)-1)) << ((segn-1)*segsiz);
+      value |= (tmp & ~((UVM_REG_DATA_1 << rmwbits) - 1)) << ((segn-1)*segsiz);
     }
 
     // Now write each of the segments
@@ -354,7 +354,7 @@ class uvm_vreg_field: uvm_object
 
 
     uvm_info("RegModel", format("Wrote virtual field \"%s\"[%0d] via %s" ~
-				" with: 'h%h", this.get_full_name(), idx,
+				" with: 0x%x", this.get_full_name(), idx,
 				(path == UVM_FRONTDOOR) ? "frontdoor" : "backdoor",
 				value),uvm_verbosity.UVM_MEDIUM);
 
@@ -442,7 +442,7 @@ class uvm_vreg_field: uvm_object
     value = value >> lsb;
 
     // Any bits on the MSB side we need to get rid of?
-    value &= (1<<this.get_n_bits()) - 1;
+    value &= (UVM_REG_DATA_1 << this.get_n_bits()) - 1;
 
     this.post_read(idx, value, path, map, status);
     for (uvm_vreg_field_cbs cb = cbs.first(); cb !is null;
@@ -456,7 +456,7 @@ class uvm_vreg_field: uvm_object
 
     this.parent.XatomicX(0);
 
-    uvm_info("RegModel", format("Read virtual field \"%s\"[%0d] via %s: 'h%h",
+    uvm_info("RegModel", format("Read virtual field \"%s\"[%0d] via %s: 0x%x",
 				this.get_full_name(), idx,
 				(path == UVM_FRONTDOOR) ? "frontdoor" : "backdoor",
 				value),uvm_verbosity.UVM_MEDIUM);
@@ -495,11 +495,11 @@ class uvm_vreg_field: uvm_object
     this.parent.XatomicX(1);
 
     if (value >> this.size) {
-      uvm_warning("RegModel", format("Writing value 'h%h that is greater " ~
+      uvm_warning("RegModel", format("Writing value 0x%x that is greater " ~
 				     "than field \"%s\" size (%0d bits)",
 				     value, this.get_full_name(),
 				     this.get_n_bits()));
-      value &= value & ((1<<this.size)-1);
+      value &= value & ((UVM_REG_DATA_1 << this.size) - 1);
     }
     uvm_reg_data_t  tmp = 0;
 
@@ -530,7 +530,7 @@ class uvm_vreg_field: uvm_object
 	return;
       }
 
-      value = (value << rmwbits) | (tmp & ((1<<rmwbits)-1));
+      value = (value << rmwbits) | (tmp & ((UVM_REG_DATA_1 << rmwbits) - 1));
     }
 
     // Any bits on the MSB side we need to RMW?
@@ -551,7 +551,7 @@ class uvm_vreg_field: uvm_object
 	  return;
 	}
       }
-      value |= (tmp & ~((1<<rmwbits)-1)) << ((segn-1)*segsiz);
+      value |= (tmp & ~((UVM_REG_DATA_1 << rmwbits) - 1)) << ((segn-1)*segsiz);
     }
 
     // Now write each of the segments
@@ -566,7 +566,7 @@ class uvm_vreg_field: uvm_object
 
     this.parent.XatomicX(0);
 
-    uvm_info("RegModel", format("Wrote virtual field \"%s\"[%0d] with: 'h%h",
+    uvm_info("RegModel", format("Wrote virtual field \"%s\"[%0d] with: 0x%x",
 				this.get_full_name(), idx, value),uvm_verbosity.UVM_MEDIUM);
 
     this.fname = "";
@@ -630,12 +630,12 @@ class uvm_vreg_field: uvm_object
     value = value >> lsb;
 
     // Any bits on the MSB side we need to get rid of?
-    value &= (1<<this.get_n_bits()) - 1;
+    value &= (UVM_REG_DATA_1 << this.get_n_bits()) - 1;
 
     this.parent.XatomicX(0);
 
     uvm_info("RegModel",
-	     format("Peeked virtual field \"%s\"[%0d]: 'h%h",
+	     format("Peeked virtual field \"%s\"[%0d]: 0x%x",
 		    this.get_full_name(), idx, value),uvm_verbosity.UVM_MEDIUM);
 
     this.fname = "";

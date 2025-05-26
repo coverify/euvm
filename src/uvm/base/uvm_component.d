@@ -227,7 +227,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
       // we do not want uvm_components to be elaborated for the components
       // that were created for the sake of factory
       if (parent is null && name == "" && 
-	  uvm_factory.is_active()) return;
+	  uvm_factory.is_initializing()) return;
 
       // Since Vlang allows multi uvm_root instances, it is better to
       // have a unique name for each uvm_root instance
@@ -3039,6 +3039,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
 						P parent)
     if (isArray!E && !is (E == string)) {
       switch (what) {
+      static import uvm.base.uvm_globals;
       case uvm_comp_auto_enum.UVM_PARALLELIZE:
 	for (size_t i=0; i!=e.length; ++i) {
 	  _m_uvm_component_automation(e[i], what,
@@ -3072,6 +3073,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
     if (is (E: uvm_component)) {
       import uvm.base.uvm_globals;
       switch (what) {
+      static import uvm.base.uvm_globals;
       case uvm_comp_auto_enum.UVM_PARALLELIZE:
 	static assert (is (E: uvm_component));
 	if (e !is null) {
@@ -3110,11 +3112,11 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
 	     e = new E(name, parent);
 	   }
 	   break;
-	 case uvm_comp_auto_enum.UVM_PARALLELIZE:
-	   uvm.base.uvm_globals.uvm_info("UVM_UTILS", format("%s is not a uvm_component",
-							     E.stringof), uvm_verbosity.UVM_NONE);
-	   uvm.base.uvm_globals.uvm_error("UVM_UTILS", "UVM_PARALLELIZE can be on only a uvm_component!");
-	   break;
+	 // case uvm_comp_auto_enum.UVM_PARALLELIZE:
+	 //   uvm.base.uvm_globals.uvm_info("UVM_UTILS", format("%s is not a uvm_component",
+	 // 						     E.stringof), uvm_verbosity.UVM_NONE);
+	 //   uvm.base.uvm_globals.uvm_error("UVM_UTILS", "UVM_PARALLELIZE can be on only a uvm_component!");
+	 //   break;
 	 default:
 	   break;
 	 }
@@ -3130,15 +3132,13 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
 	enum FLAGS = uvm_comp_auto_get_flags!(t, I);
 	alias EE = UVM_ELEMENT_TYPE!(typeof(t.tupleof[I]));
 	static if ((is (EE: uvm_component) ||
-		    is (EE: uvm_port_base!IF, IF)) &&
-		   FLAGS != 0) {
-	  _esdl__Multicore pflags;
+		    is (EE: uvm_port_base!IF, IF))) {
 	  if (what == uvm_comp_auto_enum.UVM_BUILD &&
 	      ((! (FLAGS & uvm_comp_auto_enum.UVM_NOBUILD)) &&
 	       (FLAGS & uvm_comp_auto_enum.UVM_BUILD))) {
 	    _m_uvm_component_automation(t.tupleof[I], what,
 					  t.tupleof[I].stringof[2..$],
-					  FLAGS, pflags, t);
+					  FLAGS, _esdl__Multicore.init, t);
 	  }
 	  else if (what == uvm_comp_auto_enum.UVM_BUILD_IF_ACTIVE &&
 		   ((! (FLAGS & uvm_comp_auto_enum.UVM_NOBUILD)) &&
@@ -3147,10 +3147,11 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
 	      if (t.get_is_active()) {
 		_m_uvm_component_automation(t.tupleof[I], what,
 					    t.tupleof[I].stringof[2..$],
-					    FLAGS, pflags, t);
+					    FLAGS, _esdl__Multicore.init, t);
 	      }
 	    }
 	    else {
+	      static import uvm.base.uvm_globals;
 	      uvm.base.uvm_globals.uvm_info("UVM_UTILS",
 					    format("%s(%s) is not a uvm_agent",
 						   T.stringof, t.get_full_name()), uvm_verbosity.UVM_NONE);
@@ -3158,9 +3159,10 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
 					     "UVM_BUILD_IF_ACTIVE can be used only inside a uvm_agent!");
 	    }
 	  }
-	  else if (what == uvm_comp_auto_enum.UVM_PARALLELIZE &&
-		   (FLAGS & uvm_comp_auto_enum.UVM_PARALLELIZE)) {
-	    pflags = _esdl__uda!(_esdl__Multicore, T, I);
+	  else if (what == uvm_comp_auto_enum.UVM_PARALLELIZE//  &&
+		   // (FLAGS & uvm_comp_auto_enum.UVM_PARALLELIZE)
+		   ) {
+	    _esdl__Multicore pflags = _esdl__uda!(_esdl__Multicore, T, I);
 	    _m_uvm_component_automation(t.tupleof[I], what,
 					t.tupleof[I].stringof[2..$],
 					FLAGS, pflags, null);

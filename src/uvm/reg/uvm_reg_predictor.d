@@ -33,6 +33,16 @@ import uvm.reg.uvm_reg_model;
 
 import uvm.base.uvm_component: uvm_component;
 import uvm.base.uvm_component_defines;
+import uvm.base.uvm_object_globals: uvm_verbosity;
+import uvm.tlm1.uvm_analysis_port: uvm_analysis_imp, uvm_analysis_port;
+import uvm.reg.uvm_reg_map: uvm_reg_map, uvm_reg_map_info;
+import uvm.reg.uvm_reg_adapter: uvm_reg_adapter;
+import uvm.reg.uvm_reg: uvm_reg;
+import uvm.reg.uvm_reg_item: uvm_reg_bus_op;
+import uvm.reg.uvm_reg_indirect: uvm_reg_indirect_data;
+import uvm.reg.uvm_reg_block: uvm_reg_block;
+import uvm.base.uvm_phase: uvm_phase;
+import uvm.meta.misc;
 
 import std.string: format;
 
@@ -70,7 +80,9 @@ class uvm_predict_s
 class uvm_reg_predictor(BUSTYPE): uvm_component
 {
 
-  mixin uvm_component_param_utils;
+  mixin uvm_sync;
+
+  mixin uvm_component_utils;
 
   // Variable -- NODOCS -- bus_in
   //
@@ -91,6 +103,7 @@ class uvm_reg_predictor(BUSTYPE): uvm_component
   // predictor will collect the multiple bus transactions needed to
   // determine the value being read or written.
   //
+  @uvm_public_sync
   uvm_analysis_imp!(write) _bus_in;
 
 
@@ -98,6 +111,7 @@ class uvm_reg_predictor(BUSTYPE): uvm_component
   //
   // Analysis output port that publishes <uvm_reg_item> transactions
   // converted from bus transactions received on ~bus_in~.
+  @uvm_public_sync
   uvm_analysis_port!(uvm_reg_item) _reg_ap;
 
 
@@ -106,6 +120,7 @@ class uvm_reg_predictor(BUSTYPE): uvm_component
   // The map used to convert a bus address to the corresponding register
   // or memory handle. Must be configured before the run phase.
   // 
+  @uvm_public_sync
   uvm_reg_map _map;
 
 
@@ -115,6 +130,7 @@ class uvm_reg_predictor(BUSTYPE): uvm_component
   // terms of a canonical <uvm_reg_bus_op> datum.
   // The <uvm_reg_adapter> must be configured before the run phase.
   //
+  @uvm_public_sync
   uvm_reg_adapter _adapter;
 
 
@@ -164,9 +180,9 @@ class uvm_reg_predictor(BUSTYPE): uvm_component
       uvm_fatal("REG/WRITE/NULL","write: adapter handle is null") ;
 
       // In case they forget to set byte_en
-      rw.set_byte_en(-1);
+      rw.byte_en = -1;
       _adapter.bus2reg(tr, rw);
-      rg = map.get_reg_by_offset(rw.get_addr(), (rw.get_kind == UVM_READ));
+      rg = _map.get_reg_by_offset(rw.addr, (rw.kind == UVM_READ));
 
       // ToDo: Add memory look-up and call <uvm_mem::XsampleX()>
 
@@ -180,8 +196,8 @@ class uvm_reg_predictor(BUSTYPE): uvm_component
 	  item.set_element_kind(UVM_REG);
 	  item.set_element(rg);
 	  item.set_door(UVM_PREDICT);
-	  item.set_map(map);
-	  item.set_kind(rw.get_kind());
+	  item.set_map(_map);
+	  item.set_kind(rw.kind);
 	  predict_info._reg_item = item;
 	  _m_pending[rg] = predict_info;
 	}
@@ -189,7 +205,7 @@ class uvm_reg_predictor(BUSTYPE): uvm_component
 	predict_info = _m_pending[rg];
 	reg_item = predict_info._reg_item;
 
-	if (rw.get_addr() in predict_info._addr) {
+	if (rw.addr in predict_info._addr) {
 	  uvm_error("REG_PREDICT_COLLISION",
 		    "Collision detected for register '" ~
 		    rg.get_full_name() ~ "'");
@@ -197,7 +213,7 @@ class uvm_reg_predictor(BUSTYPE): uvm_component
 	  _m_pending.remove(rg);
 	}
 
-	uvm_reg_map local_map = rg.get_local_map(map);
+	uvm_reg_map local_map = rg.get_local_map(_map);
 	uvm_reg_map_info map_info = local_map.get_reg_map_info(rg);
 	uvm_reg_indirect_data ireg = cast(uvm_reg_indirect_data) rg;
 	uvm_reg ir = ireg is null ? rg : ireg.get_indirect_reg();
@@ -205,13 +221,13 @@ class uvm_reg_predictor(BUSTYPE): uvm_component
 
 	foreach (i, addr; map_info.addr) {
 	  uvm_reg_data_t reg_item_value;
-	  if (rw.set_addr(addr)) {
+	  if (rw.addr == addr) {
 	    found = true;
 	    reg_item_value = reg_item.get_value(0);
-	    reg_item_value |= rw.data << (i * map.get_n_bytes()*8);
+	    reg_item_value |= rw.data << (i * _map.get_n_bytes()*8);
 	    reg_item.set_value(reg_item_value, 0);
-	    predict_info.addr[rw.addr] = 1;
-	    if (predict_info.addr.length == map_info.addr.length) {
+	    predict_info._addr[rw.addr] = 1;
+	    if (predict_info._addr.length == map_info.addr.length) {
               // We've captured the entire abstract register transaction.
 	      uvm_predict_e predict_kind = 
 		(reg_item.get_kind() == UVM_WRITE) ? UVM_PREDICT_WRITE : UVM_PREDICT_READ;
@@ -224,7 +240,8 @@ class uvm_reg_predictor(BUSTYPE): uvm_component
               
 	      pre_predict(reg_item);
 
-	      ir.XsampleX(reg_item.get_value(0), rw.get_byte_en(),
+	      ir.XsampleX(reg_item.get_value(0),
+			  cast(uvm_reg_data_t) rw.byte_en,
 			  (reg_item.get_kind() == UVM_READ), local_map);
 	      uvm_reg_block blk = rg.get_parent();
 	      blk.XsampleX(map_info.offset,
@@ -234,14 +251,14 @@ class uvm_reg_predictor(BUSTYPE): uvm_component
               rg.do_predict(reg_item, predict_kind, rw.byte_en);
               if (reg_item.get_kind() == UVM_WRITE)
                 uvm_info("REG_PREDICT", "Observed WRITE transaction to register " ~
-			 ir.get_full_name() ~ ": value='h" ~
-			 format("%0h",reg_item.get_value(0)) ~ " : updated value = 'h" ~
-			 format("%0h",ir.get()), UVM_HIGH);
+			 ir.get_full_name() ~ ": value=0x" ~
+			 format("%0x",reg_item.get_value(0)) ~ " : updated value = 0x" ~
+			 format("%0x",ir.get()), uvm_verbosity.UVM_HIGH);
               else
                 uvm_info("REG_PREDICT", "Observed READ transaction to register " ~
-			 ir.get_full_name() ~ ": value='h" ~
-			 format("%0h",reg_item.get_value(0)), UVM_HIGH);
-              reg_ap.write(reg_item);
+			 ir.get_full_name() ~ ": value=0x" ~
+			 format("%0x",reg_item.get_value(0)), uvm_verbosity.UVM_HIGH);
+              _reg_ap.write(reg_item);
               _m_pending.remove(rg);
 	    }
 	    break;
@@ -254,7 +271,7 @@ class uvm_reg_predictor(BUSTYPE): uvm_component
       else {
 	uvm_info("REG_PREDICT_NOT_FOR_ME",
 		 "Observed transaction does not target a register: " ~
-		 format("%p",tr), UVM_FULL);
+		 format("%p",tr), uvm_verbosity.UVM_FULL);
       }
     }
   }
@@ -273,7 +290,7 @@ class uvm_reg_predictor(BUSTYPE): uvm_component
       str ~= format("\n%s", rg.get_full_name());
     }
             
-    if (m_pending.length > 0) {
+    if (_m_pending.length > 0) {
       uvm_error("PENDING REG ITEMS",
 		format("There are %0d incomplete register transactions still pending completion:%s",
 		       _m_pending.length, str));

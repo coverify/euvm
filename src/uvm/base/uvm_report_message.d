@@ -253,8 +253,9 @@ abstract class uvm_report_message_element_base
 //
 //------------------------------------------------------------------------------
 
-class uvm_report_message_element(T) if (isIntegral!T || isBitVector!T):
-  uvm_report_message_element_base
+class uvm_report_message_element(T)
+     if (isIntegral!T || isBitVector!T || isBoolean!T):
+       uvm_report_message_element_base
 {
   mixin (uvm_sync_string);
 

@@ -263,10 +263,10 @@ class uvm_reg_map: uvm_object, rand.barrier
 		  uvm_reg_read_only_cbs.add(rg2);
 		}
 		else {
-		  string a = format("%0h",addr);
+		  string a = format("%0x",addr);
 		  uvm_warning("RegModel", "In map '" ~ get_full_name() ~ "' register '" ~ 
 			      rg.get_full_name() ~  "' maps to same address as register '" ~ 
-			      top_map._m_regs_by_offset[addr].get_full_name() ~ "': 'h" ~ a);
+			      top_map._m_regs_by_offset[addr].get_full_name() ~ "': 0x" ~ a);
 		}
 	      }
 	      else
@@ -274,8 +274,8 @@ class uvm_reg_map: uvm_object, rand.barrier
           
 	      foreach (range, mem_by_offset; top_map._m_mems_by_offset) {
 		if (addr >= range.min && addr <= range.max) {
-		  string a = format("%0h",addr);
-		  string b = format("[%0h:%0h]",range.min,range.max);
+		  string a = format("%0x",addr);
+		  string b = format("[%0x:%0x]",range.min,range.max);
 		  uvm_warning("RegModel", "In map '" ~ get_full_name() ~ "' register '" ~ 
 			      rg.get_full_name() ~  "' with address " ~ a ~ 
 			      "maps to same address as memory '" ~ 
@@ -354,10 +354,10 @@ class uvm_reg_map: uvm_object, rand.barrier
 		
 	    foreach (reg_addr, reg_by_offset; top_map.m_regs_by_offset) {
 	      if (reg_addr >= min && reg_addr <= max) {
-		string a = format("%0h", reg_addr);
+		string a = format("%0x", reg_addr);
 		uvm_warning("RegModel", "In map '" ~ get_full_name() ~ "' memory '" ~
 			    mem.get_full_name() ~ "' maps to same address as register '" ~
-			    reg_by_offset.get_full_name() ~ "': 'h" ~ a);
+			    reg_by_offset.get_full_name() ~ "': 0x" ~ a);
 	      }
 	    }
 
@@ -367,10 +367,10 @@ class uvm_reg_map: uvm_object, rand.barrier
 		  min >= range.min && max <= range.max) 
 		if (mem_by_offset != mem) // do not warn if the same mem is located at the same address via different paths
 		  {
-		    string a = format("[%0h:%0h]", min, max);
+		    string a = format("[%0x:%0x]", min, max);
 		    uvm_warning("RegModel", "In map '" ~ get_full_name() ~ "' memory '" ~
 				mem.get_full_name() ~ "' overlaps with address range of memory '" ~
-				mem_by_offset.get_full_name() ~ "': 'h" ~ a);
+				mem_by_offset.get_full_name() ~ "': 0x" ~ a);
 		  }
 	    }
 
@@ -656,7 +656,7 @@ class uvm_reg_map: uvm_object, rand.barrier
 
       if (_m_parent_map !is null) {
 	uvm_error("RegModel",
-		  format("Map \"%s\" already a submap of map \"%s\" at offset 'h%h",
+		  format("Map \"%s\" already a submap of map \"%s\" at offset 0x%x",
 			 get_full_name(), _m_parent_map.get_full_name(),
 			 _m_parent_map.get_submap_offset(this)));
 	return;
@@ -766,10 +766,10 @@ class uvm_reg_map: uvm_object, rand.barrier
 		  uvm_reg_read_only_cbs.add(rg2);
 		}
 		else {
-		  string a = format("%0h",addr);
+		  string a = format("%0x",addr);
 		  uvm_warning("RegModel", "In map '" ~ get_full_name() ~ "' register '" ~ 
 			      rg.get_full_name() ~  "' maps to same address as register '" ~ 
-			      top_map._m_regs_by_offset[addr].get_full_name() ~ "': 'h" ~ a);
+			      top_map._m_regs_by_offset[addr].get_full_name() ~ "': 0x" ~ a);
 		}
 	      }
 	      else
@@ -777,10 +777,10 @@ class uvm_reg_map: uvm_object, rand.barrier
 
 	      foreach (range, memoff; top_map._m_mems_by_offset) {
 		if (addr >= range.min && addr <= range.max) {
-		  string a = format("%0h",addr);
+		  string a = format("%0x",addr);
 		  uvm_warning("RegModel", "In map '" ~ get_full_name() ~ "' register '" ~ 
 			      rg.get_full_name() ~  "' overlaps with address range of memory '" ~ 
-			      top_map._m_mems_by_offset[range].get_full_name() ~ "': 'h" ~ a);
+			      top_map._m_mems_by_offset[range].get_full_name() ~ "': 0x" ~ a);
 		}
 	      }
 	    }
@@ -851,12 +851,12 @@ class uvm_reg_map: uvm_object, rand.barrier
 	    // make sure new offset does not conflict with others
 	    foreach (reg_addr, regoff; top_map._m_regs_by_offset) {
 	      if (reg_addr >= min && reg_addr <= max) {
-		string a = format("[%0h:%0h]", min, max);
-		string b = format("%0h", reg_addr);
+		string a = format("[%0x:%0x]", min, max);
+		string b = format("%0x", reg_addr);
 		uvm_warning("RegModel", "In map '" ~ get_full_name() ~ "' memory '" ~ 
 			    mem.get_full_name() ~  "' with range " ~ a ~ 
 			    " overlaps with address of existing register '" ~ 
-			    regoff.get_full_name() ~ "': 'h" ~ b);
+			    regoff.get_full_name() ~ "': 0x" ~ b);
 	      }
 	    }
 
@@ -864,8 +864,8 @@ class uvm_reg_map: uvm_object, rand.barrier
 	      if (min <= range.max && max >= range.max ||
 		  min <= range.min && max >= range.min ||
 		  min >= range.min && max <= range.max) {
-		string a = format("[%0h:%0h]",min,max);
-		string b = format("[%0h:%0h]",range.min,range.max);
+		string a = format("[%0x:%0x]",min,max);
+		string b = format("[%0x:%0x]",range.min,range.max);
 		uvm_warning("RegModel", "In map '" ~ get_full_name() ~ "' memory '" ~ 
 			    mem.get_full_name() ~  "' with range " ~ a ~ 
 			    " overlaps existing memory with range '" ~ 
@@ -1508,13 +1508,13 @@ class uvm_reg_map: uvm_object, rand.barrier
       get_registers(regs, uvm_hier_e.UVM_NO_HIER);
       foreach (reg; regs) {
 	printer.print_generic(reg.get_name(), reg.get_type_name(),
-			      -2, format("@%0d +'h%0x", reg.get_inst_id(),
+			      -2, format("@%0d +0x%0x", reg.get_inst_id(),
 					 reg.get_address(this)));
       }
       get_memories(mems);
       foreach (mem; mems) {
 	printer.print_generic(mem.get_name(), mem.get_type_name(),
-			      -2, format("@%0d +'h%0x",
+			      -2, format("@%0d +0x%0x",
 					 mem.get_inst_id(),
 					 mem.get_address(0, this)));
       }
@@ -1522,7 +1522,7 @@ class uvm_reg_map: uvm_object, rand.barrier
       get_virtual_registers(vregs);
       foreach (vreg; vregs) {
 	printer.print_generic(vreg.get_name(), vreg.get_type_name(),
-			      -2, format("@%0d +'h%0x", vreg.get_inst_id(),
+			      -2, format("@%0d +0x%0x", vreg.get_inst_id(),
 					 vreg.get_address(0,this)));
       }
     
@@ -1765,7 +1765,7 @@ class uvm_reg_map: uvm_object, rand.barrier
       uvm_status_e rw_status = rw.get_status();
 
       uvm_info("UVM/REG/ADDR",
-         format("%s 'h%0h at 'h%0h via map \"%s\": %s...", op,
+         format("%s 0x%0x at 0x%0x via map \"%s\": %s...", op,
 		rw_access.data, rw_access.addr, rw_map.get_full_name(),
 		rw_status// .name()
 		), uvm_verbosity.UVM_FULL);
@@ -1908,7 +1908,7 @@ class uvm_reg_map: uvm_object, rand.barrier
 	data.setByte(i0, p[i*bus_width+i0]);
 
       uvm_info("UVM/REG/ADDR",
-	       format("%s 'h%0h at 'h%0h via map \"%s\"...",op,
+	       format("%s 0x%0x at 0x%0x via map \"%s\"...", op,
 		      data, adr[i], tmp_map.get_full_name()),
 	       uvm_verbosity.UVM_FULL);
 

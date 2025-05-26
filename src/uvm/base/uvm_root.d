@@ -159,6 +159,8 @@ class uvm_root: uvm_component, uvm_root_intf, rand.disable
   // after calling uvm_root constructor
   void initialize(uvm_entity_base base) {
     import uvm.base.uvm_domain;
+    // import uvm.base.uvm_factory;
+
     synchronized (this) {
 
       // For error reporting purposes, we need to construct this first.
@@ -1031,10 +1033,14 @@ class uvm_root: uvm_component, uvm_root_intf, rand.disable
       string[] split_max_quit;
       uvm_string_split(max_quit, ',', split_max_quit);
       int max_quit_int = parse!int(split_max_quit[0]); // .atoi();
-      switch (split_max_quit[1]) {
-      case "YES": srvr.set_max_quit_count(max_quit_int, 1); break;
-      case "NO" : srvr.set_max_quit_count(max_quit_int, 0); break;
-      default   : srvr.set_max_quit_count(max_quit_int, 1); break;
+      if (split_max_quit.length == 1)
+	srvr.set_max_quit_count(max_quit_int, 1);
+      else {
+	switch (split_max_quit[1]) {
+	case "YES": srvr.set_max_quit_count(max_quit_int, 1); break;
+	case "NO" : srvr.set_max_quit_count(max_quit_int, 0); break;
+	default   : srvr.set_max_quit_count(max_quit_int, 1); break;
+	}
       }
     }
   }
@@ -1389,6 +1395,10 @@ class uvm_root: uvm_component, uvm_root_intf, rand.disable
 
   final void finalize() {
     synchronized (this) {
+      if (_elab_done is false) {
+	_elab_done = true;
+	_elab_done_semaphore.notify();
+      }
       foreach (lock; _async_locks) {
 	lock.disable();
       }

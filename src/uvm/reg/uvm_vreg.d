@@ -246,7 +246,7 @@ class uvm_vreg: uvm_object, rand.barrier
       if (offset + (n * incr) > mem.get_size()) {
 	uvm_error("RegModel", format("Given Offset for Virtual register" ~
 				     " \"%s[%0d]\" is too big for memory" ~
-				     " %s@'h%0h",
+				     " %s@0x%0x",
 				     this.get_full_name(), n,
 				     mem.get_full_name(), offset));
 	return false;
@@ -263,7 +263,7 @@ class uvm_vreg: uvm_object, rand.barrier
 
       if (this._mem !is null) {
 	uvm_info("RegModel", format("Virtual register \"%s\" is being moved" ~
-				    " re-implemented from %s@'h%0h to %s@'h%0h",
+				    " re-implemented from %s@0x%0x to %s@0x%0x",
 				    this.get_full_name(),
 				    this._mem.get_full_name(),
 				    this._offset,
@@ -346,7 +346,7 @@ class uvm_vreg: uvm_object, rand.barrier
 
       if (this._mem !is null) {
 	uvm_info("RegModel", format("Virtual register \"%s\" is being moved" ~
-				    " re-allocated from %s@'h%0h to %s@'h%0h",
+				    " re-allocated from %s@0x%0x to %s@0x%0x",
 				    this.get_full_name(),
 				    this._mem.get_full_name(),
 				    this._offset,
@@ -795,7 +795,7 @@ class uvm_vreg: uvm_object, rand.barrier
       uvm_vreg_field f = field;
 
       lsb = f.get_lsb_pos_in_register();
-      msk = ((1<<f.get_n_bits())-1) << lsb;
+      msk = ((UVM_REG_DATA_1 << f.get_n_bits())-1) << lsb;
       tmp = (value & msk) >> lsb;
 
       f.pre_write(idx, tmp, path, map);
@@ -823,7 +823,7 @@ class uvm_vreg: uvm_object, rand.barrier
     for (int i = 0; i < this.get_n_memlocs(); i++) {
       uvm_status_e s;
 
-      msk = ((1<<(this.mem.get_n_bytes()*8))-1) << lsb;
+      msk = ((UVM_REG_DATA_1 << (this.mem.get_n_bytes()*8)) - 1) << lsb;
       tmp = (value & msk) >> lsb;
       this.mem.write(s, (addr + i), tmp, path,
 		     map, parent, -1, extension, fname, lineno);
@@ -843,7 +843,7 @@ class uvm_vreg: uvm_object, rand.barrier
       uvm_vreg_field f = field;
 
       lsb = f.get_lsb_pos_in_register();
-      msk = ((1<<f.get_n_bits())-1) << lsb;
+      msk = ((UVM_REG_DATA_1 << f.get_n_bits()) - 1) << lsb;
       tmp = (value & msk) >> lsb;
 
       for (uvm_vreg_field_cbs cb = fcbs.first(); cb !is null;
@@ -858,7 +858,7 @@ class uvm_vreg: uvm_object, rand.barrier
     }
 
     uvm_info("RegModel", format("Wrote virtual register \"%s\"[%0d] via" ~
-				" %s with: 'h%h",
+				" %s with: 0x%x",
 				this.get_full_name(), idx,
 				(path == UVM_FRONTDOOR) ? "frontdoor" : "backdoor",
 				value),uvm_verbosity.UVM_MEDIUM);
@@ -951,7 +951,7 @@ class uvm_vreg: uvm_object, rand.barrier
 
       lsb = f.get_lsb_pos_in_register();
 
-      msk = ((1<<f.get_n_bits())-1) << lsb;
+      msk = ((UVM_REG_DATA_1 << f.get_n_bits()) - 1) << lsb;
       tmp = (value & msk) >> lsb;
 
       for (uvm_vreg_field_cbs cb = fcbs.first(); cb !is null;
@@ -967,7 +967,7 @@ class uvm_vreg: uvm_object, rand.barrier
 
     uvm_info("RegModel",
 	     format("Read virtual register \"%s\"[%0d] via %s:" ~
-		    " 'h%h", this.get_full_name(), idx,
+		    " 0x%x", this.get_full_name(), idx,
 		    (path == UVM_FRONTDOOR) ? "frontdoor" : "backdoor",
 		    value),uvm_verbosity.UVM_MEDIUM);
     synchronized(this) {
@@ -1003,7 +1003,7 @@ class uvm_vreg: uvm_object, rand.barrier
     for (int i = 0; i < this.get_n_memlocs(); i++) {
       uvm_status_e s;
 
-      uvm_reg_data_t  msk = ((1<<(this.mem.get_n_bytes() * 8))-1) << lsb;
+      uvm_reg_data_t  msk = ((UVM_REG_DATA_1 << (this.mem.get_n_bytes() * 8)) - 1) << lsb;
       uvm_reg_data_t  tmp = (value & msk) >> lsb;
 
       this.mem.poke(status, addr + i, tmp,
@@ -1013,7 +1013,7 @@ class uvm_vreg: uvm_object, rand.barrier
       lsb += this.mem.get_n_bytes() * 8;
     }
 
-    uvm_info("RegModel", format("Poked virtual register \"%s\"[%0d] with: 'h%h",
+    uvm_info("RegModel", format("Poked virtual register \"%s\"[%0d] with: 0x%x",
 				this.get_full_name(), idx, value),uvm_verbosity.UVM_MEDIUM);
     this.fname = "";
     this.lineno = 0;
@@ -1058,7 +1058,7 @@ class uvm_vreg: uvm_object, rand.barrier
       lsb += this.mem.get_n_bytes() * 8;
     }
 
-    uvm_info("RegModel", format("Peeked virtual register \"%s\"[%0d]: 'h%h",
+    uvm_info("RegModel", format("Peeked virtual register \"%s\"[%0d]: 0x%x",
 				this.get_full_name(), idx, value),uvm_verbosity.UVM_MEDIUM);
 
     this.fname = "";
@@ -1131,13 +1131,13 @@ class uvm_vreg: uvm_object, rand.barrier
 	uvm_reg_map[] maps;
 	mem.get_maps(maps);
 
-	retval ~= format("[%0d] in %0s['h%0h+'h%0h]\n",
+	retval ~= format("[%0d] in %0s[0x%0x+0x%0x]\n",
 			 this._size, this._mem.get_full_name(),
 			 this._offset, this._incr);
 	foreach (map; maps) {
 	  uvm_reg_addr_t  addr0 = this.get_address(0, map);
 
-	  retval ~= format("  Address in map '%s' -- @'h%0h+%0h",
+	  retval ~= format("  Address in map '%s' -- @0x%0x+%0x",
 			   map.get_full_name(), addr0,
 			   this.get_address(1, map) - addr0);
 	}

@@ -41,8 +41,8 @@ enum int UVM_STDOUT = 1;  // Writes to standard out and logfile
 
 import esdl.data.bvec;
 
-import uvm.base.uvm_misc: uvm_bitvec_to_string, uvm_leaf_scope,
-  uvm_object_value_str;
+import uvm.base.uvm_misc: uvm_bitvec_to_string, uvm_bool_to_string,
+  uvm_leaf_scope, uvm_object_value_str;
 import uvm.base.uvm_object: uvm_object;
 import uvm.base.uvm_policy: uvm_policy;
 import uvm.base.uvm_object_globals: uvm_radix_enum, UVM_FILE,
@@ -141,7 +141,7 @@ abstract class uvm_printer: uvm_policy
 		uvm_radix_enum  radix=uvm_radix_enum.UVM_NORADIX,
 		char            scope_separator='.',
 		string          type_name="")
-    if (is (T: bool)) {
+    if (is (T: bool) && (! isBitVector!T /* avoid bvec!1 */)) {
       print_bool(name, value, 1, radix, scope_separator, type_name);
     }
 
@@ -220,12 +220,12 @@ abstract class uvm_printer: uvm_policy
       }
     }
 
-  void print_bool(string          name,
-		  bool            value,
-		  ptrdiff_t       size = -1,
-		  uvm_radix_enum  radix=uvm_radix_enum.UVM_NORADIX,
-		  char            scope_separator='.',
-		  string          type_name="") {
+  void print_bool(T)(string          name,
+		     T               value,
+		     ptrdiff_t       size = -1,
+		     uvm_radix_enum  radix=uvm_radix_enum.UVM_NORADIX,
+		     char            scope_separator='.',
+		     string          type_name="") {
       import std.conv: to;
       synchronized (this) {
 	if (type_name != "") type_name = "bool";
@@ -240,8 +240,13 @@ abstract class uvm_printer: uvm_policy
 
 	name = uvm_leaf_scope(name, scope_separator);
 
-	if (value) push_element(name, type_name, sz_str, "true");
-	else push_element(name, type_name, sz_str, "false");
+	// if (value) push_element(name, type_name, sz_str, "true");
+	// else push_element(name, type_name, sz_str, "false");
+
+	string val_str = uvm_bool_to_string(value, size, radix,
+					      get_radix_string(radix));
+
+	push_element(name, type_name, sz_str, val_str);
 
 	pop_element();
       }

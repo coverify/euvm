@@ -489,7 +489,8 @@ abstract class uvm_recorder: uvm_policy
 	if (get_stream() is null) {
 	  return;
 	}
-	do_record_field(name, value, T.SIZE, radix);
+	uvm_bitstream_t lvalue = value;
+	do_record_field(name, lvalue, T.SIZE, radix);
       }
     }
 

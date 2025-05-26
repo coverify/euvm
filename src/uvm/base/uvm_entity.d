@@ -79,6 +79,9 @@ class uvm_harness: RootEntity
     _init_done = true;
   }
 
+  // to be overridden by end-user
+  void initial() {}
+    
   ubyte start() {
     this.start_bg();
     super.joinSim();
@@ -105,10 +108,17 @@ class uvm_root_plain: uvm_root
 }
 
 alias uvm_testbench = uvm_tb;
+alias uvm_context = uvm_tb;
 
 class uvm_tb: uvm_harness
 {
   uvm_entity!(uvm_root_plain) uvm_dock;
+
+  override void setVpiCosimMode() {
+    super.setVpiCosimMode();
+    uvm_dock.set_cosim();
+  }
+  
   void set_seed(uint seed) {
     uvm_dock.set_seed(seed);
   }
@@ -224,10 +234,15 @@ class uvm_entity(T): uvm_entity_base if (is (T: uvm_root))
     
   // alias _get_uvm_root this;
 
+  bool _is_cosim;
+  void set_cosim() {
+    _is_cosim = true;
+  }
+  
   @uvm_private_sync
     private bool _uvm_root_initialized;
 
-  // The uvm_root instance corresponding to this RootEntity.
+  // The uvm_root instance corresponding to this Entity.
   // effectively immutable
   @uvm_immutable_sync
     private T _uvm_root_instance;
@@ -313,7 +328,14 @@ class uvm_entity(T): uvm_entity_base if (is (T: uvm_root))
     uvm_root_initialized = true;
     uvm_root_init_semaphore.notify();
     uvm_seed_map.set_seed(_seed);
-    uvm_root_start_semaphore.wait();
+    if (! _is_cosim) {
+      uvm_root_start_semaphore.wait();
+    }
+    uvm_harness harness = cast (uvm_harness) getRoot();
+    if (harness is null) {
+      assert(false, "Could not determine UVM Harness");
+    }
+    harness.initial(); // execute user setup code from harness
     _uvm_root_instance.initial();
   }
 

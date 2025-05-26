@@ -435,12 +435,12 @@ class uvm_tlm_generic_payload: uvm_sequence_item
 	if (_m_byte_enable_length) {
 	  be = _m_byte_enable[i % _m_byte_enable_length];
 	  printer.print_generic(format("[%0d]",i), "byte", 8,
-				format("'h%h%s", _m_data[i],
+				format("0x%x%s", _m_data[i],
 				       ((be == 0xFF) ? "" : " x")));
 	}
 	else {
 	  printer.print_generic (format("[%0d]", i), "byte", 8,
-				 format("'h%h", _m_data[i]));
+				 format("0x%x", _m_data[i]));
 	}
       }
       printer.print_array_footer();

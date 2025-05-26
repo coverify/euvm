@@ -259,7 +259,7 @@ class uvm_mem_mam
 
       if (start_offset < this.cfg.start_offset) {
 	uvm_error("RegModel", format("Cannot reserve before start " ~
-				     "of memory space: 'h%h < 'h%h",
+				     "of memory space: 0x%x < 0x%x",
 				     start_offset, this.cfg.start_offset));
 	return null;
       }
@@ -269,19 +269,19 @@ class uvm_mem_mam
 
       if (end_offset > this.cfg.end_offset) {
 	uvm_error("RegModel", format("Cannot reserve past end of " ~
-				     "memory space: 'h%h > 'h%h",
+				     "memory space: 0x%x > 0x%x",
 				     end_offset, this.cfg.end_offset));
 	return null;
       }
 
-      uvm_info("RegModel", format("Attempting to reserve ['h%h:'h%h]...",
+      uvm_info("RegModel", format("Attempting to reserve [0x%x:0x%x]...",
 				  start_offset, end_offset), uvm_verbosity.UVM_MEDIUM);
 
       foreach (i, used; this._in_use) {
 	if (start_offset <= used.get_end_offset() &&
 	    end_offset >= used.get_start_offset()) {
 	  // Overlap!
-	  uvm_error("RegModel", format("Cannot reserve ['h%h:'h%h] " ~
+	  uvm_error("RegModel", format("Cannot reserve [0x%x:0x%x] " ~
 				       "because it overlaps with %s",
 				       start_offset, end_offset,
 				       used.convert2string()));
@@ -825,7 +825,7 @@ class uvm_mem_region
 
   public string convert2string() {
     synchronized(this) {
-      return format("['h%h:'h%h]",
+      return format("[0x%x:0x%x]",
 		    this._Xstart_offsetX, this._Xend_offsetX);
     }
   } // convert2string

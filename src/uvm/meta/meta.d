@@ -22,8 +22,10 @@ module uvm.meta.meta;
 import std.stdio: stderr;
 import std.conv: to;
 
-// import std.traits: fullyQualifiedName;
-import uvm.meta.fqn: fullyQualifiedName;
+import std.traits: fullyQualifiedName;
+// import uvm.meta.fqn: fullyQualifiedName;
+// import esdl.base.factory: fullyQualifiedName;
+
 alias qualifiedTypeName = fullyQualifiedName;
 
 version (X86_64) {

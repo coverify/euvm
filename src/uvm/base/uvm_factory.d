@@ -210,10 +210,10 @@ abstract class uvm_factory
 
   mixin (uvm_scope_sync_string);
 
-  static bool _is_active;
+  static bool _is_initializing;
   
-  static bool is_active() {
-    return _is_active;
+  static bool is_initializing() {
+    return _is_initializing;
   }
   
   // Group -- NODOCS -- Retrieving the factory
@@ -1780,8 +1780,16 @@ class uvm_default_factory: uvm_factory
 
   this() {
     synchronized(this) {
+      import esdl.base.factory: Factory;
       _m_types = new m_types_wrapper();
       _m_type_names = new m_type_names_wrapper();
+
+      foreach (ci; Factory!q{UVM}.getElements()) {
+	if (ci.name in _m_ci_lookup) continue;
+	else {
+	  _m_ci_lookup[ci.name] = ci;
+	}
+      }
     }
   }
 
@@ -1887,12 +1895,17 @@ class uvm_default_factory: uvm_factory
     }
 
     void register_lazy_by_name(string requested_type_name) {
+      import esdl.base.factory: Factory;
       assert (requested_type_name != "<unknown>" &&
 	      requested_type_name != "");
       
-      _is_active = true;
-      auto obj = Object.factory(requested_type_name);
-      _is_active = false;
+      _is_initializing = true;
+      // auto obj = Object.factory(requested_type_name);
+      Object obj = null;
+      auto ci = requested_type_name in _m_ci_lookup;
+      if (ci !is null) obj = ci.create();
+      // auto obj = Factory!q{UVM}.create(requested_type_name);
+      _is_initializing = false;
 
       if (obj is null) return;
 
@@ -1913,6 +1926,8 @@ class uvm_default_factory: uvm_factory
     }
   }
 
+  private ClassInfo[string]             _m_ci_lookup;
+  
   private m_types_wrapper               _m_types;
   
   private bool[string]                  _m_lookup_strs;

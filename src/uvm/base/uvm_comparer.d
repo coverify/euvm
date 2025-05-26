@@ -349,7 +349,7 @@ class uvm_comparer: uvm_policy
 	      msg = format("%s: lhs = %s : rhs = %s", name, lhs, rhs);
 	      break;
 	    default:
-	      msg = format("%s: lhs = 'h%0x : rhs = 'h%0x",
+	      msg = format("%s: lhs = 0x%0x : rhs = 0x%0x",
 			   name, lhs, rhs);
 	      break;
 	    }
@@ -596,7 +596,7 @@ class uvm_comparer: uvm_policy
 	  msg = format("%s: lhs = %0d : rhs = %0d", name, lhs, rhs);
 	  break;
 	default:
-	  msg = format("%s: lhs = 'h%0x : rhs = 'h%0x", name, lhs, rhs);
+	  msg = format("%s: lhs = 0x%0x : rhs = 0x%0x", name, lhs, rhs);
 	  break;
 	}
 	print_msg(msg);
@@ -649,7 +649,7 @@ class uvm_comparer: uvm_policy
 		       name, lhs&mask, rhs&mask);
 	  break;
 	default:
-	  msg = format("%s: lhs = 'h%0x : rhs = 'h%0x",
+	  msg = format("%s: lhs = 0x%0x : rhs = 0x%0x",
 		       name, lhs&mask, rhs&mask);
 	  break;
 	}
@@ -688,7 +688,7 @@ class uvm_comparer: uvm_policy
       }
 
       mask = -1;
-      mask >>= (64-size);
+      mask >>= (64 - size);
       if ((lhs & mask) != (rhs & mask)) {
 	switch (radix) {
 	  import std.string: format;
@@ -718,7 +718,7 @@ class uvm_comparer: uvm_policy
 		       name, lhs&mask, rhs&mask);
 	  break;
 	default:
-	  msg = format("%s: lhs = 'h%0x : rhs = 'h%0x",
+	  msg = format("%s: lhs = 0x%0x : rhs = 0x%0x",
 		       name, lhs&mask, rhs&mask);
 	  break;
 	}

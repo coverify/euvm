@@ -43,6 +43,7 @@ import uvm.reg.uvm_reg_model;
 import uvm.reg.uvm_reg_field: uvm_reg_field;
 import uvm.reg.uvm_reg_map: uvm_reg_map;
 import uvm.reg.uvm_reg_item: uvm_reg_item;
+import uvm.reg.uvm_reg_defines: UVM_REG_DATA_1;
 
 import uvm.seq.uvm_sequence_base: uvm_sequence_base;
 import uvm.base.uvm_object: uvm_object;
@@ -189,7 +190,7 @@ class uvm_reg_fifo: uvm_reg
 		    int             lineno = 0) {
     synchronized(this) {
       // emulate write, with intention of update
-      value &= ((1L << get_n_bits())-1);
+      value &= ((UVM_REG_DATA_1 << get_n_bits()) - 1);
       if (_fifo.length == _m_size) {
 	return;
       }
@@ -275,7 +276,7 @@ class uvm_reg_fifo: uvm_reg
 	  _fifo ~= this._value.get_value();
 	break;
       case UVM_PREDICT_READ:
-	uvm_reg_data_t value = rw.get_value(0) & ((1L << get_n_bits())-1);
+	uvm_reg_data_t value = rw.get_value(0) & ((UVM_REG_DATA_1 << get_n_bits()) - 1);
 	uvm_reg_data_t mirror_val;
 	if (_fifo.length == 0) {
 	  return;
@@ -283,7 +284,7 @@ class uvm_reg_fifo: uvm_reg
 	_fifo.popFront(mirror_val);
 	if (this.value.get_compare() == UVM_CHECK && mirror_val != value) {
 	  uvm_warning("MIRROR_MISMATCH",
-		      format("Observed DUT read value 'h%0h != mirror value 'h%0h",
+		      format("Observed DUT read value 0x%0x != mirror value 0x%0x",
 			     value, mirror_val));
 	}
       }

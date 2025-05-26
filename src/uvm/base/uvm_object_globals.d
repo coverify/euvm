@@ -94,7 +94,7 @@ alias uvm_field_flag_t = uint;
 // UVM_UNFORMAT2 - Selects unformatted 2 value data (%u) format
 // UVM_UNFORMAT4 - Selects unformatted 4 value data (%z) format
 // UVM_OCT       - Selects octal (%o) format
-// UVM_HEX       - Selects hexadecimal (%h) format
+// UVM_HEX       - Selects hexadecimal (%x) format
 // UVM_STRING    - Selects string (%s) format
 // UVM_TIME      - Selects time (%t) format
 // UVM_ENUM      - Selects enumeration value (name) format
@@ -130,7 +130,7 @@ char uvm_radix_to_string(uvm_radix_enum radix) {
   case uvm_radix_enum.UVM_BIN:        return 'b';
   case uvm_radix_enum.UVM_OCT:        return 'o';
   case uvm_radix_enum.UVM_DEC:        return 'd';
-  case uvm_radix_enum.UVM_HEX:        return 'h';
+  case uvm_radix_enum.UVM_HEX:        return 'x';
   case uvm_radix_enum.UVM_UNSIGNED:   return 'u';
   case uvm_radix_enum.UVM_UNFORMAT2:  return 'u';
   case uvm_radix_enum.UVM_UNFORMAT4:  return 'z';

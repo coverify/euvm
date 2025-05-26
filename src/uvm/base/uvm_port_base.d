@@ -134,7 +134,7 @@ class uvm_port_component(PORT=uvm_object): uvm_port_component_base
 {
   mixin (uvm_sync_string);
 
-  // These needs further investigation
+  // This needs further investigation
   // The component becomes accessible via the port -- FIXME
   override void uvm__auto_build() { }
 

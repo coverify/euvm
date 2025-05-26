@@ -232,7 +232,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE, rand.barrier
 
   // @uvm-ieee 1800.2-2020 auto 19.4.1.5.1
   // task
-  void write_reg(ref uvm_reg       rg,
+  void write_reg(uvm_reg           rg,
 		 out uvm_status_e  status,
 		 uvm_reg_data_t    value,
 		 uvm_door_e        path = uvm_door_e.UVM_DEFAULT_DOOR,
@@ -249,7 +249,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE, rand.barrier
 
   // @uvm-ieee 1800.2-2020 auto 19.4.1.5.2
   // task
-  void read_reg(ref uvm_reg           rg,
+  void read_reg(uvm_reg               rg,
 		out uvm_status_e      status,
 		out uvm_reg_data_t    value,
 		uvm_door_e            path = uvm_door_e.UVM_DEFAULT_DOOR,
@@ -266,7 +266,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE, rand.barrier
 
   // @uvm-ieee 1800.2-2020 auto 19.4.1.5.3
   // task
-  void poke_reg(ref uvm_reg       rg,
+  void poke_reg(uvm_reg           rg,
 		out uvm_status_e  status,
 		uvm_reg_data_t    value,
 		string            kind = "",
@@ -281,7 +281,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE, rand.barrier
 
   // @uvm-ieee 1800.2-2020 auto 19.4.1.5.4
   // task
-  void peek_reg(ref uvm_reg           rg,
+  void peek_reg(uvm_reg               rg,
 		out uvm_status_e      status,
 		out uvm_reg_data_t    value,
 		string                kind = "",
@@ -296,7 +296,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE, rand.barrier
    
   // @uvm-ieee 1800.2-2020 auto 19.4.1.5.5
   // task
-  void update_reg(ref uvm_reg       rg,
+  void update_reg(uvm_reg           rg,
 		  out uvm_status_e  status,
 		  uvm_door_e        path = uvm_door_e.UVM_DEFAULT_DOOR,
 		  uvm_reg_map       map = null,
@@ -312,7 +312,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE, rand.barrier
 
   // @uvm-ieee 1800.2-2020 auto 19.4.1.5.6
   // task
-  void mirror_reg(ref uvm_reg       rg,
+  void mirror_reg(uvm_reg           rg,
 		  out uvm_status_e  status,
 		  uvm_check_e       check  = uvm_check_e.UVM_NO_CHECK,
 		  uvm_door_e        path = uvm_door_e.UVM_DEFAULT_DOOR,
@@ -329,7 +329,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE, rand.barrier
   
   // @uvm-ieee 1800.2-2020 auto 19.4.1.5.7
   // task
-  void write_mem(ref uvm_mem       mem,
+  void write_mem(uvm_mem           mem,
 		 out uvm_status_e  status,
 		 uvm_reg_addr_t    offset,
 		 uvm_reg_data_t    value,
@@ -347,7 +347,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE, rand.barrier
 
   // @uvm-ieee 1800.2-2020 auto 19.4.1.5.8
   // task
-  void read_mem(ref uvm_mem        mem,
+  void read_mem(uvm_mem            mem,
 		out uvm_status_e   status,
 		uvm_reg_addr_t     offset,
 		out uvm_reg_data_t value,
@@ -365,7 +365,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE, rand.barrier
 
   // @uvm-ieee 1800.2-2020 auto 19.4.1.5.9
   // task
-  void poke_mem(ref uvm_mem       mem,
+  void poke_mem(uvm_mem           mem,
 		out uvm_status_e  status,
 		uvm_reg_addr_t    offset,
 		uvm_reg_data_t    value,
@@ -381,7 +381,7 @@ class uvm_reg_sequence(BASE=uvm_sequence!uvm_reg_item): BASE, rand.barrier
 
   // @uvm-ieee 1800.2-2020 auto 19.4.1.5.10
   // task
-  void peek_mem(ref uvm_mem        mem,
+  void peek_mem(uvm_mem            mem,
 		out uvm_status_e   status,
 		uvm_reg_addr_t     offset,
 		out uvm_reg_data_t value,

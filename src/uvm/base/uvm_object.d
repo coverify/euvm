@@ -102,7 +102,7 @@ abstract class uvm_object: uvm_void, rand.barrier
   // Using string Mixin function
   // mixin uvm_scope_sync;
   mixin (uvm_scope_sync_string);
-  mixin (uvm_lock_string);
+  mixin (uvm_sync_string);
 
 
   version (UVM_NO_RAND) {}
