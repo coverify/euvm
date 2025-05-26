@@ -3039,6 +3039,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
 						P parent)
     if (isArray!E && !is (E == string)) {
       switch (what) {
+      static import uvm.base.uvm_globals;
       case uvm_comp_auto_enum.UVM_PARALLELIZE:
 	for (size_t i=0; i!=e.length; ++i) {
 	  _m_uvm_component_automation(e[i], what,
@@ -3072,6 +3073,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
     if (is (E: uvm_component)) {
       import uvm.base.uvm_globals;
       switch (what) {
+      static import uvm.base.uvm_globals;
       case uvm_comp_auto_enum.UVM_PARALLELIZE:
 	static assert (is (E: uvm_component));
 	if (e !is null) {
@@ -3149,6 +3151,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
 	      }
 	    }
 	    else {
+	      static import uvm.base.uvm_globals;
 	      uvm.base.uvm_globals.uvm_info("UVM_UTILS",
 					    format("%s(%s) is not a uvm_agent",
 						   T.stringof, t.get_full_name()), uvm_verbosity.UVM_NONE);
