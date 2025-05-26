@@ -108,6 +108,7 @@ class uvm_root_plain: uvm_root
 }
 
 alias uvm_testbench = uvm_tb;
+alias uvm_context = uvm_tb;
 
 class uvm_tb: uvm_harness
 {
