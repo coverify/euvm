@@ -383,6 +383,22 @@ string uvm_bitvec_to_string(T)(T value, size_t size,
   }
 }
 
+string uvm_bool_to_string(T)(T value, size_t size,
+			     uvm_radix_enum radix=uvm_radix_enum.UVM_NORADIX,
+			     string radix_str="") {
+  import std.string: format;
+  // sign extend & don't show radix for negative values
+  string value_str = value ? "true" : "false";
+  
+  static if (is (T == enum)) {
+    value_str = format("%s [%0s]",
+		       value_str, value);
+  }
+
+  return value_str;
+}
+
+
 // Moved to uvm_aliases
 // alias uvm_bitstream_to_string = uvm_bitvec_to_string!uvm_bitstream_t;
 // alias uvm_integral_to_string  = uvm_bitvec_to_string!uvm_integral_t;
