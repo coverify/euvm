@@ -816,13 +816,13 @@ class uvm_root: uvm_component, uvm_root_intf, rand.disable
 	  last_time = setting.offset;
 	  if (setting.id == "_ALL_") {
 	    foreach (comp; comps) {
-	      setting.used[comp] = true;
+	      setting.mark_used(comp, true);
 	      comp.set_report_verbosity_level(setting.verbosity);
 	    }
 	  }
 	  else {
 	    foreach (comp; comps) {
-	      setting.used[comp] = true;
+	      setting.mark_used(comp, true);
 	      comp.set_report_id_verbosity(setting.id, setting.verbosity);
 	    }
 	  }

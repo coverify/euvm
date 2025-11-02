@@ -50,6 +50,13 @@ class uvm_cmdline_setting_base
     private string _arg; // Original command line option
     private bool[uvm_component] _used; // Usage tracking
   }
+
+  void mark_used(uvm_component comp, bool used) {
+    synchronized(this) {
+      _used[comp] = used;
+    }
+  }
+
 }
 
 class uvm_cmdline_verbosity: uvm_cmdline_setting_base

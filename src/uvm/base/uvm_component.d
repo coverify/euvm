@@ -159,7 +159,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   // phase
   static if (!__traits(compiles, _esdl__parInfo)) {
     _esdl__Multicore _esdl__parInfo = _esdl__Multicore(MulticorePolicy._UNDEFINED_,
-						       uint.max); // default value
+						       int.min); // default value
     final _esdl__Multicore _esdl__getParInfo() {
       return _esdl__parInfo;
     }
@@ -173,7 +173,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
 
   //////////////////////////////////////////////////////////////
   
-  _esdl__Multicore _par__info = _esdl__Multicore(MulticorePolicy._UNDEFINED_, uint.max);
+  _esdl__Multicore _par__info = _esdl__Multicore(MulticorePolicy._UNDEFINED_, int.min);
 
   ParContext _esdl__parInheritFrom() {
     import uvm.base.uvm_coreservice;
@@ -2767,9 +2767,9 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
     assert (cast (uvm_root) this);
     _set_id();
     assert (config !is null);
-    if (config._threadIndex == uint.max) {
-      config._threadIndex =
-	_esdl__parComponentId() % config._threadPool.length;
+    if (config._threadIndex == int.min) {
+      config._threadIndex = cast(int)
+	(_esdl__parComponentId() % config._threadPool.length);
     }
     assert (_esdl__multicoreConfig is null);
     _esdl__multicoreConfig = config;
@@ -2887,14 +2887,14 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
 	if (uvm_is_match(setting.comp, get_full_name()) ) {
 	  if ((setting.phase == "" || setting.phase == "build" ||
 	       (setting.phase == "time" && setting.offset == 0))) {
-	    setting.used[this] = true;
+	    setting.mark_used(this, true);
 	    if (setting.id == "_ALL_")
 	      set_report_verbosity_level(setting.verbosity);
 	    else
 	      set_report_id_verbosity(setting.id, setting.verbosity);
 	  }
 	  else {
-	    setting.used[this] = false;
+	    setting.mark_used(this, false);
 	    if (setting.phase != "time") {
 	      _m_verbosity_settings ~= setting;
 	    }
@@ -2915,7 +2915,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
       foreach (setting; uvm_cmdline_set_action.settings) {
 	if (!uvm_is_match(setting.comp, get_full_name())) continue;
 
-	setting.used[this] = true;
+	setting.mark_used(this, true);
 
 	if (setting.id == "_ALL_") {
 	  if (setting.all_sev) {
@@ -2954,7 +2954,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
       foreach(setting; uvm_cmdline_set_severity.settings) {
 	if (!uvm_is_match(setting.comp, get_full_name())) continue; 
 
-	setting.used[this] = true;
+	setting.mark_used(this, true);
     
 	if (setting.id == "_ALL_" && setting.all_sev) {
 	  set_report_severity_override(uvm_severity.UVM_INFO, setting.sev);
@@ -2987,7 +2987,7 @@ abstract class uvm_component: uvm_report_object, ParContext, rand.barrier
   
       foreach (setting; _m_verbosity_settings) {
 	if (phase.get_name() == setting.phase) {
-	  setting.used[this] = true;
+	  setting.mark_used(this, true);
 	  if (setting.id == "_ALL_") 
 	    set_report_verbosity_level(setting.verbosity);
 	  else 
@@ -3458,9 +3458,9 @@ void uvm__config_parallelism(T)(T t, ref _esdl__Multicore linfo)
       
       auto config = linfo.makeCfg(pconf);
       
-      if (config._threadIndex == uint.max) {
+      if (config._threadIndex == int.min) {
 	config._threadIndex =
-	  t._esdl__parComponentId() % config._threadPool.length;
+	  cast(int) (t._esdl__parComponentId() % config._threadPool.length);
       }
       // import std.stdio;
       // writeln("setting multicore  for ", t.get_full_name());
