@@ -375,7 +375,7 @@ class uvm_reg_map: uvm_object, rand.barrier
 	    }
 
 	    uvm_reg_map_addr_range range = uvm_reg_map_addr_range(min, max, stride);
-	    top_map.m_mems_by_offset[range] = mem;
+	    top_map._m_mems_by_offset[range] = mem;
 	    m_mems_info[mem].addr  = addrs;
 	    m_mems_info[mem].mem_range = range;
 	  }
