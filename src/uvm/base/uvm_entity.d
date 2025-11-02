@@ -67,9 +67,21 @@ class uvm_harness: RootEntity
     }
   }
 
-  void initialize() {
+  void _initialize(SimTime st = MAX_SIMULATION_TIME) {
     if (_init_done) assert (false, "initialize() called twice!!");
-    super.forkSim();
+    super.forkSim(st);
+    foreach (child; getChildComps()) {
+      auto entity = cast (uvm_entity_base) child;
+      if (entity !is null) {
+	entity.wait_for_init();
+      }
+    }
+    _init_done = true;
+  }
+
+  void _initialize(Time t) {
+    if (_init_done) assert (false, "initialize() called twice!!");
+    super.forkSim(t);
     foreach (child; getChildComps()) {
       auto entity = cast (uvm_entity_base) child;
       if (entity !is null) {
@@ -82,14 +94,8 @@ class uvm_harness: RootEntity
   // to be overridden by end-user
   void initial() {}
     
-  ubyte start() {
-    this.start_bg();
-    super.joinSim();
-    return getExitStatus();
-  }
-
-  void start_bg() {
-    if (_init_done == false) this.initialize();
+  void start_bg(Time t) {
+    if (_init_done == false) this._initialize(t);
     foreach (child; getChildComps()) {
       auto entity = cast (uvm_entity_base) child;
       if (entity !is null) {
@@ -98,6 +104,30 @@ class uvm_harness: RootEntity
     }
     wait_for_end_of_elaboration();
   }
+
+  void start_bg(SimTime st = MAX_SIMULATION_TIME) {
+    if (_init_done == false) this._initialize(st);
+    foreach (child; getChildComps()) {
+      auto entity = cast (uvm_entity_base) child;
+      if (entity !is null) {
+	entity._start_uvm();
+      }
+    }
+    wait_for_end_of_elaboration();
+  }
+
+  ubyte start(Time t) {
+    this.start_bg(t);
+    super.joinSim();
+    return getExitStatus();
+  }
+
+  ubyte start(SimTime st = MAX_SIMULATION_TIME) {
+    this.start_bg(st);
+    super.joinSim();
+    return getExitStatus();
+  }
+
 }
 
 class uvm_root_plain: uvm_root
@@ -258,7 +288,7 @@ class uvm_entity(T): uvm_entity_base if (is (T: uvm_root))
       // argument. If an argument is introduced, that will spoil
       // uvm_root user API.
       // _uvm_root_instance = new T();
-      // _uvm_root_instance.initialize(this);
+      // _uvm_root_instance._initialize(this);
       */
       // resetThreadContext();
       _seed = uniform!int;
