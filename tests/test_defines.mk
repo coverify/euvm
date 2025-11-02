@@ -17,15 +17,10 @@
 #   permissions and limitations under the License. 
 #----------------------------------------------------------------------
 
-MODEL = 64
-DFLAGS = -m$(MODEL) -g -fPIC -w -O # -version=UVM_NO_DEPRECATED
+DFLAGS = # -version=UVM_NO_DEPRECATED
 # ESDLDIR = ${HOME}/code/vlang
 # VLANGDIR = ${HOME}/code/vlang-uvm
-
-DMDDIR = /home/puneet/release/euvm-1.0-beta4
-DMD = $(DMDDIR)/bin/ldmd2
-
-DMDLIBDIR = $(DMDDIR)/lib
+LDC = ldc2
 PHOBOS = phobos2-ldc-shared
 DRUNTIME = druntime-ldc-shared
 UVMLIB = uvm-ldc-shared

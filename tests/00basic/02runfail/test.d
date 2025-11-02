@@ -32,16 +32,19 @@ class objA: uvm_object {}
 
 class objB: uvm_object {}
 
-class test_root: uvm_root
+class test: uvm_test
 {
+  this(string name="", uvm_component parent=null) {
+    super (name, parent);
+  }
   mixin uvm_component_utils;
-  override void initial()
+  override void run_phase(uvm_phase phase)
   {
     objA a;
     objB b;
     uvm_object obj;
    
-    a = new objA;
+    a = new objA();
     obj = a;
     b = cast(objB) obj; // UVM TEST RUN-TIME FAILURE 
     if (b is null) {
@@ -50,15 +53,9 @@ class test_root: uvm_root
   }
 }
 
-class TestBench: RootEntity
-{
-  uvm_entity!(test_root) tb;
-}
-
 int main(string[] argv) {
-  TestBench tb = new TestBench;
-  tb.multiCore(0, 0);
+  auto tb = new uvm_tb;
   tb.elaborate("tb", argv);
-  return tb.simulate();
+  return tb.start();
 }
 

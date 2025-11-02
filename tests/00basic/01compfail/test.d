@@ -43,7 +43,6 @@ class test: uvm_test
   
 int main(string[] argv) {
   uvm_tb tb = new uvm_tb;
-  tb.multicore(0, 0);
   tb.elaborate("tb", argv);
-  return tb.simulate();
+  return tb.start();
 }

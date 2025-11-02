@@ -19,17 +19,7 @@
 //----------------------------------------------------------------------
 import esdl;
 import uvm;
-import std.stdio;
-
-class test_root: uvm_root
-{
-  mixin uvm_component_utils;
-}
-
-class TestBench: RootEntity
-{
-  uvm_entity!(test_root) tb;
-}
+import std.stdio: writeln;
 
 class test: uvm_test
 {
@@ -50,16 +40,15 @@ class test: uvm_test
     // uvm_top.stop_request(); 
   }
   
-  override void report() {
+  override void report_phase(uvm_phase phase) {
     writeln("** UVM TEST PASSED **");
   }
 }
 
 int main(string[] argv) {
-  TestBench tb = new TestBench;
-  tb.multiCore(0, 0);
+  auto tb = new uvm_tb;
   tb.elaborate("tb", argv);
-  if (tb.simulate() == 1) {	// error is expected
+  if (tb.start() == 1) {	// error is expected
     return 0;
   }
   else {
