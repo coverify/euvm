@@ -191,7 +191,7 @@ mixin template uvm_component_registry_mixin(T, string S)
   import uvm.base.uvm_registry: uvm_component_registry;
   pragma(crt_constructor)
   extern(C) static void _esdl__registerWithFactory() {
-    Factory!q{UVM}.register!(typeof(this))();
+    Factory!q{UVM}.register!(T)();
   }
   alias type_id = uvm_component_registry!(T,S);
   static type_id get_type() {
