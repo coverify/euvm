@@ -102,10 +102,6 @@ class uvm_sequencer(REQ = uvm_sequence_item, RSP = REQ) :
     }
   }
 
-  override string get_type_name() {
-    return qualifiedTypeName!(typeof(this));
-  }
-
   // Group -- NODOCS -- Sequencer Interface
   // This is an interface for communicating with sequencers.
   //
