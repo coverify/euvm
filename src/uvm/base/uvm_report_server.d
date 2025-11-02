@@ -651,23 +651,27 @@ class uvm_default_report_server: uvm_report_server
 	// give the global server a chance to intercept the calls
 	uvm_report_server svr = cs.get_report_server();
 
+	// eUVM Specific
+	process_exit_status(report_message);
+
 	// no need to compose when neither UVM_DISPLAY nor UVM_LOG is set
 	if (report_message.get_action() & (uvm_action_type.UVM_LOG|uvm_action_type.UVM_DISPLAY)) {
 	  m = svr.compose_report_message(report_message);
 	}
 	svr.execute_report_message(report_message, m);
-
-	// Vlang Specific
-	// set the exit status of the simulation in case of error/fatal
-	switch (report_message.get_severity()) {
-	case uvm_severity.UVM_ERROR: getRootEntity.setExitStatus(1); break;
-	case uvm_severity.UVM_FATAL: getRootEntity.setExitStatus(1); break;
-	default: break;
-	}
       }
     }
   }
 
+  void process_exit_status(uvm_report_message report_message) {
+    // eUVM Specific
+    // set the exit status of the simulation in case of error/fatal
+    switch (report_message.get_severity()) {
+    case uvm_severity.UVM_ERROR: getRootEntity.setExitStatus(1); break;
+    case uvm_severity.UVM_FATAL: getRootEntity.setExitStatus(1); break;
+    default: break;
+    }
+  }
 
   //----------------------------------------------------------------------------
   // Group -- NODOCS -- Message Processing
